@@ -1,6 +1,6 @@
 # COBOL Structure Atlas
 
-Explorador visual e interativo da jornada `parse tree → AST` produzida a partir de `Cobol.g4`. O projeto é autocontido: contém cópias da gramática escolhida, do programa selecionado, dos copybooks disponíveis e da infraestrutura de normalização/preprocessamento criada no benchmark.
+Explorador visual e interativo da jornada `parse tree → AST → symbol table` produzida a partir de `Cobol.g4`. O projeto é autocontido: contém cópias da gramática escolhida, do programa selecionado, dos copybooks disponíveis e da infraestrutura de normalização/preprocessamento criada no benchmark.
 
 ## Por que `COACTUPC.cbl`?
 
@@ -25,7 +25,8 @@ Requisitos: JDK 17+ e Maven 3.9+.
 Depois abra:
 
 - `dist/index.html` para a parse tree;
-- `dist/ast.html` para a AST semântica.
+- `dist/ast.html` para a AST semântica;
+- `dist/symbols.html` para a tabela de símbolos.
 
 As páginas funcionam diretamente via `file://`, sem servidor e sem dependências web externas. Os inspetores permitem navegar entre um nó da AST e sua origem na parse tree.
 
@@ -57,7 +58,15 @@ Na etapa **AST**:
 - **Origem**: regra e nó da parse tree que deram origem a cada nó semântico;
 - **Compressão didática**: tamanho da região sintática condensada por cada conceito.
 
-O painel de fluxo é deliberadamente um índice da **sintaxe**, não um CFG. O ANTLR fornece o nó do `GO TO` e os tokens do destino, mas não resolve automaticamente uma aresta até o parágrafo-alvo. Essa ligação pertence à etapa posterior de AST/CFG.
+Na etapa **Symbol Table**:
+
+- **Escopos**: raiz, programa, divisions, sections, descrições de arquivo, grupos de dados e paragraphs;
+- **Namespaces**: `PROGRAM`, `DATA`, `PROCEDURE` e `FILE`, separados para preparar as regras de lookup COBOL;
+- **Símbolos**: programa, `SELECT`, `FD`, data items, condition names de nível 88, procedure sections e paragraphs;
+- **Identidade**: nome escrito, forma canônica case-insensitive, tipo, escopo declarador e nó de origem na AST;
+- **Ambiguidades preservadas**: declarações repetidas no mesmo namespace e escopo geram diagnósticos, sem uma escolha prematura.
+
+O painel de fluxo é deliberadamente um índice da **sintaxe**, não um CFG. O ANTLR fornece o nó do `GO TO` e os tokens do destino, mas não resolve automaticamente uma aresta até o parágrafo-alvo. A tabela de símbolos fornece os candidatos declarados; fazer o binding de um uso a esses candidatos continua sendo uma etapa posterior e separada.
 
 ## Contrato da AST neste MVP
 
@@ -74,10 +83,26 @@ A AST é única, imutável e não contém tabela de símbolos ou resultados de a
 
 O último item é o ponto de extensão para um MVP futuro. O payload original e sua origem já ficam preservados; um plugin poderá parsear SQL sem alterar o núcleo da AST COBOL.
 
+## Contrato da tabela de símbolos neste passo
+
+`SymbolTableBuilder` depende apenas de `Ast.Program`: não conhece ANTLR, tokens ou classes do parser. Ele coleta declarações, reconstrói escopos e normaliza nomes COBOL em maiúsculas com locale neutro. O resultado em `SymbolTable` é imutável e oferece lookup local/lexical que mantém múltiplos candidatos visíveis.
+
+Este passo não percorre referências em statements. Portanto:
+
+- o literal `CSUTLDTC` de um `CALL` não vira símbolo local;
+- targets de `GO TO` e `PERFORM` ainda não apontam para paragraphs;
+- `DataReference` ainda não aponta para data items;
+- não há CFG, reaching definitions, constant resolution ou análise SQL.
+
+Essa fronteira deixa clara a próxima transformação: uma futura camada de resolução consumirá a AST e a tabela, produzindo bindings sem modificar nenhuma das duas.
+
 Resultados atuais para `COACTUPC.cbl`:
 
 - parse tree: 57.227 nós, profundidade 39;
 - AST: 4.100 nós, profundidade 8;
+- tabela: 853 declarações em 651 escopos;
+- 492 data items, 259 condition names e 101 paragraphs;
+- dois diagnósticos de nomes de dados repetidos no mesmo escopo, preservados como candidatos;
 - um `CALL` literal para `CSUTLDTC`;
 - zero `CALLs` dinâmicos;
 - 14 statements de linguagem embutida preservados de forma opaca.
@@ -88,11 +113,11 @@ Resultados atuais para `COACTUPC.cbl`:
 antlr-parse-tree-explorer/
 ├── corpus/                    # cópia isolada do programa e copybooks
 ├── src/main/antlr4/           # Cobol.g4 + CobolPreprocessor.g4
-├── src/main/java/             # preprocessamento + AstBuilder + exportadores
-├── src/main/resources/web/    # jornada visual Parse Tree → AST
+├── src/main/java/             # preprocessamento + AST + Symbol Table + exportadores
+├── src/main/resources/web/    # jornada visual Parse Tree → AST → Symbol Table
 ├── dist/                      # resultado gerado, pronto para abrir
 ├── pom.xml
 └── run.sh
 ```
 
-`tree-data.js` e `ast-data.js` usam representações planas para a interface. Cada nó guarda identidade, pai, tipo, posição, profundidade e origem. A interface reconstrói as relações em memória e renderiza somente as linhas visíveis, evitando criar milhares de elementos DOM simultaneamente. O modelo Java permanece tipado em `Ast.java`; a forma plana é apenas um DTO de visualização.
+`tree-data.js`, `ast-data.js` e `symbol-data.js` usam representações planas para a interface. A interface reconstrói as relações em memória; os modelos Java permanecem tipados e imutáveis. As formas planas são apenas DTOs de visualização.

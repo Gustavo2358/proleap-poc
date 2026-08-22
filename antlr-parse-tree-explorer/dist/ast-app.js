@@ -3,6 +3,13 @@
 
   const data = window.AST_DATA;
   if (!data) throw new Error("ast-data.js não foi carregado");
+  const symbolData = window.SYMBOL_TABLE_DATA;
+  const symbolsByAst = new Map();
+  for (const symbol of symbolData?.symbols || []) {
+    const declarations = symbolsByAst.get(symbol.a) || [];
+    declarations.push(symbol);
+    symbolsByAst.set(symbol.a, declarations);
+  }
 
   const nodes = data.nodes;
   const children = Array.from({ length: nodes.length }, () => []);
@@ -192,6 +199,17 @@
     const originLink = $("#open-parse-node");
     originLink.href = node.r >= 0 ? `index.html#node=${node.r}` : "index.html";
     originLink.textContent = node.r >= 0 ? "Ver origem na parse tree ←" : "Abrir parse tree ←";
+    const declarations = symbolsByAst.get(node.id) || [];
+    const symbolLink = $("#open-symbol");
+    if (declarations.length) {
+      symbolLink.href = `symbols.html#symbol=${declarations[0].id}`;
+      symbolLink.textContent = declarations.length === 1 ? "Abrir símbolo →" : `Abrir ${declarations.length} símbolos →`;
+      $("#symbol-link-copy").textContent = "Este nó declara um nome. A tabela acrescenta identidade canônica, namespace e escopo sem alterar a AST.";
+    } else {
+      symbolLink.href = "symbols.html";
+      symbolLink.textContent = "Abrir Symbol Table →";
+      $("#symbol-link-copy").textContent = "Este nó não é uma declaração. A tabela contém somente os nós da AST que introduzem nomes.";
+    }
     $("#node-insight").textContent = insightFor(node);
   }
 

@@ -24,8 +24,10 @@ final class AstSnapshot {
                         Map<Integer, List<Integer>> parseToAst) {
         this.nodes = List.copyOf(nodes);
         this.metrics = metrics;
-        this.typeCounts = Map.copyOf(typeCounts);
-        this.parseToAst = Map.copyOf(parseToAst);
+        this.typeCounts = Collections.unmodifiableMap(new TreeMap<>(typeCounts));
+        Map<Integer, List<Integer>> stableParseIndex = new TreeMap<>();
+        parseToAst.forEach((key, value) -> stableParseIndex.put(key, List.copyOf(value)));
+        this.parseToAst = Collections.unmodifiableMap(stableParseIndex);
     }
 
     static AstSnapshot from(Ast.Program program) {

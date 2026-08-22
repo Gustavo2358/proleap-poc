@@ -22,7 +22,8 @@
     <nav class="journey-nav" aria-label="Jornada de transformação">
       <a class="journey-step completed" href="index.html"><span>01</span><div><b>Parse Tree</b><small>Sintaxe concreta do ANTLR</small></div></a>
       <a class="journey-step active" href="ast.html"><span>02</span><div><b>AST</b><small>Modelo semântico da aplicação</small></div></a>
-      <span class="journey-step disabled"><span>03</span><div><b>CFG</b><small>Próxima etapa</small></div></span>
+      <a class="journey-step" href="symbols.html"><span>03</span><div><b>Symbol Table</b><small>Declarações + escopos</small></div></a>
+      <span class="journey-step disabled"><span>04</span><div><b>Resolução</b><small>Próxima etapa</small></div></span>
     </nav>
 
     <section class="hero ast-hero">
@@ -40,8 +41,8 @@
       <span class="arrow">→</span>
       <div class="model-step"><i class="dot semantic"></i><b id="model-ast-nodes">4.100 nós</b><small>conceitos semânticos</small></div>
       <span class="arrow">→</span>
-      <div class="model-step future"><i class="dot future"></i><b>CFG</b><small>blocos + arestas</small></div>
-      <span class="model-note">A AST não resolve nomes nem caminhos ainda. Ela entrega uma estrutura <b>menor, tipada e rastreável</b> para essas etapas.</span>
+      <div class="model-step"><i class="dot declaration"></i><b>Symbol Table</b><small>nomes + escopos</small></div>
+      <span class="model-note">A AST não resolve nomes nem caminhos. Ela entrega uma estrutura <b>menor, tipada e rastreável</b> para a coleta de declarações.</span>
     </section>
 
     <main class="workspace">
@@ -126,6 +127,11 @@
           <p id="compression-copy"></p>
           <a class="bridge-action" id="open-parse-node" href="index.html">Ver origem na parse tree ←</a>
         </section>
+        <section class="inspector-section bridge-box">
+          <h4>Deste nó para a tabela</h4>
+          <p id="symbol-link-copy">Se este nó declara um nome, veja como ele passa a ser organizado em namespace e escopo.</p>
+          <a class="bridge-action" id="open-symbol" href="symbols.html">Abrir Symbol Table →</a>
+        </section>
         <section class="inspector-section insight-box">
           <h4>O que este nó ensina?</h4>
           <p id="node-insight"></p>
@@ -139,6 +145,7 @@
     </footer>
   </div>
   <script src="ast-data.js"></script>
+  <script src="symbol-data.js"></script>
   <script src="ast-app.js"></script>
 </body>
 </html>

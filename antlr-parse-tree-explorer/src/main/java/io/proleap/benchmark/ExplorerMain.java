@@ -67,12 +67,20 @@ public final class ExplorerMain {
         astSnapshot.write(output.resolve("ast-data.js"), source.getFileName().toString(), nodes.size(),
                 Arrays.asList(normalized.split("\\R", -1)));
 
+        SymbolTable symbolTable = new SymbolTableBuilder().build(ast);
+        SymbolTableSnapshot symbolSnapshot = SymbolTableSnapshot.from(symbolTable);
+        symbolSnapshot.write(output.resolve("symbol-data.js"), source.getFileName().toString(),
+                Arrays.asList(normalized.split("\\R", -1)));
+
         System.out.printf(Locale.ROOT,
-                "Generated %s and %s%nSource: %s%nParse tree: %,d nodes | %,d tokens | depth %d%n" +
-                        "AST: %,d nodes | depth %d | static CALLs %d | parser errors %d%n",
-                output.resolve("index.html"), output.resolve("ast.html"), source.getFileName(), nodes.size(),
+                "Generated %s, %s and %s%nSource: %s%nParse tree: %,d nodes | %,d tokens | depth %d%n" +
+                        "AST: %,d nodes | depth %d | static CALLs %d%n" +
+                        "Symbols: %,d declarations | %,d scopes | %,d diagnostics | parser errors %d%n",
+                output.resolve("index.html"), output.resolve("ast.html"), output.resolve("symbols.html"),
+                source.getFileName(), nodes.size(),
                 tokenCount, maxDepth, astSnapshot.metrics().nodes(), astSnapshot.metrics().maxDepth(),
-                astSnapshot.metrics().staticCalls(), parserErrors);
+                astSnapshot.metrics().staticCalls(), symbolSnapshot.metrics().symbols(),
+                symbolSnapshot.metrics().scopes(), symbolSnapshot.metrics().diagnostics(), parserErrors);
     }
 
     private static int walk(ParseTree tree, int parent, int depth, Parser parser,
