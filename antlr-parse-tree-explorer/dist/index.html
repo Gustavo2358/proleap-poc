@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>ANTLR Parse Tree Atlas · COBOL</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">A</span>
+        <div>
+          <p class="eyebrow">COBOL · ANTLR 4.13.2 · Cobol.g4</p>
+          <h1>Parse Tree Atlas</h1>
+        </div>
+      </div>
+      <div class="parse-status" id="parse-status"><span></span> carregando árvore…</div>
+    </header>
+
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="kicker">UM MAPA NAVEGÁVEL DA SINTAXE</p>
+        <h2>Do programa COBOL até cada token.</h2>
+        <p>Explore a estrutura concreta criada pelo ANTLR, preserve o contexto e veja onde cada nó toca o código pré-processado.</p>
+      </div>
+      <div class="metrics" id="metrics" aria-label="Métricas da árvore"></div>
+    </section>
+
+    <section class="mental-model" aria-label="Modelo mental da parse tree">
+      <span class="model-label">MODELO MENTAL</span>
+      <div class="model-step"><i class="dot root"></i><b>Regra raiz</b><small>startRule</small></div>
+      <span class="arrow">→</span>
+      <div class="model-step"><i class="dot rule"></i><b>Regras aninhadas</b><small>ParserRuleContext</small></div>
+      <span class="arrow">→</span>
+      <div class="model-step"><i class="dot token"></i><b>Folhas</b><small>TerminalNode + token</small></div>
+      <span class="model-note">A árvore registra <b>sintaxe</b>. Relações semânticas, como a aresta até o destino de um GO TO, vêm depois.</span>
+    </section>
+
+    <main class="workspace">
+      <aside class="source-panel panel">
+        <div class="panel-heading">
+          <div><span class="panel-index">01</span><h3>Código</h3></div>
+          <span class="panel-meta" id="source-position">—</span>
+        </div>
+        <div class="source-file" id="source-file">COACTUPC.cbl · pré-processado</div>
+        <div class="source-code" id="source-code" aria-label="Trecho do código COBOL"></div>
+        <div class="source-footnote">A numeração corresponde ao texto normalizado após COPY/EXEC, exatamente como chegou ao lexer.</div>
+      </aside>
+
+      <section class="tree-panel panel">
+        <div class="panel-heading tree-heading">
+          <div><span class="panel-index">02</span><h3>Estrutura</h3></div>
+          <nav class="view-tabs" aria-label="Visualizações">
+            <button class="tab active" data-view="tree">Árvore</button>
+            <button class="tab" data-view="rules">Regras</button>
+            <button class="tab" data-view="flow">Fluxo</button>
+          </nav>
+        </div>
+
+        <div class="tree-toolbar" id="tree-toolbar">
+          <label class="search-box">
+            <span aria-hidden="true">⌕</span>
+            <input id="tree-search" type="search" placeholder="Buscar regra ou token…" autocomplete="off">
+            <kbd>/</kbd>
+          </label>
+          <button class="tool-button" id="collapse-all">Recolher</button>
+        </div>
+
+        <div class="view active" id="tree-view">
+          <div class="search-summary hidden" id="search-summary"></div>
+          <div class="tree-list" id="tree-list" role="tree" aria-label="Parse tree navegável">
+            <div class="tree-spacer" id="tree-spacer"></div>
+            <div class="tree-rows" id="tree-rows"></div>
+          </div>
+          <div class="legend">
+            <span><i class="dot rule"></i> regra</span>
+            <span><i class="dot token"></i> terminal</span>
+            <span><i class="dot error"></i> recuperação</span>
+            <span class="visible-count" id="visible-count"></span>
+          </div>
+        </div>
+
+        <div class="view" id="rules-view">
+          <div class="view-intro"><b>Vocabulário estrutural</b><span>As regras mais frequentes mostram onde a gramática cria camadas intermediárias.</span></div>
+          <div class="rule-bars" id="rule-bars"></div>
+        </div>
+
+        <div class="view" id="flow-view">
+          <div class="view-intro"><b>Construções de fluxo na árvore</b><span>Clique para abrir o nó no contexto. Isto ainda não é um CFG.</span></div>
+          <div class="flow-filters" id="flow-filters"></div>
+          <div class="flow-list" id="flow-list"></div>
+        </div>
+      </section>
+
+      <aside class="inspector-panel panel">
+        <div class="panel-heading">
+          <div><span class="panel-index">03</span><h3>Inspetor</h3></div>
+          <span class="node-id" id="node-id">nó #0</span>
+        </div>
+        <div class="breadcrumb" id="breadcrumb"></div>
+        <div class="node-identity">
+          <span class="node-kind" id="node-kind">REGRA</span>
+          <h3 id="node-name">startRule</h3>
+          <p id="node-runtime">ParserRuleContext</p>
+        </div>
+        <dl class="node-facts" id="node-facts"></dl>
+        <section class="inspector-section">
+          <h4>Filhos imediatos</h4>
+          <div class="child-list" id="child-list"></div>
+        </section>
+        <section class="inspector-section insight-box">
+          <h4>O que este nó ensina?</h4>
+          <p id="node-insight"></p>
+        </section>
+      </aside>
+    </main>
+
+    <footer>
+      <span>Gerado a partir de <b>COACTUPC.cbl</b></span>
+      <span>Dados locais · sem servidor · sem bibliotecas visuais</span>
+    </footer>
+  </div>
+  <script src="tree-data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
