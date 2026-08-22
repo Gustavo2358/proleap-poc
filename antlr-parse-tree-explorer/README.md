@@ -1,6 +1,6 @@
-# ANTLR Parse Tree Atlas
+# COBOL Structure Atlas
 
-Explorador visual e interativo da parse tree produzida por `Cobol.g4`. O projeto é autocontido: contém cópias da gramática escolhida, do programa selecionado, dos copybooks disponíveis e da infraestrutura de normalização/preprocessamento criada no benchmark.
+Explorador visual e interativo da jornada `parse tree → AST` produzida a partir de `Cobol.g4`. O projeto é autocontido: contém cópias da gramática escolhida, do programa selecionado, dos copybooks disponíveis e da infraestrutura de normalização/preprocessamento criada no benchmark.
 
 ## Por que `COACTUPC.cbl`?
 
@@ -22,7 +22,12 @@ Requisitos: JDK 17+ e Maven 3.9+.
 ./run.sh
 ```
 
-Depois abra `dist/index.html`. O explorador funciona diretamente via `file://`, sem servidor e sem dependências web externas.
+Depois abra:
+
+- `dist/index.html` para a parse tree;
+- `dist/ast.html` para a AST semântica.
+
+As páginas funcionam diretamente via `file://`, sem servidor e sem dependências web externas. Os inspetores permitem navegar entre um nó da AST e sua origem na parse tree.
 
 Também é possível executar manualmente:
 
@@ -44,7 +49,38 @@ mvn exec:java -Dexec.args="--source corpus/cbl/COACTUPC.cbl --copybooks corpus/c
 - **Código**: trecho sincronizado do fonte normalizado/pré-processado.
 - **Inspetor**: tipo runtime, profundidade, intervalo de tokens, filhos e breadcrumb do nó selecionado.
 
+Na etapa **AST**:
+
+- **Estrutura**: programa, divisions, sections, paragraphs, sentences, statements e expressions;
+- **Tipos**: frequência dos conceitos definidos pelo nosso domínio;
+- **CALLs**: separação entre targets literais e expressions dinâmicas;
+- **Origem**: regra e nó da parse tree que deram origem a cada nó semântico;
+- **Compressão didática**: tamanho da região sintática condensada por cada conceito.
+
 O painel de fluxo é deliberadamente um índice da **sintaxe**, não um CFG. O ANTLR fornece o nó do `GO TO` e os tokens do destino, mas não resolve automaticamente uma aresta até o parágrafo-alvo. Essa ligação pertence à etapa posterior de AST/CFG.
+
+## Contrato da AST neste MVP
+
+A AST é única, imutável e não contém tabela de símbolos ou resultados de análise. Ela modela:
+
+- programa e quatro divisions;
+- file bindings e data entries necessárias para evolução futura;
+- sections, paragraphs e sentences;
+- ponto final como `SentenceTerminator.PERIOD`, não como token;
+- `CALL`, `IF`, `EVALUATE`, `PERFORM`, `GO TO`, `MOVE` e `NEXT SENTENCE`;
+- literals, data references e expressions ainda não especializadas;
+- statements não modelados como `UnsupportedStatement`, preservando texto e statements aninhados;
+- `EXEC SQL`, `EXEC CICS` e `EXEC SQLIMS` como `EmbeddedLanguageStatement` opaco.
+
+O último item é o ponto de extensão para um MVP futuro. O payload original e sua origem já ficam preservados; um plugin poderá parsear SQL sem alterar o núcleo da AST COBOL.
+
+Resultados atuais para `COACTUPC.cbl`:
+
+- parse tree: 57.227 nós, profundidade 39;
+- AST: 4.100 nós, profundidade 8;
+- um `CALL` literal para `CSUTLDTC`;
+- zero `CALLs` dinâmicos;
+- 14 statements de linguagem embutida preservados de forma opaca.
 
 ## Estrutura
 
@@ -52,11 +88,11 @@ O painel de fluxo é deliberadamente um índice da **sintaxe**, não um CFG. O A
 antlr-parse-tree-explorer/
 ├── corpus/                    # cópia isolada do programa e copybooks
 ├── src/main/antlr4/           # Cobol.g4 + CobolPreprocessor.g4
-├── src/main/java/             # preprocessamento copiado + exportador da árvore
-├── src/main/resources/web/    # interface estática
+├── src/main/java/             # preprocessamento + AstBuilder + exportadores
+├── src/main/resources/web/    # jornada visual Parse Tree → AST
 ├── dist/                      # resultado gerado, pronto para abrir
 ├── pom.xml
 └── run.sh
 ```
 
-`tree-data.js` usa uma representação plana da árvore. Cada nó guarda seu `id`, pai, tipo, nome, posição, intervalo de tokens, profundidade e quantidade de filhos. A interface reconstrói as relações em memória e renderiza somente as linhas visíveis, evitando criar dezenas de milhares de elementos DOM simultaneamente.
+`tree-data.js` e `ast-data.js` usam representações planas para a interface. Cada nó guarda identidade, pai, tipo, posição, profundidade e origem. A interface reconstrói as relações em memória e renderiza somente as linhas visíveis, evitando criar milhares de elementos DOM simultaneamente. O modelo Java permanece tipado em `Ast.java`; a forma plana é apenas um DTO de visualização.

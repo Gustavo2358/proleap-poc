@@ -15,7 +15,7 @@
   const ROW_HEIGHT = 34;
   const expanded = new Set();
   let visible = [];
-  let selectedId = roots[0] ?? 0;
+  let selectedId = requestedNode() ?? roots[0] ?? 0;
   let currentView = "tree";
   let flowFilter = "all";
 
@@ -35,7 +35,8 @@
     renderFlowFilters();
     renderFlows();
     rebuildVisible();
-    selectNode(selectedId, false);
+    if (!nodes[selectedId]) selectedId = roots[0] ?? 0;
+    selectNode(selectedId, requestedNode() != null);
     bindEvents();
   }
 
@@ -155,6 +156,7 @@
     }
     renderInspector(nodes[id]);
     renderSource(nodes[id]);
+    history.replaceState(null, "", `#node=${id}`);
   }
 
   function expandAncestors(id) {
@@ -201,6 +203,33 @@
       : `<span class="empty">Folha: não possui filhos.</span>`;
     $$("#child-list button").forEach((button) => button.addEventListener("click", () => selectNode(Number(button.dataset.id))));
     $("#node-insight").textContent = insightFor(node);
+    renderAstLink(node);
+  }
+
+  function renderAstLink(node) {
+    const ast = window.AST_DATA;
+    const action = $("#open-ast-node");
+    const copy = $("#ast-link-copy");
+    if (!ast) { action.href = "ast.html"; return; }
+    let cursor = node;
+    let matches = null;
+    while (cursor) {
+      matches = ast.parseToAst[String(cursor.id)];
+      if (matches?.length) break;
+      cursor = cursor.p >= 0 ? nodes[cursor.p] : null;
+    }
+    if (matches?.length) {
+      const astNode = ast.nodes[matches[0]];
+      action.href = `ast.html#node=${astNode.id}`;
+      action.textContent = `Abrir ${astNode.t} na AST →`;
+      copy.textContent = cursor.id === node.id
+        ? `Este nó origina ${matches.length === 1 ? "um nó" : `${matches.length} nós`} da AST.`
+        : `A região semântica mais próxima é ${astNode.t}, originada por ${cursor.n}.`;
+    } else {
+      action.href = "ast.html";
+      action.textContent = "Abrir a AST →";
+      copy.textContent = "Este token isolado foi absorvido pela estrutura semântica ao redor.";
+    }
   }
 
   function insightFor(node) {
@@ -320,6 +349,11 @@
   function shorten(value, length) {
     const clean = String(value ?? "").replace(/\s+/g, " ").trim();
     return clean.length > length ? `${clean.slice(0, length - 1)}…` : clean;
+  }
+
+  function requestedNode() {
+    const match = location.hash.match(/node=(\d+)/);
+    return match ? Number(match[1]) : null;
   }
 
   initialize();

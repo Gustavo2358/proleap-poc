@@ -47,7 +47,9 @@ public final class ExplorerMain {
 
         List<Node> nodes = new ArrayList<>();
         Map<String, Integer> ruleCounts = new TreeMap<>();
-        walk(tree, -1, 0, parser, nodes, ruleCounts);
+        IdentityHashMap<ParseTree, Integer> parseIds = new IdentityHashMap<>();
+        IdentityHashMap<ParseTree, Integer> parseSubtreeSizes = new IdentityHashMap<>();
+        walk(tree, -1, 0, parser, nodes, ruleCounts, parseIds, parseSubtreeSizes);
         int maxDepth = nodes.stream().mapToInt(Node::depth).max().orElse(0);
         long tokenCount = tokens.getTokens().stream().filter(t -> t.getType() != Token.EOF).count();
         long lexerErrors = diagnostics.stream().filter(d -> d.phase() == Diagnostic.Phase.LEXER).count();
@@ -60,14 +62,25 @@ public final class ExplorerMain {
                 normalized, preprocessed.unresolved(), tokenCount, maxDepth, lexerErrors, parserErrors,
                 nodes, ruleCounts, diagnostics);
 
+        Ast.Program ast = new AstBuilder(parser, normalized, parseIds, parseSubtreeSizes).build(tree);
+        AstSnapshot astSnapshot = AstSnapshot.from(ast);
+        astSnapshot.write(output.resolve("ast-data.js"), source.getFileName().toString(), nodes.size(),
+                Arrays.asList(normalized.split("\\R", -1)));
+
         System.out.printf(Locale.ROOT,
-                "Generated %s%nSource: %s%nNodes: %,d | Tokens: %,d | Depth: %d | Parser errors: %d%n",
-                output.resolve("index.html"), source.getFileName(), nodes.size(), tokenCount, maxDepth, parserErrors);
+                "Generated %s and %s%nSource: %s%nParse tree: %,d nodes | %,d tokens | depth %d%n" +
+                        "AST: %,d nodes | depth %d | static CALLs %d | parser errors %d%n",
+                output.resolve("index.html"), output.resolve("ast.html"), source.getFileName(), nodes.size(),
+                tokenCount, maxDepth, astSnapshot.metrics().nodes(), astSnapshot.metrics().maxDepth(),
+                astSnapshot.metrics().staticCalls(), parserErrors);
     }
 
-    private static void walk(ParseTree tree, int parent, int depth, Parser parser,
-                             List<Node> nodes, Map<String, Integer> ruleCounts) {
+    private static int walk(ParseTree tree, int parent, int depth, Parser parser,
+                            List<Node> nodes, Map<String, Integer> ruleCounts,
+                            IdentityHashMap<ParseTree, Integer> parseIds,
+                            IdentityHashMap<ParseTree, Integer> parseSubtreeSizes) {
         int id = nodes.size();
+        parseIds.put(tree, id);
         String kind;
         String name;
         String text = "";
@@ -105,9 +118,13 @@ public final class ExplorerMain {
 
         nodes.add(new Node(id, parent, kind, name, text, line, column, stopLine,
                 tokenStart, tokenStop, depth, tree.getChildCount()));
+        int subtreeSize = 1;
         for (int i = 0; i < tree.getChildCount(); i++) {
-            walk(tree.getChild(i), id, depth + 1, parser, nodes, ruleCounts);
+            subtreeSize += walk(tree.getChild(i), id, depth + 1, parser, nodes, ruleCounts,
+                    parseIds, parseSubtreeSizes);
         }
+        parseSubtreeSizes.put(tree, subtreeSize);
+        return subtreeSize;
     }
 
     private static String tokenName(Parser parser, Token token) {

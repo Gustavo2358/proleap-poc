@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>ANTLR Parse Tree Atlas · COBOL</title>
+  <title>COBOL Structure Atlas · Parse Tree</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -13,11 +13,17 @@
         <span class="brand-mark" aria-hidden="true">A</span>
         <div>
           <p class="eyebrow">COBOL · ANTLR 4.13.2 · Cobol.g4</p>
-          <h1>Parse Tree Atlas</h1>
+          <h1>COBOL Structure Atlas</h1>
         </div>
       </div>
       <div class="parse-status" id="parse-status"><span></span> carregando árvore…</div>
     </header>
+
+    <nav class="journey-nav" aria-label="Jornada de transformação">
+      <a class="journey-step active" href="index.html"><span>01</span><div><b>Parse Tree</b><small>Sintaxe concreta do ANTLR</small></div></a>
+      <a class="journey-step" href="ast.html"><span>02</span><div><b>AST</b><small>Modelo semântico da aplicação</small></div></a>
+      <span class="journey-step disabled"><span>03</span><div><b>CFG</b><small>Próxima etapa</small></div></span>
+    </nav>
 
     <section class="hero">
       <div class="hero-copy">
@@ -114,6 +120,11 @@
           <h4>O que este nó ensina?</h4>
           <p id="node-insight"></p>
         </section>
+        <section class="inspector-section bridge-box">
+          <h4>Próxima transformação</h4>
+          <p id="ast-link-copy">Veja como esta região sintática é condensada na AST.</p>
+          <a class="bridge-action" id="open-ast-node" href="ast.html">Abrir na AST →</a>
+        </section>
       </aside>
     </main>
 
@@ -123,6 +134,7 @@
     </footer>
   </div>
   <script src="tree-data.js"></script>
+  <script src="ast-data.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

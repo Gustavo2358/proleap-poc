@@ -11,6 +11,7 @@
     <maven.compiler.release>17</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <antlr.version>4.13.2</antlr.version>
+    <junit.version>5.12.2</junit.version>
   </properties>
 
   <dependencies>
@@ -18,6 +19,12 @@
       <groupId>org.antlr</groupId>
       <artifactId>antlr4-runtime</artifactId>
       <version>${antlr.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <version>${junit.version}</version>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 
@@ -50,6 +57,11 @@
         <configuration>
           <mainClass>io.proleap.benchmark.ExplorerMain</mainClass>
         </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>3.5.3</version>
       </plugin>
     </plugins>
   </build>
