@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>COBOL Structure Atlas · AST</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="ast-page">
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark ast-mark" aria-hidden="true">S</span>
+        <div>
+          <p class="eyebrow">COBOL · AST SEMÂNTICA · MVP 1</p>
+          <h1>COBOL Structure Atlas</h1>
+        </div>
+      </div>
+      <div class="parse-status ok" id="ast-status"><span></span> carregando AST…</div>
+    </header>
+
+    <nav class="journey-nav" aria-label="Jornada de transformação">
+      <a class="journey-step completed" href="index.html"><span>01</span><div><b>Parse Tree</b><small>Sintaxe concreta do ANTLR</small></div></a>
+      <a class="journey-step active" href="ast.html"><span>02</span><div><b>AST</b><small>Modelo semântico da aplicação</small></div></a>
+      <a class="journey-step" href="symbols.html"><span>03</span><div><b>Symbol Table</b><small>Declarações + escopos</small></div></a>
+      <span class="journey-step disabled"><span>04</span><div><b>Resolução</b><small>Próxima etapa</small></div></span>
+    </nav>
+
+    <section class="hero ast-hero">
+      <div class="hero-copy">
+        <p class="kicker">A MESMA LÓGICA, SEM O RUÍDO DA GRAMÁTICA</p>
+        <h2>Conceitos que a análise consegue usar.</h2>
+        <p>A AST condensa regras intermediárias e pontuação em programas, sentenças, statements e expressions — preservando origem e significado.</p>
+      </div>
+      <div class="metrics" id="ast-metrics" aria-label="Métricas da AST"></div>
+    </section>
+
+    <section class="mental-model ast-model" aria-label="Modelo mental da AST">
+      <span class="model-label">TRANSFORMAÇÃO</span>
+      <div class="model-step"><i class="dot parse"></i><b id="model-parse-nodes">57.227 nós</b><small>regras + tokens</small></div>
+      <span class="arrow">→</span>
+      <div class="model-step"><i class="dot semantic"></i><b id="model-ast-nodes">4.100 nós</b><small>conceitos semânticos</small></div>
+      <span class="arrow">→</span>
+      <div class="model-step"><i class="dot declaration"></i><b>Symbol Table</b><small>nomes + escopos</small></div>
+      <span class="model-note">A AST não resolve nomes nem caminhos. Ela entrega uma estrutura <b>menor, tipada e rastreável</b> para a coleta de declarações.</span>
+    </section>
+
+    <main class="workspace">
+      <aside class="source-panel panel">
+        <div class="panel-heading">
+          <div><span class="panel-index">01</span><h3>Código</h3></div>
+          <span class="panel-meta" id="source-position">—</span>
+        </div>
+        <div class="source-file" id="source-file">COACTUPC.cbl · pré-processado</div>
+        <div class="source-code" id="source-code" aria-label="Trecho do código COBOL"></div>
+        <div class="source-footnote">Cada nó da AST mantém o intervalo do fonte e a raiz correspondente na parse tree.</div>
+      </aside>
+
+      <section class="tree-panel panel">
+        <div class="panel-heading tree-heading">
+          <div><span class="panel-index">02</span><h3>AST semântica</h3></div>
+          <nav class="view-tabs" aria-label="Visualizações da AST">
+            <button class="tab active" data-view="tree">Estrutura</button>
+            <button class="tab" data-view="types">Tipos</button>
+            <button class="tab" data-view="calls">CALLs</button>
+          </nav>
+        </div>
+
+        <div class="tree-toolbar" id="tree-toolbar">
+          <label class="search-box">
+            <span aria-hidden="true">⌕</span>
+            <input id="tree-search" type="search" placeholder="Buscar tipo, nome ou atributo…" autocomplete="off">
+            <kbd>/</kbd>
+          </label>
+          <button class="tool-button" id="collapse-all">Recolher</button>
+        </div>
+
+        <div class="view active" id="tree-view">
+          <div class="search-summary hidden" id="search-summary"></div>
+          <div class="tree-list" id="tree-list" role="tree" aria-label="AST navegável">
+            <div class="tree-spacer" id="tree-spacer"></div>
+            <div class="tree-rows" id="tree-rows"></div>
+          </div>
+          <div class="legend ast-legend">
+            <span><i class="dot structure"></i> estrutura</span>
+            <span><i class="dot statement"></i> statement</span>
+            <span><i class="dot expression"></i> expression</span>
+            <span><i class="dot declaration"></i> declaração</span>
+            <span class="visible-count" id="visible-count"></span>
+          </div>
+        </div>
+
+        <div class="view" id="types-view">
+          <div class="view-intro"><b>Vocabulário da AST</b><span>Tipos definidos pelo nosso domínio, não pelas regras da gramática.</span></div>
+          <div class="rule-bars" id="type-bars"></div>
+        </div>
+
+        <div class="view" id="calls-view">
+          <div class="view-intro"><b>Subprogramas visíveis no MVP 1</b><span>Alvos literais são fatos diretos; alvos por variável exigirão análise de fluxo.</span></div>
+          <div class="call-summary" id="call-summary"></div>
+          <div class="flow-list" id="call-list"></div>
+        </div>
+      </section>
+
+      <aside class="inspector-panel panel">
+        <div class="panel-heading">
+          <div><span class="panel-index">03</span><h3>Inspetor</h3></div>
+          <span class="node-id" id="node-id">nó #0</span>
+        </div>
+        <div class="breadcrumb" id="breadcrumb"></div>
+        <div class="node-identity">
+          <span class="node-kind" id="node-kind">PROGRAMA</span>
+          <h3 id="node-name">Program</h3>
+          <p id="node-label">COACTUPC</p>
+        </div>
+        <dl class="node-facts" id="node-facts"></dl>
+        <section class="inspector-section">
+          <h4>Atributos semânticos</h4>
+          <div class="attribute-list" id="attribute-list"></div>
+        </section>
+        <section class="inspector-section">
+          <h4>Filhos imediatos</h4>
+          <div class="child-list" id="child-list"></div>
+        </section>
+        <section class="inspector-section compare-box">
+          <h4>Da parse tree para este nó</h4>
+          <p id="compression-copy"></p>
+          <a class="bridge-action" id="open-parse-node" href="index.html">Ver origem na parse tree ←</a>
+        </section>
+        <section class="inspector-section bridge-box">
+          <h4>Deste nó para a tabela</h4>
+          <p id="symbol-link-copy">Se este nó declara um nome, veja como ele passa a ser organizado em namespace e escopo.</p>
+          <a class="bridge-action" id="open-symbol" href="symbols.html">Abrir Symbol Table →</a>
+        </section>
+        <section class="inspector-section insight-box">
+          <h4>O que este nó ensina?</h4>
+          <p id="node-insight"></p>
+        </section>
+      </aside>
+    </main>
+
+    <footer>
+      <span>Uma AST COBOL · SQL/CICS preservados como extensões opacas</span>
+      <span>Sem símbolos · sem CFG · sem análise de fluxo nesta etapa</span>
+    </footer>
+  </div>
+  <script src="ast-data.js"></script>
+  <script src="symbol-data.js"></script>
+  <script src="ast-app.js"></script>
+</body>
+</html>

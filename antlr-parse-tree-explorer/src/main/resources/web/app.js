@@ -55,6 +55,7 @@
     status.classList.toggle("ok", clean);
     status.innerHTML = `<span></span>${clean ? "parse sem erros" : "parse com erros"} · ${data.meta.unresolvedCopies} COPYs ausentes`;
     $("#source-file").textContent = `${data.meta.source} · pré-processado`;
+    $("#generated-source").textContent = data.meta.source;
   }
 
   function bindEvents() {

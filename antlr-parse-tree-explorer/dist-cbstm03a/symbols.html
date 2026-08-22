@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>COBOL Structure Atlas · Symbol Table</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="symbols-page">
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark symbols-mark" aria-hidden="true">Σ</span>
+        <div><p class="eyebrow">COBOL · SYMBOL TABLE · PASSO 03</p><h1>COBOL Structure Atlas</h1></div>
+      </div>
+      <div class="parse-status ok" id="symbols-status"><span></span> carregando símbolos…</div>
+    </header>
+
+    <nav class="journey-nav" aria-label="Jornada de transformação">
+      <a class="journey-step completed" href="index.html"><span>01</span><div><b>Parse Tree</b><small>Sintaxe concreta do ANTLR</small></div></a>
+      <a class="journey-step completed" href="ast.html"><span>02</span><div><b>AST</b><small>Modelo semântico da aplicação</small></div></a>
+      <a class="journey-step active" href="symbols.html"><span>03</span><div><b>Symbol Table</b><small>Declarações + escopos</small></div></a>
+      <span class="journey-step disabled"><span>04</span><div><b>Resolução</b><small>Próxima etapa</small></div></span>
+    </nav>
+
+    <section class="hero symbols-hero">
+      <div class="hero-copy">
+        <p class="kicker">DE NOMES ESCRITOS A IDENTIDADES CONSULTÁVEIS</p>
+        <h2>O inventário semântico do programa.</h2>
+        <p>A tabela coleta somente declarações da AST, normaliza nomes COBOL e as organiza em namespaces e escopos. Ela ainda não liga usos aos símbolos.</p>
+      </div>
+      <div class="metrics" id="symbols-metrics" aria-label="Métricas da tabela de símbolos"></div>
+    </section>
+
+    <section class="mental-model symbols-model" aria-label="Modelo mental da tabela de símbolos">
+      <span class="model-label">ESTE PASSO</span>
+      <div class="model-step"><i class="dot semantic"></i><b>AST</b><small>nós declaradores</small></div>
+      <span class="arrow">→</span>
+      <div class="model-step"><i class="dot declaration"></i><b>Coleta</b><small>nome + tipo</small></div>
+      <span class="arrow">→</span>
+      <div class="model-step"><i class="dot scope"></i><b>Escopos</b><small>contexto + namespace</small></div>
+      <span class="arrow">→</span>
+      <div class="model-step future"><i class="dot future"></i><b>Resolução</b><small>usos → declarações</small></div>
+      <span class="model-note"><b>Fronteira intencional:</b> CALL, GO TO, PERFORM e referências de dados continuam sem binding. Este passo prepara o vocabulário para resolvê-los depois.</span>
+    </section>
+
+    <main class="workspace symbols-workspace">
+      <aside class="scope-panel panel">
+        <div class="panel-heading"><div><span class="panel-index">01</span><h3>Escopos</h3></div><span class="panel-meta" id="scope-count">—</span></div>
+        <div class="scope-intro">Onde um nome foi declarado? A hierarquia abaixo reconstrói o contexto lexical a partir da AST.</div>
+        <div class="scope-tree" id="scope-tree" role="tree"></div>
+        <div class="legend"><span><i class="dot scope"></i> escopo</span><span><i class="dot declaration"></i> possui símbolo</span></div>
+      </aside>
+
+      <section class="symbol-panel panel">
+        <div class="panel-heading"><div><span class="panel-index">02</span><h3>Declarações</h3></div><span class="panel-meta" id="result-count">—</span></div>
+        <div class="symbol-toolbar">
+          <label class="search-box"><span aria-hidden="true">⌕</span><input id="symbol-search" type="search" placeholder="Buscar nome ou tipo…" autocomplete="off"><kbd>/</kbd></label>
+          <button class="tool-button active" id="include-descendants" aria-pressed="true">Incluir subescopos</button>
+        </div>
+        <div class="namespace-filters" id="namespace-filters"></div>
+        <div class="selected-scope-note" id="selected-scope-note"></div>
+        <div class="symbol-list" id="symbol-list"></div>
+      </section>
+
+      <aside class="inspector-panel panel symbol-inspector">
+        <div class="panel-heading"><div><span class="panel-index">03</span><h3>Inspetor</h3></div><span class="node-id" id="symbol-id">—</span></div>
+        <div class="breadcrumb" id="symbol-breadcrumb"></div>
+        <div class="node-identity"><span class="node-kind" id="symbol-kind">SÍMBOLO</span><h3 id="symbol-name">Selecione uma declaração</h3><p id="symbol-canonical">—</p></div>
+        <dl class="node-facts" id="symbol-facts"></dl>
+        <section class="inspector-section"><h4>Atributos da declaração</h4><div class="attribute-list" id="symbol-attributes"></div></section>
+        <section class="inspector-section source-preview-section"><h4>Origem no fonte</h4><div class="source-preview" id="symbol-source"></div></section>
+        <section class="inspector-section compare-box"><h4>Identidade rastreável</h4><p id="symbol-origin-copy"></p><a class="bridge-action" id="open-ast-declaration" href="ast.html">Ver declaração na AST ←</a></section>
+        <section class="inspector-section insight-box"><h4>O que esta etapa ainda não faz?</h4><p>Não há referências, bindings, tipos inferidos, CFG ou dataflow aqui. Ambiguidades permanecem visíveis para uma futura política de resolução.</p></section>
+      </aside>
+    </main>
+
+    <footer><span>Declarações imutáveis · nomes COBOL canônicos · escopos explícitos</span><span>Sem resolução de referências · sem CFG · sem reaching definitions</span></footer>
+  </div>
+  <script src="symbol-data.js"></script>
+  <script src="symbols-app.js"></script>
+</body>
+</html>

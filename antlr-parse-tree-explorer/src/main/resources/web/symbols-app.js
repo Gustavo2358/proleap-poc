@@ -46,7 +46,7 @@
     ];
     $("#symbols-metrics").innerHTML = metrics.map(([value, label]) =>
       `<div class="metric"><strong>${value}</strong><span>${label}</span></div>`).join("");
-    $("#symbols-status").innerHTML = `<span></span>Tabela construída · ${format(data.meta.symbols)} símbolos · ${data.meta.diagnostics} avisos`;
+    $("#symbols-status").innerHTML = `<span></span>${escapeHtml(data.meta.source)} · ${format(data.meta.symbols)} símbolos · ${data.meta.diagnostics} avisos`;
     $("#scope-count").textContent = `${format(scopes.length)} total`;
   }
 
