@@ -572,12 +572,12 @@ navegáveis da métrica agregada até fonte/parse tree.
 
 ### Fase 2 — Proveniência e texto fiel
 
-- [ ] Criar fixtures de arquivo principal, COPY, REPLACING, nesting e ausência.
-- [ ] Escrever testes RED de source map/include chain/spans.
-- [ ] Implementar source map segmentado no preprocessor e ampliar `Meta`.
-- [ ] Substituir usos semânticos de `getText()` por contexts/tokens; manter
+- [x] Criar fixtures de arquivo principal, COPY, REPLACING, nesting e ausência.
+- [x] Escrever testes RED de source map/include chain/spans.
+- [x] Implementar source map segmentado no preprocessor e ampliar `Meta`.
+- [x] Substituir usos semânticos de `getText()` por contexts/tokens; manter
       source slice apenas como `writtenText`.
-- [ ] Tornar testes verdes e registrar lacunas de input explicitamente.
+- [x] Tornar testes verdes e registrar lacunas de input explicitamente.
 
 ### Fase 3 — DataReference e expressões
 

@@ -77,7 +77,7 @@ class SemanticModelBaselineCharacterizationTest {
     }
 
     @Test
-    void characterizesInformationCurrentlyFlattenedIntoWrittenName() throws Exception {
+    void preservesTheWrittenFormInsteadOfConcatenatingParserTokens() throws Exception {
         Path project = Path.of("").toAbsolutePath().normalize();
         Analysis analysis = analyze(project.resolve("corpus/cbl/COACTUPC.cbl"), project.resolve("corpus/cpy"));
         List<String> names = nodes(analysis.ast(), Ast.DataReference.class).stream()
@@ -85,10 +85,10 @@ class SemanticModelBaselineCharacterizationTest {
                 .toList();
 
         assertEquals(1_097, names.size());
-        assertTrue(names.contains("ACCTSIDIOFCACTUPAI"),
-                "OF qualification is currently concatenated by ParseTree.getText()");
-        assertTrue(names.contains("DFHCOMMAREA(1:LENGTHOFCARDDEMO-COMMAREA)"),
-                "reference modification and its expression are currently one string");
+        assertTrue(names.contains("ACCTSIDI OF CACTUPAI"),
+                "OF qualification keeps the source spelling and separators");
+        assertTrue(names.contains("DFHCOMMAREA (1:LENGTH OF CARDDEMO-COMMAREA)"),
+                "reference modification text remains faithfully preserved until structural modeling");
     }
 
     private static void assertMetrics(Analysis analysis, String programName, int astNodes, int maxDepth,

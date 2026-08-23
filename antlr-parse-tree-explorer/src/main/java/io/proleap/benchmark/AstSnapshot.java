@@ -10,7 +10,8 @@ final class AstSnapshot {
     record Node(int id, int parent, String type, String category, String label,
                 Map<String, String> attributes, int line, int column, int stopLine,
                 int depth, int childCount, int parseTreeId, String grammarRule,
-                int parseTreeNodes) {}
+                int parseTreeNodes, String sourceFile, int sourceLine,
+                int includeDepth, boolean sourceExact) {}
 
     record Metrics(int nodes, int maxDepth, int staticCalls, int dynamicCalls,
                    int embeddedLanguages, int unsupportedStatements) {}
@@ -60,10 +61,13 @@ final class AstSnapshot {
         String type = ast.getClass().getSimpleName();
         typeCounts.merge(type, 1, Integer::sum);
         Ast.ParseTreeOrigin origin = ast.meta().origin();
+        Ast.SourceProvenance provenance = ast.meta().provenance();
         if (origin.rootNodeId() >= 0) parseToAst.computeIfAbsent(origin.rootNodeId(), ignored -> new ArrayList<>()).add(id);
         output.add(new Node(id, parent, type, category(ast), label(ast), attributes(ast),
                 ast.meta().span().startLine(), ast.meta().span().startColumn(), ast.meta().span().endLine(),
-                depth, children.size(), origin.rootNodeId(), origin.grammarRule(), origin.subtreeNodeCount()));
+                depth, children.size(), origin.rootNodeId(), origin.grammarRule(), origin.subtreeNodeCount(),
+                provenance.original().file(), provenance.original().startLine(),
+                provenance.includeChain().size(), provenance.exact()));
         for (Ast.Node child : children) flatten(child, id, depth + 1, output, typeCounts, parseToAst);
     }
 
@@ -167,6 +171,8 @@ final class AstSnapshot {
                 out.write(",\"l\":" + n.line + ",\"c\":" + n.column + ",\"e\":" + n.stopLine);
                 out.write(",\"d\":" + n.depth + ",\"q\":" + n.childCount + ",\"r\":" + n.parseTreeId);
                 out.write(",\"g\":"); string(out, n.grammarRule); out.write(",\"z\":" + n.parseTreeNodes);
+                out.write(",\"sf\":"); string(out, n.sourceFile); out.write(",\"sl\":" + n.sourceLine);
+                out.write(",\"si\":" + n.includeDepth + ",\"sx\":" + n.sourceExact);
                 out.write(",\"a\":{");
                 boolean first = true;
                 for (var entry : n.attributes.entrySet()) {

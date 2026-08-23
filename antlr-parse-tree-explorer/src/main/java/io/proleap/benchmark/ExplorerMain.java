@@ -62,7 +62,8 @@ public final class ExplorerMain {
                 normalized, preprocessed.unresolved(), tokenCount, maxDepth, lexerErrors, parserErrors,
                 nodes, ruleCounts, diagnostics);
 
-        AstBuildResult astBuild = new AstBuilder(parser, normalized, parseIds, parseSubtreeSizes).build(tree);
+        AstBuildResult astBuild = new AstBuilder(parser, normalized, preprocessed.sourceMap(),
+                parseIds, parseSubtreeSizes).build(tree);
         Ast.Program ast = astBuild.program();
         AstSnapshot astSnapshot = AstSnapshot.from(ast);
         astSnapshot.write(output.resolve("ast-data.js"), source.getFileName().toString(), nodes.size(),

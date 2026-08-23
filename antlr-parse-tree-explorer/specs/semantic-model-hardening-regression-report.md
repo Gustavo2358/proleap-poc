@@ -38,8 +38,8 @@ Frontend atual:
 - `CBSTM03A` e `CBSTM03D` não têm COPYs ausentes;
 - `CBSTM03D` tem 14 targets `DataReference("WS-CALL-TARGET")` e uma única
   declaração DATA correspondente;
-- o modelo atual achata, entre outros exemplos,
-  `ACCTSID-I OF CACTUPAI` em `ACCTSIDIOFCACTUPAI` e uma reference modification
+- o baseline anterior achatava, entre outros exemplos,
+  `ACCTSIDI OF CACTUPAI` em `ACCTSIDIOFCACTUPAI` e uma reference modification
   completa em `DFHCOMMAREA(1:LENGTHOFCARDDEMO-COMMAREA)`.
 
 Esses fatos estão protegidos por `SemanticModelBaselineCharacterizationTest`.
@@ -52,7 +52,7 @@ deverão permanecer e toda diferença será explicada neste relatório.
 |---|---|---|---|---|
 | 0 — baseline | aprovada | 5 testes Maven verdes; baseline e hashes registrados | nenhuma mudança de produção | nenhuma |
 | 1 — cobertura | aprovada | 11 testes Maven verdes; guarda das 628 regras | `AstBuilder` retorna AST + cobertura + diagnósticos; nós AST inalterados | findings cobrem statements nesta fase |
-| 2 — proveniência | pendente | — | — | — |
+| 2 — proveniência | aprovada | 13 testes Maven verdes; fixtures de COPY aninhado, REPLACING e COPY ausente | `Meta` e snapshot expõem arquivo/linha/include chain/exatidão; `writtenName` mantém separadores | contextos que cruzam fronteiras são marcados `exact=false`; COPY ausente continua diagnóstico explícito |
 | 3 — referências/expressões | pendente | — | — | — |
 | 4 — procedure references | pendente | — | — | — |
 | 5 — declarações | pendente | — | — | — |
@@ -72,6 +72,26 @@ deverão permanecer e toda diferença será explicada neste relatório.
    findings determinísticos para `MOVE`, `SET` e `GOBACK`.
 5. REFACTOR/GUARD: a suíte completa terminou com 11 testes, zero falhas e sem
    alteração das métricas da AST ou da Symbol Table.
+
+## Evidência TDD da Fase 2
+
+1. RED: `SourceProvenanceTest` falhou na compilação pela ausência de source map,
+   proveniência em `Meta` e construtor do builder que a recebesse.
+2. GREEN: o preprocessador passou a manter segmentos imutáveis com arquivo,
+   offsets originais, cadeia de COPY e flag de exatidão; COPY aninhado,
+   REPLACING e ausência passaram nos testes focados.
+3. RED: a verificação do snapshot falhou na compilação porque a origem ainda
+   não era observável na representação achatada.
+4. GREEN: o snapshot passou a expor arquivo/linha, profundidade de include e
+   exatidão sem regenerar os artefatos HTML da fase 7.
+5. GUARD: a suíte completa terminou com 13 testes e zero falhas. As métricas
+   semânticas e da tabela de símbolos permaneceram iguais; qualificadores e
+   reference modification deixaram de perder espaços por `getText()`.
+
+Lacunas de input continuam conservadoras: COPY ausente gera diagnóstico
+`unresolved_copy`, texto sintético rastreável ao statement original e
+`exact=false`. Um contexto gramatical que cruza segmentos/arquivos também não
+é declarado como slice exato.
 
 ## Checklist final de regressão
 

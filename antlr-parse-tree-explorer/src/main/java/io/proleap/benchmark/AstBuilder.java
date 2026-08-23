@@ -9,6 +9,7 @@ import java.util.*;
 final class AstBuilder {
     private final Parser parser;
     private final String source;
+    private final SourceMap sourceMap;
     private final IdentityHashMap<ParseTree, Integer> parseIds;
     private final IdentityHashMap<ParseTree, Integer> parseSubtreeSizes;
     private final List<CoverageDraft> coverageDrafts = new ArrayList<>();
@@ -20,8 +21,15 @@ final class AstBuilder {
 
     AstBuilder(Parser parser, String source, IdentityHashMap<ParseTree, Integer> parseIds,
                IdentityHashMap<ParseTree, Integer> parseSubtreeSizes) {
+        this(parser, source, SourceMap.identity(source, "<preprocessed>"), parseIds, parseSubtreeSizes);
+    }
+
+    AstBuilder(Parser parser, String source, SourceMap sourceMap,
+               IdentityHashMap<ParseTree, Integer> parseIds,
+               IdentityHashMap<ParseTree, Integer> parseSubtreeSizes) {
         this.parser = parser;
         this.source = source;
+        this.sourceMap = sourceMap;
         this.parseIds = parseIds;
         this.parseSubtreeSizes = parseSubtreeSizes;
     }
@@ -45,7 +53,7 @@ final class AstBuilder {
             }
         }
         Ast.Program program = new Ast.Program(meta,
-                programName == null ? "<anonymous>" : clean(programName.getText()), divisions);
+                programName == null ? "<anonymous>" : clean(sourceText(programName)), divisions);
         return new AstBuildResult(program, buildCoverageReport(), semanticDiagnostics);
     }
 
@@ -63,7 +71,7 @@ final class AstBuilder {
             ParserRuleContext fileName = firstDescendant(select, "fileName");
             ParserRuleContext assign = firstDescendant(entry, "assignClause");
             children.add(new Ast.FileBinding(entryMeta,
-                    fileName == null ? "<unknown>" : clean(fileName.getText()),
+                    fileName == null ? "<unknown>" : clean(sourceText(fileName)),
                     assign == null ? "" : compact(sourceText(assign))));
         }
         return new Ast.Division(meta, Ast.DivisionKind.ENVIRONMENT, children);
@@ -83,7 +91,7 @@ final class AstBuilder {
                     List<Ast.DataEntry> dataEntries = new ArrayList<>();
                     for (ParserRuleContext data : directChildrenNamed(fd, "dataDescriptionEntry")) dataEntries.add(buildDataEntry(data));
                     entries.add(new Ast.FileDescription(fdMeta,
-                            fileName == null ? "<unknown>" : clean(fileName.getText()), dataEntries));
+                            fileName == null ? "<unknown>" : clean(sourceText(fileName)), dataEntries));
                 }
             } else {
                 for (ParserRuleContext data : nearestDescendants(sectionContext, "dataDescriptionEntry")) entries.add(buildDataEntry(data));
@@ -100,7 +108,7 @@ final class AstBuilder {
         String level = raw.matches("^\\d+.*") ? raw.replaceFirst("^(\\d+).*", "$1") : rule(format).contains("ExecSql") ? "SQL" : "?";
         ParserRuleContext name = firstDescendant(format, "dataName");
         if (name == null) name = firstDescendant(format, "conditionName");
-        return new Ast.DataEntry(meta, level, name == null ? "FILLER" : clean(name.getText()), raw);
+        return new Ast.DataEntry(meta, level, name == null ? "FILLER" : clean(sourceText(name)), raw);
     }
 
     private Ast.Division buildProcedure(ParserRuleContext context) {
@@ -120,7 +128,7 @@ final class AstBuilder {
         Ast.Meta meta = meta(context);
         ParserRuleContext name = firstDescendant(context, "sectionName");
         ParserRuleContext paragraphs = firstDescendant(context, "paragraphs");
-        return new Ast.Section(meta, name == null ? "<section>" : clean(name.getText()),
+        return new Ast.Section(meta, name == null ? "<section>" : clean(sourceText(name)),
                 paragraphs == null ? List.of() : buildParagraphGroup(paragraphs));
     }
 
@@ -140,7 +148,7 @@ final class AstBuilder {
         Ast.Meta meta = meta(context);
         ParserRuleContext name = firstDescendant(context, "paragraphName");
         List<Ast.Sentence> sentences = directChildrenNamed(context, "sentence").stream().map(this::buildSentence).toList();
-        return new Ast.Paragraph(meta, name == null ? "<paragraph>" : clean(name.getText()), sentences);
+        return new Ast.Paragraph(meta, name == null ? "<paragraph>" : clean(sourceText(name)), sentences);
     }
 
     private Ast.Sentence buildSentence(ParserRuleContext context) {
@@ -243,15 +251,15 @@ final class AstBuilder {
                 type == null ? "once" : compact(sourceText(type)), statementsInside(inline));
         List<ParserRuleContext> names = procedure == null ? List.of() : nearestDescendants(procedure, "procedureName");
         return new Ast.PerformStatement(meta, Ast.PerformKind.PROCEDURE,
-                names.isEmpty() ? "<unknown>" : clean(names.get(0).getText()),
-                names.size() < 2 ? "" : clean(names.get(1).getText()),
+                names.isEmpty() ? "<unknown>" : clean(sourceText(names.get(0))),
+                names.size() < 2 ? "" : clean(sourceText(names.get(1))),
                 type == null ? "once" : compact(sourceText(type)), List.of());
     }
 
     private Ast.GoToStatement buildGoTo(ParserRuleContext context) {
         Ast.Meta meta = meta(context);
         ParserRuleContext depending = firstDescendant(context, "goToDependingOnStatement");
-        List<String> targets = nearestDescendants(context, "procedureName").stream().map(ParseTree::getText).map(AstBuilder::clean).toList();
+        List<String> targets = nearestDescendants(context, "procedureName").stream().map(this::sourceText).map(AstBuilder::clean).toList();
         ParserRuleContext selector = depending == null ? null : firstDescendant(depending, "identifier");
         return new Ast.GoToStatement(meta, depending == null ? Ast.GoToKind.SIMPLE : Ast.GoToKind.DEPENDING_ON,
                 targets, selector == null ? null : expression(selector, "selector"));
@@ -283,14 +291,14 @@ final class AstBuilder {
         String contextRule = rule(context);
         ParserRuleContext literal = contextRule.equals("literal") ? context : firstDescendant(context, "literal");
         if (literal != null && compact(sourceText(context)).equals(compact(sourceText(literal)))) {
-            String raw = literal.getText();
+            String raw = sourceText(literal).strip();
             return new Ast.LiteralExpression(meta(literal), unquote(raw), raw);
         }
         if (contextRule.equals("identifier") || contextRule.equals("fileName"))
-            return new Ast.DataReference(meta(context), clean(context.getText()));
+            return new Ast.DataReference(meta(context), sourceText(context).strip());
         ParserRuleContext identifier = firstDescendant(context, "identifier");
         if (identifier != null && compact(sourceText(context)).equals(compact(sourceText(identifier))))
-            return new Ast.DataReference(meta(identifier), clean(identifier.getText()));
+            return new Ast.DataReference(meta(identifier), sourceText(identifier).strip());
         return new Ast.RawExpression(meta(context), role, compact(sourceText(context)));
     }
 
@@ -309,9 +317,13 @@ final class AstBuilder {
         int endColumn = stop == null ? startColumn : stop.getCharPositionInLine() + Math.max(0, stop.getText().length() - 1);
         int startToken = start == null ? -1 : start.getTokenIndex();
         int endToken = stop == null ? startToken : stop.getTokenIndex();
-        return new Ast.Meta(id, new Ast.SourceSpan(startLine, startColumn, endLine, endColumn, startToken, endToken),
+        Ast.SourceSpan span = new Ast.SourceSpan(startLine, startColumn, endLine, endColumn, startToken, endToken);
+        int startOffset = start == null ? 0 : Math.max(0, start.getStartIndex());
+        int endOffset = stop == null ? startOffset : Math.min(source.length(), stop.getStopIndex() + 1);
+        return new Ast.Meta(id, span,
                 new Ast.ParseTreeOrigin(parseIds.getOrDefault(context, -1), rule(context),
-                        parseSubtreeSizes.getOrDefault(context, 1)));
+                        parseSubtreeSizes.getOrDefault(context, 1)),
+                sourceMap.provenance(startOffset, endOffset));
     }
 
     private List<Ast.Statement> statementsInside(ParserRuleContext context) {
