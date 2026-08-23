@@ -58,7 +58,7 @@ intencionais, TDD-first e explicadas aqui.
 |---|---|---|---|---|
 | 0 — baseline | aprovada | 26 testes verdes; três caracterizações novas | nenhuma mudança de produção | nenhuma |
 | 1 — matriz/contratos | aprovada | 28 testes e todos os JS verdes; guarda das 628 regras | manifesto/policy/contratos imutáveis, sem binding | regras conservadoras serão refinadas por TDD nas fases de resolução |
-| 2 — compilation unit | pendente | — | todos os programUnit e visibilidade | — |
+| 2 — compilation unit | aprovada | 31 testes e todos os JS verdes; fixture com cinco unidades | modelo completo, IDs namespaced, ancestry e visibilidade tipada | binding entre unidades permanece deliberadamente ausente |
 | 3 — entidades/coleta | pendente | — | entidades, scope index e occurrences | — |
 | 4 — DATA/INDEX | pendente | — | resolução local estruturada | — |
 | 5 — PROCEDURE/FILE/PROGRAM | pendente | — | demais namespaces e catálogo plugável | — |
@@ -93,6 +93,30 @@ ignorados. Nenhum arquivo de produção, grammar, corpus ou output foi alterado.
 5. GUARD: a suíte completa terminou com 28 testes verdes e todos os JavaScripts
    passaram em `node --check`. AST, Symbol Table, corpus, grammars e outputs não
    foram modificados; nenhuma referência foi ligada a símbolo nesta fase.
+
+### Fase 2
+
+1. RED: `CompilationUnitModelTest` falhou na compilação pela ausência do modelo
+   de compilation unit, do builder multi-programa, da visibilidade tipada e das
+   tabelas namespaced.
+2. GREEN: a fixture cobre dois top-level programs, três nested programs em dois
+   níveis, siblings e shadowing. Todos os cinco `programUnit` reconhecidos pela
+   grammar são materializados em ordem estrutural, com ancestry explícita.
+3. GREEN: cada programa recebe `ProgramUnitId` determinístico e namespace local
+   de IDs AST. COMMON, INITIAL, RECURSIVE, LIBRARY e DEFINITION são atributos
+   imutáveis de PROGRAM; GLOBAL/EXTERNAL são visibilidade tipada em DATA e FILE,
+   sem remover as cláusulas originalmente preservadas.
+4. GREEN: `CompilationUnitSymbolTables` mantém uma tabela de declarações por
+   unidade e sua ancestry. Os atributos declarativos chegam aos símbolos, mas
+   nenhuma busca entre unidades ou ligação de uso foi executada.
+5. GUARD: GLOBAL+EXTERNAL conflitantes geram diagnóstico explícito em vez de
+   escolher uma visibilidade silenciosamente. O método legado `build` continua
+   retornando o primeiro programa, enquanto o novo contrato completo é usado
+   por `buildCompilationUnit`.
+6. REGRESSÃO: a suíte completa terminou com 31 testes verdes; os três
+   JavaScripts passaram em `node --check`; `git diff --check` não encontrou
+   erros. Grammar, corpus, fontes de demonstração, HTML e outputs não foram
+   alterados nesta fase.
 
 ## Checklist final de regressão
 

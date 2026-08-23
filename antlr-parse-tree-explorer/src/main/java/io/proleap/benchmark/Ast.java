@@ -52,9 +52,25 @@ public final class Ast {
     public enum DataSectionKind { FILE, DATABASE, WORKING_STORAGE, LINKAGE, COMMUNICATION, LOCAL_STORAGE, SCREEN, REPORT, PROGRAM_LIBRARY }
     public enum DataLevelKind { GROUP_OR_ELEMENTARY, STANDALONE_77, RENAMES_66, CONDITION_88, OPAQUE }
     public enum CallArgumentKind { VALUE, OMITTED, ADDRESS_OF, LENGTH_OF }
+    public enum DeclarationVisibility { LOCAL, GLOBAL, EXTERNAL, CONFLICTING }
 
-    public record Program(Meta meta, String name, List<Division> divisions) implements Node {
-        public Program { divisions = List.copyOf(divisions); }
+    public record ProgramAttributes(boolean common, boolean initial, boolean recursive,
+                                    boolean library, boolean definition, String writtenText) {
+        public ProgramAttributes { writtenText = Objects.requireNonNullElse(writtenText, ""); }
+        public static ProgramAttributes none() {
+            return new ProgramAttributes(false, false, false, false, false, "");
+        }
+    }
+
+    public record Program(Meta meta, String name, ProgramAttributes attributes,
+                          List<Division> divisions) implements Node {
+        public Program {
+            attributes = Objects.requireNonNull(attributes, "attributes");
+            divisions = List.copyOf(divisions);
+        }
+        public Program(Meta meta, String name, List<Division> divisions) {
+            this(meta, name, ProgramAttributes.none(), divisions);
+        }
     }
 
     public record Division(Meta meta, DivisionKind divisionKind, List<Node> children) implements Node {
@@ -68,15 +84,25 @@ public final class Ast {
 
     public record FileBinding(Meta meta, String logicalName, String assignment) implements Node {}
 
-    public record FileDescription(Meta meta, String fileName, List<DataEntry> entries) implements Node {
+    public record FileDescription(Meta meta, String fileName, DeclarationVisibility visibility,
+                                  List<DataEntry> entries) implements Node {
         public FileDescription { entries = List.copyOf(entries); }
+        public FileDescription(Meta meta, String fileName, List<DataEntry> entries) {
+            this(meta, fileName, DeclarationVisibility.LOCAL, entries);
+        }
     }
 
     public record DataEntry(Meta meta, String level, DataLevelKind levelKind, String name, boolean filler,
-                            String declaration, List<DataClause> clauses, List<DataEntry> children) implements Node {
+                            DeclarationVisibility visibility, String declaration,
+                            List<DataClause> clauses, List<DataEntry> children) implements Node {
         public DataEntry {
             clauses = List.copyOf(clauses);
             children = List.copyOf(children);
+        }
+        public DataEntry(Meta meta, String level, DataLevelKind levelKind, String name, boolean filler,
+                         String declaration, List<DataClause> clauses, List<DataEntry> children) {
+            this(meta, level, levelKind, name, filler, DeclarationVisibility.LOCAL,
+                    declaration, clauses, children);
         }
     }
     public sealed interface DataClause extends Node permits PictureClause, UsageClause, ValueClause,

@@ -56,13 +56,54 @@ final class AstBuilder {
     }
 
     AstBuildResult build(ParseTree tree) {
+        ParserRuleContext unit = firstDescendant(tree, "programUnit");
+        if (unit == null) throw new IllegalStateException("programUnit not found");
+        return buildProgramUnit(unit);
+    }
+
+    CompilationUnitBuildResult buildCompilationUnit(ParseTree tree, String writtenCompilationUnitId) {
+        String compilationUnitId = SymbolTable.canonical(writtenCompilationUnitId);
+        ParserRuleContext compilation = firstDescendant(tree, "compilationUnit");
+        if (compilation == null) throw new IllegalStateException("compilationUnit not found");
+        List<CompilationUnitModel.ProgramUnit> units = new ArrayList<>();
+        Map<ResolutionContracts.ProgramUnitId, SemanticCoverage.Report> coverage = new LinkedHashMap<>();
+        Map<ResolutionContracts.ProgramUnitId, List<SemanticCoverage.Diagnostic>> diagnostics = new LinkedHashMap<>();
+        List<ParserRuleContext> topLevel = directChildrenNamed(compilation, "programUnit");
+        for (int index = 0; index < topLevel.size(); index++) {
+            collectProgramUnits(topLevel.get(index), List.of(index), null, compilationUnitId,
+                    units, coverage, diagnostics);
+        }
+        CompilationUnitModel model = new CompilationUnitModel(compilationUnitId, units);
+        return new CompilationUnitBuildResult(model, coverage, diagnostics);
+    }
+
+    private void collectProgramUnits(ParserRuleContext context, List<Integer> structuralPath,
+                                     ResolutionContracts.ProgramUnitId parentId, String compilationUnitId,
+                                     List<CompilationUnitModel.ProgramUnit> units,
+                                     Map<ResolutionContracts.ProgramUnitId, SemanticCoverage.Report> coverage,
+                                     Map<ResolutionContracts.ProgramUnitId, List<SemanticCoverage.Diagnostic>> diagnostics) {
+        AstBuildResult built = buildProgramUnit(context);
+        ResolutionContracts.ProgramUnitId id = new ResolutionContracts.ProgramUnitId(
+                compilationUnitId, structuralPath, SymbolTable.canonical(built.program().name()));
+        units.add(new CompilationUnitModel.ProgramUnit(id, parentId, built.program()));
+        coverage.put(id, built.coverage());
+        diagnostics.put(id, built.diagnostics());
+        List<ParserRuleContext> nested = directChildrenNamed(context, "programUnit");
+        for (int index = 0; index < nested.size(); index++) {
+            List<Integer> childPath = new ArrayList<>(structuralPath);
+            childPath.add(index);
+            collectProgramUnits(nested.get(index), childPath, id, compilationUnitId,
+                    units, coverage, diagnostics);
+        }
+    }
+
+    private AstBuildResult buildProgramUnit(ParserRuleContext unit) {
         nextId = 0;
         coverageDrafts.clear();
         semanticDiagnostics.clear();
-        ParserRuleContext unit = firstDescendant(tree, "programUnit");
-        if (unit == null) throw new IllegalStateException("programUnit not found");
         Ast.Meta meta = meta(unit);
-        ParserRuleContext programName = firstDescendant(firstDescendant(unit, "programIdParagraph"), "programName");
+        ParserRuleContext programId = firstDescendant(unit, "programIdParagraph");
+        ParserRuleContext programName = firstDescendant(programId, "programName");
         List<Ast.Division> divisions = new ArrayList<>();
         for (ParserRuleContext child : directRuleChildren(unit)) {
             switch (rule(child)) {
@@ -74,8 +115,17 @@ final class AstBuilder {
             }
         }
         Ast.Program program = new Ast.Program(meta,
-                programName == null ? "<anonymous>" : clean(sourceText(programName)), divisions);
+                programName == null ? "<anonymous>" : clean(sourceText(programName)),
+                programAttributes(programId), divisions);
         return new AstBuildResult(program, buildCoverageReport(), semanticDiagnostics);
+    }
+
+    private Ast.ProgramAttributes programAttributes(ParserRuleContext programId) {
+        if (programId == null) return Ast.ProgramAttributes.none();
+        return new Ast.ProgramAttributes(containsToken(programId, "COMMON"),
+                containsToken(programId, "INITIAL"), containsToken(programId, "RECURSIVE"),
+                containsToken(programId, "LIBRARY"), containsToken(programId, "DEFINITION"),
+                sourceText(programId).strip());
     }
 
     private Ast.Division buildIdentification(ParserRuleContext context) {
@@ -112,7 +162,8 @@ final class AstBuilder {
                     List<Ast.DataEntry> dataEntries = new ArrayList<>();
                     dataEntries.addAll(buildDataHierarchy(directChildrenNamed(fd, "dataDescriptionEntry")));
                     entries.add(new Ast.FileDescription(fdMeta,
-                            fileName == null ? "<unknown>" : clean(sourceText(fileName)), dataEntries));
+                            fileName == null ? "<unknown>" : clean(sourceText(fileName)),
+                            declarationVisibility(fd, "externalClause", "globalClause"), dataEntries));
                 }
             } else {
                 entries.addAll(buildDataHierarchy(nearestDescendants(sectionContext, "dataDescriptionEntry")));
@@ -134,7 +185,8 @@ final class AstBuilder {
                 .filter(child -> rule(child).startsWith("data") && rule(child).endsWith("Clause"))
                 .map(this::buildDataClause).toList();
         return new Ast.DataEntry(meta, level, levelKind(level), filler ? "FILLER" : clean(sourceText(name)),
-                filler, raw, clauses, List.of());
+                filler, declarationVisibility(format, "dataExternalClause", "dataGlobalClause"),
+                raw, clauses, List.of());
     }
 
     private static final class DataDraft {
@@ -178,8 +230,23 @@ final class AstBuilder {
     private Ast.DataEntry freezeDataDraft(DataDraft draft) {
         Ast.DataEntry entry = draft.entry;
         return new Ast.DataEntry(entry.meta(), entry.level(), entry.levelKind(), entry.name(), entry.filler(),
-                entry.declaration(), entry.clauses(),
+                entry.visibility(), entry.declaration(), entry.clauses(),
                 draft.children.stream().map(this::freezeDataDraft).toList());
+    }
+
+    private Ast.DeclarationVisibility declarationVisibility(ParserRuleContext context,
+                                                             String externalRule, String globalRule) {
+        boolean external = firstDescendant(context, externalRule) != null;
+        boolean global = firstDescendant(context, globalRule) != null;
+        if (external && global) {
+            semanticDiagnostics.add(new SemanticCoverage.Diagnostic(
+                    "CONFLICTING_DECLARATION_VISIBILITY",
+                    "Declaration contains both GLOBAL and EXTERNAL visibility", meta(context)));
+            return Ast.DeclarationVisibility.CONFLICTING;
+        }
+        if (external) return Ast.DeclarationVisibility.EXTERNAL;
+        if (global) return Ast.DeclarationVisibility.GLOBAL;
+        return Ast.DeclarationVisibility.LOCAL;
     }
 
     private Ast.DataClause buildDataClause(ParserRuleContext context) {

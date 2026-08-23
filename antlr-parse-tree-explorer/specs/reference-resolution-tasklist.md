@@ -519,16 +519,16 @@ existir.
 
 ### Fase 2 — Compilation unit, nesting e visibilidade declarativa
 
-- [ ] Criar fixtures de múltiplos top-level programs e nested programs com
+- [x] Criar fixtures de múltiplos top-level programs e nested programs com
       COMMON, GLOBAL, EXTERNAL, shadowing e siblings.
-- [ ] Escrever testes RED provando que nenhuma `programUnit` pode desaparecer.
-- [ ] Introduzir o modelo imutável de compilation unit e todos os ProgramUnitId.
-- [ ] Preservar atributos PROGRAM COMMON/INITIAL/RECURSIVE e atributos DATA/FILE
+- [x] Escrever testes RED provando que nenhuma `programUnit` pode desaparecer.
+- [x] Introduzir o modelo imutável de compilation unit e todos os ProgramUnitId.
+- [x] Preservar atributos PROGRAM COMMON/INITIAL/RECURSIVE e atributos DATA/FILE
       GLOBAL/EXTERNAL necessários à visibilidade.
-- [ ] Evoluir Symbol Table por program unit e ancestry sem inserir usos/binding.
-- [ ] Emitir diagnóstico/cobertura quando uma forma de visibilidade aceita pela
+- [x] Evoluir Symbol Table por program unit e ancestry sem inserir usos/binding.
+- [x] Emitir diagnóstico/cobertura quando uma forma de visibilidade aceita pela
       gramática ainda não puder ser interpretada.
-- [ ] Tornar testes verdes, executar regressão, documentar mudanças de métricas
+- [x] Tornar testes verdes, executar regressão, documentar mudanças de métricas
       e criar commit isolado.
 
 ### Fase 3 — Entidades, relações, scope index e coleta de ocorrências

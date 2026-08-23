@@ -14,7 +14,7 @@ final class SymbolTableBuilder {
         scopes.clear(); symbols.clear(); diagnostics.clear();
         int root = addScope(-1, SymbolTable.ScopeKind.ROOT, "<root>", -1, -1);
         int programSymbol = addSymbol(SymbolTable.SymbolKind.PROGRAM, SymbolTable.Namespace.PROGRAM,
-                program.name(), root, program, Map.of());
+                program.name(), root, program, programAttributes(program));
         int programScope = addScope(root, SymbolTable.ScopeKind.PROGRAM, program.name(),
                 programSymbol, program.meta().id());
 
@@ -50,7 +50,8 @@ final class SymbolTableBuilder {
             for (Ast.Node child : section.children()) {
                 if (child instanceof Ast.FileDescription file) {
                     int fileSymbol = addSymbol(SymbolTable.SymbolKind.FILE_DESCRIPTION,
-                            SymbolTable.Namespace.FILE, file.fileName(), sectionScope, file, Map.of());
+                            SymbolTable.Namespace.FILE, file.fileName(), sectionScope, file,
+                            Map.of("visibility", file.visibility().name()));
                     int fileScope = addScope(sectionScope, SymbolTable.ScopeKind.FILE_DESCRIPTION,
                             file.fileName(), fileSymbol, file.meta().id());
                     collectDataEntries(file.entries(), fileScope);
@@ -155,6 +156,7 @@ final class SymbolTableBuilder {
         Map<String, String> attributes = new LinkedHashMap<>();
         attributes.put("level", entry.level());
         attributes.put("levelKind", entry.levelKind().name());
+        attributes.put("visibility", entry.visibility().name());
         attributes.put("declaration", entry.declaration());
         for (Ast.DataClause clause : entry.clauses()) {
             if (clause instanceof Ast.RedefinesClause redefines) {
@@ -169,6 +171,16 @@ final class SymbolTableBuilder {
                 attributes.put("relationBinding", "NOT_PERFORMED");
             }
         }
+        return attributes;
+    }
+
+    private static Map<String, String> programAttributes(Ast.Program program) {
+        Map<String, String> attributes = new LinkedHashMap<>();
+        attributes.put("common", Boolean.toString(program.attributes().common()));
+        attributes.put("initial", Boolean.toString(program.attributes().initial()));
+        attributes.put("recursive", Boolean.toString(program.attributes().recursive()));
+        attributes.put("library", Boolean.toString(program.attributes().library()));
+        attributes.put("definition", Boolean.toString(program.attributes().definition()));
         return attributes;
     }
 
