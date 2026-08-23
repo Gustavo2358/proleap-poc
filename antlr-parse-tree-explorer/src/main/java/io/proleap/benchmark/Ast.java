@@ -34,7 +34,8 @@ public final class Ast {
 
     public sealed interface Node permits Program, Division, Section, FileBinding, FileDescription,
             DataEntry, Paragraph, Sentence, CallArgument, EvaluateBranch, DataQualifier,
-            SubscriptGroup, ReferenceModification, Statement, Expression {
+            SubscriptGroup, ReferenceModification, ProcedureQualifier, ProcedureReference,
+            Statement, Expression {
         Meta meta();
     }
 
@@ -83,7 +84,7 @@ public final class Ast {
 
     public sealed interface Expression extends Node permits LiteralExpression, DataReference,
             OperationExpression, FunctionExpression, SpecialRegisterExpression,
-            PreservedExpression, RawExpression {}
+            FileReference, ProgramReference, IndexReference, PreservedExpression, RawExpression {}
 
     public record CallStatement(Meta meta, CallTargetKind targetKind, Expression target,
                                 List<CallArgument> arguments, List<Statement> exceptionFlow) implements Statement {
@@ -121,18 +122,20 @@ public final class Ast {
         public String selector() { return writtenSelector; }
     }
 
-    public record PerformStatement(Meta meta, PerformKind performKind, String fromProcedure,
-                                   String throughProcedure, String writtenControl,
+    public record PerformStatement(Meta meta, PerformKind performKind, ProcedureReference fromReference,
+                                   ProcedureReference throughReference, String writtenControl,
                                    List<Expression> controlExpressions,
                                    List<Statement> inlineBody) implements Statement {
         public PerformStatement {
             controlExpressions = List.copyOf(controlExpressions);
             inlineBody = List.copyOf(inlineBody);
         }
+        public String fromProcedure() { return fromReference == null ? "" : fromReference.writtenText(); }
+        public String throughProcedure() { return throughReference == null ? "" : throughReference.writtenText(); }
         public String control() { return writtenControl; }
     }
 
-    public record GoToStatement(Meta meta, GoToKind goToKind, List<String> targets,
+    public record GoToStatement(Meta meta, GoToKind goToKind, List<ProcedureReference> targets,
                                 Expression dependingOn) implements Statement {
         public GoToStatement { targets = List.copyOf(targets); }
     }
@@ -150,8 +153,12 @@ public final class Ast {
 
     /** Keeps unsupported syntax visible and retains any directly nested statements. */
     public record UnsupportedStatement(Meta meta, String grammarRule, String rawText,
+                                       List<Node> recognizedReferences,
                                        List<Statement> nestedStatements) implements Statement {
-        public UnsupportedStatement { nestedStatements = List.copyOf(nestedStatements); }
+        public UnsupportedStatement {
+            recognizedReferences = List.copyOf(recognizedReferences);
+            nestedStatements = List.copyOf(nestedStatements);
+        }
     }
 
     public record LiteralExpression(Meta meta, String value, String rawLexeme) implements Expression {}
@@ -189,6 +196,13 @@ public final class Ast {
                                             String writtenText) implements Expression {
         public SpecialRegisterExpression { operands = List.copyOf(operands); }
     }
+    public record ProcedureQualifier(Meta meta, QualifierConnector connector, String sectionName,
+                                     String writtenText) implements Node {}
+    public record ProcedureReference(Meta meta, String baseName, String writtenText,
+                                     ProcedureQualifier qualifier) implements Node {}
+    public record FileReference(Meta meta, String baseName, String writtenText) implements Expression {}
+    public record ProgramReference(Meta meta, String programName, String writtenText) implements Expression {}
+    public record IndexReference(Meta meta, String indexName, String writtenText) implements Expression {}
     public record PreservedExpression(Meta meta, String grammarRule, String writtenText,
                                       List<Expression> recognizedOperands,
                                       ReferenceUnderstanding understanding) implements Expression {
@@ -221,19 +235,28 @@ public final class Ast {
             List<Node> result = new ArrayList<>(n.selectorExpressions()); result.addAll(n.statements()); return result;
         }
         if (node instanceof PerformStatement n) {
-            List<Node> result = new ArrayList<>(n.controlExpressions()); result.addAll(n.inlineBody()); return result;
+            List<Node> result = new ArrayList<>();
+            if (n.fromReference() != null) result.add(n.fromReference());
+            if (n.throughReference() != null) result.add(n.throughReference());
+            result.addAll(n.controlExpressions()); result.addAll(n.inlineBody()); return result;
         }
-        if (node instanceof GoToStatement n) return n.dependingOn() == null ? List.of() : List.of(n.dependingOn());
+        if (node instanceof GoToStatement n) {
+            List<Node> result = new ArrayList<>(n.targets());
+            if (n.dependingOn() != null) result.add(n.dependingOn()); return result;
+        }
         if (node instanceof MoveStatement n) {
             List<Node> result = new ArrayList<>(); result.add(n.source()); result.addAll(n.targets()); return result;
         }
-        if (node instanceof UnsupportedStatement n) return n.nestedStatements();
+        if (node instanceof UnsupportedStatement n) {
+            List<Node> result = new ArrayList<>(n.recognizedReferences()); result.addAll(n.nestedStatements()); return result;
+        }
         if (node instanceof DataReference n) {
             List<Node> result = new ArrayList<>(n.qualifiers()); result.addAll(n.subscriptGroups());
             if (n.referenceModification() != null) result.add(n.referenceModification());
             return result;
         }
         if (node instanceof DataQualifier n) return List.of(n.reference());
+        if (node instanceof ProcedureReference n) return n.qualifier() == null ? List.of() : List.of(n.qualifier());
         if (node instanceof SubscriptGroup n) return n.subscripts();
         if (node instanceof ReferenceModification n) {
             if (n.length() == null) return List.of(n.offset());

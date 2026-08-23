@@ -98,13 +98,19 @@ final class AstSnapshot {
         if (node instanceof Ast.EvaluateStatement) return "EVALUATE";
         if (node instanceof Ast.EvaluateBranch n) return n.selector();
         if (node instanceof Ast.PerformStatement n) return n.performKind() == Ast.PerformKind.INLINE ? "inline" : n.fromProcedure();
-        if (node instanceof Ast.GoToStatement n) return String.join(", ", n.targets());
+        if (node instanceof Ast.GoToStatement n) return n.targets().stream()
+                .map(Ast.ProcedureReference::writtenText).reduce((a, b) -> a + ", " + b).orElse("");
         if (node instanceof Ast.MoveStatement) return "MOVE";
         if (node instanceof Ast.EmbeddedLanguageStatement n) return n.language().name();
         if (node instanceof Ast.NextSentenceStatement) return "NEXT SENTENCE";
         if (node instanceof Ast.UnsupportedStatement n) return n.grammarRule();
         if (node instanceof Ast.LiteralExpression n) return n.rawLexeme();
         if (node instanceof Ast.DataReference n) return n.writtenName();
+        if (node instanceof Ast.ProcedureReference n) return n.writtenText();
+        if (node instanceof Ast.ProcedureQualifier n) return n.writtenText();
+        if (node instanceof Ast.FileReference n) return n.writtenText();
+        if (node instanceof Ast.ProgramReference n) return n.writtenText();
+        if (node instanceof Ast.IndexReference n) return n.writtenText();
         if (node instanceof Ast.OperationExpression n) return n.operator();
         if (node instanceof Ast.FunctionExpression n) return n.functionName();
         if (node instanceof Ast.SpecialRegisterExpression n) return n.registerName();
@@ -141,7 +147,9 @@ final class AstSnapshot {
             result.put("performKind", n.performKind().name()); result.put("from", n.fromProcedure());
             result.put("through", n.throughProcedure()); result.put("control", n.control());
         } else if (node instanceof Ast.GoToStatement n) {
-            result.put("goToKind", n.goToKind().name()); result.put("targets", String.join(", ", n.targets()));
+            result.put("goToKind", n.goToKind().name());
+            result.put("targets", n.targets().stream().map(Ast.ProcedureReference::writtenText)
+                    .reduce((a, b) -> a + ", " + b).orElse(""));
         } else if (node instanceof Ast.MoveStatement n) result.put("corresponding", String.valueOf(n.corresponding()));
         else if (node instanceof Ast.EmbeddedLanguageStatement n) {
             result.put("language", n.language().name()); result.put("rawText", compact(n.rawText()));
@@ -153,6 +161,16 @@ final class AstSnapshot {
         } else if (node instanceof Ast.DataReference n) {
             result.put("baseName", n.baseName()); result.put("writtenText", n.writtenText());
             result.put("understanding", n.understanding().name());
+        } else if (node instanceof Ast.ProcedureReference n) {
+            result.put("baseName", n.baseName()); result.put("writtenText", n.writtenText());
+        } else if (node instanceof Ast.ProcedureQualifier n) {
+            result.put("connector", n.connector().name()); result.put("sectionName", n.sectionName());
+        } else if (node instanceof Ast.FileReference n) {
+            result.put("baseName", n.baseName()); result.put("writtenText", n.writtenText());
+        } else if (node instanceof Ast.ProgramReference n) {
+            result.put("programName", n.programName()); result.put("writtenText", n.writtenText());
+        } else if (node instanceof Ast.IndexReference n) {
+            result.put("indexName", n.indexName()); result.put("writtenText", n.writtenText());
         } else if (node instanceof Ast.OperationExpression n) {
             result.put("operator", n.operator()); result.put("writtenText", n.writtenText());
         } else if (node instanceof Ast.FunctionExpression n) {
@@ -171,6 +189,9 @@ final class AstSnapshot {
     private static String expressionLabel(Ast.Expression expression) {
         if (expression instanceof Ast.LiteralExpression n) return n.rawLexeme();
         if (expression instanceof Ast.DataReference n) return n.writtenName();
+        if (expression instanceof Ast.FileReference n) return n.writtenText();
+        if (expression instanceof Ast.ProgramReference n) return n.writtenText();
+        if (expression instanceof Ast.IndexReference n) return n.writtenText();
         if (expression instanceof Ast.OperationExpression n) return n.writtenText();
         if (expression instanceof Ast.FunctionExpression n) return n.writtenText();
         if (expression instanceof Ast.SpecialRegisterExpression n) return n.writtenText();

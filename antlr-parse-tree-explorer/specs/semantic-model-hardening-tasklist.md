@@ -591,11 +591,11 @@ navegáveis da métrica agregada até fonte/parse tree.
 
 ### Fase 4 — ProcedureReference e demais referências nominais
 
-- [ ] Executar TDD para GO TO, DEPENDING ON, PERFORM, THRU/THROUGH e
+- [x] Executar TDD para GO TO, DEPENDING ON, PERFORM, THRU/THROUGH e
       qualificação por section.
-- [ ] Cobrir procedure names de ALTER/SORT/MERGE conforme o manifesto.
-- [ ] Introduzir FileReference e demais referências nominais sem binding.
-- [ ] Validar identidade, spans, texto e ordem de cada ocorrência.
+- [x] Cobrir procedure names de ALTER/SORT/MERGE conforme o manifesto.
+- [x] Introduzir FileReference e demais referências nominais sem binding.
+- [x] Validar identidade, spans, texto e ordem de cada ocorrência.
 
 ### Fase 5 — Declarações e assinatura
 

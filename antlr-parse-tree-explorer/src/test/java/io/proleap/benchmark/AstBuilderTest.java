@@ -45,8 +45,8 @@ class AstBuilderTest {
         Ast.CallStatement call = all.stream().filter(Ast.CallStatement.class::isInstance)
                 .map(Ast.CallStatement.class::cast).findFirst().orElseThrow();
         assertEquals(Ast.CallTargetKind.STATIC_LITERAL, call.targetKind());
-        assertInstanceOf(Ast.LiteralExpression.class, call.target());
-        assertEquals("CSUTLDTC", ((Ast.LiteralExpression) call.target()).value());
+        assertInstanceOf(Ast.ProgramReference.class, call.target());
+        assertEquals("CSUTLDTC", ((Ast.ProgramReference) call.target()).programName());
         assertTrue(call.meta().origin().rootNodeId() >= 0);
         assertEquals("callStatement", call.meta().origin().grammarRule());
         assertTrue(call.meta().origin().subtreeNodeCount() > 1);

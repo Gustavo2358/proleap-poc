@@ -200,8 +200,10 @@ final class AstBuilder {
     private Ast.CallStatement buildCall(ParserRuleContext context) {
         Ast.Meta meta = meta(context);
         ParserRuleContext targetContext = firstDirectOrNearest(context, Set.of("identifier", "literal"));
-        Ast.Expression target = expression(targetContext, "call target");
-        Ast.CallTargetKind kind = target instanceof Ast.LiteralExpression
+        Ast.Expression target = targetContext != null && rule(targetContext).equals("literal")
+                ? new Ast.ProgramReference(meta(targetContext), unquote(sourceText(targetContext).strip()), sourceText(targetContext).strip())
+                : expression(targetContext, "call target");
+        Ast.CallTargetKind kind = target instanceof Ast.ProgramReference
                 ? Ast.CallTargetKind.STATIC_LITERAL : Ast.CallTargetKind.DYNAMIC_EXPRESSION;
         List<Ast.CallArgument> arguments = new ArrayList<>();
         for (ParserRuleContext arg : nearestDescendants(context, Set.of("callByReference", "callByValue", "callByContent"))) {
@@ -264,19 +266,20 @@ final class AstBuilder {
         ParserRuleContext procedure = firstDescendant(context, "performProcedureStatement");
         ParserRuleContext type = firstDescendant(context, "performType");
         List<Ast.Expression> controls = type == null ? List.of() : controlExpressions(type);
-        if (inline != null) return new Ast.PerformStatement(meta, Ast.PerformKind.INLINE, "", "",
+        if (inline != null) return new Ast.PerformStatement(meta, Ast.PerformKind.INLINE, null, null,
                 type == null ? "once" : compact(sourceText(type)), controls, statementsInside(inline));
         List<ParserRuleContext> names = procedure == null ? List.of() : nearestDescendants(procedure, "procedureName");
         return new Ast.PerformStatement(meta, Ast.PerformKind.PROCEDURE,
-                names.isEmpty() ? "<unknown>" : clean(sourceText(names.get(0))),
-                names.size() < 2 ? "" : clean(sourceText(names.get(1))),
+                names.isEmpty() ? null : procedureReference(names.get(0)),
+                names.size() < 2 ? null : procedureReference(names.get(1)),
                 type == null ? "once" : compact(sourceText(type)), controls, List.of());
     }
 
     private Ast.GoToStatement buildGoTo(ParserRuleContext context) {
         Ast.Meta meta = meta(context);
         ParserRuleContext depending = firstDescendant(context, "goToDependingOnStatement");
-        List<String> targets = nearestDescendants(context, "procedureName").stream().map(this::sourceText).map(AstBuilder::clean).toList();
+        List<Ast.ProcedureReference> targets = nearestDescendants(context, "procedureName").stream()
+                .map(this::procedureReference).toList();
         ParserRuleContext selector = depending == null ? null : firstDescendant(depending, "identifier");
         return new Ast.GoToStatement(meta, depending == null ? Ast.GoToKind.SIMPLE : Ast.GoToKind.DEPENDING_ON,
                 targets, selector == null ? null : expression(selector, "selector"));
@@ -300,15 +303,20 @@ final class AstBuilder {
 
     private Ast.UnsupportedStatement buildUnsupported(ParserRuleContext context) {
         Ast.Meta meta = meta(context);
-        return new Ast.UnsupportedStatement(meta, rule(context), compact(sourceText(context)), directNestedStatements(context));
+        List<Ast.Node> references = nearestDescendants(context,
+                Set.of("procedureName", "fileName", "indexName")).stream().map(this::nominalReference).toList();
+        return new Ast.UnsupportedStatement(meta, rule(context), compact(sourceText(context)), references,
+                directNestedStatements(context));
     }
 
     private Ast.Expression expression(ParserRuleContext context, String role) {
         if (context == null) return new Ast.RawExpression(syntheticMeta(role), role, "<missing>");
         String contextRule = rule(context);
         if (contextRule.equals("identifier")) return identifierExpression(context);
-        if (contextRule.equals("fileName")) return new Ast.DataReference(meta(context), clean(sourceText(context)),
-                sourceText(context).strip(), List.of(), List.of(), null, Ast.ReferenceUnderstanding.STRUCTURED);
+        if (contextRule.equals("fileName")) return new Ast.FileReference(meta(context), clean(sourceText(context)),
+                sourceText(context).strip());
+        if (contextRule.equals("indexName")) return new Ast.IndexReference(meta(context), clean(sourceText(context)),
+                sourceText(context).strip());
         if (contextRule.equals("qualifiedDataName") || contextRule.equals("conditionNameReference"))
             return dataReference(context);
         if (contextRule.equals("tableCall")) return tableReference(context);
@@ -609,6 +617,33 @@ final class AstBuilder {
         int start = Math.max(0, startContext.getStart().getStartIndex());
         int end = Math.min(source.length(), endContext.getStop().getStopIndex() + 1);
         return source.substring(start, end).strip();
+    }
+
+    private Ast.Node nominalReference(ParserRuleContext context) {
+        return switch (rule(context)) {
+            case "procedureName" -> procedureReference(context);
+            case "fileName" -> new Ast.FileReference(meta(context), clean(sourceText(context)), sourceText(context).strip());
+            case "indexName" -> new Ast.IndexReference(meta(context), clean(sourceText(context)), sourceText(context).strip());
+            default -> throw new IllegalArgumentException("unsupported nominal reference: " + rule(context));
+        };
+    }
+
+    private Ast.ProcedureReference procedureReference(ParserRuleContext context) {
+        Ast.Meta meta = meta(context);
+        ParserRuleContext paragraph = directChildrenNamed(context, "paragraphName").stream().findFirst().orElse(null);
+        ParserRuleContext section = directChildrenNamed(context, "sectionName").stream().findFirst().orElse(null);
+        ParserRuleContext qualification = directChildrenNamed(context, "inSection").stream().findFirst().orElse(null);
+        String baseName = paragraph != null ? clean(sourceText(paragraph))
+                : section != null ? clean(sourceText(section)) : firstSemanticWord(context);
+        Ast.ProcedureQualifier qualifier = null;
+        if (qualification != null) {
+            ParserRuleContext qualifiedSection = firstDescendant(qualification, "sectionName");
+            qualifier = new Ast.ProcedureQualifier(meta(qualification),
+                    containsToken(qualification, "IN") ? Ast.QualifierConnector.IN : Ast.QualifierConnector.OF,
+                    qualifiedSection == null ? "<unknown>" : clean(sourceText(qualifiedSection)),
+                    sourceText(qualification).strip());
+        }
+        return new Ast.ProcedureReference(meta, baseName, sourceText(context).strip(), qualifier);
     }
 
     private Ast.Meta syntheticMeta(String label) {

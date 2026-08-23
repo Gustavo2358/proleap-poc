@@ -54,7 +54,7 @@ deverão permanecer e toda diferença será explicada neste relatório.
 | 1 — cobertura | aprovada | 11 testes Maven verdes; guarda das 628 regras | `AstBuilder` retorna AST + cobertura + diagnósticos; nós AST inalterados | findings cobrem statements nesta fase |
 | 2 — proveniência | aprovada | 13 testes Maven verdes; fixtures de COPY aninhado, REPLACING e COPY ausente | `Meta` e snapshot expõem arquivo/linha/include chain/exatidão; `writtenName` mantém separadores | contextos que cruzam fronteiras são marcados `exact=false`; COPY ausente continua diagnóstico explícito |
 | 3 — referências/expressões | aprovada | 15 testes Maven verdes; fixtures gramaticais focadas | referências, qualificadores recursivos, subscritos, reference modification e expressões são nós alcançáveis | construções não interpretadas usam `PreservedExpression`; sem binding ou valores resolvidos |
-| 4 — procedure references | pendente | — | — | — |
+| 4 — procedure references | aprovada | 17 testes Maven verdes; fixture GO TO/PERFORM/ALTER/SORT/MERGE | procedure/file/program/index references são nós sem binding e alcançáveis | statements adiados continuam `UnsupportedStatement`, agora com referências reconhecidas |
 | 5 — declarações | pendente | — | — | — |
 | 6 — statements | pendente | — | — | — |
 | 7 — observabilidade | pendente | — | — | — |
@@ -117,6 +117,18 @@ em strings/`RawExpression` agora são nós: COACTUPC passou de 4.100 para 6.603
 nós (profundidade 8→11), CBSTM03A de 1.250 para 1.368 e CBSTM03D de 1.260 para
 1.378. CALLs, unsupported statements, escopos, símbolos e diagnósticos não
 mudaram. CBSTM03D continua com 14 CALLs dinâmicos para `WS-CALL-TARGET`.
+
+## Evidência TDD da Fase 4
+
+1. RED: `NominalReferenceAstTest` falhou na compilação pela ausência de
+   `ProcedureReference`, `FileReference`, `ProgramReference`, qualificadores e
+   referências reconhecidas em statements preservados.
+2. GREEN: GO TO simples/DEPENDING ON/qualificado e PERFORM simples/THRU passaram
+   a usar ocorrências com identidade, texto e spans próprios.
+3. ALTER, SORT e MERGE continuam semanticamente adiados, mas preservam em ordem
+   seus procedure/file references; CALL literal usa `ProgramReference`.
+4. As novas ocorrências explicam as contagens 6.789/1.421/1.431; fatos de CALL,
+   Symbol Table e cobertura de statements permanecem inalterados.
 
 ## Checklist final de regressão
 
