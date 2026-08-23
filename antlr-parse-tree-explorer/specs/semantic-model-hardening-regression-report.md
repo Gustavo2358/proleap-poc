@@ -56,7 +56,7 @@ deverão permanecer e toda diferença será explicada neste relatório.
 | 3 — referências/expressões | aprovada | 15 testes Maven verdes; fixtures gramaticais focadas | referências, qualificadores recursivos, subscritos, reference modification e expressões são nós alcançáveis | construções não interpretadas usam `PreservedExpression`; sem binding ou valores resolvidos |
 | 4 — procedure references | aprovada | 17 testes Maven verdes; fixture GO TO/PERFORM/ALTER/SORT/MERGE | procedure/file/program/index references são nós sem binding e alcançáveis | statements adiados continuam `UnsupportedStatement`, agora com referências reconhecidas |
 | 5 — declarações | aprovada | 19 testes Maven verdes; fixture de declarações e assinatura | hierarquia e cláusulas DATA são nós; LINKAGE/USING e relações textuais ficam explícitos | cláusulas adiadas usam `PreservedDataClause`; binding não executado |
-| 6 — statements | pendente | — | — | — |
+| 6 — statements | aprovada | 22 testes Maven verdes; fixture com as 50 alternativas | operands e clauses são estruturados; 16 statements adiados usam `PreservedStatement` | sem interpretação semântica dos 16 adiados |
 | 7 — observabilidade | pendente | — | — | — |
 | 8 — regressão final | pendente | — | — | — |
 
@@ -157,6 +157,28 @@ mudaram. CBSTM03D continua com 14 CALLs dinâmicos para `WS-CALL-TARGET`.
 Os hashes das três fontes principais e do plano suspenso permanecem idênticos
 ao baseline. Os HTMLs não foram regenerados: essa alteração está reservada para
 a Fase 7.
+
+## Evidência TDD da Fase 6
+
+1. RED: `StatementModelAstTest` exigiu um caminho explícito para cada uma das
+   50 alternativas da regra `statement`, operandos alcançáveis e ausência de
+   `UnsupportedStatement`; o contrato inicialmente não compilava.
+2. GREEN: os 31 statements aprovados para esta fase agora usam nós dedicados já
+   existentes ou `ModeledStatement`. Cada operando mantém como papel a regra
+   gramatical que o introduziu, além de referência/literal, `Meta` e origem.
+3. Os 16 statements adiados usam `PreservedStatement`, com operandos e clauses
+   estruturados e política `PRESERVED_UNINTERPRETED/DEPENDENCY_UNKNOWN`. As três
+   linguagens embutidas continuam opacas, com payload preservado.
+4. CALL passou a distinguir REFERENCE/VALUE/CONTENT, OMITTED, ADDRESS OF,
+   LENGTH OF e GIVING/RETURNING. MOVE continua distinguindo CORRESPONDING e
+   preserva referências de group moves e reference modification.
+5. Operações de arquivo mantêm `FileReference`, dados, keys e clauses de fluxo
+   excepcional. Nenhum coletor procura palavras no texto COBOL; a extração
+   percorre exclusivamente contexts e alternativas da gramática versionada.
+6. GREEN/GUARD: 22 testes passaram. As 50 alternativas são comparadas
+   mecanicamente com a gramática e exercitadas por uma fixture sintética. Os
+   nós passaram para 9.189/2.740/2.752 e COACTUPC expõe 2.871 DataReferences;
+   CALLs, escopos, símbolos e diagnósticos permaneceram iguais.
 
 ## Checklist final de regressão
 

@@ -7,6 +7,27 @@ import java.util.*;
 
 /** Builds one immutable semantic AST from the ANTLR parse tree. */
 final class AstBuilder {
+    private static final Set<String> MODELED_GENERIC_STATEMENTS = Set.of(
+            "acceptStatement", "addStatement", "closeStatement", "computeStatement",
+            "continueStatement", "deleteStatement", "divideStatement", "exitStatement",
+            "gobackStatement", "initializeStatement", "inspectStatement", "multiplyStatement",
+            "openStatement", "readStatement", "releaseStatement", "returnStatement",
+            "rewriteStatement", "setStatement", "startStatement", "stopStatement",
+            "stringStatement", "subtractStatement", "unstringStatement", "writeStatement");
+    private static final Set<String> PRESERVED_STATEMENTS = Set.of(
+            "alterStatement", "cancelStatement", "disableStatement", "displayStatement",
+            "enableStatement", "entryStatement", "exhibitStatement", "generateStatement",
+            "initiateStatement", "mergeStatement", "purgeStatement", "receiveStatement",
+            "searchStatement", "sendStatement", "sortStatement", "terminateStatement");
+    private static final Set<String> OPERAND_RULES = Set.of(
+            "identifier", "qualifiedDataName", "procedureName", "fileName", "indexName",
+            "literal", "integerLiteral", "numericLiteral", "dataName", "recordName",
+            "reportName", "cdName", "libraryName", "mnemonicName", "environmentName", "alphabetName");
+    private static final Set<String> FLOW_CLAUSE_RULES = Set.of(
+            "onExceptionClause", "notOnExceptionClause", "onOverflowPhrase", "notOnOverflowPhrase",
+            "onSizeErrorPhrase", "notOnSizeErrorPhrase", "invalidKeyPhrase", "notInvalidKeyPhrase",
+            "atEndPhrase", "notAtEndPhrase", "writeAtEndOfPagePhrase", "writeNotAtEndOfPagePhrase",
+            "receiveNoData", "receiveWithData", "searchWhen");
     private final Parser parser;
     private final String source;
     private final SourceMap sourceMap;
@@ -336,7 +357,8 @@ final class AstBuilder {
 
     private Ast.Statement buildStatement(ParserRuleContext wrapper) {
         ParserRuleContext concrete = directRuleChildren(wrapper).stream().findFirst().orElse(wrapper);
-        Ast.Statement statement = switch (rule(concrete)) {
+        String grammarRule = rule(concrete);
+        Ast.Statement statement = switch (grammarRule) {
             case "callStatement" -> buildCall(concrete);
             case "ifStatement" -> buildIf(concrete);
             case "evaluateStatement" -> buildEvaluate(concrete);
@@ -347,7 +369,11 @@ final class AstBuilder {
             case "execCicsStatement" -> buildEmbedded(concrete, Ast.EmbeddedLanguage.CICS);
             case "execSqlImsStatement" -> buildEmbedded(concrete, Ast.EmbeddedLanguage.SQLIMS);
             case "nextSentenceStatement" -> new Ast.NextSentenceStatement(meta(concrete));
-            default -> buildUnsupported(concrete);
+            default -> {
+                if (MODELED_GENERIC_STATEMENTS.contains(grammarRule)) yield buildStructuredStatement(concrete, false);
+                if (PRESERVED_STATEMENTS.contains(grammarRule)) yield buildStructuredStatement(concrete, true);
+                throw new IllegalStateException("Unclassified statement alternative: " + grammarRule);
+            }
         };
         coverageDrafts.add(new CoverageDraft(rule(concrete), statement.meta(), sourceText(concrete),
                 statement.meta().id()));
@@ -386,10 +412,69 @@ final class AstBuilder {
                 default -> Ast.PassingMode.REFERENCE;
             };
             Ast.Meta argMeta = meta(arg);
-            arguments.add(new Ast.CallArgument(argMeta, mode, expression(firstDirectOrNearest(arg,
-                    Set.of("identifier", "literal", "fileName")), "argument")));
+            Ast.CallArgumentKind argumentKind = containsToken(arg, "OMITTED")
+                    ? Ast.CallArgumentKind.OMITTED : containsToken(arg, "ADDRESS")
+                    ? Ast.CallArgumentKind.ADDRESS_OF : containsToken(arg, "LENGTH")
+                    ? Ast.CallArgumentKind.LENGTH_OF : Ast.CallArgumentKind.VALUE;
+            ParserRuleContext value = firstDirectOrNearest(arg, Set.of("identifier", "literal", "fileName"));
+            arguments.add(new Ast.CallArgument(argMeta, mode, argumentKind,
+                    argumentKind == Ast.CallArgumentKind.OMITTED ? null : expression(value, "argument"),
+                    sourceText(arg).strip()));
         }
-        return new Ast.CallStatement(meta, kind, target, arguments, directNestedStatements(context));
+        ParserRuleContext giving = firstDescendant(context, "callGivingPhrase");
+        Ast.Expression returning = giving == null ? null
+                : expression(firstDescendant(giving, "identifier"), "call returning");
+        return new Ast.CallStatement(meta, kind, target, arguments, returning, directNestedStatements(context));
+    }
+
+    private Ast.Statement buildStructuredStatement(ParserRuleContext context, boolean preserved) {
+        Ast.Meta meta = meta(context);
+        List<Ast.StatementOperand> operands = new ArrayList<>();
+        collectStatementOperands(context, context, operands);
+        List<Ast.StatementClause> clauses = nearestDescendants(context, FLOW_CLAUSE_RULES).stream()
+                .map(this::buildStatementClause).toList();
+        return preserved
+                ? new Ast.PreservedStatement(meta, rule(context), sourceText(context).strip(), operands, clauses)
+                : new Ast.ModeledStatement(meta, rule(context), sourceText(context).strip(), operands, clauses);
+    }
+
+    private void collectStatementOperands(ParserRuleContext root, ParserRuleContext context,
+                                          List<Ast.StatementOperand> output) {
+        for (ParserRuleContext child : directRuleChildren(context)) {
+            if (child != root && rule(child).equals("statement")) continue;
+            if (OPERAND_RULES.contains(rule(child))) {
+                Ast.Meta operandMeta = meta(child);
+                output.add(new Ast.StatementOperand(operandMeta, rule(context), statementOperand(child)));
+            } else {
+                collectStatementOperands(root, child, output);
+            }
+        }
+    }
+
+    private Ast.Node statementOperand(ParserRuleContext context) {
+        return switch (rule(context)) {
+            case "identifier", "qualifiedDataName" -> expression(context, "statement operand");
+            case "procedureName" -> procedureReference(context);
+            case "fileName" -> new Ast.FileReference(meta(context), clean(sourceText(context)), sourceText(context).strip());
+            case "indexName" -> new Ast.IndexReference(meta(context), clean(sourceText(context)), sourceText(context).strip());
+            case "literal", "integerLiteral", "numericLiteral" -> literalExpression(context);
+            default -> new Ast.NamedReference(meta(context), rule(context), sourceText(context).strip());
+        };
+    }
+
+    private Ast.StatementClause buildStatementClause(ParserRuleContext context) {
+        Ast.Meta meta = meta(context);
+        return new Ast.StatementClause(meta, rule(context), sourceText(context).strip(), List.of(),
+                statementsInside(context));
+    }
+
+    static Set<String> supportedStatementRules() {
+        Set<String> result = new LinkedHashSet<>(MODELED_GENERIC_STATEMENTS);
+        result.addAll(PRESERVED_STATEMENTS);
+        result.addAll(Set.of("callStatement", "ifStatement", "evaluateStatement", "performStatement",
+                "goToStatement", "moveStatement", "execSqlStatement", "execCicsStatement",
+                "execSqlImsStatement", "nextSentenceStatement"));
+        return Set.copyOf(result);
     }
 
     private Ast.IfStatement buildIf(ParserRuleContext context) {

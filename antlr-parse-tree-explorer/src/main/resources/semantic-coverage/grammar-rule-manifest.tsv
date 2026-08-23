@@ -269,12 +269,12 @@ COBOL	paragraphs	PROCEDURE_STRUCTURE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	
 COBOL	paragraph	PROCEDURE_STRUCTURE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Procedure structure is cataloged; signatures and some relationships remain unmodeled.
 COBOL	sentence	PROCEDURE_STRUCTURE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Procedure structure is cataloged; signatures and some relationships remain unmodeled.
 COBOL	statement	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
-COBOL	acceptStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
+COBOL	acceptStatement	STATEMENT	MODELED	REFERENCE_READY	Statement operands and flow clauses are structurally modeled from grammar contexts.
 COBOL	acceptFromDateStatement	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	acceptFromMnemonicStatement	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	acceptFromEscapeKeyStatement	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	acceptMessageCountStatement	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
-COBOL	addStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
+COBOL	addStatement	STATEMENT	MODELED	REFERENCE_READY	Statement operands and flow clauses are structurally modeled from grammar contexts.
 COBOL	addToStatement	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	addToGivingStatement	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	addCorrespondingStatement	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
@@ -283,7 +283,7 @@ COBOL	addTo	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	State
 COBOL	addToGiving	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	addGiving	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	alteredGoTo	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
-COBOL	alterStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
+COBOL	alterStatement	STATEMENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement has a grammar-specific preserved node and requires later semantic interpretation.
 COBOL	alterProceedTo	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	callStatement	STATEMENT	MODELED	REFERENCE_READY	Statement has a dedicated AST node; nested semantic detail may still remain incomplete.
 COBOL	callUsingPhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
@@ -295,9 +295,9 @@ COBOL	callByValue	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN
 COBOL	callByContentPhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	callByContent	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	callGivingPhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
-COBOL	cancelStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
+COBOL	cancelStatement	STATEMENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement has a grammar-specific preserved node and requires later semantic interpretation.
 COBOL	cancelCall	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
-COBOL	closeStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
+COBOL	closeStatement	STATEMENT	MODELED	REFERENCE_READY	Statement operands and flow clauses are structurally modeled from grammar contexts.
 COBOL	closeFile	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	closeReelUnitStatement	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	closeRelativeStatement	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
@@ -306,17 +306,17 @@ COBOL	closePortFileIOUsing	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENC
 COBOL	closePortFileIOUsingCloseDisposition	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	closePortFileIOUsingAssociatedData	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	closePortFileIOUsingAssociatedDataLength	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
-COBOL	computeStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
+COBOL	computeStatement	STATEMENT	MODELED	REFERENCE_READY	Statement operands and flow clauses are structurally modeled from grammar contexts.
 COBOL	computeStore	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
-COBOL	continueStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
-COBOL	deleteStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
-COBOL	disableStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
-COBOL	displayStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
+COBOL	continueStatement	STATEMENT	MODELED	NOT_DEPENDENCY_BEARING	Flow statement is structurally modeled and does not itself name a dependency.
+COBOL	deleteStatement	STATEMENT	MODELED	REFERENCE_READY	Statement operands and flow clauses are structurally modeled from grammar contexts.
+COBOL	disableStatement	STATEMENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement has a grammar-specific preserved node and requires later semantic interpretation.
+COBOL	displayStatement	STATEMENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement has a grammar-specific preserved node and requires later semantic interpretation.
 COBOL	displayOperand	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	displayAt	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	displayUpon	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	displayWith	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
-COBOL	divideStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
+COBOL	divideStatement	STATEMENT	MODELED	REFERENCE_READY	Statement operands and flow clauses are structurally modeled from grammar contexts.
 COBOL	divideIntoStatement	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	divideIntoGivingStatement	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	divideByGivingStatement	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
@@ -324,9 +324,9 @@ COBOL	divideGivingPhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_
 COBOL	divideInto	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	divideGiving	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	divideRemainder	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
-COBOL	enableStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
-COBOL	entryStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
-COBOL	evaluateStatement	STATEMENT	MODELED	DEPENDENCY_UNKNOWN	Statement has a dedicated AST node; nested semantic detail may still remain incomplete.
+COBOL	enableStatement	STATEMENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement has a grammar-specific preserved node and requires later semantic interpretation.
+COBOL	entryStatement	STATEMENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement has a grammar-specific preserved node and requires later semantic interpretation.
+COBOL	evaluateStatement	STATEMENT	MODELED	REFERENCE_READY	Statement has structured expressions and nested flow with references preserved.
 COBOL	evaluateSelect	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	evaluateAlsoSelect	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	evaluateWhenPhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
@@ -339,22 +339,22 @@ COBOL	evaluateValue	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNO
 COBOL	execCicsStatement	STATEMENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Embedded-language payload is preserved opaquely and requires a future plugin.
 COBOL	execSqlStatement	STATEMENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Embedded-language payload is preserved opaquely and requires a future plugin.
 COBOL	execSqlImsStatement	STATEMENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Embedded-language payload is preserved opaquely and requires a future plugin.
-COBOL	exhibitStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
+COBOL	exhibitStatement	STATEMENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement has a grammar-specific preserved node and requires later semantic interpretation.
 COBOL	exhibitOperand	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
-COBOL	exitStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
-COBOL	generateStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
-COBOL	gobackStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
-COBOL	goToStatement	STATEMENT	MODELED	DEPENDENCY_UNKNOWN	Statement has a dedicated AST node; nested semantic detail may still remain incomplete.
+COBOL	exitStatement	STATEMENT	MODELED	NOT_DEPENDENCY_BEARING	Flow statement is structurally modeled and does not itself name a dependency.
+COBOL	generateStatement	STATEMENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement has a grammar-specific preserved node and requires later semantic interpretation.
+COBOL	gobackStatement	STATEMENT	MODELED	NOT_DEPENDENCY_BEARING	Flow statement is structurally modeled and does not itself name a dependency.
+COBOL	goToStatement	STATEMENT	MODELED	REFERENCE_READY	Statement has structured procedure targets and selector references.
 COBOL	goToStatementSimple	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	goToDependingOnStatement	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
-COBOL	ifStatement	STATEMENT	MODELED	DEPENDENCY_UNKNOWN	Statement has a dedicated AST node; nested semantic detail may still remain incomplete.
+COBOL	ifStatement	STATEMENT	MODELED	REFERENCE_READY	Statement has a structured condition and nested flow.
 COBOL	ifThen	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	ifElse	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
-COBOL	initializeStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
+COBOL	initializeStatement	STATEMENT	MODELED	REFERENCE_READY	Statement operands and flow clauses are structurally modeled from grammar contexts.
 COBOL	initializeReplacingPhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	initializeReplacingBy	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
-COBOL	initiateStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
-COBOL	inspectStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
+COBOL	initiateStatement	STATEMENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement has a grammar-specific preserved node and requires later semantic interpretation.
+COBOL	inspectStatement	STATEMENT	MODELED	REFERENCE_READY	Statement operands and flow clauses are structurally modeled from grammar contexts.
 COBOL	inspectTallyingPhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	inspectReplacingPhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	inspectTallyingReplacingPhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
@@ -369,7 +369,7 @@ COBOL	inspectReplacingAllLeading	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEP
 COBOL	inspectBy	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	inspectTo	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	inspectBeforeAfter	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
-COBOL	mergeStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
+COBOL	mergeStatement	STATEMENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement has a grammar-specific preserved node and requires later semantic interpretation.
 COBOL	mergeOnKeyClause	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	mergeCollatingSequencePhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	mergeCollatingAlphanumeric	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
@@ -379,26 +379,26 @@ COBOL	mergeOutputProcedurePhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEP
 COBOL	mergeOutputThrough	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	mergeGivingPhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	mergeGiving	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
-COBOL	moveStatement	STATEMENT	MODELED	DEPENDENCY_UNKNOWN	Statement has a dedicated AST node; nested semantic detail may still remain incomplete.
+COBOL	moveStatement	STATEMENT	MODELED	REFERENCE_READY	Statement preserves source, targets, group move and CORRESPONDING.
 COBOL	moveToStatement	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	moveToSendingArea	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	moveCorrespondingToStatement	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	moveCorrespondingToSendingArea	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
-COBOL	multiplyStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
+COBOL	multiplyStatement	STATEMENT	MODELED	REFERENCE_READY	Statement operands and flow clauses are structurally modeled from grammar contexts.
 COBOL	multiplyRegular	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	multiplyRegularOperand	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	multiplyGiving	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	multiplyGivingOperand	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	multiplyGivingResult	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	nextSentenceStatement	STATEMENT	MODELED	NOT_DEPENDENCY_BEARING	Statement has a dedicated AST node; nested semantic detail may still remain incomplete.
-COBOL	openStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
+COBOL	openStatement	STATEMENT	MODELED	REFERENCE_READY	Statement operands and flow clauses are structurally modeled from grammar contexts.
 COBOL	openInputStatement	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	openInput	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	openOutputStatement	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	openOutput	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	openIOStatement	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	openExtendStatement	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
-COBOL	performStatement	STATEMENT	MODELED	DEPENDENCY_UNKNOWN	Statement has a dedicated AST node; nested semantic detail may still remain incomplete.
+COBOL	performStatement	STATEMENT	MODELED	REFERENCE_READY	Statement preserves procedure targets, controls and nested flow.
 COBOL	performInlineStatement	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	performProcedureStatement	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	performType	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
@@ -411,12 +411,12 @@ COBOL	performAfter	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOW
 COBOL	performFrom	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	performBy	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	performTestClause	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
-COBOL	purgeStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
-COBOL	readStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
+COBOL	purgeStatement	STATEMENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement has a grammar-specific preserved node and requires later semantic interpretation.
+COBOL	readStatement	STATEMENT	MODELED	REFERENCE_READY	Statement operands and flow clauses are structurally modeled from grammar contexts.
 COBOL	readInto	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	readWith	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	readKey	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
-COBOL	receiveStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
+COBOL	receiveStatement	STATEMENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement has a grammar-specific preserved node and requires later semantic interpretation.
 COBOL	receiveFromStatement	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	receiveFrom	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	receiveIntoStatement	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
@@ -427,15 +427,15 @@ COBOL	receiveWith	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN
 COBOL	receiveThread	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	receiveSize	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	receiveStatus	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
-COBOL	releaseStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
-COBOL	returnStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
+COBOL	releaseStatement	STATEMENT	MODELED	REFERENCE_READY	Statement operands and flow clauses are structurally modeled from grammar contexts.
+COBOL	returnStatement	STATEMENT	MODELED	REFERENCE_READY	Statement operands and flow clauses are structurally modeled from grammar contexts.
 COBOL	returnInto	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
-COBOL	rewriteStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
+COBOL	rewriteStatement	STATEMENT	MODELED	REFERENCE_READY	Statement operands and flow clauses are structurally modeled from grammar contexts.
 COBOL	rewriteFrom	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
-COBOL	searchStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
+COBOL	searchStatement	STATEMENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement has a grammar-specific preserved node and requires later semantic interpretation.
 COBOL	searchVarying	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	searchWhen	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
-COBOL	sendStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
+COBOL	sendStatement	STATEMENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement has a grammar-specific preserved node and requires later semantic interpretation.
 COBOL	sendStatementSync	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	sendStatementAsync	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	sendFromPhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
@@ -445,13 +445,13 @@ COBOL	sendAdvancingPhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY
 COBOL	sendAdvancingPage	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	sendAdvancingLines	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	sendAdvancingMnemonic	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
-COBOL	setStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
+COBOL	setStatement	STATEMENT	MODELED	REFERENCE_READY	Statement operands and flow clauses are structurally modeled from grammar contexts.
 COBOL	setToStatement	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	setUpDownByStatement	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	setTo	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	setToValue	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	setByValue	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
-COBOL	sortStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
+COBOL	sortStatement	STATEMENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement has a grammar-specific preserved node and requires later semantic interpretation.
 COBOL	sortOnKeyClause	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	sortDuplicatesPhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	sortCollatingSequencePhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
@@ -464,18 +464,18 @@ COBOL	sortOutputProcedurePhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPE
 COBOL	sortOutputThrough	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	sortGivingPhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	sortGiving	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
-COBOL	startStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
+COBOL	startStatement	STATEMENT	MODELED	REFERENCE_READY	Statement operands and flow clauses are structurally modeled from grammar contexts.
 COBOL	startKey	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
-COBOL	stopStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
+COBOL	stopStatement	STATEMENT	MODELED	NOT_DEPENDENCY_BEARING	Flow statement is structurally modeled and does not itself name a dependency.
 COBOL	stopStatementGiving	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
-COBOL	stringStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
+COBOL	stringStatement	STATEMENT	MODELED	REFERENCE_READY	Statement operands and flow clauses are structurally modeled from grammar contexts.
 COBOL	stringSendingPhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	stringSending	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	stringDelimitedByPhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	stringForPhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	stringIntoPhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	stringWithPointerPhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
-COBOL	subtractStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
+COBOL	subtractStatement	STATEMENT	MODELED	REFERENCE_READY	Statement operands and flow clauses are structurally modeled from grammar contexts.
 COBOL	subtractFromStatement	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	subtractFromGivingStatement	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	subtractCorrespondingStatement	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
@@ -484,8 +484,8 @@ COBOL	subtractMinuend	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNK
 COBOL	subtractMinuendGiving	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	subtractGiving	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	subtractMinuendCorresponding	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
-COBOL	terminateStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
-COBOL	unstringStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
+COBOL	terminateStatement	STATEMENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement has a grammar-specific preserved node and requires later semantic interpretation.
+COBOL	unstringStatement	STATEMENT	MODELED	REFERENCE_READY	Statement operands and flow clauses are structurally modeled from grammar contexts.
 COBOL	unstringSendingPhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	unstringDelimitedByPhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	unstringOrAllPhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
@@ -500,7 +500,7 @@ COBOL	useAfterClause	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKN
 COBOL	useAfterOn	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	useDebugClause	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	useDebugOn	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
-COBOL	writeStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
+COBOL	writeStatement	STATEMENT	MODELED	REFERENCE_READY	Statement operands and flow clauses are structurally modeled from grammar contexts.
 COBOL	writeFromPhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	writeAdvancingPhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	writeAdvancingPage	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.

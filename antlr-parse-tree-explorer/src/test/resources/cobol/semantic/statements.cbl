@@ -1,0 +1,65 @@
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID. STMTTEST.
+       DATA DIVISION.
+       WORKING-STORAGE SECTION.
+       01 A PIC 9.
+       01 B PIC 9.
+       01 C PIC 9.
+       01 REC PIC X.
+       PROCEDURE DIVISION.
+           ACCEPT A
+           ADD 1 TO A
+           ALTER P1 TO PROCEED TO P2
+           CALL 'PGM' USING BY REFERENCE A OMITTED
+                    BY VALUE LENGTH OF B BY CONTENT C
+                    GIVING B
+           CANCEL 'PGM'
+           CLOSE F
+           COMPUTE A = B + 1
+           CONTINUE
+           DELETE F
+           DISABLE INPUT COMM-NAME WITH KEY A
+           DISPLAY A
+           DIVIDE A INTO B
+           ENABLE INPUT COMM-NAME WITH KEY A
+           ENTRY 'ENTRY-A' USING A
+           EVALUATE A WHEN 1 CONTINUE END-EVALUATE
+           EXHIBIT A
+       *>EXECCICS SEND
+       *>EXECSQL SELECT 1
+       *>EXECSQLIMS SELECT 1
+           EXIT PROGRAM
+           GENERATE R
+           GOBACK
+           GO TO P1
+           IF A = B CONTINUE END-IF
+           INITIALIZE A
+           INITIATE R
+           INSPECT A TALLYING B FOR CHARACTERS
+           MERGE S ON ASCENDING KEY A USING F GIVING G
+           MOVE CORRESPONDING A TO B
+           MULTIPLY A BY B
+           NEXT SENTENCE
+           OPEN INPUT F
+           PERFORM P1
+           PURGE COMM-NAME
+           READ F INTO A END-READ
+           RECEIVE COMM-NAME MESSAGE INTO A
+           RELEASE REC FROM A
+           RETURN S INTO A AT END CONTINUE END-RETURN
+           REWRITE REC FROM A END-REWRITE
+           SEARCH A WHEN B = C CONTINUE END-SEARCH
+           SEND A
+           SET A TO B
+           SORT S ON ASCENDING KEY A USING F GIVING G
+           START F KEY IS EQUAL TO A END-START
+           STOP RUN
+           STRING A DELIMITED BY SIZE INTO B END-STRING
+           SUBTRACT A FROM B
+           TERMINATE R
+           UNSTRING A INTO B END-UNSTRING
+           WRITE REC FROM A END-WRITE.
+       P1.
+           CONTINUE.
+       P2.
+           GOBACK.

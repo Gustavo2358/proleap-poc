@@ -609,15 +609,15 @@ navegáveis da métrica agregada até fonte/parse tree.
 
 ### Fase 6 — Statements que definem ou transportam valores
 
-- [ ] Fortalecer MOVE/CALL com testes RED, incluindo CORRESPONDING, group move,
+- [x] Fortalecer MOVE/CALL com testes RED, incluindo CORRESPONDING, group move,
       modos de passagem e GIVING.
-- [ ] Implementar por TDD, uma fatia por vez, ACCEPT, arithmetic statements,
+- [x] Implementar por TDD, uma fatia por vez, ACCEPT, arithmetic statements,
       INITIALIZE, INSPECT, SET, STRING e UNSTRING.
-- [ ] Implementar por TDD as operações de arquivo classificadas para modelagem
+- [x] Implementar por TDD as operações de arquivo classificadas para modelagem
       semântica, preservando FILE/DATA references e clauses de fluxo excepcional.
-- [ ] Para cada statement adiado, implementar visitor gramatical específico e
+- [x] Para cada statement adiado, implementar visitor gramatical específico e
       `PreservedStatement` com `DEPENDENCY_UNKNOWN`.
-- [ ] Validar as 50 fixtures contra o manifesto; nenhuma alternativa poderá cair
+- [x] Validar as 50 fixtures contra o manifesto; nenhuma alternativa poderá cair
       em fallback silencioso.
 
 ### Fase 7 — Snapshots e observabilidade HTML

@@ -28,14 +28,15 @@ class NominalReferenceAstTest {
         assertNull(performs.get(0).throughReference());
         assertEquals("SECOND-PARA", performs.get(1).throughReference().baseName());
 
-        List<Ast.UnsupportedStatement> preserved = nodes(ast, Ast.UnsupportedStatement.class);
-        Ast.UnsupportedStatement alter = byRule(preserved, "alterStatement");
-        assertEquals(List.of("FIRST-PARA", "SECOND-PARA"), alter.recognizedReferences().stream()
+        List<Ast.PreservedStatement> preserved = nodes(ast, Ast.PreservedStatement.class);
+        Ast.PreservedStatement alter = byRule(preserved, "alterStatement");
+        assertEquals(List.of("FIRST-PARA", "SECOND-PARA"), alter.operands().stream()
+                .map(Ast.StatementOperand::value)
                 .filter(Ast.ProcedureReference.class::isInstance).map(Ast.ProcedureReference.class::cast)
                 .map(Ast.ProcedureReference::baseName).toList());
-        assertTrue(byRule(preserved, "sortStatement").recognizedReferences().stream()
+        assertTrue(byRule(preserved, "sortStatement").operands().stream().map(Ast.StatementOperand::value)
                 .anyMatch(Ast.FileReference.class::isInstance));
-        assertTrue(byRule(preserved, "mergeStatement").recognizedReferences().stream()
+        assertTrue(byRule(preserved, "mergeStatement").operands().stream().map(Ast.StatementOperand::value)
                 .filter(Ast.ProcedureReference.class::isInstance).count() >= 2);
     }
 
@@ -56,7 +57,7 @@ class NominalReferenceAstTest {
                 .anyMatch(node -> node.type().equals("ProcedureReference")));
     }
 
-    private static Ast.UnsupportedStatement byRule(List<Ast.UnsupportedStatement> statements, String rule) {
+    private static Ast.PreservedStatement byRule(List<Ast.PreservedStatement> statements, String rule) {
         return statements.stream().filter(statement -> statement.grammarRule().equals(rule)).findFirst().orElseThrow();
     }
 

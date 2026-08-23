@@ -76,7 +76,9 @@ class GrammarCoverageManifestTest {
 
         assertEntry("callStatement", SemanticCoverage.ConstructionCoverage.MODELED,
                 SemanticCoverage.DependencyKnowledge.REFERENCE_READY);
-        assertEntry("setStatement", SemanticCoverage.ConstructionCoverage.UNSUPPORTED,
+        assertEntry("setStatement", SemanticCoverage.ConstructionCoverage.MODELED,
+                SemanticCoverage.DependencyKnowledge.REFERENCE_READY);
+        assertEntry("sortStatement", SemanticCoverage.ConstructionCoverage.PRESERVED_UNINTERPRETED,
                 SemanticCoverage.DependencyKnowledge.DEPENDENCY_UNKNOWN);
         assertEntry("execSqlStatement", SemanticCoverage.ConstructionCoverage.PRESERVED_UNINTERPRETED,
                 SemanticCoverage.DependencyKnowledge.DEPENDENCY_UNKNOWN);

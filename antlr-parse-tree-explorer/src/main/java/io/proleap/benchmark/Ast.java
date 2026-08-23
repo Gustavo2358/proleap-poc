@@ -35,7 +35,8 @@ public final class Ast {
     public sealed interface Node permits Program, Division, Section, FileBinding, FileDescription,
             DataEntry, Paragraph, Sentence, CallArgument, EvaluateBranch, DataQualifier,
             SubscriptGroup, ReferenceModification, ProcedureQualifier, ProcedureReference,
-            ProcedureSignature, ProcedureParameter, Statement, Expression, DataClause {
+            ProcedureSignature, ProcedureParameter, StatementOperand, StatementClause,
+            Statement, Expression, DataClause {
         Meta meta();
     }
 
@@ -50,6 +51,7 @@ public final class Ast {
     public enum ReferenceUnderstanding { STRUCTURED, PRESERVED }
     public enum DataSectionKind { FILE, DATABASE, WORKING_STORAGE, LINKAGE, COMMUNICATION, LOCAL_STORAGE, SCREEN, REPORT, PROGRAM_LIBRARY }
     public enum DataLevelKind { GROUP_OR_ELEMENTARY, STANDALONE_77, RENAMES_66, CONDITION_88, OPAQUE }
+    public enum CallArgumentKind { VALUE, OMITTED, ADDRESS_OF, LENGTH_OF }
 
     public record Program(Meta meta, String name, List<Division> divisions) implements Node {
         public Program { divisions = List.copyOf(divisions); }
@@ -117,21 +119,24 @@ public final class Ast {
 
     public sealed interface Statement extends Node permits CallStatement, IfStatement, EvaluateStatement,
             PerformStatement, GoToStatement, MoveStatement, EmbeddedLanguageStatement,
-            NextSentenceStatement, UnsupportedStatement {}
+            NextSentenceStatement, ModeledStatement, PreservedStatement, UnsupportedStatement {}
 
     public sealed interface Expression extends Node permits LiteralExpression, DataReference,
             OperationExpression, FunctionExpression, SpecialRegisterExpression,
-            FileReference, ProgramReference, IndexReference, PreservedExpression, RawExpression {}
+            FileReference, ProgramReference, IndexReference, NamedReference,
+            PreservedExpression, RawExpression {}
 
     public record CallStatement(Meta meta, CallTargetKind targetKind, Expression target,
-                                List<CallArgument> arguments, List<Statement> exceptionFlow) implements Statement {
+                                List<CallArgument> arguments, Expression returning,
+                                List<Statement> exceptionFlow) implements Statement {
         public CallStatement {
             arguments = List.copyOf(arguments);
             exceptionFlow = List.copyOf(exceptionFlow);
         }
     }
 
-    public record CallArgument(Meta meta, PassingMode passingMode, Expression value) implements Node {}
+    public record CallArgument(Meta meta, PassingMode passingMode, CallArgumentKind argumentKind,
+                               Expression value, String writtenText) implements Node {}
 
     public record IfStatement(Meta meta, Expression condition, List<Statement> thenBranch,
                               List<Statement> elseBranch, boolean explicitlyTerminated) implements Statement {
@@ -188,6 +193,35 @@ public final class Ast {
 
     public record NextSentenceStatement(Meta meta) implements Statement {}
 
+    public record StatementOperand(Meta meta, String grammarRole, Node value) implements Node {}
+
+    public record StatementClause(Meta meta, String grammarRule, String writtenText,
+                                  List<Node> recognizedNodes,
+                                  List<Statement> nestedStatements) implements Node {
+        public StatementClause {
+            recognizedNodes = List.copyOf(recognizedNodes);
+            nestedStatements = List.copyOf(nestedStatements);
+        }
+    }
+
+    public record ModeledStatement(Meta meta, String grammarRule, String writtenText,
+                                   List<StatementOperand> operands,
+                                   List<StatementClause> clauses) implements Statement {
+        public ModeledStatement {
+            operands = List.copyOf(operands);
+            clauses = List.copyOf(clauses);
+        }
+    }
+
+    public record PreservedStatement(Meta meta, String grammarRule, String writtenText,
+                                     List<StatementOperand> operands,
+                                     List<StatementClause> clauses) implements Statement {
+        public PreservedStatement {
+            operands = List.copyOf(operands);
+            clauses = List.copyOf(clauses);
+        }
+    }
+
     /** Keeps unsupported syntax visible and retains any directly nested statements. */
     public record UnsupportedStatement(Meta meta, String grammarRule, String rawText,
                                        List<Node> recognizedReferences,
@@ -240,6 +274,7 @@ public final class Ast {
     public record FileReference(Meta meta, String baseName, String writtenText) implements Expression {}
     public record ProgramReference(Meta meta, String programName, String writtenText) implements Expression {}
     public record IndexReference(Meta meta, String indexName, String writtenText) implements Expression {}
+    public record NamedReference(Meta meta, String grammarKind, String writtenText) implements Expression {}
     public record PreservedExpression(Meta meta, String grammarRule, String writtenText,
                                       List<Expression> recognizedOperands,
                                       ReferenceUnderstanding understanding) implements Expression {
@@ -261,10 +296,12 @@ public final class Ast {
         if (node instanceof Sentence n) return n.statements();
         if (node instanceof CallStatement n) {
             List<Node> result = new ArrayList<>();
-            result.add(n.target()); result.addAll(n.arguments()); result.addAll(n.exceptionFlow());
+            result.add(n.target()); result.addAll(n.arguments());
+            if (n.returning() != null) result.add(n.returning());
+            result.addAll(n.exceptionFlow());
             return result;
         }
-        if (node instanceof CallArgument n) return List.of(n.value());
+        if (node instanceof CallArgument n) return n.value() == null ? List.of() : List.of(n.value());
         if (node instanceof IfStatement n) {
             List<Node> result = new ArrayList<>();
             result.add(n.condition()); result.addAll(n.thenBranch()); result.addAll(n.elseBranch());
@@ -291,6 +328,18 @@ public final class Ast {
         }
         if (node instanceof UnsupportedStatement n) {
             List<Node> result = new ArrayList<>(n.recognizedReferences()); result.addAll(n.nestedStatements()); return result;
+        }
+        if (node instanceof ModeledStatement n) {
+            List<Node> result = new ArrayList<>(n.operands()); result.addAll(n.clauses()); return result;
+        }
+        if (node instanceof PreservedStatement n) {
+            List<Node> result = new ArrayList<>(n.operands()); result.addAll(n.clauses()); return result;
+        }
+        if (node instanceof StatementOperand n) return List.of(n.value());
+        if (node instanceof StatementClause n) {
+            List<Node> result = new ArrayList<>(n.recognizedNodes());
+            result.addAll(n.nestedStatements());
+            return result;
         }
         if (node instanceof DataReference n) {
             List<Node> result = new ArrayList<>(n.qualifiers()); result.addAll(n.subscriptGroups());

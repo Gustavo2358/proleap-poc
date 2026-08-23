@@ -46,11 +46,11 @@ class AstBuildCoverageTest {
                 result.coverage().findings().stream().map(SemanticCoverage.Finding::grammarRule).toList());
         assertEquals(SemanticCoverage.ConstructionCoverage.MODELED,
                 result.coverage().findings().get(0).coverage());
-        assertEquals(SemanticCoverage.ConstructionCoverage.UNSUPPORTED,
+        assertEquals(SemanticCoverage.ConstructionCoverage.MODELED,
                 result.coverage().findings().get(1).coverage());
-        assertEquals(SemanticCoverage.ConstructionCoverage.UNSUPPORTED,
+        assertEquals(SemanticCoverage.ConstructionCoverage.MODELED,
                 result.coverage().findings().get(2).coverage());
-        assertFalse(result.coverage().dependencyCoverageComplete());
+        assertTrue(result.coverage().dependencyCoverageComplete());
 
         AstBuildResult repeated = builder.build(tree);
         assertEquals(result.program(), repeated.program());
