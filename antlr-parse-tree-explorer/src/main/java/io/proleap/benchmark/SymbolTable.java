@@ -18,6 +18,8 @@ public final class SymbolTable {
         FILE_DESCRIPTION,
         DATA_ITEM,
         CONDITION_NAME,
+        RENAMES,
+        INDEX_NAME,
         PROCEDURE_SECTION,
         PARAGRAPH
     }

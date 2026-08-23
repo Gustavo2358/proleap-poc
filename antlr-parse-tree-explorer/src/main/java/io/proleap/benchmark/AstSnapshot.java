@@ -56,7 +56,8 @@ final class AstSnapshot {
                                 Map<String, Integer> typeCounts, Map<Integer, List<Integer>> parseToAst) {
         int id = output.size();
         if (ast.meta().id() != id)
-            throw new IllegalStateException("AST ids are not pre-order: expected " + id + " but got " + ast.meta().id());
+            throw new IllegalStateException("AST ids are not pre-order at "
+                    + ast.getClass().getSimpleName() + ": expected " + id + " but got " + ast.meta().id());
         List<? extends Ast.Node> children = Ast.children(ast);
         String type = ast.getClass().getSimpleName();
         typeCounts.merge(type, 1, Integer::sum);
@@ -76,7 +77,9 @@ final class AstSnapshot {
         if (node instanceof Ast.Division || node instanceof Ast.Section || node instanceof Ast.Paragraph || node instanceof Ast.Sentence) return "structure";
         if (node instanceof Ast.Statement) return "statement";
         if (node instanceof Ast.Expression) return "expression";
-        if (node instanceof Ast.FileBinding || node instanceof Ast.FileDescription || node instanceof Ast.DataEntry) return "declaration";
+        if (node instanceof Ast.FileBinding || node instanceof Ast.FileDescription
+                || node instanceof Ast.DataEntry || node instanceof Ast.DataClause
+                || node instanceof Ast.ProcedureSignature || node instanceof Ast.ProcedureParameter) return "declaration";
         return "semantic";
     }
 
@@ -87,6 +90,15 @@ final class AstSnapshot {
         if (node instanceof Ast.FileBinding n) return n.logicalName();
         if (node instanceof Ast.FileDescription n) return n.fileName();
         if (node instanceof Ast.DataEntry n) return n.level() + " " + n.name();
+        if (node instanceof Ast.PictureClause n) return n.picture();
+        if (node instanceof Ast.UsageClause n) return n.usage();
+        if (node instanceof Ast.ValueClause n) return String.join(", ", n.values());
+        if (node instanceof Ast.RedefinesClause n) return n.writtenText();
+        if (node instanceof Ast.RenamesClause n) return n.writtenText();
+        if (node instanceof Ast.OccursClause n) return n.writtenText();
+        if (node instanceof Ast.PreservedDataClause n) return n.grammarRule();
+        if (node instanceof Ast.ProcedureSignature n) return n.chaining() ? "CHAINING" : "USING";
+        if (node instanceof Ast.ProcedureParameter n) return n.writtenText();
         if (node instanceof Ast.DataQualifier n) return n.writtenText();
         if (node instanceof Ast.SubscriptGroup n) return n.writtenText();
         if (node instanceof Ast.ReferenceModification n) return n.writtenText();
@@ -123,11 +135,33 @@ final class AstSnapshot {
         Map<String, String> result = new LinkedHashMap<>();
         if (node instanceof Ast.Program n) result.put("programName", n.name());
         else if (node instanceof Ast.Division n) result.put("divisionKind", n.divisionKind().name());
+        else if (node instanceof Ast.Section n && n.dataSectionKind() != null) {
+            result.put("dataSectionKind", n.dataSectionKind().name());
+        }
         else if (node instanceof Ast.FileBinding n) {
             result.put("logicalName", n.logicalName()); result.put("assignment", n.assignment());
         } else if (node instanceof Ast.FileDescription n) result.put("fileName", n.fileName());
         else if (node instanceof Ast.DataEntry n) {
-            result.put("level", n.level()); result.put("name", n.name()); result.put("declaration", n.declaration());
+            result.put("level", n.level()); result.put("levelKind", n.levelKind().name());
+            result.put("name", n.name()); result.put("filler", String.valueOf(n.filler()));
+            result.put("declaration", n.declaration());
+        } else if (node instanceof Ast.PictureClause n) {
+            result.put("picture", n.picture()); result.put("writtenText", n.writtenText());
+        } else if (node instanceof Ast.UsageClause n) {
+            result.put("usage", n.usage()); result.put("writtenText", n.writtenText());
+        } else if (node instanceof Ast.ValueClause n) {
+            result.put("values", String.join(" | ", n.values())); result.put("writtenText", n.writtenText());
+        } else if (node instanceof Ast.RedefinesClause n) result.put("writtenText", n.writtenText());
+        else if (node instanceof Ast.RenamesClause n) result.put("writtenText", n.writtenText());
+        else if (node instanceof Ast.OccursClause n) result.put("writtenText", n.writtenText());
+        else if (node instanceof Ast.PreservedDataClause n) {
+            result.put("grammarRule", n.grammarRule()); result.put("writtenText", n.writtenText());
+            result.put("understanding", Ast.ReferenceUnderstanding.PRESERVED.name());
+        } else if (node instanceof Ast.ProcedureSignature n) {
+            result.put("chaining", String.valueOf(n.chaining())); result.put("writtenText", n.writtenText());
+        } else if (node instanceof Ast.ProcedureParameter n) {
+            result.put("passingMode", n.passingMode().name()); result.put("optional", String.valueOf(n.optional()));
+            result.put("any", String.valueOf(n.any())); result.put("writtenText", n.writtenText());
         } else if (node instanceof Ast.DataQualifier n) {
             result.put("connector", n.connector().name()); result.put("name", n.name());
             result.put("writtenText", n.writtenText());

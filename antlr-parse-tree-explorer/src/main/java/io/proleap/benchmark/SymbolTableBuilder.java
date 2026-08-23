@@ -65,34 +65,32 @@ final class SymbolTableBuilder {
     }
 
     private void collectDataEntries(List<Ast.DataEntry> entries, int sectionScope) {
-        Deque<DataLevel> parents = new ArrayDeque<>();
-        int previousDataScope = sectionScope;
         for (Ast.DataEntry entry : entries) {
             int level = parseLevel(entry.level());
             if (level == 88) {
-                if (!isFiller(entry.name())) addSymbol(SymbolTable.SymbolKind.CONDITION_NAME,
-                        SymbolTable.Namespace.DATA, entry.name(), previousDataScope, entry,
-                        dataAttributes(entry));
+                if (!isFiller(entry.name())) {
+                    addSymbol(SymbolTable.SymbolKind.CONDITION_NAME, SymbolTable.Namespace.DATA,
+                            entry.name(), sectionScope, entry, dataAttributes(entry));
+                }
                 continue;
             }
-
-            int declaringScope;
-            if (level == 66 || level == 77 || level <= 1 || level > 49) {
-                parents.clear();
-                declaringScope = sectionScope;
-            } else {
-                while (!parents.isEmpty() && parents.peek().level() >= level) parents.pop();
-                declaringScope = parents.isEmpty() ? sectionScope : parents.peek().scopeId();
-            }
-
-            int symbolId = isFiller(entry.name()) ? -1
-                    : addSymbol(SymbolTable.SymbolKind.DATA_ITEM, SymbolTable.Namespace.DATA,
-                            entry.name(), declaringScope, entry, dataAttributes(entry));
+            SymbolTable.SymbolKind kind = level == 66
+                    ? SymbolTable.SymbolKind.RENAMES
+                    : SymbolTable.SymbolKind.DATA_ITEM;
+            int symbolId = isFiller(entry.name()) ? -1 : addSymbol(kind, SymbolTable.Namespace.DATA,
+                            entry.name(), sectionScope, entry, dataAttributes(entry));
             String scopeName = symbolId < 0 ? "<FILLER@" + entry.meta().span().startLine() + ">" : entry.name();
-            int itemScope = addScope(declaringScope, SymbolTable.ScopeKind.DATA_ITEM,
+            int itemScope = addScope(sectionScope, SymbolTable.ScopeKind.DATA_ITEM,
                     scopeName, symbolId, entry.meta().id());
-            previousDataScope = itemScope;
-            if (level >= 1 && level <= 49) parents.push(new DataLevel(level, itemScope));
+            for (Ast.DataClause clause : entry.clauses()) {
+                if (clause instanceof Ast.OccursClause occurs) {
+                    for (Ast.IndexReference index : occurs.indexes()) {
+                        addSymbol(SymbolTable.SymbolKind.INDEX_NAME, SymbolTable.Namespace.DATA,
+                                index.indexName(), itemScope, index, Map.of("relation", "OCCURS_INDEX"));
+                    }
+                }
+            }
+            collectDataEntries(entry.children(), itemScope);
         }
     }
 
@@ -154,7 +152,24 @@ final class SymbolTableBuilder {
     }
 
     private static Map<String, String> dataAttributes(Ast.DataEntry entry) {
-        return Map.of("level", entry.level(), "declaration", entry.declaration());
+        Map<String, String> attributes = new LinkedHashMap<>();
+        attributes.put("level", entry.level());
+        attributes.put("levelKind", entry.levelKind().name());
+        attributes.put("declaration", entry.declaration());
+        for (Ast.DataClause clause : entry.clauses()) {
+            if (clause instanceof Ast.RedefinesClause redefines) {
+                attributes.put("redefinesTarget", redefines.target().writtenText());
+                attributes.put("relationBinding", "NOT_PERFORMED");
+            } else if (clause instanceof Ast.RenamesClause renames) {
+                attributes.put("renamesFrom", renames.from().writtenText());
+                if (renames.through() != null) attributes.put("renamesThrough", renames.through().writtenText());
+                attributes.put("relationBinding", "NOT_PERFORMED");
+            } else if (clause instanceof Ast.OccursClause occurs && occurs.dependingOn() != null) {
+                attributes.put("occursDependingOn", occurs.dependingOn().writtenText());
+                attributes.put("relationBinding", "NOT_PERFORMED");
+            }
+        }
+        return attributes;
     }
 
     private static int parseLevel(String level) {

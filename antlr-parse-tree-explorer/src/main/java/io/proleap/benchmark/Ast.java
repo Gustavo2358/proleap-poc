@@ -35,7 +35,7 @@ public final class Ast {
     public sealed interface Node permits Program, Division, Section, FileBinding, FileDescription,
             DataEntry, Paragraph, Sentence, CallArgument, EvaluateBranch, DataQualifier,
             SubscriptGroup, ReferenceModification, ProcedureQualifier, ProcedureReference,
-            Statement, Expression {
+            ProcedureSignature, ProcedureParameter, Statement, Expression, DataClause {
         Meta meta();
     }
 
@@ -48,6 +48,8 @@ public final class Ast {
     public enum GoToKind { SIMPLE, DEPENDING_ON }
     public enum QualifierConnector { OF, IN }
     public enum ReferenceUnderstanding { STRUCTURED, PRESERVED }
+    public enum DataSectionKind { FILE, DATABASE, WORKING_STORAGE, LINKAGE, COMMUNICATION, LOCAL_STORAGE, SCREEN, REPORT, PROGRAM_LIBRARY }
+    public enum DataLevelKind { GROUP_OR_ELEMENTARY, STANDALONE_77, RENAMES_66, CONDITION_88, OPAQUE }
 
     public record Program(Meta meta, String name, List<Division> divisions) implements Node {
         public Program { divisions = List.copyOf(divisions); }
@@ -57,8 +59,9 @@ public final class Ast {
         public Division { children = List.copyOf(children); }
     }
 
-    public record Section(Meta meta, String name, List<Node> children) implements Node {
+    public record Section(Meta meta, String name, DataSectionKind dataSectionKind, List<Node> children) implements Node {
         public Section { children = List.copyOf(children); }
+        public Section(Meta meta, String name, List<Node> children) { this(meta, name, null, children); }
     }
 
     public record FileBinding(Meta meta, String logicalName, String assignment) implements Node {}
@@ -67,7 +70,41 @@ public final class Ast {
         public FileDescription { entries = List.copyOf(entries); }
     }
 
-    public record DataEntry(Meta meta, String level, String name, String declaration) implements Node {}
+    public record DataEntry(Meta meta, String level, DataLevelKind levelKind, String name, boolean filler,
+                            String declaration, List<DataClause> clauses, List<DataEntry> children) implements Node {
+        public DataEntry {
+            clauses = List.copyOf(clauses);
+            children = List.copyOf(children);
+        }
+    }
+    public sealed interface DataClause extends Node permits PictureClause, UsageClause, ValueClause,
+            RedefinesClause, RenamesClause, OccursClause, PreservedDataClause {}
+    public record PictureClause(Meta meta, String picture, String writtenText) implements DataClause {}
+    public record UsageClause(Meta meta, String usage, String writtenText) implements DataClause {}
+    public record ValueClause(Meta meta, List<String> values, String writtenText) implements DataClause {
+        public ValueClause { values = List.copyOf(values); }
+    }
+    public record RedefinesClause(Meta meta, DataReference target, String writtenText) implements DataClause {}
+    public record RenamesClause(Meta meta, DataReference from, DataReference through,
+                                String writtenText) implements DataClause {}
+    public record OccursClause(Meta meta, Expression minimum, Expression maximum,
+                               DataReference dependingOn, List<DataReference> keys,
+                               List<IndexReference> indexes, String writtenText) implements DataClause {
+        public OccursClause {
+            keys = List.copyOf(keys);
+            indexes = List.copyOf(indexes);
+        }
+    }
+    public record PreservedDataClause(Meta meta, String grammarRule, String writtenText,
+                                      List<Node> recognizedReferences) implements DataClause {
+        public PreservedDataClause { recognizedReferences = List.copyOf(recognizedReferences); }
+    }
+    public record ProcedureSignature(Meta meta, boolean chaining, List<ProcedureParameter> parameters,
+                                     DataReference returning, String writtenText) implements Node {
+        public ProcedureSignature { parameters = List.copyOf(parameters); }
+    }
+    public record ProcedureParameter(Meta meta, PassingMode passingMode, Expression reference,
+                                     boolean optional, boolean any, String writtenText) implements Node {}
 
     public record Paragraph(Meta meta, String name, List<Sentence> sentences) implements Node {
         public Paragraph { sentences = List.copyOf(sentences); }
@@ -215,6 +252,11 @@ public final class Ast {
         if (node instanceof Division n) return n.children();
         if (node instanceof Section n) return n.children();
         if (node instanceof FileDescription n) return n.entries();
+        if (node instanceof DataEntry n) {
+            List<Node> result = new ArrayList<>(n.clauses());
+            result.addAll(n.children());
+            return result;
+        }
         if (node instanceof Paragraph n) return n.sentences();
         if (node instanceof Sentence n) return n.statements();
         if (node instanceof CallStatement n) {
@@ -257,6 +299,24 @@ public final class Ast {
         }
         if (node instanceof DataQualifier n) return List.of(n.reference());
         if (node instanceof ProcedureReference n) return n.qualifier() == null ? List.of() : List.of(n.qualifier());
+        if (node instanceof ProcedureSignature n) {
+            List<Node> result = new ArrayList<>(n.parameters());
+            if (n.returning() != null) result.add(n.returning());
+            return result;
+        }
+        if (node instanceof ProcedureParameter n) return n.reference() == null ? List.of() : List.of(n.reference());
+        if (node instanceof RedefinesClause n) return List.of(n.target());
+        if (node instanceof RenamesClause n) return n.through()==null?List.of(n.from()):List.of(n.from(),n.through());
+        if (node instanceof OccursClause n) {
+            List<Node> result = new ArrayList<>();
+            if (n.minimum() != null) result.add(n.minimum());
+            if (n.maximum() != null) result.add(n.maximum());
+            if (n.dependingOn() != null) result.add(n.dependingOn());
+            result.addAll(n.keys());
+            result.addAll(n.indexes());
+            return result;
+        }
+        if (node instanceof PreservedDataClause n) return n.recognizedReferences();
         if (node instanceof SubscriptGroup n) return n.subscripts();
         if (node instanceof ReferenceModification n) {
             if (n.length() == null) return List.of(n.offset());

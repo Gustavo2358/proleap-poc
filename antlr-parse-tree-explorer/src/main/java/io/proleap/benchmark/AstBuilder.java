@@ -89,14 +89,14 @@ final class AstBuilder {
                     Ast.Meta fdMeta = meta(fd);
                     ParserRuleContext fileName = firstDescendant(fd, "fileName");
                     List<Ast.DataEntry> dataEntries = new ArrayList<>();
-                    for (ParserRuleContext data : directChildrenNamed(fd, "dataDescriptionEntry")) dataEntries.add(buildDataEntry(data));
+                    dataEntries.addAll(buildDataHierarchy(directChildrenNamed(fd, "dataDescriptionEntry")));
                     entries.add(new Ast.FileDescription(fdMeta,
                             fileName == null ? "<unknown>" : clean(sourceText(fileName)), dataEntries));
                 }
             } else {
-                for (ParserRuleContext data : nearestDescendants(sectionContext, "dataDescriptionEntry")) entries.add(buildDataEntry(data));
+                entries.addAll(buildDataHierarchy(nearestDescendants(sectionContext, "dataDescriptionEntry")));
             }
-            sections.add(new Ast.Section(sectionMeta, displayRule(rule(sectionContext)), entries));
+            sections.add(new Ast.Section(sectionMeta, displayRule(rule(sectionContext)), dataSectionKind(rule(sectionContext)), entries));
         }
         return new Ast.Division(meta, Ast.DivisionKind.DATA, sections);
     }
@@ -108,12 +108,154 @@ final class AstBuilder {
         String level = raw.matches("^\\d+.*") ? raw.replaceFirst("^(\\d+).*", "$1") : rule(format).contains("ExecSql") ? "SQL" : "?";
         ParserRuleContext name = firstDescendant(format, "dataName");
         if (name == null) name = firstDescendant(format, "conditionName");
-        return new Ast.DataEntry(meta, level, name == null ? "FILLER" : clean(sourceText(name)), raw);
+        boolean filler = name == null;
+        List<Ast.DataClause> clauses = directRuleChildren(format).stream()
+                .filter(child -> rule(child).startsWith("data") && rule(child).endsWith("Clause"))
+                .map(this::buildDataClause).toList();
+        return new Ast.DataEntry(meta, level, levelKind(level), filler ? "FILLER" : clean(sourceText(name)),
+                filler, raw, clauses, List.of());
+    }
+
+    private static final class DataDraft {
+        private final Ast.DataEntry entry;
+        private final List<DataDraft> children = new ArrayList<>();
+
+        private DataDraft(Ast.DataEntry entry) {
+            this.entry = entry;
+        }
+    }
+
+    private List<Ast.DataEntry> buildDataHierarchy(List<ParserRuleContext> contexts) {
+        List<DataDraft> roots = new ArrayList<>();
+        Deque<Map.Entry<Integer, DataDraft>> stack = new ArrayDeque<>();
+        DataDraft previous = null;
+        for (ParserRuleContext context : contexts) {
+            Ast.DataEntry entry = buildDataEntry(context);
+            int level = parseLevel(entry.level());
+            DataDraft draft = new DataDraft(entry);
+            if (level == 88 && previous != null) {
+                previous.children.add(draft);
+                continue;
+            }
+
+            while (!stack.isEmpty() && stack.peek().getKey() >= level) stack.pop();
+            if (level == 66) {
+                DataDraft owner = stack.stream().reduce((a, b) -> b)
+                        .map(Map.Entry::getValue).orElse(null);
+                if (owner == null) roots.add(draft); else owner.children.add(draft);
+                continue;
+            }
+
+            if (stack.isEmpty() || level == 77) roots.add(draft);
+            else stack.peek().getValue().children.add(draft);
+            if (level >= 1 && level <= 49) stack.push(Map.entry(level, draft));
+            previous = draft;
+        }
+        return roots.stream().map(this::freezeDataDraft).toList();
+    }
+
+    private Ast.DataEntry freezeDataDraft(DataDraft draft) {
+        Ast.DataEntry entry = draft.entry;
+        return new Ast.DataEntry(entry.meta(), entry.level(), entry.levelKind(), entry.name(), entry.filler(),
+                entry.declaration(), entry.clauses(),
+                draft.children.stream().map(this::freezeDataDraft).toList());
+    }
+
+    private Ast.DataClause buildDataClause(ParserRuleContext context) {
+        String grammarRule = rule(context);
+        String writtenText = sourceText(context).strip();
+        Ast.Meta meta = meta(context);
+        if (grammarRule.equals("dataPictureClause")) {
+            ParserRuleContext picture = firstDescendant(context, "pictureString");
+            return new Ast.PictureClause(meta, picture == null ? "" : sourceText(picture).strip(), writtenText);
+        }
+        if (grammarRule.equals("dataUsageClause")) {
+            String usage = writtenText.replaceFirst("(?i)^USAGE\\s+(IS\\s+)?", "");
+            return new Ast.UsageClause(meta, usage, writtenText);
+        }
+        if (grammarRule.equals("dataValueClause")) {
+            List<String> values = directChildrenNamed(context, "dataValueInterval").stream()
+                    .map(this::sourceText).map(String::strip).toList();
+            return new Ast.ValueClause(meta, values, writtenText);
+        }
+        if (grammarRule.equals("dataRedefinesClause")) {
+            return new Ast.RedefinesClause(meta,
+                    simpleDataReference(firstDescendant(context, "dataName")), writtenText);
+        }
+        if (grammarRule.equals("dataRenamesClause")) {
+            List<ParserRuleContext> names = nearestDescendants(context, "qualifiedDataName");
+            Ast.DataReference from = (Ast.DataReference) expression(names.get(0), "renames");
+            Ast.DataReference through = names.size() > 1
+                    ? (Ast.DataReference) expression(names.get(1), "renames through") : null;
+            return new Ast.RenamesClause(meta, from, through, writtenText);
+        }
+        if (grammarRule.equals("dataOccursClause")) {
+            ParserRuleContext first = firstDirectOrNearest(context, Set.of("identifier", "integerLiteral"));
+            ParserRuleContext to = firstDescendant(context, "dataOccursTo");
+            ParserRuleContext depending = firstDescendant(context, "dataOccursDepending");
+            Ast.Expression minimum = expression(first, "occurs minimum");
+            Ast.Expression maximum = to == null ? null
+                    : expression(firstDescendant(to, "integerLiteral"), "occurs maximum");
+            Ast.DataReference dependingOn = depending == null ? null
+                    : (Ast.DataReference) expression(firstDescendant(depending, "qualifiedDataName"),
+                    "occurs depending");
+            List<Ast.DataReference> keys = nearestDescendants(context, "dataOccursSort").stream()
+                    .flatMap(x -> nearestDescendants(x, "qualifiedDataName").stream())
+                    .map(x -> (Ast.DataReference) expression(x, "occurs key"))
+                    .toList();
+            List<Ast.IndexReference> indexes = nearestDescendants(context, "dataOccursIndexed").stream()
+                    .flatMap(x -> nearestDescendants(x, "indexName").stream())
+                    .map(x -> new Ast.IndexReference(meta(x), clean(sourceText(x)), sourceText(x).strip()))
+                    .toList();
+            return new Ast.OccursClause(meta, minimum, maximum, dependingOn, keys, indexes, writtenText);
+        }
+        List<Ast.Node> references = nearestDescendants(context,
+                Set.of("qualifiedDataName", "identifier", "fileName", "indexName")).stream()
+                .map(node -> rule(node).equals("qualifiedDataName") || rule(node).equals("identifier")
+                        ? expression(node, "data clause") : nominalReference(node))
+                .map(Ast.Node.class::cast).toList();
+        return new Ast.PreservedDataClause(meta, grammarRule, writtenText, references);
+    }
+
+    private Ast.DataReference simpleDataReference(ParserRuleContext context) {
+        return new Ast.DataReference(meta(context), clean(sourceText(context)), sourceText(context).strip(),
+                List.of(), List.of(), null, Ast.ReferenceUnderstanding.STRUCTURED);
+    }
+
+    private static Ast.DataLevelKind levelKind(String level) {
+        return switch (level) {
+            case "66" -> Ast.DataLevelKind.RENAMES_66;
+            case "77" -> Ast.DataLevelKind.STANDALONE_77;
+            case "88" -> Ast.DataLevelKind.CONDITION_88;
+            default -> level.matches("\\d+")
+                    ? Ast.DataLevelKind.GROUP_OR_ELEMENTARY : Ast.DataLevelKind.OPAQUE;
+        };
+    }
+
+    private static int parseLevel(String level) {
+        try { return Integer.parseInt(level); }
+        catch (NumberFormatException ignored) { return -1; }
+    }
+
+    private static Ast.DataSectionKind dataSectionKind(String grammarRule) {
+        return switch (grammarRule) {
+            case "fileSection" -> Ast.DataSectionKind.FILE;
+            case "dataBaseSection" -> Ast.DataSectionKind.DATABASE;
+            case "workingStorageSection" -> Ast.DataSectionKind.WORKING_STORAGE;
+            case "linkageSection" -> Ast.DataSectionKind.LINKAGE;
+            case "communicationSection" -> Ast.DataSectionKind.COMMUNICATION;
+            case "localStorageSection" -> Ast.DataSectionKind.LOCAL_STORAGE;
+            case "screenSection" -> Ast.DataSectionKind.SCREEN;
+            case "reportSection" -> Ast.DataSectionKind.REPORT;
+            default -> Ast.DataSectionKind.PROGRAM_LIBRARY;
+        };
     }
 
     private Ast.Division buildProcedure(ParserRuleContext context) {
         Ast.Meta meta = meta(context);
         List<Ast.Node> children = new ArrayList<>();
+        Ast.ProcedureSignature signature = buildProcedureSignature(context);
+        if (signature != null) children.add(signature);
         ParserRuleContext body = firstDescendant(context, "procedureDivisionBody");
         if (body != null) {
             for (ParserRuleContext child : directRuleChildren(body)) {
@@ -122,6 +264,37 @@ final class AstBuilder {
             }
         }
         return new Ast.Division(meta, Ast.DivisionKind.PROCEDURE, children);
+    }
+
+    private Ast.ProcedureSignature buildProcedureSignature(ParserRuleContext context) {
+        ParserRuleContext using = firstDescendant(context, "procedureDivisionUsingClause");
+        ParserRuleContext giving = firstDescendant(context, "procedureDivisionGivingClause");
+        if (using == null && giving == null) return null;
+
+        ParserRuleContext anchor = using != null ? using : giving;
+        Ast.Meta meta = meta(anchor);
+        List<Ast.ProcedureParameter> parameters = new ArrayList<>();
+        if (using != null) {
+            for (ParserRuleContext parameter : nearestDescendants(using,
+                    Set.of("procedureDivisionByReference", "procedureDivisionByValue"))) {
+                Ast.Meta parameterMeta = meta(parameter);
+                boolean any = containsToken(parameter, "ANY");
+                boolean optional = containsToken(parameter, "OPTIONAL");
+                ParserRuleContext value = firstDirectOrNearest(parameter,
+                        Set.of("identifier", "fileName", "literal"));
+                Ast.PassingMode mode = rule(parameter).contains("ByValue")
+                        ? Ast.PassingMode.VALUE : Ast.PassingMode.REFERENCE;
+                parameters.add(new Ast.ProcedureParameter(parameterMeta, mode,
+                        any ? null : expression(value, "procedure parameter"), optional, any,
+                        sourceText(parameter).strip()));
+            }
+        }
+        Ast.DataReference returning = giving == null ? null
+                : simpleDataReference(firstDescendant(giving, "dataName"));
+        String writtenText = sourceText(anchor).strip()
+                + (giving == null ? "" : " " + sourceText(giving).strip());
+        return new Ast.ProcedureSignature(meta, using != null && containsToken(using, "CHAINING"),
+                parameters, returning, writtenText);
     }
 
     private Ast.Section buildProcedureSection(ParserRuleContext context) {

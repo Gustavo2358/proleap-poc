@@ -55,7 +55,7 @@ deverão permanecer e toda diferença será explicada neste relatório.
 | 2 — proveniência | aprovada | 13 testes Maven verdes; fixtures de COPY aninhado, REPLACING e COPY ausente | `Meta` e snapshot expõem arquivo/linha/include chain/exatidão; `writtenName` mantém separadores | contextos que cruzam fronteiras são marcados `exact=false`; COPY ausente continua diagnóstico explícito |
 | 3 — referências/expressões | aprovada | 15 testes Maven verdes; fixtures gramaticais focadas | referências, qualificadores recursivos, subscritos, reference modification e expressões são nós alcançáveis | construções não interpretadas usam `PreservedExpression`; sem binding ou valores resolvidos |
 | 4 — procedure references | aprovada | 17 testes Maven verdes; fixture GO TO/PERFORM/ALTER/SORT/MERGE | procedure/file/program/index references são nós sem binding e alcançáveis | statements adiados continuam `UnsupportedStatement`, agora com referências reconhecidas |
-| 5 — declarações | pendente | — | — | — |
+| 5 — declarações | aprovada | 19 testes Maven verdes; fixture de declarações e assinatura | hierarquia e cláusulas DATA são nós; LINKAGE/USING e relações textuais ficam explícitos | cláusulas adiadas usam `PreservedDataClause`; binding não executado |
 | 6 — statements | pendente | — | — | — |
 | 7 — observabilidade | pendente | — | — | — |
 | 8 — regressão final | pendente | — | — | — |
@@ -129,6 +129,34 @@ mudaram. CBSTM03D continua com 14 CALLs dinâmicos para `WS-CALL-TARGET`.
    seus procedure/file references; CALL literal usa `ProgramReference`.
 4. As novas ocorrências explicam as contagens 6.789/1.421/1.431; fatos de CALL,
    Symbol Table e cobertura de statements permanecem inalterados.
+
+## Evidência TDD da Fase 5
+
+1. RED: `DeclarationModelAstTest` falhou na compilação pela ausência de tipos de
+   data section, hierarquia de declarações, cláusulas DATA, níveis especiais e
+   assinatura da Procedure Division.
+2. GREEN: uma fixture gramatical focada passou a provar grupos 01/05, FILLER,
+   níveis 66/77/88, REDEFINES, RENAMES, OCCURS com range/DEPENDING/INDEXED,
+   PICTURE, VALUE, USAGE, LOCAL-STORAGE, LINKAGE e USING/RETURNING.
+3. Cláusulas não interpretadas, como `BLANK WHEN ZERO`, permanecem como
+   `PreservedDataClause` com regra, texto, origem e referências reconhecidas;
+   portanto, preservar não é apresentado como interpretar.
+4. A Symbol Table ganhou kinds `RENAMES` e `INDEX_NAME`. Relações de REDEFINES,
+   RENAMES e OCCURS são atributos textuais com `relationBinding=NOT_PERFORMED`,
+   sem `symbolId`, binding ou resultado de resolução na AST.
+5. RED/GREEN: o snapshot detectou que um índice de OCCURS recebia identidade
+   antes dos operandos que o precedem na árvore. A construção passou a respeitar
+   a ordem estrutural e a fixture protege IDs determinísticos.
+6. GREEN/GUARD: a suíte completa terminou com 19 testes verdes e todos os
+   JavaScripts passaram em `node --check`. Os nós cresceram, como esperado, para
+   7.722/1.663/1.675; profundidade, CALLs, statements não suportados, escopos,
+   símbolos e diagnósticos permaneceram iguais. COACTUPC passou a expor 2.463
+   DataReferences porque relações de cláusulas deixaram de ficar escondidas em
+   texto.
+
+Os hashes das três fontes principais e do plano suspenso permanecem idênticos
+ao baseline. Os HTMLs não foram regenerados: essa alteração está reservada para
+a Fase 7.
 
 ## Checklist final de regressão
 

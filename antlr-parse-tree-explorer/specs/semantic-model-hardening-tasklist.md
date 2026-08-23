@@ -599,12 +599,12 @@ navegáveis da métrica agregada até fonte/parse tree.
 
 ### Fase 5 — Declarações e assinatura
 
-- [ ] Executar TDD para hierarquia, FILLER e níveis especiais.
-- [ ] Executar fatias independentes para REDEFINES, RENAMES, OCCURS, VALUE,
+- [x] Executar TDD para hierarquia, FILLER e níveis especiais.
+- [x] Executar fatias independentes para REDEFINES, RENAMES, OCCURS, VALUE,
       USAGE e PICTURE.
-- [ ] Preservar todas as cláusulas restantes com cobertura explícita.
-- [ ] Modelar tipos de data section, LINKAGE e ProcedureSignature.
-- [ ] Atualizar SymbolTable/Snapshot para novos kinds e relações não resolvidas,
+- [x] Preservar todas as cláusulas restantes com cobertura explícita.
+- [x] Modelar tipos de data section, LINKAGE e ProcedureSignature.
+- [x] Atualizar SymbolTable/Snapshot para novos kinds e relações não resolvidas,
       sem introduzir binding.
 
 ### Fase 6 — Statements que definem ou transportam valores
