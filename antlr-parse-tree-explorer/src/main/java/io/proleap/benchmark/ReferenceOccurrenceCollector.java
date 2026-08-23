@@ -60,8 +60,16 @@ final class ReferenceOccurrenceCollector {
         if (node instanceof Ast.CallStatement statement) {
             visit(statement.target(), ResolutionContracts.ReferenceRole.CALL_TARGET, preservation);
             for (Ast.CallArgument argument : statement.arguments())
-                if (argument.value() != null)
-                    visit(argument.value(), ResolutionContracts.ReferenceRole.CALL_ARGUMENT, preservation);
+                if (argument.value() != null) {
+                    if (argument.passingMode() == Ast.PassingMode.REFERENCE
+                            && argument.value() instanceof Ast.DataReference dataReference) {
+                        addDataReference(dataReference, ResolutionContracts.ReferenceRole.CALL_ARGUMENT,
+                                preservation, null, EnumSet.of(ResolutionContracts.ReferenceKind.DATA,
+                                        ResolutionContracts.ReferenceKind.FILE));
+                    } else {
+                        visit(argument.value(), ResolutionContracts.ReferenceRole.CALL_ARGUMENT, preservation);
+                    }
+                }
             if (statement.returning() != null)
                 visit(statement.returning(), ResolutionContracts.ReferenceRole.CALL_RETURNING, preservation);
             for (Ast.Statement nested : statement.exceptionFlow()) visit(nested, role, preservation);
@@ -202,12 +210,20 @@ final class ReferenceOccurrenceCollector {
     private void addDataReference(Ast.DataReference reference, ResolutionContracts.ReferenceRole role,
                                   ReferenceOccurrences.Preservation preservation,
                                   ResolutionContracts.ReferenceKind kindOverride) {
+        addDataReference(reference, role, preservation, kindOverride, null);
+    }
+
+    private void addDataReference(Ast.DataReference reference, ResolutionContracts.ReferenceRole role,
+                                  ReferenceOccurrences.Preservation preservation,
+                                  ResolutionContracts.ReferenceKind kindOverride,
+                                  Set<ResolutionContracts.ReferenceKind> admissibleKindsOverride) {
         ResolutionContracts.ReferenceKind kind = kindOverride != null ? kindOverride
                 : "conditionNameReference".equals(reference.meta().origin().grammarRule())
                 ? ResolutionContracts.ReferenceKind.CONDITION : ResolutionContracts.ReferenceKind.DATA;
         ReferenceOccurrences.Preservation effective = reference.understanding() == Ast.ReferenceUnderstanding.PRESERVED
                 ? ReferenceOccurrences.Preservation.PRESERVED_NODE : preservation;
-        add(reference, kind, role, reference.writtenText(), effective);
+        add(reference, kind, role, reference.writtenText(), effective,
+                admissibleKindsOverride == null ? Set.of(kind) : admissibleKindsOverride);
         for (Ast.DataQualifier qualifier : reference.qualifiers()) {
             ResolutionContracts.ReferenceKind qualifierKind = qualifierKind(qualifier);
             addDataReference(qualifier.reference(), ResolutionContracts.ReferenceRole.QUALIFIER_COMPONENT,
@@ -230,10 +246,17 @@ final class ReferenceOccurrenceCollector {
     private void add(Ast.Node reference, ResolutionContracts.ReferenceKind kind,
                      ResolutionContracts.ReferenceRole role, String writtenText,
                      ReferenceOccurrences.Preservation preservation) {
+        add(reference, kind, role, writtenText, preservation, Set.of(kind));
+    }
+
+    private void add(Ast.Node reference, ResolutionContracts.ReferenceKind kind,
+                     ResolutionContracts.ReferenceRole role, String writtenText,
+                     ReferenceOccurrences.Preservation preservation,
+                     Set<ResolutionContracts.ReferenceKind> admissibleKinds) {
         if (!visitedReferenceNodeIds.add(reference.meta().id()))
             throw new IllegalStateException("reference AST node reached twice: " + reference.meta().id());
         occurrences.add(new ReferenceOccurrences.Occurrence(occurrences.size(), programUnitId,
-                reference.meta().id(), scopes.scopeId(reference), kind, role,
+                reference.meta().id(), scopes.scopeId(reference), kind, admissibleKinds, role,
                 reference.meta().origin().grammarRule(), writtenText, reference.meta(), preservation));
     }
 }

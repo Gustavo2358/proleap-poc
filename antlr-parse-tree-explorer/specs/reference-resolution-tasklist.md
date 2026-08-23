@@ -565,16 +565,16 @@ existir.
 
 ### Fase 5 — Resolução PROCEDURE, FILE e PROGRAM
 
-- [ ] Executar TDD para GO TO simples/qualificado/DEPENDING ON, duplicatas por
+- [x] Executar TDD para GO TO simples/qualificado/DEPENDING ON, duplicatas por
       section e referência inválida entre programas.
-- [ ] Executar TDD para PERFORM FROM/THROUGH e refs de ALTER/SORT/MERGE.
-- [ ] Executar TDD para FILE entity em operações, SORT/MERGE e CALL parameters.
-- [ ] Executar TDD para CALL literal de nested program, COMMON, external catalog
+- [x] Executar TDD para PERFORM FROM/THROUGH e refs de ALTER/SORT/MERGE.
+- [x] Executar TDD para FILE entity em operações, SORT/MERGE e CALL parameters.
+- [x] Executar TDD para CALL literal de nested program, COMMON, external catalog
       ausente/presente e múltiplos candidatos.
-- [ ] Confirmar que CALL dinâmico resolve somente a variável DATA.
-- [ ] Implementar `ExternalProgramCatalog` mínimo e plugável com implementação
+- [x] Confirmar que CALL dinâmico resolve somente a variável DATA.
+- [x] Implementar `ExternalProgramCatalog` mínimo e plugável com implementação
       vazia e fake de teste; não criar indexador de codebase.
-- [ ] Tornar testes verdes, executar regressão e criar commit isolado.
+- [x] Tornar testes verdes, executar regressão e criar commit isolado.
 
 ### Fase 6 — Cobertura, diagnósticos e escala
 

@@ -61,7 +61,7 @@ intencionais, TDD-first e explicadas aqui.
 | 2 — compilation unit | aprovada | 31 testes e todos os JS verdes; fixture com cinco unidades | modelo completo, IDs namespaced, ancestry e visibilidade tipada | binding entre unidades permanece deliberadamente ausente |
 | 3 — entidades/coleta | aprovada | 35 testes e todos os JS verdes; oráculo exato de 16 ocorrências | entidades FILE, relações nominais, scope index O(1) e occurrences tipadas | lookup/candidatos/binding permanecem deliberadamente ausentes |
 | 4 — DATA/INDEX | aprovada | 42 testes e todos os JS verdes; sete testes novos de binding | resultado imutável, DATA/CONDITION/INDEX, relações e métricas de índice | namespaces PROCEDURE/FILE/PROGRAM continuam UNSUPPORTED até a Fase 5 |
-| 5 — PROCEDURE/FILE/PROGRAM | pendente | — | demais namespaces e catálogo plugável | — |
+| 5 — PROCEDURE/FILE/PROGRAM | aprovada | 49 testes e todos os JS verdes; sete testes novos | resolver composto, catálogo externo plugável e admissibleKinds | cobertura/completude agregada permanece para a Fase 6 |
 | 6 — cobertura/escala | pendente | — | completude e métricas | — |
 | 7 — HTML | pendente | — | nova jornada visual | — |
 | 8 — regressão final | pendente | — | — | — |
@@ -173,6 +173,34 @@ ignorados. Nenhum arquivo de produção, grammar, corpus ou output foi alterado.
    indexadas. O teste proíbe custo proporcional ao total de símbolos por uso.
 9. REGRESSÃO: 42 testes Maven verdes, três JavaScripts válidos e diff sem erros.
    Grammar, corpus, HTML, outputs e programas de demonstração não mudaram.
+
+### Fase 5
+
+1. RED: `ProcedureFileProgramReferenceResolverTest` falhou na compilação pela
+   ausência do resolver composto e de `ExternalProgramCatalog`.
+2. PROCEDURE: GO TO simples, qualificado e DEPENDING ON, PERFORM FROM/THROUGH e
+   referências preservadas em ALTER/SORT/MERGE são ligadas apenas dentro do
+   program unit. Duplicatas por section ficam ambíguas; nome existente somente
+   em nested program permanece não resolvido.
+3. FILE: SELECT+FD produz um candidato de entidade com ambas as declarações;
+   SELECT-only e FD-only continuam resolvíveis; ausência permanece explícita.
+   O texto `ASSIGN TO` é propagado como atributo da entidade, sem ainda extrair
+   o fato final DDNAME.
+4. ALTERNATIVAS: CALL BY REFERENCE é um contexto em que a grammar admite DATA
+   ou FILE. `admissibleKinds` preserva esse conjunto e o resolver combina ambos
+   os namespaces; não há fallback por aparência do nome.
+5. PROGRAM: filhos diretos e COMMON respeitam nesting; sibling não COMMON não é
+   interno visível; duplicatas preservam todos os candidatos. Catálogo ausente,
+   catálogo vazio, match único e match múltiplo têm resultados distintos.
+6. CATÁLOGO: `ExternalProgramCatalog` é somente uma porta de lookup e identidade,
+   com implementação vazia e fake testada. Nenhum indexador de codebase ou
+   carregamento de fonte externo foi criado.
+7. REGRESSÃO CALL: CBSTM03D mantém 14 CALL targets DATA `WS-CALL-TARGET`, todos
+   ligados à mesma declaração e sem inferência de valor. CBSTM03A mantém 14
+   nomes PROGRAM literais, todos `UNRESOLVED/EXTERNAL_CATALOG_NOT_PROVIDED` sem
+   catálogo — nunca “nenhuma dependência”.
+8. REGRESSÃO: 49 testes Maven verdes, três JavaScripts válidos e diff sem erros.
+   Grammar, corpus, baselines, HTML e outputs permaneceram inalterados.
 
 ## Checklist final de regressão
 

@@ -134,10 +134,20 @@ final class SymbolTableBuilder {
         }
         for (List<SymbolTable.Symbol> declarations : grouped.values()) {
             SymbolTable.Symbol first = declarations.get(0);
+            List<String> assignments = declarations.stream()
+                    .map(symbol -> symbol.attributes().getOrDefault("assignment", ""))
+                    .filter(value -> !value.isBlank()).distinct().toList();
+            Map<String, String> attributes = new LinkedHashMap<>();
+            attributes.put("association", "CANONICAL_LOGICAL_NAME");
+            attributes.put("binding", "NOT_PERFORMED");
+            attributes.put("assignments", String.join(",", assignments));
+            attributes.put("hasSelect", Boolean.toString(declarations.stream()
+                    .anyMatch(symbol -> symbol.kind() == SymbolTable.SymbolKind.FILE_CONTROL)));
+            attributes.put("hasDescription", Boolean.toString(declarations.stream()
+                    .anyMatch(symbol -> symbol.kind() == SymbolTable.SymbolKind.FILE_DESCRIPTION)));
             entities.add(new SymbolTable.Entity(entities.size(), SymbolTable.EntityKind.FILE,
                     first.writtenName(), first.canonicalName(),
-                    declarations.stream().map(SymbolTable.Symbol::id).toList(),
-                    Map.of("association", "CANONICAL_LOGICAL_NAME", "binding", "NOT_PERFORMED")));
+                    declarations.stream().map(SymbolTable.Symbol::id).toList(), attributes));
         }
     }
 

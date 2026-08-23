@@ -54,6 +54,26 @@ Essas regras seguem a documentação IBM de
 [Qualification](https://www.ibm.com/docs/en/cobol-zos/6.3?topic=reference-qualification),
 inclusive a distinção de `QUALIFY(EXTEND)` para match totalmente qualificado.
 
+## Namespaces implementados na Fase 5
+
+- PROCEDURE é estritamente local ao program unit. Paragraph qualificado precisa
+  pertencer à section escrita; referências não atravessam programas.
+- FILE aponta para a entidade formada pelas declarações SELECT e FD/SD. Uma
+  entidade conserva todas as declarações e o texto de ASSIGN sem produzir
+  ambiguidade artificial SELECT-versus-FD.
+- PROGRAM consulta primeiro programas internos visíveis: filhos diretos e
+  siblings/descendentes permitidos por COMMON. Outros top-level e siblings não
+  COMMON não são escolhidos por busca global.
+- Programa externo só é candidato quando `ExternalProgramCatalog` é fornecido.
+  Catálogo ausente resulta em `EXTERNAL_CATALOG_NOT_PROVIDED`; catálogo presente
+  e vazio resulta em `DECLARATION_NOT_FOUND`.
+- CALL dinâmico mantém kind DATA e liga somente sua variável. Não há resolução
+  de constante, reaching definitions ou inferência de programas possíveis.
+- Contextos gramaticais que admitem mais de um namespace preservam
+  `admissibleKinds`. Por exemplo, parâmetro BY REFERENCE de CALL pode admitir
+  DATA e FILE; candidatos de ambos são combinados, sem preferência por nome ou
+  corpus.
+
 ## Guarda não heurística
 
 `ReferenceResolutionManifest` expande uma entrada para cada uma das 628 regras
