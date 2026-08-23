@@ -51,6 +51,19 @@ mvn compile exec:java \
 
 Abra `dist-cbstm03a/ast.html` e selecione a aba **CALLs**. Esse programa contém 14 call sites estáticos: 13 para `CBSTM03B` e um para `CEE3ABD`. O corpus atual não contém `CALL` cujo alvo seja uma variável; portanto, `dynamicCalls` continua zero nesse segundo exemplo.
 
+### Variante didática com CALLs dinâmicos
+
+`corpus/cbl/CBSTM03D.CBL` é uma variante isolada de `CBSTM03A.CBL` criada para preparar uma futura demonstração de reaching definitions. Os 14 call sites usam a mesma variável `WS-CALL-TARGET`, inicialmente preenchida com `SPACES`. Dois `MOVE`s mínimos reproduzem a sequência original de alvos: 13 chamadas para `CBSTM03B`, seguidas por uma chamada para `CEE3ABD`.
+
+Gere sua jornada visual sem alterar as saídas anteriores:
+
+```bash
+mvn compile exec:java \
+  -Dexec.args="--source corpus/cbl/CBSTM03D.CBL --copybooks corpus/cpy --output dist-cbstm03d"
+```
+
+Abra `dist-cbstm03d/index.html`, `ast.html` e `symbols.html`. A AST mostra 14 CALLs dinâmicos e nenhum estático; a tabela de símbolos mostra a declaração única de `WS-CALL-TARGET`. A descoberta dos valores possíveis da variável permanece deliberadamente fora deste passo: ela dependerá do futuro CFG e da análise de fluxo.
+
 ## Como ler a interface
 
 - **Árvore**: navegação hierárquica virtualizada pelos 57 mil nós, com busca por regras e tokens.
