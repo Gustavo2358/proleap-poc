@@ -630,13 +630,13 @@ navegáveis da métrica agregada até fonte/parse tree.
 
 ### Fase 8 — Regressão e encerramento
 
-- [ ] Executar integralmente a estratégia de regressão descrita acima.
-- [ ] Produzir o relatório com diferenças esperadas e cobertura pendente.
-- [ ] Revisar o diff para excluir resolver, bindings, CFG, dataflow, SQL e fatos
+- [x] Executar integralmente a estratégia de regressão descrita acima.
+- [x] Produzir o relatório com diferenças esperadas e cobertura pendente.
+- [x] Revisar o diff para excluir resolver, bindings, CFG, dataflow, SQL e fatos
       de dependência.
-- [ ] Verificar hashes do corpus, baselines e plano suspenso.
-- [ ] Validar todos os critérios de aceite.
-- [ ] Criar commit isolado somente após aprovação dos resultados.
+- [x] Verificar hashes do corpus, baselines e plano suspenso.
+- [x] Validar todos os critérios de aceite.
+- [x] Criar commit isolado somente após aprovação dos resultados.
 
 ## Critérios de aceite objetivos
 

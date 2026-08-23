@@ -2,8 +2,8 @@
 
 ## Estado
 
-Em construção. Este documento foi iniciado na Fase 0 e será fechado somente na
-Fase 8 da tasklist `semantic-model-hardening-tasklist.md`.
+Concluído em 2026-08-23. A auditoria final e seus resultados foram aprovados
+explicitamente pelo usuário; a Fase 8 encerra o semantic model hardening.
 
 ## Baseline registrado
 
@@ -25,11 +25,11 @@ Fontes COBOL principais:
 
 ## Métricas semânticas atuais
 
-| Programa | AST | Profundidade | CALL estático | CALL dinâmico | Embedded | Unsupported | Escopos | Símbolos | Diagnósticos da tabela |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| COACTUPC | 4.100 | 8 | 1 | 0 | 14 | 411 | 651 | 853 | 2 |
-| CBSTM03A | 1.250 | 8 | 14 | 0 | 0 | 268 | 219 | 209 | 0 |
-| CBSTM03D | 1.260 | 8 | 0 | 14 | 0 | 268 | 221 | 211 | 0 |
+| Programa | AST | Profundidade | CALL estático | CALL dinâmico | Embedded | Unsupported | Preserved statements | Escopos | Símbolos | Diagnósticos da tabela |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| COACTUPC | 9.189 | 11 | 1 | 0 | 14 | 0 | 0 | 651 | 853 | 2 |
+| CBSTM03A | 2.740 | 11 | 14 | 0 | 0 | 0 | 37 | 219 | 209 | 0 |
+| CBSTM03D | 2.752 | 11 | 0 | 14 | 0 | 0 | 37 | 221 | 211 | 0 |
 
 Frontend atual:
 
@@ -58,7 +58,7 @@ deverão permanecer e toda diferença será explicada neste relatório.
 | 5 — declarações | aprovada | 19 testes Maven verdes; fixture de declarações e assinatura | hierarquia e cláusulas DATA são nós; LINKAGE/USING e relações textuais ficam explícitos | cláusulas adiadas usam `PreservedDataClause`; binding não executado |
 | 6 — statements | aprovada | 22 testes Maven verdes; fixture com as 50 alternativas | operands e clauses são estruturados; 16 statements adiados usam `PreservedStatement` | sem interpretação semântica dos 16 adiados |
 | 7 — observabilidade | aprovada | 23 testes Maven, JS e navegador local verdes | `coverage-data.js` e aba Cobertura nas três jornadas | todos os programas permanecem conservadoramente incompletos |
-| 8 — regressão final | pendente | — | — | — |
+| 8 — regressão final | aprovada | 23 testes Maven, todos os JavaScripts, duas gerações determinísticas, hashes e escopo validados | nenhuma mudança adicional de produção; relatório e tasklist atualizados | nenhuma |
 
 ## Evidência TDD da Fase 1
 
@@ -201,16 +201,71 @@ a Fase 7.
    `57b33d11f05831707ed5b0512d981b586b973e265fe44f3756237f00f2e8b4ba`.
    Isso protege IDs, ordem e snapshots determinísticos.
 
+## Evidência da regressão final — Fase 8
+
+1. A suíte Maven completa terminou com **23 testes, zero falhas, zero erros e
+   zero testes ignorados**. Isso inclui as fixtures sintéticas de referências,
+   expressões, nomes de procedimento, declarações, proveniência/COPY e as 50
+   alternativas da regra `statement`.
+2. Todos os JavaScripts de templates e dos três diretórios gerados passaram em
+   `node --check`. A busca nos templates confirmou somente recursos locais; não
+   há dependência externa de execução no HTML.
+3. COACTUPC, CBSTM03A e CBSTM03D foram regenerados duas vezes. Ambas as rodadas
+   terminaram com zero erros léxicos e sintáticos e produziram o mesmo SHA-256
+   agregado dos artefatos: `57b33d11f05831707ed5b0512d981b586b973e265fe44f3756237f00f2e8b4ba`.
+4. `DynamicCallVariantTest` confirmou 14 ocorrências de `CALL
+   WS-CALL-TARGET`, zero CALLs literais, um MOVE de `CBSTM03B` e um MOVE de
+   `CEE3ABD`. Todos os CALLs permanecem dinâmicos e a Symbol Table mantém uma
+   única declaração DATA de nível 05 para o target.
+5. Os fatos essenciais da Symbol Table não regrediram: 651/853/2 para
+   COACTUPC, 219/209/0 para CBSTM03A e 221/211/0 para CBSTM03D
+   (escopos/símbolos/diagnósticos).
+6. A evolução de 4.100/1.250/1.260 para 9.189/2.740/2.752 nós e de profundidade
+   8 para 11 é esperada: referências, expressões, cláusulas, declarações e
+   operandos antes achatados agora têm identidade própria. Duas gerações
+   idênticas provam que IDs, ordem e snapshots são determinísticos.
+7. A navegação Parse Tree ↔ AST ↔ Symbol Table e a visão de cobertura foram
+   validadas no navegador na Fase 7; a regressão estática da Fase 8 confirmou
+   novamente links e datasets locais. Nenhum arquivo de frontend mudou depois
+   dessa validação funcional.
+8. A completude continua conservadora: os três relatórios dizem
+   `complete=false`. COACTUPC expõe três COPYs ausentes e 14 CICS opacos;
+   CBSTM03A/CBSTM03D expõem 37 statements e nove expressões preservadas. Essas
+   lacunas permanecem `DEPENDENCY_UNKNOWN`, nunca “nenhuma dependência”.
+9. Os tree IDs de `benchmark`, `cbl`, `cpy`, gramáticas e corpus são idênticos
+   entre `ffa053f` e o HEAD auditado. As três fontes principais e o plano
+   suspenso também mantêm exatamente os SHA-256 registrados no baseline.
+10. A revisão do diff encontrou mudanças apenas no explorer. A AST não contém
+    `symbolId`, binding ou resultado resolvido; os IDs existentes pertencem
+    exclusivamente à Symbol Table declarativa. SQL/CICS/SQLIMS continuam como
+    payloads opacos de `EmbeddedLanguageStatement`. Não há resolver, CFG,
+    reaching definitions, propagação de constantes, análise SQL ou fatos
+    finais de dependência.
+
+## Cobertura pendente conhecida
+
+- 16 famílias de statements permanecem preservadas estruturalmente, mas ainda
+  não interpretadas semanticamente; três famílias de linguagem embutida ficam
+  opacas conforme o escopo aprovado.
+- COACTUPC não pode ser considerado completamente coberto enquanto os três
+  COPYs ausentes e os 14 statements CICS opacos permanecerem.
+- CBSTM03A e CBSTM03D não podem ser considerados completamente cobertos
+  enquanto statements/expressões preservados mantiverem
+  `DEPENDENCY_UNKNOWN`.
+- Essas pendências são deliberadamente observáveis por regra, arquivo, linha,
+  AST e parse tree e não bloqueiam o próximo passo de resolução de referências
+  sobre o subconjunto estruturado.
+
 ## Checklist final de regressão
 
-- [ ] suíte Maven completa;
-- [ ] sintaxe de todos os JavaScripts;
-- [ ] três programas regenerados sem novos erros léxicos/sintáticos;
-- [ ] fatos de CALL/MOVE de CBSTM03D preservados;
-- [ ] fatos essenciais da Symbol Table preservados;
-- [ ] mudanças de nós, IDs e profundidade explicadas e determinísticas;
-- [ ] fixtures sintéticas completas;
-- [ ] navegação HTML validada;
-- [ ] completude semântica conservadora validada;
-- [ ] fontes, baselines e plano suspenso byte a byte inalterados;
-- [ ] ausência de resolver, CFG, dataflow, SQL e fatos finais confirmada.
+- [x] suíte Maven completa;
+- [x] sintaxe de todos os JavaScripts;
+- [x] três programas regenerados sem novos erros léxicos/sintáticos;
+- [x] fatos de CALL/MOVE de CBSTM03D preservados;
+- [x] fatos essenciais da Symbol Table preservados;
+- [x] mudanças de nós, IDs e profundidade explicadas e determinísticas;
+- [x] fixtures sintéticas completas;
+- [x] navegação HTML validada;
+- [x] completude semântica conservadora validada;
+- [x] fontes, baselines e plano suspenso byte a byte inalterados;
+- [x] ausência de resolver, CFG, dataflow, SQL e fatos finais confirmada.
