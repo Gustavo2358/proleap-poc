@@ -606,14 +606,14 @@ existir.
 
 ### Fase 8 — Regressão final e encerramento
 
-- [ ] Executar integralmente a estratégia de regressão desta especificação.
-- [ ] Validar todos os critérios de aceite e a fixture de escala.
-- [ ] Produzir relatório com diferenças esperadas e cobertura pendente.
-- [ ] Revisar o diff para excluir CFG, dataflow, valores de CALL, SQL e fatos
+- [x] Executar integralmente a estratégia de regressão desta especificação.
+- [x] Validar todos os critérios de aceite e a fixture de escala.
+- [x] Produzir relatório com diferenças esperadas e cobertura pendente.
+- [x] Revisar o diff para excluir CFG, dataflow, valores de CALL, SQL e fatos
       finais de dependência.
-- [ ] Verificar hashes de fontes, corpus, gramáticas e baselines.
-- [ ] Apresentar os resultados para aprovação explícita.
-- [ ] Criar commit isolado de encerramento somente após essa aprovação.
+- [x] Verificar hashes de fontes, corpus, gramáticas e baselines.
+- [x] Apresentar os resultados para aprovação explícita.
+- [x] Criar commit isolado de encerramento somente após essa aprovação.
 
 ## Critérios de aceite objetivos
 

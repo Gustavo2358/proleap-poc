@@ -2,8 +2,8 @@
 
 ## Estado
 
-Em construção. Iniciado na Fase 0 de
-`reference-resolution-tasklist.md` e destinado a ser encerrado na Fase 8.
+Concluído. A auditoria da Fase 8 e a criação do commit isolado de encerramento
+foram aprovadas explicitamente após a apresentação dos resultados.
 
 ## Baseline pós-hardening
 
@@ -64,7 +64,7 @@ intencionais, TDD-first e explicadas aqui.
 | 5 — PROCEDURE/FILE/PROGRAM | aprovada | 49 testes e todos os JS verdes; sete testes novos | resolver composto, catálogo externo plugável e admissibleKinds | cobertura/completude agregada permanece para a Fase 6 |
 | 6 — cobertura/escala | aprovada | 53 testes e todos os JS verdes; escala com 1.200 declarações | relatório conservador, gaps e métricas de custo | snapshot/HTML permanecem para a Fase 7 |
 | 7 — HTML | aprovada | 56 testes, JS verdes, navegador e hashes determinísticos | snapshot/pipeline e quarta página da jornada | regressão final permanece para a Fase 8 |
-| 8 — regressão final | pendente | — | — | — |
+| 8 — regressão final | aprovada | 56 testes, 31 JS, duas gerações e 21 critérios auditados | nenhuma mudança funcional | nenhuma |
 
 ## Evidência TDD
 
@@ -268,16 +268,149 @@ ignorados. Nenhum arquivo de produção, grammar, corpus ou output foi alterado.
     `node --check`. Gramáticas, corpus, fontes COBOL e baselines não foram
     modificados.
 
+## Evidência da regressão final — Fase 8
+
+### Suíte, fixtures e escala
+
+1. A suíte Maven completa terminou com **56 testes, zero falhas, zero erros e
+   zero ignorados** em 52,90 s. Os testes executam todas as fixtures sintéticas
+   versionadas de grammar, provenance/COPY, declarations, expressions,
+   statements, compilation units, visibilidade, entidades, occurrences,
+   DATA/INDEX/PROCEDURE/FILE/PROGRAM, catálogo, cobertura e snapshots.
+2. `GrammarCoverageManifestTest` e `ReferenceResolutionManifestTest` validaram
+   mecanicamente as 598 regras COBOL + 30 regras do preprocessor e as 50
+   alternativas diretas de `statement`. Cada uma das 628 chaves possui
+   classificação, rationale e policy section sem consultar o corpus.
+3. A fixture de escala criou 1.200 declarações e 2.400 referências. O teste
+   focado terminou em 6,94 s incluindo startup/compilação Maven e verificou que
+   `candidateInspections <= references × 2`; não existe threshold funcional
+   dependente do hardware. O mesmo teste comparou duas assinaturas integrais de
+   resolução.
+4. Quatro instâncias do resolver executadas em paralelo sobre inputs imutáveis
+   produziram resultados iguais e preservaram isolamento entre program units.
+
+### Regressão dos três programas
+
+| Programa | Lexer/parser | AST | CALLs | Symbol Table | Resolution | Gaps | Dependency ready |
+|---|---|---:|---|---|---:|---:|---|
+| COACTUPC | 0/0; 3 COPYs ausentes | 9.189 | 1 estático | 651 scopes / 853 symbols / 2 diagnostics | 3.058 refs | 1.468 | não |
+| CBSTM03A | 0/0 | 2.740 | 14 estáticos | 219 / 209 / 0 | 580 refs | 345 | não |
+| CBSTM03D | 0/0 | 2.752 | 14 dinâmicos | 221 / 211 / 0 | 582 refs | 331 | não |
+
+5. COACTUPC preserva seu CALL PROGRAM literal `'CSUTLDTC'` como
+   `UNRESOLVED/EXTERNAL_CATALOG_NOT_PROVIDED`. O relatório mantém um gap
+   `UNRESOLVED_COPY` cuja mensagem registra três COPYs e 14 gaps originados por
+   `execCicsStatement`; por isso não declara análise completa.
+6. Os 14 CALLs de CBSTM03A continuam referências PROGRAM com os textos
+   `'CBSTM03B'` e `'CEE3ABD'`. Sem catálogo, todos permanecem
+   `UNRESOLVED/EXTERNAL_CATALOG_NOT_PROVIDED`, nunca “sem dependência”.
+7. CBSTM03D mantém 14 CALLs dinâmicos, zero estáticos, uma declaração DATA nível
+   05 de `WS-CALL-TARGET`, um MOVE de `CBSTM03B` e um MOVE de `CEE3ABD`. Os 14
+   usos `CALL_TARGET` estão `RESOLVED/UNIQUE_VISIBLE_DECLARATION` para a mesma
+   entidade namespaced `DATA_SYMBOL #8`.
+8. Nenhum resultado de CALL dinâmico contém `CBSTM03B` ou `CEE3ABD` como
+   candidato PROGRAM. Os literais continuam somente no fonte/MOVEs; não houve
+   inferência de valor, CFG ou dataflow.
+
+### Determinismo, integridade e navegador
+
+9. COACTUPC, CBSTM03A e CBSTM03D foram regenerados duas vezes. O agregado de
+   todos os arquivos de `dist`, `dist-cbstm03a` e `dist-cbstm03d` foi idêntico
+   antes e depois das duas rodadas:
+   `35a0ec597373753b48dd14b4dad64c5a7da38891cb06226087b1432017d636cb`.
+10. Os 31 JavaScripts dos templates e das três jornadas passaram em
+    `node --check`. Templates HTML/CSS/JS não contêm HTTP(S), `@import`,
+    `fetch` ou dependência externa de runtime.
+11. A navegação real no navegador percorreu, sem erro de console:
+    `resolution.html → symbols.html#symbol=0 → ast.html#node=0 →
+    index.html#node=0 → resolution.html`.
+12. Gramáticas e corpus mantêm exatamente os agregados do baseline:
+    `4be036fc47a73e32dd68de6a3ab0008ef81895f52372046f6a35e986e92b202e`
+    e `f89cf02782dc26f3a4a79e37fc98c35112f0003d36423e674785251152b4b10e`.
+13. As fontes principais mantêm os SHA-256 originais:
+    `23c875…32b5` (CBSTM03A), `d75535…7fac` (CBSTM03D) e
+    `b5bb7d…9396` (COACTUPC). O diff desde o baseline não altera `benchmark`,
+    `cbl`, `cpy`, grammars, corpus ou o relatório final do hardening.
+14. O Java de produção possui agora o agregado esperado
+    `48a57a66efd499c59a8536d43141ed43a854ff592ba9425aa485071dd63fea11`;
+    a mudança frente ao baseline corresponde aos contratos e implementações de
+    compilation unit, occurrences, resolver, coverage e snapshot documentados
+    por fase.
+
+### Validação dos critérios de aceite
+
+| # | Estado | Evidência principal |
+|---:|---|---|
+| 1 | atendido | manifests cobrem 628 regras/50 statements sem corpus |
+| 2 | atendido | fixture materializa cinco top-level/nested program units |
+| 3 | atendido | produtos imutáveis, separados e IDs namespaced |
+| 4 | atendido | reflexão e revisão confirmam AST sem campos de binding |
+| 5 | atendido | collector exige ocorrência única e report detecta perda |
+| 6 | atendido | testes de qualifier/subscript/refmod e roles independentes |
+| 7 | atendido | hierarchy/ordem/FILE e STANDARD/EXTEND/UNSPECIFIED testados |
+| 8 | atendido | 88, INDEX, relações, LINKAGE, visibility e shadowing testados |
+| 9 | atendido | GO TO/DEPENDING/PERFORM/THRU isolados por program unit |
+| 10 | atendido | entidade FILE une SELECT+FD/SD sem ambiguidade artificial |
+| 11 | atendido | nesting/COMMON e catálogo ausente/vazio/único/múltiplo testados |
+| 12 | atendido | CALL dinâmico liga somente DATA e não produz targets possíveis |
+| 13 | atendido | fixture exercita os quatro status com reason/candidates coerentes |
+| 14 | atendido | frontend/containers/binding bloqueiam completude conservadoramente |
+| 15 | atendido | índices e fixture de escala proíbem scan global por referência |
+| 16 | atendido | assinaturas, IDs, snapshots e outputs repetidos são idênticos |
+| 17 | atendido | 14 CALL_TARGET de CBSTM03D convergem para DATA_SYMBOL #8 |
+| 18 | atendido | COACTUPC incompleto e nomes PROGRAM de CBSTM03A preservados |
+| 19 | atendido | filtros, candidatos, decisões, pontes e fonte validados no browser |
+| 20 | atendido | 56 testes, 31 JS, hashes, fixtures e regressões verdes |
+| 21 | atendido | revisão de classes/diff exclui CFG, dataflow, SQL e fatos finais |
+
+## Diferenças esperadas consolidadas
+
+- a compilation unit passa a representar todos os programas top-level/nested;
+- AST PROGRAM/DATA/FILE preserva atributos declarativos mínimos de visibilidade;
+- a Symbol Table acrescenta entidades FILE, relações, visibility e atributos
+  PROGRAM, mas continua sem usos ou resultados de binding;
+- occurrences, scope index, policy, catálogo, resolution e analysis report são
+  produtos novos e separados;
+- a quarta página e `resolution-data.js` tornam decisões e gaps auditáveis;
+- contagens antigas de nós/símbolos essenciais permanecem protegidas por fatos,
+  enquanto novos atributos e DTOs alteram legitimamente os hashes dos outputs.
+
+## Cobertura pendente e limites para produção
+
+O name binding aprovado está concluído, mas o projeto **não deve ser chamado de
+analisador de dependências production-ready**. Permanecem explícitos:
+
+- 1.468/345/331 gaps em COACTUPC/CBSTM03A/CBSTM03D; nenhum dos três programas
+  está `dependencyAnalysisReady`;
+- programas externos sem catálogo continuam unresolved; não existe ainda um
+  indexador/orquestrador de codebase massiva;
+- CALL dinâmico continua sem valores possíveis, por ausência intencional de CFG
+  e reaching definitions;
+- ASSIGN/DDNAME e EXEC SQL/CICS continuam preservados, sem fatos finais;
+- o snapshot informa identidade textual e estado de preprocessing por gaps,
+  mas ainda não incorpora o SHA-256 do input como campo operacional;
+- métricas estruturais de índices/lookups/candidatos existem, mas duração por
+  etapa ainda é medida externamente e não faz parte do report determinístico;
+- gaps globais carregam regra/linha/unidade, mas não repetem toda a cadeia de
+  provenance/COPY; occurrences estruturadas preservam essa cadeia completa;
+- as páginas AST/Symbol Table legadas mostram a unidade primária. A resolução
+  preserva IDs namespaced das nested units e desabilita links enganosos, mas uma
+  visualização multi-unit completa permanece futura.
+
+Esses itens não invalidam os 21 critérios do passo de resolução nominal, mas
+devem entrar no planejamento do runner/observabilidade antes de uso massivo em
+produção.
+
 ## Checklist final de regressão
 
-- [ ] suíte Maven completa;
-- [ ] sintaxe de todos os JavaScripts;
-- [ ] matriz das 628 regras e 50 statements;
-- [ ] três programas sem novos erros;
-- [ ] fatos CALL/MOVE de CBSTM03D;
-- [ ] fatos essenciais da Symbol Table;
-- [ ] fixtures gramaticais e semânticas;
-- [ ] determinismo de duas gerações;
-- [ ] navegação HTML;
-- [ ] fixture de escala;
-- [ ] hashes e fronteiras de escopo.
+- [x] suíte Maven completa;
+- [x] sintaxe de todos os JavaScripts;
+- [x] matriz das 628 regras e 50 statements;
+- [x] três programas sem novos erros;
+- [x] fatos CALL/MOVE de CBSTM03D;
+- [x] fatos essenciais da Symbol Table;
+- [x] fixtures gramaticais e semânticas;
+- [x] determinismo de duas gerações;
+- [x] navegação HTML;
+- [x] fixture de escala;
+- [x] hashes e fronteiras de escopo.
