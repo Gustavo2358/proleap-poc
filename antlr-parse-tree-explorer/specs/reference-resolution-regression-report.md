@@ -57,7 +57,7 @@ intencionais, TDD-first e explicadas aqui.
 | Fase | Estado | Evidência | Diferenças esperadas | Pendências |
 |---|---|---|---|---|
 | 0 — baseline | aprovada | 26 testes verdes; três caracterizações novas | nenhuma mudança de produção | nenhuma |
-| 1 — matriz/contratos | pendente | — | manifesto e contratos, sem binding | — |
+| 1 — matriz/contratos | aprovada | 28 testes e todos os JS verdes; guarda das 628 regras | manifesto/policy/contratos imutáveis, sem binding | regras conservadoras serão refinadas por TDD nas fases de resolução |
 | 2 — compilation unit | pendente | — | todos os programUnit e visibilidade | — |
 | 3 — entidades/coleta | pendente | — | entidades, scope index e occurrences | — |
 | 4 — DATA/INDEX | pendente | — | resolução local estruturada | — |
@@ -76,6 +76,23 @@ mudanças intencionais das Fases 2 e 3 começarem.
 
 A suíte completa terminou com 26 testes, zero falhas, zero erros e zero testes
 ignorados. Nenhum arquivo de produção, grammar, corpus ou output foi alterado.
+
+### Fase 1
+
+1. RED: `ReferenceResolutionManifestTest` falhou na compilação porque
+   `ResolutionContracts` e `ReferenceResolutionManifest` ainda não existiam.
+2. GREEN: os contratos passaram a expor UnitId namespaced, kinds, roles, policy
+   versionada, `QUALIFY` explícito, completude conservadora, os quatro status e
+   reasons estáveis, sem implementar resolver ou candidatos.
+3. GREEN: o manifesto de resolução passou a expandir deterministicamente as
+   mesmas 628 chaves do manifesto das grammars. Origens DATA/CONDITION/INDEX,
+   PROCEDURE/FILE/PROGRAM, qualifiers, relações e built-ins usam overrides
+   exatos; as demais regras herdam somente classificação conservadora.
+4. REFACTOR: lookup do manifesto passou a usar índice imutável O(1), e uma
+   guarda falha se um override deixar de existir após mudança da grammar.
+5. GUARD: a suíte completa terminou com 28 testes verdes e todos os JavaScripts
+   passaram em `node --check`. AST, Symbol Table, corpus, grammars e outputs não
+   foram modificados; nenhuma referência foi ligada a símbolo nesta fase.
 
 ## Checklist final de regressão
 

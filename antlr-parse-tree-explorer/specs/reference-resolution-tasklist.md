@@ -507,15 +507,15 @@ existir.
 
 ### Fase 1 — Matriz semântica e contratos de cobertura
 
-- [ ] Inventariar mecanicamente todas as formas de nome/referência nas 628 regras
+- [x] Inventariar mecanicamente todas as formas de nome/referência nas 628 regras
       e relacioná-las aos nós AST, namespaces, roles e política.
-- [ ] Documentar regras COBOL/dialeto e opções configuráveis com fontes primárias.
-- [ ] Escrever teste RED para regra/formato relevante sem classificação.
-- [ ] Implementar manifesto versionado de resolução, sem resolver nomes ainda.
-- [ ] Definir contratos imutáveis de policy, UnitId, reference kind/role, status,
+- [x] Documentar regras COBOL/dialeto e opções configuráveis com fontes primárias.
+- [x] Escrever teste RED para regra/formato relevante sem classificação.
+- [x] Implementar manifesto versionado de resolução, sem resolver nomes ainda.
+- [x] Definir contratos imutáveis de policy, UnitId, reference kind/role, status,
       reason e completude.
-- [ ] Tornar os testes verdes, refatorar e executar regressão completa.
-- [ ] Registrar evidência e criar commit isolado da fase.
+- [x] Tornar os testes verdes, refatorar e executar regressão completa.
+- [x] Registrar evidência e criar commit isolado da fase.
 
 ### Fase 2 — Compilation unit, nesting e visibilidade declarativa
 

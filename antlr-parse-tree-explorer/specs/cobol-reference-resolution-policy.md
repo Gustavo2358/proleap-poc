@@ -1,0 +1,43 @@
+# Política inicial de resolução de referências COBOL
+
+## Identidade
+
+- policy ID: `proleap-cobol/ibm-enterprise-compatible`;
+- versão: `1.0.0`;
+- grammar frontend: `Cobol.g4` e `CobolPreprocessor.g4` versionadas no projeto;
+- `QUALIFY` default: `UNSPECIFIED` — nenhuma variante será presumida.
+
+Esta política é um contrato de classificação da Fase 1. Ela ainda não executa
+binding. Regras serão implementadas por TDD nas Fases 2–5.
+
+## Fontes semânticas primárias
+
+- IBM Enterprise COBOL — [Qualification](https://www.ibm.com/docs/en/cobol-zos/6.3?topic=reference-qualification);
+- IBM Enterprise COBOL — [References to PROCEDURE DIVISION names](https://www.ibm.com/docs/en/cobol-zos/6.4.0?topic=reference-references-procedure-division-names);
+- IBM Enterprise COBOL — [Scope of names](https://www.ibm.com/docs/en/cobol-zos/6.4?topic=programs-scope-names);
+- IBM Enterprise COBOL — [Calling nested COBOL programs](https://www.ibm.com/docs/en/cobol-aix/5.1.0?topic=subprograms-calling-nested-cobol-programs).
+
+## Regras aprovadas para implementação futura
+
+1. Nomes são comparados de forma case-insensitive por forma canônica, mantendo
+   a grafia original para diagnóstico e navegação.
+2. Qualificadores DATA seguem ancestry estrutural na ordem de dentro para fora;
+   `IN` e `OF` são semanticamente equivalentes.
+3. Qualificação por FILE consulta o namespace/entidade FILE.
+4. `QUALIFY(EXTEND)` somente é aplicado quando configurado explicitamente.
+5. Procedure names são locais ao program unit; paragraph pode ser qualificado
+   somente por section.
+6. GLOBAL, COMMON, nesting e shadowing seguem busca por program unit, nunca uma
+   busca global conveniente sobre toda a codebase.
+7. Programa externo somente é ligado quando um catálogo explícito é fornecido.
+8. Forma aceita pela grammar, mas ainda sem regra segura, resulta em
+   `UNSUPPORTED`; input ausente resulta em motivo conservador próprio.
+
+## Guarda não heurística
+
+`ReferenceResolutionManifest` expande uma entrada para cada uma das 628 regras
+do manifesto do frontend. Origens de referência, qualifiers, built-ins e
+relações declarativas possuem overrides exatos. As demais regras herdam apenas
+uma classificação conservadora de container, lacuna, boundary ou
+não-referência. Nenhuma classificação consulta arquivos do corpus ou procura
+palavras no texto COBOL.
