@@ -533,19 +533,19 @@ existir.
 
 ### Fase 3 — Entidades, relações, scope index e coleta de ocorrências
 
-- [ ] Criar fixtures SELECT+FD/SD, SELECT-only, FD-only, REDEFINES, RENAMES,
+- [x] Criar fixtures SELECT+FD/SD, SELECT-only, FD-only, REDEFINES, RENAMES,
       OCCURS e qualifiers por FILE.
-- [ ] Escrever testes RED para entidade FILE única e relações declarativas.
-- [ ] Implementar entidades/aliases e relações imutáveis na Symbol Table, sem
+- [x] Escrever testes RED para entidade FILE única e relações declarativas.
+- [x] Implementar entidades/aliases e relações imutáveis na Symbol Table, sem
       resultados de uso.
-- [ ] Implementar `AstScopeIndex` determinístico para mapear todo nó ao escopo
+- [x] Implementar `AstScopeIndex` determinístico para mapear todo nó ao escopo
       sem repetir buscas ancestrais globais.
-- [ ] Escrever testes RED para coleta exata de cada referência e role.
-- [ ] Implementar `ReferenceOccurrenceCollector` exclusivamente via tipos AST e
+- [x] Escrever testes RED para coleta exata de cada referência e role.
+- [x] Implementar `ReferenceOccurrenceCollector` exclusivamente via tipos AST e
       manifesto, incluindo qualifiers/subscripts/refmod e nós preservados.
-- [ ] Provar que qualifiers não são value reads e que nenhuma ocorrência é
+- [x] Provar que qualifiers não são value reads e que nenhuma ocorrência é
       duplicada ou perdida silenciosamente.
-- [ ] Tornar testes verdes, executar regressão e criar commit isolado.
+- [x] Tornar testes verdes, executar regressão e criar commit isolado.
 
 ### Fase 4 — Modelo de resultado e resolução DATA/INDEX
 

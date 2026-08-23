@@ -34,6 +34,17 @@ public final class SymbolTable {
         PARAGRAPH
     }
 
+    public enum EntityKind { FILE }
+
+    public enum RelationKind {
+        REDEFINES,
+        RENAMES_FROM,
+        RENAMES_THROUGH,
+        OCCURS_DEPENDING_ON,
+        OCCURS_KEY,
+        OCCURS_INDEX
+    }
+
     public record Scope(int id, int parentId, ScopeKind kind, String name,
                         int ownerSymbolId, int astNodeId) {}
 
@@ -49,19 +60,44 @@ public final class SymbolTable {
         public Diagnostic { symbolIds = List.copyOf(symbolIds); }
     }
 
+    /** One semantic declaration entity may be represented by multiple declarations (for example SELECT + FD). */
+    public record Entity(int id, EntityKind kind, String writtenName, String canonicalName,
+                         List<Integer> declarationSymbolIds, Map<String, String> attributes) {
+        public Entity {
+            declarationSymbolIds = List.copyOf(declarationSymbolIds);
+            attributes = Collections.unmodifiableMap(new LinkedHashMap<>(attributes));
+        }
+    }
+
+    /** Nominal declaration relation. Its target is intentionally not bound to a symbol here. */
+    public record DeclarationRelation(int id, RelationKind kind, int ownerSymbolId,
+                                      int referenceAstNodeId, String writtenTarget,
+                                      String bindingStatus, Map<String, String> attributes) {
+        public DeclarationRelation {
+            attributes = Collections.unmodifiableMap(new LinkedHashMap<>(attributes));
+            if (!"NOT_PERFORMED".equals(bindingStatus))
+                throw new IllegalArgumentException("declaration relation cannot contain binding results");
+        }
+    }
+
     private record LookupKey(int scopeId, Namespace namespace, String canonicalName) {}
     private record GlobalKey(Namespace namespace, String canonicalName) {}
 
     private final List<Scope> scopes;
     private final List<Symbol> symbols;
     private final List<Diagnostic> diagnostics;
+    private final List<Entity> entities;
+    private final List<DeclarationRelation> declarationRelations;
     private final Map<LookupKey, List<Symbol>> localIndex;
     private final Map<GlobalKey, List<Symbol>> globalIndex;
 
-    SymbolTable(List<Scope> scopes, List<Symbol> symbols, List<Diagnostic> diagnostics) {
+    SymbolTable(List<Scope> scopes, List<Symbol> symbols, List<Diagnostic> diagnostics,
+                List<Entity> entities, List<DeclarationRelation> declarationRelations) {
         this.scopes = List.copyOf(scopes);
         this.symbols = List.copyOf(symbols);
         this.diagnostics = List.copyOf(diagnostics);
+        this.entities = List.copyOf(entities);
+        this.declarationRelations = List.copyOf(declarationRelations);
         validateIds();
         Map<LookupKey, List<Symbol>> mutable = new HashMap<>();
         Map<GlobalKey, List<Symbol>> global = new HashMap<>();
@@ -82,6 +118,8 @@ public final class SymbolTable {
     public List<Scope> scopes() { return scopes; }
     public List<Symbol> symbols() { return symbols; }
     public List<Diagnostic> diagnostics() { return diagnostics; }
+    public List<Entity> entities() { return entities; }
+    public List<DeclarationRelation> declarationRelations() { return declarationRelations; }
     public Scope rootScope() { return scopes.get(0); }
 
     public List<Symbol> symbolsInScope(int scopeId) {
@@ -126,6 +164,22 @@ public final class SymbolTable {
             if (symbol.id() != i) throw new IllegalArgumentException("symbol ids must be contiguous");
             if (symbol.scopeId() < 0 || symbol.scopeId() >= scopes.size())
                 throw new IllegalArgumentException("unknown declaring scope " + symbol.scopeId());
+        }
+        for (int i = 0; i < entities.size(); i++) {
+            Entity entity = entities.get(i);
+            if (entity.id() != i) throw new IllegalArgumentException("entity ids must be contiguous");
+            if (entity.declarationSymbolIds().isEmpty())
+                throw new IllegalArgumentException("entity must have at least one declaration");
+            if (entity.declarationSymbolIds().stream().anyMatch(id -> id < 0 || id >= symbols.size()))
+                throw new IllegalArgumentException("entity contains unknown declaration symbol");
+        }
+        for (int i = 0; i < declarationRelations.size(); i++) {
+            DeclarationRelation relation = declarationRelations.get(i);
+            if (relation.id() != i) throw new IllegalArgumentException("relation ids must be contiguous");
+            if (relation.ownerSymbolId() < 0 || relation.ownerSymbolId() >= symbols.size())
+                throw new IllegalArgumentException("relation contains unknown owner symbol");
+            if (relation.referenceAstNodeId() < 0)
+                throw new IllegalArgumentException("relation must preserve its nominal reference node");
         }
     }
 }

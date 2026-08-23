@@ -59,7 +59,7 @@ intencionais, TDD-first e explicadas aqui.
 | 0 — baseline | aprovada | 26 testes verdes; três caracterizações novas | nenhuma mudança de produção | nenhuma |
 | 1 — matriz/contratos | aprovada | 28 testes e todos os JS verdes; guarda das 628 regras | manifesto/policy/contratos imutáveis, sem binding | regras conservadoras serão refinadas por TDD nas fases de resolução |
 | 2 — compilation unit | aprovada | 31 testes e todos os JS verdes; fixture com cinco unidades | modelo completo, IDs namespaced, ancestry e visibilidade tipada | binding entre unidades permanece deliberadamente ausente |
-| 3 — entidades/coleta | pendente | — | entidades, scope index e occurrences | — |
+| 3 — entidades/coleta | aprovada | 35 testes e todos os JS verdes; oráculo exato de 16 ocorrências | entidades FILE, relações nominais, scope index O(1) e occurrences tipadas | lookup/candidatos/binding permanecem deliberadamente ausentes |
 | 4 — DATA/INDEX | pendente | — | resolução local estruturada | — |
 | 5 — PROCEDURE/FILE/PROGRAM | pendente | — | demais namespaces e catálogo plugável | — |
 | 6 — cobertura/escala | pendente | — | completude e métricas | — |
@@ -117,6 +117,36 @@ ignorados. Nenhum arquivo de produção, grammar, corpus ou output foi alterado.
    JavaScripts passaram em `node --check`; `git diff --check` não encontrou
    erros. Grammar, corpus, fontes de demonstração, HTML e outputs não foram
    alterados nesta fase.
+
+### Fase 3
+
+1. RED: `EntityScopeAndOccurrenceTest` falhou na compilação pela ausência de
+   entidades, relações, `AstScopeIndex`, modelo de ocorrência e collector.
+2. GREEN: SELECT+FD homônimos formam uma entidade FILE com duas declarações;
+   SELECT-only, FD-only e SD-only continuam entidades explícitas com uma
+   declaração. Nenhuma entidade contém resultado de binding.
+3. GREEN: REDEFINES, RENAMES FROM/THROUGH e OCCURS DEPENDING/KEY/INDEX são
+   relações nominais imutáveis. Elas preservam owner, nó AST da referência e
+   texto escrito, sempre com `bindingStatus=NOT_PERFORMED`.
+4. GREEN: `AstScopeIndex` mapeia cada nó AST exatamente uma vez ao escopo dono
+   mais interno e oferece consulta O(1). A fixture prova cobertura de todos os
+   nós e determinismo entre construções.
+5. GREEN: `ReferenceOccurrenceCollector` percorre somente tipos AST e o
+   manifesto. O oráculo exato cobre 16 ocorrências de relações, referência
+   qualificada, qualificador FILE inequívoco na grammar, subscript, reference
+   modification e statement preservado; uma segunda fixture cobre FILE,
+   PROGRAM, PROCEDURE e DATA em operações e CALL/GO TO.
+6. CONSERVADORISMO: `IN nome` sintaticamente ambíguo não é promovido a FILE por
+   aparência do nome ou pelo corpus. Somente a forma que a grammar identifica
+   como `inFile` recebe kind FILE. Operandos de statements ainda sem contrato
+   direcional recebem `CONTEXT_DEPENDENT`, nunca read/write inventado.
+7. GUARD: cada nó de referência pode originar uma única ocorrência; tentativa
+   de visita duplicada falha explicitamente. Qualificadores têm role
+   `QUALIFIER_COMPONENT` e não são contabilizados como value reads.
+8. REGRESSÃO: a suíte completa terminou com 35 testes verdes; os três
+   JavaScripts passaram em `node --check`; `git diff --check` não encontrou
+   erros. Grammar, corpus, programas de demonstração, HTML e outputs não foram
+   alterados nesta fase; contagens existentes de escopos/símbolos permanecem.
 
 ## Checklist final de regressão
 

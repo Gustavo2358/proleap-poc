@@ -9,9 +9,11 @@ final class SymbolTableBuilder {
     private final List<SymbolTable.Scope> scopes = new ArrayList<>();
     private final List<SymbolTable.Symbol> symbols = new ArrayList<>();
     private final List<SymbolTable.Diagnostic> diagnostics = new ArrayList<>();
+    private final List<SymbolTable.Entity> entities = new ArrayList<>();
+    private final List<SymbolTable.DeclarationRelation> declarationRelations = new ArrayList<>();
 
     SymbolTable build(Ast.Program program) {
-        scopes.clear(); symbols.clear(); diagnostics.clear();
+        scopes.clear(); symbols.clear(); diagnostics.clear(); entities.clear(); declarationRelations.clear();
         int root = addScope(-1, SymbolTable.ScopeKind.ROOT, "<root>", -1, -1);
         int programSymbol = addSymbol(SymbolTable.SymbolKind.PROGRAM, SymbolTable.Namespace.PROGRAM,
                 program.name(), root, program, programAttributes(program));
@@ -29,7 +31,8 @@ final class SymbolTableBuilder {
             }
         }
         detectDuplicateDeclarations();
-        return new SymbolTable(scopes, symbols, diagnostics);
+        buildFileEntities();
+        return new SymbolTable(scopes, symbols, diagnostics, entities, declarationRelations);
     }
 
     private void collectEnvironment(Ast.Division division, int divisionScope) {
@@ -84,6 +87,7 @@ final class SymbolTableBuilder {
             int itemScope = addScope(sectionScope, SymbolTable.ScopeKind.DATA_ITEM,
                     scopeName, symbolId, entry.meta().id());
             for (Ast.DataClause clause : entry.clauses()) {
+                if (symbolId >= 0) collectDeclarationRelations(symbolId, clause);
                 if (clause instanceof Ast.OccursClause occurs) {
                     for (Ast.IndexReference index : occurs.indexes()) {
                         addSymbol(SymbolTable.SymbolKind.INDEX_NAME, SymbolTable.Namespace.DATA,
@@ -92,6 +96,48 @@ final class SymbolTableBuilder {
                 }
             }
             collectDataEntries(entry.children(), itemScope);
+        }
+    }
+
+    private void collectDeclarationRelations(int ownerSymbolId, Ast.DataClause clause) {
+        if (clause instanceof Ast.RedefinesClause redefines) {
+            addRelation(SymbolTable.RelationKind.REDEFINES, ownerSymbolId, redefines.target(), Map.of());
+        } else if (clause instanceof Ast.RenamesClause renames) {
+            addRelation(SymbolTable.RelationKind.RENAMES_FROM, ownerSymbolId, renames.from(), Map.of());
+            if (renames.through() != null)
+                addRelation(SymbolTable.RelationKind.RENAMES_THROUGH, ownerSymbolId, renames.through(), Map.of());
+        } else if (clause instanceof Ast.OccursClause occurs) {
+            if (occurs.dependingOn() != null)
+                addRelation(SymbolTable.RelationKind.OCCURS_DEPENDING_ON, ownerSymbolId,
+                        occurs.dependingOn(), Map.of());
+            for (Ast.DataReference key : occurs.keys())
+                addRelation(SymbolTable.RelationKind.OCCURS_KEY, ownerSymbolId, key, Map.of());
+            for (Ast.IndexReference index : occurs.indexes())
+                addRelation(SymbolTable.RelationKind.OCCURS_INDEX, ownerSymbolId, index,
+                        Map.of("declarationKind", "INDEX_NAME"));
+        }
+    }
+
+    private void addRelation(SymbolTable.RelationKind kind, int ownerSymbolId, Ast.Node reference,
+                             Map<String, String> attributes) {
+        String written = reference instanceof Ast.DataReference data ? data.writtenText()
+                : reference instanceof Ast.IndexReference index ? index.writtenText() : "";
+        declarationRelations.add(new SymbolTable.DeclarationRelation(declarationRelations.size(), kind,
+                ownerSymbolId, reference.meta().id(), written, "NOT_PERFORMED", attributes));
+    }
+
+    private void buildFileEntities() {
+        Map<String, List<SymbolTable.Symbol>> grouped = new LinkedHashMap<>();
+        for (SymbolTable.Symbol symbol : symbols) {
+            if (symbol.namespace() == SymbolTable.Namespace.FILE)
+                grouped.computeIfAbsent(symbol.canonicalName(), ignored -> new ArrayList<>()).add(symbol);
+        }
+        for (List<SymbolTable.Symbol> declarations : grouped.values()) {
+            SymbolTable.Symbol first = declarations.get(0);
+            entities.add(new SymbolTable.Entity(entities.size(), SymbolTable.EntityKind.FILE,
+                    first.writtenName(), first.canonicalName(),
+                    declarations.stream().map(SymbolTable.Symbol::id).toList(),
+                    Map.of("association", "CANONICAL_LOGICAL_NAME", "binding", "NOT_PERFORMED")));
         }
     }
 
