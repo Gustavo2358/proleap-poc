@@ -62,32 +62,59 @@ public final class ExplorerMain {
                 normalized, preprocessed.unresolved(), tokenCount, maxDepth, lexerErrors, parserErrors,
                 nodes, ruleCounts, diagnostics);
 
-        AstBuildResult astBuild = new AstBuilder(parser, normalized, preprocessed.sourceMap(),
-                parseIds, parseSubtreeSizes).build(tree);
-        Ast.Program ast = astBuild.program();
+        CompilationUnitBuildResult compilationBuild = new AstBuilder(parser, normalized,
+                preprocessed.sourceMap(), parseIds, parseSubtreeSizes)
+                .buildCompilationUnit(tree, source.getFileName().toString());
+        CompilationUnitModel compilationUnit = compilationBuild.compilationUnit();
+        if (compilationUnit.programUnits().isEmpty())
+            throw new IllegalStateException("No COBOL program unit was produced by the semantic frontend");
+        CompilationUnitModel.ProgramUnit primaryUnit = compilationUnit.programUnits().get(0);
+        Ast.Program ast = primaryUnit.program();
         AstSnapshot astSnapshot = AstSnapshot.from(ast);
         astSnapshot.write(output.resolve("ast-data.js"), source.getFileName().toString(), nodes.size(),
                 Arrays.asList(normalized.split("\\R", -1)));
         CoverageSnapshot coverageSnapshot = CoverageSnapshot.from(source.getFileName().toString(), ast,
-                astBuild.coverage(), preprocessed.unresolved(), (int) lexerErrors, (int) parserErrors);
+                compilationBuild.coverageByProgramUnit().get(primaryUnit.id()), preprocessed.unresolved(),
+                (int) lexerErrors, (int) parserErrors);
         coverageSnapshot.write(output.resolve("coverage-data.js"));
 
-        SymbolTable symbolTable = new SymbolTableBuilder().build(ast);
+        CompilationUnitSymbolTables symbolTables = new CompilationUnitSymbolTableBuilder().build(compilationUnit);
+        SymbolTable symbolTable = symbolTables.forProgramUnit(primaryUnit.id()).orElseThrow().symbolTable();
         SymbolTableSnapshot symbolSnapshot = SymbolTableSnapshot.from(symbolTable);
         symbolSnapshot.write(output.resolve("symbol-data.js"), source.getFileName().toString(),
                 Arrays.asList(normalized.split("\\R", -1)));
 
+        Map<ResolutionContracts.ProgramUnitId, ReferenceOccurrences> occurrences = new LinkedHashMap<>();
+        for (CompilationUnitModel.ProgramUnit unit : compilationUnit.programUnits()) {
+            SymbolTable unitTable = symbolTables.forProgramUnit(unit.id()).orElseThrow().symbolTable();
+            occurrences.put(unit.id(), new ReferenceOccurrenceCollector().collect(unit.id(), unit.program(),
+                    AstScopeIndex.build(unit.program(), unitTable)));
+        }
+        ResolutionContracts.CobolResolutionPolicy policy = ResolutionContracts.CobolResolutionPolicy.initial();
+        Optional<ExternalProgramCatalog> externalCatalog = Optional.empty();
+        ReferenceResolution resolution = new CobolReferenceResolver(policy, externalCatalog)
+                .resolve(compilationUnit, symbolTables, occurrences);
+        ResolutionAnalysisReport resolutionReport = ResolutionAnalysisReport.compose(compilationBuild,
+                new ResolutionAnalysisReport.FrontendState(preprocessed.unresolved(), preprocessed.errors(),
+                        (int) lexerErrors, (int) parserErrors, diagnostics), occurrences, resolution);
+        ResolutionSnapshot.from(source.getFileName().toString(),
+                        Arrays.asList(normalized.split("\\R", -1)), compilationUnit, resolution,
+                        resolutionReport, "NONE (not provided)")
+                .write(output.resolve("resolution-data.js"));
+
         System.out.printf(Locale.ROOT,
-                "Generated %s, %s and %s%nSource: %s%nParse tree: %,d nodes | %,d tokens | depth %d%n" +
+                "Generated %s, %s, %s and %s%nSource: %s%nParse tree: %,d nodes | %,d tokens | depth %d%n" +
                         "AST: %,d nodes | depth %d | static CALLs %d%n" +
                         "Symbols: %,d declarations | %,d scopes | %,d diagnostics | parser errors %d%n" +
-                        "Dependency coverage complete: %s%n",
+                        "Reference binding: %,d entries | %,d gaps | dependency analysis ready: %s%n",
                 output.resolve("index.html"), output.resolve("ast.html"), output.resolve("symbols.html"),
+                output.resolve("resolution.html"),
                 source.getFileName(), nodes.size(),
                 tokenCount, maxDepth, astSnapshot.metrics().nodes(), astSnapshot.metrics().maxDepth(),
                 astSnapshot.metrics().staticCalls(), symbolSnapshot.metrics().symbols(),
                 symbolSnapshot.metrics().scopes(), symbolSnapshot.metrics().diagnostics(), parserErrors,
-                coverageSnapshot.dependencyCoverageComplete());
+                resolution.entries().size(), resolutionReport.gaps().size(),
+                resolutionReport.completeness().dependencyAnalysisReady());
     }
 
     private static int walk(ParseTree tree, int parent, int depth, Parser parser,

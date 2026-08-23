@@ -20,7 +20,7 @@
       <a class="journey-step completed" href="index.html"><span>01</span><div><b>Parse Tree</b><small>Sintaxe concreta do ANTLR</small></div></a>
       <a class="journey-step completed" href="ast.html"><span>02</span><div><b>AST</b><small>Modelo semântico da aplicação</small></div></a>
       <a class="journey-step active" href="symbols.html"><span>03</span><div><b>Symbol Table</b><small>Declarações + escopos</small></div></a>
-      <span class="journey-step disabled"><span>04</span><div><b>Resolução</b><small>Próxima etapa</small></div></span>
+      <a class="journey-step" href="resolution.html"><span>04</span><div><b>Resolução</b><small>Usos → candidatos</small></div></a>
     </nav>
 
     <section class="hero symbols-hero">
@@ -40,8 +40,8 @@
       <span class="arrow">→</span>
       <div class="model-step"><i class="dot scope"></i><b>Escopos</b><small>contexto + namespace</small></div>
       <span class="arrow">→</span>
-      <div class="model-step future"><i class="dot future"></i><b>Resolução</b><small>usos → declarações</small></div>
-      <span class="model-note"><b>Fronteira intencional:</b> CALL, GO TO, PERFORM e referências de dados continuam sem binding. Este passo prepara o vocabulário para resolvê-los depois.</span>
+      <div class="model-step"><i class="dot resolved"></i><b>Resolução</b><small>usos → candidatos</small></div>
+      <span class="model-note"><b>Fronteira intencional:</b> esta página ainda mostra apenas declarações. Abra o passo 04 para inspecionar bindings em um produto separado e imutável.</span>
     </section>
 
     <main class="workspace symbols-workspace">

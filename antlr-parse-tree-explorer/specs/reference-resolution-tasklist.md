@@ -591,18 +591,18 @@ existir.
 
 ### Fase 7 — Snapshots, pipeline e jornada HTML
 
-- [ ] Criar `ResolutionSnapshot` e `resolution-data.js` determinísticos.
-- [ ] Integrar a etapa após Symbol Table em `ExplorerMain`, mantendo produtos
+- [x] Criar `ResolutionSnapshot` e `resolution-data.js` determinísticos.
+- [x] Integrar a etapa após Symbol Table em `ExplorerMain`, mantendo produtos
       separados e política/catálogo explícitos.
-- [ ] Criar `resolution.html`/`resolution-app.js` com filtros por unit, kind,
+- [x] Criar `resolution.html`/`resolution-app.js` com filtros por unit, kind,
       role, status e reason; busca e inspetor de candidatos/decisão.
-- [ ] Adicionar pontes AST ↔ entidade/símbolo ↔ parse tree ↔ fonte e visão de
+- [x] Adicionar pontes AST ↔ entidade/símbolo ↔ parse tree ↔ fonte e visão de
       cobertura/completude.
-- [ ] Explicar visualmente que binding da variável de CALL não resolve valores.
-- [ ] Atualizar navegação e README, sem dependências web externas.
-- [ ] Regenerar `dist`, `dist-cbstm03a` e `dist-cbstm03d` somente nesta fase.
-- [ ] Validar no navegador casos resolved/ambiguous/unresolved/unsupported.
-- [ ] Executar regressão e criar commit isolado.
+- [x] Explicar visualmente que binding da variável de CALL não resolve valores.
+- [x] Atualizar navegação e README, sem dependências web externas.
+- [x] Regenerar `dist`, `dist-cbstm03a` e `dist-cbstm03d` somente nesta fase.
+- [x] Validar no navegador casos resolved/ambiguous/unresolved/unsupported.
+- [x] Executar regressão e criar commit isolado.
 
 ### Fase 8 — Regressão final e encerramento
 

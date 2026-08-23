@@ -63,7 +63,7 @@ intencionais, TDD-first e explicadas aqui.
 | 4 — DATA/INDEX | aprovada | 42 testes e todos os JS verdes; sete testes novos de binding | resultado imutável, DATA/CONDITION/INDEX, relações e métricas de índice | namespaces PROCEDURE/FILE/PROGRAM continuam UNSUPPORTED até a Fase 5 |
 | 5 — PROCEDURE/FILE/PROGRAM | aprovada | 49 testes e todos os JS verdes; sete testes novos | resolver composto, catálogo externo plugável e admissibleKinds | cobertura/completude agregada permanece para a Fase 6 |
 | 6 — cobertura/escala | aprovada | 53 testes e todos os JS verdes; escala com 1.200 declarações | relatório conservador, gaps e métricas de custo | snapshot/HTML permanecem para a Fase 7 |
-| 7 — HTML | pendente | — | nova jornada visual | — |
+| 7 — HTML | aprovada | 56 testes, JS verdes, navegador e hashes determinísticos | snapshot/pipeline e quarta página da jornada | regressão final permanece para a Fase 8 |
 | 8 — regressão final | pendente | — | — | — |
 
 ## Evidência TDD
@@ -226,6 +226,47 @@ ignorados. Nenhum arquivo de produção, grammar, corpus ou output foi alterado.
    quantidade de unidades, sem incluir duração não determinística no snapshot.
 8. REGRESSÃO: 53 testes Maven verdes, três JavaScripts válidos e diff sem erros.
    Grammar, corpus, baselines, HTML e outputs permaneceram inalterados.
+
+### Fase 7
+
+1. RED: `ResolutionSnapshotTest` falhou primeiro pela ausência de
+   `ResolutionSnapshot`; após a menor projeção determinística, permaneceu RED
+   pela ausência de `resolution.html`; por fim, o teste de integração falhou
+   enquanto `ExplorerMain` ainda produzia somente três etapas.
+2. GREEN: `ResolutionSnapshot` projeta, sem recalcular binding, policy, catálogo,
+   completude, métricas, units, occurrences, candidatos, diagnósticos, relações
+   e gaps. O fonte normalizado aparece uma única vez; cada ocorrência conserva
+   spans, proveniência e pontes para AST/parse tree/símbolos.
+3. PIPELINE: `ExplorerMain` usa o modelo completo da compilation unit, constrói
+   tabelas e occurrences namespaced e executa o resolver depois da Symbol Table.
+   AST, Symbol Table, occurrences, resolution e report permanecem produtos
+   separados. A página legada de AST/tabela continua representando a primeira
+   unidade para compatibilidade.
+4. UI: `resolution.html` oferece busca e filtros por unit/kind/role/status/reason,
+   inspector de todos os candidatos, fonte, policy/catálogo, custo e lacunas de
+   cobertura. Não usa rede, `fetch` ou dependências web externas.
+5. LIMITE EXPLÍCITO: a seleção de `CALL_TARGET` DATA explica que o binding liga
+   `WS-CALL-TARGET` à sua declaração, mas CFG/reaching definitions continuam
+   necessários para descobrir valores possíveis e subprogramas chamados.
+6. NAVEGADOR: a fixture focada exibiu 4 RESOLVED, 1 AMBIGUOUS, 1 UNRESOLVED e
+   1 UNSUPPORTED. O filtro AMBIGUOUS retornou uma ocorrência e preservou dois
+   candidatos; pontes apontaram para AST #24 e parse tree #130; zero erros de
+   console foram observados.
+7. CBSTM03D: o filtro `CALL_TARGET` retornou exatamente 14 bindings RESOLVED de
+   `WS-CALL-TARGET`, todos com a mensagem que separa binding de dataflow. A
+   página manteve 331 gaps e `dependencyAnalysisReady=false`, evitando alegação
+   indevida de cobertura completa.
+8. OUTPUTS: somente `dist`, `dist-cbstm03a` e `dist-cbstm03d` foram regenerados
+   no repositório. Respectivamente, os snapshots contêm 3.058/1.468,
+   580/345 e 582/331 referências/gaps.
+9. DETERMINISMO: duas gerações consecutivas de `resolution-data.js` produziram
+   SHA-256 idênticos: `697cbcc55d383c8ac47e00c5cecf1baa80adb8b1570697ca3b1ce3c9eb62110b`,
+   `da9c1eb1b800f902251d06801d746f683cb5c7600cbe7a6d6fbc3070d355afd3` e
+   `c13f1ce9a0c1bfdef5af018dc03b5d644128578ea8e34655992e47a02828198c`.
+10. REGRESSÃO: a suíte completa terminou com 56 testes, zero falhas/erros; todos
+    os quatro JavaScripts-fonte e os três snapshots gerados passaram em
+    `node --check`. Gramáticas, corpus, fontes COBOL e baselines não foram
+    modificados.
 
 ## Checklist final de regressão
 

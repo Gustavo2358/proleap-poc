@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>COBOL Structure Atlas · Resolução de referências</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="resolution-page">
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark resolution-mark" aria-hidden="true">↗</span>
+        <div><p class="eyebrow">COBOL · NAME BINDING · PASSO 04</p><h1>COBOL Structure Atlas</h1></div>
+      </div>
+      <div class="parse-status" id="resolution-status"><span></span> carregando bindings…</div>
+    </header>
+
+    <nav class="journey-nav" aria-label="Jornada de transformação">
+      <a class="journey-step completed" href="index.html"><span>01</span><div><b>Parse Tree</b><small>Sintaxe concreta do ANTLR</small></div></a>
+      <a class="journey-step completed" href="ast.html"><span>02</span><div><b>AST</b><small>Modelo semântico da aplicação</small></div></a>
+      <a class="journey-step completed" href="symbols.html"><span>03</span><div><b>Symbol Table</b><small>Declarações + escopos</small></div></a>
+      <a class="journey-step active" href="resolution.html"><span>04</span><div><b>Resolução</b><small>Usos → candidatos</small></div></a>
+    </nav>
+
+    <section class="hero resolution-hero">
+      <div class="hero-copy">
+        <p class="kicker">DOS USOS NOMINAIS ÀS IDENTIDADES SEMÂNTICAS</p>
+        <h2>Cada decisão permanece explicável.</h2>
+        <p>O resolver liga referências da AST a entidades da tabela de símbolos. Ambiguidades, ausências e formas sem suporte permanecem resultados explícitos — nunca viram “nenhuma dependência”.</p>
+      </div>
+      <div class="metrics" id="resolution-metrics" aria-label="Métricas da resolução"></div>
+    </section>
+
+    <section class="mental-model resolution-model" aria-label="Modelo mental da resolução">
+      <span class="model-label">ESTE PASSO</span>
+      <div class="model-step"><i class="dot expression"></i><b>Referência AST</b><small>uso + papel</small></div>
+      <span class="arrow">+</span>
+      <div class="model-step"><i class="dot declaration"></i><b>Symbol Table</b><small>entidades visíveis</small></div>
+      <span class="arrow">→</span>
+      <div class="model-step"><i class="dot resolved"></i><b>Binding</b><small>estado + candidatos</small></div>
+      <span class="model-note"><b>Limite semântico:</b> resolver uma variável usada em CALL identifica sua declaração. Descobrir quais nomes de programa ela pode conter exige CFG + reaching definitions, etapas ainda não executadas.</span>
+    </section>
+
+    <section class="resolution-contract panel" aria-label="Contrato operacional">
+      <div id="completeness-banner" class="coverage-banner"></div>
+      <div class="policy-strip" id="policy-strip"></div>
+    </section>
+
+    <main class="workspace resolution-workspace">
+      <section class="resolution-list-panel panel">
+        <div class="panel-heading"><div><span class="panel-index">01</span><h3>Referências</h3></div><span class="panel-meta" id="resolution-count">—</span></div>
+        <div class="resolution-toolbar">
+          <label class="search-box"><span aria-hidden="true">⌕</span><input id="resolution-search" type="search" placeholder="Buscar nome, regra ou motivo…" autocomplete="off"><kbd>/</kbd></label>
+        </div>
+        <div class="resolution-filters" aria-label="Filtros de resolução">
+          <label>Unidade<select id="unit-filter"></select></label>
+          <label>Kind<select id="kind-filter"></select></label>
+          <label>Role<select id="role-filter"></select></label>
+          <label>Status<select id="status-filter"></select></label>
+          <label>Reason<select id="reason-filter"></select></label>
+        </div>
+        <div class="resolution-list" id="resolution-list"></div>
+        <div class="legend resolution-legend">
+          <span><i class="dot resolved"></i> resolved</span><span><i class="dot ambiguous"></i> ambiguous</span>
+          <span><i class="dot unresolved"></i> unresolved</span><span><i class="dot unsupported"></i> unsupported</span>
+        </div>
+      </section>
+
+      <aside class="inspector-panel panel resolution-inspector">
+        <div class="panel-heading"><div><span class="panel-index">02</span><h3>Decisão</h3></div><span class="node-id" id="resolution-id">—</span></div>
+        <div class="node-identity"><span class="node-kind" id="resolution-kind">REFERÊNCIA</span><h3 id="resolution-name">Selecione uma referência</h3><p id="resolution-decision">—</p></div>
+        <dl class="node-facts" id="resolution-facts"></dl>
+        <section class="inspector-section"><h4>Candidatos preservados</h4><div id="candidate-inspector" class="candidate-inspector"></div></section>
+        <section class="inspector-section source-preview-section"><h4>Origem no fonte</h4><div class="source-preview" id="resolution-source"></div></section>
+        <section class="inspector-section bridge-box"><h4>Pontes rastreáveis</h4><p>Volte ao uso nominal na AST ou à região concreta que o originou.</p><div class="bridge-actions"><a class="bridge-action" id="open-reference-ast" href="ast.html">AST ←</a><a class="bridge-action" id="open-reference-parse" href="index.html">Parse tree ←</a></div></section>
+        <section class="inspector-section insight-box" id="call-binding-insight"><h4>Binding não é dataflow</h4><p id="resolution-insight">Esta etapa escolhe identidades semânticas; não calcula valores em runtime.</p></section>
+      </aside>
+
+      <aside class="coverage-panel panel" id="coverage-panel">
+        <div class="panel-heading"><div><span class="panel-index">03</span><h3>Cobertura</h3></div><span class="panel-meta" id="gap-count">—</span></div>
+        <div class="coverage-explanation">Uma lacuna bloqueante torna a análise de dependências incompleta. O painel mostra exatamente a regra e a linha responsáveis.</div>
+        <div class="gap-list" id="gap-list"></div>
+      </aside>
+    </main>
+
+    <footer><span>Binding imutável e separado · política e catálogo explícitos</span><span>Sem CFG · sem reaching definitions · sem valores de CALL · sem SQL</span></footer>
+  </div>
+  <script src="resolution-data.js"></script>
+  <script src="resolution-app.js"></script>
+</body>
+</html>
