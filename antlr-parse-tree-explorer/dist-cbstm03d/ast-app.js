@@ -3,6 +3,7 @@
 
   const data = window.AST_DATA;
   if (!data) throw new Error("ast-data.js não foi carregado");
+  const coverage = window.SEMANTIC_COVERAGE_DATA;
   const symbolData = window.SYMBOL_TABLE_DATA;
   const symbolsByAst = new Map();
   for (const symbol of symbolData?.symbols || []) {
@@ -36,6 +37,7 @@
     renderHeader();
     renderTypeBars();
     renderCalls();
+    renderCoverage();
     rebuildVisible();
     selectNode(nodes[selectedId] ? selectedId : 0, requestedNode() != null);
     bindEvents();
@@ -86,6 +88,40 @@
     $$(".view").forEach((panel) => panel.classList.toggle("active", panel.id === `${view}-view`));
     $("#tree-toolbar").style.display = view === "tree" ? "flex" : "none";
     if (view === "tree") requestAnimationFrame(renderVirtualRows);
+  }
+
+  function renderCoverage() {
+    if (!coverage) return;
+    const banner = $("#coverage-banner");
+    const complete = coverage.meta.complete;
+    banner.className = `coverage-banner ${complete ? "complete" : "incomplete"}`;
+    banner.innerHTML = `<b>${complete ? "Cobertura suficiente para dependências" : "Cobertura incompleta"}</b>
+      <span>${complete ? "Nenhuma lacuna relevante foi observada." : escapeHtml(coverage.blockingReasons.join(" · "))}</span>`;
+    const metrics = coverage.metrics;
+    $("#coverage-metrics").innerHTML = [
+      [metrics.dataReferences, "referências DATA"],
+      [metrics.procedureReferences, "referências PROCEDURE"],
+      [metrics.fileReferences, "referências FILE"],
+      [metrics.preservedStatements + metrics.embeddedLanguages, "statements pendentes"]
+    ].map(([value, label]) => `<div><b>${format(value)}</b><span>${label}</span></div>`).join("");
+    const gaps = coverage.findings.filter((finding) => finding.dependency === "DEPENDENCY_UNKNOWN"
+      || finding.coverage === "UNSUPPORTED" || finding.coverage === "INPUT_MISSING");
+    $("#coverage-findings").innerHTML = gaps.length ? gaps.map((finding) => `
+      <article class="coverage-card" data-ast="${finding.ast}">
+        <div><b>${escapeHtml(finding.rule)}</b><span>${escapeHtml(finding.coverage)} · ${escapeHtml(finding.dependency)}</span></div>
+        <p>${escapeHtml(shorten(finding.text, 110))}</p>
+        <small>${escapeHtml(finding.sourceFile)}:${finding.sourceLine || finding.line}</small>
+        <nav><button data-open-ast="${finding.ast}">AST #${finding.ast}</button>
+          <a href="index.html#node=${finding.parse}">Parse tree #${finding.parse}</a>
+          <button data-open-source="${finding.ast}">Fonte L${finding.line}</button></nav>
+      </article>`).join("") : `<div class="empty-state"><b>Nenhuma lacuna</b><span>O frontend não encontrou bloqueios relevantes.</span></div>`;
+    $$("[data-open-ast]").forEach((button) => button.addEventListener("click", () => {
+      setView("tree"); selectNode(Number(button.dataset.openAst), true);
+    }));
+    $$("[data-open-source]").forEach((button) => button.addEventListener("click", () => {
+      setView("tree"); selectNode(Number(button.dataset.openSource), true);
+      $("#source-code .source-line.selected")?.scrollIntoView({ block: "center" });
+    }));
   }
 
   function rebuildVisible() {

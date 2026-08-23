@@ -63,6 +63,7 @@
             <button class="tab active" data-view="tree">Estrutura</button>
             <button class="tab" data-view="types">Tipos</button>
             <button class="tab" data-view="calls">CALLs</button>
+            <button class="tab" data-view="coverage">Cobertura</button>
           </nav>
         </div>
 
@@ -99,6 +100,13 @@
           <div class="view-intro"><b>Subprogramas visíveis no MVP 1</b><span>Alvos literais são fatos diretos; alvos por variável exigirão análise de fluxo.</span></div>
           <div class="call-summary" id="call-summary"></div>
           <div class="flow-list" id="call-list"></div>
+        </div>
+
+        <div class="view" id="coverage-view">
+          <div class="coverage-banner" id="coverage-banner"></div>
+          <div class="coverage-metrics" id="coverage-metrics"></div>
+          <div class="view-intro"><b>Lacunas semanticamente relevantes</b><span>Clique para navegar à AST; os atalhos levam também à parse tree e ao fonte.</span></div>
+          <div class="coverage-findings" id="coverage-findings"></div>
         </div>
       </section>
 
@@ -146,6 +154,7 @@
   </div>
   <script src="ast-data.js"></script>
   <script src="symbol-data.js"></script>
+  <script src="coverage-data.js"></script>
   <script src="ast-app.js"></script>
 </body>
 </html>

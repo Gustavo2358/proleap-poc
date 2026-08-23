@@ -68,6 +68,9 @@ public final class ExplorerMain {
         AstSnapshot astSnapshot = AstSnapshot.from(ast);
         astSnapshot.write(output.resolve("ast-data.js"), source.getFileName().toString(), nodes.size(),
                 Arrays.asList(normalized.split("\\R", -1)));
+        CoverageSnapshot coverageSnapshot = CoverageSnapshot.from(source.getFileName().toString(), ast,
+                astBuild.coverage(), preprocessed.unresolved(), (int) lexerErrors, (int) parserErrors);
+        coverageSnapshot.write(output.resolve("coverage-data.js"));
 
         SymbolTable symbolTable = new SymbolTableBuilder().build(ast);
         SymbolTableSnapshot symbolSnapshot = SymbolTableSnapshot.from(symbolTable);
@@ -77,12 +80,14 @@ public final class ExplorerMain {
         System.out.printf(Locale.ROOT,
                 "Generated %s, %s and %s%nSource: %s%nParse tree: %,d nodes | %,d tokens | depth %d%n" +
                         "AST: %,d nodes | depth %d | static CALLs %d%n" +
-                        "Symbols: %,d declarations | %,d scopes | %,d diagnostics | parser errors %d%n",
+                        "Symbols: %,d declarations | %,d scopes | %,d diagnostics | parser errors %d%n" +
+                        "Dependency coverage complete: %s%n",
                 output.resolve("index.html"), output.resolve("ast.html"), output.resolve("symbols.html"),
                 source.getFileName(), nodes.size(),
                 tokenCount, maxDepth, astSnapshot.metrics().nodes(), astSnapshot.metrics().maxDepth(),
                 astSnapshot.metrics().staticCalls(), symbolSnapshot.metrics().symbols(),
-                symbolSnapshot.metrics().scopes(), symbolSnapshot.metrics().diagnostics(), parserErrors);
+                symbolSnapshot.metrics().scopes(), symbolSnapshot.metrics().diagnostics(), parserErrors,
+                coverageSnapshot.dependencyCoverageComplete());
     }
 
     private static int walk(ParseTree tree, int parent, int depth, Parser parser,

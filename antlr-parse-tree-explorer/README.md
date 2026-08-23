@@ -64,6 +64,11 @@ mvn compile exec:java \
 
 Abra `dist-cbstm03d/index.html`, `ast.html` e `symbols.html`. A AST mostra 14 CALLs dinâmicos e nenhum estático; a tabela de símbolos mostra a declaração única de `WS-CALL-TARGET`. A descoberta dos valores possíveis da variável permanece deliberadamente fora deste passo: ela dependerá do futuro CFG e da análise de fluxo.
 
+Na página `ast.html`, a aba **Cobertura** explica se o programa está suficientemente
+coberto para análise de dependências. Construções preservadas, linguagens
+embutidas e COPYs ausentes aparecem como lacunas navegáveis; nunca são
+convertidas silenciosamente em “nenhuma dependência”.
+
 ## Como ler a interface
 
 - **Árvore**: navegação hierárquica virtualizada pelos 57 mil nós, com busca por regras e tokens.

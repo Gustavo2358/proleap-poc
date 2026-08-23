@@ -622,11 +622,11 @@ navegáveis da métrica agregada até fonte/parse tree.
 
 ### Fase 7 — Snapshots e observabilidade HTML
 
-- [ ] Criar snapshot determinístico do relatório de cobertura.
-- [ ] Atualizar AST/Symbol snapshots para os novos nós e relações.
-- [ ] Adicionar a visão Cobertura semântica e estados de completude aos HTMLs.
-- [ ] Permitir navegação de cada lacuna até AST, parse tree e fonte/proveniência.
-- [ ] Regenerar `dist`, `dist-cbstm03a` e `dist-cbstm03d` somente nesta fase.
+- [x] Criar snapshot determinístico do relatório de cobertura.
+- [x] Atualizar AST/Symbol snapshots para os novos nós e relações.
+- [x] Adicionar a visão Cobertura semântica e estados de completude aos HTMLs.
+- [x] Permitir navegação de cada lacuna até AST, parse tree e fonte/proveniência.
+- [x] Regenerar `dist`, `dist-cbstm03a` e `dist-cbstm03d` somente nesta fase.
 
 ### Fase 8 — Regressão e encerramento
 

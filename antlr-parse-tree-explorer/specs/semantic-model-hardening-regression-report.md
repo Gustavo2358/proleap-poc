@@ -57,7 +57,7 @@ deverão permanecer e toda diferença será explicada neste relatório.
 | 4 — procedure references | aprovada | 17 testes Maven verdes; fixture GO TO/PERFORM/ALTER/SORT/MERGE | procedure/file/program/index references são nós sem binding e alcançáveis | statements adiados continuam `UnsupportedStatement`, agora com referências reconhecidas |
 | 5 — declarações | aprovada | 19 testes Maven verdes; fixture de declarações e assinatura | hierarquia e cláusulas DATA são nós; LINKAGE/USING e relações textuais ficam explícitos | cláusulas adiadas usam `PreservedDataClause`; binding não executado |
 | 6 — statements | aprovada | 22 testes Maven verdes; fixture com as 50 alternativas | operands e clauses são estruturados; 16 statements adiados usam `PreservedStatement` | sem interpretação semântica dos 16 adiados |
-| 7 — observabilidade | pendente | — | — | — |
+| 7 — observabilidade | aprovada | 23 testes Maven, JS e navegador local verdes | `coverage-data.js` e aba Cobertura nas três jornadas | todos os programas permanecem conservadoramente incompletos |
 | 8 — regressão final | pendente | — | — | — |
 
 ## Evidência TDD da Fase 1
@@ -179,6 +179,27 @@ a Fase 7.
    mecanicamente com a gramática e exercitadas por uma fixture sintética. Os
    nós passaram para 9.189/2.740/2.752 e COACTUPC expõe 2.871 DataReferences;
    CALLs, escopos, símbolos e diagnósticos permaneceram iguais.
+
+## Evidência TDD da Fase 7
+
+1. RED/GREEN: `CoverageSnapshotTest` exigiu serialização determinística,
+   completude conservadora, motivos bloqueantes e deep links AST/parse tree.
+2. `coverage-data.js` expõe totais por `ConstructionCoverage` e
+   `DependencyKnowledge`, referências por namespace e forma, statements
+   modelados/preservados, cláusulas DATA tipadas/preservadas, expressões opacas
+   e linguagens embutidas.
+3. A aba **Cobertura** mostra banner de completude, motivos, métricas e lacunas
+   navegáveis para AST, parse tree e fonte/proveniência. A inspeção no navegador
+   confirmou a navegação de `execCicsStatement` para AST #1743, linha expandida
+   2604 e parse tree #20211, sem erros no console.
+4. `dist`, `dist-cbstm03a` e `dist-cbstm03d` foram regenerados. Todos informam
+   `complete=false`: COACTUPC tem três COPYs ausentes e CICS opaco; os programas
+   CBSTM têm statements preservados ainda não interpretados.
+5. Cláusulas DATA e expressões preservadas também geram findings navegáveis e
+   impedem completude; não ficam escondidas apenas em uma métrica agregada.
+6. Duas gerações integrais produziram o mesmo SHA-256 agregado:
+   `57b33d11f05831707ed5b0512d981b586b973e265fe44f3756237f00f2e8b4ba`.
+   Isso protege IDs, ordem e snapshots determinísticos.
 
 ## Checklist final de regressão
 

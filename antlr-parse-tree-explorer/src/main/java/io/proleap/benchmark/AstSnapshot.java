@@ -14,7 +14,7 @@ final class AstSnapshot {
                 int includeDepth, boolean sourceExact) {}
 
     record Metrics(int nodes, int maxDepth, int staticCalls, int dynamicCalls,
-                   int embeddedLanguages, int unsupportedStatements) {}
+                   int embeddedLanguages, int unsupportedStatements, int preservedStatements) {}
 
     private final List<Node> nodes;
     private final Metrics metrics;
@@ -37,16 +37,17 @@ final class AstSnapshot {
         Map<Integer, List<Integer>> parseToAst = new TreeMap<>();
         flatten(program, -1, 0, nodes, typeCounts, parseToAst);
         int maxDepth = nodes.stream().mapToInt(Node::depth).max().orElse(0);
-        int staticCalls = 0, dynamicCalls = 0, embedded = 0, unsupported = 0;
+        int staticCalls = 0, dynamicCalls = 0, embedded = 0, unsupported = 0, preserved = 0;
         for (Node node : nodes) {
             if (node.type.equals("CallStatement")) {
                 if ("STATIC_LITERAL".equals(node.attributes.get("targetKind"))) staticCalls++; else dynamicCalls++;
             }
             if (node.type.equals("EmbeddedLanguageStatement")) embedded++;
             if (node.type.equals("UnsupportedStatement")) unsupported++;
+            if (node.type.equals("PreservedStatement")) preserved++;
         }
         return new AstSnapshot(nodes, new Metrics(nodes.size(), maxDepth, staticCalls, dynamicCalls,
-                embedded, unsupported), typeCounts, parseToAst);
+                embedded, unsupported, preserved), typeCounts, parseToAst);
     }
 
     Metrics metrics() { return metrics; }
@@ -106,6 +107,10 @@ final class AstSnapshot {
         if (node instanceof Ast.Sentence) return "sentence";
         if (node instanceof Ast.CallStatement n) return expressionLabel(n.target());
         if (node instanceof Ast.CallArgument n) return n.passingMode().name();
+        if (node instanceof Ast.ModeledStatement n) return n.grammarRule();
+        if (node instanceof Ast.PreservedStatement n) return n.grammarRule();
+        if (node instanceof Ast.StatementOperand n) return n.grammarRole();
+        if (node instanceof Ast.StatementClause n) return n.grammarRule();
         if (node instanceof Ast.IfStatement) return "IF";
         if (node instanceof Ast.EvaluateStatement) return "EVALUATE";
         if (node instanceof Ast.EvaluateBranch n) return n.selector();
@@ -123,6 +128,7 @@ final class AstSnapshot {
         if (node instanceof Ast.FileReference n) return n.writtenText();
         if (node instanceof Ast.ProgramReference n) return n.writtenText();
         if (node instanceof Ast.IndexReference n) return n.writtenText();
+        if (node instanceof Ast.NamedReference n) return n.writtenText();
         if (node instanceof Ast.OperationExpression n) return n.operator();
         if (node instanceof Ast.FunctionExpression n) return n.functionName();
         if (node instanceof Ast.SpecialRegisterExpression n) return n.registerName();
@@ -172,7 +178,20 @@ final class AstSnapshot {
             result.put("terminator", n.terminator().name());
             result.put("terminatorLine", String.valueOf(n.terminatorSpan().startLine()));
         } else if (node instanceof Ast.CallStatement n) result.put("targetKind", n.targetKind().name());
-        else if (node instanceof Ast.CallArgument n) result.put("passingMode", n.passingMode().name());
+        else if (node instanceof Ast.CallArgument n) {
+            result.put("passingMode", n.passingMode().name()); result.put("argumentKind", n.argumentKind().name());
+            result.put("writtenText", n.writtenText());
+        } else if (node instanceof Ast.ModeledStatement n) {
+            result.put("grammarRule", n.grammarRule()); result.put("writtenText", n.writtenText());
+            result.put("coverage", "MODELED");
+        } else if (node instanceof Ast.PreservedStatement n) {
+            result.put("grammarRule", n.grammarRule()); result.put("writtenText", n.writtenText());
+            result.put("coverage", "PRESERVED_UNINTERPRETED");
+            result.put("dependencyKnowledge", "DEPENDENCY_UNKNOWN");
+        } else if (node instanceof Ast.StatementOperand n) result.put("grammarRole", n.grammarRole());
+        else if (node instanceof Ast.StatementClause n) {
+            result.put("grammarRule", n.grammarRule()); result.put("writtenText", n.writtenText());
+        }
         else if (node instanceof Ast.IfStatement n) result.put("explicitlyTerminated", String.valueOf(n.explicitlyTerminated()));
         else if (node instanceof Ast.EvaluateStatement n) result.put("explicitlyTerminated", String.valueOf(n.explicitlyTerminated()));
         else if (node instanceof Ast.EvaluateBranch n) {
@@ -205,6 +224,8 @@ final class AstSnapshot {
             result.put("programName", n.programName()); result.put("writtenText", n.writtenText());
         } else if (node instanceof Ast.IndexReference n) {
             result.put("indexName", n.indexName()); result.put("writtenText", n.writtenText());
+        } else if (node instanceof Ast.NamedReference n) {
+            result.put("grammarKind", n.grammarKind()); result.put("writtenText", n.writtenText());
         } else if (node instanceof Ast.OperationExpression n) {
             result.put("operator", n.operator()); result.put("writtenText", n.writtenText());
         } else if (node instanceof Ast.FunctionExpression n) {
@@ -241,7 +262,8 @@ final class AstSnapshot {
             out.write("\"nodes\":" + metrics.nodes + ",\"parseTreeNodes\":" + parseTreeNodes + ',');
             out.write("\"maxDepth\":" + metrics.maxDepth + ",\"staticCalls\":" + metrics.staticCalls + ',');
             out.write("\"dynamicCalls\":" + metrics.dynamicCalls + ",\"embeddedLanguages\":" + metrics.embeddedLanguages + ',');
-            out.write("\"unsupportedStatements\":" + metrics.unsupportedStatements + "},\n");
+            out.write("\"unsupportedStatements\":" + metrics.unsupportedStatements
+                    + ",\"preservedStatements\":" + metrics.preservedStatements + "},\n");
             out.write("\"sourceLines\":[");
             for (int i = 0; i < sourceLines.size(); i++) { if (i > 0) out.write(','); string(out, sourceLines.get(i)); }
             out.write("],\n\"nodes\":[");
