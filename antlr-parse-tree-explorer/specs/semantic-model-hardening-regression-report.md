@@ -53,7 +53,7 @@ deverão permanecer e toda diferença será explicada neste relatório.
 | 0 — baseline | aprovada | 5 testes Maven verdes; baseline e hashes registrados | nenhuma mudança de produção | nenhuma |
 | 1 — cobertura | aprovada | 11 testes Maven verdes; guarda das 628 regras | `AstBuilder` retorna AST + cobertura + diagnósticos; nós AST inalterados | findings cobrem statements nesta fase |
 | 2 — proveniência | aprovada | 13 testes Maven verdes; fixtures de COPY aninhado, REPLACING e COPY ausente | `Meta` e snapshot expõem arquivo/linha/include chain/exatidão; `writtenName` mantém separadores | contextos que cruzam fronteiras são marcados `exact=false`; COPY ausente continua diagnóstico explícito |
-| 3 — referências/expressões | pendente | — | — | — |
+| 3 — referências/expressões | aprovada | 15 testes Maven verdes; fixtures gramaticais focadas | referências, qualificadores recursivos, subscritos, reference modification e expressões são nós alcançáveis | construções não interpretadas usam `PreservedExpression`; sem binding ou valores resolvidos |
 | 4 — procedure references | pendente | — | — | — |
 | 5 — declarações | pendente | — | — | — |
 | 6 — statements | pendente | — | — | — |
@@ -92,6 +92,31 @@ Lacunas de input continuam conservadoras: COPY ausente gera diagnóstico
 `unresolved_copy`, texto sintético rastreável ao statement original e
 `exact=false`. Um contexto gramatical que cruza segmentos/arquivos também não
 é declarado como slice exato.
+
+## Evidência TDD da Fase 3
+
+1. RED: `StructuredExpressionAstTest` falhou na compilação porque
+   `DataReference` ainda não expunha base, qualifiers, grupos de subscritos e
+   reference modification, e porque os novos nós de expressão não existiam.
+2. GREEN: referências simples, `OF`, `IN`, qualificadores múltiplos,
+   qualificador subscrito, múltiplos subscritos, subscript relativo e reference
+   modification aberta/com comprimento passaram em fixtures derivadas das
+   alternativas da gramática.
+3. RED/GREEN: um subscript `qualifiedDataName integerLiteral?` inicialmente
+   perdia o inteiro opcional; o teste falhou e a construção passou a ser
+   `OperationExpression(RELATIVE_SUBSCRIPT)` com ambos os operandos.
+4. RED/GREEN: EVALUATE inicialmente não tinha seletores estruturados; o contrato
+   falhou na compilação e passou a representar `ALSO` tanto nos subjects quanto
+   nos WHENs.
+5. GREEN/GUARD: aritmética, condições, functions, special registers,
+   IF/EVALUATE/PERFORM e fallback preservado ficaram navegáveis por
+   `Ast.children` e pelo snapshot. A suíte terminou com 15 testes verdes.
+
+As contagens mudaram deterministicamente porque referências antes escondidas
+em strings/`RawExpression` agora são nós: COACTUPC passou de 4.100 para 6.603
+nós (profundidade 8→11), CBSTM03A de 1.250 para 1.368 e CBSTM03D de 1.260 para
+1.378. CALLs, unsupported statements, escopos, símbolos e diagnósticos não
+mudaram. CBSTM03D continua com 14 CALLs dinâmicos para `WS-CALL-TARGET`.
 
 ## Checklist final de regressão
 

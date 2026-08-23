@@ -36,7 +36,7 @@ class AstBuilderTest {
         assertEquals(4, ast.divisions().size());
         assertTrue(snapshot.metrics().nodes() > 3_000);
         assertTrue(snapshot.metrics().nodes() < sizes.get(tree));
-        assertEquals(8, snapshot.metrics().maxDepth());
+        assertEquals(11, snapshot.metrics().maxDepth());
         assertEquals(1, snapshot.metrics().staticCalls());
         assertEquals(0, snapshot.metrics().dynamicCalls());
         assertTrue(snapshot.metrics().embeddedLanguages() > 0);

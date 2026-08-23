@@ -87,6 +87,9 @@ final class AstSnapshot {
         if (node instanceof Ast.FileBinding n) return n.logicalName();
         if (node instanceof Ast.FileDescription n) return n.fileName();
         if (node instanceof Ast.DataEntry n) return n.level() + " " + n.name();
+        if (node instanceof Ast.DataQualifier n) return n.writtenText();
+        if (node instanceof Ast.SubscriptGroup n) return n.writtenText();
+        if (node instanceof Ast.ReferenceModification n) return n.writtenText();
         if (node instanceof Ast.Paragraph n) return n.name();
         if (node instanceof Ast.Sentence) return "sentence";
         if (node instanceof Ast.CallStatement n) return expressionLabel(n.target());
@@ -102,6 +105,10 @@ final class AstSnapshot {
         if (node instanceof Ast.UnsupportedStatement n) return n.grammarRule();
         if (node instanceof Ast.LiteralExpression n) return n.rawLexeme();
         if (node instanceof Ast.DataReference n) return n.writtenName();
+        if (node instanceof Ast.OperationExpression n) return n.operator();
+        if (node instanceof Ast.FunctionExpression n) return n.functionName();
+        if (node instanceof Ast.SpecialRegisterExpression n) return n.registerName();
+        if (node instanceof Ast.PreservedExpression n) return n.writtenText();
         if (node instanceof Ast.RawExpression n) return n.rawText();
         return node.getClass().getSimpleName();
     }
@@ -115,7 +122,12 @@ final class AstSnapshot {
         } else if (node instanceof Ast.FileDescription n) result.put("fileName", n.fileName());
         else if (node instanceof Ast.DataEntry n) {
             result.put("level", n.level()); result.put("name", n.name()); result.put("declaration", n.declaration());
-        } else if (node instanceof Ast.Paragraph n) result.put("name", n.name());
+        } else if (node instanceof Ast.DataQualifier n) {
+            result.put("connector", n.connector().name()); result.put("name", n.name());
+            result.put("writtenText", n.writtenText());
+        } else if (node instanceof Ast.SubscriptGroup n) result.put("writtenText", n.writtenText());
+        else if (node instanceof Ast.ReferenceModification n) result.put("writtenText", n.writtenText());
+        else if (node instanceof Ast.Paragraph n) result.put("name", n.name());
         else if (node instanceof Ast.Sentence n) {
             result.put("terminator", n.terminator().name());
             result.put("terminatorLine", String.valueOf(n.terminatorSpan().startLine()));
@@ -138,8 +150,19 @@ final class AstSnapshot {
             result.put("grammarRule", n.grammarRule()); result.put("rawText", n.rawText());
         } else if (node instanceof Ast.LiteralExpression n) {
             result.put("value", n.value()); result.put("rawLexeme", n.rawLexeme());
-        } else if (node instanceof Ast.DataReference n) result.put("writtenName", n.writtenName());
-        else if (node instanceof Ast.RawExpression n) {
+        } else if (node instanceof Ast.DataReference n) {
+            result.put("baseName", n.baseName()); result.put("writtenText", n.writtenText());
+            result.put("understanding", n.understanding().name());
+        } else if (node instanceof Ast.OperationExpression n) {
+            result.put("operator", n.operator()); result.put("writtenText", n.writtenText());
+        } else if (node instanceof Ast.FunctionExpression n) {
+            result.put("functionName", n.functionName()); result.put("writtenText", n.writtenText());
+        } else if (node instanceof Ast.SpecialRegisterExpression n) {
+            result.put("registerName", n.registerName()); result.put("writtenText", n.writtenText());
+        } else if (node instanceof Ast.PreservedExpression n) {
+            result.put("grammarRule", n.grammarRule()); result.put("writtenText", n.writtenText());
+            result.put("understanding", n.understanding().name());
+        } else if (node instanceof Ast.RawExpression n) {
             result.put("role", n.role()); result.put("rawText", n.rawText());
         }
         return result;
@@ -148,6 +171,10 @@ final class AstSnapshot {
     private static String expressionLabel(Ast.Expression expression) {
         if (expression instanceof Ast.LiteralExpression n) return n.rawLexeme();
         if (expression instanceof Ast.DataReference n) return n.writtenName();
+        if (expression instanceof Ast.OperationExpression n) return n.writtenText();
+        if (expression instanceof Ast.FunctionExpression n) return n.writtenText();
+        if (expression instanceof Ast.SpecialRegisterExpression n) return n.writtenText();
+        if (expression instanceof Ast.PreservedExpression n) return n.writtenText();
         if (expression instanceof Ast.RawExpression n) return n.rawText();
         return "target";
     }

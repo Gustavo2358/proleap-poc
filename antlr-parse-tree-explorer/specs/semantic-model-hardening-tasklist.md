@@ -581,12 +581,12 @@ navegáveis da métrica agregada até fonte/parse tree.
 
 ### Fase 3 — DataReference e expressões
 
-- [ ] Executar ciclos RED/GREEN/REFACTOR separados para nome simples,
+- [x] Executar ciclos RED/GREEN/REFACTOR separados para nome simples,
       qualificadores, subscritos e reference modification.
-- [ ] Executar ciclos separados para aritmética, condições, functions, special
+- [x] Executar ciclos separados para aritmética, condições, functions, special
       registers e fallback estruturado.
-- [ ] Migrar IF/EVALUATE/PERFORM para expressões estruturadas.
-- [ ] Provar que toda referência reconhecida permanece alcançável por
+- [x] Migrar IF/EVALUATE/PERFORM para expressões estruturadas.
+- [x] Provar que toda referência reconhecida permanece alcançável por
       `Ast.children` e pelo snapshot.
 
 ### Fase 4 — ProcedureReference e demais referências nominais
