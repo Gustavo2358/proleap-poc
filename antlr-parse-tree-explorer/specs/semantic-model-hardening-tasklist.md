@@ -561,14 +561,14 @@ navegáveis da métrica agregada até fonte/parse tree.
 
 ### Fase 1 — Manifesto e taxonomia de cobertura
 
-- [ ] Inventariar de forma mecanicamente verificável as 628 regras das duas
+- [x] Inventariar de forma mecanicamente verificável as 628 regras das duas
       gramáticas, detalhando as 50 alternativas de statement e as famílias
       declarativas/de referência.
-- [ ] Escrever testes RED para alternativa não classificada.
-- [ ] Implementar `ConstructionCoverage`, `DependencyKnowledge`, finding,
+- [x] Escrever testes RED para alternativa não classificada.
+- [x] Implementar `ConstructionCoverage`, `DependencyKnowledge`, finding,
       resumo e `AstBuildResult` imutáveis.
-- [ ] Implementar o manifesto completo e tornar verde o teste de guarda.
-- [ ] Refatorar somente após todos os testes da fase passarem.
+- [x] Implementar o manifesto completo e tornar verde o teste de guarda.
+- [x] Refatorar somente após todos os testes da fase passarem.
 
 ### Fase 2 — Proveniência e texto fiel
 

@@ -129,7 +129,7 @@ class SemanticModelBaselineCharacterizationTest {
         IdentityHashMap<ParseTree, Integer> ids = new IdentityHashMap<>();
         IdentityHashMap<ParseTree, Integer> sizes = new IdentityHashMap<>();
         index(tree, ids, sizes, new int[]{0});
-        Ast.Program ast = new AstBuilder(parser, preprocessing.text(), ids, sizes).build(tree);
+        Ast.Program ast = new AstBuilder(parser, preprocessing.text(), ids, sizes).build(tree).program();
         return new Analysis(ast, AstSnapshot.from(ast), new SymbolTableBuilder().build(ast),
                 parser.getNumberOfSyntaxErrors(), preprocessing.unresolved());
     }

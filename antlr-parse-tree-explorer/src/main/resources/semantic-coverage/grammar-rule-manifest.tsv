@@ -1,0 +1,629 @@
+# grammar\trule\tfamily\tconstructionCoverage\tdependencyKnowledge\trationale
+COBOL	compilationUnit	GRAMMAR_INFRASTRUCTURE	MODELED	NOT_DEPENDENCY_BEARING	Program and compilation structure is explicitly cataloged for deterministic frontend coverage.
+COBOL	programUnit	GRAMMAR_INFRASTRUCTURE	MODELED	NOT_DEPENDENCY_BEARING	Program and compilation structure is explicitly cataloged for deterministic frontend coverage.
+COBOL	endProgramStatement	GRAMMAR_INFRASTRUCTURE	MODELED	NOT_DEPENDENCY_BEARING	Program and compilation structure is explicitly cataloged for deterministic frontend coverage.
+COBOL	identificationDivision	PROGRAM_STRUCTURE	PRESERVED_UNINTERPRETED	NOT_DEPENDENCY_BEARING	Program and compilation structure is explicitly cataloged for deterministic frontend coverage.
+COBOL	identificationDivisionBody	PROGRAM_STRUCTURE	PRESERVED_UNINTERPRETED	NOT_DEPENDENCY_BEARING	Program and compilation structure is explicitly cataloged for deterministic frontend coverage.
+COBOL	programIdParagraph	PROGRAM_STRUCTURE	PRESERVED_UNINTERPRETED	NOT_DEPENDENCY_BEARING	Program and compilation structure is explicitly cataloged for deterministic frontend coverage.
+COBOL	authorParagraph	PROGRAM_STRUCTURE	PRESERVED_UNINTERPRETED	NOT_DEPENDENCY_BEARING	Program and compilation structure is explicitly cataloged for deterministic frontend coverage.
+COBOL	installationParagraph	PROGRAM_STRUCTURE	PRESERVED_UNINTERPRETED	NOT_DEPENDENCY_BEARING	Program and compilation structure is explicitly cataloged for deterministic frontend coverage.
+COBOL	dateWrittenParagraph	PROGRAM_STRUCTURE	PRESERVED_UNINTERPRETED	NOT_DEPENDENCY_BEARING	Program and compilation structure is explicitly cataloged for deterministic frontend coverage.
+COBOL	dateCompiledParagraph	PROGRAM_STRUCTURE	PRESERVED_UNINTERPRETED	NOT_DEPENDENCY_BEARING	Program and compilation structure is explicitly cataloged for deterministic frontend coverage.
+COBOL	securityParagraph	PROGRAM_STRUCTURE	PRESERVED_UNINTERPRETED	NOT_DEPENDENCY_BEARING	Program and compilation structure is explicitly cataloged for deterministic frontend coverage.
+COBOL	remarksParagraph	PROGRAM_STRUCTURE	PRESERVED_UNINTERPRETED	NOT_DEPENDENCY_BEARING	Program and compilation structure is explicitly cataloged for deterministic frontend coverage.
+COBOL	environmentDivision	ENVIRONMENT_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Environment declaration is only partially represented by the current semantic model.
+COBOL	environmentDivisionBody	ENVIRONMENT_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Environment declaration is only partially represented by the current semantic model.
+COBOL	configurationSection	ENVIRONMENT_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Environment declaration is only partially represented by the current semantic model.
+COBOL	configurationSectionParagraph	ENVIRONMENT_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Environment declaration is only partially represented by the current semantic model.
+COBOL	sourceComputerParagraph	ENVIRONMENT_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Environment declaration is only partially represented by the current semantic model.
+COBOL	objectComputerParagraph	ENVIRONMENT_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Environment declaration is only partially represented by the current semantic model.
+COBOL	objectComputerClause	ENVIRONMENT_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Environment declaration is only partially represented by the current semantic model.
+COBOL	memorySizeClause	ENVIRONMENT_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Environment declaration is only partially represented by the current semantic model.
+COBOL	diskSizeClause	ENVIRONMENT_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Environment declaration is only partially represented by the current semantic model.
+COBOL	collatingSequenceClause	ENVIRONMENT_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Environment declaration is only partially represented by the current semantic model.
+COBOL	collatingSequenceClauseAlphanumeric	ENVIRONMENT_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Environment declaration is only partially represented by the current semantic model.
+COBOL	collatingSequenceClauseNational	ENVIRONMENT_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Environment declaration is only partially represented by the current semantic model.
+COBOL	segmentLimitClause	ENVIRONMENT_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Environment declaration is only partially represented by the current semantic model.
+COBOL	characterSetClause	ENVIRONMENT_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Environment declaration is only partially represented by the current semantic model.
+COBOL	specialNamesParagraph	ENVIRONMENT_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Environment declaration is only partially represented by the current semantic model.
+COBOL	specialNameClause	ENVIRONMENT_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Environment declaration is only partially represented by the current semantic model.
+COBOL	alphabetClause	ENVIRONMENT_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Environment declaration is only partially represented by the current semantic model.
+COBOL	alphabetClauseFormat1	ENVIRONMENT_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Environment declaration is only partially represented by the current semantic model.
+COBOL	alphabetLiterals	ENVIRONMENT_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Environment declaration is only partially represented by the current semantic model.
+COBOL	alphabetThrough	ENVIRONMENT_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Environment declaration is only partially represented by the current semantic model.
+COBOL	alphabetAlso	ENVIRONMENT_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Environment declaration is only partially represented by the current semantic model.
+COBOL	alphabetClauseFormat2	ENVIRONMENT_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Environment declaration is only partially represented by the current semantic model.
+COBOL	channelClause	ENVIRONMENT_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Environment declaration is only partially represented by the current semantic model.
+COBOL	classClause	ENVIRONMENT_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Environment declaration is only partially represented by the current semantic model.
+COBOL	classClauseThrough	ENVIRONMENT_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Environment declaration is only partially represented by the current semantic model.
+COBOL	classClauseFrom	ENVIRONMENT_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Environment declaration is only partially represented by the current semantic model.
+COBOL	classClauseTo	ENVIRONMENT_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Environment declaration is only partially represented by the current semantic model.
+COBOL	currencySignClause	ENVIRONMENT_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Environment declaration is only partially represented by the current semantic model.
+COBOL	decimalPointClause	ENVIRONMENT_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Environment declaration is only partially represented by the current semantic model.
+COBOL	defaultComputationalSignClause	ENVIRONMENT_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Environment declaration is only partially represented by the current semantic model.
+COBOL	defaultDisplaySignClause	ENVIRONMENT_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Environment declaration is only partially represented by the current semantic model.
+COBOL	environmentSwitchNameClause	ENVIRONMENT_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Environment declaration is only partially represented by the current semantic model.
+COBOL	environmentSwitchNameSpecialNamesStatusPhrase	ENVIRONMENT_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Environment declaration is only partially represented by the current semantic model.
+COBOL	odtClause	ENVIRONMENT_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Environment declaration is only partially represented by the current semantic model.
+COBOL	reserveNetworkClause	ENVIRONMENT_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Environment declaration is only partially represented by the current semantic model.
+COBOL	symbolicCharactersClause	ENVIRONMENT_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Environment declaration is only partially represented by the current semantic model.
+COBOL	symbolicCharacters	ENVIRONMENT_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Environment declaration is only partially represented by the current semantic model.
+COBOL	inputOutputSection	ENVIRONMENT_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Environment declaration is only partially represented by the current semantic model.
+COBOL	inputOutputSectionParagraph	ENVIRONMENT_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Environment declaration is only partially represented by the current semantic model.
+COBOL	fileControlParagraph	ENVIRONMENT_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Environment declaration is only partially represented by the current semantic model.
+COBOL	fileControlEntry	ENVIRONMENT_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Environment declaration is only partially represented by the current semantic model.
+COBOL	selectClause	ENVIRONMENT_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Environment declaration is only partially represented by the current semantic model.
+COBOL	fileControlClause	ENVIRONMENT_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Environment declaration is only partially represented by the current semantic model.
+COBOL	assignClause	ENVIRONMENT_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Environment declaration is only partially represented by the current semantic model.
+COBOL	reserveClause	ENVIRONMENT_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Environment declaration is only partially represented by the current semantic model.
+COBOL	organizationClause	ENVIRONMENT_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Environment declaration is only partially represented by the current semantic model.
+COBOL	paddingCharacterClause	ENVIRONMENT_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Environment declaration is only partially represented by the current semantic model.
+COBOL	recordDelimiterClause	ENVIRONMENT_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Environment declaration is only partially represented by the current semantic model.
+COBOL	accessModeClause	ENVIRONMENT_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Environment declaration is only partially represented by the current semantic model.
+COBOL	recordKeyClause	ENVIRONMENT_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Environment declaration is only partially represented by the current semantic model.
+COBOL	alternateRecordKeyClause	ENVIRONMENT_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Environment declaration is only partially represented by the current semantic model.
+COBOL	passwordClause	ENVIRONMENT_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Environment declaration is only partially represented by the current semantic model.
+COBOL	fileStatusClause	ENVIRONMENT_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Environment declaration is only partially represented by the current semantic model.
+COBOL	relativeKeyClause	ENVIRONMENT_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Environment declaration is only partially represented by the current semantic model.
+COBOL	ioControlParagraph	ENVIRONMENT_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Environment declaration is only partially represented by the current semantic model.
+COBOL	ioControlClause	ENVIRONMENT_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Environment declaration is only partially represented by the current semantic model.
+COBOL	rerunClause	ENVIRONMENT_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Environment declaration is only partially represented by the current semantic model.
+COBOL	rerunEveryRecords	ENVIRONMENT_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Environment declaration is only partially represented by the current semantic model.
+COBOL	rerunEveryOf	ENVIRONMENT_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Environment declaration is only partially represented by the current semantic model.
+COBOL	rerunEveryClock	ENVIRONMENT_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Environment declaration is only partially represented by the current semantic model.
+COBOL	sameClause	ENVIRONMENT_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Environment declaration is only partially represented by the current semantic model.
+COBOL	multipleFileClause	ENVIRONMENT_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Environment declaration is only partially represented by the current semantic model.
+COBOL	multipleFilePosition	ENVIRONMENT_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Environment declaration is only partially represented by the current semantic model.
+COBOL	commitmentControlClause	ENVIRONMENT_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Environment declaration is only partially represented by the current semantic model.
+COBOL	dataDivision	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	dataDivisionSection	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	fileSection	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	fileDescriptionEntry	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	fileDescriptionEntryClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	externalClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	globalClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	blockContainsClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	blockContainsTo	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	recordContainsClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	recordContainsClauseFormat1	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	recordContainsClauseFormat2	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	recordContainsClauseFormat3	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	recordContainsTo	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	labelRecordsClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	valueOfClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	valuePair	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	dataRecordsClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	linageClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	linageAt	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	linageFootingAt	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	linageLinesAtTop	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	linageLinesAtBottom	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	recordingModeClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	modeStatement	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	codeSetClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	reportClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	dataBaseSection	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	dataBaseSectionEntry	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	workingStorageSection	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	linkageSection	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	communicationSection	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	communicationDescriptionEntry	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	communicationDescriptionEntryFormat1	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	communicationDescriptionEntryFormat2	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	communicationDescriptionEntryFormat3	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	destinationCountClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	destinationTableClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	endKeyClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	errorKeyClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	messageCountClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	messageDateClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	messageTimeClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	statusKeyClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	symbolicDestinationClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	symbolicQueueClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	symbolicSourceClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	symbolicTerminalClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	symbolicSubQueueClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	textLengthClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	localStorageSection	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	screenSection	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	screenDescriptionEntry	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	screenDescriptionBlankClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	screenDescriptionBellClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	screenDescriptionBlinkClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	screenDescriptionEraseClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	screenDescriptionLightClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	screenDescriptionGridClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	screenDescriptionReverseVideoClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	screenDescriptionUnderlineClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	screenDescriptionSizeClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	screenDescriptionLineClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	screenDescriptionColumnClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	screenDescriptionForegroundColorClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	screenDescriptionBackgroundColorClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	screenDescriptionControlClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	screenDescriptionValueClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	screenDescriptionPictureClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	screenDescriptionFromClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	screenDescriptionToClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	screenDescriptionUsingClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	screenDescriptionUsageClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	screenDescriptionBlankWhenZeroClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	screenDescriptionJustifiedClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	screenDescriptionSignClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	screenDescriptionAutoClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	screenDescriptionSecureClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	screenDescriptionRequiredClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	screenDescriptionPromptClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	screenDescriptionPromptOccursClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	screenDescriptionFullClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	screenDescriptionZeroFillClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	reportSection	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	reportDescription	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	reportDescriptionEntry	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	reportDescriptionGlobalClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	reportDescriptionPageLimitClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	reportDescriptionHeadingClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	reportDescriptionFirstDetailClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	reportDescriptionLastDetailClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	reportDescriptionFootingClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	reportGroupDescriptionEntry	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	reportGroupDescriptionEntryFormat1	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	reportGroupDescriptionEntryFormat2	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	reportGroupDescriptionEntryFormat3	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	reportGroupBlankWhenZeroClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	reportGroupColumnNumberClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	reportGroupIndicateClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	reportGroupJustifiedClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	reportGroupLineNumberClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	reportGroupLineNumberNextPage	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	reportGroupLineNumberPlus	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	reportGroupNextGroupClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	reportGroupNextGroupPlus	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	reportGroupNextGroupNextPage	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	reportGroupPictureClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	reportGroupResetClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	reportGroupSignClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	reportGroupSourceClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	reportGroupSumClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	reportGroupTypeClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	reportGroupTypeReportHeading	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	reportGroupTypePageHeading	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	reportGroupTypeControlHeading	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	reportGroupTypeDetail	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	reportGroupTypeControlFooting	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	reportGroupUsageClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	reportGroupTypePageFooting	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	reportGroupTypeReportFooting	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	reportGroupValueClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	programLibrarySection	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	libraryDescriptionEntry	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	libraryDescriptionEntryFormat1	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	libraryDescriptionEntryFormat2	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	libraryAttributeClauseFormat1	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	libraryAttributeClauseFormat2	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	libraryAttributeFunction	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	libraryAttributeParameter	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	libraryAttributeTitle	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	libraryEntryProcedureClauseFormat1	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	libraryEntryProcedureClauseFormat2	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	libraryEntryProcedureForClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	libraryEntryProcedureGivingClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	libraryEntryProcedureUsingClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	libraryEntryProcedureUsingName	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	libraryEntryProcedureWithClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	libraryEntryProcedureWithName	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	libraryIsCommonClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	libraryIsGlobalClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	dataDescriptionEntry	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	dataDescriptionEntryFormat1	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	dataDescriptionEntryFormat2	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	dataDescriptionEntryFormat3	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	dataDescriptionEntryExecSql	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	dataAlignedClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	dataBlankWhenZeroClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	dataCommonOwnLocalClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	dataExternalClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	dataGlobalClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	dataIntegerStringClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	dataJustifiedClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	dataOccursClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	dataOccursTo	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	dataOccursDepending	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	dataOccursSort	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	dataOccursIndexed	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	dataPictureClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	pictureString	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	pictureChars	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	pictureCardinality	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	dataReceivedByClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	dataRecordAreaClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	dataRedefinesClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	dataRenamesClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	dataSignClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	dataSynchronizedClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	dataThreadLocalClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	dataTypeClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	dataTypeDefClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	dataUsageClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	dataUsingClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	dataValueClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	dataValueInterval	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	dataValueIntervalFrom	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	dataValueIntervalTo	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	dataWithLowerBoundsClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	procedureDivision	PROCEDURE_STRUCTURE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Procedure structure is cataloged; signatures and some relationships remain unmodeled.
+COBOL	procedureDivisionUsingClause	PROCEDURE_STRUCTURE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Procedure structure is cataloged; signatures and some relationships remain unmodeled.
+COBOL	procedureDivisionGivingClause	PROCEDURE_STRUCTURE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Procedure structure is cataloged; signatures and some relationships remain unmodeled.
+COBOL	procedureDivisionUsingParameter	PROCEDURE_STRUCTURE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Procedure structure is cataloged; signatures and some relationships remain unmodeled.
+COBOL	procedureDivisionByReferencePhrase	PROCEDURE_STRUCTURE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Procedure structure is cataloged; signatures and some relationships remain unmodeled.
+COBOL	procedureDivisionByReference	PROCEDURE_STRUCTURE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Procedure structure is cataloged; signatures and some relationships remain unmodeled.
+COBOL	procedureDivisionByValuePhrase	PROCEDURE_STRUCTURE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Procedure structure is cataloged; signatures and some relationships remain unmodeled.
+COBOL	procedureDivisionByValue	PROCEDURE_STRUCTURE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Procedure structure is cataloged; signatures and some relationships remain unmodeled.
+COBOL	procedureDeclaratives	PROCEDURE_STRUCTURE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Procedure structure is cataloged; signatures and some relationships remain unmodeled.
+COBOL	procedureDeclarative	PROCEDURE_STRUCTURE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Procedure structure is cataloged; signatures and some relationships remain unmodeled.
+COBOL	procedureSectionHeader	PROCEDURE_STRUCTURE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Procedure structure is cataloged; signatures and some relationships remain unmodeled.
+COBOL	procedureDivisionBody	PROCEDURE_STRUCTURE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Procedure structure is cataloged; signatures and some relationships remain unmodeled.
+COBOL	procedureSection	PROCEDURE_STRUCTURE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Procedure structure is cataloged; signatures and some relationships remain unmodeled.
+COBOL	paragraphs	PROCEDURE_STRUCTURE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Procedure structure is cataloged; signatures and some relationships remain unmodeled.
+COBOL	paragraph	PROCEDURE_STRUCTURE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Procedure structure is cataloged; signatures and some relationships remain unmodeled.
+COBOL	sentence	PROCEDURE_STRUCTURE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Procedure structure is cataloged; signatures and some relationships remain unmodeled.
+COBOL	statement	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	acceptStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
+COBOL	acceptFromDateStatement	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	acceptFromMnemonicStatement	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	acceptFromEscapeKeyStatement	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	acceptMessageCountStatement	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	addStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
+COBOL	addToStatement	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	addToGivingStatement	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	addCorrespondingStatement	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	addFrom	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	addTo	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	addToGiving	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	addGiving	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	alteredGoTo	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	alterStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
+COBOL	alterProceedTo	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	callStatement	STATEMENT	MODELED	REFERENCE_READY	Statement has a dedicated AST node; nested semantic detail may still remain incomplete.
+COBOL	callUsingPhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	callUsingParameter	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	callByReferencePhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	callByReference	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	callByValuePhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	callByValue	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	callByContentPhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	callByContent	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	callGivingPhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	cancelStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
+COBOL	cancelCall	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	closeStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
+COBOL	closeFile	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	closeReelUnitStatement	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	closeRelativeStatement	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	closePortFileIOStatement	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	closePortFileIOUsing	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	closePortFileIOUsingCloseDisposition	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	closePortFileIOUsingAssociatedData	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	closePortFileIOUsingAssociatedDataLength	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	computeStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
+COBOL	computeStore	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	continueStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
+COBOL	deleteStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
+COBOL	disableStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
+COBOL	displayStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
+COBOL	displayOperand	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	displayAt	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	displayUpon	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	displayWith	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	divideStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
+COBOL	divideIntoStatement	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	divideIntoGivingStatement	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	divideByGivingStatement	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	divideGivingPhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	divideInto	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	divideGiving	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	divideRemainder	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	enableStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
+COBOL	entryStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
+COBOL	evaluateStatement	STATEMENT	MODELED	DEPENDENCY_UNKNOWN	Statement has a dedicated AST node; nested semantic detail may still remain incomplete.
+COBOL	evaluateSelect	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	evaluateAlsoSelect	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	evaluateWhenPhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	evaluateWhen	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	evaluateCondition	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	evaluateThrough	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	evaluateAlsoCondition	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	evaluateWhenOther	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	evaluateValue	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	execCicsStatement	STATEMENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Embedded-language payload is preserved opaquely and requires a future plugin.
+COBOL	execSqlStatement	STATEMENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Embedded-language payload is preserved opaquely and requires a future plugin.
+COBOL	execSqlImsStatement	STATEMENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Embedded-language payload is preserved opaquely and requires a future plugin.
+COBOL	exhibitStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
+COBOL	exhibitOperand	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	exitStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
+COBOL	generateStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
+COBOL	gobackStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
+COBOL	goToStatement	STATEMENT	MODELED	DEPENDENCY_UNKNOWN	Statement has a dedicated AST node; nested semantic detail may still remain incomplete.
+COBOL	goToStatementSimple	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	goToDependingOnStatement	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	ifStatement	STATEMENT	MODELED	DEPENDENCY_UNKNOWN	Statement has a dedicated AST node; nested semantic detail may still remain incomplete.
+COBOL	ifThen	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	ifElse	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	initializeStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
+COBOL	initializeReplacingPhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	initializeReplacingBy	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	initiateStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
+COBOL	inspectStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
+COBOL	inspectTallyingPhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	inspectReplacingPhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	inspectTallyingReplacingPhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	inspectConvertingPhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	inspectFor	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	inspectCharacters	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	inspectReplacingCharacters	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	inspectAllLeadings	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	inspectReplacingAllLeadings	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	inspectAllLeading	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	inspectReplacingAllLeading	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	inspectBy	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	inspectTo	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	inspectBeforeAfter	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	mergeStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
+COBOL	mergeOnKeyClause	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	mergeCollatingSequencePhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	mergeCollatingAlphanumeric	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	mergeCollatingNational	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	mergeUsing	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	mergeOutputProcedurePhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	mergeOutputThrough	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	mergeGivingPhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	mergeGiving	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	moveStatement	STATEMENT	MODELED	DEPENDENCY_UNKNOWN	Statement has a dedicated AST node; nested semantic detail may still remain incomplete.
+COBOL	moveToStatement	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	moveToSendingArea	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	moveCorrespondingToStatement	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	moveCorrespondingToSendingArea	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	multiplyStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
+COBOL	multiplyRegular	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	multiplyRegularOperand	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	multiplyGiving	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	multiplyGivingOperand	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	multiplyGivingResult	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	nextSentenceStatement	STATEMENT	MODELED	NOT_DEPENDENCY_BEARING	Statement has a dedicated AST node; nested semantic detail may still remain incomplete.
+COBOL	openStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
+COBOL	openInputStatement	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	openInput	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	openOutputStatement	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	openOutput	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	openIOStatement	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	openExtendStatement	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	performStatement	STATEMENT	MODELED	DEPENDENCY_UNKNOWN	Statement has a dedicated AST node; nested semantic detail may still remain incomplete.
+COBOL	performInlineStatement	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	performProcedureStatement	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	performType	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	performTimes	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	performUntil	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	performVarying	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	performVaryingClause	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	performVaryingPhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	performAfter	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	performFrom	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	performBy	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	performTestClause	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	purgeStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
+COBOL	readStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
+COBOL	readInto	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	readWith	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	readKey	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	receiveStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
+COBOL	receiveFromStatement	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	receiveFrom	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	receiveIntoStatement	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	receiveNoData	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	receiveWithData	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	receiveBefore	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	receiveWith	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	receiveThread	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	receiveSize	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	receiveStatus	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	releaseStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
+COBOL	returnStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
+COBOL	returnInto	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	rewriteStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
+COBOL	rewriteFrom	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	searchStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
+COBOL	searchVarying	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	searchWhen	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	sendStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
+COBOL	sendStatementSync	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	sendStatementAsync	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	sendFromPhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	sendWithPhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	sendReplacingPhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	sendAdvancingPhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	sendAdvancingPage	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	sendAdvancingLines	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	sendAdvancingMnemonic	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	setStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
+COBOL	setToStatement	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	setUpDownByStatement	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	setTo	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	setToValue	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	setByValue	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	sortStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
+COBOL	sortOnKeyClause	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	sortDuplicatesPhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	sortCollatingSequencePhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	sortCollatingAlphanumeric	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	sortCollatingNational	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	sortInputProcedurePhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	sortInputThrough	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	sortUsing	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	sortOutputProcedurePhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	sortOutputThrough	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	sortGivingPhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	sortGiving	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	startStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
+COBOL	startKey	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	stopStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
+COBOL	stopStatementGiving	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	stringStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
+COBOL	stringSendingPhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	stringSending	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	stringDelimitedByPhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	stringForPhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	stringIntoPhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	stringWithPointerPhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	subtractStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
+COBOL	subtractFromStatement	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	subtractFromGivingStatement	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	subtractCorrespondingStatement	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	subtractSubtrahend	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	subtractMinuend	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	subtractMinuendGiving	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	subtractGiving	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	subtractMinuendCorresponding	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	terminateStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
+COBOL	unstringStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
+COBOL	unstringSendingPhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	unstringDelimitedByPhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	unstringOrAllPhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	unstringIntoPhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	unstringInto	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	unstringDelimiterIn	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	unstringCountIn	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	unstringWithPointerPhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	unstringTallyingPhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	useStatement	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	useAfterClause	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	useAfterOn	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	useDebugClause	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	useDebugOn	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	writeStatement	STATEMENT	UNSUPPORTED	DEPENDENCY_UNKNOWN	Statement currently falls back to UnsupportedStatement and cannot yield complete dependency facts.
+COBOL	writeFromPhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	writeAdvancingPhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	writeAdvancingPage	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	writeAdvancingLines	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	writeAdvancingMnemonic	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	writeAtEndOfPagePhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	writeNotAtEndOfPagePhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	atEndPhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	notAtEndPhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	invalidKeyPhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	notInvalidKeyPhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	onOverflowPhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	notOnOverflowPhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	onSizeErrorPhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	notOnSizeErrorPhrase	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	onExceptionClause	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	notOnExceptionClause	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	arithmeticExpression	EXPRESSION_REFERENCE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Expression or reference structure is currently flattened or only partially interpreted.
+COBOL	plusMinus	EXPRESSION_REFERENCE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Expression or reference structure is currently flattened or only partially interpreted.
+COBOL	multDivs	EXPRESSION_REFERENCE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Expression or reference structure is currently flattened or only partially interpreted.
+COBOL	multDiv	EXPRESSION_REFERENCE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Expression or reference structure is currently flattened or only partially interpreted.
+COBOL	powers	EXPRESSION_REFERENCE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Expression or reference structure is currently flattened or only partially interpreted.
+COBOL	power	EXPRESSION_REFERENCE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Expression or reference structure is currently flattened or only partially interpreted.
+COBOL	basis	EXPRESSION_REFERENCE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Expression or reference structure is currently flattened or only partially interpreted.
+COBOL	condition	EXPRESSION_REFERENCE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Expression or reference structure is currently flattened or only partially interpreted.
+COBOL	andOrCondition	EXPRESSION_REFERENCE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Expression or reference structure is currently flattened or only partially interpreted.
+COBOL	combinableCondition	EXPRESSION_REFERENCE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Expression or reference structure is currently flattened or only partially interpreted.
+COBOL	simpleCondition	EXPRESSION_REFERENCE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Expression or reference structure is currently flattened or only partially interpreted.
+COBOL	classCondition	EXPRESSION_REFERENCE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Expression or reference structure is currently flattened or only partially interpreted.
+COBOL	conditionNameReference	EXPRESSION_REFERENCE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Expression or reference structure is currently flattened or only partially interpreted.
+COBOL	conditionNameSubscriptReference	EXPRESSION_REFERENCE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Expression or reference structure is currently flattened or only partially interpreted.
+COBOL	relationCondition	EXPRESSION_REFERENCE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Expression or reference structure is currently flattened or only partially interpreted.
+COBOL	relationSignCondition	EXPRESSION_REFERENCE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Expression or reference structure is currently flattened or only partially interpreted.
+COBOL	relationArithmeticComparison	EXPRESSION_REFERENCE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Expression or reference structure is currently flattened or only partially interpreted.
+COBOL	relationCombinedComparison	EXPRESSION_REFERENCE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Expression or reference structure is currently flattened or only partially interpreted.
+COBOL	relationCombinedCondition	EXPRESSION_REFERENCE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Expression or reference structure is currently flattened or only partially interpreted.
+COBOL	relationalOperator	EXPRESSION_REFERENCE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Expression or reference structure is currently flattened or only partially interpreted.
+COBOL	abbreviation	EXPRESSION_REFERENCE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Expression or reference structure is currently flattened or only partially interpreted.
+COBOL	identifier	EXPRESSION_REFERENCE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Expression or reference structure is currently flattened or only partially interpreted.
+COBOL	tableCall	EXPRESSION_REFERENCE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Expression or reference structure is currently flattened or only partially interpreted.
+COBOL	functionCall	EXPRESSION_REFERENCE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Expression or reference structure is currently flattened or only partially interpreted.
+COBOL	referenceModifier	EXPRESSION_REFERENCE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Expression or reference structure is currently flattened or only partially interpreted.
+COBOL	characterPosition	EXPRESSION_REFERENCE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Expression or reference structure is currently flattened or only partially interpreted.
+COBOL	length	EXPRESSION_REFERENCE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Expression or reference structure is currently flattened or only partially interpreted.
+COBOL	subscript	EXPRESSION_REFERENCE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Expression or reference structure is currently flattened or only partially interpreted.
+COBOL	argument	EXPRESSION_REFERENCE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Expression or reference structure is currently flattened or only partially interpreted.
+COBOL	qualifiedDataName	EXPRESSION_REFERENCE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Expression or reference structure is currently flattened or only partially interpreted.
+COBOL	qualifiedDataNameFormat1	EXPRESSION_REFERENCE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Expression or reference structure is currently flattened or only partially interpreted.
+COBOL	qualifiedDataNameFormat2	EXPRESSION_REFERENCE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Expression or reference structure is currently flattened or only partially interpreted.
+COBOL	qualifiedDataNameFormat3	EXPRESSION_REFERENCE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Expression or reference structure is currently flattened or only partially interpreted.
+COBOL	qualifiedDataNameFormat4	EXPRESSION_REFERENCE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Expression or reference structure is currently flattened or only partially interpreted.
+COBOL	qualifiedInData	EXPRESSION_REFERENCE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Expression or reference structure is currently flattened or only partially interpreted.
+COBOL	inData	EXPRESSION_REFERENCE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Expression or reference structure is currently flattened or only partially interpreted.
+COBOL	inFile	EXPRESSION_REFERENCE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Expression or reference structure is currently flattened or only partially interpreted.
+COBOL	inMnemonic	EXPRESSION_REFERENCE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Expression or reference structure is currently flattened or only partially interpreted.
+COBOL	inSection	EXPRESSION_REFERENCE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Expression or reference structure is currently flattened or only partially interpreted.
+COBOL	inLibrary	EXPRESSION_REFERENCE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Expression or reference structure is currently flattened or only partially interpreted.
+COBOL	inTable	EXPRESSION_REFERENCE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Expression or reference structure is currently flattened or only partially interpreted.
+COBOL	alphabetName	NAME_LITERAL	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Name or literal form is cataloged; semantic role depends on its grammar context.
+COBOL	assignmentName	NAME_LITERAL	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Name or literal form is cataloged; semantic role depends on its grammar context.
+COBOL	basisName	NAME_LITERAL	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Name or literal form is cataloged; semantic role depends on its grammar context.
+COBOL	cdName	NAME_LITERAL	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Name or literal form is cataloged; semantic role depends on its grammar context.
+COBOL	className	NAME_LITERAL	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Name or literal form is cataloged; semantic role depends on its grammar context.
+COBOL	computerName	NAME_LITERAL	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Name or literal form is cataloged; semantic role depends on its grammar context.
+COBOL	conditionName	NAME_LITERAL	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Name or literal form is cataloged; semantic role depends on its grammar context.
+COBOL	dataName	NAME_LITERAL	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Name or literal form is cataloged; semantic role depends on its grammar context.
+COBOL	dataDescName	NAME_LITERAL	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Name or literal form is cataloged; semantic role depends on its grammar context.
+COBOL	environmentName	NAME_LITERAL	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Name or literal form is cataloged; semantic role depends on its grammar context.
+COBOL	fileName	NAME_LITERAL	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Name or literal form is cataloged; semantic role depends on its grammar context.
+COBOL	functionName	NAME_LITERAL	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Name or literal form is cataloged; semantic role depends on its grammar context.
+COBOL	indexName	NAME_LITERAL	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Name or literal form is cataloged; semantic role depends on its grammar context.
+COBOL	languageName	NAME_LITERAL	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Name or literal form is cataloged; semantic role depends on its grammar context.
+COBOL	libraryName	NAME_LITERAL	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Name or literal form is cataloged; semantic role depends on its grammar context.
+COBOL	localName	NAME_LITERAL	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Name or literal form is cataloged; semantic role depends on its grammar context.
+COBOL	mnemonicName	NAME_LITERAL	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Name or literal form is cataloged; semantic role depends on its grammar context.
+COBOL	paragraphName	NAME_LITERAL	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Name or literal form is cataloged; semantic role depends on its grammar context.
+COBOL	procedureName	NAME_LITERAL	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Name or literal form is cataloged; semantic role depends on its grammar context.
+COBOL	programName	NAME_LITERAL	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Name or literal form is cataloged; semantic role depends on its grammar context.
+COBOL	recordName	NAME_LITERAL	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Name or literal form is cataloged; semantic role depends on its grammar context.
+COBOL	reportName	NAME_LITERAL	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Name or literal form is cataloged; semantic role depends on its grammar context.
+COBOL	routineName	NAME_LITERAL	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Name or literal form is cataloged; semantic role depends on its grammar context.
+COBOL	screenName	NAME_LITERAL	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Name or literal form is cataloged; semantic role depends on its grammar context.
+COBOL	sectionName	NAME_LITERAL	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Name or literal form is cataloged; semantic role depends on its grammar context.
+COBOL	systemName	NAME_LITERAL	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Name or literal form is cataloged; semantic role depends on its grammar context.
+COBOL	symbolicCharacter	NAME_LITERAL	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Name or literal form is cataloged; semantic role depends on its grammar context.
+COBOL	textName	NAME_LITERAL	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Name or literal form is cataloged; semantic role depends on its grammar context.
+COBOL	cobolWord	NAME_LITERAL	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Name or literal form is cataloged; semantic role depends on its grammar context.
+COBOL	literal	NAME_LITERAL	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Name or literal form is cataloged; semantic role depends on its grammar context.
+COBOL	booleanLiteral	NAME_LITERAL	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Name or literal form is cataloged; semantic role depends on its grammar context.
+COBOL	numericLiteral	NAME_LITERAL	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Name or literal form is cataloged; semantic role depends on its grammar context.
+COBOL	integerLiteral	NAME_LITERAL	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Name or literal form is cataloged; semantic role depends on its grammar context.
+COBOL	cicsDfhRespLiteral	NAME_LITERAL	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Name or literal form is cataloged; semantic role depends on its grammar context.
+COBOL	cicsDfhValueLiteral	NAME_LITERAL	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Name or literal form is cataloged; semantic role depends on its grammar context.
+COBOL	figurativeConstant	NAME_LITERAL	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Name or literal form is cataloged; semantic role depends on its grammar context.
+COBOL	specialRegister	NAME_LITERAL	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Name or literal form is cataloged; semantic role depends on its grammar context.
+COBOL	commentEntry	GRAMMAR_INFRASTRUCTURE	PRESERVED_UNINTERPRETED	NOT_DEPENDENCY_BEARING	Grammar infrastructure is explicitly cataloged and carries no standalone dependency claim.
+PREPROCESSOR	startRule	PREPROCESSOR	PRESERVED_UNINTERPRETED	NOT_DEPENDENCY_BEARING	Preprocessor syntax is explicitly cataloged and has no standalone dependency claim.
+PREPROCESSOR	compilerOptions	PREPROCESSOR	PRESERVED_UNINTERPRETED	NOT_DEPENDENCY_BEARING	Preprocessor syntax is explicitly cataloged and has no standalone dependency claim.
+PREPROCESSOR	compilerXOpts	PREPROCESSOR	PRESERVED_UNINTERPRETED	NOT_DEPENDENCY_BEARING	Preprocessor syntax is explicitly cataloged and has no standalone dependency claim.
+PREPROCESSOR	compilerOption	PREPROCESSOR	PRESERVED_UNINTERPRETED	NOT_DEPENDENCY_BEARING	Preprocessor syntax is explicitly cataloged and has no standalone dependency claim.
+PREPROCESSOR	execCicsStatement	PREPROCESSOR	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Preprocessor construct is preserved but not yet represented with semantic provenance.
+PREPROCESSOR	execSqlStatement	PREPROCESSOR	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Preprocessor construct is preserved but not yet represented with semantic provenance.
+PREPROCESSOR	execSqlImsStatement	PREPROCESSOR	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Preprocessor construct is preserved but not yet represented with semantic provenance.
+PREPROCESSOR	copyStatement	PREPROCESSOR	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Preprocessor construct is preserved but not yet represented with semantic provenance.
+PREPROCESSOR	copySource	PREPROCESSOR	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Preprocessor construct is preserved but not yet represented with semantic provenance.
+PREPROCESSOR	copyLibrary	PREPROCESSOR	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Preprocessor construct is preserved but not yet represented with semantic provenance.
+PREPROCESSOR	replacingPhrase	PREPROCESSOR	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Preprocessor construct is preserved but not yet represented with semantic provenance.
+PREPROCESSOR	replaceArea	PREPROCESSOR	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Preprocessor construct is preserved but not yet represented with semantic provenance.
+PREPROCESSOR	replaceByStatement	PREPROCESSOR	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Preprocessor construct is preserved but not yet represented with semantic provenance.
+PREPROCESSOR	replaceOffStatement	PREPROCESSOR	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Preprocessor construct is preserved but not yet represented with semantic provenance.
+PREPROCESSOR	replaceClause	PREPROCESSOR	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Preprocessor construct is preserved but not yet represented with semantic provenance.
+PREPROCESSOR	directoryPhrase	PREPROCESSOR	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Preprocessor construct is preserved but not yet represented with semantic provenance.
+PREPROCESSOR	familyPhrase	PREPROCESSOR	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Preprocessor construct is preserved but not yet represented with semantic provenance.
+PREPROCESSOR	replaceable	PREPROCESSOR	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Preprocessor construct is preserved but not yet represented with semantic provenance.
+PREPROCESSOR	replacement	PREPROCESSOR	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Preprocessor construct is preserved but not yet represented with semantic provenance.
+PREPROCESSOR	ejectStatement	PREPROCESSOR	PRESERVED_UNINTERPRETED	NOT_DEPENDENCY_BEARING	Preprocessor syntax is explicitly cataloged and has no standalone dependency claim.
+PREPROCESSOR	skipStatement	PREPROCESSOR	PRESERVED_UNINTERPRETED	NOT_DEPENDENCY_BEARING	Preprocessor syntax is explicitly cataloged and has no standalone dependency claim.
+PREPROCESSOR	titleStatement	PREPROCESSOR	PRESERVED_UNINTERPRETED	NOT_DEPENDENCY_BEARING	Preprocessor syntax is explicitly cataloged and has no standalone dependency claim.
+PREPROCESSOR	pseudoText	PREPROCESSOR	PRESERVED_UNINTERPRETED	NOT_DEPENDENCY_BEARING	Preprocessor syntax is explicitly cataloged and has no standalone dependency claim.
+PREPROCESSOR	charData	PREPROCESSOR	PRESERVED_UNINTERPRETED	NOT_DEPENDENCY_BEARING	Preprocessor syntax is explicitly cataloged and has no standalone dependency claim.
+PREPROCESSOR	charDataSql	PREPROCESSOR	PRESERVED_UNINTERPRETED	NOT_DEPENDENCY_BEARING	Preprocessor syntax is explicitly cataloged and has no standalone dependency claim.
+PREPROCESSOR	charDataLine	PREPROCESSOR	PRESERVED_UNINTERPRETED	NOT_DEPENDENCY_BEARING	Preprocessor syntax is explicitly cataloged and has no standalone dependency claim.
+PREPROCESSOR	cobolWord	PREPROCESSOR	PRESERVED_UNINTERPRETED	NOT_DEPENDENCY_BEARING	Preprocessor syntax is explicitly cataloged and has no standalone dependency claim.
+PREPROCESSOR	literal	PREPROCESSOR	PRESERVED_UNINTERPRETED	NOT_DEPENDENCY_BEARING	Preprocessor syntax is explicitly cataloged and has no standalone dependency claim.
+PREPROCESSOR	filename	PREPROCESSOR	PRESERVED_UNINTERPRETED	NOT_DEPENDENCY_BEARING	Preprocessor syntax is explicitly cataloged and has no standalone dependency claim.
+PREPROCESSOR	charDataKeyword	PREPROCESSOR	PRESERVED_UNINTERPRETED	NOT_DEPENDENCY_BEARING	Preprocessor syntax is explicitly cataloged and has no standalone dependency claim.

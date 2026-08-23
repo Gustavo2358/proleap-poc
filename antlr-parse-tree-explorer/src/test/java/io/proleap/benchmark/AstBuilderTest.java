@@ -29,7 +29,7 @@ class AstBuilderTest {
         IdentityHashMap<ParseTree, Integer> ids = new IdentityHashMap<>();
         IdentityHashMap<ParseTree, Integer> sizes = new IdentityHashMap<>();
         index(tree, ids, sizes, new int[] {0});
-        Ast.Program ast = new AstBuilder(parser, source, ids, sizes).build(tree);
+        Ast.Program ast = new AstBuilder(parser, source, ids, sizes).build(tree).program();
         AstSnapshot snapshot = AstSnapshot.from(ast);
 
         assertEquals("COACTUPC", ast.name());

@@ -51,7 +51,7 @@ deverão permanecer e toda diferença será explicada neste relatório.
 | Fase | Estado | Evidência | Diferenças esperadas | Pendências |
 |---|---|---|---|---|
 | 0 — baseline | aprovada | 5 testes Maven verdes; baseline e hashes registrados | nenhuma mudança de produção | nenhuma |
-| 1 — cobertura | pendente | — | novo resultado/manifesto, AST inalterada | — |
+| 1 — cobertura | aprovada | 11 testes Maven verdes; guarda das 628 regras | `AstBuilder` retorna AST + cobertura + diagnósticos; nós AST inalterados | findings cobrem statements nesta fase |
 | 2 — proveniência | pendente | — | — | — |
 | 3 — referências/expressões | pendente | — | — | — |
 | 4 — procedure references | pendente | — | — | — |
@@ -59,6 +59,19 @@ deverão permanecer e toda diferença será explicada neste relatório.
 | 6 — statements | pendente | — | — | — |
 | 7 — observabilidade | pendente | — | — | — |
 | 8 — regressão final | pendente | — | — | — |
+
+## Evidência TDD da Fase 1
+
+1. RED: `GrammarCoverageManifestTest` e `SemanticCoverageTest` falharam na
+   compilação porque manifesto, taxonomia e `AstBuildResult` ainda não existiam.
+2. GREEN: os cinco testes desses contratos passaram após a implementação
+   mínima e a inclusão das 628 linhas explícitas do manifesto.
+3. RED: `AstBuildCoverageTest` falhou porque `AstBuilder.build` ainda retornava
+   somente `Ast.Program`.
+4. GREEN: o builder passou a retornar produtos separados e o teste confirmou
+   findings determinísticos para `MOVE`, `SET` e `GOBACK`.
+5. REFACTOR/GUARD: a suíte completa terminou com 11 testes, zero falhas e sem
+   alteração das métricas da AST ou da Symbol Table.
 
 ## Checklist final de regressão
 

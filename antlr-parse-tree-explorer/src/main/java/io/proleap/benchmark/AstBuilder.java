@@ -11,7 +11,12 @@ final class AstBuilder {
     private final String source;
     private final IdentityHashMap<ParseTree, Integer> parseIds;
     private final IdentityHashMap<ParseTree, Integer> parseSubtreeSizes;
+    private final List<CoverageDraft> coverageDrafts = new ArrayList<>();
+    private final List<SemanticCoverage.Diagnostic> semanticDiagnostics = new ArrayList<>();
     private int nextId;
+
+    private record CoverageDraft(String grammarRule, Ast.Meta meta, String writtenText,
+                                 int astNodeId) { }
 
     AstBuilder(Parser parser, String source, IdentityHashMap<ParseTree, Integer> parseIds,
                IdentityHashMap<ParseTree, Integer> parseSubtreeSizes) {
@@ -21,7 +26,10 @@ final class AstBuilder {
         this.parseSubtreeSizes = parseSubtreeSizes;
     }
 
-    Ast.Program build(ParseTree tree) {
+    AstBuildResult build(ParseTree tree) {
+        nextId = 0;
+        coverageDrafts.clear();
+        semanticDiagnostics.clear();
         ParserRuleContext unit = firstDescendant(tree, "programUnit");
         if (unit == null) throw new IllegalStateException("programUnit not found");
         Ast.Meta meta = meta(unit);
@@ -36,7 +44,9 @@ final class AstBuilder {
                 default -> { }
             }
         }
-        return new Ast.Program(meta, programName == null ? "<anonymous>" : clean(programName.getText()), divisions);
+        Ast.Program program = new Ast.Program(meta,
+                programName == null ? "<anonymous>" : clean(programName.getText()), divisions);
+        return new AstBuildResult(program, buildCoverageReport(), semanticDiagnostics);
     }
 
     private Ast.Division buildIdentification(ParserRuleContext context) {
@@ -145,7 +155,7 @@ final class AstBuilder {
 
     private Ast.Statement buildStatement(ParserRuleContext wrapper) {
         ParserRuleContext concrete = directRuleChildren(wrapper).stream().findFirst().orElse(wrapper);
-        return switch (rule(concrete)) {
+        Ast.Statement statement = switch (rule(concrete)) {
             case "callStatement" -> buildCall(concrete);
             case "ifStatement" -> buildIf(concrete);
             case "evaluateStatement" -> buildEvaluate(concrete);
@@ -158,6 +168,25 @@ final class AstBuilder {
             case "nextSentenceStatement" -> new Ast.NextSentenceStatement(meta(concrete));
             default -> buildUnsupported(concrete);
         };
+        coverageDrafts.add(new CoverageDraft(rule(concrete), statement.meta(), sourceText(concrete),
+                statement.meta().id()));
+        return statement;
+    }
+
+    private SemanticCoverage.Report buildCoverageReport() {
+        Comparator<CoverageDraft> bySourceOrder = Comparator
+                .comparingInt((CoverageDraft draft) -> draft.meta().span().startToken())
+                .thenComparingInt(CoverageDraft::astNodeId);
+        List<CoverageDraft> ordered = coverageDrafts.stream().sorted(bySourceOrder).toList();
+        List<SemanticCoverage.Finding> findings = new ArrayList<>();
+        for (CoverageDraft draft : ordered) {
+            GrammarCoverageManifest.Entry policy = GrammarCoverageManifest.entry(
+                    GrammarCoverageManifest.Grammar.COBOL, draft.grammarRule());
+            findings.add(new SemanticCoverage.Finding(findings.size(), draft.grammarRule(), draft.meta(),
+                    draft.writtenText(), policy.coverage(), policy.dependencyKnowledge(),
+                    policy.rationale(), draft.astNodeId()));
+        }
+        return new SemanticCoverage.Report(findings);
     }
 
     private Ast.CallStatement buildCall(ParserRuleContext context) {
