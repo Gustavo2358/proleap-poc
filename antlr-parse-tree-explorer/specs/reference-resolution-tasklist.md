@@ -549,19 +549,19 @@ existir.
 
 ### Fase 4 — Modelo de resultado e resolução DATA/INDEX
 
-- [ ] Criar `ReferenceResolution`, entries, candidates, diagnostics, índices e
+- [x] Criar `ReferenceResolution`, entries, candidates, diagnostics, índices e
       consultas imutáveis.
-- [ ] Executar ciclos RED/GREEN/REFACTOR separados para nome simples,
+- [x] Executar ciclos RED/GREEN/REFACTOR separados para nome simples,
       duplicidade, ausência e kind incompatível.
-- [ ] Executar ciclos separados para OF/IN, qualifiers múltiplos/parciais,
+- [x] Executar ciclos separados para OF/IN, qualifiers múltiplos/parciais,
       ordem inválida, FILE qualifier e `QUALIFY(EXTEND)`.
-- [ ] Executar ciclos separados para nível 88, index names, sections DATA,
+- [x] Executar ciclos separados para nível 88, index names, sections DATA,
       GLOBAL/EXTERNAL e shadowing nested.
-- [ ] Resolver relações REDEFINES/RENAMES/OCCURS em produto separado, respeitando
+- [x] Resolver relações REDEFINES/RENAMES/OCCURS em produto separado, respeitando
       restrições contextuais.
-- [ ] Garantir `UNSUPPORTED` para formas sem política e diagnósticos estáveis.
-- [ ] Medir lookup por índice e proibir scan global por referência em teste.
-- [ ] Tornar testes verdes, executar regressão e criar commit isolado.
+- [x] Garantir `UNSUPPORTED` para formas sem política e diagnósticos estáveis.
+- [x] Medir lookup por índice e proibir scan global por referência em teste.
+- [x] Tornar testes verdes, executar regressão e criar commit isolado.
 
 ### Fase 5 — Resolução PROCEDURE, FILE e PROGRAM
 

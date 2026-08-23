@@ -73,6 +73,15 @@ public final class ResolutionContracts {
         UNSPECIFIED
     }
 
+    public enum SemanticEntityDomain {
+        DATA_SYMBOL,
+        INDEX_SYMBOL,
+        PROCEDURE_SYMBOL,
+        FILE_ENTITY,
+        PROGRAM_UNIT,
+        EXTERNAL_PROGRAM
+    }
+
     /** Namespaces local integer IDs by one deterministic program unit. */
     public record ProgramUnitId(String compilationUnitId, List<Integer> structuralPath,
                                 String canonicalProgramName) {
@@ -82,6 +91,16 @@ public final class ResolutionContracts {
             if (structuralPath.stream().anyMatch(index -> index == null || index < 0))
                 throw new IllegalArgumentException("structuralPath must contain non-negative indexes");
             canonicalProgramName = requireText(canonicalProgramName, "canonicalProgramName");
+        }
+    }
+
+    /** Stable identity inside one deterministic semantic-analysis generation. */
+    public record SemanticEntityId(ProgramUnitId programUnitId, SemanticEntityDomain domain,
+                                   int localId) {
+        public SemanticEntityId {
+            programUnitId = Objects.requireNonNull(programUnitId, "programUnitId");
+            domain = Objects.requireNonNull(domain, "domain");
+            if (localId < 0) throw new IllegalArgumentException("localId must be non-negative");
         }
     }
 

@@ -8,7 +8,9 @@
 - `QUALIFY` default: `UNSPECIFIED` — nenhuma variante será presumida.
 
 Esta política é um contrato de classificação da Fase 1. Ela ainda não executa
-binding. Regras serão implementadas por TDD nas Fases 2–5.
+binding por si própria. As regras DATA/CONDITION/INDEX passaram a ser
+implementadas por TDD na Fase 4; os demais namespaces permanecem em fases
+separadas.
 
 ## Fontes semânticas primárias
 
@@ -32,6 +34,25 @@ binding. Regras serão implementadas por TDD nas Fases 2–5.
 7. Programa externo somente é ligado quando um catálogo explícito é fornecido.
 8. Forma aceita pela grammar, mas ainda sem regra segura, resulta em
    `UNSUPPORTED`; input ausente resulta em motivo conservador próprio.
+
+## Semântica de QUALIFY implementada na Fase 4
+
+- `STANDARD`: todos os candidatos que correspondem à sequência ordenada de
+  qualifiers permanecem válidos; mais de um candidato resulta em `AMBIGUOUS`.
+- `EXTEND`: quando exatamente um candidato corresponde de forma totalmente
+  qualificada e os demais somente de forma parcial, o candidato totalmente
+  qualificado é único. A regra equivalente para um único nível 01 também é
+  aplicada.
+- `UNSPECIFIED`: se STANDARD e EXTEND produziriam decisões diferentes, o
+  resultado é `UNSUPPORTED/UNSUPPORTED_DIALECT_OPTION`; a implementação não
+  escolhe uma opção silenciosamente.
+- `IN` e `OF` continuam equivalentes, preservando-se a grafia na ocorrência.
+- qualifiers podem omitir níveis intermediários, mas precisam respeitar a
+  ordem estrutural de dentro para fora.
+
+Essas regras seguem a documentação IBM de
+[Qualification](https://www.ibm.com/docs/en/cobol-zos/6.3?topic=reference-qualification),
+inclusive a distinção de `QUALIFY(EXTEND)` para match totalmente qualificado.
 
 ## Guarda não heurística
 

@@ -60,7 +60,7 @@ intencionais, TDD-first e explicadas aqui.
 | 1 — matriz/contratos | aprovada | 28 testes e todos os JS verdes; guarda das 628 regras | manifesto/policy/contratos imutáveis, sem binding | regras conservadoras serão refinadas por TDD nas fases de resolução |
 | 2 — compilation unit | aprovada | 31 testes e todos os JS verdes; fixture com cinco unidades | modelo completo, IDs namespaced, ancestry e visibilidade tipada | binding entre unidades permanece deliberadamente ausente |
 | 3 — entidades/coleta | aprovada | 35 testes e todos os JS verdes; oráculo exato de 16 ocorrências | entidades FILE, relações nominais, scope index O(1) e occurrences tipadas | lookup/candidatos/binding permanecem deliberadamente ausentes |
-| 4 — DATA/INDEX | pendente | — | resolução local estruturada | — |
+| 4 — DATA/INDEX | aprovada | 42 testes e todos os JS verdes; sete testes novos de binding | resultado imutável, DATA/CONDITION/INDEX, relações e métricas de índice | namespaces PROCEDURE/FILE/PROGRAM continuam UNSUPPORTED até a Fase 5 |
 | 5 — PROCEDURE/FILE/PROGRAM | pendente | — | demais namespaces e catálogo plugável | — |
 | 6 — cobertura/escala | pendente | — | completude e métricas | — |
 | 7 — HTML | pendente | — | nova jornada visual | — |
@@ -147,6 +147,32 @@ ignorados. Nenhum arquivo de produção, grammar, corpus ou output foi alterado.
    JavaScripts passaram em `node --check`; `git diff --check` não encontrou
    erros. Grammar, corpus, programas de demonstração, HTML e outputs não foram
    alterados nesta fase; contagens existentes de escopos/símbolos permanecem.
+
+### Fase 4
+
+1. RED: `DataAndIndexReferenceResolverTest` falhou na compilação pela ausência
+   de `ReferenceResolution`, candidates, relações resolvidas e resolver.
+2. GREEN: cada ocorrência recebe entry imutável com status, reason, candidatos
+   namespaced por `SemanticEntityId`, diagnósticos e consultas indexadas. AST e
+   Symbol Table não recebem IDs de binding.
+3. GREEN: nomes simples únicos, duplicados, ausentes e incompatíveis são
+   diferenciados. DATA, nível 88/CONDITION e INDEX preservam seus kinds.
+4. GREEN: OF e IN, qualificação parcial/múltipla, ordem inválida e ancestry de
+   FILE SECTION são resolvidos estruturalmente. Nenhum qualifier é reconstruído
+   por regex ou source text.
+5. POLICY: STANDARD mantém todos os matches; EXTEND prefere o único match
+   totalmente qualificado conforme IBM; UNSPECIFIED retorna
+   `UNSUPPORTED_DIALECT_OPTION` quando as opções divergiriam.
+6. VISIBILIDADE: declaração local sombreia ancestral; somente declaração
+   ancestral tipada GLOBAL é importada. EXTERNAL local permanece explícita.
+7. RELAÇÕES: REDEFINES, RENAMES e OCCURS têm produto de binding separado,
+   reutilizando a identidade da ocorrência nominal sem escrever na Symbol
+   Table.
+8. ESCALA: índices por unit/name são construídos uma vez; métricas contam
+   lookups, candidatos inspecionados, cardinalidade máxima e declarações
+   indexadas. O teste proíbe custo proporcional ao total de símbolos por uso.
+9. REGRESSÃO: 42 testes Maven verdes, três JavaScripts válidos e diff sem erros.
+   Grammar, corpus, HTML, outputs e programas de demonstração não mudaram.
 
 ## Checklist final de regressão
 
