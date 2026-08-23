@@ -578,16 +578,16 @@ existir.
 
 ### Fase 6 — Cobertura, diagnósticos e escala
 
-- [ ] Compor cobertura do frontend, preprocessing, collector e resolver.
-- [ ] Escrever testes RED para os quatro estados, reasons e flags conservadoras
+- [x] Compor cobertura do frontend, preprocessing, collector e resolver.
+- [x] Escrever testes RED para os quatro estados, reasons e flags conservadoras
       de completude.
-- [ ] Garantir que opacos, COPY ausente e catálogo ausente nunca virem “zero
+- [x] Garantir que opacos, COPY ausente e catálogo ausente nunca virem “zero
       dependências”.
-- [ ] Criar fixture sintética parametrizável com milhares de símbolos e refs.
-- [ ] Validar determinismo, cardinalidade dos índices, ausência de scan global,
+- [x] Criar fixture sintética parametrizável com milhares de símbolos e refs.
+- [x] Validar determinismo, cardinalidade dos índices, ausência de scan global,
       isolamento entre unidades e execução paralela segura.
-- [ ] Registrar métricas de custo sem threshold absoluto dependente de hardware.
-- [ ] Tornar testes verdes, executar regressão e criar commit isolado.
+- [x] Registrar métricas de custo sem threshold absoluto dependente de hardware.
+- [x] Tornar testes verdes, executar regressão e criar commit isolado.
 
 ### Fase 7 — Snapshots, pipeline e jornada HTML
 

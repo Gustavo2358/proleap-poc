@@ -62,7 +62,7 @@ intencionais, TDD-first e explicadas aqui.
 | 3 — entidades/coleta | aprovada | 35 testes e todos os JS verdes; oráculo exato de 16 ocorrências | entidades FILE, relações nominais, scope index O(1) e occurrences tipadas | lookup/candidatos/binding permanecem deliberadamente ausentes |
 | 4 — DATA/INDEX | aprovada | 42 testes e todos os JS verdes; sete testes novos de binding | resultado imutável, DATA/CONDITION/INDEX, relações e métricas de índice | namespaces PROCEDURE/FILE/PROGRAM continuam UNSUPPORTED até a Fase 5 |
 | 5 — PROCEDURE/FILE/PROGRAM | aprovada | 49 testes e todos os JS verdes; sete testes novos | resolver composto, catálogo externo plugável e admissibleKinds | cobertura/completude agregada permanece para a Fase 6 |
-| 6 — cobertura/escala | pendente | — | completude e métricas | — |
+| 6 — cobertura/escala | aprovada | 53 testes e todos os JS verdes; escala com 1.200 declarações | relatório conservador, gaps e métricas de custo | snapshot/HTML permanecem para a Fase 7 |
 | 7 — HTML | pendente | — | nova jornada visual | — |
 | 8 — regressão final | pendente | — | — | — |
 
@@ -200,6 +200,31 @@ ignorados. Nenhum arquivo de produção, grammar, corpus ou output foi alterado.
    nomes PROGRAM literais, todos `UNRESOLVED/EXTERNAL_CATALOG_NOT_PROVIDED` sem
    catálogo — nunca “nenhuma dependência”.
 8. REGRESSÃO: 49 testes Maven verdes, três JavaScripts válidos e diff sem erros.
+   Grammar, corpus, baselines, HTML e outputs permaneceram inalterados.
+
+### Fase 6
+
+1. RED: `ResolutionAnalysisReportTest` falhou na compilação pela ausência do
+   produto que compõe frontend, collector e resolver.
+2. GREEN: `ResolutionAnalysisReport` agrega policy, status/reasons/kinds/roles,
+   summaries por program unit, gaps tipados e flags conservadoras de
+   `referenceBindingComplete` e `dependencyAnalysisReady`.
+3. CONSERVADORISMO: COPY ausente, erros frontend, cobertura
+   `DEPENDENCY_UNKNOWN`, diagnósticos semânticos, referência em container
+   preservado e qualquer binding não RESOLVED bloqueiam a alegação de análise
+   completa. O resultado expõe unknowns; nunca os converte em zero dependências.
+4. INTEGRIDADE: cada ocorrência coletada precisa possuir entry de resolução;
+   produto ausente ou ocorrência perdida gera gap explícito por program unit.
+5. ESCALA: a fixture parametrizável gera 1.200 declarações e 2.400 referências.
+   O teste verifica cardinalidade dos índices e limita inspeções ao conjunto de
+   candidatos do mesmo nome, sem threshold de tempo dependente da máquina.
+6. DETERMINISMO: duas resoluções produzem a mesma assinatura estável. Quatro
+   instâncias executadas em paralelo sobre inputs imutáveis produzem resultados
+   idênticos e mantêm isolamento entre program units.
+7. MÉTRICAS: o relatório registra declarações indexadas, lookups nominais,
+   candidatos inspecionados, cardinalidade máxima, referências coletadas e
+   quantidade de unidades, sem incluir duração não determinística no snapshot.
+8. REGRESSÃO: 53 testes Maven verdes, três JavaScripts válidos e diff sem erros.
    Grammar, corpus, baselines, HTML e outputs permaneceram inalterados.
 
 ## Checklist final de regressão
