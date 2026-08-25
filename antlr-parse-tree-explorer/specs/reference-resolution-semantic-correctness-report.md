@@ -1537,3 +1537,82 @@ Evidência executada:
 - Causa raiz: `ResolutionAnalysisReport.addResolutionGaps` iterava apenas `ReferenceResolution.entries()` e ignorava `declarationRelations()`.
 - Correção geral mínima: relações não resolvidas agora geram gaps `DECLARATION_RELATION_<STATUS>_<REASON>` e bloqueiam readiness. Um mapa por `ProgramUnitId + referenceAstNodeId` preserva regra, linha e occurrence id sem lookup quadrático.
 - GREEN: teste específico `1/1`, grupo `ResolutionAnalysisReportTest` `5/5` e suíte completa `78/78`, sem falhas, erros ou testes ignorados.
+
+### Post-hardening code review
+
+O review da Fase 10 foi executado sobre a implementação, não apenas sobre os testes. Foram relidos integralmente os caminhos nominais relevantes em:
+
+- `SymbolTableBuilder.java`, `CompilationUnitSymbolTableBuilder.java` e `SymbolTable.java`: propagação GLOBAL, FILE, hierarquia DATA, CONDITION, INDEX, REDEFINES, RENAMES e declaration relations;
+- `ReferenceOccurrenceCollector.java`: DATA, CONDITION, INDEX, qualifiers, subscripts, FILE, PROGRAM, relações de declaração e kinds admissíveis;
+- `DataAndIndexReferenceResolver.java`: lookup local/ancestral, GLOBAL, shadowing nominal, qualification, DATA/FILE qualifiers, QUALIFY, relações e índices;
+- `CobolReferenceResolver.java` e `ProgramNameCanonicalizer.java`: PROCEDURE, FILE/GLOBAL FILE, PROGRAM, COMMON, siblings privados, nested/literal PROGRAM-ID, catálogo externo e PGMNAME;
+- `ReferenceOccurrences.java`, `ReferenceResolution.java`, `ResolutionContracts.java` e `DeclarationRelationResolution.java`: separação entre hint sintático e kind final, IDs semânticos, estados conservadores e policy de dialeto;
+- `ResolutionAnalysisReport.java`: critérios de completude e readiness para todos os resultados que o resolver sabe serem incertos.
+
+Dois novos bugs semânticos reproduzíveis foram encontrados. Ambos receberam teste RED antes da correção, correção geral mínima, regressão completa e commit próprio: binding nested com `PGMNAME` ausente (`45dfbd5`) e readiness ignorando declaration relations não resolvidas (`491c146`). Depois dessas correções, nenhum outro bug nominal reproduzível permaneceu no escopo revisado.
+
+### Evidência RED consolidada
+
+| Hipótese | Esperado | Observado antes da correção | Resultado |
+|---|---|---|---|
+| GLOBAL DATA através de ancestor LOCAL | alcançar o GLOBAL externo elegível | `UNRESOLVED` ao encontrar o LOCAL invisível | **BUG CONFIRMADO** |
+| GLOBAL FILE através de ancestor LOCAL | alcançar o FILE GLOBAL externo | `UNRESOLVED` após filtrar o bucket LOCAL | **BUG CONFIRMADO** |
+| FD GLOBAL propaga visibilidade | record, DATA, CONDITION e INDEX GLOBAL | descendentes marcados LOCAL | **BUG CONFIRMADO** |
+| colisão nominal em contexto FILE | parar no nome local incompatível | FILE GLOBAL externo selecionado | **BUG CONFIRMADO** |
+| PGMNAME external | transformações IBM por modo | conversões COMPAT/LONGUPPER incompletas | **BUG CONFIRMADO** |
+| LONGMIXED nested | preservar case | chamada uppercase ligada ao filho mixed-case | **BUG CONFIRMADO** |
+| REDEFINES estrutural | usar sibling scope | igualdade textual de level rejeitou target válido | **BUG CONFIRMADO** |
+| kind semântico de subscript | candidate final inequívoco | candidate já distinguia DATA de INDEX | **HIPÓTESE FUNCIONAL REFUTADA** |
+| PGMNAME ausente em nested lookup | não publicar certeza quando policies discordam | chamada foi `RESOLVED` por folding | **BUG NOVO CONFIRMADO** |
+| declaration relation e readiness | relação incerta bloqueia readiness | relatório publicou `COMPLETE` | **BUG NOVO CONFIRMADO** |
+
+As causas raiz e a razão de a cobertura anterior não detectá-las estão registradas em cada fase acima: faltavam as topologias indiretas de visibilidade, colisões entre namespaces, transformações de borda de PGMNAME, diferença estrutural entre level-number e scope, comparação entre policies possíveis e um caso em que occurrence e declaration relation divergiam de estado.
+
+### Correções e commits isolados
+
+| Commit | Arquivos de produção principais | Mudança conceitual |
+|---|---|---|
+| `96249a8` | nenhum | baseline documental da segunda rodada |
+| `c1903e3` | `DataAndIndexReferenceResolver.java` | ancestors só bloqueiam DATA por nomes GLOBAL elegíveis |
+| `eda9976` | `CobolReferenceResolver.java` | FILE LOCAL invisível não encerra busca ancestral |
+| `61f7eb8` | `SymbolTableBuilder.java` | GLOBAL do FD alimenta a hierarquia de records |
+| `376c39a` | `CobolReferenceResolver.java` | seleção FILE ocorre depois do primeiro nível nominal |
+| `360b17d` | `ProgramNameCanonicalizer.java`, `CobolReferenceResolver.java` | canonicalização externa PGMNAME completa e centralizada |
+| `59c59f1` | `ProgramNameCanonicalizer.java`, `CobolReferenceResolver.java` | identidade nested respeita LONGMIXED sem alterar `ProgramUnitId` |
+| `5c556f0` | `DataAndIndexReferenceResolver.java` | REDEFINES usa o scope estrutural do owner |
+| `a31981e` | `ReferenceOccurrences.java`, `ReferenceResolution.java` | contrato do kind final documentado e travado por regressão |
+| `45dfbd5` | `CobolReferenceResolver.java` | modo ausente compara targets possíveis sem false certainty |
+| `491c146` | `ResolutionAnalysisReport.java` | declaration relations incertas geram gaps bloqueantes |
+
+Cada correção inclui teste permanente; as oito hipóteses originais possuem fixture adversarial própria. Os dois achados de review reutilizam fixtures adequadas já existentes e não introduzem lógica específica de fixture.
+
+### Evidência GREEN final
+
+- Execução conjunta dos 11 testes adversariais pós-review: exit code `0`.
+- Suíte Maven completa: `Tests run: 78, Failures: 0, Errors: 0, Skipped: 0`; `BUILD SUCCESS`.
+- Teste anti-scan `usesPrebuiltNameIndexesInsteadOfScanningAllSymbolsPerReference`: `1/1` verde.
+- JavaScript: 31 arquivos passaram em `node --check`.
+- Nenhuma ocorrência de `@Disabled`, `@Ignore`, `assumeTrue(false)` ou `assumeFalse(true)` em `src/test`.
+- `git diff --check`: exit code `0`.
+- Desde o SHA inicial, corpus, gramáticas e outputs versionados permanecem inalterados; em `src/test/resources`, somente as oito fixtures adversariais previstas foram adicionadas.
+
+### Performance
+
+Os resolvers continuam consultando índices por nome, unidade e scope. As correções de GLOBAL e shadowing percorrem apenas a cadeia de programas e os buckets do nome consultado. O tratamento conservador de `PGMNAME(UNSPECIFIED)` usa dois mapas preindexados e compara conjuntos de targets visíveis. A correlação de declaration relations no relatório usa mapa por `ProgramUnitId + referenceAstNodeId`. Nenhuma mudança introduziu `O(references × all symbols)`, e o teste anti-scan permanece verde.
+
+### Lacunas restantes da segunda rodada
+
+- **Bug conhecido no escopo nominal revisado:** nenhum permanece reproduzível após as correções e regressões desta rodada.
+- **Limitação de frontend:** qualifier lexicalmente indistinguível entre DATA e FILE continua representado como `DATA_OR_FILE` e pode produzir ambiguidade conservadora.
+- **Dialeto não suportado:** modos de PGMNAME além de COMPAT, LONGUPPER e LONGMIXED não são inferidos.
+- **Configuração ausente:** quando a opção PGMNAME efetiva não foi fornecida, o resolver só publica binding se as policies suportadas concordarem sobre o target.
+- **Feature fora do escopo:** CFG, def-use, reaching definitions, constant propagation e backward value resolution não foram desenvolvidos nesta rodada.
+- **Limite da evidência:** os resultados cobrem as construções representáveis pelo frontend e as regras adversarialmente exercitadas; não afirmam suporte a todo COBOL possível.
+
+### Decisão de readiness
+
+**A) ReferenceResolution is sufficiently trustworthy as the nominal binding foundation for CFG/def-use.**
+
+A conclusão é restrita ao binding nominal representável pelo frontend. Ownership, visibilidade, namespace, qualification, program identity, relations e categoria semântica final possuem contratos explícitos e regressões adversariais; estados `AMBIGUOUS`, `UNRESOLVED` e `UNSUPPORTED`, inclusive em declaration relations, bloqueiam readiness em vez de serem convertidos em certeza. Os lookups permanecem indexados.
+
+Esta decisão encerra apenas o hardening solicitado. Ela registra a condição prévia para trabalho futuro, mas **não inicia nem implementa CFG, def-use ou reaching definitions** nesta tarefa.

@@ -974,6 +974,8 @@ Não considerar esta fase concluída se existir qualquer teste adversarial desab
 FASE 10 — REVIEW COMPLETO PÓS-HARDENING
 ======================================================================
 
+STATUS: [x] CONCLUÍDA — review ancorado no código; dois bugs adicionais reproduzidos, corrigidos e versionados separadamente
+
 Esta fase não deve se limitar a reler os testes.
 
 Executar um novo code review completo da resolução nominal atual, ancorado no código.
@@ -1077,6 +1079,8 @@ Nenhum novo bug pode ser corrigido sem teste reproduzindo o problema primeiro.
 FASE 11 — ATUALIZAÇÃO FINAL DO RELATÓRIO
 ======================================================================
 
+STATUS: [x] CONCLUÍDA — relatório consolidado, evidência final verde e decisão de readiness registrada
+
 Atualizar:
 
 specs/reference-resolution-semantic-correctness-report.md
@@ -1172,6 +1176,8 @@ E justificar.
 ======================================================================
 CRITÉRIOS FINAIS DE ACEITE
 ======================================================================
+
+STATUS: [x] ATENDIDOS
 
 A segunda rodada só está concluída quando:
 
