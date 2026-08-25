@@ -33,6 +33,16 @@ class DataAndIndexReferenceResolverTest {
             "src/test/resources/cobol/resolution/subscript-semantic-kind.cbl");
 
     @Test
+    void declaresDeclarationRelationsAsNominalStructuralBindingOnly() throws Exception {
+        Analysis analysis = analyze(REDEFINES_DIFFERENT_LEVEL, ResolutionContracts.QualifyMode.STANDARD);
+        DeclarationRelationResolution relations = analysis.resolution().declarationRelations();
+        assertEquals(DeclarationRelationResolution.SemanticScope.NOMINAL_STRUCTURAL_TARGET_BINDING,
+                relations.semanticScope());
+        assertTrue(relations.entries().stream().anyMatch(entry ->
+                entry.status() == ResolutionContracts.ResolutionStatus.RESOLVED));
+    }
+
+    @Test
     void resolvesSimpleDuplicateMissingAndIncompatibleNames() throws Exception {
         Analysis analysis = analyze(DATA, ResolutionContracts.QualifyMode.STANDARD);
         ResolutionContracts.ProgramUnitId unit = analysis.model().programUnits().get(0).id();

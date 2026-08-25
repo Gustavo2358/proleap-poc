@@ -138,7 +138,7 @@ Commit: `fix: canonicalize external calls by linkage`
 FASE 4 — CONTRATO DE REDEFINES/RENAMES É BINDING NOMINAL/ESTRUTURAL
 ======================================================================
 
-STATUS: [ ] PENDENTE
+STATUS: [x] CONCLUÍDA — binding funcional preservado; escopo nominal/estrutural explicitado
 
 Hipótese:
 

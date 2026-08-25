@@ -1669,3 +1669,13 @@ As observações do review entram nesta seção como hipóteses. Nenhuma conclus
 - Correção: `ProgramNameCanonicalizer.dynamicExternal` explicita a transformação dinâmica IBM. O resolver gera chaves possíveis a partir de linkage e PGMNAME: DYNAM usa somente a chave dinâmica; NODYNAM usa PGMNAME; linkage ausente compara a chave dinâmica com todas as chaves estáticas possíveis. Divergência de IDs retorna `UNSUPPORTED_DIALECT_OPTION` com candidates preservados.
 - Controle: os helpers antigos de resolução PROGRAM declaram NODYNAM explicitamente, pois exercitam canonicalização estática PGMNAME. CALL identifier continua dinâmico e não é transformado em target nominal por valor.
 - GREEN: teste adversarial e unitário `2/2`; `CallSemanticsTest` `3/3`; suíte completa `82/82`, sem falhas, erros ou skips.
+
+### Fase 4 — contrato de REDEFINES/RENAMES
+
+- Hipótese: o binding nominal/estrutural está correto, mas o significado de `DeclarationRelationResolution.Entry.status=RESOLVED` não estava explícito na API.
+- Fixture reutilizada: `redefines-different-level-number.cbl`, com uma relação estruturalmente resolvida e um homônimo fora do owner scope não resolvido.
+- Teste: `declaresDeclarationRelationsAsNominalStructuralBindingOnly`.
+- RED: `DeclarationRelationResolution` não oferecia método ou tipo que declarasse o escopo semântico do produto. **LACUNA CONTRATUAL CONFIRMADA; BUG FUNCIONAL REFUTADO**.
+- Correção: `SemanticScope.NOMINAL_STRUCTURAL_TARGET_BINDING`, retornado por `semanticScope()`, e Javadoc em `Entry`: RESOLVED identifica o target nominal/estrutural e não certifica todas as regras COBOL da cláusula.
+- Nenhuma regra de lookup, candidate ou status foi alterada; validação integral de REDEFINES/RENAMES continua responsabilidade de um semantic checker separado.
+- GREEN: teste específico `1/1`, grupo `DataAndIndexReferenceResolverTest` `17/17` e suíte completa `83/83`, sem falhas, erros ou skips.

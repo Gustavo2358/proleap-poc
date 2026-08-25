@@ -4,6 +4,13 @@ import java.util.*;
 
 /** Binding results for declaration relations, kept separate from the Symbol Table. */
 public final class DeclarationRelationResolution {
+    /** This product binds structurally admissible targets; it is not a full clause validator. */
+    public enum SemanticScope { NOMINAL_STRUCTURAL_TARGET_BINDING }
+
+    /**
+     * A {@code RESOLVED} status means that the nominal/structural target was identified.
+     * It does not certify every COBOL semantic constraint of REDEFINES or RENAMES.
+     */
     public record Entry(int id, ResolutionContracts.ProgramUnitId programUnitId, int relationId,
                         SymbolTable.RelationKind kind, int referenceAstNodeId,
                         ResolutionContracts.ResolutionStatus status,
@@ -22,4 +29,5 @@ public final class DeclarationRelationResolution {
     }
 
     public List<Entry> entries() { return entries; }
+    public SemanticScope semanticScope() { return SemanticScope.NOMINAL_STRUCTURAL_TARGET_BINDING; }
 }
