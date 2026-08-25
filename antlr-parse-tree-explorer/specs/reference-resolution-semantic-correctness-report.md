@@ -1494,3 +1494,36 @@ Isso torna `ReferenceResolution` uma fundação suficientemente confiável para 
 - Contrato escolhido (Opção A): `Occurrence.kind` é a interpretação sintática primária/hint; `admissibleKinds` preserva o polimorfismo; `Candidate.kind`, acessado por `Entry.selectedCandidate()` quando `RESOLVED`, é a categoria semântica final.
 - Mudança: somente Javadocs em `ReferenceOccurrences.Occurrence`, `ReferenceResolution.Candidate` e `selectedCandidate`; nenhuma lógica de binding foi alterada.
 - GREEN final da fase: teste adversarial `1/1` e suíte completa `76/76`, sem falhas, erros ou testes ignorados. GLOBAL INDEX, `INDEXED BY` e subscripts numéricos permaneceram verdes.
+
+### Fase 9 — regressão integrada
+
+| Caso | RED observado | Correção | GREEN | Commit |
+|---|---|---|---|---|
+| GLOBAL através de ancestor LOCAL | `UNRESOLVED` em vez de OUTER GLOBAL | ancestors consideram somente nomes GLOBAL elegíveis | sim | `c1903e3` |
+| GLOBAL FILE através de ancestor LOCAL | busca encerrou no bucket LOCAL vazio após filtro | prosseguir até bucket FILE visível | sim | `eda9976` |
+| FD GLOBAL → record | record/DATA/CONDITION/INDEX marcados LOCAL | visibilidade do FD alimenta `effectiveGlobal` | sim | `61f7eb8` |
+| colisão FILE/DATA | FILE GLOBAL externo resolvido apesar do nome local incompatível | região nominal antes do filtro FILE | sim | `376c39a` |
+| PGMNAME external | traduções COMPAT/LONGUPPER incompletas | canonicalizador externo centralizado | sim | `360b17d` |
+| LONGMIXED nested | duas grafias de case colapsadas no mesmo filho | chave nested dependente da policy, ID estrutural estável | sim | `59c59f1` |
+| REDEFINES structural level | siblings 05/04 rejeitados | `scopeId` como fonte de verdade | sim | `5c556f0` |
+| subscript semantic kind | nenhum binding incorreto; contrato já expunha candidate final | hipótese refutada, contrato documentado/testado | sim | `a31981e` |
+
+Evidência executada:
+
+- seleção explícita dos oito métodos adversariais mais o teste unitário PGMNAME: `Tests run: 9, Failures: 0, Errors: 0, Skipped: 0`;
+- suíte Maven completa: `Tests run: 76, Failures: 0, Errors: 0, Skipped: 0`, `BUILD SUCCESS`;
+- 31 arquivos JavaScript: `node --check`, exit code 0;
+- busca por `@Disabled`, `@Ignore` e assumptions incondicionalmente falsas: nenhuma ocorrência;
+- `git diff --check`: exit code 0;
+- teste anti-scan `usesPrebuiltNameIndexesInsteadOfScanningAllSymbolsPerReference`: `1/1` verde;
+- diff das áreas protegidas desde `58aea33`: nenhuma alteração em corpus, gramáticas ou outputs; em `src/test/resources`, somente as oito novas fixtures adversariais foram adicionadas.
+
+### Fase 10 — achado adicional: PGMNAME ausente em nested lookup
+
+- Hipótese de review: `PgmnameMode.UNSPECIFIED` ainda usa a chave uppercase e pode publicar um nested binding certo quando LONGUPPER/COMPAT e LONGMIXED discordam.
+- Fixture reutilizada: `longmixed-nested-program.cbl`; nenhum caso específico foi codificado na produção.
+- Teste novo: `keepsUnspecifiedNestedProgramIdentityConservativeWhenModesDisagree`.
+- RED observado: `CALL 'MIXED-CHILD'` foi `RESOLVED` para `'mixed-Child'` sob `UNSPECIFIED`; LONGMIXED não possui esse match. **BUG NOVO CONFIRMADO**.
+- Causa raiz: `ProgramNameCanonicalizer.nested(UNSPECIFIED)` e `programsByName` colapsavam a chave por uppercase antes de avaliar se a opção ausente mudava o conjunto de targets internos.
+- Correção geral mínima: o resolver mantém buckets preindexados folded e LONGMIXED. Sob `UNSPECIFIED`, compara os conjuntos de programas visíveis; igualdade permite binding option-independent, divergência retorna `UNSUPPORTED / UNSUPPORTED_DIALECT_OPTION` preservando os targets possíveis. Não há scan de todos os programas por referência.
+- GREEN: teste específico `1/1`, grupo `ProcedureFileProgramReferenceResolverTest` `17/17` e suíte completa `77/77`, sem falhas, erros ou testes ignorados. O caso de grafia exata, comum a todas as policies, continua resolvido.

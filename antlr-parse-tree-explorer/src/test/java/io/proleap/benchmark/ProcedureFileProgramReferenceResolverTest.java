@@ -476,6 +476,23 @@ class ProcedureFileProgramReferenceResolverTest {
     }
 
     @Test
+    void keepsUnspecifiedNestedProgramIdentityConservativeWhenModesDisagree() throws Exception {
+        Analysis unspecified = analyze(LONGMIXED_NESTED_PROGRAM, Optional.empty(),
+                ResolutionContracts.PgmnameMode.UNSPECIFIED);
+        ResolutionContracts.ProgramUnitId caller = unit(unspecified, "'Outer'");
+        ResolutionContracts.ProgramUnitId child = unit(unspecified, "'mixed-Child'");
+
+        assertAll("option-independent exact spelling may bind",
+                () -> assertProgramCandidate(unspecified.resolution(), caller,
+                        "'mixed-Child'", child));
+        ReferenceResolution.Entry dependent = assertEntry(unspecified.resolution(), caller,
+                "'MIXED-CHILD'", ResolutionContracts.ReferenceRole.CALL_TARGET,
+                ResolutionContracts.ResolutionStatus.UNSUPPORTED,
+                ResolutionContracts.ResolutionReason.UNSUPPORTED_DIALECT_OPTION, 1);
+        assertEquals(child, dependent.candidates().get(0).entityId().programUnitId());
+    }
+
+    @Test
     void usesOptionalExternalCatalogAndPreservesAllReturnedCandidates() throws Exception {
         ExternalProgramCatalog catalog = canonicalName -> switch (canonicalName) {
             case "EXTERNAL0ONE" -> List.of(new ExternalProgramCatalog.Program(10, "fake", "EXTERNAL-ONE", Map.of()));

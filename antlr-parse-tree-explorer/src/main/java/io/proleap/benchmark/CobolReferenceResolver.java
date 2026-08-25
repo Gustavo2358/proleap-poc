@@ -17,6 +17,8 @@ final class CobolReferenceResolver {
     private final Optional<ExternalProgramCatalog> externalCatalog;
     private final Map<ResolutionContracts.ProgramUnitId, UnitIndex> units = new LinkedHashMap<>();
     private final Map<String, List<CompilationUnitModel.ProgramUnit>> programsByName = new LinkedHashMap<>();
+    private final Map<String, List<CompilationUnitModel.ProgramUnit>> longMixedProgramsByName =
+            new LinkedHashMap<>();
     private final Map<ResolutionContracts.ProgramUnitId, Integer> programLocalIds = new LinkedHashMap<>();
     private int additionalLookups;
     private long additionalInspections;
@@ -85,7 +87,7 @@ final class CobolReferenceResolver {
     }
 
     private void buildIndexes(CompilationUnitModel model, CompilationUnitSymbolTables symbolTables) {
-        units.clear(); programsByName.clear(); programLocalIds.clear();
+        units.clear(); programsByName.clear(); longMixedProgramsByName.clear(); programLocalIds.clear();
         additionalLookups = 0; additionalInspections = 0; additionalIndexed = 0; additionalMaximum = 0;
         int programIndex = 0;
         for (CompilationUnitModel.ProgramUnit unit : model.programUnits()) {
@@ -100,6 +102,10 @@ final class CobolReferenceResolver {
             String programLookupKey = ProgramNameCanonicalizer.nested(
                     unit.program().name(), policy.pgmnameMode());
             programsByName.computeIfAbsent(programLookupKey, ignored -> new ArrayList<>()).add(unit);
+            String longMixedLookupKey = ProgramNameCanonicalizer.nested(
+                    unit.program().name(), ResolutionContracts.PgmnameMode.LONGMIXED);
+            longMixedProgramsByName.computeIfAbsent(
+                    longMixedLookupKey, ignored -> new ArrayList<>()).add(unit);
             programLocalIds.put(unit.id(), programIndex++);
             additionalIndexed += procedures.values().stream().mapToInt(List::size).sum()
                     + files.values().stream().mapToInt(List::size).sum() + 1;
@@ -181,13 +187,37 @@ final class CobolReferenceResolver {
         if (!(node instanceof Ast.ProgramReference reference))
             return new Decision(ResolutionContracts.ResolutionStatus.UNSUPPORTED,
                     ResolutionContracts.ResolutionReason.UNSUPPORTED_GRAMMAR_FORM, List.of());
-        String canonical = ProgramNameCanonicalizer.nested(
-                reference.programName(), policy.pgmnameMode());
-        additionalLookups++;
-        List<CompilationUnitModel.ProgramUnit> named = programsByName.getOrDefault(canonical, List.of());
-        additionalInspections += named.size();
-        List<CompilationUnitModel.ProgramUnit> visible = named.stream()
-                .filter(target -> visibleInternalProgram(caller.unit(), target)).toList();
+        List<CompilationUnitModel.ProgramUnit> visible;
+        if (policy.pgmnameMode() == ResolutionContracts.PgmnameMode.UNSPECIFIED) {
+            String foldedKey = ProgramNameCanonicalizer.nested(
+                    reference.programName(), ResolutionContracts.PgmnameMode.LONGUPPER);
+            String mixedKey = ProgramNameCanonicalizer.nested(
+                    reference.programName(), ResolutionContracts.PgmnameMode.LONGMIXED);
+            additionalLookups += 2;
+            List<CompilationUnitModel.ProgramUnit> folded = visiblePrograms(
+                    caller.unit(), programsByName.getOrDefault(foldedKey, List.of()));
+            List<CompilationUnitModel.ProgramUnit> mixed = visiblePrograms(
+                    caller.unit(), longMixedProgramsByName.getOrDefault(mixedKey, List.of()));
+            additionalInspections += folded.size() + mixed.size();
+            if (!programIds(folded).equals(programIds(mixed))) {
+                LinkedHashMap<ResolutionContracts.ProgramUnitId, CompilationUnitModel.ProgramUnit> possible =
+                        new LinkedHashMap<>();
+                folded.forEach(unit -> possible.put(unit.id(), unit));
+                mixed.forEach(unit -> possible.put(unit.id(), unit));
+                List<ReferenceResolution.Candidate> candidates = possible.values().stream()
+                        .map(this::programCandidate).toList();
+                return new Decision(ResolutionContracts.ResolutionStatus.UNSUPPORTED,
+                        ResolutionContracts.ResolutionReason.UNSUPPORTED_DIALECT_OPTION, candidates);
+            }
+            visible = folded;
+        } else {
+            String canonical = ProgramNameCanonicalizer.nested(
+                    reference.programName(), policy.pgmnameMode());
+            additionalLookups++;
+            List<CompilationUnitModel.ProgramUnit> named = programsByName.getOrDefault(canonical, List.of());
+            additionalInspections += named.size();
+            visible = visiblePrograms(caller.unit(), named);
+        }
         if (!visible.isEmpty()) {
             List<ReferenceResolution.Candidate> candidates = visible.stream().map(this::programCandidate).toList();
             return nominalDecision(candidates, false);
@@ -207,6 +237,17 @@ final class CobolReferenceResolver {
         List<ReferenceResolution.Candidate> candidates = external.stream()
                 .map(program -> externalCandidate(program, externalCanonical)).toList();
         return nominalDecision(candidates, false);
+    }
+
+    private List<CompilationUnitModel.ProgramUnit> visiblePrograms(
+            CompilationUnitModel.ProgramUnit caller, List<CompilationUnitModel.ProgramUnit> named) {
+        return named.stream().filter(target -> visibleInternalProgram(caller, target)).toList();
+    }
+
+    private static Set<ResolutionContracts.ProgramUnitId> programIds(
+            List<CompilationUnitModel.ProgramUnit> programs) {
+        return programs.stream().map(CompilationUnitModel.ProgramUnit::id)
+                .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
     }
 
     private static boolean dependsOnPgmname(String writtenName) {
