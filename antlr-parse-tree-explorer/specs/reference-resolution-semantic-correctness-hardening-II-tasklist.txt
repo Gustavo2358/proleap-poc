@@ -191,6 +191,8 @@ Nenhum código de produção deve ser alterado nesta fase.
 FASE 1 — GLOBAL EXTERNO NÃO DEVE SER BLOQUEADO POR NOME LOCAL EM PROGRAMA INTERMEDIÁRIO
 ======================================================================
 
+STATUS: [x] CONCLUÍDA — RED comprovado, correção geral e regressão verdes
+
 Hipótese:
 
 A busca atual para referências DATA não qualificadas pode parar cedo demais quando encontra um nome em um programa intermediário.

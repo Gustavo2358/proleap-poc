@@ -19,6 +19,8 @@ class DataAndIndexReferenceResolverTest {
             "src/test/resources/cobol/resolution/nested-namespace-shadowing.cbl");
     private static final Path QUALIFIED_GLOBAL = Path.of(
             "src/test/resources/cobol/resolution/nested-qualified-global.cbl");
+    private static final Path GLOBAL_THROUGH_LOCAL = Path.of(
+            "src/test/resources/cobol/resolution/nested-global-through-local-data.cbl");
     private static final Path REDEFINES_STRUCTURAL = Path.of(
             "src/test/resources/cobol/resolution/redefines-structural-binding.cbl");
     private static final Path RENAMES_STRUCTURAL = Path.of(
@@ -197,6 +199,47 @@ class DataAndIndexReferenceResolverTest {
         assertEntry(analysis.resolution(), child, "NOT-VISIBLE", ResolutionContracts.ReferenceRole.VALUE_READ,
                 ResolutionContracts.ResolutionStatus.UNRESOLVED,
                 ResolutionContracts.ResolutionReason.DECLARATION_NOT_FOUND, 0);
+    }
+
+    @Test
+    void skipsInvisibleLocalDataInIntermediateProgramsWhenLookingForGlobalData() throws Exception {
+        Analysis analysis = analyze(GLOBAL_THROUGH_LOCAL, ResolutionContracts.QualifyMode.STANDARD);
+        CompilationUnitModel.ProgramUnit outerA = program(analysis, "OUTER-A");
+        CompilationUnitModel.ProgramUnit middleA = program(analysis, "MIDDLE-A");
+        CompilationUnitModel.ProgramUnit innerA = program(analysis, "INNER-A");
+        CompilationUnitModel.ProgramUnit middleB = program(analysis, "MIDDLE-B");
+        CompilationUnitModel.ProgramUnit innerB = program(analysis, "INNER-B");
+        CompilationUnitModel.ProgramUnit innerC = program(analysis, "INNER-C");
+        CompilationUnitModel.ProgramUnit innerD = program(analysis, "INNER-D");
+        SymbolTable outerTable = analysis.tables().forProgramUnit(outerA.id()).orElseThrow().symbolTable();
+        SymbolTable middleTable = analysis.tables().forProgramUnit(middleA.id()).orElseThrow().symbolTable();
+
+        assertAll("adversarial visibility topology",
+                () -> assertEquals("GLOBAL", symbol(outerTable, "X").attributes().get("visibility")),
+                () -> assertEquals("LOCAL", symbol(middleTable, "X").attributes().get("visibility")),
+                () -> assertTrue(analysis.tables().forProgramUnit(innerA.id()).orElseThrow().symbolTable()
+                        .lookupAll(SymbolTable.Namespace.DATA, "X").isEmpty()));
+
+        ReferenceResolution.Entry throughLocal = assertEntry(analysis.resolution(), innerA.id(), "X",
+                ResolutionContracts.ReferenceRole.VALUE_READ, ResolutionContracts.ResolutionStatus.RESOLVED,
+                ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION, 1);
+        ReferenceResolution.Entry nearestGlobal = assertEntry(analysis.resolution(), innerB.id(), "X",
+                ResolutionContracts.ReferenceRole.VALUE_READ, ResolutionContracts.ResolutionStatus.RESOLVED,
+                ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION, 1);
+        ReferenceResolution.Entry local = assertEntry(analysis.resolution(), innerC.id(), "X",
+                ResolutionContracts.ReferenceRole.VALUE_READ, ResolutionContracts.ResolutionStatus.RESOLVED,
+                ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION, 1);
+
+        assertAll("nominal nested DATA selection",
+                () -> assertEquals(outerA.id(), throughLocal.candidates().get(0).entityId().programUnitId()),
+                () -> assertEquals(ResolutionContracts.ReferenceKind.DATA, throughLocal.candidates().get(0).kind()),
+                () -> assertNotEquals(middleA.id(), throughLocal.candidates().get(0).entityId().programUnitId()),
+                () -> assertEquals(middleB.id(), nearestGlobal.candidates().get(0).entityId().programUnitId()),
+                () -> assertEquals(innerC.id(), local.candidates().get(0).entityId().programUnitId()),
+                () -> assertEntry(analysis.resolution(), innerD.id(), "X",
+                        ResolutionContracts.ReferenceRole.VALUE_READ,
+                        ResolutionContracts.ResolutionStatus.UNRESOLVED,
+                        ResolutionContracts.ResolutionReason.DECLARATION_NOT_FOUND, 0));
     }
 
     @Test
@@ -381,6 +424,12 @@ class DataAndIndexReferenceResolverTest {
     private static SymbolTable.Symbol symbol(SymbolTable table, String name) {
         return table.lookupAll(SymbolTable.Namespace.DATA, name).stream().findFirst()
                 .orElseThrow(() -> new AssertionError("missing declaration " + name));
+    }
+
+    private static CompilationUnitModel.ProgramUnit program(Analysis analysis, String name) {
+        return analysis.model().programUnits().stream()
+                .filter(unit -> unit.program().name().equals(name)).findFirst()
+                .orElseThrow(() -> new AssertionError("missing program " + name));
     }
 
     private static SymbolTable.Symbol symbolUnder(SymbolTable table, String name, String owner) {

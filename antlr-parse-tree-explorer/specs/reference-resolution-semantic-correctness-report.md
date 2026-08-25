@@ -1413,3 +1413,13 @@ Isso torna `ReferenceResolution` uma fundação suficientemente confiável para 
 - `git diff --check`: exit code 0.
 - O baseline não alterou código de produção, gramáticas, corpus, fixtures existentes nem outputs versionados. `git diff --quiet HEAD -- corpus src/main/antlr4 src/test/resources dist dist-cbstm03a dist-cbstm03d` terminou com exit code 0 antes da criação das novas fixtures.
 - Escopo confirmado: esta rodada termina no hardening nominal, testes, review e decisão de readiness. CFG, def-use, reaching definitions, constant propagation e value resolution não serão implementados.
+
+### Fase 1 — GLOBAL DATA através de ancestor LOCAL
+
+- Regra: uma declaração LOCAL de um programa ancestral não pertence à região de visibilidade do programa indiretamente contido e, portanto, não pode bloquear um homônimo GLOBAL de um ancestral mais externo.
+- Fixture: `nested-global-through-local-data.cbl`, com quatro topologias independentes e controles para nome local no programa da referência, GLOBAL no ancestor mais próximo e ausência de GLOBAL elegível.
+- Teste: `skipsInvisibleLocalDataInIntermediateProgramsWhenLookingForGlobalData`.
+- RED observado: esperado `RESOLVED → OUTER-A.X`; observado `UNRESOLVED / DECLARATION_NOT_FOUND`, zero candidates. **BUG CONFIRMADO**.
+- Causa raiz: `DataAndIndexReferenceResolver.compatibleCandidates` interrompia `stopAtFirstNominalLevel` para qualquer homônimo em qualquer ancestor, antes de excluir declarações LOCAL invisíveis.
+- Correção geral mínima: o programa da referência continua aplicando shadowing a qualquer homônimo; em ancestors, somente declarações GLOBAL participam do corte nominal e da seleção. A consulta permanece no índice `byName` por unidade.
+- GREEN: teste adversarial `1/1`, grupo `DataAndIndexReferenceResolverTest` `13/13` e suíte completa `68/68`, sem falhas, erros ou testes ignorados.

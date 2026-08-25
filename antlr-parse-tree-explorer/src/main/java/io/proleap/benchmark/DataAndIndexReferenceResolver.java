@@ -137,10 +137,13 @@ final class DataAndIndexReferenceResolver {
             nominalLookups++;
             List<SymbolTable.Symbol> sameName = unit.byName().getOrDefault(canonical, List.of());
             candidateInspections += sameName.size();
-            for (SymbolTable.Symbol symbol : sameName)
+            boolean startingUnit = current.equals(startingUnitId);
+            List<SymbolTable.Symbol> visibleSameName = startingUnit ? sameName : sameName.stream()
+                    .filter(DataAndIndexReferenceResolver::isGlobal).toList();
+            for (SymbolTable.Symbol symbol : visibleSameName)
                 if (admissibleKinds.stream().anyMatch(kind -> compatible(symbol, kind)))
                     result.add(new SymbolOwner(current, unit.table(), symbol));
-            if (stopAtFirstNominalLevel && !sameName.isEmpty()) break;
+            if (stopAtFirstNominalLevel && !visibleSameName.isEmpty()) break;
             current = unit.unit().parentId();
         }
         return result;
@@ -219,10 +222,17 @@ final class DataAndIndexReferenceResolver {
     private boolean hasSameNameInSearchPath(ResolutionContracts.ProgramUnitId startingUnitId, String canonical) {
         ResolutionContracts.ProgramUnitId current = startingUnitId;
         while (current != null) {
-            if (!units.get(current).byName().getOrDefault(canonical, List.of()).isEmpty()) return true;
+            List<SymbolTable.Symbol> sameName = units.get(current).byName()
+                    .getOrDefault(canonical, List.of());
+            if (current.equals(startingUnitId) ? !sameName.isEmpty()
+                    : sameName.stream().anyMatch(DataAndIndexReferenceResolver::isGlobal)) return true;
             current = units.get(current).unit().parentId();
         }
         return false;
+    }
+
+    private static boolean isGlobal(SymbolTable.Symbol symbol) {
+        return "GLOBAL".equals(symbol.attributes().get("visibility"));
     }
 
     private static boolean compatible(SymbolTable.Symbol symbol, ResolutionContracts.ReferenceKind kind) {
