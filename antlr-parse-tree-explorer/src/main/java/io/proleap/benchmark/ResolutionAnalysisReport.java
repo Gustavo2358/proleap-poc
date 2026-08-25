@@ -10,7 +10,8 @@ public final class ResolutionAnalysisReport {
         SEMANTIC_DIAGNOSTIC,
         COLLECTOR_INTEGRITY,
         PRESERVED_CONTAINER,
-        REFERENCE_BINDING
+        REFERENCE_BINDING,
+        CALL_SEMANTICS
     }
 
     public enum AnalysisClaim { COMPLETE, INCOMPLETE }
@@ -90,6 +91,7 @@ public final class ResolutionAnalysisReport {
         addFrontendGaps(frontend, gaps);
         addCollectorGaps(frontend.compilationUnit(), occurrencesByUnit, resolution, gaps);
         addResolutionGaps(resolution, gaps);
+        addCallSemanticsGaps(resolution, gaps);
 
         EnumMap<ResolutionContracts.ResolutionStatus, Long> statuses = zeroed(
                 ResolutionContracts.ResolutionStatus.class);
@@ -111,9 +113,11 @@ public final class ResolutionAnalysisReport {
         }
 
         List<String> blockingReasons = gaps.stream().map(Gap::code).distinct().toList();
-        boolean complete = gaps.isEmpty();
+        boolean bindingComplete = gaps.stream().noneMatch(gap ->
+                gap.category() != GapCategory.CALL_SEMANTICS);
+        boolean dependencyReady = gaps.isEmpty();
         ResolutionContracts.Completeness completeness = new ResolutionContracts.Completeness(
-                complete, complete, complete ? List.of() : blockingReasons);
+                bindingComplete, dependencyReady, dependencyReady ? List.of() : blockingReasons);
         List<ProgramUnitSummary> summaries = programSummaries(
                 frontend.compilationUnit(), resolution, gaps, frontendState);
         ReferenceResolution.Metrics metrics = resolution.metrics();
@@ -248,6 +252,26 @@ public final class ResolutionAnalysisReport {
         }
     }
 
+    private static void addCallSemanticsGaps(ReferenceResolution resolution, List<Gap> gaps) {
+        for (ReferenceResolution.Entry entry : resolution.entries()) {
+            if (entry.callSemantics().isEmpty()) continue;
+            ReferenceResolution.CallSemantics semantics = entry.callSemantics().orElseThrow();
+            ReferenceOccurrences.Occurrence occurrence = entry.occurrence();
+            if (semantics.linkage() == ResolutionContracts.CallLinkage.UNKNOWN) {
+                addGap(gaps, GapCategory.CALL_SEMANTICS, "CALL_LINKAGE_UNKNOWN",
+                        "CALL target is nominally bound but linkage depends on missing compiler options",
+                        occurrence.programUnitId(), occurrence.grammarRule(),
+                        occurrence.meta().span().startLine(), occurrence.id());
+            }
+            if (semantics.targetSyntax() == Ast.CallTargetSyntax.IDENTIFIER_OR_EXPRESSION) {
+                addGap(gaps, GapCategory.CALL_SEMANTICS, "DYNAMIC_CALL_TARGET_VALUE_UNKNOWN",
+                        "CALL identifier/expression binds its data reference, not the runtime program target",
+                        occurrence.programUnitId(), occurrence.grammarRule(),
+                        occurrence.meta().span().startLine(), occurrence.id());
+            }
+        }
+    }
+
     private static List<ProgramUnitSummary> programSummaries(
             CompilationUnitModel model, ReferenceResolution resolution, List<Gap> gaps,
             FrontendState frontendState) {
@@ -258,15 +282,18 @@ public final class ResolutionAnalysisReport {
         for (CompilationUnitModel.ProgramUnit unit : model.programUnits()) {
             List<ReferenceResolution.Entry> entries = resolution.entries().stream()
                     .filter(entry -> entry.occurrence().programUnitId().equals(unit.id())).toList();
-            int unitGaps = (int) gaps.stream().filter(gap -> gap.programUnitId() != null
-                    && gap.programUnitId().equals(unit.id())).count();
-            boolean complete = !globalInputGap && unitGaps == 0;
+            List<Gap> unitGapEntries = gaps.stream().filter(gap -> gap.programUnitId() != null
+                    && gap.programUnitId().equals(unit.id())).toList();
+            int unitGaps = unitGapEntries.size();
+            boolean bindingComplete = !globalInputGap && unitGapEntries.stream().noneMatch(gap ->
+                    gap.category() != GapCategory.CALL_SEMANTICS);
+            boolean dependencyReady = !globalInputGap && unitGaps == 0;
             result.add(new ProgramUnitSummary(unit.id(), entries.size(),
                     count(entries, ResolutionContracts.ResolutionStatus.RESOLVED),
                     count(entries, ResolutionContracts.ResolutionStatus.AMBIGUOUS),
                     count(entries, ResolutionContracts.ResolutionStatus.UNRESOLVED),
                     count(entries, ResolutionContracts.ResolutionStatus.UNSUPPORTED),
-                    unitGaps + (globalInputGap ? 1 : 0), complete, complete));
+                    unitGaps + (globalInputGap ? 1 : 0), bindingComplete, dependencyReady));
         }
         return List.copyOf(result);
     }

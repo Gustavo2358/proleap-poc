@@ -35,6 +35,10 @@ class CallSemanticsTest {
             "src/test/resources/cobol/resolution/static-external-canonicalization.cbl");
     private static final Path UNKNOWN_LINKAGE_EXTERNAL = Path.of(
             "src/test/resources/cobol/resolution/unknown-linkage-external-canonicalization.cbl");
+    private static final Path UNKNOWN_LINKAGE_SAME_TARGET = Path.of(
+            "src/test/resources/cobol/resolution/unknown-linkage-same-external-target.cbl");
+    private static final Path CALL_IDENTIFIER_RUNTIME_TARGET = Path.of(
+            "src/test/resources/cobol/resolution/call-identifier-runtime-target.cbl");
 
     @Test
     void separatesLiteralTargetSyntaxFromCompilerSelectedLinkage() throws Exception {
@@ -133,6 +137,55 @@ class CallSemanticsTest {
                 ResolutionContracts.CallLinkage.UNKNOWN, Set.of(30, 31));
     }
 
+    @Test
+    void unknownCallSemanticsBlockDependencyReadinessWithoutErasingCertainNameBinding()
+            throws Exception {
+        ExternalProgramCatalog catalog = key -> Set.of("TARGET0A", "TARGET-A").contains(key)
+                ? List.of(new ExternalProgramCatalog.Program(
+                        1, "readiness-catalog", "TARGET-A", Map.of()))
+                : List.of();
+        Analysis analysis = analyze(UNKNOWN_LINKAGE_SAME_TARGET, catalog);
+        ReferenceResolution.Entry call = analysis.resolution().entries().stream()
+                .filter(entry -> entry.occurrence().role()
+                        == ResolutionContracts.ReferenceRole.CALL_TARGET)
+                .findFirst().orElseThrow();
+        assertEquals(ResolutionContracts.ResolutionStatus.RESOLVED, call.status());
+        assertEquals(ResolutionContracts.CallLinkage.UNKNOWN,
+                call.callSemantics().orElseThrow().linkage());
+
+        ResolutionAnalysisReport report = ResolutionAnalysisReport.compose(
+                analysis.build(), ResolutionAnalysisReport.FrontendState.complete(),
+                analysis.occurrences(), analysis.resolution());
+        assertAll("certain nominal binding and uncertain call dependency are separate",
+                () -> assertTrue(report.completeness().referenceBindingComplete()),
+                () -> assertFalse(report.completeness().dependencyAnalysisReady()),
+                () -> assertTrue(report.gaps().stream().anyMatch(gap ->
+                        gap.code().equals("CALL_LINKAGE_UNKNOWN"))));
+    }
+
+    @Test
+    void callIdentifierBindingDoesNotClaimItsRuntimeProgramTargetIsKnown() throws Exception {
+        Analysis analysis = analyze(CALL_IDENTIFIER_RUNTIME_TARGET, ExternalProgramCatalog.empty());
+        ReferenceResolution.Entry call = analysis.resolution().entries().stream()
+                .filter(entry -> entry.occurrence().role()
+                        == ResolutionContracts.ReferenceRole.CALL_TARGET)
+                .findFirst().orElseThrow();
+        assertEquals(ResolutionContracts.ResolutionStatus.RESOLVED, call.status());
+        assertEquals(ResolutionContracts.ReferenceKind.DATA,
+                call.selectedCandidate().orElseThrow().kind());
+        assertEquals(ResolutionContracts.CallLinkage.DYNAMIC,
+                call.callSemantics().orElseThrow().linkage());
+
+        ResolutionAnalysisReport report = ResolutionAnalysisReport.compose(
+                analysis.build(), ResolutionAnalysisReport.FrontendState.complete(),
+                analysis.occurrences(), analysis.resolution());
+        assertAll("the data variable is bound but its runtime program value is not",
+                () -> assertTrue(report.completeness().referenceBindingComplete()),
+                () -> assertFalse(report.completeness().dependencyAnalysisReady()),
+                () -> assertTrue(report.gaps().stream().anyMatch(gap ->
+                        gap.code().equals("DYNAMIC_CALL_TARGET_VALUE_UNKNOWN"))));
+    }
+
     private static List<ExternalProgramCatalog.Program> external(int id, String name, String linkage) {
         return List.of(new ExternalProgramCatalog.Program(
                 id, "linkage-catalog", name, Map.of("expectedLinkage", linkage)));
@@ -195,8 +248,10 @@ class CallSemanticsTest {
         IdentityHashMap<ParseTree, Integer> ids = new IdentityHashMap<>();
         IdentityHashMap<ParseTree, Integer> sizes = new IdentityHashMap<>();
         index(tree, ids, sizes, new int[]{0});
-        CompilationUnitModel model = new AstBuilder(parser, outcome.text(), outcome.sourceMap(), ids, sizes)
-                .buildCompilationUnit(tree, sourcePath.getFileName().toString()).compilationUnit();
+        CompilationUnitBuildResult build = new AstBuilder(
+                parser, outcome.text(), outcome.sourceMap(), ids, sizes)
+                .buildCompilationUnit(tree, sourcePath.getFileName().toString());
+        CompilationUnitModel model = build.compilationUnit();
         CompilationUnitSymbolTables tables = new CompilationUnitSymbolTableBuilder().build(model);
         Map<ResolutionContracts.ProgramUnitId, ReferenceOccurrences> occurrences = new LinkedHashMap<>();
         for (CompilationUnitModel.ProgramUnit unit : model.programUnits()) {
@@ -208,7 +263,7 @@ class CallSemanticsTest {
                 .withPgmnameMode(outcome.pgmnameMode()).withDynamMode(outcome.dynamMode());
         ReferenceResolution resolution = new CobolReferenceResolver(policy, Optional.of(catalog))
                 .resolve(model, tables, occurrences);
-        return new Analysis(outcome, model, resolution);
+        return new Analysis(outcome, build, model, occurrences, resolution);
     }
 
     private static int index(ParseTree tree, IdentityHashMap<ParseTree, Integer> ids,
@@ -234,6 +289,8 @@ class CallSemanticsTest {
                 .collect(Collectors.toSet());
     }
 
-    private record Analysis(PreprocessorEngine.Outcome outcome, CompilationUnitModel model,
+    private record Analysis(PreprocessorEngine.Outcome outcome, CompilationUnitBuildResult build,
+                            CompilationUnitModel model,
+                            Map<ResolutionContracts.ProgramUnitId, ReferenceOccurrences> occurrences,
                             ReferenceResolution resolution) { }
 }

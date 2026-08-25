@@ -181,12 +181,12 @@ public final class ResolutionContracts {
                                List<String> blockingReasons) {
         public Completeness {
             blockingReasons = List.copyOf(blockingReasons);
-            if ((referenceBindingComplete || dependencyAnalysisReady) && !blockingReasons.isEmpty())
-                throw new IllegalArgumentException("a complete result cannot have blocking reasons");
+            if (dependencyAnalysisReady && !blockingReasons.isEmpty())
+                throw new IllegalArgumentException("dependency-ready result cannot have blocking reasons");
             if (dependencyAnalysisReady && !referenceBindingComplete)
                 throw new IllegalArgumentException("dependency readiness requires complete reference binding");
-            if (!referenceBindingComplete && blockingReasons.isEmpty())
-                throw new IllegalArgumentException("an incomplete result must explain why");
+            if (!dependencyAnalysisReady && blockingReasons.isEmpty())
+                throw new IllegalArgumentException("a dependency-incomplete result must explain why");
         }
     }
 

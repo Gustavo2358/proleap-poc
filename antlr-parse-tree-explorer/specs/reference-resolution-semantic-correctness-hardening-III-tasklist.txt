@@ -176,6 +176,33 @@ Fixture/teste:
 Commit: `fix: distinguish syntactic and resolved kind metrics`
 
 ======================================================================
+FASE 5A — CALL INCERTO DEVE BLOQUEAR DEPENDENCY READINESS, NÃO BINDING NOMINAL
+======================================================================
+
+STATUS: [x] CONCLUÍDA — bug novo do review final; dois REDs e regressão verdes
+
+Achado adicional:
+
+- target externo pode ser nominalmente certo sob todas as opções e ainda ter linkage UNKNOWN;
+- CALL identifier pode resolver corretamente a variável DATA sem conhecer o valor de programa em runtime;
+- nenhum desses casos pode autorizar call/dependency analysis completa.
+
+Fixtures/testes:
+
+- `unknown-linkage-same-external-target.cbl` prova target certo com linkage desconhecido;
+- `call-identifier-runtime-target.cbl` prova binding DATA certo sem target de programa conhecido;
+- `CallSemanticsTest` exige separação entre `referenceBindingComplete` e
+  `dependencyAnalysisReady` e gaps específicos.
+
+Correção:
+
+- `CALL_LINKAGE_UNKNOWN` e `DYNAMIC_CALL_TARGET_VALUE_UNKNOWN` em `CALL_SEMANTICS`;
+- bindings nominais certos permanecem completos;
+- dependency readiness permanece falsa até a informação ausente existir.
+
+Commit: `fix: block dependency readiness on unknown call semantics`
+
+======================================================================
 FASE 6 — EVIDÊNCIA DOCUMENTAL E REGRESSÃO INTEGRADA
 ======================================================================
 

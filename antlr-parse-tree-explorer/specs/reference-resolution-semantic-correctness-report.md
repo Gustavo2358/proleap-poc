@@ -1693,3 +1693,14 @@ As observações do review entram nesta seção como hipóteses. Nenhuma conclus
 ### Correção da evidência de baseline da segunda rodada
 
 O relatório anterior continha `58aea33e0280cfe2bf430017762127644d2ebef1`, que não identifica o commit abreviado `58aea33`. `git rev-parse 58aea33` comprovou o SHA correto `58aea33692984750b647d87471f7f7fdc26ef4cb`. A linha foi corrigida sem alterar o histórico ou as conclusões funcionais daquela rodada.
+
+### Achado adicional do review — call semantics e readiness
+
+- Hipótese: target nominal certo com linkage UNKNOWN, ou binding DATA certo de CALL identifier, ainda pode produzir `dependencyAnalysisReady=true`.
+- Fixtures: `unknown-linkage-same-external-target.cbl` e `call-identifier-runtime-target.cbl`.
+- Testes: `unknownCallSemanticsBlockDependencyReadinessWithoutErasingCertainNameBinding` e `callIdentifierBindingDoesNotClaimItsRuntimeProgramTargetIsKnown`.
+- RED 1: o mesmo programa externo era retornado para as chaves `TARGET0A` e `TARGET-A`; a entry ficou `RESOLVED` com `linkage=UNKNOWN`, mas o relatório publicou dependency readiness. **BUG NOVO CONFIRMADO**.
+- Estado adversarial 2: CALL identifier resolveu corretamente o DATA item e declarou linkage dinâmico; sem gap próprio, esse binding poderia ser confundido com conhecimento do target de programa em runtime.
+- Causa raiz: completude de binding e readiness de dependências eram um único booleano derivado de `gaps.isEmpty()`, e o relatório não inspecionava `CallSemantics`.
+- Correção: gaps `CALL_LINKAGE_UNKNOWN` e `DYNAMIC_CALL_TARGET_VALUE_UNKNOWN` na categoria `CALL_SEMANTICS`. `Completeness` agora permite binding nominal completo com dependency readiness falsa e razões bloqueantes. Program summaries aplicam a mesma separação.
+- GREEN: testes da correção `2/2`, `CallSemanticsTest` `5/5` e suíte completa `86/86`, sem falhas, erros ou skips.
