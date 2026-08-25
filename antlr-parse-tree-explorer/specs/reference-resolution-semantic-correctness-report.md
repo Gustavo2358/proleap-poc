@@ -1453,3 +1453,14 @@ Isso torna `ReferenceResolution` uma fundação suficientemente confiável para 
 - Causa raiz: `CobolReferenceResolver.resolveFile` consultava exclusivamente o índice de entidades FILE; declarações DATA/CONDITION/INDEX homônimas no programa da referência eram invisíveis ao algoritmo.
 - Correção geral mínima: cada `UnitIndex` passa a possuir um bucket nominal preconstruído por canonical name. `resolveFile` determina o primeiro nível nominal visível (qualquer nome local; somente GLOBAL em ancestors) e só então filtra entidades FILE. Nome incompatível produz `INVALID_NAMESPACE_FOR_CONTEXT`; o lookup continua proporcional aos buckets homônimos.
 - GREEN: teste adversarial `1/1`, grupo `ProcedureFileProgramReferenceResolverTest` `14/14` e suíte completa `71/71`, sem falhas, erros ou testes ignorados. FILE GLOBAL, FILE local e `CALL ARGUMENT DATA_OR_FILE` permaneceram verdes.
+
+### Fase 5 — canonicalização externa PGMNAME
+
+- Regra documentada: [IBM Enterprise COBOL PGMNAME](https://www.ibm.com/docs/en/cobol-zos/6.4.0?topic=options-pgmname) especifica que COMPAT aplica uppercase, truncamento em oito, tradução de hífen para `0` e converte primeiro caractere `1`-`9` em `A`-`I` e demais não alfabéticos, exceto `_`, em `J`; LONGUPPER aplica uppercase e as traduções sem truncar; LONGMIXED preserva o nome sem truncamento, tradução ou case folding.
+- Fixture: `external-program-name-canonicalization.cbl`, exercitando `PROG-A`, `LONG-NAME-ABC`, `1PROG`, `$PROG`, `-PROG` e `mixed-Child` pelo `ExternalProgramCatalog`.
+- Testes: `ProgramNameCanonicalizerTest.appliesTheDocumentedIbmExternalProgramNameTransformations` e `ProcedureFileProgramReferenceResolverTest.appliesPgmnameCanonicalizationBeforeExternalCatalogLookup`.
+- RED unitário: COMPAT produziu `1PROG`, `$PROG` e `0PROG`, em vez de `APROG`, `JPROG` e `JPROG`. RED end-to-end: além desses casos, LONGUPPER produziu `PROG-A` e `-PROG`, em vez de `PROG0A` e `JPROG`. **BUG CONFIRMADO**.
+- Causa raiz: `CobolReferenceResolver.externalProgramCanonical` implementava somente uppercase/truncamento/hífen para COMPAT e somente uppercase para LONGUPPER; conversão do primeiro caractere e traduções LONGUPPER estavam ausentes.
+- Correção geral mínima: `ProgramNameCanonicalizer.external` centraliza a chave externa determinística e é testada isoladamente; o resolver continua bloqueando nomes dependentes da policy quando o modo é `UNSPECIFIED`.
+- Regressão intermediária: a primeira suíte completa após a correção teve `73` testes e uma falha no fake catalog legado, que ainda indexava `EXTERNAL-ONE`/`EXTERNAL-MANY` sob LONGUPPER. O helper foi alinhado à chave IBM correta `EXTERNAL0ONE`/`EXTERNAL0MANY`; a grafia COBOL e as expectativas de binding não foram alteradas.
+- GREEN: testes adversariais unitário e end-to-end `2/2`; suíte completa `73/73`, sem falhas, erros ou testes ignorados. Testes anteriores de PGMNAME explícito, ausente e catálogo externo permaneceram verdes.

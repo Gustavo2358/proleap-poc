@@ -196,7 +196,7 @@ final class CobolReferenceResolver {
                 && dependsOnPgmname(reference.programName()))
             return new Decision(ResolutionContracts.ResolutionStatus.UNSUPPORTED,
                     ResolutionContracts.ResolutionReason.UNSUPPORTED_DIALECT_OPTION, List.of());
-        String externalCanonical = externalProgramCanonical(
+        String externalCanonical = ProgramNameCanonicalizer.external(
                 reference.programName(), policy.pgmnameMode());
         List<ExternalProgramCatalog.Program> external = List.copyOf(
                 externalCatalog.get().lookup(externalCanonical));
@@ -212,18 +212,6 @@ final class CobolReferenceResolver {
         return uppercase.chars().anyMatch(character ->
                 !(character >= 'A' && character <= 'Z')
                         && !(character >= '0' && character <= '9'));
-    }
-
-    private static String externalProgramCanonical(String writtenName,
-                                                   ResolutionContracts.PgmnameMode mode) {
-        return switch (mode) {
-            case COMPAT -> {
-                String compatible = SymbolTable.canonical(writtenName).replace('-', '0');
-                yield compatible.substring(0, Math.min(8, compatible.length()));
-            }
-            case LONGMIXED -> writtenName;
-            case LONGUPPER, UNSPECIFIED -> SymbolTable.canonical(writtenName);
-        };
     }
 
     private boolean visibleInternalProgram(CompilationUnitModel.ProgramUnit caller,

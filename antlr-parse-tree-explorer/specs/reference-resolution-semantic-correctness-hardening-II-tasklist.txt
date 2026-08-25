@@ -586,6 +586,8 @@ fix: enforce nominal shadowing in file resolution
 FASE 5 — COMPLETAR CANONICALIZAÇÃO DE PGMNAME PARA PROGRAMAS EXTERNOS
 ======================================================================
 
+STATUS: [x] CONCLUÍDA — regra IBM documentada, RED unitário/E2E e regressão verdes
+
 Hipótese:
 
 A implementação atual de:

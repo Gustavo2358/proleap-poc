@@ -28,6 +28,8 @@ class ProcedureFileProgramReferenceResolverTest {
             "src/test/resources/cobol/resolution/literal-program-name.cbl");
     private static final Path PROGRAM_NAME_POLICY = Path.of(
             "src/test/resources/cobol/resolution/program-name-policy.cbl");
+    private static final Path EXTERNAL_PROGRAM_NAMES = Path.of(
+            "src/test/resources/cobol/resolution/external-program-name-canonicalization.cbl");
 
     @Test
     void resolvesProcedureTargetsQualificationDependingOnPerformAndPreservedAlter() throws Exception {
@@ -423,10 +425,30 @@ class ProcedureFileProgramReferenceResolverTest {
     }
 
     @Test
+    void appliesPgmnameCanonicalizationBeforeExternalCatalogLookup() throws Exception {
+        ExternalProgramCatalog catalog = canonicalName -> List.of(new ExternalProgramCatalog.Program(
+                Math.abs(canonicalName.hashCode()), "canonicalization-catalog", canonicalName, Map.of()));
+        Analysis compat = analyze(EXTERNAL_PROGRAM_NAMES, Optional.of(catalog),
+                ResolutionContracts.PgmnameMode.COMPAT);
+        Analysis upper = analyze(EXTERNAL_PROGRAM_NAMES, Optional.of(catalog),
+                ResolutionContracts.PgmnameMode.LONGUPPER);
+        Analysis mixed = analyze(EXTERNAL_PROGRAM_NAMES, Optional.of(catalog),
+                ResolutionContracts.PgmnameMode.LONGMIXED);
+
+        assertAll("external catalog receives the policy-dependent canonical name",
+                () -> assertExternalCanonical(compat, "'LONG-NAME-ABC'", "LONG0NAM"),
+                () -> assertExternalCanonical(compat, "'1PROG'", "APROG"),
+                () -> assertExternalCanonical(compat, "'$PROG'", "JPROG"),
+                () -> assertExternalCanonical(upper, "'PROG-A'", "PROG0A"),
+                () -> assertExternalCanonical(upper, "'-PROG'", "JPROG"),
+                () -> assertExternalCanonical(mixed, "'mixed-Child'", "mixed-Child"));
+    }
+
+    @Test
     void usesOptionalExternalCatalogAndPreservesAllReturnedCandidates() throws Exception {
         ExternalProgramCatalog catalog = canonicalName -> switch (canonicalName) {
-            case "EXTERNAL-ONE" -> List.of(new ExternalProgramCatalog.Program(10, "fake", "EXTERNAL-ONE", Map.of()));
-            case "EXTERNAL-MANY" -> List.of(
+            case "EXTERNAL0ONE" -> List.of(new ExternalProgramCatalog.Program(10, "fake", "EXTERNAL-ONE", Map.of()));
+            case "EXTERNAL0MANY" -> List.of(
                     new ExternalProgramCatalog.Program(20, "fake", "EXTERNAL-MANY", Map.of("library", "A")),
                     new ExternalProgramCatalog.Program(21, "fake", "EXTERNAL-MANY", Map.of("library", "B")));
             default -> List.of();
@@ -565,6 +587,18 @@ class ProcedureFileProgramReferenceResolverTest {
         assertEquals(ResolutionContracts.ReferenceKind.PROGRAM, candidate.kind());
         assertEquals(ResolutionContracts.SemanticEntityDomain.PROGRAM_UNIT, candidate.entityId().domain());
         assertEquals(declarationUnit, candidate.entityId().programUnitId());
+    }
+
+    private static void assertExternalCanonical(Analysis analysis, String writtenText,
+                                                String expectedCanonical) {
+        ResolutionContracts.ProgramUnitId caller = unit(analysis, "EXTERNAL-NAME-CALLER");
+        ReferenceResolution.Entry entry = assertEntry(analysis.resolution(), caller, writtenText,
+                ResolutionContracts.ReferenceRole.CALL_TARGET,
+                ResolutionContracts.ResolutionStatus.RESOLVED,
+                ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION, 1);
+        assertEquals(ResolutionContracts.SemanticEntityDomain.EXTERNAL_PROGRAM,
+                entry.candidates().get(0).entityId().domain());
+        assertEquals(expectedCanonical, entry.candidates().get(0).canonicalName());
     }
 
     private static void assertInvisibleInternalProgram(
