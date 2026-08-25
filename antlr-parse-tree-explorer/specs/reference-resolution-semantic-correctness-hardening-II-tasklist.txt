@@ -393,6 +393,8 @@ fix: harden nested global file lookup
 FASE 3 — FD GLOBAL DEVE TORNAR RECORD-NAMES E SUBORDINADOS GLOBAIS
 ======================================================================
 
+STATUS: [x] CONCLUÍDA — RED comprovado, correção geral e regressão verdes
+
 Hipótese:
 
 Atualmente:

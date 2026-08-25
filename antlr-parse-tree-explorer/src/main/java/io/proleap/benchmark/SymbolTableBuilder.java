@@ -57,7 +57,8 @@ final class SymbolTableBuilder {
                             Map.of("visibility", file.visibility().name()));
                     int fileScope = addScope(sectionScope, SymbolTable.ScopeKind.FILE_DESCRIPTION,
                             file.fileName(), fileSymbol, file.meta().id());
-                    collectDataEntries(file.entries(), fileScope, false);
+                    collectDataEntries(file.entries(), fileScope,
+                            file.visibility() == Ast.DeclarationVisibility.GLOBAL);
                 } else if (child instanceof Ast.DataEntry entry) {
                     collectDataEntries(section.children().stream()
                             .filter(Ast.DataEntry.class::isInstance)

@@ -15,6 +15,8 @@ class DataAndIndexReferenceResolverTest {
     private static final Path NESTED = Path.of("src/test/resources/cobol/resolution/nested-data-visibility.cbl");
     private static final Path GLOBAL_SUBORDINATES = Path.of(
             "src/test/resources/cobol/resolution/global-subordinate-visibility.cbl");
+    private static final Path GLOBAL_FD_RECORDS = Path.of(
+            "src/test/resources/cobol/resolution/global-fd-record-visibility.cbl");
     private static final Path NAMESPACE_SHADOWING = Path.of(
             "src/test/resources/cobol/resolution/nested-namespace-shadowing.cbl");
     private static final Path QUALIFIED_GLOBAL = Path.of(
@@ -275,6 +277,53 @@ class DataAndIndexReferenceResolverTest {
                         "GLOBAL-IDX", ResolutionContracts.ReferenceRole.SUBSCRIPT,
                         ResolutionContracts.ReferenceKind.INDEX,
                         ResolutionContracts.SemanticEntityDomain.INDEX_SYMBOL, "INDEX_NAME"));
+    }
+
+    @Test
+    void propagatesGlobalFileDescriptionVisibilityToItsRecordHierarchy() throws Exception {
+        Analysis analysis = analyze(GLOBAL_FD_RECORDS, ResolutionContracts.QualifyMode.STANDARD);
+        CompilationUnitModel.ProgramUnit outer = program(analysis, "GLOBAL-FD-OUTER");
+        CompilationUnitModel.ProgramUnit inner = program(analysis, "GLOBAL-FD-INNER");
+        CompilationUnitModel.ProgramUnit localInner = program(analysis, "LOCAL-FD-INNER");
+        SymbolTable outerTable = analysis.tables().forProgramUnit(outer.id()).orElseThrow().symbolTable();
+        SymbolTable innerTable = analysis.tables().forProgramUnit(inner.id()).orElseThrow().symbolTable();
+        SymbolTable.Entity file = outerTable.entities().stream()
+                .filter(entity -> entity.canonicalName().equals("CUSTOMER-FILE"))
+                .findFirst().orElseThrow();
+
+        assertAll("FD GLOBAL effective visibility reaches the complete record hierarchy",
+                () -> assertEquals("GLOBAL", file.attributes().get("visibility")),
+                () -> assertEquals("GLOBAL", symbol(outerTable, "CUSTOMER-RECORD")
+                        .attributes().get("visibility")),
+                () -> assertEquals("GLOBAL", symbol(outerTable, "CUSTOMER-ID")
+                        .attributes().get("visibility")),
+                () -> assertEquals("GLOBAL", symbol(outerTable, "CUSTOMER-OK")
+                        .attributes().get("visibility")),
+                () -> assertEquals("GLOBAL", symbol(outerTable, "CUSTOMER-IDX")
+                        .attributes().get("visibility")),
+                () -> assertTrue(innerTable.lookupAll(SymbolTable.Namespace.DATA, "CUSTOMER-ID").isEmpty()));
+
+        assertAll("contained program binds inherited FD record declarations to the outer unit",
+                () -> assertInheritedCandidate(analysis.resolution(), inner.id(), outer.id(),
+                        "CUSTOMER-RECORD", ResolutionContracts.ReferenceRole.VALUE_READ,
+                        ResolutionContracts.ReferenceKind.DATA,
+                        ResolutionContracts.SemanticEntityDomain.DATA_SYMBOL, "DATA_ITEM"),
+                () -> assertInheritedCandidate(analysis.resolution(), inner.id(), outer.id(),
+                        "CUSTOMER-ID", ResolutionContracts.ReferenceRole.VALUE_READ,
+                        ResolutionContracts.ReferenceKind.DATA,
+                        ResolutionContracts.SemanticEntityDomain.DATA_SYMBOL, "DATA_ITEM"),
+                () -> assertInheritedCandidate(analysis.resolution(), inner.id(), outer.id(),
+                        "CUSTOMER-OK", ResolutionContracts.ReferenceRole.VALUE_READ,
+                        ResolutionContracts.ReferenceKind.CONDITION,
+                        ResolutionContracts.SemanticEntityDomain.DATA_SYMBOL, "CONDITION_NAME"),
+                () -> assertInheritedCandidate(analysis.resolution(), inner.id(), outer.id(),
+                        "CUSTOMER-IDX", ResolutionContracts.ReferenceRole.SUBSCRIPT,
+                        ResolutionContracts.ReferenceKind.INDEX,
+                        ResolutionContracts.SemanticEntityDomain.INDEX_SYMBOL, "INDEX_NAME"),
+                () -> assertEntry(analysis.resolution(), localInner.id(), "LOCAL-ID",
+                        ResolutionContracts.ReferenceRole.VALUE_READ,
+                        ResolutionContracts.ResolutionStatus.UNRESOLVED,
+                        ResolutionContracts.ResolutionReason.DECLARATION_NOT_FOUND, 0));
     }
 
     @Test

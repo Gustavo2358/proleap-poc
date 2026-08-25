@@ -1433,3 +1433,13 @@ Isso torna `ReferenceResolution` uma fundação suficientemente confiável para 
 - Causa raiz: `CobolReferenceResolver.resolveFile` encontrava o bucket FILE do ancestor, filtrava suas entidades LOCAL e retornava imediatamente uma decisão vazia, sem continuar ao próximo ancestor.
 - Correção geral mínima: retornar no primeiro bucket que possua entidades efetivamente visíveis; um bucket ancestral contendo apenas FILEs LOCAL é ignorado e a cadeia estrutural prossegue. Os buckets continuam preindexados por nome e unidade.
 - GREEN: teste adversarial `1/1`, grupo `ProcedureFileProgramReferenceResolverTest` `13/13` e suíte completa `69/69`, sem falhas, erros ou testes ignorados. `nested-global-file.cbl` e shadowing FILE local permaneceram verdes.
+
+### Fase 3 — FD GLOBAL propaga visibilidade aos records
+
+- Regra: a cláusula GLOBAL de uma file description torna globais os record-names associados e os data-names, condition-names e index-names subordinados.
+- Fixture: `global-fd-record-visibility.cbl`, com `CUSTOMER-FILE GLOBAL`, record, data item, level-88 e `INDEXED BY`; um segundo FD LOCAL controla que a herança não seja aplicada indiscriminadamente.
+- Teste: `propagatesGlobalFileDescriptionVisibilityToItsRecordHierarchy`.
+- RED observado: a entidade FILE possuía `visibility=GLOBAL`, mas `CUSTOMER-RECORD`, `CUSTOMER-ID`, `CUSTOMER-OK` e `CUSTOMER-IDX` possuíam `visibility=LOCAL`; o teste falhou nas quatro asserções estruturais antes de chegar aos bindings. **BUG CONFIRMADO**.
+- Causa raiz: `SymbolTableBuilder.collectDataDivision` chamava `collectDataEntries(file.entries(), fileScope, false)`, descartando a visibilidade do `FileDescription` na raiz da hierarquia.
+- Correção geral mínima: a raiz recebe `file.visibility() == GLOBAL` como `inheritedGlobal`; a recursão existente de `effectiveGlobal` continua sendo a única regra de propagação para DATA, CONDITION e INDEX.
+- GREEN: teste adversarial `1/1` e suíte completa `70/70`, sem falhas, erros ou testes ignorados. O controle FD LOCAL permaneceu `UNRESOLVED`; os testes anteriores de GLOBAL FILE e hierarquia DATA GLOBAL continuaram verdes.
