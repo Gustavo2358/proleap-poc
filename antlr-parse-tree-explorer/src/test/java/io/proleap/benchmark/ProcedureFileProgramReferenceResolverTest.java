@@ -20,6 +20,8 @@ class ProcedureFileProgramReferenceResolverTest {
             "src/test/resources/cobol/resolution/nested-global-through-local-file.cbl");
     private static final Path DATA_FILE_QUALIFIER_COLLISION = Path.of(
             "src/test/resources/cobol/resolution/data-file-qualifier-collision.cbl");
+    private static final Path FILE_NAMESPACE_SHADOWING = Path.of(
+            "src/test/resources/cobol/resolution/file-namespace-shadowing.cbl");
     private static final Path COMMON_PROGRAM_VISIBILITY = Path.of(
             "src/test/resources/cobol/resolution/common-program-visibility.cbl");
     private static final Path LITERAL_PROGRAM_NAME = Path.of(
@@ -164,6 +166,42 @@ class ProcedureFileProgramReferenceResolverTest {
                         ResolutionContracts.ReferenceRole.FILE_OPERATION,
                         ResolutionContracts.ResolutionStatus.UNRESOLVED,
                         ResolutionContracts.ResolutionReason.DECLARATION_NOT_FOUND, 0));
+    }
+
+    @Test
+    void stopsFileLookupAtIncompatibleLocalNominalDeclarations() throws Exception {
+        Analysis analysis = analyze(FILE_NAMESPACE_SHADOWING, Optional.empty());
+        ResolutionContracts.ProgramUnitId outer = unit(analysis, "FILE-SHADOW-OUTER");
+        ResolutionContracts.ProgramUnitId inner = unit(analysis, "FILE-SHADOW-INNER");
+        SymbolTable outerTable = analysis.tables().forProgramUnit(outer).orElseThrow().symbolTable();
+        SymbolTable innerTable = analysis.tables().forProgramUnit(inner).orElseThrow().symbolTable();
+
+        assertAll("fixture contains incompatible local names and homonymous outer GLOBAL FILE entities",
+                () -> assertEquals(SymbolTable.SymbolKind.DATA_ITEM,
+                        innerTable.lookupAll(SymbolTable.Namespace.DATA, "DATA-X").get(0).kind()),
+                () -> assertEquals(SymbolTable.SymbolKind.CONDITION_NAME,
+                        innerTable.lookupAll(SymbolTable.Namespace.DATA, "CONDITION-X").get(0).kind()),
+                () -> assertEquals(SymbolTable.SymbolKind.INDEX_NAME,
+                        innerTable.lookupAll(SymbolTable.Namespace.DATA, "INDEX-X").get(0).kind()),
+                () -> assertFileEntity(outerTable, "DATA-X", 1, "GLOBAL"),
+                () -> assertFileEntity(outerTable, "CONDITION-X", 1, "GLOBAL"),
+                () -> assertFileEntity(outerTable, "INDEX-X", 1, "GLOBAL"));
+
+        assertAll("FILE context respects the first nominal declaration before namespace filtering",
+                () -> assertEntry(analysis.resolution(), inner, "DATA-X",
+                        ResolutionContracts.ReferenceRole.FILE_OPERATION,
+                        ResolutionContracts.ResolutionStatus.UNRESOLVED,
+                        ResolutionContracts.ResolutionReason.INVALID_NAMESPACE_FOR_CONTEXT, 0),
+                () -> assertEntry(analysis.resolution(), inner, "CONDITION-X",
+                        ResolutionContracts.ReferenceRole.FILE_OPERATION,
+                        ResolutionContracts.ResolutionStatus.UNRESOLVED,
+                        ResolutionContracts.ResolutionReason.INVALID_NAMESPACE_FOR_CONTEXT, 0),
+                () -> assertEntry(analysis.resolution(), inner, "INDEX-X",
+                        ResolutionContracts.ReferenceRole.FILE_OPERATION,
+                        ResolutionContracts.ResolutionStatus.UNRESOLVED,
+                        ResolutionContracts.ResolutionReason.INVALID_NAMESPACE_FOR_CONTEXT, 0),
+                () -> assertFileCandidate(analysis.resolution(), inner, "FILE-X", inner, 1, "LOCAL"),
+                () -> assertFileCandidate(analysis.resolution(), inner, "CONTROL-FILE", outer, 1, "GLOBAL"));
     }
 
     @Test

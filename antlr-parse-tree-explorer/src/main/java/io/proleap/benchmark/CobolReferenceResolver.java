@@ -6,6 +6,7 @@ import java.util.*;
 final class CobolReferenceResolver {
     private record UnitIndex(CompilationUnitModel.ProgramUnit unit, SymbolTable table,
                              Map<String, List<SymbolTable.Symbol>> procedures,
+                             Map<String, List<SymbolTable.Symbol>> nominalNames,
                              Map<String, List<SymbolTable.Entity>> files,
                              Map<Integer, Ast.Node> astNodes) { }
     private record Decision(ResolutionContracts.ResolutionStatus status,
@@ -90,10 +91,12 @@ final class CobolReferenceResolver {
         for (CompilationUnitModel.ProgramUnit unit : model.programUnits()) {
             SymbolTable table = symbolTables.forProgramUnit(unit.id()).orElseThrow().symbolTable();
             Map<String, List<SymbolTable.Symbol>> procedures = groupProcedures(table);
+            Map<String, List<SymbolTable.Symbol>> nominalNames = groupSymbols(table);
             Map<String, List<SymbolTable.Entity>> files = groupFiles(table);
             Map<Integer, Ast.Node> astNodes = new HashMap<>();
             indexAst(unit.program(), astNodes);
-            units.put(unit.id(), new UnitIndex(unit, table, procedures, files, Map.copyOf(astNodes)));
+            units.put(unit.id(), new UnitIndex(unit, table, procedures, nominalNames,
+                    files, Map.copyOf(astNodes)));
             programsByName.computeIfAbsent(unit.id().canonicalProgramName(), ignored -> new ArrayList<>()).add(unit);
             programLocalIds.put(unit.id(), programIndex++);
             additionalIndexed += procedures.values().stream().mapToInt(List::size).sum()
@@ -148,18 +151,22 @@ final class CobolReferenceResolver {
         while (current != null) {
             UnitIndex unit = units.get(current);
             additionalLookups++;
+            List<SymbolTable.Symbol> nominal = unit.nominalNames().getOrDefault(canonical, List.of());
             List<SymbolTable.Entity> named = unit.files().getOrDefault(canonical, List.of());
-            additionalInspections += named.size();
-            if (!named.isEmpty()) {
+            additionalInspections += nominal.size() + named.size();
+            boolean localUnit = current.equals(occurrence.programUnitId());
+            List<SymbolTable.Symbol> visibleNominal = localUnit ? nominal : nominal.stream()
+                    .filter(CobolReferenceResolver::isGlobal).toList();
+            if (!visibleNominal.isEmpty()) {
                 ResolutionContracts.ProgramUnitId owner = current;
-                List<SymbolTable.Entity> visible = owner.equals(occurrence.programUnitId()) ? named
-                        : named.stream().filter(entity -> "GLOBAL".equals(
-                                entity.attributes().get("visibility"))).toList();
-                if (!visible.isEmpty()) {
-                    List<ReferenceResolution.Candidate> candidates = visible.stream()
-                            .map(entity -> fileCandidate(owner, entity)).toList();
-                    return nominalDecision(candidates, false);
-                }
+                List<SymbolTable.Entity> visibleFiles = localUnit ? named : named.stream()
+                        .filter(entity -> "GLOBAL".equals(entity.attributes().get("visibility"))).toList();
+                if (visibleFiles.isEmpty())
+                    return new Decision(ResolutionContracts.ResolutionStatus.UNRESOLVED,
+                            ResolutionContracts.ResolutionReason.INVALID_NAMESPACE_FOR_CONTEXT, List.of());
+                List<ReferenceResolution.Candidate> candidates = visibleFiles.stream()
+                        .map(entity -> fileCandidate(owner, entity)).toList();
+                return nominalDecision(candidates, false);
             }
             current = unit.unit().parentId();
         }
@@ -303,6 +310,17 @@ final class CobolReferenceResolver {
                 mutable.computeIfAbsent(symbol.canonicalName(), ignored -> new ArrayList<>()).add(symbol);
         }
         return immutableLists(mutable);
+    }
+
+    private static Map<String, List<SymbolTable.Symbol>> groupSymbols(SymbolTable table) {
+        LinkedHashMap<String, List<SymbolTable.Symbol>> mutable = new LinkedHashMap<>();
+        for (SymbolTable.Symbol symbol : table.symbols())
+            mutable.computeIfAbsent(symbol.canonicalName(), ignored -> new ArrayList<>()).add(symbol);
+        return immutableLists(mutable);
+    }
+
+    private static boolean isGlobal(SymbolTable.Symbol symbol) {
+        return "GLOBAL".equals(symbol.attributes().get("visibility"));
     }
 
     private static Map<String, List<SymbolTable.Entity>> groupFiles(SymbolTable table) {

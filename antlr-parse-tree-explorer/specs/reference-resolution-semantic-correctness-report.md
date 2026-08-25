@@ -1443,3 +1443,13 @@ Isso torna `ReferenceResolution` uma fundação suficientemente confiável para 
 - Causa raiz: `SymbolTableBuilder.collectDataDivision` chamava `collectDataEntries(file.entries(), fileScope, false)`, descartando a visibilidade do `FileDescription` na raiz da hierarquia.
 - Correção geral mínima: a raiz recebe `file.visibility() == GLOBAL` como `inheritedGlobal`; a recursão existente de `effectiveGlobal` continua sendo a única regra de propagação para DATA, CONDITION e INDEX.
 - GREEN: teste adversarial `1/1` e suíte completa `70/70`, sem falhas, erros ou testes ignorados. O controle FD LOCAL permaneceu `UNRESOLVED`; os testes anteriores de GLOBAL FILE e hierarquia DATA GLOBAL continuaram verdes.
+
+### Fase 4 — shadowing nominal entre namespaces em contexto FILE
+
+- Regra: a busca identifica primeiro o nome na região nominal visível; se o primeiro nível elegível contém o nome em namespace incompatível com FILE, o resultado deve ser conservador, sem continuar até um FILE GLOBAL externo.
+- Fixture: `file-namespace-shadowing.cbl`, com FILEs GLOBAL externos homônimos a DATA, CONDITION e INDEX locais; FILE local e FILE GLOBAL sem colisão são controles.
+- Teste: `stopsFileLookupAtIncompatibleLocalNominalDeclarations`.
+- RED observado: os três casos incompatíveis foram `RESOLVED` para `FILE-SHADOW-OUTER` em vez de `UNRESOLVED / INVALID_NAMESPACE_FOR_CONTEXT`. **BUG CONFIRMADO**.
+- Causa raiz: `CobolReferenceResolver.resolveFile` consultava exclusivamente o índice de entidades FILE; declarações DATA/CONDITION/INDEX homônimas no programa da referência eram invisíveis ao algoritmo.
+- Correção geral mínima: cada `UnitIndex` passa a possuir um bucket nominal preconstruído por canonical name. `resolveFile` determina o primeiro nível nominal visível (qualquer nome local; somente GLOBAL em ancestors) e só então filtra entidades FILE. Nome incompatível produz `INVALID_NAMESPACE_FOR_CONTEXT`; o lookup continua proporcional aos buckets homônimos.
+- GREEN: teste adversarial `1/1`, grupo `ProcedureFileProgramReferenceResolverTest` `14/14` e suíte completa `71/71`, sem falhas, erros ou testes ignorados. FILE GLOBAL, FILE local e `CALL ARGUMENT DATA_OR_FILE` permaneceram verdes.

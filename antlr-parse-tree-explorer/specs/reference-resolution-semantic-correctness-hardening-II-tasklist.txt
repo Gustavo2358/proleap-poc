@@ -480,6 +480,8 @@ fix: propagate global fd visibility to records
 FASE 4 — FILE RESOLUTION DEVE RESPEITAR SHADOWING NOMINAL ENTRE NAMESPACES
 ======================================================================
 
+STATUS: [x] CONCLUÍDA — RED comprovado, correção geral e regressão verdes
+
 Hipótese:
 
 A busca de resolveFile() consulta somente FILE entities e pode ignorar uma declaração homônima de outro namespace no programa atual.
