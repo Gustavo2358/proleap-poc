@@ -1,0 +1,13 @@
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID. PAGETEST.
+       EJECT.
+       SKIP1
+       SKIP2.
+       SKIP3
+       TITLE 'PREPROCESSOR CONTRACT'.
+       DATA DIVISION.
+       WORKING-STORAGE SECTION.
+       01 VALUE-A PIC X.
+       PROCEDURE DIVISION.
+           MOVE 'X' TO VALUE-A.
+           GOBACK.
