@@ -64,7 +64,8 @@ final class CobolReferenceResolver {
                 diagnosticIds = List.of(id);
             }
             entries.add(new ReferenceResolution.Entry(entries.size(), occurrence, decision.status(),
-                    decision.reason(), decision.candidates(), diagnosticIds));
+                    decision.reason(), decision.candidates(), diagnosticIds,
+                    callSemantics(occurrence, decision)));
         }
         ReferenceResolution.Metrics baseMetrics = data.metrics();
         return new ReferenceResolution(policy, entries, diagnostics,
@@ -73,6 +74,31 @@ final class CobolReferenceResolver {
                         baseMetrics.candidateInspections() + additionalInspections,
                         Math.max(baseMetrics.maximumCandidates(), additionalMaximum)),
                 data.declarationRelations());
+    }
+
+    private Optional<ReferenceResolution.CallSemantics> callSemantics(
+            ReferenceOccurrences.Occurrence occurrence, Decision decision) {
+        if (occurrence.role() != ResolutionContracts.ReferenceRole.CALL_TARGET)
+            return Optional.empty();
+        Ast.Node target = units.get(occurrence.programUnitId()).astNodes()
+                .get(occurrence.referenceAstNodeId());
+        Ast.CallTargetSyntax syntax = target instanceof Ast.ProgramReference
+                ? Ast.CallTargetSyntax.LITERAL_PROGRAM_NAME
+                : Ast.CallTargetSyntax.IDENTIFIER_OR_EXPRESSION;
+        ResolutionContracts.CallLinkage linkage;
+        if (syntax == Ast.CallTargetSyntax.IDENTIFIER_OR_EXPRESSION) {
+            linkage = ResolutionContracts.CallLinkage.DYNAMIC;
+        } else if (!decision.candidates().isEmpty() && decision.candidates().stream().allMatch(candidate ->
+                candidate.entityId().domain() == ResolutionContracts.SemanticEntityDomain.PROGRAM_UNIT)) {
+            linkage = ResolutionContracts.CallLinkage.STATIC;
+        } else {
+            linkage = switch (policy.dynamMode()) {
+                case DYNAM -> ResolutionContracts.CallLinkage.DYNAMIC;
+                case NODYNAM -> ResolutionContracts.CallLinkage.STATIC;
+                case UNSPECIFIED -> ResolutionContracts.CallLinkage.UNKNOWN;
+            };
+        }
+        return Optional.of(new ReferenceResolution.CallSemantics(syntax, linkage));
     }
 
     private Decision resolveDataAlternatives(ReferenceResolution.Entry base) {

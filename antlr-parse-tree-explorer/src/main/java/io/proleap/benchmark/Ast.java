@@ -44,7 +44,8 @@ public final class Ast {
     public enum SentenceTerminator { PERIOD, END_OF_PROCEDURE }
     public enum PassingMode { REFERENCE, VALUE, CONTENT }
     public enum EmbeddedLanguage { SQL, CICS, SQLIMS, UNKNOWN }
-    public enum CallTargetKind { STATIC_LITERAL, DYNAMIC_EXPRESSION }
+    /** Syntactic form only; linkage is compiler-option-dependent and belongs to resolution. */
+    public enum CallTargetSyntax { LITERAL_PROGRAM_NAME, IDENTIFIER_OR_EXPRESSION }
     public enum PerformKind { INLINE, PROCEDURE }
     public enum GoToKind { SIMPLE, DEPENDING_ON }
     public enum QualifierConnector { OF, IN }
@@ -153,7 +154,7 @@ public final class Ast {
             FileReference, ProgramReference, IndexReference, NamedReference,
             PreservedExpression, RawExpression {}
 
-    public record CallStatement(Meta meta, CallTargetKind targetKind, Expression target,
+    public record CallStatement(Meta meta, CallTargetSyntax targetSyntax, Expression target,
                                 List<CallArgument> arguments, Expression returning,
                                 List<Statement> exceptionFlow) implements Statement {
         public CallStatement {

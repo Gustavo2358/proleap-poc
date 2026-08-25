@@ -17,11 +17,13 @@ final class PreprocessorEngine {
     }
     record Outcome(String text, int errors, int unresolved, List<Diagnostic> diagnostics,
                    List<CompilerOption> compilerOptions,
-                   ResolutionContracts.PgmnameMode pgmnameMode, SourceMap sourceMap) {
+                   ResolutionContracts.PgmnameMode pgmnameMode,
+                   ResolutionContracts.DynamMode dynamMode, SourceMap sourceMap) {
         Outcome {
             diagnostics = List.copyOf(diagnostics);
             compilerOptions = List.copyOf(compilerOptions);
             pgmnameMode = Objects.requireNonNull(pgmnameMode, "pgmnameMode");
+            dynamMode = Objects.requireNonNull(dynamMode, "dynamMode");
         }
     }
     private record Edit(int start, int end, SourceMap replacement) {}
@@ -47,8 +49,13 @@ final class PreprocessorEngine {
                 .filter(option -> option.name().equals("PGMNAME") || option.name().equals("PGMN"))
                 .map(CompilerOption::value).map(ResolutionContracts.PgmnameMode::fromCompilerValue)
                 .reduce((first, second) -> second).orElse(ResolutionContracts.PgmnameMode.UNSPECIFIED);
+        ResolutionContracts.DynamMode dynamMode = compilerOptions.stream()
+                .map(option -> ResolutionContracts.DynamMode.fromCompilerOption(
+                        option.name(), option.value()))
+                .filter(mode -> mode != ResolutionContracts.DynamMode.UNSPECIFIED)
+                .reduce((first, second) -> second).orElse(ResolutionContracts.DynamMode.UNSPECIFIED);
         return new Outcome(document.text(), Math.toIntExact(errors), unresolved[0],
-                diagnostics, compilerOptions, pgmnameMode, document);
+                diagnostics, compilerOptions, pgmnameMode, dynamMode, document);
     }
 
     private SourceMap processRecursive(SourceMap document, String file, List<Diagnostic> diagnostics,
@@ -75,7 +82,12 @@ final class PreprocessorEngine {
             int end = Math.min(source.length(), stopToken.getStopIndex() + 1);
             String rule = parser.getRuleNames()[context.getRuleIndex()];
             String original = source.substring(start, end);
-            if (rule.equals("copyStatement")) {
+            if (rule.equals("compilerOptions")) {
+                StringBuilder blank = new StringBuilder(original.length());
+                original.chars().forEach(character -> blank.append(
+                        character == '\n' || character == '\r' ? (char) character : ' '));
+                edits.add(new Edit(start, end, document.transformedSlice(start, end, blank.toString())));
+            } else if (rule.equals("copyStatement")) {
                 Matcher matcher = COPY.matcher(original);
                 if (!matcher.find()) continue;
                 String requested = matcher.group(2);
@@ -133,7 +145,7 @@ final class PreprocessorEngine {
     private static void collect(ParseTree tree, String[] ruleNames, List<ParserRuleContext> out) {
         if (tree instanceof ParserRuleContext context) {
             String rule = ruleNames[context.getRuleIndex()];
-            if (rule.equals("copyStatement") || rule.equals("execCicsStatement") ||
+            if (rule.equals("compilerOptions") || rule.equals("copyStatement") || rule.equals("execCicsStatement") ||
                     rule.equals("execSqlStatement") || rule.equals("execSqlImsStatement")) out.add(context);
         }
         for (int i = 0; i < tree.getChildCount(); i++) collect(tree.getChild(i), ruleNames, out);

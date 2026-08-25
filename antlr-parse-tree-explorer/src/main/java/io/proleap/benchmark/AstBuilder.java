@@ -470,8 +470,8 @@ final class AstBuilder {
         Ast.Expression target = targetContext != null && rule(targetContext).equals("literal")
                 ? new Ast.ProgramReference(meta(targetContext), unquote(sourceText(targetContext).strip()), sourceText(targetContext).strip())
                 : expression(targetContext, "call target");
-        Ast.CallTargetKind kind = target instanceof Ast.ProgramReference
-                ? Ast.CallTargetKind.STATIC_LITERAL : Ast.CallTargetKind.DYNAMIC_EXPRESSION;
+        Ast.CallTargetSyntax kind = target instanceof Ast.ProgramReference
+                ? Ast.CallTargetSyntax.LITERAL_PROGRAM_NAME : Ast.CallTargetSyntax.IDENTIFIER_OR_EXPRESSION;
         List<Ast.CallArgument> arguments = new ArrayList<>();
         for (ParserRuleContext arg : nearestDescendants(context, Set.of("callByReference", "callByValue", "callByContent"))) {
             Ast.PassingMode mode = switch (rule(arg)) {

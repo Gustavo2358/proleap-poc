@@ -1,0 +1,161 @@
+package io.proleap.benchmark;
+
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.Parser;
+import org.antlr.v4.runtime.tree.ParseTree;
+import org.junit.jupiter.api.Test;
+
+import java.lang.reflect.RecordComponent;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.IdentityHashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+class CallSemanticsTest {
+    private static final Path DYNAM = Path.of(
+            "src/test/resources/cobol/resolution/call-linkage-dynam.cbl");
+    private static final Path NODYNAM = Path.of(
+            "src/test/resources/cobol/resolution/call-linkage-nodynam.cbl");
+    private static final Path UNSPECIFIED = Path.of(
+            "src/test/resources/cobol/resolution/call-linkage-unspecified.cbl");
+
+    @Test
+    void separatesLiteralTargetSyntaxFromCompilerSelectedLinkage() throws Exception {
+        GrammarBinding grammar = Bindings.proleap();
+        String source = SourceNormalizer.fixed(Files.readString(DYNAM, StandardCharsets.UTF_8));
+        PreprocessorEngine.Outcome outcome = new PreprocessorEngine(
+                grammar, new CopybookLibrary(Path.of("src/test/resources")))
+                .process(source, DYNAM.getFileName().toString());
+        Set<String> outcomeComponents = components(PreprocessorEngine.Outcome.class);
+        Set<String> policyComponents = components(ResolutionContracts.CobolResolutionPolicy.class);
+        Set<String> entryComponents = components(ReferenceResolution.Entry.class);
+        Set<String> targetKinds = Arrays.stream(Ast.CallTargetSyntax.values())
+                .map(Enum::name).collect(Collectors.toSet());
+
+        assertAll("CALL syntax and linkage must be independent contracts",
+                () -> assertTrue(outcome.compilerOptions().stream().anyMatch(option ->
+                        option.name().equals("DYNAM")), outcome.compilerOptions().toString()),
+                () -> assertTrue(outcomeComponents.contains("dynamMode"), outcomeComponents.toString()),
+                () -> assertTrue(policyComponents.contains("dynamMode"), policyComponents.toString()),
+                () -> assertEquals(Set.of("LITERAL_PROGRAM_NAME", "IDENTIFIER_OR_EXPRESSION"),
+                        targetKinds),
+                () -> assertTrue(entryComponents.contains("callSemantics"), entryComponents.toString()));
+    }
+
+    @Test
+    void transportsDynamModeAndAssignsLinkageWithoutChangingTargetSyntax() throws Exception {
+        Analysis dynam = analyze(DYNAM);
+        Analysis nodynam = analyze(NODYNAM);
+        Analysis unspecified = analyze(UNSPECIFIED);
+
+        assertAll("compiler options are transported structurally",
+                () -> assertEquals(ResolutionContracts.DynamMode.DYNAM, dynam.outcome().dynamMode()),
+                () -> assertEquals(ResolutionContracts.DynamMode.NODYNAM, nodynam.outcome().dynamMode()),
+                () -> assertEquals(ResolutionContracts.DynamMode.UNSPECIFIED,
+                        unspecified.outcome().dynamMode()),
+                () -> assertEquals(ResolutionContracts.DynamMode.DYNAM,
+                        dynam.resolution().policy().dynamMode()),
+                () -> assertEquals(ResolutionContracts.DynamMode.NODYNAM,
+                        nodynam.resolution().policy().dynamMode()));
+
+        assertCallSyntax(dynam.model().programUnits().get(0).program());
+        assertCallSyntax(nodynam.model().programUnits().get(0).program());
+        assertCallSyntax(unspecified.model().programUnits().get(0).program());
+
+        assertLinkage(dynam, "'TARGET-A'", ResolutionContracts.CallLinkage.DYNAMIC);
+        assertLinkage(nodynam, "'TARGET-A'", ResolutionContracts.CallLinkage.STATIC);
+        assertLinkage(unspecified, "'TARGET-A'", ResolutionContracts.CallLinkage.UNKNOWN);
+        assertLinkage(dynam, "CALL-NAME", ResolutionContracts.CallLinkage.DYNAMIC);
+        assertLinkage(nodynam, "CALL-NAME", ResolutionContracts.CallLinkage.DYNAMIC);
+        assertLinkage(unspecified, "CALL-NAME", ResolutionContracts.CallLinkage.DYNAMIC);
+    }
+
+    private static void assertCallSyntax(Ast.Program program) {
+        List<Ast.CallStatement> calls = nodes(program, Ast.CallStatement.class);
+        assertEquals(2, calls.size());
+        assertEquals(Ast.CallTargetSyntax.LITERAL_PROGRAM_NAME, calls.get(0).targetSyntax());
+        assertEquals(Ast.CallTargetSyntax.IDENTIFIER_OR_EXPRESSION, calls.get(1).targetSyntax());
+        AstSnapshot.Metrics metrics = AstSnapshot.from(program).metrics();
+        assertEquals(1, metrics.literalTargetCalls());
+        assertEquals(1, metrics.identifierTargetCalls());
+    }
+
+    private static void assertLinkage(Analysis analysis, String writtenText,
+                                      ResolutionContracts.CallLinkage expected) {
+        ReferenceResolution.Entry entry = analysis.resolution().entries().stream()
+                .filter(candidate -> candidate.occurrence().role()
+                        == ResolutionContracts.ReferenceRole.CALL_TARGET)
+                .filter(candidate -> candidate.occurrence().writtenText().equals(writtenText))
+                .findFirst().orElseThrow();
+        assertEquals(expected, entry.callSemantics().orElseThrow().linkage(), entry.toString());
+    }
+
+    private static Analysis analyze(Path sourcePath) throws Exception {
+        GrammarBinding grammar = Bindings.proleap();
+        String normalized = SourceNormalizer.fixed(Files.readString(sourcePath, StandardCharsets.UTF_8));
+        PreprocessorEngine.Outcome outcome = new PreprocessorEngine(
+                grammar, new CopybookLibrary(Path.of("src/test/resources")))
+                .process(normalized, sourcePath.getFileName().toString());
+        Parser parser = grammar.cobolParser(new CommonTokenStream(grammar.cobolLexer(
+                CharStreams.fromString(outcome.text(), sourcePath.getFileName().toString()))));
+        ParseTree tree = grammar.cobolStart(parser);
+        assertEquals(0, parser.getNumberOfSyntaxErrors());
+        IdentityHashMap<ParseTree, Integer> ids = new IdentityHashMap<>();
+        IdentityHashMap<ParseTree, Integer> sizes = new IdentityHashMap<>();
+        index(tree, ids, sizes, new int[]{0});
+        CompilationUnitModel model = new AstBuilder(parser, outcome.text(), outcome.sourceMap(), ids, sizes)
+                .buildCompilationUnit(tree, sourcePath.getFileName().toString()).compilationUnit();
+        CompilationUnitSymbolTables tables = new CompilationUnitSymbolTableBuilder().build(model);
+        Map<ResolutionContracts.ProgramUnitId, ReferenceOccurrences> occurrences = new LinkedHashMap<>();
+        for (CompilationUnitModel.ProgramUnit unit : model.programUnits()) {
+            SymbolTable table = tables.forProgramUnit(unit.id()).orElseThrow().symbolTable();
+            occurrences.put(unit.id(), new ReferenceOccurrenceCollector().collect(
+                    unit.id(), unit.program(), AstScopeIndex.build(unit.program(), table)));
+        }
+        ResolutionContracts.CobolResolutionPolicy policy = ResolutionContracts.CobolResolutionPolicy.initial()
+                .withPgmnameMode(outcome.pgmnameMode()).withDynamMode(outcome.dynamMode());
+        ExternalProgramCatalog catalog = key -> key.equals("TARGET-A")
+                ? List.of(new ExternalProgramCatalog.Program(1, "call-semantics", "TARGET-A", Map.of()))
+                : List.of();
+        ReferenceResolution resolution = new CobolReferenceResolver(policy, Optional.of(catalog))
+                .resolve(model, tables, occurrences);
+        return new Analysis(outcome, model, resolution);
+    }
+
+    private static int index(ParseTree tree, IdentityHashMap<ParseTree, Integer> ids,
+                             IdentityHashMap<ParseTree, Integer> sizes, int[] next) {
+        ids.put(tree, next[0]++);
+        int size = 1;
+        for (int child = 0; child < tree.getChildCount(); child++)
+            size += index(tree.getChild(child), ids, sizes, next);
+        sizes.put(tree, size);
+        return size;
+    }
+
+    private static <T extends Ast.Node> List<T> nodes(Ast.Node root, Class<T> type) {
+        java.util.ArrayList<T> result = new java.util.ArrayList<>();
+        if (type.isInstance(root)) result.add(type.cast(root));
+        for (Ast.Node child : Ast.children(root)) result.addAll(nodes(child, type));
+        return List.copyOf(result);
+    }
+
+    private static Set<String> components(Class<?> type) {
+        return Arrays.stream(type.getRecordComponents()).map(RecordComponent::getName)
+                .map(name -> name.toLowerCase(Locale.ROOT).equals("dynammode") ? "dynamMode" : name)
+                .collect(Collectors.toSet());
+    }
+
+    private record Analysis(PreprocessorEngine.Outcome outcome, CompilationUnitModel model,
+                            ReferenceResolution resolution) { }
+}

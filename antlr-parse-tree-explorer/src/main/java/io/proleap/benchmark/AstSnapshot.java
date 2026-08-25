@@ -13,7 +13,7 @@ final class AstSnapshot {
                 int parseTreeNodes, String sourceFile, int sourceLine,
                 int includeDepth, boolean sourceExact) {}
 
-    record Metrics(int nodes, int maxDepth, int staticCalls, int dynamicCalls,
+    record Metrics(int nodes, int maxDepth, int literalTargetCalls, int identifierTargetCalls,
                    int embeddedLanguages, int unsupportedStatements, int preservedStatements) {}
 
     private final List<Node> nodes;
@@ -37,16 +37,19 @@ final class AstSnapshot {
         Map<Integer, List<Integer>> parseToAst = new TreeMap<>();
         flatten(program, -1, 0, nodes, typeCounts, parseToAst);
         int maxDepth = nodes.stream().mapToInt(Node::depth).max().orElse(0);
-        int staticCalls = 0, dynamicCalls = 0, embedded = 0, unsupported = 0, preserved = 0;
+        int literalTargetCalls = 0, identifierTargetCalls = 0, embedded = 0, unsupported = 0, preserved = 0;
         for (Node node : nodes) {
             if (node.type.equals("CallStatement")) {
-                if ("STATIC_LITERAL".equals(node.attributes.get("targetKind"))) staticCalls++; else dynamicCalls++;
+                if ("LITERAL_PROGRAM_NAME".equals(node.attributes.get("targetSyntax")))
+                    literalTargetCalls++;
+                else identifierTargetCalls++;
             }
             if (node.type.equals("EmbeddedLanguageStatement")) embedded++;
             if (node.type.equals("UnsupportedStatement")) unsupported++;
             if (node.type.equals("PreservedStatement")) preserved++;
         }
-        return new AstSnapshot(nodes, new Metrics(nodes.size(), maxDepth, staticCalls, dynamicCalls,
+        return new AstSnapshot(nodes, new Metrics(nodes.size(), maxDepth,
+                literalTargetCalls, identifierTargetCalls,
                 embedded, unsupported, preserved), typeCounts, parseToAst);
     }
 
@@ -177,7 +180,7 @@ final class AstSnapshot {
         else if (node instanceof Ast.Sentence n) {
             result.put("terminator", n.terminator().name());
             result.put("terminatorLine", String.valueOf(n.terminatorSpan().startLine()));
-        } else if (node instanceof Ast.CallStatement n) result.put("targetKind", n.targetKind().name());
+        } else if (node instanceof Ast.CallStatement n) result.put("targetSyntax", n.targetSyntax().name());
         else if (node instanceof Ast.CallArgument n) {
             result.put("passingMode", n.passingMode().name()); result.put("argumentKind", n.argumentKind().name());
             result.put("writtenText", n.writtenText());
@@ -260,8 +263,10 @@ final class AstSnapshot {
             out.write("window.AST_DATA={\n\"meta\":{");
             field(out, "source", sourceName); out.write(',');
             out.write("\"nodes\":" + metrics.nodes + ",\"parseTreeNodes\":" + parseTreeNodes + ',');
-            out.write("\"maxDepth\":" + metrics.maxDepth + ",\"staticCalls\":" + metrics.staticCalls + ',');
-            out.write("\"dynamicCalls\":" + metrics.dynamicCalls + ",\"embeddedLanguages\":" + metrics.embeddedLanguages + ',');
+            out.write("\"maxDepth\":" + metrics.maxDepth + ",\"literalTargetCalls\":"
+                    + metrics.literalTargetCalls + ',');
+            out.write("\"identifierTargetCalls\":" + metrics.identifierTargetCalls
+                    + ",\"embeddedLanguages\":" + metrics.embeddedLanguages + ',');
             out.write("\"unsupportedStatements\":" + metrics.unsupportedStatements
                     + ",\"preservedStatements\":" + metrics.preservedStatements + "},\n");
             out.write("\"sourceLines\":[");

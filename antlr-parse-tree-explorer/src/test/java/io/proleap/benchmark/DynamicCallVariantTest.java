@@ -44,7 +44,8 @@ class DynamicCallVariantTest {
 
         assertEquals("CBSTM03D", ast.name());
         assertEquals(14, calls.size());
-        assertTrue(calls.stream().allMatch(call -> call.targetKind() == Ast.CallTargetKind.DYNAMIC_EXPRESSION));
+        assertTrue(calls.stream().allMatch(call ->
+                call.targetSyntax() == Ast.CallTargetSyntax.IDENTIFIER_OR_EXPRESSION));
         assertTrue(calls.stream().allMatch(call -> call.target() instanceof Ast.DataReference reference
                 && reference.writtenName().equals("WS-CALL-TARGET")));
 

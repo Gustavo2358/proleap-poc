@@ -45,7 +45,7 @@ class SemanticModelBaselineCharacterizationTest {
         List<Ast.CallStatement> dynamicCalls = nodes(cbstm03d.ast(), Ast.CallStatement.class);
         assertEquals(14, dynamicCalls.size());
         assertTrue(dynamicCalls.stream().allMatch(call ->
-                call.targetKind() == Ast.CallTargetKind.DYNAMIC_EXPRESSION
+                call.targetSyntax() == Ast.CallTargetSyntax.IDENTIFIER_OR_EXPRESSION
                         && call.target() instanceof Ast.DataReference reference
                         && reference.writtenName().equals("WS-CALL-TARGET")));
         assertEquals(1, cbstm03d.symbolTable().lookupAll(
@@ -92,15 +92,16 @@ class SemanticModelBaselineCharacterizationTest {
     }
 
     private static void assertMetrics(Analysis analysis, String programName, int astNodes, int maxDepth,
-                                      int staticCalls, int dynamicCalls, int embedded, int unsupported,
+                                      int literalTargetCalls, int identifierTargetCalls,
+                                      int embedded, int unsupported,
                                       int scopes, int symbols, int symbolDiagnostics) {
         AstSnapshot.Metrics metrics = analysis.snapshot().metrics();
         assertAll(programName,
                 () -> assertEquals(programName, analysis.ast().name()),
                 () -> assertEquals(astNodes, metrics.nodes()),
                 () -> assertEquals(maxDepth, metrics.maxDepth()),
-                () -> assertEquals(staticCalls, metrics.staticCalls()),
-                () -> assertEquals(dynamicCalls, metrics.dynamicCalls()),
+                () -> assertEquals(literalTargetCalls, metrics.literalTargetCalls()),
+                () -> assertEquals(identifierTargetCalls, metrics.identifierTargetCalls()),
                 () -> assertEquals(embedded, metrics.embeddedLanguages()),
                 () -> assertEquals(unsupported, metrics.unsupportedStatements()),
                 () -> assertEquals(scopes, analysis.symbolTable().scopes().size()),

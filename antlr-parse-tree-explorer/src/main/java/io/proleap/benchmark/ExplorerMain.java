@@ -91,7 +91,8 @@ public final class ExplorerMain {
                     AstScopeIndex.build(unit.program(), unitTable)));
         }
         ResolutionContracts.CobolResolutionPolicy policy = ResolutionContracts.CobolResolutionPolicy.initial()
-                .withPgmnameMode(preprocessed.pgmnameMode());
+                .withPgmnameMode(preprocessed.pgmnameMode())
+                .withDynamMode(preprocessed.dynamMode());
         Optional<ExternalProgramCatalog> externalCatalog = Optional.empty();
         ReferenceResolution resolution = new CobolReferenceResolver(policy, externalCatalog)
                 .resolve(compilationUnit, symbolTables, occurrences);
@@ -105,14 +106,14 @@ public final class ExplorerMain {
 
         System.out.printf(Locale.ROOT,
                 "Generated %s, %s, %s and %s%nSource: %s%nParse tree: %,d nodes | %,d tokens | depth %d%n" +
-                        "AST: %,d nodes | depth %d | static CALLs %d%n" +
+                "AST: %,d nodes | depth %d | literal-target CALLs %d%n" +
                         "Symbols: %,d declarations | %,d scopes | %,d diagnostics | parser errors %d%n" +
                         "Reference binding: %,d entries | %,d gaps | dependency analysis ready: %s%n",
                 output.resolve("index.html"), output.resolve("ast.html"), output.resolve("symbols.html"),
                 output.resolve("resolution.html"),
                 source.getFileName(), nodes.size(),
                 tokenCount, maxDepth, astSnapshot.metrics().nodes(), astSnapshot.metrics().maxDepth(),
-                astSnapshot.metrics().staticCalls(), symbolSnapshot.metrics().symbols(),
+                astSnapshot.metrics().literalTargetCalls(), symbolSnapshot.metrics().symbols(),
                 symbolSnapshot.metrics().scopes(), symbolSnapshot.metrics().diagnostics(), parserErrors,
                 resolution.entries().size(), resolutionReport.gaps().size(),
                 resolutionReport.completeness().dependencyAnalysisReady());

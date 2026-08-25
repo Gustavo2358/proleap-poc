@@ -49,13 +49,13 @@
       [format(data.meta.nodes), "nós semânticos"],
       [`${reduction}%`, "menos nós"],
       [format(data.meta.maxDepth), "níveis de profundidade"],
-      [format(data.meta.staticCalls), "CALL estático"]
+      [format(data.meta.literalTargetCalls), "CALL literal"]
     ];
     $("#ast-metrics").innerHTML = metrics.map(([value, label]) =>
       `<div class="metric"><strong>${value}</strong><span>${label}</span></div>`).join("");
     $("#model-parse-nodes").textContent = `${format(data.meta.parseTreeNodes)} nós`;
     $("#model-ast-nodes").textContent = `${format(data.meta.nodes)} nós`;
-    $("#ast-status").innerHTML = `<span></span>AST construída · ${format(data.meta.nodes)} nós · ${data.meta.dynamicCalls} CALLs dinâmicos`;
+    $("#ast-status").innerHTML = `<span></span>AST construída · ${format(data.meta.nodes)} nós · ${data.meta.identifierTargetCalls} CALLs por identificador/expressão`;
     $("#source-file").textContent = `${data.meta.source} · pré-processado`;
   }
 
@@ -258,7 +258,7 @@
     if (node.t === "Program") return "É a raiz do modelo da aplicação. Ela já ignora EOF e regras de compilação que não acrescentam significado ao domínio.";
     if (node.t === "Division") return "A divisão COBOL permanece explícita porque organiza declarações e lógica com papéis semânticos diferentes.";
     if (node.t === "Sentence") return "O ponto não virou um nó. Seu efeito foi promovido ao atributo terminator=PERIOD, preservando a fronteira necessária para NEXT SENTENCE e CFG.";
-    if (node.t === "CallStatement") return node.a.targetKind === "STATIC_LITERAL"
+    if (node.t === "CallStatement") return node.a.targetSyntax === "LITERAL_PROGRAM_NAME"
       ? "O alvo literal já é um fato direto sobre dependência de subprograma. Nenhuma tabela de símbolos ou análise de fluxo é necessária para descobri-lo."
       : "O alvo é uma expression dinâmica. A AST o preserva; reaching definitions e resolução de constantes serão responsáveis pelos valores possíveis.";
     if (node.t === "IfStatement" || node.t === "EvaluateStatement") return "Os branches são filhos semânticos. No CFG eles se tornarão caminhos separados, cujo estado poderá ser unido no ponto de merge.";
@@ -330,9 +330,9 @@
 
   function renderCalls() {
     const calls = nodes.filter((node) => node.t === "CallStatement");
-    $("#call-summary").innerHTML = `<span><b>${format(data.meta.staticCalls)}</b>estático</span><span><b>${format(data.meta.dynamicCalls)}</b>dinâmico</span>`;
+    $("#call-summary").innerHTML = `<span><b>${format(data.meta.literalTargetCalls)}</b>literal</span><span><b>${format(data.meta.identifierTargetCalls)}</b>identificador/expressão</span>`;
     $("#call-list").innerHTML = calls.length ? calls.map((node) =>
-      `<div class="flow-card" data-id="${node.id}"><span class="flow-type">${node.a.targetKind === "STATIC_LITERAL" ? "LITERAL" : "DINÂMICO"}</span><span class="flow-snippet">CALL ${escapeHtml(node.n)}</span><span class="flow-line">L${node.l}</span></div>`
+      `<div class="flow-card" data-id="${node.id}"><span class="flow-type">${node.a.targetSyntax === "LITERAL_PROGRAM_NAME" ? "LITERAL" : "IDENTIFICADOR/EXPRESSÃO"}</span><span class="flow-snippet">CALL ${escapeHtml(node.n)}</span><span class="flow-line">L${node.l}</span></div>`
     ).join("") : `<span class="empty">Nenhum CALL encontrado.</span>`;
     $$("#call-list .flow-card").forEach((card) => card.addEventListener("click", () => selectNode(Number(card.dataset.id))));
   }

@@ -43,6 +43,7 @@ final class ResolutionSnapshot {
             field(out, "policyVersion", resolution.policy().version()); out.write(',');
             field(out, "qualifyMode", resolution.policy().qualifyMode().name()); out.write(',');
             field(out, "pgmnameMode", resolution.policy().pgmnameMode().name()); out.write(',');
+            field(out, "dynamMode", resolution.policy().dynamMode().name()); out.write(',');
             field(out, "catalog", externalCatalogDescription); out.write(',');
             field(out, "claim", report.analysisClaim().name()); out.write(',');
             out.write("\"referenceBindingComplete\":" + report.completeness().referenceBindingComplete() + ',');
@@ -164,6 +165,13 @@ final class ResolutionSnapshot {
             strings(out, occurrence.admissibleKinds().stream().map(Enum::name).sorted().toList());
             out.write("],");
             field(out, "role", occurrence.role().name()); out.write(',');
+            out.write("\"callSemantics\":");
+            if (entry.callSemantics().isPresent()) {
+                ReferenceResolution.CallSemantics semantics = entry.callSemantics().orElseThrow();
+                out.write('{'); field(out, "targetSyntax", semantics.targetSyntax().name()); out.write(',');
+                field(out, "linkage", semantics.linkage().name()); out.write('}');
+            } else out.write("null");
+            out.write(',');
             field(out, "status", entry.status().name()); out.write(',');
             field(out, "reason", entry.reason().name()); out.write(',');
             field(out, "grammarRule", occurrence.grammarRule()); out.write(',');

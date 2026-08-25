@@ -4,6 +4,15 @@ import java.util.*;
 
 /** Immutable name-binding product. AST and Symbol Table remain unmodified. */
 public final class ReferenceResolution {
+    /** Compiler-option-dependent semantics for a CALL target, separate from target syntax. */
+    public record CallSemantics(Ast.CallTargetSyntax targetSyntax,
+                                ResolutionContracts.CallLinkage linkage) {
+        public CallSemantics {
+            targetSyntax = Objects.requireNonNull(targetSyntax, "targetSyntax");
+            linkage = Objects.requireNonNull(linkage, "linkage");
+        }
+    }
+
     /** A candidate's {@code kind} is its semantic declaration category after lookup. */
     public record Candidate(ResolutionContracts.SemanticEntityId entityId,
                             ResolutionContracts.ReferenceKind kind,
@@ -23,17 +32,26 @@ public final class ReferenceResolution {
     public record Entry(int id, ReferenceOccurrences.Occurrence occurrence,
                         ResolutionContracts.ResolutionStatus status,
                         ResolutionContracts.ResolutionReason reason,
-                        List<Candidate> candidates, List<Integer> diagnosticIds) {
+                        List<Candidate> candidates, List<Integer> diagnosticIds,
+                        Optional<CallSemantics> callSemantics) {
         public Entry {
             occurrence = Objects.requireNonNull(occurrence, "occurrence");
             status = Objects.requireNonNull(status, "status");
             reason = Objects.requireNonNull(reason, "reason");
             candidates = List.copyOf(candidates);
             diagnosticIds = List.copyOf(diagnosticIds);
+            callSemantics = Objects.requireNonNull(callSemantics, "callSemantics");
             if (status == ResolutionContracts.ResolutionStatus.RESOLVED && candidates.size() != 1)
                 throw new IllegalArgumentException("RESOLVED entry must have exactly one candidate");
             if (status == ResolutionContracts.ResolutionStatus.AMBIGUOUS && candidates.size() < 2)
                 throw new IllegalArgumentException("AMBIGUOUS entry must preserve every candidate");
+        }
+
+        public Entry(int id, ReferenceOccurrences.Occurrence occurrence,
+                     ResolutionContracts.ResolutionStatus status,
+                     ResolutionContracts.ResolutionReason reason,
+                     List<Candidate> candidates, List<Integer> diagnosticIds) {
+            this(id, occurrence, status, reason, candidates, diagnosticIds, Optional.empty());
         }
 
         /** The selected candidate, including the final semantic kind, only for certain bindings. */

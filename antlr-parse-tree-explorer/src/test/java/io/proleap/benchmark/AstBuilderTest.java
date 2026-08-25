@@ -37,14 +37,14 @@ class AstBuilderTest {
         assertTrue(snapshot.metrics().nodes() > 3_000);
         assertTrue(snapshot.metrics().nodes() < sizes.get(tree));
         assertEquals(11, snapshot.metrics().maxDepth());
-        assertEquals(1, snapshot.metrics().staticCalls());
-        assertEquals(0, snapshot.metrics().dynamicCalls());
+        assertEquals(1, snapshot.metrics().literalTargetCalls());
+        assertEquals(0, snapshot.metrics().identifierTargetCalls());
         assertTrue(snapshot.metrics().embeddedLanguages() > 0);
 
         List<Ast.Node> all = flatten(ast);
         Ast.CallStatement call = all.stream().filter(Ast.CallStatement.class::isInstance)
                 .map(Ast.CallStatement.class::cast).findFirst().orElseThrow();
-        assertEquals(Ast.CallTargetKind.STATIC_LITERAL, call.targetKind());
+        assertEquals(Ast.CallTargetSyntax.LITERAL_PROGRAM_NAME, call.targetSyntax());
         assertInstanceOf(Ast.ProgramReference.class, call.target());
         assertEquals("CSUTLDTC", ((Ast.ProgramReference) call.target()).programName());
         assertTrue(call.meta().origin().rootNodeId() >= 0);

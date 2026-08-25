@@ -80,7 +80,7 @@ Commit: `fix: make unspecified external pgmname conservative`
 FASE 2 — SEPARAR FORMA SINTÁTICA DE CALL E LINKAGE SEMÂNTICO
 ======================================================================
 
-STATUS: [ ] PENDENTE
+STATUS: [x] CONCLUÍDA — RED de quatro contratos e transporte ponta a ponta; 81 testes verdes
 
 Hipótese:
 

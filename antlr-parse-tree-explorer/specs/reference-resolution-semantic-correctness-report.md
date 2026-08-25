@@ -1646,3 +1646,15 @@ As observações do review entram nesta seção como hipóteses. Nenhuma conclus
 - Correção: remover a heurística; gerar as chaves COMPAT/LONGUPPER/LONGMIXED, consultar cada chave distinta e comparar conjuntos estáveis `(catalogId,id)`. Divergência retorna `UNSUPPORTED_DIALECT_OPTION` com a união deduplicada dos candidates possíveis. O `ProgramUnitId` externo deixa de depender da chave/alias usado no lookup.
 - Ajuste de regressão: o fake catalog legado devolvia o mesmo ID genérico para toda chave desconhecida. Ele passou a declarar somente aliases pretendidos; quando um catálogo realmente devolve o mesmo `(catalogId,id)` por aliases distintos, o binding continua seguramente resolvível.
 - GREEN: teste específico `1/1`, grupo `ProcedureFileProgramReferenceResolverTest` `18/18` e suíte completa `79/79`, sem falhas, erros ou skips.
+
+### Fase 2 — target syntax e call linkage
+
+- Regra: CALL literal sob NODYNAM é estático; sob DYNAM é dinâmico para programas não nested/separadamente compilados. CALL identifier é dinâmico independentemente da opção. A forma lexical não prova linkage.
+- Fixtures: `call-linkage-dynam.cbl`, `call-linkage-nodynam.cbl` e `call-linkage-unspecified.cbl`, cada uma com CALL literal e identifier.
+- Testes: `separatesLiteralTargetSyntaxFromCompilerSelectedLinkage` e `transportsDynamModeAndAssignsLinkageWithoutChangingTargetSyntax`.
+- RED inicial: `PreprocessorEngine.Outcome` e `CobolResolutionPolicy` não possuíam `dynamMode`; a AST expunha `{STATIC_LITERAL,DYNAMIC_EXPRESSION}`; `ReferenceResolution.Entry` não expunha call semantics. **BUG CONCEITUAL CONFIRMADO**.
+- RED ponta a ponta adicional: o preprocessador reconheceu `CBL DYNAM`, mas preservou a diretiva no texto entregue ao parser COBOL, produzindo erro sintático. Isso provou que compiler options eram coletadas, mas ainda não transportadas por um pipeline analisável.
+- Causa raiz: `CallTargetKind` fundia forma e semântica; a policy modelava somente QUALIFY/PGMNAME; o preprocessor não derivava DYNAM nem removia estruturalmente o contexto `compilerOptions`; snapshots e UI repetiam a classificação enganosa.
+- Correção: `Ast.CallTargetSyntax` agora contém somente `LITERAL_PROGRAM_NAME` e `IDENTIFIER_OR_EXPRESSION`; `DynamMode` é transportado pelo preprocessor para a policy; `ReferenceResolution.CallSemantics` associa cada CALL_TARGET a `STATIC`, `DYNAMIC` ou `UNKNOWN`. Target identifier é sempre dinâmico; literal external usa a opção; target interno nested permanece estático. Diretivas reconhecidas são substituídas preservando linhas/proveniência antes do parser COBOL.
+- Métricas AST e UI foram renomeadas para `literalTargetCalls`/`identifierTargetCalls`; nenhuma delas afirma linkage.
+- GREEN: testes da fase `2/2`; grupo AST/CALL selecionado verde; suíte completa `81/81`, sem falhas, erros ou skips; 31 checks JavaScript verdes.

@@ -89,6 +89,27 @@ public final class ResolutionContracts {
         }
     }
 
+    public enum DynamMode {
+        DYNAM,
+        NODYNAM,
+        UNSPECIFIED;
+
+        public static DynamMode fromCompilerOption(String name, String value) {
+            String option = name == null ? "" : name.trim().toUpperCase(java.util.Locale.ROOT);
+            String setting = value == null ? "" : value.trim().toUpperCase(java.util.Locale.ROOT);
+            if (option.equals("NODYNAM") || option.equals("NODYN")) return NODYNAM;
+            if (option.equals("DYNAM") || option.equals("DYN"))
+                return setting.equals("NO") ? NODYNAM : DYNAM;
+            return UNSPECIFIED;
+        }
+    }
+
+    public enum CallLinkage {
+        STATIC,
+        DYNAMIC,
+        UNKNOWN
+    }
+
     public enum SemanticEntityDomain {
         DATA_SYMBOL,
         INDEX_SYMBOL,
@@ -122,12 +143,18 @@ public final class ResolutionContracts {
 
     /** Versioned dialect/options contract; absence of an option remains explicit. */
     public record CobolResolutionPolicy(String policyId, String version, QualifyMode qualifyMode,
-                                        PgmnameMode pgmnameMode) {
+                                        PgmnameMode pgmnameMode, DynamMode dynamMode) {
         public CobolResolutionPolicy {
             policyId = requireText(policyId, "policyId");
             version = requireText(version, "version");
             qualifyMode = Objects.requireNonNull(qualifyMode, "qualifyMode");
             pgmnameMode = Objects.requireNonNull(pgmnameMode, "pgmnameMode");
+            dynamMode = Objects.requireNonNull(dynamMode, "dynamMode");
+        }
+
+        public CobolResolutionPolicy(String policyId, String version, QualifyMode qualifyMode,
+                                     PgmnameMode pgmnameMode) {
+            this(policyId, version, qualifyMode, pgmnameMode, DynamMode.UNSPECIFIED);
         }
 
         public CobolResolutionPolicy(String policyId, String version, QualifyMode qualifyMode) {
@@ -136,12 +163,16 @@ public final class ResolutionContracts {
 
         public static CobolResolutionPolicy initial() {
             return new CobolResolutionPolicy(
-                    "proleap-cobol/explicit-options", "2.0.0", QualifyMode.UNSPECIFIED,
-                    PgmnameMode.UNSPECIFIED);
+                    "proleap-cobol/explicit-options", "3.0.0", QualifyMode.UNSPECIFIED,
+                    PgmnameMode.UNSPECIFIED, DynamMode.UNSPECIFIED);
         }
 
         public CobolResolutionPolicy withPgmnameMode(PgmnameMode mode) {
-            return new CobolResolutionPolicy(policyId, version, qualifyMode, mode);
+            return new CobolResolutionPolicy(policyId, version, qualifyMode, mode, dynamMode);
+        }
+
+        public CobolResolutionPolicy withDynamMode(DynamMode mode) {
+            return new CobolResolutionPolicy(policyId, version, qualifyMode, pgmnameMode, mode);
         }
     }
 
