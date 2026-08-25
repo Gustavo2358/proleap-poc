@@ -47,7 +47,8 @@ public final class ResolutionAnalysisReport {
     private final List<ProgramUnitSummary> programUnits;
     private final Map<ResolutionContracts.ResolutionStatus, Long> statusCounts;
     private final Map<ResolutionContracts.ResolutionReason, Long> reasonCounts;
-    private final Map<ResolutionContracts.ReferenceKind, Long> kindCounts;
+    private final Map<ResolutionContracts.ReferenceKind, Long> syntacticKindCounts;
+    private final Map<ResolutionContracts.ReferenceKind, Long> resolvedSemanticKindCounts;
     private final Map<ResolutionContracts.ReferenceRole, Long> roleCounts;
     private final OperationalMetrics operationalMetrics;
 
@@ -56,7 +57,8 @@ public final class ResolutionAnalysisReport {
                                      List<Gap> gaps, List<ProgramUnitSummary> programUnits,
                                      Map<ResolutionContracts.ResolutionStatus, Long> statusCounts,
                                      Map<ResolutionContracts.ResolutionReason, Long> reasonCounts,
-                                     Map<ResolutionContracts.ReferenceKind, Long> kindCounts,
+                                     Map<ResolutionContracts.ReferenceKind, Long> syntacticKindCounts,
+                                     Map<ResolutionContracts.ReferenceKind, Long> resolvedSemanticKindCounts,
                                      Map<ResolutionContracts.ReferenceRole, Long> roleCounts,
                                      OperationalMetrics operationalMetrics) {
         this.policy = policy;
@@ -67,7 +69,8 @@ public final class ResolutionAnalysisReport {
         this.programUnits = List.copyOf(programUnits);
         this.statusCounts = Map.copyOf(statusCounts);
         this.reasonCounts = Map.copyOf(reasonCounts);
-        this.kindCounts = Map.copyOf(kindCounts);
+        this.syntacticKindCounts = Map.copyOf(syntacticKindCounts);
+        this.resolvedSemanticKindCounts = Map.copyOf(resolvedSemanticKindCounts);
         this.roleCounts = Map.copyOf(roleCounts);
         this.operationalMetrics = operationalMetrics;
     }
@@ -92,14 +95,18 @@ public final class ResolutionAnalysisReport {
                 ResolutionContracts.ResolutionStatus.class);
         EnumMap<ResolutionContracts.ResolutionReason, Long> reasons = zeroed(
                 ResolutionContracts.ResolutionReason.class);
-        EnumMap<ResolutionContracts.ReferenceKind, Long> kinds = zeroed(
+        EnumMap<ResolutionContracts.ReferenceKind, Long> syntacticKinds = zeroed(
+                ResolutionContracts.ReferenceKind.class);
+        EnumMap<ResolutionContracts.ReferenceKind, Long> resolvedSemanticKinds = zeroed(
                 ResolutionContracts.ReferenceKind.class);
         EnumMap<ResolutionContracts.ReferenceRole, Long> roles = zeroed(
                 ResolutionContracts.ReferenceRole.class);
         for (ReferenceResolution.Entry entry : resolution.entries()) {
             statuses.merge(entry.status(), 1L, Long::sum);
             reasons.merge(entry.reason(), 1L, Long::sum);
-            kinds.merge(entry.occurrence().kind(), 1L, Long::sum);
+            syntacticKinds.merge(entry.occurrence().kind(), 1L, Long::sum);
+            entry.selectedCandidate().ifPresent(candidate ->
+                    resolvedSemanticKinds.merge(candidate.kind(), 1L, Long::sum));
             roles.merge(entry.occurrence().role(), 1L, Long::sum);
         }
 
@@ -116,7 +123,7 @@ public final class ResolutionAnalysisReport {
                 metrics.nominalLookups(), metrics.candidateInspections(), metrics.maximumCandidates(),
                 referenceCount, frontend.compilationUnit().programUnits().size());
         return new ResolutionAnalysisReport(resolution.policy(), completeness, gaps, summaries,
-                statuses, reasons, kinds, roles, operational);
+                statuses, reasons, syntacticKinds, resolvedSemanticKinds, roles, operational);
     }
 
     public ResolutionContracts.CobolResolutionPolicy policy() { return policy; }
@@ -126,7 +133,12 @@ public final class ResolutionAnalysisReport {
     public List<ProgramUnitSummary> programUnits() { return programUnits; }
     public Map<ResolutionContracts.ResolutionStatus, Long> statusCounts() { return statusCounts; }
     public Map<ResolutionContracts.ResolutionReason, Long> reasonCounts() { return reasonCounts; }
-    public Map<ResolutionContracts.ReferenceKind, Long> kindCounts() { return kindCounts; }
+    public Map<ResolutionContracts.ReferenceKind, Long> syntacticKindCounts() {
+        return syntacticKindCounts;
+    }
+    public Map<ResolutionContracts.ReferenceKind, Long> resolvedSemanticKindCounts() {
+        return resolvedSemanticKindCounts;
+    }
     public Map<ResolutionContracts.ReferenceRole, Long> roleCounts() { return roleCounts; }
     public OperationalMetrics operationalMetrics() { return operationalMetrics; }
     public long referenceCount() { return operationalMetrics.collectedReferences(); }

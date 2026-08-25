@@ -158,7 +158,7 @@ Commit: `test: define declaration relation binding contract`
 FASE 5 — MÉTRICAS DEVEM DISTINGUIR HINT SINTÁTICO DE KIND RESOLVIDO
 ======================================================================
 
-STATUS: [ ] PENDENTE
+STATUS: [x] CONCLUÍDA — RED confirmou métrica ambígua; contagens sintática e semântica separadas
 
 Hipótese:
 

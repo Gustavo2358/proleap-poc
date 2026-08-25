@@ -124,6 +124,43 @@ class ResolutionAnalysisReportTest {
                         gap.code().startsWith("DECLARATION_RELATION_UNRESOLVED_"))));
     }
 
+    @Test
+    void distinguishesSyntacticHintsFromResolvedSemanticKindMetrics() throws Exception {
+        Path fixture = Path.of("src/test/resources/cobol/resolution/subscript-semantic-kind.cbl");
+        Analysis analysis = analyze(Files.readString(fixture, StandardCharsets.UTF_8),
+                fixture.getFileName().toString());
+        List<ReferenceResolution.Entry> subscripts = analysis.resolution().entries().stream()
+                .filter(entry -> entry.occurrence().role() == ResolutionContracts.ReferenceRole.SUBSCRIPT)
+                .toList();
+        assertTrue(subscripts.stream().anyMatch(entry ->
+                entry.occurrence().kind() == ResolutionContracts.ReferenceKind.INDEX
+                        && entry.selectedCandidate().orElseThrow().kind()
+                        == ResolutionContracts.ReferenceKind.DATA));
+
+        ResolutionAnalysisReport report = ResolutionAnalysisReport.compose(analysis.build(),
+                ResolutionAnalysisReport.FrontendState.complete(), analysis.occurrences(),
+                analysis.resolution());
+        long syntacticIndexSubscripts = subscripts.stream().filter(entry ->
+                entry.occurrence().kind() == ResolutionContracts.ReferenceKind.INDEX).count();
+        long resolvedDataSubscripts = subscripts.stream().filter(entry ->
+                entry.selectedCandidate().orElseThrow().kind()
+                        == ResolutionContracts.ReferenceKind.DATA).count();
+        assertAll("metrics must name their semantic level",
+                () -> assertTrue(syntacticIndexSubscripts > 0),
+                () -> assertTrue(resolvedDataSubscripts > 0),
+                () -> assertTrue(report.syntacticKindCounts()
+                        .get(ResolutionContracts.ReferenceKind.INDEX) >= syntacticIndexSubscripts),
+                () -> assertTrue(report.resolvedSemanticKindCounts()
+                        .get(ResolutionContracts.ReferenceKind.DATA) >= resolvedDataSubscripts),
+                () -> assertEquals(analysis.resolution().entries().size(),
+                        report.syntacticKindCounts().values().stream().mapToLong(Long::longValue).sum()),
+                () -> assertEquals(analysis.resolution().entries().stream()
+                                .filter(entry -> entry.status()
+                                        == ResolutionContracts.ResolutionStatus.RESOLVED).count(),
+                        report.resolvedSemanticKindCounts().values().stream()
+                                .mapToLong(Long::longValue).sum()));
+    }
+
     private static ReferenceResolution resolveAgain(Analysis analysis) {
         return new CobolReferenceResolver(ResolutionContracts.CobolResolutionPolicy.initial(), Optional.empty())
                 .resolve(analysis.model(), analysis.tables(), analysis.occurrences());

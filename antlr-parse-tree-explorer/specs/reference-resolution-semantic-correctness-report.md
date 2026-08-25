@@ -1679,3 +1679,13 @@ As observações do review entram nesta seção como hipóteses. Nenhuma conclus
 - Correção: `SemanticScope.NOMINAL_STRUCTURAL_TARGET_BINDING`, retornado por `semanticScope()`, e Javadoc em `Entry`: RESOLVED identifica o target nominal/estrutural e não certifica todas as regras COBOL da cláusula.
 - Nenhuma regra de lookup, candidate ou status foi alterada; validação integral de REDEFINES/RENAMES continua responsabilidade de um semantic checker separado.
 - GREEN: teste específico `1/1`, grupo `DataAndIndexReferenceResolverTest` `17/17` e suíte completa `83/83`, sem falhas, erros ou skips.
+
+### Fase 5 — métricas de kind sintático e semântico
+
+- Hipótese: `ResolutionAnalysisReport.kindCounts` somava `occurrence.kind()` sob um nome genérico, embora o contrato permita que o candidate final possua outro kind.
+- Fixture reutilizada: `subscript-semantic-kind.cbl`.
+- Teste: `distinguishesSyntacticHintsFromResolvedSemanticKindMetrics`.
+- RED: a fixture comprovou entry de SUBSCRIPT com `Occurrence.kind=INDEX` e `selectedCandidate.kind=DATA`, mas a API oferecia apenas `kindCounts`; `syntacticKindCounts` e `resolvedSemanticKindCounts` não existiam. **LACUNA DE PRODUTO/MÉTRICA CONFIRMADA; BINDING PERMANECE CORRETO**.
+- Correção: `syntacticKindCounts` conta todas as occurrences pelo hint; `resolvedSemanticKindCounts` conta apenas o kind do candidate final em entries RESOLVED. A soma da primeira equivale a todas as entries e a soma da segunda equivale às entries RESOLVED.
+- Snapshot passa a publicar `counts.syntacticKind` e `counts.resolvedSemanticKind`; o nome genérico `kind` foi removido.
+- GREEN: teste específico `1/1`, `ResolutionAnalysisReportTest` `6/6`, snapshots `3/3` e suíte completa `84/84`, sem falhas, erros ou skips.

@@ -84,7 +84,11 @@ final class ResolutionSnapshot {
         out.write(',');
         enumCounts(out, "reason", ResolutionContracts.ResolutionReason.values(), report.reasonCounts());
         out.write(',');
-        enumCounts(out, "kind", ResolutionContracts.ReferenceKind.values(), report.kindCounts());
+        enumCounts(out, "syntacticKind", ResolutionContracts.ReferenceKind.values(),
+                report.syntacticKindCounts());
+        out.write(',');
+        enumCounts(out, "resolvedSemanticKind", ResolutionContracts.ReferenceKind.values(),
+                report.resolvedSemanticKindCounts());
         out.write(',');
         enumCounts(out, "role", ResolutionContracts.ReferenceRole.values(), report.roleCounts());
         out.write('}');
