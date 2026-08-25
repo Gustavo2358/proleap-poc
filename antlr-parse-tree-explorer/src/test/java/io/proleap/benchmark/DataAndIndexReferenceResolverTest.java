@@ -25,6 +25,8 @@ class DataAndIndexReferenceResolverTest {
             "src/test/resources/cobol/resolution/nested-global-through-local-data.cbl");
     private static final Path REDEFINES_STRUCTURAL = Path.of(
             "src/test/resources/cobol/resolution/redefines-structural-binding.cbl");
+    private static final Path REDEFINES_DIFFERENT_LEVEL = Path.of(
+            "src/test/resources/cobol/resolution/redefines-different-level-number.cbl");
     private static final Path RENAMES_STRUCTURAL = Path.of(
             "src/test/resources/cobol/resolution/renames-structural-binding.cbl");
 
@@ -121,6 +123,32 @@ class DataAndIndexReferenceResolverTest {
                         () -> assertEquals(ResolutionContracts.ResolutionReason.INVALID_NAMESPACE_FOR_CONTEXT,
                                 invalid.reason(), invalid.toString()),
                         () -> assertEquals(0, invalid.candidates().size(), invalid.toString())));
+    }
+
+    @Test
+    void usesStructuralSiblingScopeInsteadOfTextualLevelNumberForRedefines() throws Exception {
+        Analysis analysis = analyze(REDEFINES_DIFFERENT_LEVEL, ResolutionContracts.QualifyMode.STANDARD);
+        ResolutionContracts.ProgramUnitId unit = analysis.model().programUnits().get(0).id();
+        SymbolTable table = analysis.tables().forProgramUnit(unit).orElseThrow().symbolTable();
+        SymbolTable.Symbol target = symbolUnder(table, "ITEM-A", "GROUP-A");
+        SymbolTable.Symbol owner = symbolUnder(table, "ITEM-B", "GROUP-A");
+        SymbolTable.Symbol other = symbolUnder(table, "OTHER-X", "GROUP-B");
+        SymbolTable.Symbol badOwner = symbolUnder(table, "BAD-X", "GROUP-C");
+
+        assertAll("written levels differ while the valid declarations are structural siblings",
+                () -> assertEquals("05", target.attributes().get("level")),
+                () -> assertEquals("04", owner.attributes().get("level")),
+                () -> assertEquals(owner.scopeId(), target.scopeId()),
+                () -> assertEquals(badOwner.attributes().get("level"), other.attributes().get("level")),
+                () -> assertNotEquals(badOwner.scopeId(), other.scopeId()));
+
+        DeclarationRelationResolution.Entry valid = relationForOwner(
+                analysis, table, unit, owner.id(), SymbolTable.RelationKind.REDEFINES);
+        DeclarationRelationResolution.Entry invalid = relationForOwner(
+                analysis, table, unit, badOwner.id(), SymbolTable.RelationKind.REDEFINES);
+        assertAll("scope hierarchy is the source of truth for REDEFINES",
+                () -> assertRelationCandidate(valid, target.id()),
+                () -> assertInvalidRelation(invalid));
     }
 
     @Test

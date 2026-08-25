@@ -748,6 +748,8 @@ fix: honor longmixed nested program identity
 FASE 7 — REDEFINES DEVE USAR NÍVEL ESTRUTURAL, NÃO IGUALDADE TEXTUAL DE LEVEL-NUMBER
 ======================================================================
 
+STATUS: [x] CONCLUÍDA — RED comprovado, correção estrutural e regressão verdes
+
 Hipótese:
 
 A implementação atual exige algo equivalente a:

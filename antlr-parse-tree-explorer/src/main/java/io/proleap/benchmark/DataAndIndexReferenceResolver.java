@@ -361,10 +361,8 @@ final class DataAndIndexReferenceResolver {
         List<SymbolTable.Symbol> named = table.lookupLocal(
                 owner.scopeId(), SymbolTable.Namespace.DATA, relation.writtenTarget());
         candidateInspections += named.size();
-        String ownerLevel = owner.attributes().get("level");
         List<ReferenceResolution.Candidate> candidates = named.stream()
                 .filter(symbol -> symbol.kind() == SymbolTable.SymbolKind.DATA_ITEM)
-                .filter(symbol -> Objects.equals(ownerLevel, symbol.attributes().get("level")))
                 .map(symbol -> candidate(new SymbolOwner(unitId, table, symbol))).toList();
         maximumCandidates = Math.max(maximumCandidates, candidates.size());
         if (candidates.isEmpty())

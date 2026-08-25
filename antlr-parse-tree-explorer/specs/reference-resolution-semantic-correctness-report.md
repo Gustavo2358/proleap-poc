@@ -1474,3 +1474,13 @@ Isso torna `ReferenceResolution` uma fundação suficientemente confiável para 
 - Causa raiz: `programsByName` era indexado por `ProgramUnitId.canonicalProgramName` e a consulta usava `SymbolTable.canonical`, ambos invariavelmente uppercase.
 - Correção geral mínima: `ProgramNameCanonicalizer.nested` produz a chave de lookup dependente da policy para declaração, chamada e `Candidate.canonicalName`. `ProgramUnitId` não foi alterado e continua sendo identidade estrutural estável.
 - GREEN: teste adversarial `1/1`, grupo de program names/resolver `17/17` e suíte completa `74/74`, sem falhas, erros ou testes ignorados. PROGRAM-ID literal, COMMON, visibilidade privada, ambiguidade e catálogo externo permaneceram verdes.
+
+### Fase 7 — REDEFINES usa nível estrutural
+
+- Regra: o target de REDEFINES deve pertencer ao mesmo nível estrutural do owner; igualdade textual dos level-numbers não substitui a relação de siblings representada pelos scopes.
+- Fixture: `redefines-different-level-number.cbl`, com `ITEM-A` level 05 e `ITEM-B REDEFINES ITEM-A` level 04 sob o mesmo parent; `OTHER-X`/`BAD-X` têm ambos level 05, mas parents distintos.
+- Teste: `usesStructuralSiblingScopeInsteadOfTextualLevelNumberForRedefines`, que verifica explicitamente `owner.scopeId == target.scopeId` no caso válido e desigualdade no controle.
+- RED observado: o caso estruturalmente válido resultou `UNRESOLVED / INVALID_NAMESPACE_FOR_CONTEXT`, zero candidates, apesar do mesmo `scopeId`. **BUG CONFIRMADO**.
+- Causa raiz: `DataAndIndexReferenceResolver.resolveRedefines` já fazia `lookupLocal(owner.scopeId(), ...)`, mas aplicava depois igualdade de `attributes["level"]`, rejeitando siblings válidos com grafias de level diferentes.
+- Correção geral mínima: remover a comparação textual e conservar o lookup indexado no scope estrutural do owner; targets de outros grupos continuam fora do bucket local.
+- GREEN: teste adversarial `1/1`, grupo `DataAndIndexReferenceResolverTest` `15/15` e suíte completa `75/75`, sem falhas, erros ou testes ignorados. Os testes anteriores de REDEFINES e targets fora do grupo permaneceram verdes.
