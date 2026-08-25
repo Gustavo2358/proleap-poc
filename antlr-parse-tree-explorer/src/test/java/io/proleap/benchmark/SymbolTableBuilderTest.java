@@ -12,6 +12,34 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class SymbolTableBuilderTest {
     @Test
+    void ancestorScopeLookupDoesNotImplementCobolVisibilityAcrossStructuralBranches() {
+        List<SymbolTable.Scope> scopes = List.of(
+                new SymbolTable.Scope(0, -1, SymbolTable.ScopeKind.ROOT, "<root>", -1, -1),
+                new SymbolTable.Scope(1, 0, SymbolTable.ScopeKind.PROGRAM, "PROGRAM", -1, 0),
+                new SymbolTable.Scope(2, 1, SymbolTable.ScopeKind.DIVISION, "DATA DIVISION", -1, 1),
+                new SymbolTable.Scope(3, 2, SymbolTable.ScopeKind.SECTION, "WORKING-STORAGE", -1, 2),
+                new SymbolTable.Scope(4, 1, SymbolTable.ScopeKind.DIVISION, "PROCEDURE DIVISION", -1, 3),
+                new SymbolTable.Scope(5, 4, SymbolTable.ScopeKind.PARAGRAPH, "MAIN", -1, 4)
+        );
+        SymbolTable.Symbol wsX = new SymbolTable.Symbol(
+                0,
+                SymbolTable.SymbolKind.DATA_ITEM,
+                SymbolTable.Namespace.DATA,
+                "WS-X",
+                "WS-X",
+                3,
+                5,
+                new Ast.SourceSpan(3, 7, 3, 10, 0, 0),
+                Map.of("level", "01")
+        );
+        SymbolTable table = new SymbolTable(scopes, List.of(wsX), List.of(), List.of(), List.of());
+
+        assertTrue(table.lookupInAncestorScopes(5, SymbolTable.Namespace.DATA, "WS-X").isEmpty(),
+                "ancestor lookup must not be mistaken for COBOL visibility across structural branches");
+        assertEquals(List.of(wsX), table.lookupLocal(3, SymbolTable.Namespace.DATA, "WS-X"));
+    }
+
+    @Test
     void collectsScopedDeclarationsWithoutResolvingReferences() throws Exception {
         Ast.Program ast = parseSelectedProgram();
         SymbolTable table = new SymbolTableBuilder().build(ast);

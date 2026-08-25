@@ -45,6 +45,13 @@ public final class SymbolTable {
         OCCURS_INDEX
     }
 
+    /**
+     * Structural/declaration context for ownership, qualification and ancestry.
+     *
+     * <p>The {@code parentId} chain models structural ownership; it is not the
+     * complete COBOL name-visibility model. COBOL visibility and binding belong
+     * to the dedicated reference resolvers.</p>
+     */
     public record Scope(int id, int parentId, ScopeKind kind, String name,
                         int ownerSymbolId, int astNodeId) {}
 
@@ -136,8 +143,15 @@ public final class SymbolTable {
         return globalIndex.getOrDefault(new GlobalKey(namespace, canonical(writtenName)), List.of());
     }
 
-    /** Lexical lookup only. This is infrastructure, not reference binding. */
-    public List<Symbol> lookupVisible(int startingScopeId, Namespace namespace, String writtenName) {
+    /**
+     * Searches only the structural scope ancestor chain.
+     *
+     * <p>This operation queries the starting scope, ascends sequentially through
+     * {@code parentId} while no declaration is found, and returns the first
+     * non-empty result. It does not perform COBOL reference binding and must not
+     * be used as a substitute for the dedicated COBOL reference resolvers.</p>
+     */
+    public List<Symbol> lookupInAncestorScopes(int startingScopeId, Namespace namespace, String writtenName) {
         int scopeId = startingScopeId;
         while (scopeId >= 0) {
             List<Symbol> found = lookupLocal(scopeId, namespace, writtenName);
