@@ -792,7 +792,8 @@ class ProcedureFileProgramReferenceResolverTest {
                     AstScopeIndex.build(unit.program(), table)));
         }
         ResolutionContracts.CobolResolutionPolicy policy = new ResolutionContracts.CobolResolutionPolicy(
-                "test-policy", "1", ResolutionContracts.QualifyMode.STANDARD, pgmnameMode);
+                "test-policy", "1", ResolutionContracts.QualifyMode.STANDARD, pgmnameMode,
+                ResolutionContracts.DynamMode.NODYNAM);
         ReferenceResolution resolution = new CobolReferenceResolver(policy, catalog)
                 .resolve(model, tables, occurrences);
         return new Analysis(model, tables, resolution);

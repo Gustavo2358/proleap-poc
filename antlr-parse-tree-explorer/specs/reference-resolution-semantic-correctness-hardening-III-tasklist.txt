@@ -109,7 +109,7 @@ Commit: `fix: separate call target syntax from linkage`
 FASE 3 — CALL EXTERNO DINÂMICO USA IDENTIDADE DINÂMICA, NÃO PGMNAME ESTÁTICO
 ======================================================================
 
-STATUS: [ ] PENDENTE
+STATUS: [x] CONCLUÍDA — RED selecionou target estático sob DYNAM; chave por linkage e incerteza verdes
 
 Hipótese:
 

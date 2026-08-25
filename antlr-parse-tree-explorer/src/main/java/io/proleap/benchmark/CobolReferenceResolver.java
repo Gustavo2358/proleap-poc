@@ -256,25 +256,11 @@ final class CobolReferenceResolver {
         if (externalCatalog.isEmpty())
             return new Decision(ResolutionContracts.ResolutionStatus.UNRESOLVED,
                     ResolutionContracts.ResolutionReason.EXTERNAL_CATALOG_NOT_PROVIDED, List.of());
-        if (policy.pgmnameMode() == ResolutionContracts.PgmnameMode.UNSPECIFIED)
-            return resolveUnspecifiedExternalProgram(reference.programName());
-        String externalCanonical = ProgramNameCanonicalizer.external(
-                reference.programName(), policy.pgmnameMode());
-        additionalLookups++;
-        List<ExternalProgramCatalog.Program> external = lookupExternal(externalCanonical);
-        additionalInspections += external.size();
-        List<ReferenceResolution.Candidate> candidates = external.stream()
-                .map(program -> externalCandidate(program, externalCanonical)).toList();
-        return nominalDecision(candidates, false);
+        return resolveExternalProgram(reference.programName());
     }
 
-    private Decision resolveUnspecifiedExternalProgram(String writtenName) {
-        LinkedHashSet<String> keys = EnumSet.of(
-                        ResolutionContracts.PgmnameMode.COMPAT,
-                        ResolutionContracts.PgmnameMode.LONGUPPER,
-                        ResolutionContracts.PgmnameMode.LONGMIXED).stream()
-                .map(mode -> ProgramNameCanonicalizer.external(writtenName, mode))
-                .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
+    private Decision resolveExternalProgram(String writtenName) {
+        LinkedHashSet<String> keys = possibleExternalKeys(writtenName);
         List<Set<ExternalProgramId>> outcomes = new ArrayList<>();
         LinkedHashMap<ExternalProgramId, ReferenceResolution.Candidate> possible = new LinkedHashMap<>();
         for (String key : keys) {
@@ -292,6 +278,24 @@ final class CobolReferenceResolver {
                     ResolutionContracts.ResolutionReason.UNSUPPORTED_DIALECT_OPTION,
                     List.copyOf(possible.values()));
         return nominalDecision(List.copyOf(possible.values()), false);
+    }
+
+    private LinkedHashSet<String> possibleExternalKeys(String writtenName) {
+        LinkedHashSet<String> keys = new LinkedHashSet<>();
+        if (policy.dynamMode() != ResolutionContracts.DynamMode.NODYNAM)
+            keys.add(ProgramNameCanonicalizer.dynamicExternal(writtenName));
+        if (policy.dynamMode() != ResolutionContracts.DynamMode.DYNAM) {
+            if (policy.pgmnameMode() == ResolutionContracts.PgmnameMode.UNSPECIFIED) {
+                EnumSet.of(ResolutionContracts.PgmnameMode.COMPAT,
+                                ResolutionContracts.PgmnameMode.LONGUPPER,
+                                ResolutionContracts.PgmnameMode.LONGMIXED).stream()
+                        .map(mode -> ProgramNameCanonicalizer.external(writtenName, mode))
+                        .forEach(keys::add);
+            } else {
+                keys.add(ProgramNameCanonicalizer.external(writtenName, policy.pgmnameMode()));
+            }
+        }
+        return keys;
     }
 
     private List<ExternalProgramCatalog.Program> lookupExternal(String canonicalName) {

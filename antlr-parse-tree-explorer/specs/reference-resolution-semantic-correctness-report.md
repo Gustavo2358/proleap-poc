@@ -1658,3 +1658,14 @@ As observações do review entram nesta seção como hipóteses. Nenhuma conclus
 - Correção: `Ast.CallTargetSyntax` agora contém somente `LITERAL_PROGRAM_NAME` e `IDENTIFIER_OR_EXPRESSION`; `DynamMode` é transportado pelo preprocessor para a policy; `ReferenceResolution.CallSemantics` associa cada CALL_TARGET a `STATIC`, `DYNAMIC` ou `UNKNOWN`. Target identifier é sempre dinâmico; literal external usa a opção; target interno nested permanece estático. Diretivas reconhecidas são substituídas preservando linhas/proveniência antes do parser COBOL.
 - Métricas AST e UI foram renomeadas para `literalTargetCalls`/`identifierTargetCalls`; nenhuma delas afirma linkage.
 - GREEN: testes da fase `2/2`; grupo AST/CALL selecionado verde; suíte completa `81/81`, sem falhas, erros ou skips; 31 checks JavaScript verdes.
+
+### Fase 3 — canonicalização externa por linkage
+
+- Regra: PGMNAME governa referências estáticas; dynamic CALL não é afetado por PGMNAME e usa folding uppercase, truncamento em oito e traduções compatíveis.
+- Fixtures: `dynamic-external-canonicalization.cbl` (`DYNAM,PGMNAME(LONGMIXED)`), `static-external-canonicalization.cbl` (`NODYNAM,PGMNAME(LONGMIXED)`) e `unknown-linkage-external-canonicalization.cbl` (PGMNAME explícito, linkage ausente).
+- Teste: `canonicalizesExternalLiteralCallsAccordingToLinkage`, cobrindo nome longo/hifenizado, leading digit e mixed case.
+- RED: sob DYNAM, a entry corretamente informava `linkage=DYNAMIC`, mas `'LONG-NAME-ABC'` foi consultado pela chave LONGMIXED e resolveu para o target estático ID 11, em vez da chave dinâmica `LONG0NAM` e ID 10. **BUG CONFIRMADO**.
+- Causa raiz: `CobolReferenceResolver.resolveProgram` sempre chamava `ProgramNameCanonicalizer.external(..., pgmnameMode)`, sem consultar `DynamMode`.
+- Correção: `ProgramNameCanonicalizer.dynamicExternal` explicita a transformação dinâmica IBM. O resolver gera chaves possíveis a partir de linkage e PGMNAME: DYNAM usa somente a chave dinâmica; NODYNAM usa PGMNAME; linkage ausente compara a chave dinâmica com todas as chaves estáticas possíveis. Divergência de IDs retorna `UNSUPPORTED_DIALECT_OPTION` com candidates preservados.
+- Controle: os helpers antigos de resolução PROGRAM declaram NODYNAM explicitamente, pois exercitam canonicalização estática PGMNAME. CALL identifier continua dinâmico e não é transformado em target nominal por valor.
+- GREEN: teste adversarial e unitário `2/2`; `CallSemanticsTest` `3/3`; suíte completa `82/82`, sem falhas, erros ou skips.

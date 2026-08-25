@@ -25,6 +25,12 @@ final class ProgramNameCanonicalizer {
                 ? semanticName : SymbolTable.canonical(semanticName);
     }
 
+    /** IBM dynamic CALL identity is COMPAT-like and is not controlled by PGMNAME. */
+    static String dynamicExternal(String writtenName) {
+        Objects.requireNonNull(writtenName, "writtenName");
+        return translatedUpper(writtenName, true);
+    }
+
     private static String translatedUpper(String writtenName, boolean truncate) {
         String canonical = SymbolTable.canonical(writtenName);
         if (truncate) canonical = canonical.substring(0, Math.min(8, canonical.length()));

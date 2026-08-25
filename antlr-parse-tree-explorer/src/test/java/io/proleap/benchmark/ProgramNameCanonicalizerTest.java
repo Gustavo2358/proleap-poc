@@ -37,6 +37,10 @@ class ProgramNameCanonicalizerTest {
                         "'mixed-Child'", ResolutionContracts.PgmnameMode.LONGUPPER)),
                 () -> assertEquals("MIXED-CHILD", ProgramNameCanonicalizer.nested(
                         "'mixed-Child'", ResolutionContracts.PgmnameMode.COMPAT)));
+        assertAll("dynamic CALL identity is COMPAT-like and independent from PGMNAME",
+                () -> assertEquals("LONG0NAM", ProgramNameCanonicalizer.dynamicExternal("LONG-NAME-ABC")),
+                () -> assertEquals("APROG", ProgramNameCanonicalizer.dynamicExternal("1PROG")),
+                () -> assertEquals("MIXED0CH", ProgramNameCanonicalizer.dynamicExternal("mixed-Child")));
     }
 
     private static String canonical(String name, ResolutionContracts.PgmnameMode mode) {
