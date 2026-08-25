@@ -1616,3 +1616,22 @@ Os resolvers continuam consultando índices por nome, unidade e scope. As corre�
 A conclusão é restrita ao binding nominal representável pelo frontend. Ownership, visibilidade, namespace, qualification, program identity, relations e categoria semântica final possuem contratos explícitos e regressões adversariais; estados `AMBIGUOUS`, `UNRESOLVED` e `UNSUPPORTED`, inclusive em declaration relations, bloqueiam readiness em vez de serem convertidos em certeza. Os lookups permanecem indexados.
 
 Esta decisão encerra apenas o hardening solicitado. Ela registra a condição prévia para trabalho futuro, mas **não inicia nem implementa CFG, def-use ou reaching definitions** nesta tarefa.
+
+## Third semantic correctness hardening — external CALL semantics
+
+### Fase 0 — baseline e hipóteses do review
+
+- SHA inicial: `cbe1b365aad74f8ce3b7f2ed3eb084c2fb5aa567`.
+- Worktree inicialmente limpo e sincronizado com `origin/main`.
+- Maven: `Tests run: 78, Failures: 0, Errors: 0, Skipped: 0`; `BUILD SUCCESS`.
+- JavaScript: 31 arquivos passaram em `node --check`.
+- `git diff --check`: exit code 0.
+- Escopo: hardening de PROGRAM externo, compiler options, contratos e métricas. CFG, call graph, def-use e reaching definitions permanecem fora desta rodada.
+
+Fontes normativas consultadas:
+
+- [IBM Enterprise COBOL 6.4 — PGMNAME](https://www.ibm.com/docs/en/cobol-zos/6.4.0?topic=options-pgmname): regras de COMPAT, LONGUPPER, LONGMIXED e a exclusão explícita de dynamic calls do efeito de PGMNAME;
+- [IBM Enterprise COBOL 6.4 — DYNAM](https://www.ibm.com/docs/en/cobol-zos/6.4.0?topic=options-dynam): CALL literal depende de DYNAM/NODYNAM e CALL identifier é sempre dinâmico;
+- [IBM — Making static calls](https://www.ibm.com/docs/en/cobol-zos/6.4.0?topic=program-making-static-calls) e [Making dynamic calls](https://www.ibm.com/docs/en/cobol-zos/6.4.0?topic=program-making-dynamic-calls): vínculo entre forma do CALL, opções e carregamento/link-edit.
+
+As observações do review entram nesta seção como hipóteses. Nenhuma conclusão funcional é aceita sem fixture, teste pré-correção e execução RED ou refutação.
