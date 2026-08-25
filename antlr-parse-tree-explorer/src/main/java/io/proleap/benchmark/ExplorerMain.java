@@ -92,7 +92,8 @@ public final class ExplorerMain {
         }
         ResolutionContracts.CobolResolutionPolicy policy = ResolutionContracts.CobolResolutionPolicy.initial()
                 .withPgmnameMode(preprocessed.pgmnameMode())
-                .withDynamMode(preprocessed.dynamMode());
+                .withDynamMode(preprocessed.dynamMode())
+                .withDllMode(preprocessed.dllMode());
         Optional<ExternalProgramCatalog> externalCatalog = Optional.empty();
         ReferenceResolution resolution = new CobolReferenceResolver(policy, externalCatalog)
                 .resolve(compilationUnit, symbolTables, occurrences);

@@ -94,7 +94,11 @@ final class CobolReferenceResolver {
         } else {
             linkage = switch (policy.dynamMode()) {
                 case DYNAM -> ResolutionContracts.CallLinkage.DYNAMIC;
-                case NODYNAM -> ResolutionContracts.CallLinkage.STATIC;
+                case NODYNAM -> switch (policy.dllMode()) {
+                    case DLL -> ResolutionContracts.CallLinkage.DLL;
+                    case NODLL -> ResolutionContracts.CallLinkage.STATIC;
+                    case UNSPECIFIED -> ResolutionContracts.CallLinkage.UNKNOWN;
+                };
                 case UNSPECIFIED -> ResolutionContracts.CallLinkage.UNKNOWN;
             };
         }

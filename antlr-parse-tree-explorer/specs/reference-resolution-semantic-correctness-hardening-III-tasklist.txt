@@ -203,6 +203,34 @@ Correção:
 Commit: `fix: block dependency readiness on unknown call semantics`
 
 ======================================================================
+FASE 5B — NODYNAM NÃO PROVA STATIC SEM NODLL
+======================================================================
+
+STATUS: [x] CONCLUÍDA — bug novo do review final; DLL/NODLL transportado e linkage explícito
+
+Achado adicional:
+
+IBM define static CALL literal sob NODYNAM e NODLL. NODYNAM com DLL não pode ser publicado como
+STATIC. A policy e o preprocessor não transportavam DLL/NODLL e o vocabulário não representava
+linkage DLL.
+
+Fixture/teste:
+
+- `call-linkage-dll.cbl` com `CBL NODYNAM,DLL`;
+- controles DYNAM/NODLL e NODYNAM/NODLL nas fixtures da Fase 2;
+- provar `DllMode` no outcome/policy e `CallLinkage.DLL` na entry.
+
+Correção:
+
+- `DllMode {DLL,NODLL,UNSPECIFIED}`;
+- STATIC exige NODYNAM+NODLL;
+- NODYNAM+DLL resulta DLL;
+- DLL ausente permanece UNKNOWN;
+- canonicalização DLL permanece governada por PGMNAME.
+
+Commit: `fix: model dll linkage for literal calls`
+
+======================================================================
 FASE 6 — EVIDÊNCIA DOCUMENTAL E REGRESSÃO INTEGRADA
 ======================================================================
 

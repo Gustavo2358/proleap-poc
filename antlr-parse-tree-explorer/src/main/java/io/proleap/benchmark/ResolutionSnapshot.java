@@ -44,6 +44,7 @@ final class ResolutionSnapshot {
             field(out, "qualifyMode", resolution.policy().qualifyMode().name()); out.write(',');
             field(out, "pgmnameMode", resolution.policy().pgmnameMode().name()); out.write(',');
             field(out, "dynamMode", resolution.policy().dynamMode().name()); out.write(',');
+            field(out, "dllMode", resolution.policy().dllMode().name()); out.write(',');
             field(out, "catalog", externalCatalogDescription); out.write(',');
             field(out, "claim", report.analysisClaim().name()); out.write(',');
             out.write("\"referenceBindingComplete\":" + report.completeness().referenceBindingComplete() + ',');

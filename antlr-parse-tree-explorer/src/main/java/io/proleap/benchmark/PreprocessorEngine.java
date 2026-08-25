@@ -18,12 +18,14 @@ final class PreprocessorEngine {
     record Outcome(String text, int errors, int unresolved, List<Diagnostic> diagnostics,
                    List<CompilerOption> compilerOptions,
                    ResolutionContracts.PgmnameMode pgmnameMode,
-                   ResolutionContracts.DynamMode dynamMode, SourceMap sourceMap) {
+                   ResolutionContracts.DynamMode dynamMode,
+                   ResolutionContracts.DllMode dllMode, SourceMap sourceMap) {
         Outcome {
             diagnostics = List.copyOf(diagnostics);
             compilerOptions = List.copyOf(compilerOptions);
             pgmnameMode = Objects.requireNonNull(pgmnameMode, "pgmnameMode");
             dynamMode = Objects.requireNonNull(dynamMode, "dynamMode");
+            dllMode = Objects.requireNonNull(dllMode, "dllMode");
         }
     }
     private record Edit(int start, int end, SourceMap replacement) {}
@@ -54,8 +56,13 @@ final class PreprocessorEngine {
                         option.name(), option.value()))
                 .filter(mode -> mode != ResolutionContracts.DynamMode.UNSPECIFIED)
                 .reduce((first, second) -> second).orElse(ResolutionContracts.DynamMode.UNSPECIFIED);
+        ResolutionContracts.DllMode dllMode = compilerOptions.stream()
+                .map(option -> ResolutionContracts.DllMode.fromCompilerOption(
+                        option.name(), option.value()))
+                .filter(mode -> mode != ResolutionContracts.DllMode.UNSPECIFIED)
+                .reduce((first, second) -> second).orElse(ResolutionContracts.DllMode.UNSPECIFIED);
         return new Outcome(document.text(), Math.toIntExact(errors), unresolved[0],
-                diagnostics, compilerOptions, pgmnameMode, dynamMode, document);
+                diagnostics, compilerOptions, pgmnameMode, dynamMode, dllMode, document);
     }
 
     private SourceMap processRecursive(SourceMap document, String file, List<Diagnostic> diagnostics,

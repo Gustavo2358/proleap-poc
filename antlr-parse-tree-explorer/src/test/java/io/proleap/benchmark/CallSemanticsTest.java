@@ -39,6 +39,8 @@ class CallSemanticsTest {
             "src/test/resources/cobol/resolution/unknown-linkage-same-external-target.cbl");
     private static final Path CALL_IDENTIFIER_RUNTIME_TARGET = Path.of(
             "src/test/resources/cobol/resolution/call-identifier-runtime-target.cbl");
+    private static final Path DLL = Path.of(
+            "src/test/resources/cobol/resolution/call-linkage-dll.cbl");
 
     @Test
     void separatesLiteralTargetSyntaxFromCompilerSelectedLinkage() throws Exception {
@@ -77,7 +79,11 @@ class CallSemanticsTest {
                 () -> assertEquals(ResolutionContracts.DynamMode.DYNAM,
                         dynam.resolution().policy().dynamMode()),
                 () -> assertEquals(ResolutionContracts.DynamMode.NODYNAM,
-                        nodynam.resolution().policy().dynamMode()));
+                        nodynam.resolution().policy().dynamMode()),
+                () -> assertEquals(ResolutionContracts.DllMode.NODLL, dynam.outcome().dllMode()),
+                () -> assertEquals(ResolutionContracts.DllMode.NODLL, nodynam.outcome().dllMode()),
+                () -> assertEquals(ResolutionContracts.DllMode.UNSPECIFIED,
+                        unspecified.outcome().dllMode()));
 
         assertCallSyntax(dynam.model().programUnits().get(0).program());
         assertCallSyntax(nodynam.model().programUnits().get(0).program());
@@ -186,6 +192,28 @@ class CallSemanticsTest {
                         gap.code().equals("DYNAMIC_CALL_TARGET_VALUE_UNKNOWN"))));
     }
 
+    @Test
+    void doesNotClassifyNodynamDllCallsAsStatic() throws Exception {
+        ExternalProgramCatalog catalog = key -> Set.of("TARGET0A", "TARGET-A").contains(key)
+                ? List.of(new ExternalProgramCatalog.Program(
+                        1, "dll-catalog", "TARGET-A", Map.of()))
+                : List.of();
+        Analysis analysis = analyze(DLL, catalog);
+        ReferenceResolution.Entry call = analysis.resolution().entries().stream()
+                .filter(entry -> entry.occurrence().role()
+                        == ResolutionContracts.ReferenceRole.CALL_TARGET)
+                .findFirst().orElseThrow();
+        assertAll("NODYNAM alone is insufficient to prove static linkage",
+                () -> assertEquals(ResolutionContracts.DynamMode.NODYNAM,
+                        analysis.outcome().dynamMode()),
+                () -> assertEquals(ResolutionContracts.DllMode.DLL, analysis.outcome().dllMode()),
+                () -> assertEquals(ResolutionContracts.DllMode.DLL,
+                        analysis.resolution().policy().dllMode()),
+                () -> assertEquals(ResolutionContracts.ResolutionStatus.RESOLVED, call.status()),
+                () -> assertEquals(ResolutionContracts.CallLinkage.DLL,
+                        call.callSemantics().orElseThrow().linkage()));
+    }
+
     private static List<ExternalProgramCatalog.Program> external(int id, String name, String linkage) {
         return List.of(new ExternalProgramCatalog.Program(
                 id, "linkage-catalog", name, Map.of("expectedLinkage", linkage)));
@@ -260,7 +288,8 @@ class CallSemanticsTest {
                     unit.id(), unit.program(), AstScopeIndex.build(unit.program(), table)));
         }
         ResolutionContracts.CobolResolutionPolicy policy = ResolutionContracts.CobolResolutionPolicy.initial()
-                .withPgmnameMode(outcome.pgmnameMode()).withDynamMode(outcome.dynamMode());
+                .withPgmnameMode(outcome.pgmnameMode()).withDynamMode(outcome.dynamMode())
+                .withDllMode(outcome.dllMode());
         ReferenceResolution resolution = new CobolReferenceResolver(policy, Optional.of(catalog))
                 .resolve(model, tables, occurrences);
         return new Analysis(outcome, build, model, occurrences, resolution);

@@ -1704,3 +1704,12 @@ O relatório anterior continha `58aea33e0280cfe2bf430017762127644d2ebef1`, que n
 - Causa raiz: completude de binding e readiness de dependências eram um único booleano derivado de `gaps.isEmpty()`, e o relatório não inspecionava `CallSemantics`.
 - Correção: gaps `CALL_LINKAGE_UNKNOWN` e `DYNAMIC_CALL_TARGET_VALUE_UNKNOWN` na categoria `CALL_SEMANTICS`. `Completeness` agora permite binding nominal completo com dependency readiness falsa e razões bloqueantes. Program summaries aplicam a mesma separação.
 - GREEN: testes da correção `2/2`, `CallSemanticsTest` `5/5` e suíte completa `86/86`, sem falhas, erros ou skips.
+
+### Achado adicional do review — DLL/NODLL
+
+- Regra: a documentação IBM condiciona static CALL literal a NODYNAM e NODLL; programas DLL usam NODYNAM+DLL e não são static linkage comum.
+- Fixture: `call-linkage-dll.cbl`, com `CBL NODYNAM,DLL`; fixtures anteriores passaram a declarar NODLL quando esperam STATIC/DYNAMIC convencional.
+- Teste: `doesNotClassifyNodynamDllCallsAsStatic`.
+- RED: `PreprocessorEngine.Outcome` e `CobolResolutionPolicy` não possuíam `dllMode`; `CallLinkage` continha apenas STATIC/DYNAMIC/UNKNOWN. Assim, NODYNAM+DLL seguia o ramo STATIC. **BUG NOVO CONFIRMADO**.
+- Correção: `DllMode {DLL,NODLL,UNSPECIFIED}` é derivado e transportado; `CallLinkage.DLL` representa DLL; STATIC exige NODYNAM+NODLL; ausência de DLL/NODLL sob NODYNAM resulta UNKNOWN. A canonicalização de DLL continua usando PGMNAME, portanto os índices de identidade externa não foram duplicados.
+- GREEN: teste específico `1/1`, `CallSemanticsTest` `6/6` e suíte completa `87/87`, sem falhas, erros ou skips.

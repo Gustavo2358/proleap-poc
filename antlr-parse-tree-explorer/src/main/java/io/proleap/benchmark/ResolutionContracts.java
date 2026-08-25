@@ -104,9 +104,24 @@ public final class ResolutionContracts {
         }
     }
 
+    public enum DllMode {
+        DLL,
+        NODLL,
+        UNSPECIFIED;
+
+        public static DllMode fromCompilerOption(String name, String value) {
+            String option = name == null ? "" : name.trim().toUpperCase(java.util.Locale.ROOT);
+            String setting = value == null ? "" : value.trim().toUpperCase(java.util.Locale.ROOT);
+            if (option.equals("NODLL")) return NODLL;
+            if (option.equals("DLL")) return setting.equals("NO") ? NODLL : DLL;
+            return UNSPECIFIED;
+        }
+    }
+
     public enum CallLinkage {
         STATIC,
         DYNAMIC,
+        DLL,
         UNKNOWN
     }
 
@@ -143,13 +158,20 @@ public final class ResolutionContracts {
 
     /** Versioned dialect/options contract; absence of an option remains explicit. */
     public record CobolResolutionPolicy(String policyId, String version, QualifyMode qualifyMode,
-                                        PgmnameMode pgmnameMode, DynamMode dynamMode) {
+                                        PgmnameMode pgmnameMode, DynamMode dynamMode,
+                                        DllMode dllMode) {
         public CobolResolutionPolicy {
             policyId = requireText(policyId, "policyId");
             version = requireText(version, "version");
             qualifyMode = Objects.requireNonNull(qualifyMode, "qualifyMode");
             pgmnameMode = Objects.requireNonNull(pgmnameMode, "pgmnameMode");
             dynamMode = Objects.requireNonNull(dynamMode, "dynamMode");
+            dllMode = Objects.requireNonNull(dllMode, "dllMode");
+        }
+
+        public CobolResolutionPolicy(String policyId, String version, QualifyMode qualifyMode,
+                                     PgmnameMode pgmnameMode, DynamMode dynamMode) {
+            this(policyId, version, qualifyMode, pgmnameMode, dynamMode, DllMode.UNSPECIFIED);
         }
 
         public CobolResolutionPolicy(String policyId, String version, QualifyMode qualifyMode,
@@ -164,15 +186,19 @@ public final class ResolutionContracts {
         public static CobolResolutionPolicy initial() {
             return new CobolResolutionPolicy(
                     "proleap-cobol/explicit-options", "3.0.0", QualifyMode.UNSPECIFIED,
-                    PgmnameMode.UNSPECIFIED, DynamMode.UNSPECIFIED);
+                    PgmnameMode.UNSPECIFIED, DynamMode.UNSPECIFIED, DllMode.UNSPECIFIED);
         }
 
         public CobolResolutionPolicy withPgmnameMode(PgmnameMode mode) {
-            return new CobolResolutionPolicy(policyId, version, qualifyMode, mode, dynamMode);
+            return new CobolResolutionPolicy(policyId, version, qualifyMode, mode, dynamMode, dllMode);
         }
 
         public CobolResolutionPolicy withDynamMode(DynamMode mode) {
-            return new CobolResolutionPolicy(policyId, version, qualifyMode, pgmnameMode, mode);
+            return new CobolResolutionPolicy(policyId, version, qualifyMode, pgmnameMode, mode, dllMode);
+        }
+
+        public CobolResolutionPolicy withDllMode(DllMode mode) {
+            return new CobolResolutionPolicy(policyId, version, qualifyMode, pgmnameMode, dynamMode, mode);
         }
     }
 
