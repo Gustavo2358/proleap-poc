@@ -12,6 +12,11 @@ final class CobolReferenceResolver {
     private record Decision(ResolutionContracts.ResolutionStatus status,
                             ResolutionContracts.ResolutionReason reason,
                             List<ReferenceResolution.Candidate> candidates) { }
+    private record ExternalProgramId(String catalogId, int programId) {
+        private ExternalProgramId(ExternalProgramCatalog.Program program) {
+            this(program.catalogId().toUpperCase(Locale.ROOT), program.id());
+        }
+    }
 
     private final ResolutionContracts.CobolResolutionPolicy policy;
     private final Optional<ExternalProgramCatalog> externalCatalog;
@@ -225,18 +230,46 @@ final class CobolReferenceResolver {
         if (externalCatalog.isEmpty())
             return new Decision(ResolutionContracts.ResolutionStatus.UNRESOLVED,
                     ResolutionContracts.ResolutionReason.EXTERNAL_CATALOG_NOT_PROVIDED, List.of());
-        if (policy.pgmnameMode() == ResolutionContracts.PgmnameMode.UNSPECIFIED
-                && dependsOnPgmname(reference.programName()))
-            return new Decision(ResolutionContracts.ResolutionStatus.UNSUPPORTED,
-                    ResolutionContracts.ResolutionReason.UNSUPPORTED_DIALECT_OPTION, List.of());
+        if (policy.pgmnameMode() == ResolutionContracts.PgmnameMode.UNSPECIFIED)
+            return resolveUnspecifiedExternalProgram(reference.programName());
         String externalCanonical = ProgramNameCanonicalizer.external(
                 reference.programName(), policy.pgmnameMode());
-        List<ExternalProgramCatalog.Program> external = List.copyOf(
-                externalCatalog.get().lookup(externalCanonical));
+        additionalLookups++;
+        List<ExternalProgramCatalog.Program> external = lookupExternal(externalCanonical);
         additionalInspections += external.size();
         List<ReferenceResolution.Candidate> candidates = external.stream()
                 .map(program -> externalCandidate(program, externalCanonical)).toList();
         return nominalDecision(candidates, false);
+    }
+
+    private Decision resolveUnspecifiedExternalProgram(String writtenName) {
+        LinkedHashSet<String> keys = EnumSet.of(
+                        ResolutionContracts.PgmnameMode.COMPAT,
+                        ResolutionContracts.PgmnameMode.LONGUPPER,
+                        ResolutionContracts.PgmnameMode.LONGMIXED).stream()
+                .map(mode -> ProgramNameCanonicalizer.external(writtenName, mode))
+                .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
+        List<Set<ExternalProgramId>> outcomes = new ArrayList<>();
+        LinkedHashMap<ExternalProgramId, ReferenceResolution.Candidate> possible = new LinkedHashMap<>();
+        for (String key : keys) {
+            additionalLookups++;
+            List<ExternalProgramCatalog.Program> programs = lookupExternal(key);
+            additionalInspections += programs.size();
+            LinkedHashSet<ExternalProgramId> ids = programs.stream().map(ExternalProgramId::new)
+                    .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
+            outcomes.add(Set.copyOf(ids));
+            for (ExternalProgramCatalog.Program program : programs)
+                possible.putIfAbsent(new ExternalProgramId(program), externalCandidate(program, key));
+        }
+        if (outcomes.stream().distinct().count() > 1)
+            return new Decision(ResolutionContracts.ResolutionStatus.UNSUPPORTED,
+                    ResolutionContracts.ResolutionReason.UNSUPPORTED_DIALECT_OPTION,
+                    List.copyOf(possible.values()));
+        return nominalDecision(List.copyOf(possible.values()), false);
+    }
+
+    private List<ExternalProgramCatalog.Program> lookupExternal(String canonicalName) {
+        return List.copyOf(externalCatalog.orElseThrow().lookup(canonicalName));
     }
 
     private List<CompilationUnitModel.ProgramUnit> visiblePrograms(
@@ -248,14 +281,6 @@ final class CobolReferenceResolver {
             List<CompilationUnitModel.ProgramUnit> programs) {
         return programs.stream().map(CompilationUnitModel.ProgramUnit::id)
                 .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
-    }
-
-    private static boolean dependsOnPgmname(String writtenName) {
-        String uppercase = SymbolTable.canonical(writtenName);
-        if (!writtenName.equals(uppercase) || uppercase.length() > 8) return true;
-        return uppercase.chars().anyMatch(character ->
-                !(character >= 'A' && character <= 'Z')
-                        && !(character >= '0' && character <= '9'));
     }
 
     private boolean visibleInternalProgram(CompilationUnitModel.ProgramUnit caller,
@@ -321,7 +346,7 @@ final class CobolReferenceResolver {
                                                                     String canonicalName) {
         ResolutionContracts.ProgramUnitId catalogOwner = new ResolutionContracts.ProgramUnitId(
                 "EXTERNAL-CATALOG:" + program.catalogId().toUpperCase(Locale.ROOT),
-                List.of(program.id()), canonicalName);
+                List.of(program.id()), SymbolTable.canonical(program.writtenName()));
         Map<String, String> attributes = new LinkedHashMap<>(program.attributes());
         attributes.put("catalogId", program.catalogId());
         attributes.put("source", "EXTERNAL_CATALOG");

@@ -32,6 +32,8 @@ class ProcedureFileProgramReferenceResolverTest {
             "src/test/resources/cobol/resolution/external-program-name-canonicalization.cbl");
     private static final Path LONGMIXED_NESTED_PROGRAM = Path.of(
             "src/test/resources/cobol/resolution/longmixed-nested-program.cbl");
+    private static final Path UNSPECIFIED_EXTERNAL_PROGRAM = Path.of(
+            "src/test/resources/cobol/resolution/unspecified-external-program-name.cbl");
 
     @Test
     void resolvesProcedureTargetsQualificationDependingOnPerformAndPreservedAlter() throws Exception {
@@ -367,13 +369,17 @@ class ProcedureFileProgramReferenceResolverTest {
                 .map(java.lang.reflect.RecordComponent::getName)
                 .collect(java.util.stream.Collectors.toSet());
 
-        ExternalProgramCatalog catalog = canonicalName -> List.of(new ExternalProgramCatalog.Program(
-                switch (canonicalName) {
-                    case "SIMPLE" -> 1;
-                    case "MIXED-CHILD" -> 2;
-                    case "LONG-NAME-ABC" -> 3;
-                    default -> 4;
-                }, "policy-catalog", canonicalName, Map.of()));
+        ExternalProgramCatalog catalog = canonicalName -> switch (canonicalName) {
+            case "SIMPLE" -> List.of(new ExternalProgramCatalog.Program(
+                    1, "policy-catalog", canonicalName, Map.of()));
+            case "mixed-Child" -> List.of(new ExternalProgramCatalog.Program(
+                    2, "policy-catalog", canonicalName, Map.of()));
+            case "LONG-NAME-ABC" -> List.of(new ExternalProgramCatalog.Program(
+                    3, "policy-catalog", canonicalName, Map.of()));
+            case "LONG0NAM" -> List.of(new ExternalProgramCatalog.Program(
+                    4, "policy-catalog", canonicalName, Map.of()));
+            default -> List.of();
+        };
         Analysis analysis = analyze(PROGRAM_NAME_POLICY, Optional.of(catalog),
                 ResolutionContracts.PgmnameMode.UNSPECIFIED);
         ResolutionContracts.ProgramUnitId caller = unit(analysis, "POLICY-CALLER");
@@ -406,11 +412,11 @@ class ProcedureFileProgramReferenceResolverTest {
                         () -> assertEntry(analysis.resolution(), caller, "'mixed-Child'",
                                 ResolutionContracts.ReferenceRole.CALL_TARGET,
                                 ResolutionContracts.ResolutionStatus.UNSUPPORTED,
-                                ResolutionContracts.ResolutionReason.UNSUPPORTED_DIALECT_OPTION, 0),
+                                ResolutionContracts.ResolutionReason.UNSUPPORTED_DIALECT_OPTION, 1),
                         () -> assertEntry(analysis.resolution(), caller, "'LONG-NAME-ABC'",
                                 ResolutionContracts.ReferenceRole.CALL_TARGET,
                                 ResolutionContracts.ResolutionStatus.UNSUPPORTED,
-                                ResolutionContracts.ResolutionReason.UNSUPPORTED_DIALECT_OPTION, 0)),
+                                ResolutionContracts.ResolutionReason.UNSUPPORTED_DIALECT_OPTION, 2)),
                 () -> assertAll("explicit modes canonicalize external identities",
                         () -> assertEquals("mixed-Child", assertEntry(longMixed.resolution(),
                                 unit(longMixed, "POLICY-CALLER"), "'mixed-Child'",
@@ -444,6 +450,59 @@ class ProcedureFileProgramReferenceResolverTest {
                 () -> assertExternalCanonical(upper, "'PROG-A'", "PROG0A"),
                 () -> assertExternalCanonical(upper, "'-PROG'", "JPROG"),
                 () -> assertExternalCanonical(mixed, "'mixed-Child'", "mixed-Child"));
+    }
+
+    @Test
+    void keepsUnspecifiedExternalProgramIdentityConservativeForLeadingDigits() throws Exception {
+        ExternalProgramCatalog catalog = canonicalName -> switch (canonicalName) {
+            case "SIMPLE" -> List.of(new ExternalProgramCatalog.Program(
+                    1, "unspecified-pgmname", "SIMPLE", Map.of()));
+            case "APROG" -> List.of(new ExternalProgramCatalog.Program(
+                    2, "unspecified-pgmname", "COMPAT-1PROG", Map.of("mode", "FOLDED")));
+            case "1PROG" -> List.of(new ExternalProgramCatalog.Program(
+                    3, "unspecified-pgmname", "LONGMIXED-1PROG", Map.of("mode", "MIXED")));
+            default -> List.of();
+        };
+        Analysis unspecified = analyze(UNSPECIFIED_EXTERNAL_PROGRAM, Optional.of(catalog),
+                ResolutionContracts.PgmnameMode.UNSPECIFIED);
+        Analysis compat = analyze(UNSPECIFIED_EXTERNAL_PROGRAM, Optional.of(catalog),
+                ResolutionContracts.PgmnameMode.COMPAT);
+        Analysis upper = analyze(UNSPECIFIED_EXTERNAL_PROGRAM, Optional.of(catalog),
+                ResolutionContracts.PgmnameMode.LONGUPPER);
+        Analysis mixed = analyze(UNSPECIFIED_EXTERNAL_PROGRAM, Optional.of(catalog),
+                ResolutionContracts.PgmnameMode.LONGMIXED);
+
+        ReferenceResolution.Entry simple = assertEntry(unspecified.resolution(),
+                unit(unspecified, "UNSPECIFIED-EXTERNAL-CALLER"), "'SIMPLE'",
+                ResolutionContracts.ReferenceRole.CALL_TARGET,
+                ResolutionContracts.ResolutionStatus.RESOLVED,
+                ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION, 1);
+        assertEquals(1, simple.candidates().get(0).entityId().localId());
+
+        ReferenceResolution.Entry dependent = assertEntry(unspecified.resolution(),
+                unit(unspecified, "UNSPECIFIED-EXTERNAL-CALLER"), "'1PROG'",
+                ResolutionContracts.ReferenceRole.CALL_TARGET,
+                ResolutionContracts.ResolutionStatus.UNSUPPORTED,
+                ResolutionContracts.ResolutionReason.UNSUPPORTED_DIALECT_OPTION, 2);
+        assertEquals(Set.of(2, 3), dependent.candidates().stream()
+                .map(candidate -> candidate.entityId().localId()).collect(
+                        java.util.stream.Collectors.toSet()));
+
+        assertEquals(2, assertEntry(compat.resolution(), unit(compat, "UNSPECIFIED-EXTERNAL-CALLER"),
+                "'1PROG'", ResolutionContracts.ReferenceRole.CALL_TARGET,
+                ResolutionContracts.ResolutionStatus.RESOLVED,
+                ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION, 1)
+                .candidates().get(0).entityId().localId());
+        assertEquals(2, assertEntry(upper.resolution(), unit(upper, "UNSPECIFIED-EXTERNAL-CALLER"),
+                "'1PROG'", ResolutionContracts.ReferenceRole.CALL_TARGET,
+                ResolutionContracts.ResolutionStatus.RESOLVED,
+                ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION, 1)
+                .candidates().get(0).entityId().localId());
+        assertEquals(3, assertEntry(mixed.resolution(), unit(mixed, "UNSPECIFIED-EXTERNAL-CALLER"),
+                "'1PROG'", ResolutionContracts.ReferenceRole.CALL_TARGET,
+                ResolutionContracts.ResolutionStatus.RESOLVED,
+                ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION, 1)
+                .candidates().get(0).entityId().localId());
     }
 
     @Test

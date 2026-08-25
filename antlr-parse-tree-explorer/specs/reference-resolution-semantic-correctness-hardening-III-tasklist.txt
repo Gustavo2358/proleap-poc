@@ -51,7 +51,7 @@ Commit: `docs: record call-semantics hardening baseline`
 FASE 1 — PGMNAME AUSENTE NÃO PODE PUBLICAR IDENTIDADE EXTERNA FALSA
 ======================================================================
 
-STATUS: [ ] PENDENTE
+STATUS: [x] CONCLUÍDA — RED confirmou false certainty; comparação por IDs catalogados verde
 
 Hipótese:
 

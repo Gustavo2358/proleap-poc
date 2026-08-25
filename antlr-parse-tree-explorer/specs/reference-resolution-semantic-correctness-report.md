@@ -1635,3 +1635,14 @@ Fontes normativas consultadas:
 - [IBM — Making static calls](https://www.ibm.com/docs/en/cobol-zos/6.4.0?topic=program-making-static-calls) e [Making dynamic calls](https://www.ibm.com/docs/en/cobol-zos/6.4.0?topic=program-making-dynamic-calls): vínculo entre forma do CALL, opções e carregamento/link-edit.
 
 As observações do review entram nesta seção como hipóteses. Nenhuma conclusão funcional é aceita sem fixture, teste pré-correção e execução RED ou refutação.
+
+### Fase 1 — PGMNAME externo ausente e leading digit
+
+- Regra: COMPAT/LONGUPPER transformam leading `1` em `A`; LONGMIXED preserva `1`. Sem a opção efetiva, um binding só é certo se as policies suportadas levarem ao mesmo conjunto de IDs do catálogo.
+- Fixture: `unspecified-external-program-name.cbl`, com controles `'SIMPLE'` e `'1PROG'`.
+- Teste: `keepsUnspecifiedExternalProgramIdentityConservativeForLeadingDigits`.
+- RED: sob `UNSPECIFIED`, `'1PROG'` foi `RESOLVED` para o target catalogado em `1PROG` (ID 3), embora `APROG` levasse a outro target (ID 2). **BUG CONFIRMADO**.
+- Causa raiz: `dependsOnPgmname` tratava uppercase alfanumérico de até oito caracteres como option-independent e o resolver consultava somente a chave uppercase.
+- Correção: remover a heurística; gerar as chaves COMPAT/LONGUPPER/LONGMIXED, consultar cada chave distinta e comparar conjuntos estáveis `(catalogId,id)`. Divergência retorna `UNSUPPORTED_DIALECT_OPTION` com a união deduplicada dos candidates possíveis. O `ProgramUnitId` externo deixa de depender da chave/alias usado no lookup.
+- Ajuste de regressão: o fake catalog legado devolvia o mesmo ID genérico para toda chave desconhecida. Ele passou a declarar somente aliases pretendidos; quando um catálogo realmente devolve o mesmo `(catalogId,id)` por aliases distintos, o binding continua seguramente resolvível.
+- GREEN: teste específico `1/1`, grupo `ProcedureFileProgramReferenceResolverTest` `18/18` e suíte completa `79/79`, sem falhas, erros ou skips.
