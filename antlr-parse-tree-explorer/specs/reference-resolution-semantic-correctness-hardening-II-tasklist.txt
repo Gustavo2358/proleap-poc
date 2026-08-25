@@ -1,0 +1,1201 @@
+# Reference Resolution Semantic Correctness Hardening II
+
+## Objetivo
+
+Executar uma segunda rodada de hardening semântico da resolução nominal COBOL, baseada em lacunas identificadas por review direto do código atual após o primeiro hardening.
+
+Esta tasklist não deve assumir que os bugs descritos realmente existem apenas porque foram identificados por revisão estática.
+
+Para cada hipótese é obrigatório:
+
+regra COBOL
++
+fixture adversarial mínima
++
+teste automatizado
++
+execução contra a implementação atual
+↓
+prova RED ou refutação da hipótese
+
+Somente depois da prova RED é permitido corrigir o código correspondente.
+
+A abordagem obrigatória é:
+
+HIPÓTESE
+↓
+FIXTURE
+↓
+TESTE
+↓
+RED comprovado
+↓
+DIAGNÓSTICO DA CAUSA RAIZ
+↓
+CORREÇÃO GERAL MÍNIMA
+↓
+GREEN
+↓
+SUÍTE COMPLETA
+↓
+COMMIT ISOLADO
+
+======================================================================
+REGRAS GERAIS DE EXECUÇÃO
+======================================================================
+
+Trabalhar exclusivamente em:
+
+antlr-parse-tree-explorer
+
+Cada fase desta tasklist representa um card independente.
+
+Diferentemente do hardening anterior:
+
+NÃO é necessário pedir autorização ao usuário entre as fases.
+
+Execute todas as fases sequencialmente até a conclusão.
+
+Porém:
+
+CADA FASE DE CORREÇÃO DEVE TERMINAR EM UM COMMIT GIT PRÓPRIO ANTES DE INICIAR A PRÓXIMA.
+
+Não misture correções de problemas diferentes no mesmo commit.
+
+Se durante uma fase for descoberto outro bug pertencente a uma fase posterior:
+
+- registre o achado;
+- não antecipe a correção;
+- trate-o em sua respectiva fase.
+
+Se surgir um bug novo não previsto nesta tasklist:
+
+- registre-o no relatório;
+- crie teste adversarial;
+- não o corrija silenciosamente;
+- trate-o em uma fase adicional própria, com commit separado.
+
+======================================================================
+PRINCÍPIO FUNDAMENTAL
+======================================================================
+
+A tasklist existe para evitar exatamente esta falácia:
+
+o código parece correto
+↓
+logo está correto
+
+A evidência exigida é:
+
+semântica COBOL documentada
++
+caso adversarial
++
+teste executável
++
+comportamento observado
+
+Não aceite o corpus existente como especificação da linguagem.
+
+Não adapte expectativas apenas para fazer o teste passar.
+
+Não crie heurísticas específicas para as fixtures.
+
+======================================================================
+RESTRIÇÕES ARQUITETURAIS
+======================================================================
+
+Preservar a arquitetura atual:
+
+AST
+↓
+SymbolTable
+↓
+ReferenceOccurrences
+↓
+ReferenceResolution
+↓
+CFG / def-use futuramente
+
+Não:
+
+- mover binding para AST;
+- adicionar estado mutável à AST;
+- substituir SemanticEntityId;
+- fundir SymbolTable e ReferenceResolution;
+- introduzir CFG nesta tarefa;
+- introduzir reaching definitions;
+- introduzir constant propagation;
+- introduzir backward value resolution;
+- fazer lookup por regex sobre source code;
+- selecionar arbitrariamente o primeiro candidato;
+- transformar AMBIGUOUS, UNRESOLVED ou UNSUPPORTED em certeza.
+
+======================================================================
+REQUISITO DE COMMITS
+======================================================================
+
+Cada fase de correção deve resultar em um commit diferente.
+
+É aceitável colocar RED + correção + regressão no mesmo commit da fase desde que o relatório registre explicitamente o RED observado antes da correção.
+
+Sugestões de mensagens:
+
+fix: harden nested global data lookup
+fix: harden nested global file lookup
+fix: propagate global fd visibility to records
+fix: enforce nominal shadowing in file resolution
+fix: complete pgmname external canonicalization
+fix: honor longmixed nested program identity
+fix: use structural level for redefines
+refactor: clarify resolved kind for subscript references
+docs: finalize second reference-resolution hardening
+
+Não squashar esses commits durante a execução desta tasklist.
+
+======================================================================
+FASE 0 — BASELINE
+======================================================================
+
+STATUS: [x] CONCLUÍDA
+
+Objetivo:
+
+Registrar o estado exato antes da segunda rodada de hardening.
+
+Checklist:
+
+- registrar SHA inicial;
+- confirmar worktree limpo;
+- executar suíte Maven completa;
+- registrar total de testes;
+- executar checks JavaScript existentes;
+- executar git diff --check;
+- confirmar ausência de alterações em:
+  - gramáticas;
+  - corpus;
+  - fixtures existentes;
+  - outputs versionados.
+
+Atualizar:
+
+specs/reference-resolution-semantic-correctness-report.md
+
+Criando uma nova seção:
+
+Second semantic correctness hardening
+
+Nenhum código de produção deve ser alterado nesta fase.
+
+======================================================================
+FASE 1 — GLOBAL EXTERNO NÃO DEVE SER BLOQUEADO POR NOME LOCAL EM PROGRAMA INTERMEDIÁRIO
+======================================================================
+
+Hipótese:
+
+A busca atual para referências DATA não qualificadas pode parar cedo demais quando encontra um nome em um programa intermediário.
+
+Topologia adversarial:
+
+OUTER
+│
+│ X GLOBAL
+│
+└── MIDDLE
+    │
+    │ X LOCAL
+    │
+    └── INNER
+          │
+          └── referência X
+
+O X LOCAL de MIDDLE não é visível de INNER.
+
+Ele não deve impedir a busca de alcançar OUTER.X GLOBAL.
+
+Fixture mínima:
+
+Criar algo conceitualmente equivalente a:
+
+PROGRAM-ID. OUTER.
+
+DATA DIVISION.
+WORKING-STORAGE SECTION.
+
+01 X GLOBAL PIC X.
+
+PROCEDURE DIVISION.
+
+PROGRAM-ID. MIDDLE.
+
+DATA DIVISION.
+WORKING-STORAGE SECTION.
+
+01 X PIC X.
+
+PROCEDURE DIVISION.
+
+PROGRAM-ID. INNER.
+
+DATA DIVISION.
+WORKING-STORAGE SECTION.
+
+01 RESULT-X PIC X.
+
+PROCEDURE DIVISION.
+    MOVE X TO RESULT-X.
+
+Garantir que a estrutura seja válida segundo a grammar.
+
+Testes obrigatórios:
+
+- comprovar que OUTER.X é GLOBAL;
+- comprovar que MIDDLE.X é LOCAL;
+- comprovar que INNER não possui X;
+- comprovar que INNER → X deve resolver para OUTER.X;
+- verificar SemanticEntityId.programUnitId;
+- verificar SymbolKind;
+- garantir que MIDDLE.X não seja retornado como candidate.
+
+Adicionar controles:
+
+INNER possui X LOCAL
+→ deve usar INNER.X
+
+MIDDLE possui X GLOBAL
+→ deve usar MIDDLE.X
+
+MIDDLE possui X LOCAL
+OUTER não possui X GLOBAL
+→ UNRESOLVED
+
+RED obrigatório:
+
+Executar o teste antes da alteração.
+
+Registrar no relatório:
+
+esperado:
+RESOLVED → OUTER.X
+
+observado:
+...
+
+classificação:
+BUG CONFIRMADO / HIPÓTESE REFUTADA
+
+Correção:
+
+Corrigir a lógica de busca por ProgramUnit para distinguir:
+
+nome encontrado no programa da referência
+
+de:
+
+nome LOCAL encontrado em ancestor, portanto invisível
+
+A busca externa deve considerar somente nomes efetivamente participantes da região GLOBAL.
+
+Não implementar uma regra específica para “pular MIDDLE”.
+
+Regressão:
+
+- teste adversarial da fase verde;
+- testes de nested visibility anteriores verdes;
+- suíte Maven completa verde.
+
+Commit:
+
+fix: harden nested global data lookup
+
+======================================================================
+FASE 2 — GLOBAL FILE NÃO DEVE SER BLOQUEADO POR FILE LOCAL INTERMEDIÁRIO
+======================================================================
+
+Hipótese:
+
+resolveFile() pode parar quando encontra um FILE homônimo local em um programa intermediário, mesmo que esse FILE não seja visível no programa interno.
+
+Topologia:
+
+OUTER
+│
+│ FILE X GLOBAL
+│
+└── MIDDLE
+    │
+    │ FILE X LOCAL
+    │
+    └── INNER
+          │
+          └── READ X
+
+Resultado esperado:
+
+INNER
+↓
+MIDDLE.X LOCAL não participa
+↓
+OUTER.X GLOBAL
+↓
+RESOLVED
+
+Fixture:
+
+Criar fixture sintética com:
+
+- OUTER.FILE-X GLOBAL;
+- MIDDLE.FILE-X LOCAL;
+- INNER READ FILE-X.
+
+Adicionar controles:
+
+MIDDLE.FILE-X GLOBAL
+→ MIDDLE vence
+
+INNER.FILE-X LOCAL
+→ INNER vence
+
+nenhum GLOBAL externo
+→ UNRESOLVED
+
+RED obrigatório:
+
+Provar o comportamento da implementação atual antes da correção.
+
+Correção:
+
+Reformular a busca FILE para utilizar uma estratégia nominal coerente com nested program visibility:
+
+local unit
+↓
+ancestors
+   └── somente declarações GLOBAL elegíveis
+
+Não retornar UNRESOLVED simplesmente porque um ancestor possui uma entidade FILE homônima LOCAL.
+
+Regressão:
+
+- fixture nova verde;
+- nested-global-file.cbl verde;
+- shadowing FILE local existente preservado;
+- suíte completa verde.
+
+Commit:
+
+fix: harden nested global file lookup
+
+======================================================================
+FASE 3 — FD GLOBAL DEVE TORNAR RECORD-NAMES E SUBORDINADOS GLOBAIS
+======================================================================
+
+Hipótese:
+
+Atualmente:
+
+collectDataEntries(file.entries(), fileScope, false)
+
+pode impedir que GLOBAL do FD seja propagado para os records associados.
+
+Caso:
+
+FD CUSTOMER-FILE GLOBAL.
+
+01 CUSTOMER-RECORD.
+   05 CUSTOMER-ID PIC X(10).
+
+Em contained program:
+
+MOVE CUSTOMER-ID TO ...
+
+deve conseguir acessar o nome global herdado.
+
+Fixture:
+
+Criar:
+
+OUTER
+└── FD CUSTOMER-FILE GLOBAL
+    └── CUSTOMER-RECORD
+        └── CUSTOMER-ID
+
+INNER
+└── usa:
+    CUSTOMER-RECORD
+    CUSTOMER-ID
+
+Se aplicável, adicionar:
+
+88 CONDITION
+INDEXED BY
+
+subordinados ao record do FD global.
+
+Testes:
+
+Verificar no SymbolTable:
+
+CUSTOMER-FILE   GLOBAL
+CUSTOMER-RECORD GLOBAL
+CUSTOMER-ID     GLOBAL
+
+e no ReferenceResolution:
+
+INNER.CUSTOMER-ID
+→ SemanticEntityId do OUTER
+
+Adicionar controle:
+
+FD local
+→ records não são herdados
+
+RED obrigatório:
+
+Provar a falha antes da alteração.
+
+Correção:
+
+Propagar a visibilidade efetiva do FileDescription para a raiz da hierarquia de seus data entries.
+
+A implementação deve reutilizar a infraestrutura existente de effectiveGlobal, não criar uma segunda regra paralela.
+
+Regressão:
+
+- GLOBAL FILE entity continua correta;
+- GLOBAL data hierarchy continua correta;
+- nova fixture verde;
+- suíte completa verde.
+
+Commit:
+
+fix: propagate global fd visibility to records
+
+======================================================================
+FASE 4 — FILE RESOLUTION DEVE RESPEITAR SHADOWING NOMINAL ENTRE NAMESPACES
+======================================================================
+
+Hipótese:
+
+A busca de resolveFile() consulta somente FILE entities e pode ignorar uma declaração homônima de outro namespace no programa atual.
+
+Caso adversarial:
+
+OUTER
+└── FILE X GLOBAL
+
+INNER
+└── DATA X LOCAL
+
+INNER:
+    READ X
+
+A busca COBOL nominal deve detectar X no programa da referência.
+
+Não deve ignorar o DATA local apenas porque o statement espera FILE e continuar até OUTER.FILE X.
+
+Fixture:
+
+Construir:
+
+OUTER:
+    FD X GLOBAL
+
+INNER:
+    01 X PIC X.
+
+    READ X
+
+ou forma sintaticamente válida equivalente.
+
+Adicionar colisões com:
+
+- CONDITION;
+- INDEX;
+- FILE local;
+- DATA local.
+
+Expectativa:
+
+Quando o primeiro nome nominal encontrado não pertence ao namespace permitido:
+
+UNRESOLVED
++
+INVALID_NAMESPACE_FOR_CONTEXT
+
+ou reason semanticamente equivalente.
+
+Nunca:
+
+ignorar nome local
+↓
+resolver FILE global externo
+
+RED obrigatório:
+
+Registrar explicitamente:
+
+nome local:
+kind = DATA
+
+nome externo:
+kind = FILE GLOBAL
+
+resultado atual:
+...
+
+resultado esperado:
+...
+
+Correção:
+
+Idealmente reutilizar ou extrair a abstração já introduzida para lookup nominal DATA:
+
+lookup nominal por ProgramUnit
+↓
+determinação da região de visibilidade
+↓
+filtragem pelo namespace permitido
+
+Evitar duplicação divergente entre:
+
+DataAndIndexReferenceResolver
+CobolReferenceResolver.resolveFile
+
+Mas não fazer redesign grande apenas por estética.
+
+Regressão:
+
+- fixture nova verde;
+- GLOBAL FILE existente verde;
+- CALL ARGUMENT DATA_OR_FILE continua funcionando;
+- suíte completa verde.
+
+Commit:
+
+fix: enforce nominal shadowing in file resolution
+
+======================================================================
+FASE 5 — COMPLETAR CANONICALIZAÇÃO DE PGMNAME PARA PROGRAMAS EXTERNOS
+======================================================================
+
+Hipótese:
+
+A implementação atual de:
+
+COMPAT
+LONGUPPER
+LONGMIXED
+
+não cobre integralmente as transformações exigidas pela policy IBM adotada.
+
+Casos adversariais mínimos:
+
+LONGUPPER:
+
+PROG-A
+
+e validar transformação de hífen conforme a opção.
+
+COMPAT:
+
+Testar:
+
+LONG-NAME-ABC
+
+e também primeiros caracteres especiais/numerais suportados pela regra IBM.
+
+Exemplos conceituais:
+
+1PROG
+$PROG
+-PROG
+
+Não assumir expectativa: documentar a transformação segundo a documentação oficial utilizada.
+
+LONGMIXED:
+
+Garantir preservação integral da forma escrita para catálogo externo.
+
+TDD:
+
+Antes da correção:
+
+- criar testes unitários da função de canonicalização;
+- criar teste end-to-end com ExternalProgramCatalog;
+- executar;
+- registrar RED.
+
+Correção:
+
+Centralizar a canonicalização externa em uma única política/função.
+
+Evitar código de transformação espalhado entre frontend e resolver.
+
+A canonicalização deve ser deterministicamente testável isoladamente.
+
+Casos obrigatórios:
+
+- COMPAT truncation;
+- COMPAT hyphen handling;
+- COMPAT leading-character handling;
+- LONGUPPER hyphen handling;
+- LONGUPPER leading-character handling;
+- LONGMIXED case preservation;
+- UNSPECIFIED → conservative result quando necessário.
+
+Regressão:
+
+- testes antigos PGMNAME verdes;
+- novo conjunto adversarial verde;
+- suíte completa verde.
+
+Commit:
+
+fix: complete pgmname external canonicalization
+
+======================================================================
+FASE 6 — LONGMIXED TAMBÉM DEVE VALER PARA NESTED PROGRAM BINDING
+======================================================================
+
+Hipótese:
+
+A identidade utilizada em:
+
+ProgramUnitId.canonicalProgramName
+
+e:
+
+programsByName
+
+ainda é construída via uppercase global, tornando nested program lookup case-insensitive mesmo em PGMNAME(LONGMIXED).
+
+Fixture:
+
+Criar:
+
+PROGRAM-ID. OUTER.
+
+CALL 'mixed-Child'.
+CALL 'MIXED-CHILD'.
+
+PROGRAM-ID. 'mixed-Child'.
+...
+
+sob:
+
+PGMNAME(LONGMIXED)
+
+Testes:
+
+Provar separadamente:
+
+CALL 'mixed-Child'
+→ nested program correto
+
+CALL 'MIXED-CHILD'
+→ não deve automaticamente resolver para o mesmo target
+
+Adicionar controles para:
+
+LONGUPPER
+COMPAT
+
+quando aplicável.
+
+Requisito arquitetural:
+
+Não alterar ProgramUnitId de forma precipitada apenas para satisfazer o teste.
+
+Avaliar se a melhor solução é:
+
+ProgramUnitId
+→ identidade estrutural estável
+
+ProgramNameLookupKey
+→ identidade dependente da CobolResolutionPolicy
+
+Essa separação é preferível caso preserve melhor a estabilidade de IDs entre fases.
+
+RED obrigatório:
+
+O teste deve provar que o comportamento atual colapsa indevidamente os dois nomes antes da correção.
+
+Regressão:
+
+- literal PROGRAM-ID continua funcionando;
+- COMMON continua funcionando;
+- duplicate nested program detection continua funcionando;
+- external PGMNAME continua funcionando;
+- suíte completa verde.
+
+Commit:
+
+fix: honor longmixed nested program identity
+
+======================================================================
+FASE 7 — REDEFINES DEVE USAR NÍVEL ESTRUTURAL, NÃO IGUALDADE TEXTUAL DE LEVEL-NUMBER
+======================================================================
+
+Hipótese:
+
+A implementação atual exige algo equivalente a:
+
+owner.level == target.level
+
+mas a regra COBOL relevante é estrutural.
+
+Dois itens podem ocupar o mesmo nível hierárquico mesmo quando seus level-numbers escritos são diferentes.
+
+Fixture:
+
+Criar caso válido sintaticamente aceito pela grammar com:
+
+mesmo parent estrutural
++
+level numbers diferentes
++
+REDEFINES
+
+Exemplo conceitual:
+
+01 GROUP-A.
+   05 ITEM-A PIC X.
+   04 ITEM-B REDEFINES ITEM-A PIC X.
+
+Usar uma forma COBOL válida segundo a documentação/dialeto adotado.
+
+Adicionar controles:
+
+mesmo número, parent diferente
+→ inválido
+
+parent igual, target correto
+→ válido
+
+Teste:
+
+Verificar explicitamente:
+
+owner.scopeId == target.scopeId
+
+ou propriedade estrutural equivalente.
+
+Não apenas nomes.
+
+RED obrigatório:
+
+Provar que o filtro textual atual rejeita o caso estruturalmente válido.
+
+Correção:
+
+Usar a hierarquia de scopes como fonte de verdade.
+
+Evitar depender de:
+
+attributes["level"]
+
+para uma propriedade que já está representada estruturalmente.
+
+Regressão:
+
+- testes anteriores REDEFINES verdes;
+- targets de outros grupos continuam rejeitados;
+- novo caso com level-number diferente verde;
+- suíte completa verde.
+
+Commit:
+
+fix: use structural level for redefines
+
+======================================================================
+FASE 8 — CLARIFICAR OCCURRENCE.KIND VS CANDIDATE.KIND PARA SUBSCRIPTS
+======================================================================
+
+Hipótese:
+
+Um subscript COBOL pode ser:
+
+INDEX
+ou
+DATA item
+
+A implementação atual pode produzir:
+
+Occurrence.kind = INDEX
+admissibleKinds = {DATA, INDEX}
+
+e depois resolver:
+
+Candidate.kind = DATA
+
+Isso não necessariamente produz binding errado, mas cria um contrato perigoso para o futuro def-use.
+
+Fixture:
+
+Criar:
+
+01 SUBSCRIPT-NUM PIC 9(4).
+
+01 TABLE-X OCCURS 100
+   PIC X.
+
+MOVE TABLE-X(SUBSCRIPT-NUM) TO ...
+
+e outro caso:
+
+01 TABLE-X OCCURS 100
+   INDEXED BY TABLE-IDX
+   PIC X.
+
+MOVE TABLE-X(TABLE-IDX) TO ...
+
+Testes:
+
+Data subscript:
+
+admissibleKinds = {DATA, INDEX}
+selected Candidate.kind = DATA
+
+Index subscript:
+
+selected Candidate.kind = INDEX
+
+Objetivo:
+
+Definir explicitamente qual destes contratos queremos:
+
+Opção A:
+
+Occurrence.kind
+=
+hint/preferred syntactic interpretation
+
+Candidate.kind
+=
+resolved semantic kind
+
+ou:
+
+Opção B:
+
+reformular o contrato para não fornecer um kind único quando a occurrence é semanticamente polimórfica.
+
+A escolha deve ser documentada.
+
+Critério principal:
+
+O futuro consumidor de ReferenceResolution não pode precisar fazer:
+
+if (occurrence.kind() == DATA)
+
+e acabar ignorando um DATA item usado como subscript.
+
+O resultado resolvido deve fornecer inequivocamente a categoria semântica final.
+
+TDD:
+
+- criar teste antes da mudança;
+- provar o estado atual;
+- se for apenas ambiguidade de contrato e não bug funcional, registrar claramente;
+- alterar somente se necessário para tornar o contrato seguro.
+
+Regressão:
+
+- GLOBAL INDEX continua resolvendo;
+- OCCURS INDEXED BY continua correto;
+- subscripts numéricos continuam corretos;
+- suíte completa verde.
+
+Commit caso haja mudança:
+
+refactor: clarify resolved kind for subscript references
+
+Caso o contrato já seja suficiente e apenas documentação/teste sejam necessários:
+
+test: lock semantic kind contract for subscript references
+
+======================================================================
+FASE 9 — REGRESSÃO INTEGRADA DA SEGUNDA RODADA
+======================================================================
+
+Executar:
+
+mvn test
+
+e registrar:
+
+Tests run
+Failures
+Errors
+Skipped
+
+Executar também:
+
+git diff --check
+
+e todos os checks JavaScript existentes.
+
+Reexecutar individualmente todos os testes adversariais criados nesta rodada.
+
+Produzir tabela:
+
+| Caso | RED observado | Correção | GREEN | Commit |
+|---|---|---|---|---|
+| GLOBAL através de ancestor LOCAL | ... | ... | ... | SHA |
+| GLOBAL FILE através de ancestor LOCAL | ... | ... | ... | SHA |
+| FD GLOBAL → record | ... | ... | ... | SHA |
+| namespace collision FILE/DATA | ... | ... | ... | SHA |
+| PGMNAME external | ... | ... | ... | SHA |
+| LONGMIXED nested | ... | ... | ... | SHA |
+| REDEFINES structural level | ... | ... | ... | SHA |
+| subscript semantic kind | ... | ... | ... | SHA |
+
+Não considerar esta fase concluída se existir qualquer teste adversarial desabilitado.
+
+======================================================================
+FASE 10 — REVIEW COMPLETO PÓS-HARDENING
+======================================================================
+
+Esta fase não deve se limitar a reler os testes.
+
+Executar um novo code review completo da resolução nominal atual, ancorado no código.
+
+Revisar obrigatoriamente:
+
+SymbolTableBuilder:
+
+- propagation de GLOBAL;
+- FILE entities;
+- DATA hierarchy;
+- CONDITION;
+- INDEX;
+- declaration relations;
+- REDEFINES;
+- RENAMES.
+
+ReferenceOccurrenceCollector:
+
+- DATA;
+- CONDITION;
+- INDEX;
+- qualifiers;
+- subscripts;
+- FILE;
+- PROGRAM;
+- declaration relations;
+- ambiguous admissible kinds.
+
+DataAndIndexReferenceResolver:
+
+- local lookup;
+- nested programs;
+- GLOBAL;
+- namespace shadowing;
+- qualification;
+- DATA/FILE qualifiers;
+- QUALIFY(STANDARD/EXTEND);
+- relation binding;
+- performance/indexes.
+
+CobolReferenceResolver:
+
+- PROCEDURE;
+- FILE;
+- GLOBAL FILE;
+- PROGRAM;
+- COMMON;
+- private siblings;
+- nested PROGRAM-ID;
+- literal PROGRAM-ID;
+- external catalog;
+- PGMNAME.
+
+ResolutionContracts:
+
+- contracts suficientemente explícitos;
+- ausência de false certainty;
+- Occurrence.kind vs admissibleKinds;
+- Candidate.kind;
+- SemanticEntityId;
+- dialect policy.
+
+ResolutionAnalysisReport:
+
+Verificar se COMPLETE ainda pode ser emitido para algum caso em que o resolver conhece uma limitação semântica.
+
+Um resultado conservador:
+
+AMBIGUOUS
+UNRESOLVED
+UNSUPPORTED
+
+deve continuar bloqueando readiness quando apropriado.
+
+======================================================================
+ADVERSARIAL REVIEW FINAL
+======================================================================
+
+Durante o review da Fase 10:
+
+não procure apenas verificar se as oito correções desta tasklist foram aplicadas.
+
+Procure novos bugs.
+
+Para cada novo caso suspeito:
+
+1. descrever a hipótese;
+2. construir fixture mínima;
+3. escrever teste;
+4. executar;
+5. provar ou refutar;
+6. se confirmado:
+   - corrigir;
+   - executar regressão;
+   - criar commit próprio.
+
+Nenhum novo bug pode ser corrigido sem teste reproduzindo o problema primeiro.
+
+======================================================================
+FASE 11 — ATUALIZAÇÃO FINAL DO RELATÓRIO
+======================================================================
+
+Atualizar:
+
+specs/reference-resolution-semantic-correctness-report.md
+
+Criar seção:
+
+## Second semantic correctness hardening
+
+Conteúdo obrigatório:
+
+1. BASELINE
+- SHA inicial;
+- total inicial de testes;
+- estado inicial da suíte.
+
+2. HIPÓTESES
+Para cada fase:
+- regra COBOL;
+- classes suspeitas;
+- fixture;
+- teste.
+
+3. RED EVIDENCE
+
+Tabela:
+
+| Hipótese | Esperado | Observado antes da correção | Resultado |
+|---|---|---|---|
+| ... | ... | ... | BUG CONFIRMADO / REFUTADO |
+
+4. ROOT CAUSE
+Para cada bug:
+- classe;
+- método;
+- decisão incorreta;
+- por que testes anteriores não detectaram.
+
+5. CORREÇÕES
+Para cada commit:
+- SHA;
+- arquivos;
+- mudança conceitual.
+
+6. GREEN EVIDENCE
+Registrar:
+- teste específico;
+- grupo;
+- suíte completa.
+
+7. PERFORMANCE
+
+Confirmar que nenhuma correção transformou lookup em:
+
+O(references × all symbols)
+
+quando índices poderiam ser utilizados.
+
+8. LACUNAS RESTANTES
+
+Separar:
+- bug conhecido;
+- limitação de frontend;
+- dialeto não suportado;
+- configuração ausente;
+- feature fora do escopo.
+
+9. REVIEW FINAL
+
+Adicionar seção:
+
+Post-hardening code review
+
+contendo os arquivos revisados e os novos problemas encontrados ou:
+
+No additional reproducible semantic bug was found in the reviewed scope.
+
+Não escrever isso sem executar o review.
+
+10. DECISÃO DE READINESS
+
+Finalizar obrigatoriamente com uma das duas conclusões:
+
+A) ReferenceResolution is sufficiently trustworthy
+   as the nominal binding foundation for CFG/def-use.
+
+ou:
+
+B) ReferenceResolution must not yet be treated
+   as a stable binding foundation for CFG/def-use.
+
+E justificar.
+
+======================================================================
+CRITÉRIOS FINAIS DE ACEITE
+======================================================================
+
+A segunda rodada só está concluída quando:
+
+- todos os casos desta tasklist têm fixtures adversariais;
+- todas as hipóteses foram executadas contra o código pré-correção;
+- REDs foram preservados no relatório;
+- hipóteses refutadas foram registradas como refutadas;
+- nenhuma correção foi feita apenas por inspeção;
+- cada bug possui teste de regressão permanente;
+- cada fase de correção possui commit próprio;
+- GLOBAL atravessando programa intermediário LOCAL foi testado;
+- GLOBAL FILE atravessando programa intermediário LOCAL foi testado;
+- FD GLOBAL propagando record/data-names foi testado;
+- FILE/DATA namespace shadowing foi testado;
+- canonicalização PGMNAME foi testada adversarialmente;
+- LONGMIXED nested program foi testado;
+- REDEFINES com level-number diferente foi testado;
+- DATA vs INDEX em subscript teve contrato fixado;
+- suíte Maven completa está verde;
+- JavaScript checks estão verdes;
+- git diff --check está verde;
+- performance/indexação não regrediu;
+- foi executado review completo pós-correções;
+- novos bugs encontrados no review receberam teste antes da correção;
+- relatório de hardening foi atualizado;
+- existe decisão explícita sobre readiness para CFG/def-use.
+
+======================================================================
+RESULTADO ESPERADO
+======================================================================
+
+O objetivo não é provar que:
+
+"todo COBOL possível está suportado"
+
+O objetivo é chegar a uma afirmação mais restrita e defensável:
+
+Para as construções nominais que o frontend afirma compreender,
+ReferenceResolution aplica regras explícitas,
+possui cobertura adversarial,
+não transforma incerteza em certeza
+e pode ser utilizada como identidade semântica
+pelas próximas fases de CFG/def-use.
+
+Somente depois dessa conclusão deve começar o desenvolvimento de def-use/reaching definitions.

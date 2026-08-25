@@ -1401,3 +1401,15 @@ Resumo das hipóteses:
 Essa conclusão é limitada ao binding nominal representável pelo frontend e coberto nesta auditoria. As falhas confirmadas de GLOBAL, shadowing, qualification, FILE, qualifier tipado, COMMON, REDEFINES, RENAMES, literal PROGRAM-ID e PGMNAME foram corrigidas por regras gerais e possuem regressões permanentes. Ownership por `ProgramUnitId`, kinds e `SemanticEntityId`s foram verificados; ambiguidade e opção de dialeto ausente permanecem conservadoras; o teste anti-scan confirma lookup indexado. A suíte final contém 67 testes Maven verdes e os 31 checks JavaScript continuam verdes.
 
 Isso torna `ReferenceResolution` uma fundação suficientemente confiável para iniciar CFG/def-use, mas não autoriza inferir valores nem converter resultados `AMBIGUOUS`, `UNSUPPORTED` ou `UNRESOLVED` em bindings. Essas decisões conservadoras devem ser propagadas pelo próximo estágio.
+
+## Second semantic correctness hardening
+
+### Fase 0 — baseline
+
+- SHA inicial: `58aea33e0280cfe2bf430017762127644d2ebef1`.
+- Estado inicial versionado: limpo. A única entrada de `git status --short` era a tasklist desta rodada, fornecida como arquivo ainda não rastreado em `specs/reference-resolution-semantic-correctness-hardening-II-tasklist.txt`.
+- Suíte Maven: `Tests run: 67, Failures: 0, Errors: 0, Skipped: 0`; `BUILD SUCCESS`.
+- Checks JavaScript: 31 arquivos em `src/main/resources/web`, `dist`, `dist-cbstm03a` e `dist-cbstm03d`; todos passaram em `node --check` (exit code 0).
+- `git diff --check`: exit code 0.
+- O baseline não alterou código de produção, gramáticas, corpus, fixtures existentes nem outputs versionados. `git diff --quiet HEAD -- corpus src/main/antlr4 src/test/resources dist dist-cbstm03a dist-cbstm03d` terminou com exit code 0 antes da criação das novas fixtures.
+- Escopo confirmado: esta rodada termina no hardening nominal, testes, review e decisão de readiness. CFG, def-use, reaching definitions, constant propagation e value resolution não serão implementados.
