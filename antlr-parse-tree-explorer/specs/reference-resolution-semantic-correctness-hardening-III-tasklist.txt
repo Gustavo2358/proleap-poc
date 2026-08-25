@@ -247,7 +247,7 @@ Commit: `fix: reject invalid dynam dll call semantics`
 FASE 6 — EVIDÊNCIA DOCUMENTAL E REGRESSÃO INTEGRADA
 ======================================================================
 
-STATUS: [ ] PENDENTE
+STATUS: [x] CONCLUÍDA — evidência integrada verde e SHA da segunda rodada corrigido
 
 - corrigir no relatório anterior o SHA inicial inválido para
   `58aea33692984750b647d87471f7f7fdc26ef4cb`;
@@ -259,11 +259,16 @@ STATUS: [ ] PENDENTE
 
 Commit documental do SHA: `docs: correct second hardening baseline sha`
 
+Evidência final: 11 testes adversariais selecionados verdes; suíte Maven 88/88; teste
+anti-scan 1/1; 31 arquivos JavaScript válidos; nenhuma desabilitação; `git diff --check`
+verde. Corpus e gramáticas permaneceram inalterados. Os únicos outputs versionados alterados
+foram os três bundles da UI necessários para remover a classificação literal=static.
+
 ======================================================================
 FASE 7 — REVIEW FINAL E RELATÓRIO
 ======================================================================
 
-STATUS: [ ] PENDENTE
+STATUS: [x] CONCLUÍDA — caminhos de produção relidos; lacunas e readiness delimitados
 
 Revisar no código:
 
@@ -288,18 +293,18 @@ Commit: `docs: finalize call-semantics hardening`
 CRITÉRIOS FINAIS DE ACEITE
 ======================================================================
 
-STATUS: [ ] PENDENTE
+STATUS: [x] CONCLUÍDA
 
-- cada hipótese executada contra o estado pré-correção;
-- cada bug confirmado possui RED preservado e regressão permanente;
-- hipótese refutada registrada sem mudança funcional desnecessária;
-- commits de correções separados;
-- nenhuma opção ausente convertida em certeza;
-- sintaxe literal não implica linkage estático;
-- canonicalização externa respeita linkage;
-- contrato de relation binding explícito;
-- métricas sintática e semântica não se confundem;
-- SHA documental corrigido;
-- Maven, JavaScript, anti-scan e integridade verdes;
-- review final executado;
-- nenhum CFG, call graph, def-use ou reaching definitions implementado.
+- [x] cada hipótese executada contra o estado pré-correção;
+- [x] cada bug confirmado possui RED preservado e regressão permanente;
+- [x] hipótese refutada registrada sem mudança funcional desnecessária;
+- [x] commits de correções separados;
+- [x] nenhuma opção ausente convertida em certeza;
+- [x] sintaxe literal não implica linkage estático;
+- [x] canonicalização externa respeita linkage;
+- [x] contrato de relation binding explícito;
+- [x] métricas sintática e semântica não se confundem;
+- [x] SHA documental corrigido;
+- [x] Maven, JavaScript, anti-scan e integridade verdes;
+- [x] review final executado;
+- [x] nenhum CFG, call graph, def-use ou reaching definitions implementado.

@@ -1721,3 +1721,92 @@ O relatório anterior continha `58aea33e0280cfe2bf430017762127644d2ebef1`, que n
 - RED: o target foi `RESOLVED / UNIQUE_VISIBLE_DECLARATION` e `linkage=DYNAMIC`, embora a combinação seja proibida pela IBM. **BUG NOVO CONFIRMADO**.
 - Correção: CALL externo sob DYNAM+DLL retorna `UNSUPPORTED / UNSUPPORTED_DIALECT_OPTION`, sem candidate inventado, e `CallSemantics.linkage=UNKNOWN`. DYNAM só publica linkage DYNAMIC quando NODLL está explícito; ausência de DLL/NODLL permanece UNKNOWN e bloqueia dependency readiness.
 - GREEN: teste específico `1/1`, `CallSemanticsTest` `7/7` e suíte completa `88/88`, sem falhas, erros ou skips.
+
+### Evidência RED consolidada da terceira rodada
+
+| Hipótese | Evidência anterior à correção | Resultado |
+|---|---|---|
+| PGMNAME ausente com leading digit | `CALL '1PROG'` publicou o ID da chave LONGMIXED apesar de COMPAT/LONGUPPER selecionarem outro ID | **BUG CONFIRMADO** |
+| literal implica static linkage | AST expunha `STATIC_LITERAL` e não transportava DYNAM | **BUG CONCEITUAL CONFIRMADO** |
+| diretiva de compiler options chega ao parser | `CBL DYNAM` era reconhecida, mas causava erro no parser COBOL | **BUG DE PIPELINE CONFIRMADO** |
+| canonicalização de dynamic CALL | DYNAM+LONGMIXED selecionou a chave estática LONGMIXED | **BUG CONFIRMADO** |
+| REDEFINES/RENAMES `RESOLVED` certifica validade completa | o binding já era nominal/estruturalmente correto; faltava declarar seu escopo | **BUG FUNCIONAL REFUTADO; LACUNA CONTRATUAL CONFIRMADA** |
+| métrica `kind` representa categoria final | contabilizava somente `Occurrence.kind`, inclusive quando candidate final era DATA | **LACUNA DE MÉTRICA CONFIRMADA** |
+| linkage UNKNOWN bloqueia dependências | binding nominal certo ainda publicava dependency readiness | **BUG NOVO CONFIRMADO** |
+| CALL identifier revela target de programa | binding do DATA item não gerava gap para o valor desconhecido em runtime | **BUG NOVO CONFIRMADO** |
+| NODYNAM basta para static | NODYNAM+DLL seguia o ramo STATIC porque DLL não era modelado | **BUG NOVO CONFIRMADO** |
+| DYNAM+DLL pode ser analisado normalmente | combinação IBM inválida publicou target RESOLVED e linkage DYNAMIC | **BUG NOVO CONFIRMADO** |
+| SHA inicial da segunda rodada | SHA longo registrado não correspondia ao commit abreviado | **ERRO DOCUMENTAL CONFIRMADO** |
+
+### Commits isolados da terceira rodada
+
+| Commit | Mudança |
+|---|---|
+| `65ceaf4` | baseline, escopo e hipóteses |
+| `29f55e5` | comparação conservadora das identidades externas sob PGMNAME ausente |
+| `a14a1e0` | separação entre target syntax e linkage; transporte de DYNAM/NODYNAM |
+| `70047c1` | canonicalização de CALL externo orientada pelo linkage |
+| `7e8f816` | contrato nominal/estrutural de declaration relations |
+| `ebaf264` | métricas separadas de kind sintático e semântico resolvido |
+| `db4ff45` | correção do SHA documental da segunda rodada |
+| `af24426` | gaps de call semantics bloqueando dependency readiness |
+| `cbbd016` | transporte de DLL/NODLL e linkage DLL explícito |
+| `52b2f51` | rejeição conservadora de DYNAM+DLL |
+
+Cada bug funcional foi primeiro observado em RED e recebeu fixture/regressão permanente antes
+da correção. A hipótese funcional sobre REDEFINES/RENAMES foi refutada sem mudança no lookup;
+somente seu contrato público foi explicitado.
+
+### Post-hardening code review
+
+O review final releu os caminhos de produção em `ProgramNameCanonicalizer`,
+`CobolReferenceResolver`, catálogo externo, AST/collector de CALL, `PreprocessorEngine`,
+`CobolResolutionPolicy`, `ReferenceResolution`, `ResolutionContracts`, snapshots,
+`ResolutionAnalysisReport` e `DeclarationRelationResolution`.
+
+Os lookups externos consultam apenas o conjunto pequeno e limitado de chaves produzido pelas
+policies suportadas. Sob opção ausente, os conjuntos estáveis `(catalogId,id)` são comparados;
+discordância vira estado conservador, não false certainty. Os índices internos por nome e scope
+permanecem inalterados, nenhum caminho passou a varrer todos os símbolos por referência e o teste
+anti-scan continuou verde.
+
+### Evidência GREEN final da terceira rodada
+
+- seleção explícita de 11 regressões adversariais: exit code `0`;
+- suíte Maven completa: `Tests run: 88, Failures: 0, Errors: 0, Skipped: 0`; `BUILD SUCCESS`;
+- teste anti-scan `usesPrebuiltNameIndexesInsteadOfScanningAllSymbolsPerReference`: `1/1` verde;
+- 31 arquivos JavaScript passaram em `node --check`;
+- nenhuma ocorrência de `@Disabled`, `@Ignore`, `assumeTrue(false)` ou `assumeFalse(true)`;
+- `git diff --check`: exit code `0`;
+- corpus e gramáticas permaneceram inalterados;
+- os três bundles versionados da UI foram atualizados somente para trocar métricas/rótulos que
+  confundiam forma literal com linkage estático;
+- 11 fixtures adversariais novas foram adicionadas, sem lógica de produção específica de fixture.
+
+### Lacunas restantes após a terceira rodada
+
+- **CALLINTERFACE:** a opção por statement ainda não é modelada. Código que dependa desse override
+  não deve tratar `CallSemantics` como prova suficiente para call graph externo.
+- **Opções fora do source:** quando o frontend não recebe as opções efetivas do build, os modos
+  permanecem `UNSPECIFIED`; o resolver preserva incerteza e bloqueia dependency readiness.
+- **CALL identifier:** o DATA item pode ser nominalmente resolvido, mas descobrir o programa em
+  runtime exige análise de valores, fora deste hardening. O gap correspondente é explícito.
+- **Catálogo externo:** correção de conteúdo, aliases e completude do catálogo são premissas de
+  entrada; o resolver só compara identidades estáveis devolvidas por ele.
+- **REDEFINES/RENAMES:** `RESOLVED` certifica somente o target nominal/estrutural, não a validade
+  integral da cláusula segundo todas as regras COBOL.
+- **Features futuras:** CFG, call graph, def-use, reaching definitions e propagação de valores não
+  foram implementados nesta rodada.
+
+### Decisão de readiness da terceira rodada
+
+**Binding nominal:** suficientemente confiável como fundação para CFG estrutural e para um futuro
+def-use. Consumidores devem usar `entry.selectedCandidate().kind()` como categoria semântica final.
+
+**Call graph externo:** não há autorização para inferir uma aresta apenas porque o target é literal.
+Ela exige binding resolvido, `CallSemantics` conhecido, ausência de gaps bloqueantes e ausência de
+semântica CALLINTERFACE não modelada. Assim, a rodada remove a false certainty conhecida, mas não
+declara suporte universal a call graph externo.
+
+Esta conclusão encerra exclusivamente o hardening solicitado. **Nenhum CFG, call graph, def-use ou
+reaching definitions foi iniciado ou implementado.**
