@@ -6,6 +6,11 @@ import java.util.*;
 public final class ReferenceOccurrences {
     public enum Preservation { STRUCTURED, PRESERVED_CONTAINER, PRESERVED_NODE }
 
+    /**
+     * A nominal use before binding. {@code kind} is the primary syntactic interpretation;
+     * {@code admissibleKinds} retains every semantic category allowed by that syntax.
+     * Consumers must use the selected candidate kind, not this hint, as the final resolved category.
+     */
     public record Occurrence(int id, ResolutionContracts.ProgramUnitId programUnitId,
                              int referenceAstNodeId, int scopeId,
                              ResolutionContracts.ReferenceKind kind,

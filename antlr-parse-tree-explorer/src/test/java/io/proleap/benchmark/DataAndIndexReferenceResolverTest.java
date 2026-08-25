@@ -29,6 +29,8 @@ class DataAndIndexReferenceResolverTest {
             "src/test/resources/cobol/resolution/redefines-different-level-number.cbl");
     private static final Path RENAMES_STRUCTURAL = Path.of(
             "src/test/resources/cobol/resolution/renames-structural-binding.cbl");
+    private static final Path SUBSCRIPT_SEMANTIC_KIND = Path.of(
+            "src/test/resources/cobol/resolution/subscript-semantic-kind.cbl");
 
     @Test
     void resolvesSimpleDuplicateMissingAndIncompatibleNames() throws Exception {
@@ -447,6 +449,41 @@ class DataAndIndexReferenceResolverTest {
                 "inspection must be proportional to same-name candidates, not all symbols");
         assertTrue(analysis.resolution().metrics().indexedDeclarations()
                 >= analysis.tables().units().get(0).symbolTable().symbols().size());
+    }
+
+    @Test
+    void exposesTheResolvedSemanticKindForPolymorphicSubscripts() throws Exception {
+        Analysis analysis = analyze(SUBSCRIPT_SEMANTIC_KIND, ResolutionContracts.QualifyMode.STANDARD);
+        ResolutionContracts.ProgramUnitId unit = analysis.model().programUnits().get(0).id();
+        ReferenceResolution.Entry dataSubscript = assertEntry(analysis.resolution(), unit,
+                "SUBSCRIPT-NUM", ResolutionContracts.ReferenceRole.SUBSCRIPT,
+                ResolutionContracts.ResolutionStatus.RESOLVED,
+                ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION, 1);
+        ReferenceResolution.Entry indexSubscript = assertEntry(analysis.resolution(), unit,
+                "TABLE-IDX", ResolutionContracts.ReferenceRole.SUBSCRIPT,
+                ResolutionContracts.ResolutionStatus.RESOLVED,
+                ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION, 1);
+
+        assertAll("occurrence kind is a syntactic hint and admissibleKinds preserves polymorphism",
+                () -> assertEquals(ResolutionContracts.ReferenceKind.INDEX,
+                        dataSubscript.occurrence().kind()),
+                () -> assertEquals(EnumSet.of(ResolutionContracts.ReferenceKind.DATA,
+                                ResolutionContracts.ReferenceKind.INDEX),
+                        dataSubscript.occurrence().admissibleKinds()),
+                () -> assertEquals(ResolutionContracts.ReferenceKind.INDEX,
+                        indexSubscript.occurrence().kind()),
+                () -> assertEquals(EnumSet.of(ResolutionContracts.ReferenceKind.DATA,
+                                ResolutionContracts.ReferenceKind.INDEX),
+                        indexSubscript.occurrence().admissibleKinds()));
+        assertAll("selected candidate kind is the final semantic category",
+                () -> assertEquals(ResolutionContracts.ReferenceKind.DATA,
+                        dataSubscript.selectedCandidate().orElseThrow().kind()),
+                () -> assertEquals(ResolutionContracts.SemanticEntityDomain.DATA_SYMBOL,
+                        dataSubscript.selectedCandidate().orElseThrow().entityId().domain()),
+                () -> assertEquals(ResolutionContracts.ReferenceKind.INDEX,
+                        indexSubscript.selectedCandidate().orElseThrow().kind()),
+                () -> assertEquals(ResolutionContracts.SemanticEntityDomain.INDEX_SYMBOL,
+                        indexSubscript.selectedCandidate().orElseThrow().entityId().domain()));
     }
 
     private static ReferenceResolution.Entry assertEntry(

@@ -1484,3 +1484,13 @@ Isso torna `ReferenceResolution` uma fundação suficientemente confiável para 
 - Causa raiz: `DataAndIndexReferenceResolver.resolveRedefines` já fazia `lookupLocal(owner.scopeId(), ...)`, mas aplicava depois igualdade de `attributes["level"]`, rejeitando siblings válidos com grafias de level diferentes.
 - Correção geral mínima: remover a comparação textual e conservar o lookup indexado no scope estrutural do owner; targets de outros grupos continuam fora do bucket local.
 - GREEN: teste adversarial `1/1`, grupo `DataAndIndexReferenceResolverTest` `15/15` e suíte completa `75/75`, sem falhas, erros ou testes ignorados. Os testes anteriores de REDEFINES e targets fora do grupo permaneceram verdes.
+
+### Fase 8 — contrato semântico de subscripts
+
+- Regra: um subscript pode designar DATA ou INDEX; a resolução final precisa expor inequivocamente a categoria selecionada.
+- Fixture: `subscript-semantic-kind.cbl`, com `SUBSCRIPT-NUM` DATA e `TABLE-IDX` declarado por `INDEXED BY`, ambos usados como subscripts da mesma tabela.
+- Teste: `exposesTheResolvedSemanticKindForPolymorphicSubscripts`.
+- Execução pré-mudança: `1/1` verde. DATA subscript: `Occurrence.kind=INDEX`, `admissibleKinds={DATA,INDEX}`, `selectedCandidate.kind=DATA`; index subscript: `selectedCandidate.kind=INDEX`. **HIPÓTESE DE BUG FUNCIONAL REFUTADA**.
+- Contrato escolhido (Opção A): `Occurrence.kind` é a interpretação sintática primária/hint; `admissibleKinds` preserva o polimorfismo; `Candidate.kind`, acessado por `Entry.selectedCandidate()` quando `RESOLVED`, é a categoria semântica final.
+- Mudança: somente Javadocs em `ReferenceOccurrences.Occurrence`, `ReferenceResolution.Candidate` e `selectedCandidate`; nenhuma lógica de binding foi alterada.
+- GREEN final da fase: teste adversarial `1/1` e suíte completa `76/76`, sem falhas, erros ou testes ignorados. GLOBAL INDEX, `INDEXED BY` e subscripts numéricos permaneceram verdes.

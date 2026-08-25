@@ -825,6 +825,8 @@ fix: use structural level for redefines
 FASE 8 — CLARIFICAR OCCURRENCE.KIND VS CANDIDATE.KIND PARA SUBSCRIPTS
 ======================================================================
 
+STATUS: [x] CONCLUÍDA — hipótese funcional refutada; contrato Opção A documentado e testado
+
 Hipótese:
 
 Um subscript COBOL pode ser:

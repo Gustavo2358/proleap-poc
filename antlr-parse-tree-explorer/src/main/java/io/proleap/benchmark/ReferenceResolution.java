@@ -4,6 +4,7 @@ import java.util.*;
 
 /** Immutable name-binding product. AST and Symbol Table remain unmodified. */
 public final class ReferenceResolution {
+    /** A candidate's {@code kind} is its semantic declaration category after lookup. */
     public record Candidate(ResolutionContracts.SemanticEntityId entityId,
                             ResolutionContracts.ReferenceKind kind,
                             String writtenName, String canonicalName,
@@ -35,6 +36,7 @@ public final class ReferenceResolution {
                 throw new IllegalArgumentException("AMBIGUOUS entry must preserve every candidate");
         }
 
+        /** The selected candidate, including the final semantic kind, only for certain bindings. */
         public Optional<Candidate> selectedCandidate() {
             return status == ResolutionContracts.ResolutionStatus.RESOLVED
                     ? Optional.of(candidates.get(0)) : Optional.empty();
