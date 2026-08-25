@@ -231,6 +231,19 @@ Correção:
 Commit: `fix: model dll linkage for literal calls`
 
 ======================================================================
+FASE 5C — DYNAM+DLL INVÁLIDO NÃO PODE PUBLICAR CERTEZA
+======================================================================
+
+STATUS: [x] CONCLUÍDA — bug novo do review final; configuração inválida fica UNSUPPORTED
+
+Fixture `invalid-dynam-dll-call.cbl` e teste adversarial comprovam que a combinação proibida pela
+IBM antes produzia target RESOLVED/linkage DYNAMIC. O resolver agora retorna
+`UNSUPPORTED_DIALECT_OPTION` e linkage UNKNOWN. DYNAM sem DLL/NODLL explícito também preserva
+linkage UNKNOWN; somente DYNAM+NODLL prova DYNAMIC.
+
+Commit: `fix: reject invalid dynam dll call semantics`
+
+======================================================================
 FASE 6 — EVIDÊNCIA DOCUMENTAL E REGRESSÃO INTEGRADA
 ======================================================================
 

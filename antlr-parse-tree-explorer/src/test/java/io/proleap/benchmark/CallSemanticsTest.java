@@ -41,6 +41,8 @@ class CallSemanticsTest {
             "src/test/resources/cobol/resolution/call-identifier-runtime-target.cbl");
     private static final Path DLL = Path.of(
             "src/test/resources/cobol/resolution/call-linkage-dll.cbl");
+    private static final Path INVALID_DYNAM_DLL = Path.of(
+            "src/test/resources/cobol/resolution/invalid-dynam-dll-call.cbl");
 
     @Test
     void separatesLiteralTargetSyntaxFromCompilerSelectedLinkage() throws Exception {
@@ -211,6 +213,29 @@ class CallSemanticsTest {
                         analysis.resolution().policy().dllMode()),
                 () -> assertEquals(ResolutionContracts.ResolutionStatus.RESOLVED, call.status()),
                 () -> assertEquals(ResolutionContracts.CallLinkage.DLL,
+                        call.callSemantics().orElseThrow().linkage()));
+    }
+
+    @Test
+    void rejectsTheInvalidDynamDllCompilerOptionCombination() throws Exception {
+        ExternalProgramCatalog catalog = key -> key.equals("TARGET0A")
+                ? List.of(new ExternalProgramCatalog.Program(
+                        1, "invalid-options-catalog", "TARGET-A", Map.of()))
+                : List.of();
+        Analysis analysis = analyze(INVALID_DYNAM_DLL, catalog);
+        ReferenceResolution.Entry call = analysis.resolution().entries().stream()
+                .filter(entry -> entry.occurrence().role()
+                        == ResolutionContracts.ReferenceRole.CALL_TARGET)
+                .findFirst().orElseThrow();
+        assertAll("DYNAM and DLL are not a supported certain call configuration",
+                () -> assertEquals(ResolutionContracts.DynamMode.DYNAM,
+                        analysis.resolution().policy().dynamMode()),
+                () -> assertEquals(ResolutionContracts.DllMode.DLL,
+                        analysis.resolution().policy().dllMode()),
+                () -> assertEquals(ResolutionContracts.ResolutionStatus.UNSUPPORTED, call.status()),
+                () -> assertEquals(ResolutionContracts.ResolutionReason.UNSUPPORTED_DIALECT_OPTION,
+                        call.reason()),
+                () -> assertEquals(ResolutionContracts.CallLinkage.UNKNOWN,
                         call.callSemantics().orElseThrow().linkage()));
     }
 

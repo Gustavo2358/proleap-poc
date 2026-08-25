@@ -1713,3 +1713,11 @@ O relatório anterior continha `58aea33e0280cfe2bf430017762127644d2ebef1`, que n
 - RED: `PreprocessorEngine.Outcome` e `CobolResolutionPolicy` não possuíam `dllMode`; `CallLinkage` continha apenas STATIC/DYNAMIC/UNKNOWN. Assim, NODYNAM+DLL seguia o ramo STATIC. **BUG NOVO CONFIRMADO**.
 - Correção: `DllMode {DLL,NODLL,UNSPECIFIED}` é derivado e transportado; `CallLinkage.DLL` representa DLL; STATIC exige NODYNAM+NODLL; ausência de DLL/NODLL sob NODYNAM resulta UNKNOWN. A canonicalização de DLL continua usando PGMNAME, portanto os índices de identidade externa não foram duplicados.
 - GREEN: teste específico `1/1`, `CallSemanticsTest` `6/6` e suíte completa `87/87`, sem falhas, erros ou skips.
+
+### Achado adicional do review — combinação DYNAM+DLL inválida
+
+- Fixture: `invalid-dynam-dll-call.cbl`, com `CBL DYNAM,DLL` e target externo catalogado.
+- Teste: `rejectsTheInvalidDynamDllCompilerOptionCombination`.
+- RED: o target foi `RESOLVED / UNIQUE_VISIBLE_DECLARATION` e `linkage=DYNAMIC`, embora a combinação seja proibida pela IBM. **BUG NOVO CONFIRMADO**.
+- Correção: CALL externo sob DYNAM+DLL retorna `UNSUPPORTED / UNSUPPORTED_DIALECT_OPTION`, sem candidate inventado, e `CallSemantics.linkage=UNKNOWN`. DYNAM só publica linkage DYNAMIC quando NODLL está explícito; ausência de DLL/NODLL permanece UNKNOWN e bloqueia dependency readiness.
+- GREEN: teste específico `1/1`, `CallSemanticsTest` `7/7` e suíte completa `88/88`, sem falhas, erros ou skips.

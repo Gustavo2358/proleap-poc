@@ -93,7 +93,9 @@ final class CobolReferenceResolver {
             linkage = ResolutionContracts.CallLinkage.STATIC;
         } else {
             linkage = switch (policy.dynamMode()) {
-                case DYNAM -> ResolutionContracts.CallLinkage.DYNAMIC;
+                case DYNAM -> policy.dllMode() == ResolutionContracts.DllMode.NODLL
+                        ? ResolutionContracts.CallLinkage.DYNAMIC
+                        : ResolutionContracts.CallLinkage.UNKNOWN;
                 case NODYNAM -> switch (policy.dllMode()) {
                     case DLL -> ResolutionContracts.CallLinkage.DLL;
                     case NODLL -> ResolutionContracts.CallLinkage.STATIC;
@@ -257,10 +259,18 @@ final class CobolReferenceResolver {
             List<ReferenceResolution.Candidate> candidates = visible.stream().map(this::programCandidate).toList();
             return nominalDecision(candidates, false);
         }
+        if (invalidExternalCallOptions())
+            return new Decision(ResolutionContracts.ResolutionStatus.UNSUPPORTED,
+                    ResolutionContracts.ResolutionReason.UNSUPPORTED_DIALECT_OPTION, List.of());
         if (externalCatalog.isEmpty())
             return new Decision(ResolutionContracts.ResolutionStatus.UNRESOLVED,
                     ResolutionContracts.ResolutionReason.EXTERNAL_CATALOG_NOT_PROVIDED, List.of());
         return resolveExternalProgram(reference.programName());
+    }
+
+    private boolean invalidExternalCallOptions() {
+        return policy.dynamMode() == ResolutionContracts.DynamMode.DYNAM
+                && policy.dllMode() == ResolutionContracts.DllMode.DLL;
     }
 
     private Decision resolveExternalProgram(String writtenName) {
