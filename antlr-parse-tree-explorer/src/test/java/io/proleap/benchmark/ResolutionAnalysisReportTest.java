@@ -100,6 +100,30 @@ class ResolutionAnalysisReportTest {
                 analysis.model().find(entry.occurrence().programUnitId()).isPresent()));
     }
 
+    @Test
+    void unresolvedDeclarationRelationsBlockDependencyReadiness() throws Exception {
+        String source = Files.readString(Path.of(
+                "src/test/resources/cobol/resolution/redefines-different-level-number.cbl"),
+                StandardCharsets.UTF_8);
+        Analysis analysis = analyze(source, "redefines-different-level-number.cbl");
+        assertTrue(analysis.resolution().declarationRelations().entries().stream().anyMatch(entry ->
+                entry.status() != ResolutionContracts.ResolutionStatus.RESOLVED));
+        assertTrue(analysis.resolution().entries().stream().allMatch(entry ->
+                entry.status() == ResolutionContracts.ResolutionStatus.RESOLVED),
+                "generic nominal occurrences intentionally isolate the relation-specific readiness gap");
+
+        ResolutionAnalysisReport report = ResolutionAnalysisReport.compose(analysis.build(),
+                ResolutionAnalysisReport.FrontendState.complete(), analysis.occurrences(),
+                analysis.resolution());
+        assertAll("an invalid declaration relation must block downstream readiness",
+                () -> assertFalse(report.completeness().referenceBindingComplete()),
+                () -> assertFalse(report.completeness().dependencyAnalysisReady()),
+                () -> assertEquals(ResolutionAnalysisReport.AnalysisClaim.INCOMPLETE,
+                        report.analysisClaim()),
+                () -> assertTrue(report.gaps().stream().anyMatch(gap ->
+                        gap.code().startsWith("DECLARATION_RELATION_UNRESOLVED_"))));
+    }
+
     private static ReferenceResolution resolveAgain(Analysis analysis) {
         return new CobolReferenceResolver(ResolutionContracts.CobolResolutionPolicy.initial(), Optional.empty())
                 .resolve(analysis.model(), analysis.tables(), analysis.occurrences());

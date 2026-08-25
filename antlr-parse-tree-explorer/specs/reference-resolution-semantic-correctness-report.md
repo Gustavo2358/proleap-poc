@@ -1527,3 +1527,13 @@ Evidência executada:
 - Causa raiz: `ProgramNameCanonicalizer.nested(UNSPECIFIED)` e `programsByName` colapsavam a chave por uppercase antes de avaliar se a opção ausente mudava o conjunto de targets internos.
 - Correção geral mínima: o resolver mantém buckets preindexados folded e LONGMIXED. Sob `UNSPECIFIED`, compara os conjuntos de programas visíveis; igualdade permite binding option-independent, divergência retorna `UNSUPPORTED / UNSUPPORTED_DIALECT_OPTION` preservando os targets possíveis. Não há scan de todos os programas por referência.
 - GREEN: teste específico `1/1`, grupo `ProcedureFileProgramReferenceResolverTest` `17/17` e suíte completa `77/77`, sem falhas, erros ou testes ignorados. O caso de grafia exata, comum a todas as policies, continua resolvido.
+
+### Fase 10 — achado adicional: declaration relations e readiness
+
+- Hipótese de review: `ResolutionAnalysisReport` pode emitir `COMPLETE` quando a occurrence nominal está resolvida, mas a relação estrutural REDEFINES/RENAMES correspondente está `UNRESOLVED`, `AMBIGUOUS` ou `UNSUPPORTED`.
+- Fixture: `redefines-different-level-number.cbl`, cujo `BAD-X REDEFINES OTHER-X` possui nome nominal único, mas parent estrutural inválido.
+- Teste: `ResolutionAnalysisReportTest.unresolvedDeclarationRelationsBlockDependencyReadiness`.
+- RED observado: todas as occurrences eram `RESOLVED`, a relação inválida era `UNRESOLVED`, mas `referenceBindingComplete=true`, `dependencyAnalysisReady=true` e claim `COMPLETE`. **BUG NOVO CONFIRMADO**.
+- Causa raiz: `ResolutionAnalysisReport.addResolutionGaps` iterava apenas `ReferenceResolution.entries()` e ignorava `declarationRelations()`.
+- Correção geral mínima: relações não resolvidas agora geram gaps `DECLARATION_RELATION_<STATUS>_<REASON>` e bloqueiam readiness. Um mapa por `ProgramUnitId + referenceAstNodeId` preserva regra, linha e occurrence id sem lookup quadrático.
+- GREEN: teste específico `1/1`, grupo `ResolutionAnalysisReportTest` `5/5` e suíte completa `78/78`, sem falhas, erros ou testes ignorados.

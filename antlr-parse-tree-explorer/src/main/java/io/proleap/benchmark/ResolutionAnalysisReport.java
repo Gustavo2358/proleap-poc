@@ -207,7 +207,10 @@ public final class ResolutionAnalysisReport {
     }
 
     private static void addResolutionGaps(ReferenceResolution resolution, List<Gap> gaps) {
+        Map<String, ReferenceResolution.Entry> entriesByReferenceNode = new HashMap<>();
         for (ReferenceResolution.Entry entry : resolution.entries()) {
+            entriesByReferenceNode.put(entry.occurrence().programUnitId() + "#"
+                    + entry.occurrence().referenceAstNodeId(), entry);
             if (entry.status() == ResolutionContracts.ResolutionStatus.RESOLVED) continue;
             ReferenceOccurrences.Occurrence occurrence = entry.occurrence();
             addGap(gaps, GapCategory.REFERENCE_BINDING,
@@ -216,6 +219,20 @@ public final class ResolutionAnalysisReport {
                             + occurrence.writtenText() + "': " + entry.reason(),
                     occurrence.programUnitId(), occurrence.grammarRule(),
                     occurrence.meta().span().startLine(), occurrence.id());
+        }
+        for (DeclarationRelationResolution.Entry relation :
+                resolution.declarationRelations().entries()) {
+            if (relation.status() == ResolutionContracts.ResolutionStatus.RESOLVED) continue;
+            ReferenceResolution.Entry nominal = entriesByReferenceNode.get(
+                    relation.programUnitId() + "#" + relation.referenceAstNodeId());
+            ReferenceOccurrences.Occurrence occurrence = nominal == null ? null : nominal.occurrence();
+            addGap(gaps, GapCategory.REFERENCE_BINDING,
+                    "DECLARATION_RELATION_" + relation.status() + "_" + relation.reason(),
+                    relation.status() + " " + relation.kind() + " declaration relation: "
+                            + relation.reason(), relation.programUnitId(),
+                    occurrence == null ? "" : occurrence.grammarRule(),
+                    occurrence == null ? 0 : occurrence.meta().span().startLine(),
+                    occurrence == null ? -1 : occurrence.id());
         }
     }
 
