@@ -155,9 +155,11 @@ final class CobolReferenceResolver {
                 List<SymbolTable.Entity> visible = owner.equals(occurrence.programUnitId()) ? named
                         : named.stream().filter(entity -> "GLOBAL".equals(
                                 entity.attributes().get("visibility"))).toList();
-                List<ReferenceResolution.Candidate> candidates = visible.stream()
-                        .map(entity -> fileCandidate(owner, entity)).toList();
-                return nominalDecision(candidates, false);
+                if (!visible.isEmpty()) {
+                    List<ReferenceResolution.Candidate> candidates = visible.stream()
+                            .map(entity -> fileCandidate(owner, entity)).toList();
+                    return nominalDecision(candidates, false);
+                }
             }
             current = unit.unit().parentId();
         }

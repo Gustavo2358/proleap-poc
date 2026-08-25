@@ -16,6 +16,8 @@ class ProcedureFileProgramReferenceResolverTest {
     private static final Path PROGRAM = Path.of("src/test/resources/cobol/resolution/program-binding.cbl");
     private static final Path NESTED_GLOBAL_FILE = Path.of(
             "src/test/resources/cobol/resolution/nested-global-file.cbl");
+    private static final Path GLOBAL_FILE_THROUGH_LOCAL = Path.of(
+            "src/test/resources/cobol/resolution/nested-global-through-local-file.cbl");
     private static final Path DATA_FILE_QUALIFIER_COLLISION = Path.of(
             "src/test/resources/cobol/resolution/data-file-qualifier-collision.cbl");
     private static final Path COMMON_PROGRAM_VISIBILITY = Path.of(
@@ -133,6 +135,35 @@ class ProcedureFileProgramReferenceResolverTest {
                                 "GLOBAL-FD-ONLY", outer, 1, "GLOBAL"),
                         () -> assertFileCandidate(analysis.resolution(), inner,
                                 "SHADOW-FILE", inner, 2, "LOCAL")));
+    }
+
+    @Test
+    void skipsInvisibleLocalFilesInIntermediateProgramsWhenLookingForGlobalFiles() throws Exception {
+        Analysis analysis = analyze(GLOBAL_FILE_THROUGH_LOCAL, Optional.empty());
+        ResolutionContracts.ProgramUnitId outerA = unit(analysis, "FILE-OUTER-A");
+        ResolutionContracts.ProgramUnitId middleA = unit(analysis, "FILE-MIDDLE-A");
+        ResolutionContracts.ProgramUnitId innerA = unit(analysis, "FILE-INNER-A");
+        ResolutionContracts.ProgramUnitId middleB = unit(analysis, "FILE-MIDDLE-B");
+        ResolutionContracts.ProgramUnitId innerB = unit(analysis, "FILE-INNER-B");
+        ResolutionContracts.ProgramUnitId innerC = unit(analysis, "FILE-INNER-C");
+        ResolutionContracts.ProgramUnitId innerD = unit(analysis, "FILE-INNER-D");
+
+        assertAll("adversarial FILE visibility topology",
+                () -> assertFileEntity(analysis.tables().forProgramUnit(outerA).orElseThrow().symbolTable(),
+                        "FILE-X", 1, "GLOBAL"),
+                () -> assertFileEntity(analysis.tables().forProgramUnit(middleA).orElseThrow().symbolTable(),
+                        "FILE-X", 1, "LOCAL"),
+                () -> assertTrue(analysis.tables().forProgramUnit(innerA).orElseThrow().symbolTable()
+                        .entities().stream().noneMatch(entity -> entity.canonicalName().equals("FILE-X"))));
+
+        assertAll("nested FILE lookup ignores only invisible ancestor declarations",
+                () -> assertFileCandidate(analysis.resolution(), innerA, "FILE-X", outerA, 1, "GLOBAL"),
+                () -> assertFileCandidate(analysis.resolution(), innerB, "FILE-X", middleB, 1, "GLOBAL"),
+                () -> assertFileCandidate(analysis.resolution(), innerC, "FILE-X", innerC, 1, "LOCAL"),
+                () -> assertEntry(analysis.resolution(), innerD, "FILE-X",
+                        ResolutionContracts.ReferenceRole.FILE_OPERATION,
+                        ResolutionContracts.ResolutionStatus.UNRESOLVED,
+                        ResolutionContracts.ResolutionReason.DECLARATION_NOT_FOUND, 0));
     }
 
     @Test

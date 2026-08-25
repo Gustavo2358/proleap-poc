@@ -314,6 +314,8 @@ fix: harden nested global data lookup
 FASE 2 — GLOBAL FILE NÃO DEVE SER BLOQUEADO POR FILE LOCAL INTERMEDIÁRIO
 ======================================================================
 
+STATUS: [x] CONCLUÍDA — RED comprovado, correção geral e regressão verdes
+
 Hipótese:
 
 resolveFile() pode parar quando encontra um FILE homônimo local em um programa intermediário, mesmo que esse FILE não seja visível no programa interno.

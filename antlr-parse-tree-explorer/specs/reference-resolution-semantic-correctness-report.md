@@ -1423,3 +1423,13 @@ Isso torna `ReferenceResolution` uma fundação suficientemente confiável para 
 - Causa raiz: `DataAndIndexReferenceResolver.compatibleCandidates` interrompia `stopAtFirstNominalLevel` para qualquer homônimo em qualquer ancestor, antes de excluir declarações LOCAL invisíveis.
 - Correção geral mínima: o programa da referência continua aplicando shadowing a qualquer homônimo; em ancestors, somente declarações GLOBAL participam do corte nominal e da seleção. A consulta permanece no índice `byName` por unidade.
 - GREEN: teste adversarial `1/1`, grupo `DataAndIndexReferenceResolverTest` `13/13` e suíte completa `68/68`, sem falhas, erros ou testes ignorados.
+
+### Fase 2 — GLOBAL FILE através de ancestor LOCAL
+
+- Regra: FILE local de um programa ancestral não é visível ao programa indiretamente contido; somente FILE GLOBAL participa da busca externa, e o GLOBAL elegível mais próximo vence.
+- Fixture: `nested-global-through-local-file.cbl`, com FILE GLOBAL externo através de FILE LOCAL intermediário e controles para FILE GLOBAL intermediário, FILE LOCAL no programa da referência e ausência de GLOBAL externo.
+- Teste: `skipsInvisibleLocalFilesInIntermediateProgramsWhenLookingForGlobalFiles`.
+- RED observado: esperado `RESOLVED → FILE-OUTER-A.FILE-X`; observado `UNRESOLVED / DECLARATION_NOT_FOUND`, zero candidates. **BUG CONFIRMADO**.
+- Causa raiz: `CobolReferenceResolver.resolveFile` encontrava o bucket FILE do ancestor, filtrava suas entidades LOCAL e retornava imediatamente uma decisão vazia, sem continuar ao próximo ancestor.
+- Correção geral mínima: retornar no primeiro bucket que possua entidades efetivamente visíveis; um bucket ancestral contendo apenas FILEs LOCAL é ignorado e a cadeia estrutural prossegue. Os buckets continuam preindexados por nome e unidade.
+- GREEN: teste adversarial `1/1`, grupo `ProcedureFileProgramReferenceResolverTest` `13/13` e suíte completa `69/69`, sem falhas, erros ou testes ignorados. `nested-global-file.cbl` e shadowing FILE local permaneceram verdes.
