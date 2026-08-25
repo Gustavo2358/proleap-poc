@@ -1406,7 +1406,7 @@ Isso torna `ReferenceResolution` uma fundação suficientemente confiável para 
 
 ### Fase 0 — baseline
 
-- SHA inicial: `58aea33e0280cfe2bf430017762127644d2ebef1`.
+- SHA inicial: `58aea33692984750b647d87471f7f7fdc26ef4cb`.
 - Estado inicial versionado: limpo. A única entrada de `git status --short` era a tasklist desta rodada, fornecida como arquivo ainda não rastreado em `specs/reference-resolution-semantic-correctness-hardening-II-tasklist.txt`.
 - Suíte Maven: `Tests run: 67, Failures: 0, Errors: 0, Skipped: 0`; `BUILD SUCCESS`.
 - Checks JavaScript: 31 arquivos em `src/main/resources/web`, `dist`, `dist-cbstm03a` e `dist-cbstm03d`; todos passaram em `node --check` (exit code 0).
@@ -1689,3 +1689,7 @@ As observações do review entram nesta seção como hipóteses. Nenhuma conclus
 - Correção: `syntacticKindCounts` conta todas as occurrences pelo hint; `resolvedSemanticKindCounts` conta apenas o kind do candidate final em entries RESOLVED. A soma da primeira equivale a todas as entries e a soma da segunda equivale às entries RESOLVED.
 - Snapshot passa a publicar `counts.syntacticKind` e `counts.resolvedSemanticKind`; o nome genérico `kind` foi removido.
 - GREEN: teste específico `1/1`, `ResolutionAnalysisReportTest` `6/6`, snapshots `3/3` e suíte completa `84/84`, sem falhas, erros ou skips.
+
+### Correção da evidência de baseline da segunda rodada
+
+O relatório anterior continha `58aea33e0280cfe2bf430017762127644d2ebef1`, que não identifica o commit abreviado `58aea33`. `git rev-parse 58aea33` comprovou o SHA correto `58aea33692984750b647d87471f7f7fdc26ef4cb`. A linha foi corrigida sem alterar o histórico ou as conclusões funcionais daquela rodada.
