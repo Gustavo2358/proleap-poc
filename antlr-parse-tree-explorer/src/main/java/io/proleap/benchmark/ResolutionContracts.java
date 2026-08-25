@@ -73,6 +73,22 @@ public final class ResolutionContracts {
         UNSPECIFIED
     }
 
+    public enum PgmnameMode {
+        COMPAT,
+        LONGUPPER,
+        LONGMIXED,
+        UNSPECIFIED;
+
+        public static PgmnameMode fromCompilerValue(String value) {
+            return switch (value == null ? "" : value.trim().toUpperCase(java.util.Locale.ROOT)) {
+                case "CO", "COMPAT" -> COMPAT;
+                case "LU", "U", "UPPER", "LONGUPPER" -> LONGUPPER;
+                case "LM", "M", "MIXED", "LONGMIXED" -> LONGMIXED;
+                default -> UNSPECIFIED;
+            };
+        }
+    }
+
     public enum SemanticEntityDomain {
         DATA_SYMBOL,
         INDEX_SYMBOL,
@@ -105,16 +121,27 @@ public final class ResolutionContracts {
     }
 
     /** Versioned dialect/options contract; absence of an option remains explicit. */
-    public record CobolResolutionPolicy(String policyId, String version, QualifyMode qualifyMode) {
+    public record CobolResolutionPolicy(String policyId, String version, QualifyMode qualifyMode,
+                                        PgmnameMode pgmnameMode) {
         public CobolResolutionPolicy {
             policyId = requireText(policyId, "policyId");
             version = requireText(version, "version");
             qualifyMode = Objects.requireNonNull(qualifyMode, "qualifyMode");
+            pgmnameMode = Objects.requireNonNull(pgmnameMode, "pgmnameMode");
+        }
+
+        public CobolResolutionPolicy(String policyId, String version, QualifyMode qualifyMode) {
+            this(policyId, version, qualifyMode, PgmnameMode.UNSPECIFIED);
         }
 
         public static CobolResolutionPolicy initial() {
             return new CobolResolutionPolicy(
-                    "proleap-cobol/ibm-enterprise-compatible", "1.0.0", QualifyMode.UNSPECIFIED);
+                    "proleap-cobol/explicit-options", "2.0.0", QualifyMode.UNSPECIFIED,
+                    PgmnameMode.UNSPECIFIED);
+        }
+
+        public CobolResolutionPolicy withPgmnameMode(PgmnameMode mode) {
+            return new CobolResolutionPolicy(policyId, version, qualifyMode, mode);
         }
     }
 

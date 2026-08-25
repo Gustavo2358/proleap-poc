@@ -57,24 +57,27 @@ final class SymbolTableBuilder {
                             Map.of("visibility", file.visibility().name()));
                     int fileScope = addScope(sectionScope, SymbolTable.ScopeKind.FILE_DESCRIPTION,
                             file.fileName(), fileSymbol, file.meta().id());
-                    collectDataEntries(file.entries(), fileScope);
+                    collectDataEntries(file.entries(), fileScope, false);
                 } else if (child instanceof Ast.DataEntry entry) {
                     collectDataEntries(section.children().stream()
                             .filter(Ast.DataEntry.class::isInstance)
-                            .map(Ast.DataEntry.class::cast).toList(), sectionScope);
+                            .map(Ast.DataEntry.class::cast).toList(), sectionScope, false);
                     break;
                 }
             }
         }
     }
 
-    private void collectDataEntries(List<Ast.DataEntry> entries, int sectionScope) {
+    private void collectDataEntries(List<Ast.DataEntry> entries, int sectionScope,
+                                    boolean inheritedGlobal) {
         for (Ast.DataEntry entry : entries) {
+            boolean effectiveGlobal = inheritedGlobal
+                    || entry.visibility() == Ast.DeclarationVisibility.GLOBAL;
             int level = parseLevel(entry.level());
             if (level == 88) {
                 if (!isFiller(entry.name())) {
                     addSymbol(SymbolTable.SymbolKind.CONDITION_NAME, SymbolTable.Namespace.DATA,
-                            entry.name(), sectionScope, entry, dataAttributes(entry));
+                            entry.name(), sectionScope, entry, dataAttributes(entry, effectiveGlobal));
                 }
                 continue;
             }
@@ -82,7 +85,7 @@ final class SymbolTableBuilder {
                     ? SymbolTable.SymbolKind.RENAMES
                     : SymbolTable.SymbolKind.DATA_ITEM;
             int symbolId = isFiller(entry.name()) ? -1 : addSymbol(kind, SymbolTable.Namespace.DATA,
-                            entry.name(), sectionScope, entry, dataAttributes(entry));
+                            entry.name(), sectionScope, entry, dataAttributes(entry, effectiveGlobal));
             String scopeName = symbolId < 0 ? "<FILLER@" + entry.meta().span().startLine() + ">" : entry.name();
             int itemScope = addScope(sectionScope, SymbolTable.ScopeKind.DATA_ITEM,
                     scopeName, symbolId, entry.meta().id());
@@ -91,11 +94,13 @@ final class SymbolTableBuilder {
                 if (clause instanceof Ast.OccursClause occurs) {
                     for (Ast.IndexReference index : occurs.indexes()) {
                         addSymbol(SymbolTable.SymbolKind.INDEX_NAME, SymbolTable.Namespace.DATA,
-                                index.indexName(), itemScope, index, Map.of("relation", "OCCURS_INDEX"));
+                                index.indexName(), itemScope, index,
+                                Map.of("relation", "OCCURS_INDEX", "visibility",
+                                        effectiveGlobal ? "GLOBAL" : "LOCAL"));
                     }
                 }
             }
-            collectDataEntries(entry.children(), itemScope);
+            collectDataEntries(entry.children(), itemScope, effectiveGlobal);
         }
     }
 
@@ -145,6 +150,14 @@ final class SymbolTableBuilder {
                     .anyMatch(symbol -> symbol.kind() == SymbolTable.SymbolKind.FILE_CONTROL)));
             attributes.put("hasDescription", Boolean.toString(declarations.stream()
                     .anyMatch(symbol -> symbol.kind() == SymbolTable.SymbolKind.FILE_DESCRIPTION)));
+            Set<String> descriptionVisibilities = declarations.stream()
+                    .filter(symbol -> symbol.kind() == SymbolTable.SymbolKind.FILE_DESCRIPTION)
+                    .map(symbol -> symbol.attributes().getOrDefault("visibility", "LOCAL"))
+                    .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
+            String visibility = descriptionVisibilities.contains("CONFLICTING")
+                    || descriptionVisibilities.size() > 1 ? "CONFLICTING"
+                    : descriptionVisibilities.stream().findFirst().orElse("LOCAL");
+            attributes.put("visibility", visibility);
             entities.add(new SymbolTable.Entity(entities.size(), SymbolTable.EntityKind.FILE,
                     first.writtenName(), first.canonicalName(),
                     declarations.stream().map(SymbolTable.Symbol::id).toList(), attributes));
@@ -208,11 +221,11 @@ final class SymbolTableBuilder {
         }
     }
 
-    private static Map<String, String> dataAttributes(Ast.DataEntry entry) {
+    private static Map<String, String> dataAttributes(Ast.DataEntry entry, boolean effectiveGlobal) {
         Map<String, String> attributes = new LinkedHashMap<>();
         attributes.put("level", entry.level());
         attributes.put("levelKind", entry.levelKind().name());
-        attributes.put("visibility", entry.visibility().name());
+        attributes.put("visibility", effectiveGlobal ? "GLOBAL" : entry.visibility().name());
         attributes.put("declaration", entry.declaration());
         for (Ast.DataClause clause : entry.clauses()) {
             if (clause instanceof Ast.RedefinesClause redefines) {

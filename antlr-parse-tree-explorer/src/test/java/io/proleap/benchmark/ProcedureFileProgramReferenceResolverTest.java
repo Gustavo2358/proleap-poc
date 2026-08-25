@@ -14,6 +14,16 @@ class ProcedureFileProgramReferenceResolverTest {
     private static final Path PROCEDURE = Path.of("src/test/resources/cobol/resolution/procedure-binding.cbl");
     private static final Path FILE = Path.of("src/test/resources/cobol/resolution/file-binding.cbl");
     private static final Path PROGRAM = Path.of("src/test/resources/cobol/resolution/program-binding.cbl");
+    private static final Path NESTED_GLOBAL_FILE = Path.of(
+            "src/test/resources/cobol/resolution/nested-global-file.cbl");
+    private static final Path DATA_FILE_QUALIFIER_COLLISION = Path.of(
+            "src/test/resources/cobol/resolution/data-file-qualifier-collision.cbl");
+    private static final Path COMMON_PROGRAM_VISIBILITY = Path.of(
+            "src/test/resources/cobol/resolution/common-program-visibility.cbl");
+    private static final Path LITERAL_PROGRAM_NAME = Path.of(
+            "src/test/resources/cobol/resolution/literal-program-name.cbl");
+    private static final Path PROGRAM_NAME_POLICY = Path.of(
+            "src/test/resources/cobol/resolution/program-name-policy.cbl");
 
     @Test
     void resolvesProcedureTargetsQualificationDependingOnPerformAndPreservedAlter() throws Exception {
@@ -98,6 +108,76 @@ class ProcedureFileProgramReferenceResolverTest {
     }
 
     @Test
+    void resolvesOnlyGlobalAncestorFilesAndPreservesFileEntityOwnershipAndDeclarations() throws Exception {
+        Analysis analysis = analyze(NESTED_GLOBAL_FILE, Optional.empty());
+        ResolutionContracts.ProgramUnitId outer = unit(analysis, "FILE-OUTER");
+        ResolutionContracts.ProgramUnitId inner = unit(analysis, "FILE-INNER");
+        SymbolTable outerTable = analysis.tables().forProgramUnit(outer).orElseThrow().symbolTable();
+        SymbolTable innerTable = analysis.tables().forProgramUnit(inner).orElseThrow().symbolTable();
+
+        assertAll("GLOBAL FILE semantic product",
+                () -> assertAll("FILE entities preserve association and effective visibility before binding",
+                        () -> assertFileEntity(outerTable, "GLOBAL-BOTH", 2, "GLOBAL"),
+                        () -> assertFileEntity(outerTable, "OUTER-LOCAL", 2, "LOCAL"),
+                        () -> assertFileEntity(outerTable, "GLOBAL-FD-ONLY", 1, "GLOBAL"),
+                        () -> assertFileEntity(outerTable, "SHADOW-FILE", 2, "GLOBAL"),
+                        () -> assertFileEntity(innerTable, "SHADOW-FILE", 2, "LOCAL")),
+                () -> assertAll("nested FILE lookup applies GLOBAL visibility and local shadowing",
+                        () -> assertFileCandidate(analysis.resolution(), inner,
+                                "GLOBAL-BOTH", outer, 2, "GLOBAL"),
+                        () -> assertEntry(analysis.resolution(), inner, "OUTER-LOCAL",
+                                ResolutionContracts.ReferenceRole.FILE_OPERATION,
+                                ResolutionContracts.ResolutionStatus.UNRESOLVED,
+                                ResolutionContracts.ResolutionReason.DECLARATION_NOT_FOUND, 0),
+                        () -> assertFileCandidate(analysis.resolution(), inner,
+                                "GLOBAL-FD-ONLY", outer, 1, "GLOBAL"),
+                        () -> assertFileCandidate(analysis.resolution(), inner,
+                                "SHADOW-FILE", inner, 2, "LOCAL")));
+    }
+
+    @Test
+    void preservesQualifierKindWhenDataAndFileHierarchiesHaveTheSameNames() throws Exception {
+        Analysis analysis = analyze(DATA_FILE_QUALIFIER_COLLISION, Optional.empty());
+        ResolutionContracts.ProgramUnitId unit = unit(analysis, "QUALIFIER-COLLISION");
+        SymbolTable table = analysis.tables().forProgramUnit(unit).orElseThrow().symbolTable();
+        List<SymbolTable.Symbol> items = table.lookupAll(SymbolTable.Namespace.DATA, "ITEM");
+        assertEquals(2, items.size());
+        SymbolTable.Symbol fileItem = items.stream().filter(symbol -> hasFileAncestor(table, symbol))
+                .findFirst().orElseThrow();
+        SymbolTable.Symbol dataItem = items.stream().filter(symbol -> !hasFileAncestor(table, symbol))
+                .findFirst().orElseThrow();
+
+        List<ReferenceResolution.Entry> homonymousQualifiers = analysis.resolution().find(
+                unit, "QUALIFIER-X", ResolutionContracts.ReferenceRole.QUALIFIER_COMPONENT);
+        List<ReferenceResolution.Entry> generalQualifiers = homonymousQualifiers.stream()
+                .filter(entry -> entry.occurrence().grammarRule().equals("dataName")).toList();
+        ReferenceResolution.Entry explicitFileQualifier = homonymousQualifiers.stream()
+                .filter(entry -> entry.occurrence().grammarRule().equals("fileName"))
+                .findFirst().orElseThrow();
+        assertAll("typed DATA/FILE qualifier collision",
+                () -> assertAll("grammar-derived qualifier constraints retain semantic admissibility",
+                        () -> assertEquals(3, homonymousQualifiers.size()),
+                        () -> assertEquals(2, generalQualifiers.size()),
+                        () -> generalQualifiers.forEach(entry -> assertEquals(
+                                EnumSet.of(ResolutionContracts.ReferenceKind.DATA,
+                                        ResolutionContracts.ReferenceKind.FILE),
+                                entry.occurrence().admissibleKinds(), entry.toString())),
+                        () -> assertEquals(ResolutionContracts.ReferenceKind.FILE,
+                                explicitFileQualifier.occurrence().kind()),
+                        () -> assertEquals(Set.of(ResolutionContracts.ReferenceKind.FILE),
+                                explicitFileQualifier.occurrence().admissibleKinds()),
+                        () -> assertEquals(ResolutionContracts.ResolutionStatus.RESOLVED,
+                                explicitFileQualifier.status(), explicitFileQualifier.toString()),
+                        () -> assertEquals(ResolutionContracts.SemanticEntityDomain.FILE_ENTITY,
+                                explicitFileQualifier.candidates().get(0).entityId().domain())),
+                () -> assertAll("ambiguous generic qualifiers never collapse DATA and FILE to strings",
+                        () -> assertAmbiguousDataCandidates(analysis.resolution(), unit,
+                                "ITEM OF QUALIFIER-X", dataItem.id(), fileItem.id()),
+                        () -> assertAmbiguousDataCandidates(analysis.resolution(), unit,
+                                "ITEM OF FILE-RECORD IN QUALIFIER-X", dataItem.id(), fileItem.id())));
+    }
+
+    @Test
     void resolvesNestedAndCommonProgramsButPreservesVisibilityAndAmbiguity() throws Exception {
         Analysis analysis = analyze(PROGRAM, Optional.empty());
         ResolutionContracts.ProgramUnitId outer = unit(analysis, "PROGRAM-OUTER");
@@ -118,6 +198,159 @@ class ProcedureFileProgramReferenceResolverTest {
                 ResolutionContracts.ReferenceRole.CALL_TARGET,
                 ResolutionContracts.ResolutionStatus.AMBIGUOUS,
                 ResolutionContracts.ResolutionReason.MULTIPLE_VALID_CANDIDATES, 2);
+    }
+
+    @Test
+    void excludesCommonProgramAndItsDescendantsFromTheCommonProgramsCallingRegion() throws Exception {
+        Analysis analysis = analyze(COMMON_PROGRAM_VISIBILITY, Optional.empty());
+        ResolutionContracts.ProgramUnitId root = unit(analysis, "COMMON-ROOT");
+        ResolutionContracts.ProgramUnitId sibling = unit(analysis, "SIBLING");
+        ResolutionContracts.ProgramUnitId common = unit(analysis, "COMMON-C");
+        ResolutionContracts.ProgramUnitId descendant = unit(analysis, "DESCENDANT");
+        ResolutionContracts.ProgramUnitId privateSibling = unit(analysis, "PRIVATE-SIBLING");
+        ResolutionContracts.ProgramUnitId a = unit(analysis, "A");
+        ResolutionContracts.ProgramUnitId b = unit(analysis, "B");
+        ResolutionContracts.ProgramUnitId deepCommon = unit(analysis, "DEEP-C");
+        ResolutionContracts.ProgramUnitId d = unit(analysis, "D");
+
+        assertAll("fixture topology and declaration categories",
+                () -> assertNull(analysis.model().find(root).orElseThrow().parentId()),
+                () -> assertEquals(root, analysis.model().find(sibling).orElseThrow().parentId()),
+                () -> assertEquals(root, analysis.model().find(common).orElseThrow().parentId()),
+                () -> assertEquals(common, analysis.model().find(descendant).orElseThrow().parentId()),
+                () -> assertEquals(root, analysis.model().find(privateSibling).orElseThrow().parentId()),
+                () -> assertEquals(root, analysis.model().find(a).orElseThrow().parentId()),
+                () -> assertEquals(a, analysis.model().find(b).orElseThrow().parentId()),
+                () -> assertEquals(a, analysis.model().find(deepCommon).orElseThrow().parentId()),
+                () -> assertEquals(deepCommon, analysis.model().find(d).orElseThrow().parentId()),
+                () -> assertTrue(analysis.model().find(common).orElseThrow().program().attributes().common()),
+                () -> assertTrue(analysis.model().find(deepCommon).orElseThrow().program().attributes().common()),
+                () -> assertFalse(analysis.model().find(privateSibling).orElseThrow().program().attributes().common()));
+
+        assertAll("COMMON scope excludes the COMMON program subtree",
+                () -> assertProgramCandidate(analysis.resolution(), root, "'COMMON-C'", common),
+                () -> assertProgramCandidate(analysis.resolution(), sibling, "'COMMON-C'", common),
+                () -> assertInvisibleInternalProgram(analysis.resolution(), descendant, "'COMMON-C'"),
+                () -> assertInvisibleInternalProgram(analysis.resolution(), sibling, "'PRIVATE-SIBLING'"),
+                () -> assertProgramCandidate(analysis.resolution(), a, "'DEEP-C'", deepCommon),
+                () -> assertProgramCandidate(analysis.resolution(), b, "'DEEP-C'", deepCommon),
+                () -> assertInvisibleInternalProgram(analysis.resolution(), d, "'DEEP-C'"),
+                () -> assertInvisibleInternalProgram(analysis.resolution(), root, "'DEEP-C'"));
+    }
+
+    @Test
+    void separatesLiteralProgramNameSpellingFromCanonicalProgramIdentity() throws Exception {
+        Analysis analysis = analyze(LITERAL_PROGRAM_NAME, Optional.empty());
+        assertEquals(2, analysis.model().programUnits().size());
+        CompilationUnitModel.ProgramUnit outer = analysis.model().programUnits().get(0);
+        CompilationUnitModel.ProgramUnit child = analysis.model().programUnits().get(1);
+        assertEquals(outer.id(), child.parentId());
+        Ast.ProgramReference target = nodes(outer.program(), Ast.ProgramReference.class).stream()
+                .findFirst().orElseThrow();
+        ReferenceResolution.Entry binding = analysis.resolution().find(
+                outer.id(), "'CHILD'", ResolutionContracts.ReferenceRole.CALL_TARGET)
+                .stream().findFirst().orElseThrow();
+
+        assertAll("literal program name representation and binding",
+                () -> assertAll("written spelling is distinct from semantic identity",
+                        () -> assertEquals("'CHILD'", child.program().name()),
+                        () -> assertTrue(child.program().attributes().writtenText().contains("'CHILD'")),
+                        () -> assertEquals("CHILD", child.id().canonicalProgramName()),
+                        () -> assertEquals("CHILD", target.programName()),
+                        () -> assertEquals("'CHILD'", target.writtenText()),
+                        () -> assertEquals("'CHILD'", binding.occurrence().writtenText()),
+                        () -> assertEquals(ResolutionContracts.ReferenceKind.PROGRAM,
+                                binding.occurrence().kind())),
+                () -> assertAll("CALL literal binds to the literal PROGRAM-ID semantic identity",
+                        () -> assertEquals(ResolutionContracts.ResolutionStatus.RESOLVED,
+                                binding.status(), binding.toString()),
+                        () -> assertEquals(ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION,
+                                binding.reason(), binding.toString()),
+                        () -> assertEquals(1, binding.candidates().size(), binding.toString()),
+                        () -> {
+                            assertFalse(binding.candidates().isEmpty(), binding.toString());
+                            ReferenceResolution.Candidate candidate = binding.candidates().get(0);
+                            assertEquals(ResolutionContracts.SemanticEntityDomain.PROGRAM_UNIT,
+                                    candidate.entityId().domain());
+                            assertEquals(child.id(), candidate.entityId().programUnitId());
+                        }));
+    }
+
+    @Test
+    void requiresExplicitPgmnamePolicyWhenProgramIdentityDependsOnCompilerOption() throws Exception {
+        GrammarBinding grammar = Bindings.proleap();
+        Parser preprocessor = grammar.preprocessorParser(new CommonTokenStream(
+                grammar.preprocessorLexer(CharStreams.fromString("CBL PGMNAME(LONGMIXED)\n"))));
+        ParseTree optionTree = grammar.preprocessorStart(preprocessor);
+        String optionTreeText = optionTree.toStringTree(preprocessor);
+        PreprocessorEngine.Outcome transported = new PreprocessorEngine(
+                grammar, new CopybookLibrary(Path.of("src/test/resources")))
+                .process("CBL PGMNAME(LONGMIXED)\n", "options.cbl");
+        Set<String> outcomeComponents = Arrays.stream(PreprocessorEngine.Outcome.class.getRecordComponents())
+                .map(java.lang.reflect.RecordComponent::getName)
+                .collect(java.util.stream.Collectors.toSet());
+        Set<String> policyComponents = Arrays.stream(
+                        ResolutionContracts.CobolResolutionPolicy.class.getRecordComponents())
+                .map(java.lang.reflect.RecordComponent::getName)
+                .collect(java.util.stream.Collectors.toSet());
+
+        ExternalProgramCatalog catalog = canonicalName -> List.of(new ExternalProgramCatalog.Program(
+                switch (canonicalName) {
+                    case "SIMPLE" -> 1;
+                    case "MIXED-CHILD" -> 2;
+                    case "LONG-NAME-ABC" -> 3;
+                    default -> 4;
+                }, "policy-catalog", canonicalName, Map.of()));
+        Analysis analysis = analyze(PROGRAM_NAME_POLICY, Optional.of(catalog),
+                ResolutionContracts.PgmnameMode.UNSPECIFIED);
+        ResolutionContracts.ProgramUnitId caller = unit(analysis, "POLICY-CALLER");
+        Analysis longMixed = analyze(PROGRAM_NAME_POLICY, Optional.of(catalog),
+                ResolutionContracts.PgmnameMode.LONGMIXED);
+        Analysis compat = analyze(PROGRAM_NAME_POLICY, Optional.of(catalog),
+                ResolutionContracts.PgmnameMode.COMPAT);
+
+        assertAll("PGMNAME is an explicit input to program identity",
+                () -> assertAll("frontend recognizes and transports the compiler option",
+                        () -> assertEquals(0, preprocessor.getNumberOfSyntaxErrors()),
+                        () -> assertTrue(optionTreeText.contains("PGMNAME"), optionTreeText),
+                        () -> assertTrue(optionTreeText.contains("LONGMIXED"), optionTreeText),
+                        () -> assertEquals(ResolutionContracts.PgmnameMode.LONGMIXED,
+                                transported.pgmnameMode()),
+                        () -> assertTrue(transported.compilerOptions().stream().anyMatch(option ->
+                                option.name().equals("PGMNAME") && option.value().equals("LONGMIXED"))),
+                        () -> assertTrue(outcomeComponents.stream().anyMatch(
+                                        component -> component.toLowerCase(Locale.ROOT).contains("compileroption")
+                                                || component.toLowerCase(Locale.ROOT).contains("pgmname")),
+                                "PreprocessorEngine.Outcome must transport parsed compiler options")),
+                () -> assertTrue(policyComponents.stream().anyMatch(
+                                component -> component.toLowerCase(Locale.ROOT).contains("pgmname")),
+                        "CobolResolutionPolicy must expose an explicit PGMNAME mode"),
+                () -> assertAll("only option-independent identity may resolve without PGMNAME",
+                        () -> assertEntry(analysis.resolution(), caller, "'SIMPLE'",
+                                ResolutionContracts.ReferenceRole.CALL_TARGET,
+                                ResolutionContracts.ResolutionStatus.RESOLVED,
+                                ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION, 1),
+                        () -> assertEntry(analysis.resolution(), caller, "'mixed-Child'",
+                                ResolutionContracts.ReferenceRole.CALL_TARGET,
+                                ResolutionContracts.ResolutionStatus.UNSUPPORTED,
+                                ResolutionContracts.ResolutionReason.UNSUPPORTED_DIALECT_OPTION, 0),
+                        () -> assertEntry(analysis.resolution(), caller, "'LONG-NAME-ABC'",
+                                ResolutionContracts.ReferenceRole.CALL_TARGET,
+                                ResolutionContracts.ResolutionStatus.UNSUPPORTED,
+                                ResolutionContracts.ResolutionReason.UNSUPPORTED_DIALECT_OPTION, 0)),
+                () -> assertAll("explicit modes canonicalize external identities",
+                        () -> assertEquals("mixed-Child", assertEntry(longMixed.resolution(),
+                                unit(longMixed, "POLICY-CALLER"), "'mixed-Child'",
+                                ResolutionContracts.ReferenceRole.CALL_TARGET,
+                                ResolutionContracts.ResolutionStatus.RESOLVED,
+                                ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION, 1)
+                                .candidates().get(0).canonicalName()),
+                        () -> assertEquals("LONG0NAM", assertEntry(compat.resolution(),
+                                unit(compat, "POLICY-CALLER"), "'LONG-NAME-ABC'",
+                                ResolutionContracts.ReferenceRole.CALL_TARGET,
+                                ResolutionContracts.ResolutionStatus.RESOLVED,
+                                ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION, 1)
+                                .candidates().get(0).canonicalName())));
     }
 
     @Test
@@ -201,6 +434,95 @@ class ProcedureFileProgramReferenceResolverTest {
                 .findFirst().orElseThrow().id();
     }
 
+    private static void assertFileEntity(SymbolTable table, String name, int declarations, String visibility) {
+        SymbolTable.Entity entity = table.entities().stream()
+                .filter(candidate -> candidate.kind() == SymbolTable.EntityKind.FILE)
+                .filter(candidate -> candidate.canonicalName().equals(SymbolTable.canonical(name)))
+                .findFirst().orElseThrow(() -> new AssertionError("missing FILE entity " + name));
+        assertEquals(declarations, entity.declarationSymbolIds().size());
+        assertEquals(visibility, entity.attributes().get("visibility"));
+    }
+
+    private static void assertFileCandidate(
+            ReferenceResolution resolution, ResolutionContracts.ProgramUnitId useUnit, String name,
+            ResolutionContracts.ProgramUnitId declarationUnit, int declarations, String visibility) {
+        ReferenceResolution.Entry entry = assertEntry(resolution, useUnit, name,
+                ResolutionContracts.ReferenceRole.FILE_OPERATION,
+                ResolutionContracts.ResolutionStatus.RESOLVED,
+                ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION, 1);
+        ReferenceResolution.Candidate candidate = entry.candidates().get(0);
+        assertEquals(ResolutionContracts.ReferenceKind.FILE, candidate.kind());
+        assertEquals(ResolutionContracts.SemanticEntityDomain.FILE_ENTITY, candidate.entityId().domain());
+        assertEquals(declarationUnit, candidate.entityId().programUnitId());
+        assertEquals(declarations, candidate.declarationSymbolIds().size());
+        assertEquals(visibility, candidate.attributes().get("visibility"));
+    }
+
+    private static void assertDataCandidate(
+            ReferenceResolution resolution, ResolutionContracts.ProgramUnitId unit,
+            String writtenText, int expectedSymbolId) {
+        ReferenceResolution.Entry entry = assertEntry(resolution, unit, writtenText,
+                ResolutionContracts.ReferenceRole.VALUE_READ,
+                ResolutionContracts.ResolutionStatus.RESOLVED,
+                ResolutionContracts.ResolutionReason.QUALIFIED_HIERARCHY_MATCH, 1);
+        ReferenceResolution.Candidate candidate = entry.candidates().get(0);
+        assertEquals(ResolutionContracts.ReferenceKind.DATA, candidate.kind());
+        assertEquals(ResolutionContracts.SemanticEntityDomain.DATA_SYMBOL, candidate.entityId().domain());
+        assertEquals(expectedSymbolId, candidate.entityId().localId());
+    }
+
+    private static void assertAmbiguousDataCandidates(
+            ReferenceResolution resolution, ResolutionContracts.ProgramUnitId unit,
+            String writtenText, int firstSymbolId, int secondSymbolId) {
+        ReferenceResolution.Entry entry = assertEntry(resolution, unit, writtenText,
+                ResolutionContracts.ReferenceRole.VALUE_READ,
+                ResolutionContracts.ResolutionStatus.AMBIGUOUS,
+                ResolutionContracts.ResolutionReason.MULTIPLE_VALID_CANDIDATES, 2);
+        assertEquals(Set.of(firstSymbolId, secondSymbolId), entry.candidates().stream()
+                .map(candidate -> candidate.entityId().localId())
+                .collect(java.util.stream.Collectors.toSet()));
+        assertTrue(entry.candidates().stream().allMatch(candidate ->
+                candidate.kind() == ResolutionContracts.ReferenceKind.DATA));
+    }
+
+    private static void assertProgramCandidate(
+            ReferenceResolution resolution, ResolutionContracts.ProgramUnitId caller,
+            String writtenText, ResolutionContracts.ProgramUnitId declarationUnit) {
+        ReferenceResolution.Entry entry = assertEntry(resolution, caller, writtenText,
+                ResolutionContracts.ReferenceRole.CALL_TARGET,
+                ResolutionContracts.ResolutionStatus.RESOLVED,
+                ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION, 1);
+        ReferenceResolution.Candidate candidate = entry.candidates().get(0);
+        assertEquals(ResolutionContracts.ReferenceKind.PROGRAM, candidate.kind());
+        assertEquals(ResolutionContracts.SemanticEntityDomain.PROGRAM_UNIT, candidate.entityId().domain());
+        assertEquals(declarationUnit, candidate.entityId().programUnitId());
+    }
+
+    private static void assertInvisibleInternalProgram(
+            ReferenceResolution resolution, ResolutionContracts.ProgramUnitId caller, String writtenText) {
+        assertEntry(resolution, caller, writtenText,
+                ResolutionContracts.ReferenceRole.CALL_TARGET,
+                ResolutionContracts.ResolutionStatus.UNRESOLVED,
+                ResolutionContracts.ResolutionReason.EXTERNAL_CATALOG_NOT_PROVIDED, 0);
+    }
+
+    private static boolean hasFileAncestor(SymbolTable table, SymbolTable.Symbol symbol) {
+        int scopeId = symbol.scopeId();
+        while (scopeId >= 0) {
+            SymbolTable.Scope scope = table.scopes().get(scopeId);
+            if (scope.kind() == SymbolTable.ScopeKind.FILE_DESCRIPTION) return true;
+            scopeId = scope.parentId();
+        }
+        return false;
+    }
+
+    private static <T extends Ast.Node> List<T> nodes(Ast.Node root, Class<T> type) {
+        List<T> result = new ArrayList<>();
+        if (type.isInstance(root)) result.add(type.cast(root));
+        for (Ast.Node child : Ast.children(root)) result.addAll(nodes(child, type));
+        return List.copyOf(result);
+    }
+
     private static ReferenceResolution.Entry assertEntry(
             ReferenceResolution resolution, ResolutionContracts.ProgramUnitId unit,
             String writtenText, ResolutionContracts.ReferenceRole role,
@@ -215,9 +537,14 @@ class ProcedureFileProgramReferenceResolverTest {
     }
 
     private static Analysis analyze(Path sourcePath, Optional<ExternalProgramCatalog> catalog) throws Exception {
+        return analyze(sourcePath, catalog, ResolutionContracts.PgmnameMode.LONGUPPER);
+    }
+
+    private static Analysis analyze(Path sourcePath, Optional<ExternalProgramCatalog> catalog,
+                                    ResolutionContracts.PgmnameMode pgmnameMode) throws Exception {
         Path file = sourcePath.toAbsolutePath();
         String source = SourceNormalizer.fixed(Files.readString(file, StandardCharsets.UTF_8));
-        return analyzeSource(file, source, catalog);
+        return analyzeSource(file, source, catalog, pgmnameMode);
     }
 
     private static Analysis analyzeCorpus(String fileName, Optional<ExternalProgramCatalog> catalog) throws Exception {
@@ -230,11 +557,12 @@ class ProcedureFileProgramReferenceResolverTest {
         String fixed = SourceNormalizer.fixed(Files.readString(file, StandardCharsets.UTF_8));
         String source = new PreprocessorEngine(binding, new CopybookLibrary(copybooks))
                 .process(fixed, file.getFileName().toString()).text();
-        return analyzeSource(file, source, catalog);
+        return analyzeSource(file, source, catalog, ResolutionContracts.PgmnameMode.LONGUPPER);
     }
 
     private static Analysis analyzeSource(Path file, String source,
-                                          Optional<ExternalProgramCatalog> catalog) throws Exception {
+                                          Optional<ExternalProgramCatalog> catalog,
+                                          ResolutionContracts.PgmnameMode pgmnameMode) throws Exception {
         GrammarBinding binding = Bindings.proleap();
         Parser parser = binding.cobolParser(new CommonTokenStream(
                 binding.cobolLexer(CharStreams.fromString(source, file.getFileName().toString()))));
@@ -254,10 +582,10 @@ class ProcedureFileProgramReferenceResolverTest {
                     AstScopeIndex.build(unit.program(), table)));
         }
         ResolutionContracts.CobolResolutionPolicy policy = new ResolutionContracts.CobolResolutionPolicy(
-                "test-policy", "1", ResolutionContracts.QualifyMode.STANDARD);
+                "test-policy", "1", ResolutionContracts.QualifyMode.STANDARD, pgmnameMode);
         ReferenceResolution resolution = new CobolReferenceResolver(policy, catalog)
                 .resolve(model, tables, occurrences);
-        return new Analysis(model, resolution);
+        return new Analysis(model, tables, resolution);
     }
 
     private static int index(ParseTree tree, IdentityHashMap<ParseTree, Integer> ids,
@@ -269,5 +597,6 @@ class ProcedureFileProgramReferenceResolverTest {
         return size;
     }
 
-    private record Analysis(CompilationUnitModel model, ReferenceResolution resolution) { }
+    private record Analysis(CompilationUnitModel model, CompilationUnitSymbolTables tables,
+                            ReferenceResolution resolution) { }
 }

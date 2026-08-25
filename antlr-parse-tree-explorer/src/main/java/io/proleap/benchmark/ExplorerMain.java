@@ -90,7 +90,8 @@ public final class ExplorerMain {
             occurrences.put(unit.id(), new ReferenceOccurrenceCollector().collect(unit.id(), unit.program(),
                     AstScopeIndex.build(unit.program(), unitTable)));
         }
-        ResolutionContracts.CobolResolutionPolicy policy = ResolutionContracts.CobolResolutionPolicy.initial();
+        ResolutionContracts.CobolResolutionPolicy policy = ResolutionContracts.CobolResolutionPolicy.initial()
+                .withPgmnameMode(preprocessed.pgmnameMode());
         Optional<ExternalProgramCatalog> externalCatalog = Optional.empty();
         ReferenceResolution resolution = new CobolReferenceResolver(policy, externalCatalog)
                 .resolve(compilationUnit, symbolTables, occurrences);

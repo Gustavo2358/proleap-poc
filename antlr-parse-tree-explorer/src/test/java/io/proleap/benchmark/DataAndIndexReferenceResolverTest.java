@@ -13,6 +13,16 @@ import static org.junit.jupiter.api.Assertions.*;
 class DataAndIndexReferenceResolverTest {
     private static final Path DATA = Path.of("src/test/resources/cobol/resolution/data-binding.cbl");
     private static final Path NESTED = Path.of("src/test/resources/cobol/resolution/nested-data-visibility.cbl");
+    private static final Path GLOBAL_SUBORDINATES = Path.of(
+            "src/test/resources/cobol/resolution/global-subordinate-visibility.cbl");
+    private static final Path NAMESPACE_SHADOWING = Path.of(
+            "src/test/resources/cobol/resolution/nested-namespace-shadowing.cbl");
+    private static final Path QUALIFIED_GLOBAL = Path.of(
+            "src/test/resources/cobol/resolution/nested-qualified-global.cbl");
+    private static final Path REDEFINES_STRUCTURAL = Path.of(
+            "src/test/resources/cobol/resolution/redefines-structural-binding.cbl");
+    private static final Path RENAMES_STRUCTURAL = Path.of(
+            "src/test/resources/cobol/resolution/renames-structural-binding.cbl");
 
     @Test
     void resolvesSimpleDuplicateMissingAndIncompatibleNames() throws Exception {
@@ -66,11 +76,85 @@ class DataAndIndexReferenceResolverTest {
         DeclarationRelationResolution relations = analysis.resolution().declarationRelations();
         assertTrue(relations.entries().stream().filter(entry -> entry.kind() == SymbolTable.RelationKind.REDEFINES)
                 .allMatch(entry -> entry.status() == ResolutionContracts.ResolutionStatus.RESOLVED));
-        assertTrue(relations.entries().stream().filter(entry -> entry.kind() == SymbolTable.RelationKind.RENAMES_FROM
-                        || entry.kind() == SymbolTable.RelationKind.RENAMES_THROUGH
-                        || entry.kind() == SymbolTable.RelationKind.OCCURS_DEPENDING_ON
+        assertTrue(relations.entries().stream().filter(entry -> entry.kind() == SymbolTable.RelationKind.OCCURS_DEPENDING_ON
                         || entry.kind() == SymbolTable.RelationKind.OCCURS_INDEX)
                 .allMatch(entry -> entry.status() == ResolutionContracts.ResolutionStatus.RESOLVED));
+        assertTrue(relations.entries().stream().filter(entry -> entry.kind() == SymbolTable.RelationKind.RENAMES_FROM
+                        || entry.kind() == SymbolTable.RelationKind.RENAMES_THROUGH)
+                .allMatch(entry -> entry.status() == ResolutionContracts.ResolutionStatus.UNRESOLVED
+                        && entry.reason() == ResolutionContracts.ResolutionReason.INVALID_NAMESPACE_FOR_CONTEXT));
+    }
+
+    @Test
+    void resolvesRedefinesWithinItsStructuralLevelAndRejectsInvalidHierarchyTargets() throws Exception {
+        Analysis analysis = analyze(REDEFINES_STRUCTURAL, ResolutionContracts.QualifyMode.STANDARD);
+        ResolutionContracts.ProgramUnitId unit = analysis.model().programUnits().get(0).id();
+        SymbolTable table = analysis.tables().forProgramUnit(unit).orElseThrow().symbolTable();
+        SymbolTable.Symbol groupAX = symbolUnder(table, "X", "GROUP-A");
+        SymbolTable.Symbol groupBX = symbolUnder(table, "X", "GROUP-B");
+        SymbolTable.Symbol y = symbolUnder(table, "Y", "GROUP-A");
+        SymbolTable.Symbol deepX = symbolUnder(table, "DEEP-X", "SUBGROUP-C");
+        SymbolTable.Symbol badY = symbolUnder(table, "BAD-Y", "GROUP-C");
+
+        assertAll("adversarial REDEFINES declarations",
+                () -> assertNotEquals(groupAX.id(), groupBX.id()),
+                () -> assertEquals(SymbolTable.SymbolKind.DATA_ITEM, groupAX.kind()),
+                () -> assertEquals(SymbolTable.SymbolKind.DATA_ITEM, groupBX.kind()),
+                () -> assertEquals(SymbolTable.SymbolKind.DATA_ITEM, y.kind()),
+                () -> assertEquals(SymbolTable.SymbolKind.DATA_ITEM, deepX.kind()),
+                () -> assertEquals(SymbolTable.SymbolKind.DATA_ITEM, badY.kind()));
+
+        DeclarationRelationResolution.Entry valid = relationForOwner(
+                analysis, table, unit, y.id(), SymbolTable.RelationKind.REDEFINES);
+        DeclarationRelationResolution.Entry invalid = relationForOwner(
+                analysis, table, unit, badY.id(), SymbolTable.RelationKind.REDEFINES);
+
+        assertAll("REDEFINES selection is constrained by the declaring item's structural level",
+                () -> assertRelationCandidate(valid, groupAX.id()),
+                () -> assertAll("different-level target is rejected instead of nominally bound",
+                        () -> assertEquals(ResolutionContracts.ResolutionStatus.UNRESOLVED,
+                                invalid.status(), invalid.toString()),
+                        () -> assertEquals(ResolutionContracts.ResolutionReason.INVALID_NAMESPACE_FOR_CONTEXT,
+                                invalid.reason(), invalid.toString()),
+                        () -> assertEquals(0, invalid.candidates().size(), invalid.toString())));
+    }
+
+    @Test
+    void resolvesRenamesWithinItsLogicalRecordAndRejectsCrossRecordRanges() throws Exception {
+        Analysis analysis = analyze(RENAMES_STRUCTURAL, ResolutionContracts.QualifyMode.STANDARD);
+        ResolutionContracts.ProgramUnitId unit = analysis.model().programUnits().get(0).id();
+        SymbolTable table = analysis.tables().forProgramUnit(unit).orElseThrow().symbolTable();
+        SymbolTable.Symbol recordAStart = symbolUnder(table, "START-X", "RECORD-A");
+        SymbolTable.Symbol recordAEnd = symbolUnder(table, "END-X", "RECORD-A");
+        SymbolTable.Symbol recordBStart = symbolUnder(table, "START-X", "RECORD-B");
+        SymbolTable.Symbol recordBEnd = symbolUnder(table, "END-X", "RECORD-B");
+        SymbolTable.Symbol rangeA = symbolUnder(table, "RANGE-A", "RECORD-A");
+        SymbolTable.Symbol crossStart = symbolUnder(table, "CROSS-START", "RECORD-C");
+        SymbolTable.Symbol crossEnd = symbolUnder(table, "CROSS-END", "RECORD-D");
+        SymbolTable.Symbol crossRange = symbolUnder(table, "CROSS-RANGE", "RECORD-D");
+
+        assertAll("adversarial RENAMES declarations and logical-record ownership",
+                () -> assertNotEquals(recordAStart.id(), recordBStart.id()),
+                () -> assertNotEquals(recordAEnd.id(), recordBEnd.id()),
+                () -> assertEquals(SymbolTable.SymbolKind.RENAMES, rangeA.kind()),
+                () -> assertEquals(SymbolTable.SymbolKind.RENAMES, crossRange.kind()),
+                () -> assertNotEquals(table.scopes().get(crossStart.scopeId()).name(),
+                        table.scopes().get(crossEnd.scopeId()).name()));
+
+        DeclarationRelationResolution.Entry validFrom = relationForOwner(
+                analysis, table, unit, rangeA.id(), SymbolTable.RelationKind.RENAMES_FROM);
+        DeclarationRelationResolution.Entry validThrough = relationForOwner(
+                analysis, table, unit, rangeA.id(), SymbolTable.RelationKind.RENAMES_THROUGH);
+        DeclarationRelationResolution.Entry invalidFrom = relationForOwner(
+                analysis, table, unit, crossRange.id(), SymbolTable.RelationKind.RENAMES_FROM);
+        DeclarationRelationResolution.Entry invalidThrough = relationForOwner(
+                analysis, table, unit, crossRange.id(), SymbolTable.RelationKind.RENAMES_THROUGH);
+
+        assertAll("RENAMES endpoints are selected and validated within the owner logical record",
+                () -> assertRelationCandidate(validFrom, recordAStart.id()),
+                () -> assertRelationCandidate(validThrough, recordAEnd.id()),
+                () -> assertInvalidRelation(invalidFrom),
+                () -> assertInvalidRelation(invalidThrough));
     }
 
     @Test
@@ -113,6 +197,102 @@ class DataAndIndexReferenceResolverTest {
         assertEntry(analysis.resolution(), child, "NOT-VISIBLE", ResolutionContracts.ReferenceRole.VALUE_READ,
                 ResolutionContracts.ResolutionStatus.UNRESOLVED,
                 ResolutionContracts.ResolutionReason.DECLARATION_NOT_FOUND, 0);
+    }
+
+    @Test
+    void inheritsGlobalGroupVisibilityForDataConditionAndIndexSubordinates() throws Exception {
+        Analysis analysis = analyze(GLOBAL_SUBORDINATES, ResolutionContracts.QualifyMode.STANDARD);
+        CompilationUnitModel.ProgramUnit outer = analysis.model().programUnits().stream()
+                .filter(unit -> unit.program().name().equals("GLOBAL-OUTER")).findFirst().orElseThrow();
+        CompilationUnitModel.ProgramUnit inner = analysis.model().programUnits().stream()
+                .filter(unit -> unit.program().name().equals("GLOBAL-INNER")).findFirst().orElseThrow();
+        SymbolTable outerTable = analysis.tables().forProgramUnit(outer.id()).orElseThrow().symbolTable();
+        SymbolTable innerTable = analysis.tables().forProgramUnit(inner.id()).orElseThrow().symbolTable();
+
+        assertEquals(SymbolTable.SymbolKind.DATA_ITEM, symbol(outerTable, "GLOBAL-CHILD").kind());
+        assertEquals(SymbolTable.SymbolKind.CONDITION_NAME, symbol(outerTable, "STATUS-OK").kind());
+        assertEquals(SymbolTable.SymbolKind.INDEX_NAME, symbol(outerTable, "GLOBAL-IDX").kind());
+        assertTrue(innerTable.lookupAll(SymbolTable.Namespace.DATA, "GLOBAL-CHILD").isEmpty(),
+                "binding must not invent a local DATA declaration");
+        assertTrue(innerTable.lookupAll(SymbolTable.Namespace.DATA, "STATUS-OK").isEmpty(),
+                "binding must not invent a local CONDITION declaration");
+        assertTrue(innerTable.lookupAll(SymbolTable.Namespace.DATA, "GLOBAL-IDX").isEmpty(),
+                "binding must not invent a local INDEX declaration");
+
+        assertAll("GLOBAL visibility inherited by subordinate declarations",
+                () -> assertInheritedCandidate(analysis.resolution(), inner.id(), outer.id(),
+                        "GLOBAL-CHILD", ResolutionContracts.ReferenceRole.VALUE_READ,
+                        ResolutionContracts.ReferenceKind.DATA,
+                        ResolutionContracts.SemanticEntityDomain.DATA_SYMBOL, "DATA_ITEM"),
+                () -> assertInheritedCandidate(analysis.resolution(), inner.id(), outer.id(),
+                        "STATUS-OK", ResolutionContracts.ReferenceRole.VALUE_READ,
+                        ResolutionContracts.ReferenceKind.CONDITION,
+                        ResolutionContracts.SemanticEntityDomain.DATA_SYMBOL, "CONDITION_NAME"),
+                () -> assertInheritedCandidate(analysis.resolution(), inner.id(), outer.id(),
+                        "GLOBAL-IDX", ResolutionContracts.ReferenceRole.SUBSCRIPT,
+                        ResolutionContracts.ReferenceKind.INDEX,
+                        ResolutionContracts.SemanticEntityDomain.INDEX_SYMBOL, "INDEX_NAME"));
+    }
+
+    @Test
+    void stopsAtIncompatibleLocalNamesBeforeFilteringByReferenceKind() throws Exception {
+        Analysis analysis = analyze(NAMESPACE_SHADOWING, ResolutionContracts.QualifyMode.STANDARD);
+        CompilationUnitModel.ProgramUnit outer = analysis.model().programUnits().stream()
+                .filter(unit -> unit.program().name().equals("SHADOW-OUTER")).findFirst().orElseThrow();
+        CompilationUnitModel.ProgramUnit inner = analysis.model().programUnits().stream()
+                .filter(unit -> unit.program().name().equals("SHADOW-INNER")).findFirst().orElseThrow();
+        SymbolTable outerTable = analysis.tables().forProgramUnit(outer.id()).orElseThrow().symbolTable();
+        SymbolTable innerTable = analysis.tables().forProgramUnit(inner.id()).orElseThrow().symbolTable();
+
+        assertAll("fixture declaration categories",
+                () -> assertEquals(SymbolTable.SymbolKind.DATA_ITEM,
+                        symbol(outerTable, "COLLIDE-CONDITION").kind()),
+                () -> assertEquals(SymbolTable.SymbolKind.CONDITION_NAME,
+                        symbol(innerTable, "COLLIDE-CONDITION").kind()),
+                () -> assertEquals(SymbolTable.SymbolKind.DATA_ITEM,
+                        symbol(outerTable, "COLLIDE-INDEX").kind()),
+                () -> assertEquals(SymbolTable.SymbolKind.INDEX_NAME,
+                        symbol(innerTable, "COLLIDE-INDEX").kind()));
+
+        ReferenceResolution.Entry control = assertEntry(analysis.resolution(), inner.id(), "CONTROL-GLOBAL",
+                ResolutionContracts.ReferenceRole.VALUE_READ, ResolutionContracts.ResolutionStatus.RESOLVED,
+                ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION, 1);
+        assertEquals(outer.id(), control.candidates().get(0).entityId().programUnitId());
+
+        assertAll("an incompatible local declaration shadows an otherwise compatible outer GLOBAL",
+                () -> assertEntry(analysis.resolution(), inner.id(), "COLLIDE-CONDITION",
+                        ResolutionContracts.ReferenceRole.VALUE_READ,
+                        ResolutionContracts.ResolutionStatus.UNRESOLVED,
+                        ResolutionContracts.ResolutionReason.INVALID_NAMESPACE_FOR_CONTEXT, 0),
+                () -> assertEntry(analysis.resolution(), inner.id(), "COLLIDE-INDEX",
+                        ResolutionContracts.ReferenceRole.VALUE_READ,
+                        ResolutionContracts.ResolutionStatus.UNRESOLVED,
+                        ResolutionContracts.ResolutionReason.INVALID_NAMESPACE_FOR_CONTEXT, 0));
+    }
+
+    @Test
+    void appliesQualificationAcrossLocalAndInheritedGlobalCandidatesBeforeSelectingAProgramUnit() throws Exception {
+        Analysis analysis = analyze(QUALIFIED_GLOBAL, ResolutionContracts.QualifyMode.STANDARD);
+        CompilationUnitModel.ProgramUnit outer = analysis.model().programUnits().stream()
+                .filter(unit -> unit.program().name().equals("QUALIFY-OUTER")).findFirst().orElseThrow();
+        CompilationUnitModel.ProgramUnit inner = analysis.model().programUnits().stream()
+                .filter(unit -> unit.program().name().equals("QUALIFY-INNER")).findFirst().orElseThrow();
+        SymbolTable outerTable = analysis.tables().forProgramUnit(outer.id()).orElseThrow().symbolTable();
+        SymbolTable innerTable = analysis.tables().forProgramUnit(inner.id()).orElseThrow().symbolTable();
+
+        assertAll("same base name exists in both ProgramUnits before candidate selection",
+                () -> assertEquals(SymbolTable.SymbolKind.DATA_ITEM, symbol(outerTable, "VALUE-X").kind()),
+                () -> assertEquals(SymbolTable.SymbolKind.DATA_ITEM, symbol(innerTable, "VALUE-X").kind()),
+                () -> assertEquals("GLOBAL", symbol(outerTable, "OUTER-GROUP").attributes().get("visibility")),
+                () -> assertEquals("LOCAL", symbol(innerTable, "INNER-GROUP").attributes().get("visibility")));
+
+        assertAll("unqualified, locally qualified and externally qualified references are distinct",
+                () -> assertResolvedInUnit(analysis.resolution(), inner.id(), "VALUE-X",
+                        ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION, inner.id()),
+                () -> assertResolvedInUnit(analysis.resolution(), inner.id(), "VALUE-X OF INNER-GROUP",
+                        ResolutionContracts.ResolutionReason.QUALIFIED_HIERARCHY_MATCH, inner.id()),
+                () -> assertResolvedInUnit(analysis.resolution(), inner.id(), "VALUE-X OF OUTER-GROUP",
+                        ResolutionContracts.ResolutionReason.QUALIFIED_HIERARCHY_MATCH, outer.id()));
     }
 
     @Test
@@ -160,6 +340,87 @@ class DataAndIndexReferenceResolverTest {
         assertEquals(reason, entry.reason(), entry.toString());
         assertEquals(candidates, entry.candidates().size(), entry.toString());
         return entry;
+    }
+
+    private static void assertInheritedCandidate(
+            ReferenceResolution resolution, ResolutionContracts.ProgramUnitId useUnit,
+            ResolutionContracts.ProgramUnitId declarationUnit, String writtenText,
+            ResolutionContracts.ReferenceRole role, ResolutionContracts.ReferenceKind kind,
+            ResolutionContracts.SemanticEntityDomain domain, String symbolKind) {
+        ReferenceResolution.Entry entry = resolution.find(useUnit, writtenText, role).stream()
+                .findFirst().orElseThrow(() -> new AssertionError("missing resolution entry " + role + " " + writtenText));
+        assertAll(writtenText,
+                () -> assertEquals(kind, entry.occurrence().kind(), entry.toString()),
+                () -> assertEquals(ResolutionContracts.ResolutionStatus.RESOLVED, entry.status(), entry.toString()),
+                () -> assertEquals(ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION,
+                        entry.reason(), entry.toString()),
+                () -> assertEquals(1, entry.candidates().size(), entry.toString()),
+                () -> {
+                    assertFalse(entry.candidates().isEmpty(), entry.toString());
+                    ReferenceResolution.Candidate candidate = entry.candidates().get(0);
+                    assertEquals(kind, candidate.kind());
+                    assertEquals(declarationUnit, candidate.entityId().programUnitId());
+                    assertEquals(domain, candidate.entityId().domain());
+                    assertEquals(symbolKind, candidate.attributes().get("symbolKind"));
+                });
+    }
+
+    private static void assertResolvedInUnit(
+            ReferenceResolution resolution, ResolutionContracts.ProgramUnitId useUnit,
+            String writtenText, ResolutionContracts.ResolutionReason reason,
+            ResolutionContracts.ProgramUnitId expectedDeclarationUnit) {
+        ReferenceResolution.Entry entry = assertEntry(resolution, useUnit, writtenText,
+                ResolutionContracts.ReferenceRole.VALUE_READ, ResolutionContracts.ResolutionStatus.RESOLVED,
+                reason, 1);
+        ReferenceResolution.Candidate candidate = entry.candidates().get(0);
+        assertEquals(ResolutionContracts.ReferenceKind.DATA, candidate.kind());
+        assertEquals(ResolutionContracts.SemanticEntityDomain.DATA_SYMBOL, candidate.entityId().domain());
+        assertEquals(expectedDeclarationUnit, candidate.entityId().programUnitId());
+    }
+
+    private static SymbolTable.Symbol symbol(SymbolTable table, String name) {
+        return table.lookupAll(SymbolTable.Namespace.DATA, name).stream().findFirst()
+                .orElseThrow(() -> new AssertionError("missing declaration " + name));
+    }
+
+    private static SymbolTable.Symbol symbolUnder(SymbolTable table, String name, String owner) {
+        return table.lookupAll(SymbolTable.Namespace.DATA, name).stream()
+                .filter(symbol -> table.scopes().get(symbol.scopeId()).name().equals(owner))
+                .findFirst().orElseThrow(() -> new AssertionError("missing declaration " + owner + "." + name));
+    }
+
+    private static DeclarationRelationResolution.Entry relationForOwner(
+            Analysis analysis, SymbolTable table, ResolutionContracts.ProgramUnitId unit,
+            int ownerSymbolId, SymbolTable.RelationKind kind) {
+        SymbolTable.DeclarationRelation declaration = table.declarationRelations().stream()
+                .filter(relation -> relation.kind() == kind && relation.ownerSymbolId() == ownerSymbolId)
+                .findFirst().orElseThrow(() -> new AssertionError("missing " + kind + " relation for " + ownerSymbolId));
+        return analysis.resolution().declarationRelations().entries().stream()
+                .filter(entry -> entry.programUnitId().equals(unit))
+                .filter(entry -> entry.relationId() == declaration.id())
+                .findFirst().orElseThrow(() -> new AssertionError("missing resolution for relation " + declaration.id()));
+    }
+
+    private static void assertRelationCandidate(DeclarationRelationResolution.Entry entry, int expectedSymbolId) {
+        assertAll(entry.toString(),
+                () -> assertEquals(ResolutionContracts.ResolutionStatus.RESOLVED, entry.status()),
+                () -> assertEquals(ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION, entry.reason()),
+                () -> assertEquals(1, entry.candidates().size()),
+                () -> {
+                    assertFalse(entry.candidates().isEmpty());
+                    ReferenceResolution.Candidate candidate = entry.candidates().get(0);
+                    assertEquals(ResolutionContracts.SemanticEntityDomain.DATA_SYMBOL,
+                            candidate.entityId().domain());
+                    assertEquals(expectedSymbolId, candidate.entityId().localId());
+                });
+    }
+
+    private static void assertInvalidRelation(DeclarationRelationResolution.Entry entry) {
+        assertAll(entry.toString(),
+                () -> assertEquals(ResolutionContracts.ResolutionStatus.UNRESOLVED, entry.status()),
+                () -> assertEquals(ResolutionContracts.ResolutionReason.INVALID_NAMESPACE_FOR_CONTEXT,
+                        entry.reason()),
+                () -> assertEquals(0, entry.candidates().size()));
     }
 
     private static Analysis analyze(Path sourcePath, ResolutionContracts.QualifyMode mode) throws Exception {

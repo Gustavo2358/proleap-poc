@@ -138,17 +138,30 @@ final class CobolReferenceResolver {
     }
 
     private Decision resolveFile(ReferenceOccurrences.Occurrence occurrence) {
-        UnitIndex unit = units.get(occurrence.programUnitId());
-        Ast.Node node = unit.astNodes().get(occurrence.referenceAstNodeId());
+        UnitIndex startingUnit = units.get(occurrence.programUnitId());
+        Ast.Node node = startingUnit.astNodes().get(occurrence.referenceAstNodeId());
         String name = node instanceof Ast.FileReference reference ? reference.baseName()
                 : node instanceof Ast.DataReference reference ? reference.baseName()
                 : occurrence.writtenText();
-        additionalLookups++;
-        List<SymbolTable.Entity> entities = unit.files().getOrDefault(SymbolTable.canonical(name), List.of());
-        additionalInspections += entities.size();
-        List<ReferenceResolution.Candidate> candidates = entities.stream()
-                .map(entity -> fileCandidate(occurrence.programUnitId(), entity)).toList();
-        return nominalDecision(candidates, false);
+        String canonical = SymbolTable.canonical(name);
+        ResolutionContracts.ProgramUnitId current = occurrence.programUnitId();
+        while (current != null) {
+            UnitIndex unit = units.get(current);
+            additionalLookups++;
+            List<SymbolTable.Entity> named = unit.files().getOrDefault(canonical, List.of());
+            additionalInspections += named.size();
+            if (!named.isEmpty()) {
+                ResolutionContracts.ProgramUnitId owner = current;
+                List<SymbolTable.Entity> visible = owner.equals(occurrence.programUnitId()) ? named
+                        : named.stream().filter(entity -> "GLOBAL".equals(
+                                entity.attributes().get("visibility"))).toList();
+                List<ReferenceResolution.Candidate> candidates = visible.stream()
+                        .map(entity -> fileCandidate(owner, entity)).toList();
+                return nominalDecision(candidates, false);
+            }
+            current = unit.unit().parentId();
+        }
+        return nominalDecision(List.of(), false);
     }
 
     private Decision resolveProgram(ReferenceOccurrences.Occurrence occurrence) {
@@ -170,22 +183,60 @@ final class CobolReferenceResolver {
         if (externalCatalog.isEmpty())
             return new Decision(ResolutionContracts.ResolutionStatus.UNRESOLVED,
                     ResolutionContracts.ResolutionReason.EXTERNAL_CATALOG_NOT_PROVIDED, List.of());
-        List<ExternalProgramCatalog.Program> external = List.copyOf(externalCatalog.get().lookup(canonical));
+        if (policy.pgmnameMode() == ResolutionContracts.PgmnameMode.UNSPECIFIED
+                && dependsOnPgmname(reference.programName()))
+            return new Decision(ResolutionContracts.ResolutionStatus.UNSUPPORTED,
+                    ResolutionContracts.ResolutionReason.UNSUPPORTED_DIALECT_OPTION, List.of());
+        String externalCanonical = externalProgramCanonical(
+                reference.programName(), policy.pgmnameMode());
+        List<ExternalProgramCatalog.Program> external = List.copyOf(
+                externalCatalog.get().lookup(externalCanonical));
         additionalInspections += external.size();
         List<ReferenceResolution.Candidate> candidates = external.stream()
-                .map(program -> externalCandidate(program, canonical)).toList();
+                .map(program -> externalCandidate(program, externalCanonical)).toList();
         return nominalDecision(candidates, false);
+    }
+
+    private static boolean dependsOnPgmname(String writtenName) {
+        String uppercase = SymbolTable.canonical(writtenName);
+        if (!writtenName.equals(uppercase) || uppercase.length() > 8) return true;
+        return uppercase.chars().anyMatch(character ->
+                !(character >= 'A' && character <= 'Z')
+                        && !(character >= '0' && character <= '9'));
+    }
+
+    private static String externalProgramCanonical(String writtenName,
+                                                   ResolutionContracts.PgmnameMode mode) {
+        return switch (mode) {
+            case COMPAT -> {
+                String compatible = SymbolTable.canonical(writtenName).replace('-', '0');
+                yield compatible.substring(0, Math.min(8, compatible.length()));
+            }
+            case LONGMIXED -> writtenName;
+            case LONGUPPER, UNSPECIFIED -> SymbolTable.canonical(writtenName);
+        };
     }
 
     private boolean visibleInternalProgram(CompilationUnitModel.ProgramUnit caller,
                                            CompilationUnitModel.ProgramUnit target) {
         if (caller.id().equals(target.id())) return true;
         if (Objects.equals(target.parentId(), caller.id())) return true;
+        if (isDescendantOf(caller.id(), target.id())) return false;
         ResolutionContracts.ProgramUnitId ancestorParent = caller.parentId();
         while (ancestorParent != null) {
             if (Objects.equals(target.parentId(), ancestorParent) && target.program().attributes().common())
                 return true;
             ancestorParent = units.get(ancestorParent).unit().parentId();
+        }
+        return false;
+    }
+
+    private boolean isDescendantOf(ResolutionContracts.ProgramUnitId candidate,
+                                   ResolutionContracts.ProgramUnitId ancestor) {
+        ResolutionContracts.ProgramUnitId parent = units.get(candidate).unit().parentId();
+        while (parent != null) {
+            if (parent.equals(ancestor)) return true;
+            parent = units.get(parent).unit().parentId();
         }
         return false;
     }

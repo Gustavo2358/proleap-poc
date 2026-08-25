@@ -26,7 +26,13 @@ final class ReferenceOccurrenceCollector {
     private void visit(Ast.Node node, ResolutionContracts.ReferenceRole role,
                        ReferenceOccurrences.Preservation preservation) {
         if (node instanceof Ast.DataReference reference) {
-            addDataReference(reference, role, preservation, null);
+            if (role == ResolutionContracts.ReferenceRole.SUBSCRIPT) {
+                addDataReference(reference, role, preservation, ResolutionContracts.ReferenceKind.INDEX,
+                        EnumSet.of(ResolutionContracts.ReferenceKind.DATA,
+                                ResolutionContracts.ReferenceKind.INDEX));
+            } else {
+                addDataReference(reference, role, preservation, null);
+            }
             return;
         }
         if (node instanceof Ast.ProcedureReference reference) {
@@ -225,22 +231,21 @@ final class ReferenceOccurrenceCollector {
         add(reference, kind, role, reference.writtenText(), effective,
                 admissibleKindsOverride == null ? Set.of(kind) : admissibleKindsOverride);
         for (Ast.DataQualifier qualifier : reference.qualifiers()) {
-            ResolutionContracts.ReferenceKind qualifierKind = qualifierKind(qualifier);
+            ResolutionContracts.ReferenceKind qualifierKind = qualifier.target() == Ast.QualifierTarget.FILE
+                    ? ResolutionContracts.ReferenceKind.FILE : ResolutionContracts.ReferenceKind.DATA;
+            Set<ResolutionContracts.ReferenceKind> qualifierKinds = qualifier.target()
+                    == Ast.QualifierTarget.DATA_OR_FILE
+                    ? EnumSet.of(ResolutionContracts.ReferenceKind.DATA,
+                            ResolutionContracts.ReferenceKind.FILE)
+                    : Set.of(qualifierKind);
             addDataReference(qualifier.reference(), ResolutionContracts.ReferenceRole.QUALIFIER_COMPONENT,
-                    effective, qualifierKind);
+                    effective, qualifierKind, qualifierKinds);
         }
         for (Ast.SubscriptGroup group : reference.subscriptGroups())
             for (Ast.Expression subscript : group.subscripts())
                 visit(subscript, ResolutionContracts.ReferenceRole.SUBSCRIPT, effective);
         if (reference.referenceModification() != null)
             visit(reference.referenceModification(), role, effective);
-    }
-
-    private ResolutionContracts.ReferenceKind qualifierKind(Ast.DataQualifier qualifier) {
-        String grammarRule = qualifier.meta().origin().grammarRule();
-        ReferenceResolutionManifest.Entry entry = ReferenceResolutionManifest.entry(
-                GrammarCoverageManifest.Grammar.COBOL, grammarRule);
-        return entry.referenceKind() == null ? ResolutionContracts.ReferenceKind.DATA : entry.referenceKind();
     }
 
     private void add(Ast.Node reference, ResolutionContracts.ReferenceKind kind,

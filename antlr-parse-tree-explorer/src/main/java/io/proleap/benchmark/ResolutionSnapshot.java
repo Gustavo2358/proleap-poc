@@ -42,6 +42,7 @@ final class ResolutionSnapshot {
             field(out, "policyId", resolution.policy().policyId()); out.write(',');
             field(out, "policyVersion", resolution.policy().version()); out.write(',');
             field(out, "qualifyMode", resolution.policy().qualifyMode().name()); out.write(',');
+            field(out, "pgmnameMode", resolution.policy().pgmnameMode().name()); out.write(',');
             field(out, "catalog", externalCatalogDescription); out.write(',');
             field(out, "claim", report.analysisClaim().name()); out.write(',');
             out.write("\"referenceBindingComplete\":" + report.completeness().referenceBindingComplete() + ',');

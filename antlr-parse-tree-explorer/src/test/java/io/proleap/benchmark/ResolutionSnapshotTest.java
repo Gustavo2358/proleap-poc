@@ -34,7 +34,8 @@ class ResolutionSnapshotTest {
         assertEquals(text, Files.readString(second, StandardCharsets.UTF_8));
         assertTrue(text.startsWith("window.RESOLUTION_DATA={"));
         assertTrue(text.contains("\"catalog\":\"NONE (explicit empty catalog)\""));
-        assertTrue(text.contains("\"policyId\":\"proleap-cobol/ibm-enterprise-compatible\""));
+        assertTrue(text.contains("\"policyId\":\"proleap-cobol/explicit-options\""));
+        assertTrue(text.contains("\"pgmnameMode\":\"UNSPECIFIED\""));
         assertTrue(text.contains("\"status\":\"RESOLVED\""));
         assertTrue(text.contains("\"status\":\"AMBIGUOUS\""));
         assertTrue(text.contains("\"status\":\"UNRESOLVED\""));

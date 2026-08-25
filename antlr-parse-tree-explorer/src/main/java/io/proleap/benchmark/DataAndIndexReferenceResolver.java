@@ -79,11 +79,16 @@ final class DataAndIndexReferenceResolver {
         Ast.Node node = startingUnit.astNodes().get(occurrence.referenceAstNodeId());
         String baseName = baseName(node, occurrence);
         String canonical = SymbolTable.canonical(baseName);
-        List<SymbolOwner> compatible = compatibleCandidates(startingUnitId, canonical, occurrence.kind());
-        List<SymbolOwner> visible = localOrInheritedGlobal(startingUnitId, compatible);
+        boolean qualifiedReference = node instanceof Ast.DataReference data
+                && !data.qualifiers().isEmpty();
+        List<SymbolOwner> compatible = compatibleCandidates(
+                startingUnitId, canonical, occurrence.admissibleKinds(), !qualifiedReference);
+        List<SymbolOwner> visible = qualifiedReference
+                ? localAndInheritedGlobal(startingUnitId, compatible)
+                : localOrInheritedGlobal(startingUnitId, compatible);
         List<SymbolOwner> qualified = applyQualification(visible, node);
         List<ReferenceResolution.Candidate> candidates = qualified.stream()
-                .map(owner -> candidate(owner, occurrence.kind())).toList();
+                .map(this::candidate).toList();
         maximumCandidates = Math.max(maximumCandidates, candidates.size());
 
         if (candidates.isEmpty()) {
@@ -94,7 +99,6 @@ final class DataAndIndexReferenceResolver {
             return new Decision(ResolutionContracts.ResolutionStatus.UNRESOLVED, reason, List.of());
         }
         if (candidates.size() == 1) {
-            boolean qualifiedReference = node instanceof Ast.DataReference data && !data.qualifiers().isEmpty();
             return new Decision(ResolutionContracts.ResolutionStatus.RESOLVED,
                     qualifiedReference ? ResolutionContracts.ResolutionReason.QUALIFIED_HIERARCHY_MATCH
                             : ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION,
@@ -105,7 +109,7 @@ final class DataAndIndexReferenceResolver {
         if (policy.qualifyMode() == ResolutionContracts.QualifyMode.EXTEND && extended.size() == 1)
             return new Decision(ResolutionContracts.ResolutionStatus.RESOLVED,
                     ResolutionContracts.ResolutionReason.QUALIFIED_HIERARCHY_MATCH,
-                    List.of(candidate(extended.get(0), occurrence.kind())));
+                    List.of(candidate(extended.get(0))));
         if (policy.qualifyMode() == ResolutionContracts.QualifyMode.UNSPECIFIED && extended.size() == 1)
             return new Decision(ResolutionContracts.ResolutionStatus.UNSUPPORTED,
                     ResolutionContracts.ResolutionReason.UNSUPPORTED_DIALECT_OPTION, candidates);
@@ -115,10 +119,17 @@ final class DataAndIndexReferenceResolver {
 
     private record SymbolOwner(ResolutionContracts.ProgramUnitId unitId, SymbolTable table,
                                SymbolTable.Symbol symbol) { }
+    private record QualifierConstraint(String canonicalName,
+                                       Set<ResolutionContracts.ReferenceKind> admissibleKinds) {
+        private QualifierConstraint {
+            admissibleKinds = Set.copyOf(admissibleKinds);
+        }
+    }
 
     private List<SymbolOwner> compatibleCandidates(ResolutionContracts.ProgramUnitId startingUnitId,
                                                    String canonical,
-                                                   ResolutionContracts.ReferenceKind kind) {
+                                                   Set<ResolutionContracts.ReferenceKind> admissibleKinds,
+                                                   boolean stopAtFirstNominalLevel) {
         List<SymbolOwner> result = new ArrayList<>();
         ResolutionContracts.ProgramUnitId current = startingUnitId;
         while (current != null) {
@@ -127,7 +138,9 @@ final class DataAndIndexReferenceResolver {
             List<SymbolTable.Symbol> sameName = unit.byName().getOrDefault(canonical, List.of());
             candidateInspections += sameName.size();
             for (SymbolTable.Symbol symbol : sameName)
-                if (compatible(symbol, kind)) result.add(new SymbolOwner(current, unit.table(), symbol));
+                if (admissibleKinds.stream().anyMatch(kind -> compatible(symbol, kind)))
+                    result.add(new SymbolOwner(current, unit.table(), symbol));
+            if (stopAtFirstNominalLevel && !sameName.isEmpty()) break;
             current = unit.unit().parentId();
         }
         return result;
@@ -149,39 +162,58 @@ final class DataAndIndexReferenceResolver {
         return List.of();
     }
 
+    private List<SymbolOwner> localAndInheritedGlobal(ResolutionContracts.ProgramUnitId startingUnitId,
+                                                       List<SymbolOwner> candidates) {
+        return candidates.stream().filter(owner -> owner.unitId().equals(startingUnitId)
+                        || "GLOBAL".equals(owner.symbol().attributes().get("visibility")))
+                .toList();
+    }
+
     private List<SymbolOwner> applyQualification(List<SymbolOwner> candidates, Ast.Node node) {
         if (!(node instanceof Ast.DataReference reference) || reference.qualifiers().isEmpty()) return candidates;
-        List<String> qualifiers = reference.qualifiers().stream()
-                .map(Ast.DataQualifier::name).map(SymbolTable::canonical).toList();
+        List<QualifierConstraint> qualifiers = qualifierConstraints(reference);
         return candidates.stream().filter(candidate -> orderedSubsequence(qualifiers, ancestry(candidate))).toList();
     }
 
     private List<SymbolOwner> qualifyExtend(List<SymbolOwner> candidates, Ast.Node node) {
         if (!(node instanceof Ast.DataReference reference)) return List.of();
-        List<String> qualifiers = reference.qualifiers().stream()
-                .map(Ast.DataQualifier::name).map(SymbolTable::canonical).toList();
+        List<QualifierConstraint> qualifiers = qualifierConstraints(reference);
         if (qualifiers.isEmpty()) {
             List<SymbolOwner> level01 = candidates.stream()
                     .filter(candidate -> ancestry(candidate).isEmpty()).toList();
             return level01.size() == 1 ? level01 : List.of();
         }
         List<SymbolOwner> fullyQualified = candidates.stream()
-                .filter(candidate -> qualifiers.equals(ancestry(candidate))).toList();
+                .filter(candidate -> exactQualification(qualifiers, ancestry(candidate))).toList();
         return fullyQualified.size() == 1 ? fullyQualified : List.of();
     }
 
-    private List<String> ancestry(SymbolOwner owner) {
-        List<String> result = new ArrayList<>();
+    private List<QualifierConstraint> ancestry(SymbolOwner owner) {
+        List<QualifierConstraint> result = new ArrayList<>();
         int scopeId = owner.symbol().scopeId();
         while (scopeId >= 0) {
             SymbolTable.Scope scope = owner.table().scopes().get(scopeId);
             if (scope.kind() == SymbolTable.ScopeKind.DATA_ITEM && scope.ownerSymbolId() >= 0)
-                result.add(owner.table().symbols().get(scope.ownerSymbolId()).canonicalName());
+                result.add(new QualifierConstraint(
+                        owner.table().symbols().get(scope.ownerSymbolId()).canonicalName(),
+                        Set.of(ResolutionContracts.ReferenceKind.DATA)));
             else if (scope.kind() == SymbolTable.ScopeKind.FILE_DESCRIPTION && scope.ownerSymbolId() >= 0)
-                result.add(owner.table().symbols().get(scope.ownerSymbolId()).canonicalName());
+                result.add(new QualifierConstraint(
+                        owner.table().symbols().get(scope.ownerSymbolId()).canonicalName(),
+                        Set.of(ResolutionContracts.ReferenceKind.FILE)));
             scopeId = scope.parentId();
         }
         return List.copyOf(result);
+    }
+
+    private static List<QualifierConstraint> qualifierConstraints(Ast.DataReference reference) {
+        return reference.qualifiers().stream().map(qualifier -> new QualifierConstraint(
+                SymbolTable.canonical(qualifier.name()), switch (qualifier.target()) {
+                    case DATA -> Set.of(ResolutionContracts.ReferenceKind.DATA);
+                    case FILE -> Set.of(ResolutionContracts.ReferenceKind.FILE);
+                    case DATA_OR_FILE -> EnumSet.of(ResolutionContracts.ReferenceKind.DATA,
+                            ResolutionContracts.ReferenceKind.FILE);
+                })).toList();
     }
 
     private boolean hasSameNameInSearchPath(ResolutionContracts.ProgramUnitId startingUnitId, String canonical) {
@@ -203,8 +235,8 @@ final class DataAndIndexReferenceResolver {
         };
     }
 
-    private ReferenceResolution.Candidate candidate(SymbolOwner owner,
-                                                     ResolutionContracts.ReferenceKind kind) {
+    private ReferenceResolution.Candidate candidate(SymbolOwner owner) {
+        ResolutionContracts.ReferenceKind kind = referenceKind(owner.symbol());
         ResolutionContracts.SemanticEntityDomain domain = kind == ResolutionContracts.ReferenceKind.INDEX
                 ? ResolutionContracts.SemanticEntityDomain.INDEX_SYMBOL
                 : ResolutionContracts.SemanticEntityDomain.DATA_SYMBOL;
@@ -215,23 +247,124 @@ final class DataAndIndexReferenceResolver {
                         "visibility", owner.symbol().attributes().getOrDefault("visibility", "LOCAL")));
     }
 
+    private static ResolutionContracts.ReferenceKind referenceKind(SymbolTable.Symbol symbol) {
+        return switch (symbol.kind()) {
+            case INDEX_NAME -> ResolutionContracts.ReferenceKind.INDEX;
+            case CONDITION_NAME -> ResolutionContracts.ReferenceKind.CONDITION;
+            default -> ResolutionContracts.ReferenceKind.DATA;
+        };
+    }
+
     private DeclarationRelationResolution resolveRelations(CompilationUnitSymbolTables symbolTables,
                                                             Map<String, ReferenceResolution.Entry> entriesByReference) {
         List<DeclarationRelationResolution.Entry> result = new ArrayList<>();
         for (CompilationUnitSymbolTables.UnitSymbols unit : symbolTables.units()) {
+            Map<Integer, Decision> renames = resolveRenames(unit.id(), unit.symbolTable());
             for (SymbolTable.DeclarationRelation relation : unit.symbolTable().declarationRelations()) {
-                ReferenceResolution.Entry binding = entriesByReference.get(
-                        referenceKey(unit.id(), relation.referenceAstNodeId()));
-                ResolutionContracts.ResolutionStatus status = binding == null
-                        ? ResolutionContracts.ResolutionStatus.UNSUPPORTED : binding.status();
-                ResolutionContracts.ResolutionReason reason = binding == null
-                        ? ResolutionContracts.ResolutionReason.UNSUPPORTED_GRAMMAR_FORM : binding.reason();
-                List<ReferenceResolution.Candidate> candidates = binding == null ? List.of() : binding.candidates();
+                Decision structural = relation.kind() == SymbolTable.RelationKind.REDEFINES
+                        ? resolveRedefines(unit.id(), unit.symbolTable(), relation)
+                        : renames.get(relation.id());
+                ReferenceResolution.Entry binding = structural == null ? entriesByReference.get(
+                        referenceKey(unit.id(), relation.referenceAstNodeId())) : null;
+                ResolutionContracts.ResolutionStatus status = structural != null ? structural.status()
+                        : binding == null ? ResolutionContracts.ResolutionStatus.UNSUPPORTED : binding.status();
+                ResolutionContracts.ResolutionReason reason = structural != null ? structural.reason()
+                        : binding == null ? ResolutionContracts.ResolutionReason.UNSUPPORTED_GRAMMAR_FORM
+                        : binding.reason();
+                List<ReferenceResolution.Candidate> candidates = structural != null ? structural.candidates()
+                        : binding == null ? List.of() : binding.candidates();
                 result.add(new DeclarationRelationResolution.Entry(result.size(), unit.id(), relation.id(),
                         relation.kind(), relation.referenceAstNodeId(), status, reason, candidates));
             }
         }
         return new DeclarationRelationResolution(result);
+    }
+
+    private Map<Integer, Decision> resolveRenames(ResolutionContracts.ProgramUnitId unitId,
+                                                  SymbolTable table) {
+        Map<Integer, Decision> result = new HashMap<>();
+        Map<Integer, List<SymbolTable.DeclarationRelation>> byOwner = new LinkedHashMap<>();
+        table.declarationRelations().stream()
+                .filter(relation -> relation.kind() == SymbolTable.RelationKind.RENAMES_FROM
+                        || relation.kind() == SymbolTable.RelationKind.RENAMES_THROUGH)
+                .forEach(relation -> byOwner.computeIfAbsent(
+                        relation.ownerSymbolId(), ignored -> new ArrayList<>()).add(relation));
+        for (var ownerRelations : byOwner.entrySet()) {
+            SymbolTable.Symbol owner = table.symbols().get(ownerRelations.getKey());
+            Map<Integer, List<ReferenceResolution.Candidate>> candidates = new LinkedHashMap<>();
+            for (SymbolTable.DeclarationRelation relation : ownerRelations.getValue())
+                candidates.put(relation.id(), renamesCandidates(unitId, table, owner, relation));
+            boolean invalid = candidates.values().stream().anyMatch(List::isEmpty);
+            Optional<SymbolTable.DeclarationRelation> from = ownerRelations.getValue().stream()
+                    .filter(relation -> relation.kind() == SymbolTable.RelationKind.RENAMES_FROM).findFirst();
+            Optional<SymbolTable.DeclarationRelation> through = ownerRelations.getValue().stream()
+                    .filter(relation -> relation.kind() == SymbolTable.RelationKind.RENAMES_THROUGH).findFirst();
+            if (!invalid && from.isPresent() && through.isPresent()
+                    && candidates.get(from.get().id()).size() == 1
+                    && candidates.get(through.get().id()).size() == 1
+                    && candidates.get(from.get().id()).get(0).entityId().localId()
+                    > candidates.get(through.get().id()).get(0).entityId().localId())
+                invalid = true;
+            for (SymbolTable.DeclarationRelation relation : ownerRelations.getValue()) {
+                List<ReferenceResolution.Candidate> endpoint = candidates.get(relation.id());
+                Decision decision = invalid ? new Decision(ResolutionContracts.ResolutionStatus.UNRESOLVED,
+                        ResolutionContracts.ResolutionReason.INVALID_NAMESPACE_FOR_CONTEXT, List.of())
+                        : endpoint.size() == 1
+                        ? new Decision(ResolutionContracts.ResolutionStatus.RESOLVED,
+                        ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION, endpoint)
+                        : new Decision(ResolutionContracts.ResolutionStatus.AMBIGUOUS,
+                        ResolutionContracts.ResolutionReason.MULTIPLE_VALID_CANDIDATES, endpoint);
+                result.put(relation.id(), decision);
+            }
+        }
+        return Map.copyOf(result);
+    }
+
+    private List<ReferenceResolution.Candidate> renamesCandidates(
+            ResolutionContracts.ProgramUnitId unitId, SymbolTable table, SymbolTable.Symbol owner,
+            SymbolTable.DeclarationRelation relation) {
+        nominalLookups++;
+        List<SymbolTable.Symbol> named = table.lookupAll(
+                SymbolTable.Namespace.DATA, relation.writtenTarget());
+        candidateInspections += named.size();
+        List<ReferenceResolution.Candidate> candidates = named.stream()
+                .filter(symbol -> symbol.kind() == SymbolTable.SymbolKind.DATA_ITEM)
+                .filter(symbol -> scopeIsWithin(table, symbol.scopeId(), owner.scopeId()))
+                .map(symbol -> candidate(new SymbolOwner(unitId, table, symbol))).toList();
+        maximumCandidates = Math.max(maximumCandidates, candidates.size());
+        return candidates;
+    }
+
+    private static boolean scopeIsWithin(SymbolTable table, int candidateScopeId, int boundaryScopeId) {
+        int scopeId = candidateScopeId;
+        while (scopeId >= 0) {
+            if (scopeId == boundaryScopeId) return true;
+            scopeId = table.scopes().get(scopeId).parentId();
+        }
+        return false;
+    }
+
+    private Decision resolveRedefines(ResolutionContracts.ProgramUnitId unitId, SymbolTable table,
+                                      SymbolTable.DeclarationRelation relation) {
+        SymbolTable.Symbol owner = table.symbols().get(relation.ownerSymbolId());
+        nominalLookups++;
+        List<SymbolTable.Symbol> named = table.lookupLocal(
+                owner.scopeId(), SymbolTable.Namespace.DATA, relation.writtenTarget());
+        candidateInspections += named.size();
+        String ownerLevel = owner.attributes().get("level");
+        List<ReferenceResolution.Candidate> candidates = named.stream()
+                .filter(symbol -> symbol.kind() == SymbolTable.SymbolKind.DATA_ITEM)
+                .filter(symbol -> Objects.equals(ownerLevel, symbol.attributes().get("level")))
+                .map(symbol -> candidate(new SymbolOwner(unitId, table, symbol))).toList();
+        maximumCandidates = Math.max(maximumCandidates, candidates.size());
+        if (candidates.isEmpty())
+            return new Decision(ResolutionContracts.ResolutionStatus.UNRESOLVED,
+                    ResolutionContracts.ResolutionReason.INVALID_NAMESPACE_FOR_CONTEXT, List.of());
+        if (candidates.size() == 1)
+            return new Decision(ResolutionContracts.ResolutionStatus.RESOLVED,
+                    ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION, candidates);
+        return new Decision(ResolutionContracts.ResolutionStatus.AMBIGUOUS,
+                ResolutionContracts.ResolutionReason.MULTIPLE_VALID_CANDIDATES, candidates);
     }
 
     private static String baseName(Ast.Node node, ReferenceOccurrences.Occurrence occurrence) {
@@ -240,11 +373,26 @@ final class DataAndIndexReferenceResolver {
         return occurrence.writtenText();
     }
 
-    private static boolean orderedSubsequence(List<String> qualifiers, List<String> ancestry) {
+    private static boolean orderedSubsequence(List<QualifierConstraint> qualifiers,
+                                              List<QualifierConstraint> ancestry) {
         int position = 0;
-        for (String ancestor : ancestry)
-            if (position < qualifiers.size() && qualifiers.get(position).equals(ancestor)) position++;
+        for (QualifierConstraint ancestor : ancestry)
+            if (position < qualifiers.size() && constraintMatches(qualifiers.get(position), ancestor)) position++;
         return position == qualifiers.size();
+    }
+
+    private static boolean exactQualification(List<QualifierConstraint> qualifiers,
+                                              List<QualifierConstraint> ancestry) {
+        if (qualifiers.size() != ancestry.size()) return false;
+        for (int i = 0; i < qualifiers.size(); i++)
+            if (!constraintMatches(qualifiers.get(i), ancestry.get(i))) return false;
+        return true;
+    }
+
+    private static boolean constraintMatches(QualifierConstraint requested,
+                                             QualifierConstraint declared) {
+        return requested.canonicalName().equals(declared.canonicalName())
+                && requested.admissibleKinds().stream().anyMatch(declared.admissibleKinds()::contains);
     }
 
     private static void indexAst(Ast.Node node, Map<Integer, Ast.Node> output) {

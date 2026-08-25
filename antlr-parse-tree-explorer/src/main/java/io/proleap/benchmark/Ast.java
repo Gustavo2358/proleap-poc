@@ -48,6 +48,7 @@ public final class Ast {
     public enum PerformKind { INLINE, PROCEDURE }
     public enum GoToKind { SIMPLE, DEPENDING_ON }
     public enum QualifierConnector { OF, IN }
+    public enum QualifierTarget { DATA, FILE, DATA_OR_FILE }
     public enum ReferenceUnderstanding { STRUCTURED, PRESERVED }
     public enum DataSectionKind { FILE, DATABASE, WORKING_STORAGE, LINKAGE, COMMUNICATION, LOCAL_STORAGE, SCREEN, REPORT, PROGRAM_LIBRARY }
     public enum DataLevelKind { GROUP_OR_ELEMENTARY, STANDALONE_77, RENAMES_66, CONDITION_88, OPAQUE }
@@ -259,7 +260,8 @@ public final class Ast {
     }
 
     public record LiteralExpression(Meta meta, String value, String rawLexeme) implements Expression {}
-    public record DataQualifier(Meta meta, QualifierConnector connector, DataReference reference,
+    public record DataQualifier(Meta meta, QualifierConnector connector, QualifierTarget target,
+                                DataReference reference,
                                 String writtenText) implements Node {
         public String name() { return reference.baseName(); }
     }

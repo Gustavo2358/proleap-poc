@@ -84,7 +84,8 @@ final class AstBuilder {
                                      Map<ResolutionContracts.ProgramUnitId, List<SemanticCoverage.Diagnostic>> diagnostics) {
         AstBuildResult built = buildProgramUnit(context);
         ResolutionContracts.ProgramUnitId id = new ResolutionContracts.ProgramUnitId(
-                compilationUnitId, structuralPath, SymbolTable.canonical(built.program().name()));
+                compilationUnitId, structuralPath,
+                SymbolTable.canonical(unquote(built.program().name())));
         units.add(new CompilationUnitModel.ProgramUnit(id, parentId, built.program()));
         coverage.put(id, built.coverage());
         diagnostics.put(id, built.diagnostics());
@@ -748,10 +749,17 @@ final class AstBuilder {
     private List<Ast.DataQualifier> buildQualifiers(ParserRuleContext qualified) {
         List<ParserRuleContext> contexts = nearestDescendants(qualified, Set.of("inData", "inTable", "inFile"));
         List<Ast.DataQualifier> result = new ArrayList<>();
-        for (ParserRuleContext qualifier : contexts) {
+        boolean generalFormat = rule(qualified).equals("qualifiedDataNameFormat1")
+                || firstDescendant(qualified, "qualifiedDataNameFormat1") != null;
+        for (int i = 0; i < contexts.size(); i++) {
+            ParserRuleContext qualifier = contexts.get(i);
             String written = sourceText(qualifier).strip();
             Ast.QualifierConnector connector = containsToken(qualifier, "IN")
                     ? Ast.QualifierConnector.IN : Ast.QualifierConnector.OF;
+            String qualifierRule = rule(qualifier);
+            Ast.QualifierTarget target = qualifierRule.equals("inFile") ? Ast.QualifierTarget.FILE
+                    : qualifierRule.equals("inData") && generalFormat && i == contexts.size() - 1
+                    ? Ast.QualifierTarget.DATA_OR_FILE : Ast.QualifierTarget.DATA;
             Ast.Meta qualifierMeta = meta(qualifier);
             ParserRuleContext value = directRuleChildren(qualifier).stream().reduce((first, second) -> second).orElse(null);
             Ast.DataReference reference;
@@ -762,7 +770,7 @@ final class AstBuilder {
                         value == null ? name : sourceText(value).strip(), List.of(), List.of(), null,
                         Ast.ReferenceUnderstanding.STRUCTURED);
             }
-            result.add(new Ast.DataQualifier(qualifierMeta, connector, reference, written));
+            result.add(new Ast.DataQualifier(qualifierMeta, connector, target, reference, written));
         }
         return result;
     }

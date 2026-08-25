@@ -1,0 +1,16 @@
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID. REDEFINES-STRUCTURE.
+       DATA DIVISION.
+       WORKING-STORAGE SECTION.
+       01 GROUP-A.
+          05 X PIC X.
+          05 Y REDEFINES X PIC X.
+       01 GROUP-B.
+          05 X PIC X.
+       01 GROUP-C.
+          05 SUBGROUP-C.
+             10 DEEP-X PIC X.
+          05 BAD-Y REDEFINES DEEP-X PIC X.
+       PROCEDURE DIVISION.
+           GOBACK.
+       END PROGRAM REDEFINES-STRUCTURE.
