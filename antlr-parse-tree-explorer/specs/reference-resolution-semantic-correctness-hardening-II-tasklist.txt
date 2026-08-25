@@ -667,6 +667,8 @@ fix: complete pgmname external canonicalization
 FASE 6 — LONGMIXED TAMBÉM DEVE VALER PARA NESTED PROGRAM BINDING
 ======================================================================
 
+STATUS: [x] CONCLUÍDA — RED comprovado, chave de lookup separada e regressão verdes
+
 Hipótese:
 
 A identidade utilizada em:

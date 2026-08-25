@@ -30,6 +30,8 @@ class ProcedureFileProgramReferenceResolverTest {
             "src/test/resources/cobol/resolution/program-name-policy.cbl");
     private static final Path EXTERNAL_PROGRAM_NAMES = Path.of(
             "src/test/resources/cobol/resolution/external-program-name-canonicalization.cbl");
+    private static final Path LONGMIXED_NESTED_PROGRAM = Path.of(
+            "src/test/resources/cobol/resolution/longmixed-nested-program.cbl");
 
     @Test
     void resolvesProcedureTargetsQualificationDependingOnPerformAndPreservedAlter() throws Exception {
@@ -442,6 +444,35 @@ class ProcedureFileProgramReferenceResolverTest {
                 () -> assertExternalCanonical(upper, "'PROG-A'", "PROG0A"),
                 () -> assertExternalCanonical(upper, "'-PROG'", "JPROG"),
                 () -> assertExternalCanonical(mixed, "'mixed-Child'", "mixed-Child"));
+    }
+
+    @Test
+    void honorsLongmixedCaseWhenBindingNestedPrograms() throws Exception {
+        Analysis mixed = analyze(LONGMIXED_NESTED_PROGRAM, Optional.empty(),
+                ResolutionContracts.PgmnameMode.LONGMIXED);
+        Analysis upper = analyze(LONGMIXED_NESTED_PROGRAM, Optional.empty(),
+                ResolutionContracts.PgmnameMode.LONGUPPER);
+        Analysis compat = analyze(LONGMIXED_NESTED_PROGRAM, Optional.empty(),
+                ResolutionContracts.PgmnameMode.COMPAT);
+        ResolutionContracts.ProgramUnitId mixedCaller = unit(mixed, "'Outer'");
+        ResolutionContracts.ProgramUnitId mixedChild = unit(mixed, "'mixed-Child'");
+
+        assertAll("ProgramUnitId remains structural and independent from the lookup policy",
+                () -> assertEquals("MIXED-CHILD", mixedChild.canonicalProgramName()),
+                () -> assertEquals(mixedChild, unit(upper, "'mixed-Child'")),
+                () -> assertEquals(mixedChild, unit(compat, "'mixed-Child'")));
+        assertAll("LONGMIXED nested lookup preserves written case",
+                () -> assertProgramCandidate(mixed.resolution(), mixedCaller,
+                        "'mixed-Child'", mixedChild),
+                () -> assertEntry(mixed.resolution(), mixedCaller, "'MIXED-CHILD'",
+                        ResolutionContracts.ReferenceRole.CALL_TARGET,
+                        ResolutionContracts.ResolutionStatus.UNRESOLVED,
+                        ResolutionContracts.ResolutionReason.EXTERNAL_CATALOG_NOT_PROVIDED, 0));
+        assertAll("case-folding modes retain case-insensitive nested lookup",
+                () -> assertProgramCandidate(upper.resolution(), unit(upper, "'Outer'"),
+                        "'MIXED-CHILD'", unit(upper, "'mixed-Child'")),
+                () -> assertProgramCandidate(compat.resolution(), unit(compat, "'Outer'"),
+                        "'MIXED-CHILD'", unit(compat, "'mixed-Child'")));
     }
 
     @Test

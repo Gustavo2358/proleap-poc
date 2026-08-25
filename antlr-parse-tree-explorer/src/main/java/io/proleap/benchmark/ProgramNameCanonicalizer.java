@@ -17,6 +17,14 @@ final class ProgramNameCanonicalizer {
         };
     }
 
+    static String nested(String writtenName, ResolutionContracts.PgmnameMode mode) {
+        Objects.requireNonNull(writtenName, "writtenName");
+        Objects.requireNonNull(mode, "mode");
+        String semanticName = unquote(writtenName.strip());
+        return mode == ResolutionContracts.PgmnameMode.LONGMIXED
+                ? semanticName : SymbolTable.canonical(semanticName);
+    }
+
     private static String translatedUpper(String writtenName, boolean truncate) {
         String canonical = SymbolTable.canonical(writtenName);
         if (truncate) canonical = canonical.substring(0, Math.min(8, canonical.length()));
@@ -27,5 +35,12 @@ final class ProgramNameCanonicalizer {
         char translated = first >= '1' && first <= '9'
                 ? (char) ('A' + first - '1') : 'J';
         return translated + canonical.substring(1);
+    }
+
+    private static String unquote(String value) {
+        if (value.length() >= 2 && ((value.startsWith("'") && value.endsWith("'"))
+                || (value.startsWith("\"") && value.endsWith("\""))))
+            return value.substring(1, value.length() - 1);
+        return value;
     }
 }

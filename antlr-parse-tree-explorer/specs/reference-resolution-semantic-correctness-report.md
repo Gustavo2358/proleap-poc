@@ -1464,3 +1464,13 @@ Isso torna `ReferenceResolution` uma fundação suficientemente confiável para 
 - Correção geral mínima: `ProgramNameCanonicalizer.external` centraliza a chave externa determinística e é testada isoladamente; o resolver continua bloqueando nomes dependentes da policy quando o modo é `UNSPECIFIED`.
 - Regressão intermediária: a primeira suíte completa após a correção teve `73` testes e uma falha no fake catalog legado, que ainda indexava `EXTERNAL-ONE`/`EXTERNAL-MANY` sob LONGUPPER. O helper foi alinhado à chave IBM correta `EXTERNAL0ONE`/`EXTERNAL0MANY`; a grafia COBOL e as expectativas de binding não foram alteradas.
 - GREEN: testes adversariais unitário e end-to-end `2/2`; suíte completa `73/73`, sem falhas, erros ou testes ignorados. Testes anteriores de PGMNAME explícito, ausente e catálogo externo permaneceram verdes.
+
+### Fase 6 — LONGMIXED em nested program binding
+
+- Regra: PGMNAME controla também referências a nested programs. LONGMIXED preserva case; LONGUPPER faz case folding, mas nested names não usam as traduções externas; COMPAT preserva a compatibilidade case-insensitive existente.
+- Fixture: `longmixed-nested-program.cbl`, com declaração literal `'mixed-Child'` e chamadas `'mixed-Child'`/`'MIXED-CHILD'`.
+- Teste: `honorsLongmixedCaseWhenBindingNestedPrograms`, com controles LONGUPPER e COMPAT e asserção de estabilidade do `ProgramUnitId`.
+- RED observado: sob LONGMIXED, ambas as grafias resolveram para o mesmo `SemanticEntityId` do filho; a chamada uppercase deveria permanecer sem target interno. **BUG CONFIRMADO**.
+- Causa raiz: `programsByName` era indexado por `ProgramUnitId.canonicalProgramName` e a consulta usava `SymbolTable.canonical`, ambos invariavelmente uppercase.
+- Correção geral mínima: `ProgramNameCanonicalizer.nested` produz a chave de lookup dependente da policy para declaração, chamada e `Candidate.canonicalName`. `ProgramUnitId` não foi alterado e continua sendo identidade estrutural estável.
+- GREEN: teste adversarial `1/1`, grupo de program names/resolver `17/17` e suíte completa `74/74`, sem falhas, erros ou testes ignorados. PROGRAM-ID literal, COMMON, visibilidade privada, ambiguidade e catálogo externo permaneceram verdes.

@@ -97,7 +97,9 @@ final class CobolReferenceResolver {
             indexAst(unit.program(), astNodes);
             units.put(unit.id(), new UnitIndex(unit, table, procedures, nominalNames,
                     files, Map.copyOf(astNodes)));
-            programsByName.computeIfAbsent(unit.id().canonicalProgramName(), ignored -> new ArrayList<>()).add(unit);
+            String programLookupKey = ProgramNameCanonicalizer.nested(
+                    unit.program().name(), policy.pgmnameMode());
+            programsByName.computeIfAbsent(programLookupKey, ignored -> new ArrayList<>()).add(unit);
             programLocalIds.put(unit.id(), programIndex++);
             additionalIndexed += procedures.values().stream().mapToInt(List::size).sum()
                     + files.values().stream().mapToInt(List::size).sum() + 1;
@@ -179,7 +181,8 @@ final class CobolReferenceResolver {
         if (!(node instanceof Ast.ProgramReference reference))
             return new Decision(ResolutionContracts.ResolutionStatus.UNSUPPORTED,
                     ResolutionContracts.ResolutionReason.UNSUPPORTED_GRAMMAR_FORM, List.of());
-        String canonical = SymbolTable.canonical(reference.programName());
+        String canonical = ProgramNameCanonicalizer.nested(
+                reference.programName(), policy.pgmnameMode());
         additionalLookups++;
         List<CompilationUnitModel.ProgramUnit> named = programsByName.getOrDefault(canonical, List.of());
         additionalInspections += named.size();
@@ -269,7 +272,7 @@ final class CobolReferenceResolver {
         return new ReferenceResolution.Candidate(new ResolutionContracts.SemanticEntityId(unit.id(),
                 ResolutionContracts.SemanticEntityDomain.PROGRAM_UNIT, programLocalIds.get(unit.id())),
                 ResolutionContracts.ReferenceKind.PROGRAM, unit.program().name(),
-                unit.id().canonicalProgramName(), List.of(),
+                ProgramNameCanonicalizer.nested(unit.program().name(), policy.pgmnameMode()), List.of(),
                 Map.of("common", Boolean.toString(unit.program().attributes().common()), "source", "COMPILATION_UNIT"));
     }
 

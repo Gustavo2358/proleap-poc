@@ -30,6 +30,13 @@ class ProgramNameCanonicalizerTest {
                         ResolutionContracts.PgmnameMode.LONGUPPER)));
         assertEquals("mixed-Child", canonical("mixed-Child",
                 ResolutionContracts.PgmnameMode.LONGMIXED));
+        assertAll("nested lookup keys are separate from external transformations",
+                () -> assertEquals("mixed-Child", ProgramNameCanonicalizer.nested(
+                        "'mixed-Child'", ResolutionContracts.PgmnameMode.LONGMIXED)),
+                () -> assertEquals("MIXED-CHILD", ProgramNameCanonicalizer.nested(
+                        "'mixed-Child'", ResolutionContracts.PgmnameMode.LONGUPPER)),
+                () -> assertEquals("MIXED-CHILD", ProgramNameCanonicalizer.nested(
+                        "'mixed-Child'", ResolutionContracts.PgmnameMode.COMPAT)));
     }
 
     private static String canonical(String name, ResolutionContracts.PgmnameMode mode) {
