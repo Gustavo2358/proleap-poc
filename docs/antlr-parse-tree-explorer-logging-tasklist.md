@@ -89,20 +89,20 @@ O comando/harness, diretório temporário e resultados de cada execução serão
 - [x] Preservar semântica e decidir/documentar saída user-facing da CLI.
 - [x] Executar testes focados/relacionados, suíte e regressão real.
 - [x] Revisar diff completo e executar `git diff --check`.
-- [ ] Commit da fase e hash: `feat: instrument analyzer pipeline lifecycle`.
+- [x] Commit da fase e hash: `fbafb84` — `feat: instrument analyzer pipeline lifecycle`.
 
 ## Fase 3 — Normalização, preprocessing e ANTLR
 
-- [ ] Escrever testes antes da implementação e confirmar RED.
-- [ ] Adicionar resumo `DEBUG` e decisões `TRACE` relevantes ao `SourceNormalizer`.
-- [ ] Adicionar políticas/decisões `TRACE` ao `PreprocessorEngine`.
-- [ ] Adicionar `WARN` útil para COPY unresolved/cycle/I/O, com fallback e impacto e sem alta cardinalidade.
-- [ ] Manter `AntlrDiagnosticListener` como produtor de `Diagnostic`, sem `WARN` individual.
-- [ ] Emitir resumo `parse_degraded` somente quando houver degradação.
-- [ ] Testar alta cardinalidade sem `WARN` por erro individual.
-- [ ] Verificar ausência de parse-tree dump e de custo caro com nível desligado.
-- [ ] Executar testes focados/relacionados, suíte e regressão real.
-- [ ] Revisar diff completo e executar `git diff --check`.
+- [x] Escrever testes antes da implementação e confirmar RED.
+- [x] Adicionar resumo `DEBUG` e decisões `TRACE` relevantes ao `SourceNormalizer`.
+- [x] Adicionar políticas/decisões `TRACE` ao `PreprocessorEngine`.
+- [x] Adicionar `WARN` útil para COPY unresolved/cycle/I/O, com fallback e impacto e sem alta cardinalidade.
+- [x] Manter `AntlrDiagnosticListener` como produtor de `Diagnostic`, sem `WARN` individual.
+- [x] Emitir resumo `parse_degraded` somente quando houver degradação.
+- [x] Testar alta cardinalidade sem `WARN` por erro individual.
+- [x] Verificar ausência de parse-tree dump e de custo caro com nível desligado.
+- [x] Executar testes focados/relacionados, suíte e regressão real.
+- [x] Revisar diff completo e executar `git diff --check`.
 - [ ] Commit da fase e hash: `feat: add frontend diagnostic logging`.
 
 ## Fase 4 — AST e symbol tables
@@ -174,6 +174,7 @@ O comando/harness, diretório temporário e resultados de cada execução serão
 - Fase 0: baseline de artefatos `coactupc-semantic-baseline.txt` consumido pelo harness existente; cobertura ampliada para `coverage-data.js` e métricas canônicas de frontend/AST/símbolos/resolução.
 - Fase 1: `LoggingInfrastructureTest` (4 contratos): níveis default, override global, override seletivo por classe e lifecycle/restauração de MDC.
 - Fase 2: `ExplorerMainLoggingTest` (2 contratos): lifecycle/timings/correlação e produtos preservados; falha escapando com um único stacktrace e MDC limpo.
+- Fase 3: `FrontendLoggingTest` (6 contratos): decisões de normalização, agregação de 100 COPYs ausentes, ciclos/I/O, decisões trace de preprocessamento, 250 diagnósticos ANTLR sem WARN e resumo único de degradação após recuperação.
 
 ## Comandos de regressão e resultados
 
@@ -186,6 +187,10 @@ O comando/harness, diretório temporário e resultados de cada execução serão
 - Fase 2: relacionados `ExplorerMainLoggingTest,ResolutionSnapshotTest,LoggingInfrastructureTest` — 9 testes verdes.
 - Fase 2: `mvn test` — 115 testes verdes, 0 falhas/erros/skips, 44.795s.
 - Fase 2: `./scripts/source-normalizer-regression.sh phase2` — passou, artefatos em `/tmp/proleap-source-normalizer-phase2.4csHzW`; métricas canônicas idênticas.
+- Fase 3: `mvn -Dtest=FrontendLoggingTest test` — RED por eventos ausentes; GREEN com 6 testes.
+- Fase 3: relacionados `FrontendLoggingTest,SourceNormalizerTest,PreprocessorEnginePolicyTest,SourceNormalizationPreprocessingIntegrationTest,SourceProvenanceTest,ExplorerMainLoggingTest` — 31 testes verdes.
+- Fase 3: `mvn test` — 121 testes verdes, 0 falhas/erros/skips, 45.885s (execução final após a revisão).
+- Fase 3: `./scripts/source-normalizer-regression.sh phase3-final` — passou, artefatos em `/tmp/proleap-source-normalizer-phase3-final.pGd7Vi`; todos os nove artefatos de cada uma das três jornadas estavam presentes e não vazios; métricas canônicas preservadas.
 
 ## Medição de overhead
 
@@ -202,6 +207,8 @@ _A preencher na fase 7 e repetir na fase 8._
 - `System.out.printf` foi mantido como contrato user-facing da CLI e continua alimentando o baseline; eventos operacionais são enviados separadamente a stderr.
 - O boundary mantém a fase operacional corrente e registra exceção escapando uma vez em `analysis_failed`; camadas internas não registram stacktrace.
 - Default da Fase 2 produz exatamente dois eventos `INFO` por execução normal. Contagens que exigem varrer texto/mapas para `DEBUG` estão protegidas por `isDebugEnabled()`.
+- `Diagnostic` continua sendo o único detalhe individual de ANTLR; `AntlrDiagnosticListener` só fornece campos técnicos mínimos em `TRACE`, protegido por `isTraceEnabled()` e sem token/mensagem arbitrária.
+- COPY ausente, ciclo e I/O são sumarizados uma vez por processamento, com `count`, `reason`, `fallback` e `impact`; decisões individuais ficam em `TRACE`. O `WARN parse_degraded` é emitido uma vez após lexer/parser quando há erros e a árvore foi produzida.
 - Demais decisões serão registradas quando tomadas.
 
 ## Desvios e exceções de escopo
@@ -212,3 +219,4 @@ _A preencher na fase 7 e repetir na fase 8._
 
 1. `b13a996` — `test: establish logging regression baseline`
 2. `0aec643` — `feat: establish analyzer logging infrastructure`
+3. `fbafb84` — `feat: instrument analyzer pipeline lifecycle`

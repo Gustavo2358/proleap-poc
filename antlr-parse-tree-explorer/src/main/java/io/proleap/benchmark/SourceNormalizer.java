@@ -1,8 +1,14 @@
 package io.proleap.benchmark;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 final class SourceNormalizer {
+    private static final Logger LOG = LoggerFactory.getLogger(SourceNormalizer.class);
+
     enum SourceFormat { FIXED }
     enum DebugLinePolicy { INCLUDE, EXCLUDE }
 
@@ -86,8 +92,10 @@ final class SourceNormalizer {
     }
 
     private static Result normalizeFixed(String raw, String file, DebugLinePolicy debugLinePolicy) {
+        long started = System.nanoTime();
         List<NormalizedLine> output = new ArrayList<>();
-        for (PhysicalLine physical : physicalLines(raw)) {
+        List<PhysicalLine> physicalLines = physicalLines(raw);
+        for (PhysicalLine physical : physicalLines) {
             String line = physical.content();
             validateFixedCharacters(line, physical.start());
             String padded = line.length() < 7 ? line + "       ".substring(Math.min(7, line.length())) : line;
@@ -96,17 +104,35 @@ final class SourceNormalizer {
             int end = Math.min(padded.length(), 72);
             String area = padded.substring(7, end);
             switch (kind) {
-                case COMMENT, PAGE_EJECT_COMMENT ->
+                case COMMENT ->
                         output.add(transformedLine("*> " + area, physical));
-                case CONTINUATION -> appendContinuation(output, area, physical);
-                case DEBUG -> output.add(switch (debugLinePolicy) {
-                    case INCLUDE -> programTextLine(area, end, physical);
-                    case EXCLUDE -> transformedLine("*> DEBUG " + area, physical);
-                });
+                case PAGE_EJECT_COMMENT -> {
+                    output.add(transformedLine("*> " + area, physical));
+                    LOG.trace("event=page_eject_normalized source={} phase=NORMALIZATION line={}",
+                            file, physical.lineNumber());
+                }
+                case CONTINUATION -> {
+                    appendContinuation(output, area, physical);
+                    LOG.trace("event=continuation_resolved source={} phase=NORMALIZATION line={}",
+                            file, physical.lineNumber());
+                }
+                case DEBUG -> {
+                    output.add(switch (debugLinePolicy) {
+                        case INCLUDE -> programTextLine(area, end, physical);
+                        case EXCLUDE -> transformedLine("*> DEBUG " + area, physical);
+                    });
+                    LOG.trace("event=debug_line_policy_applied source={} phase=NORMALIZATION line={} policy={}",
+                            file, physical.lineNumber(), debugLinePolicy);
+                }
                 case NORMAL -> output.add(programTextLine(area, end, physical));
             }
         }
-        return mappedResult(normalizeCommentEntries(output), raw, file);
+        List<NormalizedLine> normalized = normalizeCommentEntries(output, file);
+        Result result = mappedResult(normalized, raw, file);
+        LOG.debug("event=normalization_completed source={} phase=NORMALIZATION elapsedMs={} physicalLines={} outputLines={} diagnostics={}",
+                file, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - started), physicalLines.size(),
+                normalized.size(), result.diagnostics().size());
+        return result;
     }
 
     static Set<String> commentEntryOwnerRules() {
@@ -123,11 +149,13 @@ final class SourceNormalizer {
         return Collections.unmodifiableSet(result);
     }
 
-    private static List<NormalizedLine> normalizeCommentEntries(List<NormalizedLine> input) {
+    private static List<NormalizedLine> normalizeCommentEntries(List<NormalizedLine> input,
+                                                                 String file) {
         List<NormalizedLine> output = new ArrayList<>();
         CommentEntryState state = CommentEntryState.NONE;
         NormalizedLine lastLine = null;
-        for (NormalizedLine normalizedLine : input) {
+        for (int lineIndex = 0; lineIndex < input.size(); lineIndex++) {
+            NormalizedLine normalizedLine = input.get(lineIndex);
             lastLine = normalizedLine;
             String line = normalizedLine.content();
             switch (normalizedLine.role()) {
@@ -158,6 +186,8 @@ final class SourceNormalizer {
                                 normalizedLine, header.owner(), header.period() + 1);
                 output.add(decision.line());
                 state = decision.state();
+                LOG.trace("event=comment_entry_transition source={} phase=NORMALIZATION line={} owner={} state={}",
+                        file, lineIndex + 1, header.owner(), state);
             } else if (!areaA) {
                 switch (state) {
                     case NONE -> output.add(normalizedLine);

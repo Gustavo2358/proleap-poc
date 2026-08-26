@@ -2,6 +2,8 @@ package io.proleap.benchmark;
 
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -9,6 +11,8 @@ import java.nio.file.Path;
 import java.util.*;
 
 final class PreprocessorEngine {
+    private static final Logger LOG = LoggerFactory.getLogger(PreprocessorEngine.class);
+
     enum PreprocessorPolicy {
         PASS_THROUGH,
         REMOVE,
@@ -54,6 +58,10 @@ final class PreprocessorEngine {
     }
     private record Edit(int start, int end, SourceMap replacement) {}
     private record CopyReplacement(String replaceable, String replacement) {}
+    private static final class LogSummary {
+        private int cycles;
+        private int ioFailures;
+    }
 
     private final GrammarBinding binding;
     private final CopybookLibrary library;
@@ -67,9 +75,10 @@ final class PreprocessorEngine {
         List<CompilerOption> compilerOptions = new ArrayList<>();
         int[] unresolved = {0};
         int[] toleratedPreprocessorDiagnostics = {0};
+        LogSummary logSummary = new LogSummary();
         SourceMap document = processRecursive(normalized, file,
                 diagnostics, compilerOptions, unresolved, toleratedPreprocessorDiagnostics,
-                new HashSet<>());
+                new HashSet<>(), logSummary);
         long errors = diagnostics.stream().filter(d -> d.phase() == Diagnostic.Phase.PREPROCESSOR)
                 .count() - toleratedPreprocessorDiagnostics[0];
         ResolutionContracts.PgmnameMode pgmnameMode = compilerOptions.stream()
@@ -86,6 +95,18 @@ final class PreprocessorEngine {
                         option.name(), option.value()))
                 .filter(mode -> mode != ResolutionContracts.DllMode.UNSPECIFIED)
                 .reduce((first, second) -> second).orElse(ResolutionContracts.DllMode.UNSPECIFIED);
+        if (unresolved[0] > 0) {
+            LOG.warn("event=copy_unresolved source={} phase=PREPROCESSING count={} reason=NOT_FOUND fallback=KEEP_UNRESOLVED_PLACEHOLDER impact=ANALYSIS_INCOMPLETE",
+                    file, unresolved[0]);
+        }
+        if (logSummary.cycles > 0) {
+            LOG.warn("event=copy_cycle source={} phase=PREPROCESSING count={} reason=EXPANSION_CYCLE fallback=KEEP_CYCLIC_PLACEHOLDER impact=ANALYSIS_INCOMPLETE",
+                    file, logSummary.cycles);
+        }
+        if (logSummary.ioFailures > 0) {
+            LOG.warn("event=copy_io_failure source={} phase=PREPROCESSING count={} reason=IO_EXCEPTION fallback=KEEP_IO_ERROR_PLACEHOLDER impact=ANALYSIS_INCOMPLETE",
+                    file, logSummary.ioFailures);
+        }
         return new Outcome(document.text(), Math.toIntExact(errors), unresolved[0],
                 diagnostics, compilerOptions, pgmnameMode, dynamMode, dllMode, document);
     }
@@ -93,7 +114,7 @@ final class PreprocessorEngine {
     private SourceMap processRecursive(SourceMap document, String file, List<Diagnostic> diagnostics,
                                        List<CompilerOption> compilerOptions,
                                        int[] unresolved, int[] toleratedPreprocessorDiagnostics,
-                                       Set<Path> expansionStack) {
+                                       Set<Path> expansionStack, LogSummary logSummary) {
         String source = document.text();
         Lexer lexer = binding.preprocessorLexer(CharStreams.fromString(source, file));
         lexer.removeErrorListeners();
@@ -112,7 +133,7 @@ final class PreprocessorEngine {
                 String rule = parser.getRuleNames()[context.getRuleIndex()];
                 PreprocessorPolicy policy = policyFor(rule);
                 if (policy == PreprocessorPolicy.EXTRACT_COMPILER_OPTIONS) {
-                    collectCompilerOptions(context, parser.getRuleNames(), source, compilerOptions);
+                    collectCompilerOptions(context, parser.getRuleNames(), source, file, compilerOptions);
                 }
                 if (policy != PreprocessorPolicy.PASS_THROUGH) actionable.add(context);
             } else if (child instanceof TerminalNode terminal
@@ -138,6 +159,8 @@ final class PreprocessorEngine {
             int end = stopToken.getStopIndex() + 1;
             String rule = parser.getRuleNames()[context.getRuleIndex()];
             PreprocessorPolicy policy = policyFor(rule);
+            LOG.trace("event=preprocess_policy_selected source={} phase=PREPROCESSING rule={} policy={} line={}",
+                    file, rule, policy, startToken.getLine());
             String original = source.substring(start, end);
             if (policy == PreprocessorPolicy.EXTRACT_COMPILER_OPTIONS
                     || policy == PreprocessorPolicy.REMOVE) {
@@ -148,12 +171,17 @@ final class PreprocessorEngine {
                 Optional<Path> path = library.resolve(requested);
                 if (path.isEmpty()) {
                     unresolved[0]++;
+                    LOG.trace("event=copy_resolution source={} phase=PREPROCESSING requested={} line={} status=UNRESOLVED reason=NOT_FOUND fallback=KEEP_UNRESOLVED_PLACEHOLDER",
+                            file, requested, startToken.getLine());
                     toleratedPreprocessorDiagnostics[0]++;
                     diagnostics.add(sourceDiagnostic(document, Diagnostic.Phase.PREPROCESSOR,
                             start, end, "unresolved_copy: " + requested, requested, ""));
                     edits.add(new Edit(start, end, document.transformedSlice(start, end,
                             "*> UNRESOLVED COPY " + requested + "\n")));
                 } else if (!expansionStack.add(path.get().toAbsolutePath().normalize())) {
+                    logSummary.cycles++;
+                    LOG.trace("event=copy_resolution source={} phase=PREPROCESSING requested={} line={} status=CYCLIC reason=EXPANSION_CYCLE fallback=KEEP_CYCLIC_PLACEHOLDER",
+                            file, requested, startToken.getLine());
                     toleratedPreprocessorDiagnostics[0]++;
                     diagnostics.add(sourceDiagnostic(document, Diagnostic.Phase.PREPROCESSOR,
                             start, end, "cyclic COPY: " + requested, requested, ""));
@@ -162,19 +190,29 @@ final class PreprocessorEngine {
                 } else {
                     try {
                         String includedFile = path.get().getFileName().toString();
+                        LOG.trace("event=copy_resolved source={} phase=PREPROCESSING requested={} line={} includedFile={}",
+                                file, requested, startToken.getLine(), includedFile);
                         SourceMap copySource = library.readNormalized(path.get());
                         SourceMap copyText = processRecursive(copySource, includedFile,
                                 diagnostics, compilerOptions, unresolved,
-                                toleratedPreprocessorDiagnostics, expansionStack);
-                        for (CopyReplacement replacement : copyReplacements(
-                                context, parser.getRuleNames(), source)) {
+                                toleratedPreprocessorDiagnostics, expansionStack, logSummary);
+                        List<CopyReplacement> replacements = copyReplacements(
+                                context, parser.getRuleNames(), source);
+                        for (CopyReplacement replacement : replacements) {
                             copyText = copyText.replaceLiteral(
                                     replacement.replaceable(), replacement.replacement());
+                        }
+                        if (!replacements.isEmpty()) {
+                            LOG.trace("event=copy_replacing_applied source={} phase=PREPROCESSING requested={} line={} replacements={}",
+                                    file, requested, startToken.getLine(), replacements.size());
                         }
                         int includeLine = document.provenance(start, end).original().startLine();
                         Ast.CopyFrame frame = new Ast.CopyFrame(file, requested, includedFile, includeLine);
                         edits.add(new Edit(start, end, copyText.withCopyFrame(frame)));
                     } catch (IOException e) {
+                        logSummary.ioFailures++;
+                        LOG.trace("event=copy_resolution source={} phase=PREPROCESSING requested={} line={} status=IO_FAILURE reason={}",
+                                file, requested, startToken.getLine(), e.getClass().getSimpleName());
                         diagnostics.add(sourceDiagnostic(document, Diagnostic.Phase.IO,
                                 start, end, e.getMessage(), requested, e.getClass().getName()));
                         edits.add(new Edit(start, end, document.transformedSlice(start, end,
@@ -195,6 +233,8 @@ final class PreprocessorEngine {
                 String embeddedSource = sentenceEnd
                         ? original.substring(0, original.length() - 1) : original;
                 String opaque = flattenPhysicalLines(embeddedSource).strip();
+                LOG.trace("event=embedded_language_preserved source={} phase=PREPROCESSING rule={} line={} sentenceEnd={}",
+                        file, rule, startToken.getLine(), sentenceEnd);
                 edits.add(new Edit(start, end, document.transformedSlice(start, end,
                         tag + " " + opaque + "\n" + (sentenceEnd ? ". \n" : ""))));
             } else if (policy == PreprocessorPolicy.UNSUPPORTED) {
@@ -385,7 +425,7 @@ final class PreprocessorEngine {
         return value;
     }
 
-    private static void collectCompilerOptions(ParseTree tree, String[] ruleNames, String source,
+    private static void collectCompilerOptions(ParseTree tree, String[] ruleNames, String source, String file,
                                                List<CompilerOption> out) {
         if (tree instanceof ParserRuleContext context
                 && ruleNames[context.getRuleIndex()].equals("compilerOption")) {
@@ -402,10 +442,11 @@ final class PreprocessorEngine {
                 String written = from >= 0 && to >= from && to <= source.length()
                         ? source.substring(from, to) : context.getText();
                 out.add(new CompilerOption(name, value, written));
+                LOG.trace("event=compiler_option_detected source={} phase=PREPROCESSING name={}", file, name);
             }
         }
         for (int i = 0; i < tree.getChildCount(); i++)
-            collectCompilerOptions(tree.getChild(i), ruleNames, source, out);
+            collectCompilerOptions(tree.getChild(i), ruleNames, source, file, out);
     }
 
     private static void collectTerminals(ParseTree tree, List<String> out) {

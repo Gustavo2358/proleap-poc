@@ -103,6 +103,10 @@ public final class ExplorerMain {
         long parserErrors = diagnostics.stream().filter(d -> d.phase() == Diagnostic.Phase.PARSER).count();
         LOG.debug("event=parsing_completed phase=PARSING elapsedMs={} nodes={} maxDepth={} parserErrors={}",
                 elapsedMs(phaseStarted), nodes.size(), maxDepth, parserErrors);
+        if (lexerErrors > 0 || parserErrors > 0) {
+            LOG.warn("event=parse_degraded phase=PARSING lexerErrors={} parserErrors={} reason=ANTLR_DIAGNOSTICS fallback=CONTINUE_WITH_PARTIAL_PARSE_TREE result=PARSE_TREE_PRODUCED impact=ANALYSIS_INCOMPLETE",
+                    lexerErrors, parserErrors);
+        }
 
         progress.phase = "ARTIFACT_EXPORT";
         Files.createDirectories(output);
