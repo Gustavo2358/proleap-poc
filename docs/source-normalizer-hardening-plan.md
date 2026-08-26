@@ -121,19 +121,19 @@ não depender de interface gráfica.
 
 ### Fase 0 — Baseline observável e harness de regressão
 
-- [ ] Criar `SourceNormalizerTest` e a árvore de fixtures de source format.
-- [ ] Criar uma fixture completa reproduzindo `AUTHOR.` seguido de comentário
+- [x] Criar `SourceNormalizerTest` e a árvore de fixtures de source format.
+- [x] Criar uma fixture completa reproduzindo `AUTHOR.` seguido de comentário
       fixed-format e `ENVIRONMENT DIVISION`.
-- [ ] Criar probes de provenance com posições físicas conhecidas.
-- [ ] Automatizar o gate de regressão da aplicação descrito acima.
-- [ ] Registrar baseline semântico de `COACTUPC.cbl` sem cristalizar offsets já
+- [x] Criar probes de provenance com posições físicas conhecidas.
+- [x] Automatizar o gate de regressão da aplicação descrito acima.
+- [x] Registrar baseline semântico de `COACTUPC.cbl` sem cristalizar offsets já
       sabidamente incorretos como comportamento desejável.
-- [ ] Caracterizar comportamentos válidos que devem sobreviver: comentários
+- [x] Caracterizar comportamentos válidos que devem sobreviver: comentários
       fixed-format, COPY, EXEC, compiler options, AST, símbolos e resolução.
-- [ ] Rodar teste focado, suíte completa e gate da aplicação.
-- [ ] Revisar o harness para garantir que uma aplicação que apenas retorna zero,
+- [x] Rodar teste focado, suíte completa e gate da aplicação.
+- [x] Revisar o harness para garantir que uma aplicação que apenas retorna zero,
       mas perde `ENVIRONMENT DIVISION`, realmente falhe.
-- [ ] Commit: `test: establish source normalization regression harness`.
+- [x] Commit: `test: establish source normalization regression harness`.
 
 ### Fase 1 — Fazer a provenance nascer no arquivo bruto
 
