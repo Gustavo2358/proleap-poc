@@ -36,7 +36,8 @@ class PreprocessorEnginePolicyTest {
 
         PreprocessorEngine.Outcome outcome = new PreprocessorEngine(
                 binding, new CopybookLibrary(FIXTURE.getParent()))
-                .process(normalized, FIXTURE.getFileName().toString());
+                .process(SourceMap.identity(normalized, FIXTURE.getFileName().toString()),
+                        FIXTURE.getFileName().toString());
 
         assertEquals(normalized.length(), outcome.text().length());
         assertEquals(normalized.chars().filter(c -> c == '\n').count(),
@@ -105,11 +106,13 @@ class PreprocessorEnginePolicyTest {
 
         UnsupportedOperationException areaFailure = assertThrows(
                 UnsupportedOperationException.class,
-                () -> engine.process(
-                        "REPLACE ==OLD== BY ==NEW==.\nOLD\nREPLACE OFF.\n", "replace.cbl"));
+                () -> engine.process(SourceMap.identity(
+                        "REPLACE ==OLD== BY ==NEW==.\nOLD\nREPLACE OFF.\n", "replace.cbl"),
+                        "replace.cbl"));
         UnsupportedOperationException offFailure = assertThrows(
                 UnsupportedOperationException.class,
-                () -> engine.process("REPLACE OFF.\n", "replace-off.cbl"));
+                () -> engine.process(SourceMap.identity("REPLACE OFF.\n", "replace-off.cbl"),
+                        "replace-off.cbl"));
 
         assertTrue(areaFailure.getMessage().contains("replaceArea"), areaFailure.getMessage());
         assertTrue(offFailure.getMessage().contains("replaceOffStatement"), offFailure.getMessage());

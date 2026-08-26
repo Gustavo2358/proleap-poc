@@ -88,7 +88,8 @@ class SymbolTableBuilderTest {
         GrammarBinding binding = Bindings.proleap();
         String fixed = SourceNormalizer.fixed(Files.readString(sourceFile, StandardCharsets.UTF_8));
         String source = new PreprocessorEngine(binding, new CopybookLibrary(project.resolve("corpus/cpy")))
-                .process(fixed, sourceFile.getFileName().toString()).text();
+                .process(SourceMap.identity(fixed, sourceFile.getFileName().toString()),
+                        sourceFile.getFileName().toString()).text();
         Lexer lexer = binding.cobolLexer(CharStreams.fromString(source));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         Parser parser = binding.cobolParser(tokens);

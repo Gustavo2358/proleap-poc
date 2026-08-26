@@ -48,6 +48,30 @@ final class SourceMap {
         return new SourceMap(text, segments, Map.of(file, text));
     }
 
+    static SourceMap mapped(String text, String file, String original, List<Segment> segments) {
+        Objects.requireNonNull(file, "file");
+        Objects.requireNonNull(original, "original");
+        int previousEnd = 0;
+        for (Segment segment : segments) {
+            if (segment.start() < previousEnd || segment.end() > text.length()) {
+                throw new IllegalArgumentException("invalid or overlapping mapped segment");
+            }
+            if (!segment.sourceFile().equals(file)) {
+                throw new IllegalArgumentException("mapped segment belongs to another source file");
+            }
+            if (segment.originalStart() < 0 || segment.originalEnd() < segment.originalStart()
+                    || segment.originalEnd() > original.length()) {
+                throw new IllegalArgumentException("invalid original segment range");
+            }
+            if (segment.exact()
+                    && segment.end() - segment.start() != segment.originalEnd() - segment.originalStart()) {
+                throw new IllegalArgumentException("exact mapped segment changes length");
+            }
+            previousEnd = segment.end();
+        }
+        return new SourceMap(text, mergeAdjacent(segments), Map.of(file, original));
+    }
+
     String text() { return text; }
 
     SourceMap replace(int start, int end, SourceMap replacement) {

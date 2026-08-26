@@ -50,7 +50,8 @@ class CallSemanticsTest {
         String source = SourceNormalizer.fixed(Files.readString(DYNAM, StandardCharsets.UTF_8));
         PreprocessorEngine.Outcome outcome = new PreprocessorEngine(
                 grammar, new CopybookLibrary(Path.of("src/test/resources")))
-                .process(source, DYNAM.getFileName().toString());
+                .process(SourceMap.identity(source, DYNAM.getFileName().toString()),
+                        DYNAM.getFileName().toString());
         Set<String> outcomeComponents = components(PreprocessorEngine.Outcome.class);
         Set<String> policyComponents = components(ResolutionContracts.CobolResolutionPolicy.class);
         Set<String> entryComponents = components(ReferenceResolution.Entry.class);
@@ -293,7 +294,8 @@ class CallSemanticsTest {
         String normalized = SourceNormalizer.fixed(Files.readString(sourcePath, StandardCharsets.UTF_8));
         PreprocessorEngine.Outcome outcome = new PreprocessorEngine(
                 grammar, new CopybookLibrary(Path.of("src/test/resources")))
-                .process(normalized, sourcePath.getFileName().toString());
+                .process(SourceMap.identity(normalized, sourcePath.getFileName().toString()),
+                        sourcePath.getFileName().toString());
         Parser parser = grammar.cobolParser(new CommonTokenStream(grammar.cobolLexer(
                 CharStreams.fromString(outcome.text(), sourcePath.getFileName().toString()))));
         ParseTree tree = grammar.cobolStart(parser);

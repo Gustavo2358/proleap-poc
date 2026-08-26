@@ -18,6 +18,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 class SourceNormalizerTest {
     private static final Path COMMENT_BEFORE_ENVIRONMENT = Path.of(
             "src/test/resources/cobol/source-format/comment-before-environment.cbl");
+    private static final Path INLINE_COMMENT_ENTRY = Path.of(
+            "src/test/resources/cobol/source-format/inline-comment-entry.cbl");
 
     @Test
     void fixedCommentAfterEmptyCommentEntryDoesNotConsumeEnvironmentDivision() throws Exception {
@@ -54,6 +56,32 @@ class SourceNormalizerTest {
 
         org.junit.jupiter.api.Assertions.assertTrue(
                 failure.getMessage().contains("Unsupported line separator"), failure.getMessage());
+    }
+
+    @Test
+    void mapsNormalizedTextBackToPhysicalLinesAndColumns() throws Exception {
+        String raw = Files.readString(INLINE_COMMENT_ENTRY, StandardCharsets.UTF_8);
+        SourceNormalizer.Result result = SourceNormalizer.normalize(
+                raw, INLINE_COMMENT_ENTRY.getFileName().toString());
+
+        int environmentStart = result.text().indexOf("ENVIRONMENT");
+        Ast.SourceProvenance environment = result.sourceMap().provenance(
+                environmentStart, environmentStart + "ENVIRONMENT".length());
+        assertEquals(4, environment.original().startLine());
+        assertEquals(7, environment.original().startColumn());
+        org.junit.jupiter.api.Assertions.assertTrue(environment.exact());
+
+        int moveStart = result.text().indexOf("MOVE");
+        Ast.SourceProvenance move = result.sourceMap().provenance(moveStart, moveStart + 4);
+        assertEquals(9, move.original().startLine());
+        assertEquals(11, move.original().startColumn());
+        org.junit.jupiter.api.Assertions.assertTrue(move.exact());
+
+        int commentEntryStart = result.text().indexOf("*>CE ORIGINAL AUTHOR.");
+        Ast.SourceProvenance commentEntry = result.sourceMap().provenance(
+                commentEntryStart, commentEntryStart + "*>CE ORIGINAL AUTHOR.".length());
+        assertEquals(3, commentEntry.original().startLine());
+        org.junit.jupiter.api.Assertions.assertFalse(commentEntry.exact());
     }
 
     private static ParserRuleContext firstRule(ParseTree tree, Parser parser, String expected) {

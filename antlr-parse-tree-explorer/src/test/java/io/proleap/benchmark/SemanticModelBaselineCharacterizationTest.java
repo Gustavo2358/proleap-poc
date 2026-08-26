@@ -123,7 +123,8 @@ class SemanticModelBaselineCharacterizationTest {
         String fixed = SourceNormalizer.fixed(Files.readString(sourceFile, StandardCharsets.UTF_8));
         PreprocessorEngine.Outcome preprocessing =
                 new PreprocessorEngine(binding, new CopybookLibrary(copybooks))
-                        .process(fixed, sourceFile.getFileName().toString());
+                        .process(SourceMap.identity(fixed, sourceFile.getFileName().toString()),
+                                sourceFile.getFileName().toString());
         Lexer lexer = binding.cobolLexer(CharStreams.fromString(preprocessing.text()));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         Parser parser = binding.cobolParser(tokens);

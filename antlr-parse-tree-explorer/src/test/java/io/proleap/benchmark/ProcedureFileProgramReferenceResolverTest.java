@@ -360,7 +360,8 @@ class ProcedureFileProgramReferenceResolverTest {
         String optionTreeText = optionTree.toStringTree(preprocessor);
         PreprocessorEngine.Outcome transported = new PreprocessorEngine(
                 grammar, new CopybookLibrary(Path.of("src/test/resources")))
-                .process("CBL PGMNAME(LONGMIXED)\n", "options.cbl");
+                .process(SourceMap.identity("CBL PGMNAME(LONGMIXED)\n", "options.cbl"),
+                        "options.cbl");
         Set<String> outcomeComponents = Arrays.stream(PreprocessorEngine.Outcome.class.getRecordComponents())
                 .map(java.lang.reflect.RecordComponent::getName)
                 .collect(java.util.stream.Collectors.toSet());
@@ -766,7 +767,8 @@ class ProcedureFileProgramReferenceResolverTest {
         GrammarBinding binding = Bindings.proleap();
         String fixed = SourceNormalizer.fixed(Files.readString(file, StandardCharsets.UTF_8));
         String source = new PreprocessorEngine(binding, new CopybookLibrary(copybooks))
-                .process(fixed, file.getFileName().toString()).text();
+                .process(SourceMap.identity(fixed, file.getFileName().toString()),
+                        file.getFileName().toString()).text();
         return analyzeSource(file, source, catalog, ResolutionContracts.PgmnameMode.LONGUPPER);
     }
 

@@ -62,11 +62,11 @@ final class PreprocessorEngine {
         this.binding = binding; this.library = library;
     }
 
-    Outcome process(String normalized, String file) {
+    Outcome process(SourceMap normalized, String file) {
         List<Diagnostic> diagnostics = new ArrayList<>();
         List<CompilerOption> compilerOptions = new ArrayList<>();
         int[] unresolved = {0};
-        SourceMap document = processRecursive(SourceMap.identity(normalized, file), file,
+        SourceMap document = processRecursive(normalized, file,
                 diagnostics, compilerOptions, unresolved, new HashSet<>());
         long errors = diagnostics.stream().filter(d -> d.phase() == Diagnostic.Phase.PREPROCESSOR)
                 .filter(d -> !d.message().startsWith("unresolved_copy") && !d.message().startsWith("cyclic COPY")).count();
@@ -158,8 +158,8 @@ final class PreprocessorEngine {
                 } else {
                     try {
                         String includedFile = path.get().getFileName().toString();
-                        String copySource = library.readNormalized(path.get());
-                        SourceMap copyText = processRecursive(SourceMap.identity(copySource, includedFile), includedFile,
+                        SourceMap copySource = library.readNormalized(path.get());
+                        SourceMap copyText = processRecursive(copySource, includedFile,
                                 diagnostics, compilerOptions, unresolved, expansionStack);
                         for (CopyReplacement replacement : copyReplacements(
                                 context, parser.getRuleNames(), source)) {

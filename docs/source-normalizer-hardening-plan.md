@@ -137,18 +137,18 @@ não depender de interface gráfica.
 
 ### Fase 1 — Fazer a provenance nascer no arquivo bruto
 
-- [ ] Introduzir um resultado imutável de normalização contendo pelo menos
+- [x] Introduzir um resultado imutável de normalização contendo pelo menos
       texto transformado, `SourceMap`, diagnósticos e política de formato.
-- [ ] Fazer o mapa armazenar o texto bruto como fonte original.
-- [ ] Integrar `ExplorerMain`, `PreprocessorEngine` e `CopybookLibrary` sem
+- [x] Fazer o mapa armazenar o texto bruto como fonte original.
+- [x] Integrar `ExplorerMain`, `PreprocessorEngine` e `CopybookLibrary` sem
       recriar `SourceMap.identity()` sobre texto já normalizado.
-- [ ] Preservar a cadeia de provenance em COPYs normalizados e aninhados.
-- [ ] Testar linha/coluna original, `exact` e conteúdo original antes e depois
+- [x] Preservar a cadeia de provenance em COPYs normalizados e aninhados.
+- [x] Testar linha/coluna original, `exact` e conteúdo original antes e depois
       de transformação, inclusive em copybooks.
-- [ ] Confirmar que APIs antigas que aceitam somente `String` não conseguem
+- [x] Confirmar que APIs antigas que aceitam somente `String` não conseguem
       reintroduzir identidade falsa; remover ou restringir esses caminhos.
-- [ ] Rodar teste focado, suíte completa e gate da aplicação.
-- [ ] Commit: `refactor: originate source map before normalization`.
+- [x] Rodar teste focado, suíte completa e gate da aplicação.
+- [x] Commit: `refactor: originate source map before normalization`.
 
 ### Fase 2 — Scanner exato de registros físicos e line endings
 

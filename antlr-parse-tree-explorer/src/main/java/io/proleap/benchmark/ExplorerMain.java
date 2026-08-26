@@ -24,11 +24,12 @@ public final class ExplorerMain {
         GrammarBinding binding = Bindings.proleap();
         List<Diagnostic> diagnostics = new ArrayList<>();
         String raw = Files.readString(source, StandardCharsets.UTF_8);
-        String normalized = SourceNormalizer.fixed(raw);
+        SourceNormalizer.Result sourceNormalization = SourceNormalizer.normalize(
+                raw, source.getFileName().toString());
         PreprocessorEngine.Outcome preprocessed =
                 new PreprocessorEngine(binding, new CopybookLibrary(copybooks))
-                        .process(normalized, source.getFileName().toString());
-        normalized = preprocessed.text();
+                        .process(sourceNormalization.sourceMap(), source.getFileName().toString());
+        String normalized = preprocessed.text();
         diagnostics.addAll(preprocessed.diagnostics());
 
         Lexer lexer = binding.cobolLexer(CharStreams.fromString(normalized, source.getFileName().toString()));
