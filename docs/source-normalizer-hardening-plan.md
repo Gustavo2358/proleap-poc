@@ -215,28 +215,28 @@ não depender de interface gráfica.
 
 ### Fase 6 — Comment entries definidos pela sintaxe, sem regex global
 
-- [ ] Remover `markCommentEntries()`, a regex de headers e o booleano
+- [x] Remover `markCommentEntries()`, a regex de headers e o booleano
       `inEntry`.
-- [ ] Escolher e registrar em uma breve ADR local a solução que mantém a
+- [x] Escolher e registrar em uma breve ADR local a solução que mantém a
       gramática como autoridade: preferir lexer/parser ou uma gramática ANTLR
       dedicada de registros; somente usar scanner intermediário se ele tiver
       estados e fronteiras fechados derivados das regras gramaticais.
-- [ ] Cobrir exaustivamente os pontos que aceitam `commentEntry`, incluindo
+- [x] Cobrir exaustivamente os pontos que aceitam `commentEntry`, incluindo
       `programIdParagraph`, `AUTHOR`, `INSTALLATION`, `DATE-WRITTEN`,
       `DATE-COMPILED`, `SECURITY` e `REMARKS`.
-- [ ] Criar teste de contrato entre esses pontos da gramática e as políticas do
+- [x] Criar teste de contrato entre esses pontos da gramática e as políticas do
       componente responsável por comment entries.
-- [ ] Determinar o fim pela fronteira sintática apropriada, nunca por
+- [x] Determinar o fim pela fronteira sintática apropriada, nunca por
       `endsWith(".")`.
-- [ ] Cobrir comment entry inline, multilinha, vazio, com pontos internos, sem
+- [x] Cobrir comment entry inline, multilinha, vazio, com pontos internos, sem
       ponto final, com linhas vazias, com comentários fixed-format intercalados,
       no EOF e imediatamente antes de outro parágrafo/division.
-- [ ] Reproduzir e corrigir explicitamente o caso em que
+- [x] Reproduzir e corrigir explicitamente o caso em que
       `ENVIRONMENT DIVISION` virava `*>CE ENVIRONMENT DIVISION`.
-- [ ] Garantir que comment entries não gerem nós semânticos, CFG, dataflow ou
+- [x] Garantir que comment entries não gerem nós semânticos, CFG, dataflow ou
       dependências, mas mantenham provenance física correta.
-- [ ] Rodar teste focado, suíte completa e gate da aplicação.
-- [ ] Commit: `fix: derive comment entries from closed syntax`.
+- [x] Rodar teste focado, suíte completa e gate da aplicação.
+- [x] Commit: `fix: derive comment entries from closed syntax`.
 
 ### Fase 7 — Integração completa com preprocessing e copybooks
 

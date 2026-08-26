@@ -29,6 +29,32 @@ final class SourceNormalizer {
     private enum Indicator { NORMAL, COMMENT, PAGE_EJECT_COMMENT, CONTINUATION, DEBUG }
     private enum LineRole { PROGRAM_TEXT, NON_PROGRAM, CONTINUATION_PLACEHOLDER }
     private enum ContinuationKind { SINGLE_QUOTED_LITERAL, DOUBLE_QUOTED_LITERAL, WORD }
+    private enum CommentEntryState {
+        NONE, PROGRAM_NAME_PENDING, COMMENT_ENTRY, REMARKS_COMMENT_ENTRY
+    }
+
+    private enum CommentEntryOwner {
+        PROGRAM_ID("programIdParagraph", "PROGRAM-ID", true),
+        AUTHOR("authorParagraph", "AUTHOR", false),
+        INSTALLATION("installationParagraph", "INSTALLATION", false),
+        DATE_WRITTEN("dateWrittenParagraph", "DATE-WRITTEN", false),
+        DATE_COMPILED("dateCompiledParagraph", "DATE-COMPILED", false),
+        SECURITY("securityParagraph", "SECURITY", false),
+        REMARKS("remarksParagraph", "REMARKS", false);
+
+        private final String ruleName;
+        private final String keyword;
+        private final boolean programId;
+
+        CommentEntryOwner(String ruleName, String keyword, boolean programId) {
+            this.ruleName = ruleName;
+            this.keyword = keyword;
+            this.programId = programId;
+        }
+    }
+
+    private record CommentEntryHeader(CommentEntryOwner owner, int period) {}
+    private record CommentEntryDecision(NormalizedLine line, CommentEntryState state) {}
 
     private record PhysicalLine(String content, String terminator, int start, int contentEnd,
                                 int end, int lineNumber) {}
@@ -80,44 +106,231 @@ final class SourceNormalizer {
                 case NORMAL -> output.add(programTextLine(area, end, physical));
             }
         }
-        return mappedResult(markCommentEntries(output), raw, file);
+        return mappedResult(normalizeCommentEntries(output), raw, file);
     }
 
-    private static List<NormalizedLine> markCommentEntries(List<NormalizedLine> input) {
-        java.util.regex.Pattern header = java.util.regex.Pattern.compile(
-                "(?i)^(\\s*)(AUTHOR|INSTALLATION|DATE-WRITTEN|DATE-COMPILED|SECURITY|REMARKS)\\s*\\.\\s*(.*?)\\s*$");
+    static Set<String> commentEntryOwnerRules() {
+        Set<String> result = new LinkedHashSet<>();
+        for (CommentEntryOwner owner : CommentEntryOwner.values()) result.add(owner.ruleName);
+        return Collections.unmodifiableSet(result);
+    }
+
+    private static List<NormalizedLine> normalizeCommentEntries(List<NormalizedLine> input) {
         List<NormalizedLine> output = new ArrayList<>();
-        boolean inEntry = false;
+        CommentEntryState state = CommentEntryState.NONE;
         for (NormalizedLine normalizedLine : input) {
             String line = normalizedLine.content();
-            java.util.regex.Matcher matcher = header.matcher(line);
-            if (matcher.matches()) {
-                String value = matcher.group(3);
-                if (!value.isBlank()) {
-                    String insertedTerminator = normalizedLine.terminator().isEmpty()
-                            ? "\n" : normalizedLine.terminator();
-                    output.add(transformedFrom(normalizedLine,
-                            matcher.group(1) + matcher.group(2) + ". ", insertedTerminator, false));
-                    output.add(transformedFrom(normalizedLine,
-                            "*>CE " + value, normalizedLine.terminator(), true));
-                    inEntry = !value.stripTrailing().endsWith(".");
-                } else {
-                    output.add(transformedFrom(normalizedLine,
-                            matcher.group(1) + matcher.group(2) + ". ",
-                            normalizedLine.terminator(), true));
-                    inEntry = true;
-                }
-            } else if (inEntry && !line.isBlank() && !line.stripLeading().startsWith("*>")) {
-                if (startsInAreaA(line)) {
-                    inEntry = false;
+            if (normalizedLine.role() != LineRole.PROGRAM_TEXT || line.isBlank()) {
+                output.add(normalizedLine);
+                continue;
+            }
+
+            boolean areaA = startsInAreaA(line);
+            if (areaA) state = CommentEntryState.NONE;
+            CommentEntryHeader header = areaA ? commentEntryHeader(line) : null;
+            if (header != null) {
+                CommentEntryDecision decision = header.owner().programId
+                        ? normalizeProgramIdHeader(normalizedLine, header.period() + 1)
+                        : normalizeOrdinaryCommentEntryHeader(
+                                normalizedLine, header.owner(), header.period() + 1);
+                output.add(decision.line());
+                state = decision.state();
+            } else if (!areaA && state == CommentEntryState.PROGRAM_NAME_PENDING) {
+                CommentEntryDecision decision = normalizeProgramIdName(normalizedLine);
+                output.add(decision.line());
+                state = decision.state();
+            } else if (!areaA && (state == CommentEntryState.COMMENT_ENTRY
+                    || state == CommentEntryState.REMARKS_COMMENT_ENTRY)) {
+                if (state == CommentEntryState.REMARKS_COMMENT_ENTRY && isEndRemarks(line)) {
                     output.add(normalizedLine);
+                    state = CommentEntryState.NONE;
                 } else {
-                    output.add(transformedFrom(normalizedLine,
-                            "*>CE " + line.strip(), normalizedLine.terminator(), true));
+                    output.add(asCommentEntry(normalizedLine, line));
                 }
-            } else output.add(normalizedLine);
+            } else {
+                output.add(normalizedLine);
+            }
         }
         return output;
+    }
+
+    private static CommentEntryHeader commentEntryHeader(String line) {
+        int start = firstNonSpace(line, 0);
+        if (start < 0 || start >= 4) return null;
+        for (CommentEntryOwner owner : CommentEntryOwner.values()) {
+            int afterKeyword = start + owner.keyword.length();
+            if (afterKeyword <= line.length()
+                    && line.regionMatches(true, start, owner.keyword, 0, owner.keyword.length())) {
+                int period = firstNonSpace(line, afterKeyword);
+                if (period >= 0 && isSeparatorPeriod(line, period)) {
+                    return new CommentEntryHeader(owner, period);
+                }
+            }
+        }
+        return null;
+    }
+
+    private static CommentEntryDecision normalizeOrdinaryCommentEntryHeader(
+            NormalizedLine line, CommentEntryOwner owner, int tailStart) {
+        CommentEntryState state = owner == CommentEntryOwner.REMARKS
+                ? CommentEntryState.REMARKS_COMMENT_ENTRY : CommentEntryState.COMMENT_ENTRY;
+        int commentStart = firstNonSpace(line.content(), tailStart);
+        if (commentStart < 0) return new CommentEntryDecision(line, state);
+        return new CommentEntryDecision(tagTail(line, commentStart), state);
+    }
+
+    private static CommentEntryDecision normalizeProgramIdHeader(NormalizedLine line,
+                                                                  int tailStart) {
+        int nameStart = firstNonSpace(line.content(), tailStart);
+        if (nameStart < 0) {
+            return new CommentEntryDecision(line, CommentEntryState.PROGRAM_NAME_PENDING);
+        }
+        return normalizeProgramIdFrom(line, nameStart);
+    }
+
+    private static CommentEntryDecision normalizeProgramIdName(NormalizedLine line) {
+        int nameStart = firstNonSpace(line.content(), 0);
+        if (nameStart < 0) {
+            return new CommentEntryDecision(line, CommentEntryState.PROGRAM_NAME_PENDING);
+        }
+        return normalizeProgramIdFrom(line, nameStart);
+    }
+
+    private static CommentEntryDecision normalizeProgramIdFrom(NormalizedLine line, int nameStart) {
+        int afterName = endOfProgramName(line.content(), nameStart);
+        if (afterName == nameStart) {
+            throw new IllegalArgumentException("PROGRAM-ID requires a program name before comment entry"
+                    + " at source offset " + line.contentOriginalStart());
+        }
+        int syntaxEnd = firstNonSpace(line.content(), afterName);
+        if (syntaxEnd < 0) {
+            return new CommentEntryDecision(line, CommentEntryState.COMMENT_ENTRY);
+        }
+        if (isSeparatorPeriod(line.content(), syntaxEnd)) {
+            int commentStart = firstNonSpace(line.content(), syntaxEnd + 1);
+            return commentStart < 0
+                    ? new CommentEntryDecision(line, CommentEntryState.COMMENT_ENTRY)
+                    : new CommentEntryDecision(tagTail(line, commentStart),
+                            CommentEntryState.COMMENT_ENTRY);
+        }
+
+        int afterClause = programIdClauseEnd(line.content(), syntaxEnd);
+        if (afterClause >= 0) {
+            int afterSyntax = firstNonSpace(line.content(), afterClause);
+            if (afterSyntax >= 0 && isSeparatorPeriod(line.content(), afterSyntax)) {
+                afterSyntax = firstNonSpace(line.content(), afterSyntax + 1);
+            }
+            return afterSyntax < 0
+                    ? new CommentEntryDecision(line, CommentEntryState.COMMENT_ENTRY)
+                    : new CommentEntryDecision(tagTail(line, afterSyntax),
+                            CommentEntryState.COMMENT_ENTRY);
+        }
+        return new CommentEntryDecision(tagTail(line, syntaxEnd), CommentEntryState.COMMENT_ENTRY);
+    }
+
+    private static int programIdClauseEnd(String line, int start) {
+        int cursor = start;
+        int wordEnd = endOfCobolWord(line, cursor);
+        if (wordEquals(line, cursor, wordEnd, "IS")) {
+            cursor = firstNonSpace(line, wordEnd);
+            if (cursor < 0) return -1;
+            wordEnd = endOfCobolWord(line, cursor);
+        }
+        if (!isProgramIdQualifier(line, cursor, wordEnd)) return -1;
+        cursor = wordEnd;
+        int next = firstNonSpace(line, cursor);
+        if (next >= 0) {
+            int nextEnd = endOfCobolWord(line, next);
+            if (wordEquals(line, next, nextEnd, "PROGRAM")) cursor = nextEnd;
+        }
+        return cursor;
+    }
+
+    private static boolean isProgramIdQualifier(String line, int start, int end) {
+        return wordEquals(line, start, end, "COMMON")
+                || wordEquals(line, start, end, "INITIAL")
+                || wordEquals(line, start, end, "LIBRARY")
+                || wordEquals(line, start, end, "DEFINITION")
+                || wordEquals(line, start, end, "RECURSIVE");
+    }
+
+    private static boolean wordEquals(String line, int start, int end, String expected) {
+        return end - start == expected.length()
+                && line.regionMatches(true, start, expected, 0, expected.length());
+    }
+
+    private static int endOfCobolWord(String line, int start) {
+        int cursor = start;
+        while (cursor < line.length() && isCobolWordCharacter(line.charAt(cursor))) cursor++;
+        return cursor;
+    }
+
+    private static int endOfProgramName(String line, int start) {
+        if (start >= line.length()) return start;
+        int quoteIndex = start;
+        char first = line.charAt(start);
+        if (isLiteralPrefix(first) && start + 1 < line.length()
+                && isQuote(line.charAt(start + 1))) {
+            quoteIndex = start + 1;
+        } else if (!isQuote(first)) {
+            return endOfCobolWord(line, start);
+        }
+        char quote = line.charAt(quoteIndex);
+        for (int index = quoteIndex + 1; index < line.length(); index++) {
+            if (line.charAt(index) == quote) {
+                if (index + 1 < line.length() && line.charAt(index + 1) == quote) {
+                    index++;
+                } else {
+                    return index + 1;
+                }
+            }
+        }
+        return start;
+    }
+
+    private static boolean isLiteralPrefix(char character) {
+        char upper = Character.toUpperCase(character);
+        return upper == 'X' || upper == 'G' || upper == 'N' || upper == 'Z';
+    }
+
+    private static boolean isQuote(char character) {
+        return character == '\'' || character == '"';
+    }
+
+    private static int firstNonSpace(String line, int start) {
+        for (int index = start; index < line.length(); index++) {
+            if (line.charAt(index) != ' ') return index;
+        }
+        return -1;
+    }
+
+    private static boolean isSeparatorPeriod(String line, int index) {
+        return index < line.length() && line.charAt(index) == '.'
+                && (index + 1 == line.length() || line.charAt(index + 1) == ' ');
+    }
+
+    private static boolean isEndRemarks(String line) {
+        int start = firstNonSpace(line, 0);
+        if (start < 0) return false;
+        String keyword = "END-REMARKS";
+        int end = start + keyword.length();
+        if (end > line.length() || !line.regionMatches(true, start, keyword, 0, keyword.length())) {
+            return false;
+        }
+        int following = firstNonSpace(line, end);
+        if (following < 0) return true;
+        if (!isSeparatorPeriod(line, following)) return false;
+        return firstNonSpace(line, following + 1) < 0;
+    }
+
+    private static NormalizedLine tagTail(NormalizedLine line, int commentStart) {
+        String content = line.content().substring(0, commentStart).stripTrailing()
+                + " *>CE " + line.content().substring(commentStart).strip();
+        return transformedFrom(line, content, line.terminator(), true);
+    }
+
+    private static NormalizedLine asCommentEntry(NormalizedLine line, String content) {
+        return transformedFrom(line, "*>CE " + content.strip(), line.terminator(), true);
     }
 
     private static boolean startsInAreaA(String line) {

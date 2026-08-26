@@ -1,5 +1,6 @@
 package io.proleap.benchmark;
 
+import io.proleap.benchmark.antlr.CobolParser;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Parser;
@@ -10,6 +11,11 @@ import org.junit.jupiter.api.Test;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.IdentityHashMap;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -204,6 +210,143 @@ class SourceNormalizerTest {
         assertTrue(goback.exact());
     }
 
+    @Test
+    void commentEntryOwnersHaveAnExhaustiveNormalizationPolicy() {
+        Set<String> grammarOwners = Arrays.stream(CobolParser.class.getDeclaredClasses())
+                .filter(context -> Arrays.stream(context.getDeclaredMethods())
+                        .anyMatch(method -> method.getParameterCount() == 0
+                                && method.getReturnType() == CobolParser.CommentEntryContext.class))
+                .map(Class::getSimpleName)
+                .map(name -> Character.toLowerCase(name.charAt(0))
+                        + name.substring(1, name.length() - "Context".length()))
+                .collect(Collectors.toSet());
+
+        assertEquals(grammarOwners, SourceNormalizer.commentEntryOwnerRules());
+    }
+
+    @Test
+    void commentEntriesFollowFixedFormatParagraphBoundariesNotPeriods() {
+        String raw = "       IDENTIFICATION DIVISION.\n"
+                + "       PROGRAM-ID. COMMENTS. PROGRAM NOTE.\n"
+                + "       AUTHOR. INLINE HAS. INTERNAL PERIODS.\n"
+                + "           MULTILINE HAS. INTERNAL PERIODS.\n"
+                + "\n"
+                + "      * ORDINARY COMMENT INSIDE ENTRY\n"
+                + "           FINAL WITHOUT PERIOD\n"
+                + "       ENVIRONMENT DIVISION.\n";
+        SourceNormalizer.Result result = SourceNormalizer.normalize(
+                raw, "comment-entries.cbl", SourceNormalizer.SourceFormat.FIXED);
+
+        assertEquals("IDENTIFICATION DIVISION.\n"
+                        + "PROGRAM-ID. COMMENTS. *>CE PROGRAM NOTE.\n"
+                        + "AUTHOR. *>CE INLINE HAS. INTERNAL PERIODS.\n"
+                        + "*>CE MULTILINE HAS. INTERNAL PERIODS.\n"
+                        + "\n"
+                        + "*>  ORDINARY COMMENT INSIDE ENTRY\n"
+                        + "*>CE FINAL WITHOUT PERIOD\n"
+                        + "ENVIRONMENT DIVISION.\n",
+                result.text());
+        assertFalse(result.text().contains("*>CE ENVIRONMENT"), result.text());
+
+        int environmentStart = result.text().indexOf("ENVIRONMENT");
+        Ast.SourceProvenance environment = result.sourceMap().provenance(
+                environmentStart, environmentStart + "ENVIRONMENT".length());
+        assertEquals(8, environment.original().startLine());
+        assertEquals(7, environment.original().startColumn());
+        assertTrue(environment.exact());
+    }
+
+    @Test
+    void programIdCommentEntryHandlesSplitNameOptionalClauseAndOptionalPeriod() {
+        assertEquals("PROGRAM-ID.\n    SPLIT.\n*>CE NOTE AFTER NAME.\nENVIRONMENT DIVISION.\n",
+                SourceNormalizer.fixed(
+                        "       PROGRAM-ID.\n"
+                                + "           SPLIT.\n"
+                                + "           NOTE AFTER NAME.\n"
+                                + "       ENVIRONMENT DIVISION.\n"));
+        assertEquals("PROGRAM-ID. QUALIFIED IS INITIAL PROGRAM.\n"
+                        + "*>CE QUALIFIED NOTE.\nENVIRONMENT DIVISION.\n",
+                SourceNormalizer.fixed(
+                        "       PROGRAM-ID. QUALIFIED IS INITIAL PROGRAM.\n"
+                                + "           QUALIFIED NOTE.\n"
+                                + "       ENVIRONMENT DIVISION.\n"));
+        assertEquals("PROGRAM-ID. NODOT\n*>CE NOTE WITHOUT PROGRAM PERIOD\n"
+                        + "ENVIRONMENT DIVISION.\n",
+                SourceNormalizer.fixed(
+                        "       PROGRAM-ID. NODOT\n"
+                                + "           NOTE WITHOUT PROGRAM PERIOD\n"
+                                + "       ENVIRONMENT DIVISION.\n"));
+        assertEquals("PROGRAM-ID. 'Quoted''Name'. *>CE LITERAL NAME NOTE.\n",
+                SourceNormalizer.fixed(
+                        "       PROGRAM-ID. 'Quoted''Name'. LITERAL NAME NOTE.\n"));
+        assertEquals("PROGRAM-ID. N\"National\". *>CE NATIONAL NAME NOTE.\n",
+                SourceNormalizer.fixed(
+                        "       PROGRAM-ID. N\"National\". NATIONAL NAME NOTE.\n"));
+    }
+
+    @Test
+    void normalizedCommentEntryMatrixParsesWithoutSyntaxErrors() {
+        String raw = "       IDENTIFICATION DIVISION.\n"
+                + "       PROGRAM-ID. COMMENT-MATRIX. PROGRAM COMMENT.\n"
+                + "       AUTHOR. INLINE. AUTHOR TEXT.\n"
+                + "           AUTHOR CONTINUATION WITHOUT FINAL PERIOD\n"
+                + "       INSTALLATION.\n"
+                + "\n"
+                + "           INSTALLATION TEXT. WITH PERIOD.\n"
+                + "       DATE-WRITTEN. 2026.08.25.\n"
+                + "       DATE-COMPILED.\n"
+                + "           NEVER\n"
+                + "       SECURITY. NONE.\n"
+                + "       REMARKS. REMARK ONE. REMARK TWO.\n"
+                + "       ENVIRONMENT DIVISION.\n"
+                + "       DATA DIVISION.\n"
+                + "       PROCEDURE DIVISION.\n"
+                + "           GOBACK.\n";
+        String normalized = SourceNormalizer.fixed(raw);
+
+        GrammarBinding binding = Bindings.proleap();
+        Parser parser = binding.cobolParser(new CommonTokenStream(
+                binding.cobolLexer(CharStreams.fromString(normalized, "comment-matrix.cbl"))));
+        binding.cobolStart(parser);
+
+        assertEquals(0, parser.getNumberOfSyntaxErrors(), normalized);
+    }
+
+    @Test
+    void remarksHasAnExplicitEndRemarksBoundaryAndHeadersRequireDotFs() {
+        assertEquals("REMARKS.\n*>CE TEXT WITH PERIODS.\n    END-REMARKS.\n"
+                        + "ENVIRONMENT DIVISION.\n",
+                SourceNormalizer.fixed(
+                        "       REMARKS.\n"
+                                + "           TEXT WITH PERIODS.\n"
+                                + "           END-REMARKS.\n"
+                                + "       ENVIRONMENT DIVISION.\n"));
+        assertEquals("AUTHOR.X\n", SourceNormalizer.fixed("       AUTHOR.X\n"),
+                "a period without a following separator is not DOT_FS and cannot open an entry");
+        assertEquals("AUTHOR.\n*>CE FINAL ENTRY AT EOF",
+                SourceNormalizer.fixed("       AUTHOR.\n           FINAL ENTRY AT EOF"));
+    }
+
+    @Test
+    void commentEntriesDoNotCreateSemanticAstNodes() {
+        String programPrefix = "       IDENTIFICATION DIVISION.\n"
+                + "       PROGRAM-ID. NO-COMMENT-NODES.\n";
+        String programSuffix = "       ENVIRONMENT DIVISION.\n"
+                + "       DATA DIVISION.\n"
+                + "       PROCEDURE DIVISION.\n"
+                + "           GOBACK.\n";
+        Ast.Program withoutEntries = buildNormalizedAst(programPrefix + programSuffix,
+                "without-comment-entries.cbl");
+        Ast.Program withEntries = buildNormalizedAst(programPrefix
+                        + "       AUTHOR. INLINE AUTHOR.\n"
+                        + "           SECOND AUTHOR RECORD.\n"
+                        + "       REMARKS. TEXT. WITH. PERIODS.\n"
+                        + programSuffix,
+                "with-comment-entries.cbl");
+
+        assertEquals(semanticNodeTypes(withoutEntries), semanticNodeTypes(withEntries));
+    }
+
     private static ParserRuleContext firstRule(ParseTree tree, Parser parser, String expected) {
         if (tree instanceof ParserRuleContext context
                 && parser.getRuleNames()[context.getRuleIndex()].equals(expected)) return context;
@@ -212,5 +355,38 @@ class SourceNormalizerTest {
             if (found != null) return found;
         }
         return null;
+    }
+
+    private static Ast.Program buildNormalizedAst(String raw, String file) {
+        SourceNormalizer.Result normalized = SourceNormalizer.normalize(
+                raw, file, SourceNormalizer.SourceFormat.FIXED);
+        GrammarBinding binding = Bindings.proleap();
+        Parser parser = binding.cobolParser(new CommonTokenStream(
+                binding.cobolLexer(CharStreams.fromString(normalized.text(), file))));
+        ParseTree tree = binding.cobolStart(parser);
+        assertEquals(0, parser.getNumberOfSyntaxErrors(), normalized.text());
+        IdentityHashMap<ParseTree, Integer> ids = new IdentityHashMap<>();
+        IdentityHashMap<ParseTree, Integer> sizes = new IdentityHashMap<>();
+        index(tree, ids, sizes, new int[]{0});
+        return new AstBuilder(parser, normalized.text(), normalized.sourceMap(), ids, sizes)
+                .build(tree).program();
+    }
+
+    private static int index(ParseTree tree, IdentityHashMap<ParseTree, Integer> ids,
+                             IdentityHashMap<ParseTree, Integer> sizes, int[] next) {
+        ids.put(tree, next[0]++);
+        int size = 1;
+        for (int child = 0; child < tree.getChildCount(); child++) {
+            size += index(tree.getChild(child), ids, sizes, next);
+        }
+        sizes.put(tree, size);
+        return size;
+    }
+
+    private static List<String> semanticNodeTypes(Ast.Node root) {
+        java.util.ArrayList<String> result = new java.util.ArrayList<>();
+        result.add(root.getClass().getSimpleName());
+        for (Ast.Node child : Ast.children(root)) result.addAll(semanticNodeTypes(child));
+        return result;
     }
 }
