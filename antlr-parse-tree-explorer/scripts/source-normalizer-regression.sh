@@ -31,7 +31,7 @@ cd "$project_dir"
 
 required_files=(
   index.html ast.html symbols.html resolution.html
-  tree-data.js ast-data.js symbol-data.js resolution-data.js
+  tree-data.js ast-data.js coverage-data.js symbol-data.js resolution-data.js
 )
 
 for output in "$canonical_output" "$fixture_output" "$integration_output"; do
@@ -49,6 +49,11 @@ while IFS= read -r expected; do
   [[ -z "$expected" ]] && continue
   grep -Fqx "$expected" "$run_root/coactupc.log"
 done <"src/test/resources/cobol/source-format/coactupc-regression-baseline.txt"
+
+while IFS='|' read -r artifact expected; do
+  [[ -z "$artifact" ]] && continue
+  grep -Fq "$expected" "$canonical_output/$artifact"
+done <"src/test/resources/cobol/source-format/coactupc-semantic-baseline.txt"
 
 grep -Fq '"n":"COMMENTBUG"' "$fixture_output/ast-data.js"
 for division in IDENTIFICATION ENVIRONMENT DATA PROCEDURE; do
