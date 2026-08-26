@@ -167,8 +167,7 @@ class EntityScopeAndOccurrenceTest {
         IdentityHashMap<ParseTree, Integer> ids = new IdentityHashMap<>();
         IdentityHashMap<ParseTree, Integer> sizes = new IdentityHashMap<>();
         index(tree, ids, sizes, new int[]{0});
-        Ast.Program program = new AstBuilder(parser, source,
-                SourceMap.identity(source, file.getFileName().toString()), ids, sizes).build(tree).program();
+        Ast.Program program = new AstBuilder(parser, source, ids, sizes).build(tree).program();
         SymbolTable table = new SymbolTableBuilder().build(program);
         ResolutionContracts.ProgramUnitId unitId = new ResolutionContracts.ProgramUnitId(
                 file.getFileName().toString().toUpperCase(Locale.ROOT), List.of(0),

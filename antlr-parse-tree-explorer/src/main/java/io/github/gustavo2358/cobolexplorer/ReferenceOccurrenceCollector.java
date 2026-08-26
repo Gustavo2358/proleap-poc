@@ -21,7 +21,7 @@ final class ReferenceOccurrenceCollector {
                                  Ast.Program program, AstScopeIndex scopes) {
         this.programUnitId = Objects.requireNonNull(programUnitId, "programUnitId");
         this.scopes = Objects.requireNonNull(scopes, "scopes");
-        this.source = program.meta().provenance().original().file();
+        this.source = programUnitId.canonicalProgramName();
         occurrences.clear();
         visitedReferenceNodeIds.clear();
         visit(program, ResolutionContracts.ReferenceRole.CONTEXT_DEPENDENT,

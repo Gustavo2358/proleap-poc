@@ -43,7 +43,7 @@ class ResolutionSnapshotTest {
         assertTrue(text.contains("\"candidates\":["));
         assertTrue(text.contains("\"astNodeId\":"));
         assertTrue(text.contains("\"parseNodeId\":"));
-        assertTrue(text.contains("\"original\":{"));
+        assertFalse(text.contains("\"original\":{"));
         assertTrue(text.contains("\"gaps\":["));
         assertTrue(text.contains("\"dependencyAnalysisReady\":false"));
         assertEquals(1, occurrences(text, "\"sourceLines\":["),
@@ -99,8 +99,7 @@ class ResolutionSnapshotTest {
         IdentityHashMap<ParseTree, Integer> ids = new IdentityHashMap<>();
         IdentityHashMap<ParseTree, Integer> sizes = new IdentityHashMap<>();
         index(tree, ids, sizes, new int[]{0});
-        CompilationUnitBuildResult build = new AstBuilder(parser, source,
-                SourceMap.identity(source, sourceName), ids, sizes).buildCompilationUnit(tree, sourceName);
+        CompilationUnitBuildResult build = new AstBuilder(parser, source, ids, sizes).buildCompilationUnit(tree, sourceName);
         CompilationUnitModel model = build.compilationUnit();
         CompilationUnitSymbolTables tables = new CompilationUnitSymbolTableBuilder().build(model);
         Map<ResolutionContracts.ProgramUnitId, ReferenceOccurrences> occurrences = new LinkedHashMap<>();

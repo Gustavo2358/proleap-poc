@@ -601,21 +601,21 @@ PREPROCESSOR	startRule	PREPROCESSOR	PRESERVED_UNINTERPRETED	NOT_DEPENDENCY_BEARI
 PREPROCESSOR	compilerOptions	PREPROCESSOR	PRESERVED_UNINTERPRETED	NOT_DEPENDENCY_BEARING	Preprocessor syntax is explicitly cataloged and has no standalone dependency claim.
 PREPROCESSOR	compilerXOpts	PREPROCESSOR	PRESERVED_UNINTERPRETED	NOT_DEPENDENCY_BEARING	Preprocessor syntax is explicitly cataloged and has no standalone dependency claim.
 PREPROCESSOR	compilerOption	PREPROCESSOR	PRESERVED_UNINTERPRETED	NOT_DEPENDENCY_BEARING	Preprocessor syntax is explicitly cataloged and has no standalone dependency claim.
-PREPROCESSOR	execCicsStatement	PREPROCESSOR	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Preprocessor construct is preserved but not yet represented with semantic provenance.
-PREPROCESSOR	execSqlStatement	PREPROCESSOR	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Preprocessor construct is preserved but not yet represented with semantic provenance.
-PREPROCESSOR	execSqlImsStatement	PREPROCESSOR	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Preprocessor construct is preserved but not yet represented with semantic provenance.
-PREPROCESSOR	copyStatement	PREPROCESSOR	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Preprocessor construct is preserved but not yet represented with semantic provenance.
-PREPROCESSOR	copySource	PREPROCESSOR	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Preprocessor construct is preserved but not yet represented with semantic provenance.
-PREPROCESSOR	copyLibrary	PREPROCESSOR	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Preprocessor construct is preserved but not yet represented with semantic provenance.
-PREPROCESSOR	replacingPhrase	PREPROCESSOR	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Preprocessor construct is preserved but not yet represented with semantic provenance.
-PREPROCESSOR	replaceArea	PREPROCESSOR	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Preprocessor construct is preserved but not yet represented with semantic provenance.
-PREPROCESSOR	replaceByStatement	PREPROCESSOR	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Preprocessor construct is preserved but not yet represented with semantic provenance.
-PREPROCESSOR	replaceOffStatement	PREPROCESSOR	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Preprocessor construct is preserved but not yet represented with semantic provenance.
-PREPROCESSOR	replaceClause	PREPROCESSOR	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Preprocessor construct is preserved but not yet represented with semantic provenance.
-PREPROCESSOR	directoryPhrase	PREPROCESSOR	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Preprocessor construct is preserved but not yet represented with semantic provenance.
-PREPROCESSOR	familyPhrase	PREPROCESSOR	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Preprocessor construct is preserved but not yet represented with semantic provenance.
-PREPROCESSOR	replaceable	PREPROCESSOR	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Preprocessor construct is preserved but not yet represented with semantic provenance.
-PREPROCESSOR	replacement	PREPROCESSOR	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Preprocessor construct is preserved but not yet represented with semantic provenance.
+PREPROCESSOR	execCicsStatement	PREPROCESSOR	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Preprocessor construct is preserved as opaque expanded input.
+PREPROCESSOR	execSqlStatement	PREPROCESSOR	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Preprocessor construct is preserved as opaque expanded input.
+PREPROCESSOR	execSqlImsStatement	PREPROCESSOR	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Preprocessor construct is preserved as opaque expanded input.
+PREPROCESSOR	copyStatement	PREPROCESSOR	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	COPY is expanded before semantic analysis.
+PREPROCESSOR	copySource	PREPROCESSOR	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	COPY is expanded before semantic analysis.
+PREPROCESSOR	copyLibrary	PREPROCESSOR	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	COPY is expanded before semantic analysis.
+PREPROCESSOR	replacingPhrase	PREPROCESSOR	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	COPY replacement is applied before semantic analysis.
+PREPROCESSOR	replaceArea	PREPROCESSOR	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Unsupported preprocessing construct blocks complete analysis.
+PREPROCESSOR	replaceByStatement	PREPROCESSOR	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Unsupported preprocessing construct blocks complete analysis.
+PREPROCESSOR	replaceOffStatement	PREPROCESSOR	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Unsupported preprocessing construct blocks complete analysis.
+PREPROCESSOR	replaceClause	PREPROCESSOR	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Unsupported preprocessing construct blocks complete analysis.
+PREPROCESSOR	directoryPhrase	PREPROCESSOR	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	COPY is expanded before semantic analysis.
+PREPROCESSOR	familyPhrase	PREPROCESSOR	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	COPY is expanded before semantic analysis.
+PREPROCESSOR	replaceable	PREPROCESSOR	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	COPY replacement is applied before semantic analysis.
+PREPROCESSOR	replacement	PREPROCESSOR	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	COPY replacement is applied before semantic analysis.
 PREPROCESSOR	ejectStatement	PREPROCESSOR	PRESERVED_UNINTERPRETED	NOT_DEPENDENCY_BEARING	Preprocessor syntax is explicitly cataloged and has no standalone dependency claim.
 PREPROCESSOR	skipStatement	PREPROCESSOR	PRESERVED_UNINTERPRETED	NOT_DEPENDENCY_BEARING	Preprocessor syntax is explicitly cataloged and has no standalone dependency claim.
 PREPROCESSOR	titleStatement	PREPROCESSOR	PRESERVED_UNINTERPRETED	NOT_DEPENDENCY_BEARING	Preprocessor syntax is explicitly cataloged and has no standalone dependency claim.

@@ -43,20 +43,23 @@ final class PreprocessorEngine {
             writtenText = Objects.requireNonNull(writtenText, "writtenText");
         }
     }
+    /** Semantic dependency observed while expanding COPY; independent of AST node origins. */
+    record CopyDependency(String requestedName, String includedFile) {}
     record Outcome(String text, int errors, int unresolved, List<Diagnostic> diagnostics,
                    List<CompilerOption> compilerOptions,
                    ResolutionContracts.PgmnameMode pgmnameMode,
                    ResolutionContracts.DynamMode dynamMode,
-                   ResolutionContracts.DllMode dllMode, SourceMap sourceMap) {
+                   ResolutionContracts.DllMode dllMode, List<CopyDependency> copyDependencies) {
         Outcome {
             diagnostics = List.copyOf(diagnostics);
             compilerOptions = List.copyOf(compilerOptions);
+            copyDependencies = List.copyOf(copyDependencies);
             pgmnameMode = Objects.requireNonNull(pgmnameMode, "pgmnameMode");
             dynamMode = Objects.requireNonNull(dynamMode, "dynamMode");
             dllMode = Objects.requireNonNull(dllMode, "dllMode");
         }
     }
-    private record Edit(int start, int end, SourceMap replacement) {}
+    private record Edit(int start, int end, String replacement) {}
     private record CopyReplacement(String replaceable, String replacement) {}
     private static final class LogSummary {
         private int cycles;
@@ -70,15 +73,16 @@ final class PreprocessorEngine {
         this.binding = binding; this.library = library;
     }
 
-    Outcome process(SourceMap normalized, String file) {
+    Outcome process(String normalized, String file) {
         List<Diagnostic> diagnostics = new ArrayList<>();
         List<CompilerOption> compilerOptions = new ArrayList<>();
+        List<CopyDependency> copyDependencies = new ArrayList<>();
         int[] unresolved = {0};
         int[] toleratedPreprocessorDiagnostics = {0};
         LogSummary logSummary = new LogSummary();
-        SourceMap document = processRecursive(normalized, file,
+        String document = processRecursive(normalized, file,
                 diagnostics, compilerOptions, unresolved, toleratedPreprocessorDiagnostics,
-                new HashSet<>(), logSummary);
+                new HashSet<>(), logSummary, copyDependencies);
         long errors = diagnostics.stream().filter(d -> d.phase() == Diagnostic.Phase.PREPROCESSOR)
                 .count() - toleratedPreprocessorDiagnostics[0];
         ResolutionContracts.PgmnameMode pgmnameMode = compilerOptions.stream()
@@ -107,15 +111,15 @@ final class PreprocessorEngine {
             LOG.warn("event=copy_io_failure source={} phase=PREPROCESSING count={} reason=IO_EXCEPTION fallback=KEEP_IO_ERROR_PLACEHOLDER impact=ANALYSIS_INCOMPLETE",
                     file, logSummary.ioFailures);
         }
-        return new Outcome(document.text(), Math.toIntExact(errors), unresolved[0],
-                diagnostics, compilerOptions, pgmnameMode, dynamMode, dllMode, document);
+        return new Outcome(document, Math.toIntExact(errors), unresolved[0],
+                diagnostics, compilerOptions, pgmnameMode, dynamMode, dllMode, copyDependencies);
     }
 
-    private SourceMap processRecursive(SourceMap document, String file, List<Diagnostic> diagnostics,
+    private String processRecursive(String source, String file, List<Diagnostic> diagnostics,
                                        List<CompilerOption> compilerOptions,
                                        int[] unresolved, int[] toleratedPreprocessorDiagnostics,
-                                       Set<Path> expansionStack, LogSummary logSummary) {
-        String source = document.text();
+                                       Set<Path> expansionStack, LogSummary logSummary,
+                                       List<CopyDependency> copyDependencies) {
         Lexer lexer = binding.preprocessorLexer(CharStreams.fromString(source, file));
         lexer.removeErrorListeners();
         lexer.addErrorListener(new AntlrDiagnosticListener(binding.name(), Diagnostic.Phase.PREPROCESSOR, file, diagnostics));
@@ -164,8 +168,7 @@ final class PreprocessorEngine {
             String original = source.substring(start, end);
             if (policy == PreprocessorPolicy.EXTRACT_COMPILER_OPTIONS
                     || policy == PreprocessorPolicy.REMOVE) {
-                edits.add(new Edit(start, end, document.transformedSlice(
-                        start, end, blankPreservingLineBreaks(original))));
+                edits.add(new Edit(start, end, blankPreservingLineBreaks(original)));
             } else if (policy == PreprocessorPolicy.EXPAND_COPY) {
                 String requested = copySourceName(context, parser.getRuleNames(), source);
                 Optional<Path> path = library.resolve(requested);
@@ -174,49 +177,43 @@ final class PreprocessorEngine {
                     LOG.trace("event=copy_resolution source={} phase=PREPROCESSING requested={} line={} status=UNRESOLVED reason=NOT_FOUND fallback=KEEP_UNRESOLVED_PLACEHOLDER",
                             file, requested, startToken.getLine());
                     toleratedPreprocessorDiagnostics[0]++;
-                    diagnostics.add(sourceDiagnostic(document, Diagnostic.Phase.PREPROCESSOR,
-                            start, end, "unresolved_copy: " + requested, requested, ""));
-                    edits.add(new Edit(start, end, document.transformedSlice(start, end,
-                            "*> UNRESOLVED COPY " + requested + "\n")));
+                    diagnostics.add(sourceDiagnostic(file, startToken, Diagnostic.Phase.PREPROCESSOR,
+                            "unresolved_copy: " + requested, requested, ""));
+                    edits.add(new Edit(start, end, "*> UNRESOLVED COPY " + requested + "\n"));
                 } else if (!expansionStack.add(path.get().toAbsolutePath().normalize())) {
                     logSummary.cycles++;
                     LOG.trace("event=copy_resolution source={} phase=PREPROCESSING requested={} line={} status=CYCLIC reason=EXPANSION_CYCLE fallback=KEEP_CYCLIC_PLACEHOLDER",
                             file, requested, startToken.getLine());
                     toleratedPreprocessorDiagnostics[0]++;
-                    diagnostics.add(sourceDiagnostic(document, Diagnostic.Phase.PREPROCESSOR,
-                            start, end, "cyclic COPY: " + requested, requested, ""));
-                    edits.add(new Edit(start, end, document.transformedSlice(start, end,
-                            "*> CYCLIC COPY " + requested + "\n")));
+                    diagnostics.add(sourceDiagnostic(file, startToken, Diagnostic.Phase.PREPROCESSOR,
+                            "cyclic COPY: " + requested, requested, ""));
+                    edits.add(new Edit(start, end, "*> CYCLIC COPY " + requested + "\n"));
                 } else {
                     try {
                         String includedFile = path.get().getFileName().toString();
                         LOG.trace("event=copy_resolved source={} phase=PREPROCESSING requested={} line={} includedFile={}",
                                 file, requested, startToken.getLine(), includedFile);
-                        SourceMap copySource = library.readNormalized(path.get());
-                        SourceMap copyText = processRecursive(copySource, includedFile,
+                        copyDependencies.add(new CopyDependency(requested, includedFile));
+                        String copyText = processRecursive(library.readNormalized(path.get()), includedFile,
                                 diagnostics, compilerOptions, unresolved,
-                                toleratedPreprocessorDiagnostics, expansionStack, logSummary);
+                                toleratedPreprocessorDiagnostics, expansionStack, logSummary, copyDependencies);
                         List<CopyReplacement> replacements = copyReplacements(
                                 context, parser.getRuleNames(), source);
                         for (CopyReplacement replacement : replacements) {
-                            copyText = copyText.replaceLiteral(
-                                    replacement.replaceable(), replacement.replacement());
+                            copyText = copyText.replace(replacement.replaceable(), replacement.replacement());
                         }
                         if (!replacements.isEmpty()) {
                             LOG.trace("event=copy_replacing_applied source={} phase=PREPROCESSING requested={} line={} replacements={}",
                                     file, requested, startToken.getLine(), replacements.size());
                         }
-                        int includeLine = document.provenance(start, end).original().startLine();
-                        Ast.CopyFrame frame = new Ast.CopyFrame(file, requested, includedFile, includeLine);
-                        edits.add(new Edit(start, end, copyText.withCopyFrame(frame)));
+                        edits.add(new Edit(start, end, copyText));
                     } catch (IOException e) {
                         logSummary.ioFailures++;
                         LOG.trace("event=copy_resolution source={} phase=PREPROCESSING requested={} line={} status=IO_FAILURE reason={}",
                                 file, requested, startToken.getLine(), e.getClass().getSimpleName());
-                        diagnostics.add(sourceDiagnostic(document, Diagnostic.Phase.IO,
-                                start, end, e.getMessage(), requested, e.getClass().getName()));
-                        edits.add(new Edit(start, end, document.transformedSlice(start, end,
-                                "*> COPY IO ERROR " + requested + "\n")));
+                        diagnostics.add(sourceDiagnostic(file, startToken, Diagnostic.Phase.IO,
+                                e.getMessage(), requested, e.getClass().getName()));
+                        edits.add(new Edit(start, end, "*> COPY IO ERROR " + requested + "\n"));
                     } finally {
                         expansionStack.remove(path.get().toAbsolutePath().normalize());
                     }
@@ -235,8 +232,7 @@ final class PreprocessorEngine {
                 String opaque = flattenPhysicalLines(embeddedSource).strip();
                 LOG.trace("event=embedded_language_preserved source={} phase=PREPROCESSING rule={} line={} sentenceEnd={}",
                         file, rule, startToken.getLine(), sentenceEnd);
-                edits.add(new Edit(start, end, document.transformedSlice(start, end,
-                        tag + " " + opaque + "\n" + (sentenceEnd ? ". \n" : ""))));
+                edits.add(new Edit(start, end, tag + " " + opaque + "\n" + (sentenceEnd ? ". \n" : "")));
             } else if (policy == PreprocessorPolicy.UNSUPPORTED) {
                 throw new UnsupportedOperationException(
                         "Unsupported preprocessing construct: " + rule);
@@ -246,25 +242,23 @@ final class PreprocessorEngine {
             }
         }
         edits.sort(Comparator.comparingInt(Edit::start).reversed());
-        SourceMap result = document;
+        String result = source;
         int lastStart = Integer.MAX_VALUE;
         for (Edit edit : edits) {
             if (edit.end() > lastStart) {
                 throw new IllegalStateException("Overlapping top-level preprocessing edits at "
                         + edit.start() + ".." + edit.end());
             }
-            result = result.replace(edit.start(), edit.end(), edit.replacement());
+            result = result.substring(0, edit.start()) + edit.replacement() + result.substring(edit.end());
             lastStart = edit.start();
         }
         return result;
     }
 
-    private Diagnostic sourceDiagnostic(SourceMap document, Diagnostic.Phase phase,
-                                        int start, int end, String message,
+    private Diagnostic sourceDiagnostic(String file, Token token, Diagnostic.Phase phase, String message,
                                         String offendingToken, String exceptionClass) {
-        Ast.SourceLocation original = document.provenance(start, end).original();
-        return new Diagnostic(binding.name(), phase, original.file(), original.startLine(),
-                original.startColumn(), message, offendingToken, exceptionClass);
+        return new Diagnostic(binding.name(), phase, file, token.getLine(),
+                token.getCharPositionInLine(), message, offendingToken, exceptionClass);
     }
 
     private static boolean hasDirectTerminal(ParserRuleContext context, Parser parser,

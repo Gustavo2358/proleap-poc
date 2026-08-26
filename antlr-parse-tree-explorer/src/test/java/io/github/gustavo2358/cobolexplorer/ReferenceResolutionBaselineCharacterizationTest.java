@@ -80,8 +80,7 @@ class ReferenceResolutionBaselineCharacterizationTest {
         IdentityHashMap<ParseTree, Integer> ids = new IdentityHashMap<>();
         IdentityHashMap<ParseTree, Integer> sizes = new IdentityHashMap<>();
         index(tree, ids, sizes, new int[]{0});
-        Ast.Program ast = new AstBuilder(parser, source,
-                SourceMap.identity(source, file.getFileName().toString()), ids, sizes).build(tree).program();
+        Ast.Program ast = new AstBuilder(parser, source, ids, sizes).build(tree).program();
         return new Parsed(tree, ast);
     }
 

@@ -607,8 +607,7 @@ class DataAndIndexReferenceResolverTest {
         IdentityHashMap<ParseTree, Integer> ids = new IdentityHashMap<>();
         IdentityHashMap<ParseTree, Integer> sizes = new IdentityHashMap<>();
         index(tree, ids, sizes, new int[]{0});
-        CompilationUnitBuildResult build = new AstBuilder(parser, source,
-                SourceMap.identity(source, file.getFileName().toString()), ids, sizes)
+        CompilationUnitBuildResult build = new AstBuilder(parser, source, ids, sizes)
                 .buildCompilationUnit(tree, file.getFileName().toString());
         CompilationUnitModel model = build.compilationUnit();
         CompilationUnitSymbolTables tables = new CompilationUnitSymbolTableBuilder().build(model);

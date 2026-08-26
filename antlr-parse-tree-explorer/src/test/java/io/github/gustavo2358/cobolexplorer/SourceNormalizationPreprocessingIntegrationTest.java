@@ -3,6 +3,7 @@ package io.github.gustavo2358.cobolexplorer;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Parser;
+import org.antlr.v4.runtime.tree.ParseTree;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -10,6 +11,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.IdentityHashMap;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -28,7 +30,7 @@ class SourceNormalizationPreprocessingIntegrationTest {
         GrammarBinding binding = Bindings.cobol();
         PreprocessorEngine.Outcome outcome = new PreprocessorEngine(
                 binding, new CopybookLibrary(FIXTURE.resolve("cpy")))
-                .process(normalized.sourceMap(), "main.cbl");
+                .process(normalized.text(), "main.cbl");
 
         assertEquals(0, outcome.errors(), outcome.diagnostics().toString());
         assertEquals(0, outcome.unresolved(), outcome.diagnostics().toString());
@@ -37,17 +39,8 @@ class SourceNormalizationPreprocessingIntegrationTest {
         assertTrue(outcome.text().contains("01 LONG-NAME PIC X."));
         assertTrue(outcome.text().contains("DISPLAY 'HELLO FROM COPY'."));
 
-        Ast.SourceProvenance field = provenanceOf(outcome, "LONG-NAME");
-        assertEquals("FIELDS.cpy", field.original().file());
-        assertEquals(1, field.original().startLine());
-        assertEquals(List.of("UNIT.cpy", "FIELDS.cpy"), includedFiles(field));
-        assertFalse(field.exact(), "a word assembled from two physical records is transformed");
-
-        Ast.SourceProvenance literal = provenanceOf(outcome, "DISPLAY 'HELLO FROM COPY'.");
-        assertEquals("UNIT.cpy", literal.original().file());
-        assertEquals(10, literal.original().startLine());
-        assertEquals(List.of("UNIT.cpy"), includedFiles(literal));
-        assertFalse(literal.exact(), "a literal assembled from two physical records is transformed");
+        assertEquals(List.of("UNIT.cpy", "FIELDS.cpy"), outcome.copyDependencies().stream()
+                .map(PreprocessorEngine.CopyDependency::includedFile).toList());
 
         Parser parser = binding.cobolParser(new CommonTokenStream(
                 binding.cobolLexer(CharStreams.fromString(outcome.text(), "main.cbl"))));
@@ -65,7 +58,7 @@ class SourceNormalizationPreprocessingIntegrationTest {
         PreprocessorEngine engine = new PreprocessorEngine(Bindings.cobol(), library);
 
         PreprocessorEngine.Outcome missing = engine.process(
-                SourceMap.identity("COPY MISSING.\n", "missing.cbl"), "missing.cbl");
+                "COPY MISSING.\n", "missing.cbl");
         assertEquals(1, missing.unresolved());
         assertEquals(0, missing.errors());
         assertTrue(missing.text().contains("UNRESOLVED COPY MISSING"));
@@ -77,7 +70,7 @@ class SourceNormalizationPreprocessingIntegrationTest {
         assertEquals(0, missingDiagnostic.column());
 
         PreprocessorEngine.Outcome cyclic = engine.process(
-                SourceMap.identity("COPY CYCLE.\n", "cycle-main.cbl"), "cycle-main.cbl");
+                "COPY CYCLE.\n", "cycle-main.cbl");
         assertTrue(cyclic.text().contains("CYCLIC COPY CYCLE"));
         assertEquals(0, cyclic.errors());
         assertTrue(cyclic.diagnostics().stream().anyMatch(diagnostic ->
@@ -87,10 +80,10 @@ class SourceNormalizationPreprocessingIntegrationTest {
                 .findFirst().orElseThrow();
         assertEquals("CYCLE.cpy", cycleDiagnostic.file());
         assertEquals(1, cycleDiagnostic.line());
-        assertEquals(7, cycleDiagnostic.column());
+        assertEquals(0, cycleDiagnostic.column());
 
         PreprocessorEngine.Outcome unreadable = engine.process(
-                SourceMap.identity("COPY UNREADABLE.\n", "io-main.cbl"), "io-main.cbl");
+                "COPY UNREADABLE.\n", "io-main.cbl");
         assertTrue(unreadable.text().contains("COPY IO ERROR UNREADABLE"));
         assertTrue(unreadable.diagnostics().stream().anyMatch(diagnostic ->
                 diagnostic.phase() == Diagnostic.Phase.IO));
@@ -121,7 +114,7 @@ class SourceNormalizationPreprocessingIntegrationTest {
         GrammarBinding binding = Bindings.cobol();
         PreprocessorEngine.Outcome outcome = new PreprocessorEngine(
                 binding, new CopybookLibrary(FIXTURE.resolve("cpy")))
-                .process(normalized.sourceMap(), "policy-integration.cbl");
+                .process(normalized.text(), "policy-integration.cbl");
 
         assertEquals(ResolutionContracts.DynamMode.DYNAM, outcome.dynamMode());
         assertEquals(ResolutionContracts.DllMode.NODLL, outcome.dllMode());
@@ -141,13 +134,60 @@ class SourceNormalizationPreprocessingIntegrationTest {
         assertEquals(0, parser.getNumberOfSyntaxErrors(), outcome.text());
     }
 
-    private static Ast.SourceProvenance provenanceOf(PreprocessorEngine.Outcome outcome,
-                                                      String text) {
-        int start = outcome.text().indexOf(text);
-        return outcome.sourceMap().provenance(start, start + text.length());
+    @Test
+    void copyExpansionKeepsCopyDependenciesCallsAndDataBindingsSemantic(@TempDir Path directory)
+            throws Exception {
+        Files.writeString(directory.resolve("DATA.cpy"), "       01 CUSTOMER-DATA.\n"
+                + "          05 CUSTOMER-NAME PIC X(30).\n");
+        Files.writeString(directory.resolve("CALLS.cpy"), "       CALL 'PROGB'.\n");
+        String main = "       IDENTIFICATION DIVISION.\n"
+                + "       PROGRAM-ID. PROGA.\n"
+                + "       DATA DIVISION.\n"
+                + "       WORKING-STORAGE SECTION.\n"
+                + "       COPY DATA.\n"
+                + "       PROCEDURE DIVISION.\n"
+                + "       COPY CALLS.\n"
+                + "       DISPLAY CUSTOMER-NAME.\n";
+        SourceNormalizer.Result normalized = SourceNormalizer.normalize(main, "PROGA.cbl",
+                SourceNormalizer.SourceFormat.FIXED);
+        GrammarBinding binding = Bindings.cobol();
+        PreprocessorEngine.Outcome outcome = new PreprocessorEngine(binding, new CopybookLibrary(directory))
+                .process(normalized.text(), "PROGA.cbl");
+        assertEquals(List.of("DATA.cpy", "CALLS.cpy"), outcome.copyDependencies().stream()
+                .map(PreprocessorEngine.CopyDependency::includedFile).toList());
+
+        Parser parser = binding.cobolParser(new CommonTokenStream(
+                binding.cobolLexer(CharStreams.fromString(outcome.text(), "PROGA.cbl"))));
+        ParseTree tree = binding.cobolStart(parser);
+        assertEquals(0, parser.getNumberOfSyntaxErrors(), outcome.text());
+        IdentityHashMap<ParseTree, Integer> ids = new IdentityHashMap<>(), sizes = new IdentityHashMap<>();
+        index(tree, ids, sizes, new int[] {0});
+        Ast.Program program = new AstBuilder(parser, outcome.text(), ids, sizes).build(tree).program();
+        assertTrue(Ast.children(program).stream().anyMatch(Ast.Division.class::isInstance));
+        assertTrue(nodes(program, Ast.CallStatement.class).stream().anyMatch(call ->
+                call.target() instanceof Ast.ProgramReference target && target.programName().equals("PROGB")));
+        SymbolTable table = new SymbolTableBuilder().build(program);
+        assertTrue(table.symbols().stream().anyMatch(symbol -> symbol.writtenName().equals("CUSTOMER-NAME")));
     }
 
-    private static List<String> includedFiles(Ast.SourceProvenance provenance) {
-        return provenance.includeChain().stream().map(Ast.CopyFrame::includedFile).toList();
+    private static <T extends Ast.Node> List<T> nodes(Ast.Node root, Class<T> type) {
+        java.util.ArrayList<T> result = new java.util.ArrayList<>();
+        java.util.ArrayDeque<Ast.Node> pending = new java.util.ArrayDeque<>();
+        pending.push(root);
+        while (!pending.isEmpty()) {
+            Ast.Node node = pending.pop();
+            if (type.isInstance(node)) result.add(type.cast(node));
+            Ast.children(node).forEach(pending::push);
+        }
+        return result;
     }
+
+    private static int index(ParseTree node, IdentityHashMap<ParseTree, Integer> ids,
+                             IdentityHashMap<ParseTree, Integer> sizes, int[] next) {
+        int id = next[0]++; ids.put(node, id); int size = 1;
+        for (int child = 0; child < node.getChildCount(); child++)
+            size += index(node.getChild(child), ids, sizes, next);
+        sizes.put(node, size); return size;
+    }
+
 }

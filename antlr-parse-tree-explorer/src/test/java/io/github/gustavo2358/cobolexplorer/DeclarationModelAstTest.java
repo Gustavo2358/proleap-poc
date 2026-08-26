@@ -67,7 +67,7 @@ class DeclarationModelAstTest {
     private static Ast.Program parse() throws Exception {
         Path file=Path.of("src/test/resources/cobol/semantic/declarations.cbl").toAbsolutePath(); String source=SourceNormalizerTestSupport.fixed(Files.readString(file,StandardCharsets.UTF_8));
         GrammarBinding b=Bindings.cobol(); Parser p=b.cobolParser(new CommonTokenStream(b.cobolLexer(CharStreams.fromString(source)))); ParseTree t=b.cobolStart(p); assertEquals(0,p.getNumberOfSyntaxErrors());
-        IdentityHashMap<ParseTree,Integer> ids=new IdentityHashMap<>(), sizes=new IdentityHashMap<>(); index(t,ids,sizes,new int[]{0}); return new AstBuilder(p,source,SourceMap.identity(source,"declarations.cbl"),ids,sizes).build(t).program();
+        IdentityHashMap<ParseTree,Integer> ids=new IdentityHashMap<>(), sizes=new IdentityHashMap<>(); index(t,ids,sizes,new int[]{0}); return new AstBuilder(p,source,ids,sizes).build(t).program();
     }
     private static int index(ParseTree t,IdentityHashMap<ParseTree,Integer> i,IdentityHashMap<ParseTree,Integer>s,int[]n){i.put(t,n[0]++);int z=1;for(int x=0;x<t.getChildCount();x++)z+=index(t.getChild(x),i,s,n);s.put(t,z);return z;}
     private static <T extends Ast.Node> List<T> nodes(Ast.Node r,Class<T>t){List<T>o=new ArrayList<>();if(t.isInstance(r))o.add(t.cast(r));for(Ast.Node c:Ast.children(r))o.addAll(nodes(c,t));return o;}

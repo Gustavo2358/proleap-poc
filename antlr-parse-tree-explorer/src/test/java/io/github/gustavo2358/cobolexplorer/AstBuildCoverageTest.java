@@ -38,8 +38,7 @@ class AstBuildCoverageTest {
         IdentityHashMap<ParseTree, Integer> sizes = new IdentityHashMap<>();
         index(tree, ids, sizes, new int[]{0});
 
-        AstBuilder builder = new AstBuilder(parser, source,
-                SourceMap.identity(source, "coverage.cbl"), ids, sizes);
+        AstBuilder builder = new AstBuilder(parser, source, ids, sizes);
         AstBuildResult result = builder.build(tree);
         assertEquals("SAMPLE", result.program().name());
         assertTrue(result.diagnostics().isEmpty());

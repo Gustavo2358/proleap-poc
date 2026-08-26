@@ -12,9 +12,7 @@ class CoverageSnapshotTest {
     @Test
     void writesDeterministicConservativeBrowserSnapshot() throws Exception {
         Ast.Meta meta = new Ast.Meta(0, new Ast.SourceSpan(1, 0, 1, 3, 0, 0),
-                new Ast.ParseTreeOrigin(7, "programUnit", 2),
-                new Ast.SourceProvenance(new Ast.SourceLocation("sample.cbl", 1, 0, 1, 3),
-                        new Ast.SourceLocation("sample.cbl", 1, 0, 1, 3), List.of(), true));
+                new Ast.ParseTreeOrigin(7, "programUnit", 2));
         Ast.Program program = new Ast.Program(meta, "SAMPLE", List.of());
         SemanticCoverage.Report report = new SemanticCoverage.Report(List.of(
                 new SemanticCoverage.Finding(0, "sortStatement", meta, "SORT S",

@@ -26,10 +26,10 @@ final class CopybookLibrary {
         return Optional.ofNullable(found);
     }
 
-    SourceMap readNormalized(Path path) throws IOException {
+    String readNormalized(Path path) throws IOException {
         String file = path.getFileName().toString();
         return SourceNormalizer.normalize(Files.readString(path, StandardCharsets.UTF_8), file,
                 new SourceNormalizer.Options(SourceNormalizer.SourceFormat.FIXED,
-                        SourceNormalizer.DebugLinePolicy.EXCLUDE)).sourceMap();
+                        SourceNormalizer.DebugLinePolicy.EXCLUDE)).text();
     }
 }

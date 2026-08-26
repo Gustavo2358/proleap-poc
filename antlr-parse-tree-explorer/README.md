@@ -37,12 +37,12 @@ Também é possível executar manualmente:
 mvn compile exec:java
 ```
 
-## Contrato de source format e provenance
+## Contrato de source format e preprocessing
 
 O frontend aceita fonte COBOL em formato fixo por uma fronteira explícita. O
-arquivo bruto origina o `SourceMap` antes de qualquer transformação; normalização,
-COPY e preprocessing compõem esse mapa, sem recriar um mapa `identity` no meio do
-pipeline.
+arquivo bruto é normalizado e expandido antes do parser. A unidade de análise é o
+texto COBOL expandido do programa raiz; não há mapeamento de nós para arquivos
+físicos ou copybooks de origem.
 
 - colunas 1–6 são sequence area, coluna 7 é indicator area, colunas 8–72 são
   program text e o restante é identification area;
@@ -57,9 +57,8 @@ pipeline.
 - comment entries são derivados dos parágrafos que a gramática declara,
   delimitados por Area A e por `END-REMARKS` quando aplicável. Pontos no texto
   não encerram a entrada, e nenhuma regex global decide seu estado;
-- texto transformado preserva seus registros físicos e recebe `exact=false`.
-  Conteúdo intocado e line endings mantêm segmentos exatos, inclusive dentro
-  de COPYs aninhados.
+- COPYs aninhados e `COPY REPLACING` continuam expandindo o texto semanticamente;
+  as dependências de copybook são coletadas quando cada diretiva COPY é processada.
 
 O preprocessor também é fail-closed: cada alternativa top-level de
 `CobolPreprocessor.startRule` possui política testada contra o parser gerado.
@@ -76,7 +75,7 @@ MAVEN_BIN="${MAVEN_BIN:-mvn}" ./scripts/source-normalizer-regression.sh manual
 ```
 
 O comando verifica erros de lexer/parser, baseline semântico, artefatos web,
-provenance e ausência de comment entries na AST semântica.
+ausência de comment entries na AST semântica.
 
 Para verificar que a identidade do projeto não regrediu, execute:
 

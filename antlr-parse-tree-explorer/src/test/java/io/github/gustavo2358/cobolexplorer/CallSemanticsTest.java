@@ -50,7 +50,7 @@ class CallSemanticsTest {
         String source = SourceNormalizerTestSupport.fixed(Files.readString(DYNAM, StandardCharsets.UTF_8));
         PreprocessorEngine.Outcome outcome = new PreprocessorEngine(
                 grammar, new CopybookLibrary(Path.of("src/test/resources")))
-                .process(SourceMap.identity(source, DYNAM.getFileName().toString()),
+                .process(source,
                         DYNAM.getFileName().toString());
         Set<String> outcomeComponents = components(PreprocessorEngine.Outcome.class);
         Set<String> policyComponents = components(ResolutionContracts.CobolResolutionPolicy.class);
@@ -294,7 +294,7 @@ class CallSemanticsTest {
         String normalized = SourceNormalizerTestSupport.fixed(Files.readString(sourcePath, StandardCharsets.UTF_8));
         PreprocessorEngine.Outcome outcome = new PreprocessorEngine(
                 grammar, new CopybookLibrary(Path.of("src/test/resources")))
-                .process(SourceMap.identity(normalized, sourcePath.getFileName().toString()),
+                .process(normalized,
                         sourcePath.getFileName().toString());
         Parser parser = grammar.cobolParser(new CommonTokenStream(grammar.cobolLexer(
                 CharStreams.fromString(outcome.text(), sourcePath.getFileName().toString()))));
@@ -304,7 +304,7 @@ class CallSemanticsTest {
         IdentityHashMap<ParseTree, Integer> sizes = new IdentityHashMap<>();
         index(tree, ids, sizes, new int[]{0});
         CompilationUnitBuildResult build = new AstBuilder(
-                parser, outcome.text(), outcome.sourceMap(), ids, sizes)
+                parser, outcome.text(), ids, sizes)
                 .buildCompilationUnit(tree, sourcePath.getFileName().toString());
         CompilationUnitModel model = build.compilationUnit();
         CompilationUnitSymbolTables tables = new CompilationUnitSymbolTableBuilder().build(model);

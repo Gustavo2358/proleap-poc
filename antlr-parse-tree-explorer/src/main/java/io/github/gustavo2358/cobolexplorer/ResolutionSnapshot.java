@@ -183,7 +183,6 @@ final class ResolutionSnapshot {
             field(out, "writtenText", occurrence.writtenText()); out.write(',');
             field(out, "preservation", occurrence.preservation().name()); out.write(',');
             writeSpan(out, meta.span()); out.write(',');
-            writeProvenance(out, meta.provenance()); out.write(',');
             out.write("\"diagnosticIds\":[");
             integers(out, entry.diagnosticIds()); out.write("],");
             out.write("\"candidates\":[");
@@ -203,31 +202,6 @@ final class ResolutionSnapshot {
                 + ",\"endColumn\":" + span.endColumn() + '}');
     }
 
-    private static void writeProvenance(Writer out, Ast.SourceProvenance provenance) throws IOException {
-        out.write("\"provenance\":{");
-        out.write("\"exact\":" + provenance.exact() + ',');
-        writeLocation(out, "expanded", provenance.expanded()); out.write(',');
-        writeLocation(out, "original", provenance.original());
-        out.write(",\"includeChain\":[");
-        for (int index = 0; index < provenance.includeChain().size(); index++) {
-            if (index > 0) out.write(',');
-            Ast.CopyFrame frame = provenance.includeChain().get(index);
-            out.write('{'); field(out, "includingFile", frame.includingFile()); out.write(',');
-            field(out, "requestedName", frame.requestedName()); out.write(',');
-            field(out, "includedFile", frame.includedFile());
-            out.write(",\"includeLine\":" + frame.includeLine() + '}');
-        }
-        out.write("]}");
-    }
-
-    private static void writeLocation(Writer out, String name, Ast.SourceLocation location) throws IOException {
-        string(out, name); out.write(":{");
-        field(out, "file", location.file());
-        out.write(",\"startLine\":" + location.startLine()
-                + ",\"startColumn\":" + location.startColumn()
-                + ",\"endLine\":" + location.endLine()
-                + ",\"endColumn\":" + location.endColumn() + '}');
-    }
 
     private static void writeCandidate(Writer out, ReferenceResolution.Candidate candidate) throws IOException {
         ResolutionContracts.SemanticEntityId entity = candidate.entityId();

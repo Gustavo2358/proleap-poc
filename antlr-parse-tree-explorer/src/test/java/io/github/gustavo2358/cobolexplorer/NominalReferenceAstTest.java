@@ -71,7 +71,7 @@ class NominalReferenceAstTest {
         assertEquals(0, parser.getNumberOfSyntaxErrors());
         IdentityHashMap<ParseTree, Integer> ids = new IdentityHashMap<>(), sizes = new IdentityHashMap<>();
         index(tree, ids, sizes, new int[]{0});
-        return new AstBuilder(parser, source, SourceMap.identity(source, file.getFileName().toString()), ids, sizes).build(tree).program();
+        return new AstBuilder(parser, source, ids, sizes).build(tree).program();
     }
 
     private static int index(ParseTree tree, IdentityHashMap<ParseTree, Integer> ids,

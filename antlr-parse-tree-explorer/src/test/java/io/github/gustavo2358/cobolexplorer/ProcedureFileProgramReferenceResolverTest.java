@@ -360,7 +360,7 @@ class ProcedureFileProgramReferenceResolverTest {
         String optionTreeText = optionTree.toStringTree(preprocessor);
         PreprocessorEngine.Outcome transported = new PreprocessorEngine(
                 grammar, new CopybookLibrary(Path.of("src/test/resources")))
-                .process(SourceMap.identity("CBL PGMNAME(LONGMIXED)\n", "options.cbl"),
+                .process("CBL PGMNAME(LONGMIXED)\n",
                         "options.cbl");
         Set<String> outcomeComponents = Arrays.stream(PreprocessorEngine.Outcome.class.getRecordComponents())
                 .map(java.lang.reflect.RecordComponent::getName)
@@ -767,7 +767,7 @@ class ProcedureFileProgramReferenceResolverTest {
         GrammarBinding binding = Bindings.cobol();
         String fixed = SourceNormalizerTestSupport.fixed(Files.readString(file, StandardCharsets.UTF_8));
         String source = new PreprocessorEngine(binding, new CopybookLibrary(copybooks))
-                .process(SourceMap.identity(fixed, file.getFileName().toString()),
+                .process(fixed,
                         file.getFileName().toString()).text();
         return analyzeSource(file, source, catalog, ResolutionContracts.PgmnameMode.LONGUPPER);
     }
@@ -783,8 +783,7 @@ class ProcedureFileProgramReferenceResolverTest {
         IdentityHashMap<ParseTree, Integer> ids = new IdentityHashMap<>();
         IdentityHashMap<ParseTree, Integer> sizes = new IdentityHashMap<>();
         index(tree, ids, sizes, new int[]{0});
-        CompilationUnitModel model = new AstBuilder(parser, source,
-                SourceMap.identity(source, file.getFileName().toString()), ids, sizes)
+        CompilationUnitModel model = new AstBuilder(parser, source, ids, sizes)
                 .buildCompilationUnit(tree, file.getFileName().toString()).compilationUnit();
         CompilationUnitSymbolTables tables = new CompilationUnitSymbolTableBuilder().build(model);
         Map<ResolutionContracts.ProgramUnitId, ReferenceOccurrences> occurrences = new LinkedHashMap<>();

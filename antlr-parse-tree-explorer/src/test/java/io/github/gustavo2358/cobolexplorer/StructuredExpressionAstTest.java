@@ -79,9 +79,7 @@ class StructuredExpressionAstTest {
         assertTrue(reachable.containsAll(multiSubscript.subscriptGroups()));
         assertTrue(reachable.contains(modified.referenceModification()));
         assertTrue(nodes(ast, Ast.DataReference.class).stream().allMatch(reference ->
-                reference.meta().span().startLine() > 0
-                        && reference.meta().provenance().original().file().equals("references.cbl")
-                        && !reference.writtenText().isBlank()));
+                reference.meta().span().startLine() > 0 && !reference.writtenText().isBlank()));
 
         AstSnapshot snapshot = AstSnapshot.from(ast);
         long snapshotReferences = snapshot.nodes().stream()
@@ -154,7 +152,7 @@ class StructuredExpressionAstTest {
         IdentityHashMap<ParseTree, Integer> ids = new IdentityHashMap<>();
         IdentityHashMap<ParseTree, Integer> sizes = new IdentityHashMap<>();
         index(tree, ids, sizes, new int[]{0});
-        return new AstBuilder(parser, source, SourceMap.identity(source, fileName), ids, sizes)
+        return new AstBuilder(parser, source, ids, sizes)
                 .build(tree).program();
     }
 

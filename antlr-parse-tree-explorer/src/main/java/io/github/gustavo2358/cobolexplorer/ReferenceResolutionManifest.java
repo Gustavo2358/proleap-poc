@@ -89,7 +89,7 @@ final class ReferenceResolutionManifest {
         GrammarCoverageManifest.RuleKey key = semantic.key();
         if (key.grammar() == GrammarCoverageManifest.Grammar.PREPROCESSOR) {
             return new Entry(key, RuleClass.INPUT_BOUNDARY, null, "preprocessing-input",
-                    "Preprocessor syntax controls input/provenance and can block complete binding; "
+                    "Preprocessor syntax controls input and can block complete binding; "
                             + semantic.rationale());
         }
 

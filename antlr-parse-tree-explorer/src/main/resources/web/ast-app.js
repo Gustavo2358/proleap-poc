@@ -110,7 +110,7 @@
       <article class="coverage-card" data-ast="${finding.ast}">
         <div><b>${escapeHtml(finding.rule)}</b><span>${escapeHtml(finding.coverage)} · ${escapeHtml(finding.dependency)}</span></div>
         <p>${escapeHtml(shorten(finding.text, 110))}</p>
-        <small>${escapeHtml(finding.sourceFile)}:${finding.sourceLine || finding.line}</small>
+        <small>linha preprocessada ${finding.line}</small>
         <nav><button data-open-ast="${finding.ast}">AST #${finding.ast}</button>
           <a href="index.html#node=${finding.parse}">Parse tree #${finding.parse}</a>
           <button data-open-source="${finding.ast}">Fonte L${finding.line}</button></nav>

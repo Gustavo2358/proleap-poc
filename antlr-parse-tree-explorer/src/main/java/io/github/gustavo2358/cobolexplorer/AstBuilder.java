@@ -34,7 +34,6 @@ final class AstBuilder {
             "receiveNoData", "receiveWithData", "searchWhen");
     private final Parser parser;
     private final String source;
-    private final SourceMap sourceMap;
     private final IdentityHashMap<ParseTree, Integer> parseIds;
     private final IdentityHashMap<ParseTree, Integer> parseSubtreeSizes;
     private final List<CoverageDraft> coverageDrafts = new ArrayList<>();
@@ -45,12 +44,11 @@ final class AstBuilder {
                                  int astNodeId) { }
     private record LogMetrics(int nodes, int unsupportedStatements, int preservedStatements) { }
 
-    AstBuilder(Parser parser, String source, SourceMap sourceMap,
+    AstBuilder(Parser parser, String source,
                IdentityHashMap<ParseTree, Integer> parseIds,
                IdentityHashMap<ParseTree, Integer> parseSubtreeSizes) {
         this.parser = parser;
         this.source = source;
-        this.sourceMap = sourceMap;
         this.parseIds = parseIds;
         this.parseSubtreeSizes = parseSubtreeSizes;
     }
@@ -123,7 +121,7 @@ final class AstBuilder {
         if (LOG.isDebugEnabled()) {
             LogMetrics metrics = logMetrics(program);
             LOG.debug("event=ast_built scope=PROGRAM_UNIT source={} programUnit={} phase=AST_BUILD elapsedMs={} nodes={} semanticDiagnostics={} unsupportedStatements={} preservedStatements={}",
-                    program.meta().provenance().original().file(), program.name(),
+                    "<preprocessed>", program.name(),
                     TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - started), metrics.nodes(),
                     result.diagnostics().size(), metrics.unsupportedStatements(), metrics.preservedStatements());
         }
@@ -471,7 +469,7 @@ final class AstBuilder {
         coverageDrafts.add(new CoverageDraft(rule(concrete), statement.meta(), sourceText(concrete),
                 statement.meta().id()));
         if (LOG.isTraceEnabled()) {
-            String sourceFile = statement.meta().provenance().original().file();
+            String sourceFile = "<preprocessed>";
             if (statement instanceof Ast.PreservedStatement) {
                 LOG.trace("event=ast_statement_preserved source={} phase=AST_BUILD grammarRule={} line={}",
                         sourceFile, grammarRule, statement.meta().span().startLine());
@@ -665,7 +663,7 @@ final class AstBuilder {
     private Ast.UnsupportedStatement buildUnsupported(ParserRuleContext context) {
         Ast.Meta meta = meta(context);
         LOG.trace("event=ast_construct_unsupported source={} phase=AST_BUILD grammarRule={} line={}",
-                meta.provenance().original().file(), rule(context), meta.span().startLine());
+                "<preprocessed>", rule(context), meta.span().startLine());
         List<Ast.Node> references = nearestDescendants(context,
                 Set.of("procedureName", "fileName", "indexName")).stream().map(this::nominalReference).toList();
         return new Ast.UnsupportedStatement(meta, rule(context), compact(sourceText(context)), references,
@@ -1032,12 +1030,9 @@ final class AstBuilder {
         int startToken = start == null ? -1 : start.getTokenIndex();
         int endToken = stop == null ? startToken : stop.getTokenIndex();
         Ast.SourceSpan span = new Ast.SourceSpan(startLine, startColumn, endLine, endColumn, startToken, endToken);
-        int startOffset = start == null ? 0 : Math.max(0, start.getStartIndex());
-        int endOffset = stop == null ? startOffset : Math.min(source.length(), stop.getStopIndex() + 1);
         return new Ast.Meta(id, span,
                 new Ast.ParseTreeOrigin(parseIds.getOrDefault(context, -1), rule(context),
-                        parseSubtreeSizes.getOrDefault(context, 1)),
-                sourceMap.provenance(startOffset, endOffset));
+                        parseSubtreeSizes.getOrDefault(context, 1)));
     }
 
     private List<Ast.Statement> statementsInside(ParserRuleContext context) {

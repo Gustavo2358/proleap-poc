@@ -198,8 +198,7 @@ class ResolutionAnalysisReportTest {
         IdentityHashMap<ParseTree, Integer> ids = new IdentityHashMap<>();
         IdentityHashMap<ParseTree, Integer> sizes = new IdentityHashMap<>();
         index(tree, ids, sizes, new int[]{0});
-        CompilationUnitBuildResult build = new AstBuilder(parser, source,
-                SourceMap.identity(source, sourceName), ids, sizes).buildCompilationUnit(tree, sourceName);
+        CompilationUnitBuildResult build = new AstBuilder(parser, source, ids, sizes).buildCompilationUnit(tree, sourceName);
         CompilationUnitModel model = build.compilationUnit();
         CompilationUnitSymbolTables tables = new CompilationUnitSymbolTableBuilder().build(model);
         Map<ResolutionContracts.ProgramUnitId, ReferenceOccurrences> occurrences = new LinkedHashMap<>();

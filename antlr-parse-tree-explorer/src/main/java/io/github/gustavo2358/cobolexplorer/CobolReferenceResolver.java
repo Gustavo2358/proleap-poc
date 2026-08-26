@@ -82,8 +82,7 @@ final class CobolReferenceResolver {
                         Math.max(baseMetrics.maximumCandidates(), additionalMaximum)),
                 data.declarationRelations());
         if (LOG.isDebugEnabled()) {
-            String source = model.programUnits().isEmpty() ? model.compilationUnitId()
-                    : model.programUnits().get(0).program().meta().provenance().original().file();
+            String source = model.compilationUnitId();
             LOG.debug("event=resolution_completed scope=RESOLVER source={} phase=REFERENCE_RESOLUTION elapsedMs={} references={} resolved={} unresolved={} ambiguous={} unsupported={} indexedDeclarations={} nominalLookups={} candidateInspections={} maximumCandidates={}",
                     source, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - started), result.entries().size(),
                     count(result, ResolutionContracts.ResolutionStatus.RESOLVED),
@@ -105,7 +104,7 @@ final class CobolReferenceResolver {
         List<String> candidateIds = decision.candidates().stream()
                 .map(candidate -> candidate.entityId().toString()).toList();
         LOG.trace("event=reference_resolution source={} programUnit={} phase=REFERENCE_RESOLUTION occurrenceId={} kind={} role={} writtenName={} line={} candidateCount={} candidateIds={} status={} reason={}",
-                occurrence.meta().provenance().original().file(), occurrence.programUnitId().canonicalProgramName(),
+                occurrence.programUnitId().canonicalProgramName(), occurrence.programUnitId().canonicalProgramName(),
                 occurrence.id(), occurrence.kind(), occurrence.role(), occurrence.writtenText(),
                 occurrence.meta().span().startLine(), candidateIds.size(), candidateIds,
                 decision.status(), decision.reason());

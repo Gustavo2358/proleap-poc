@@ -63,7 +63,7 @@ class StatementModelAstTest {
         assertEquals(0, parser.getNumberOfSyntaxErrors());
         IdentityHashMap<ParseTree, Integer> ids = new IdentityHashMap<>(), sizes = new IdentityHashMap<>();
         index(tree, ids, sizes, new int[]{0});
-        return new AstBuilder(parser, source, SourceMap.identity(source, "statements.cbl"), ids, sizes).build(tree);
+        return new AstBuilder(parser, source, ids, sizes).build(tree);
     }
 
     private static int index(ParseTree tree, IdentityHashMap<ParseTree, Integer> ids,

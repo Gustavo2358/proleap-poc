@@ -21,15 +21,13 @@ final class SourceNormalizer {
 
     record NormalizationDiagnostic(int line, int column, String message) {}
 
-    record Result(SourceMap sourceMap, List<NormalizationDiagnostic> diagnostics,
+    record Result(String text, List<NormalizationDiagnostic> diagnostics,
                   SourceFormat format) {
         Result {
-            sourceMap = Objects.requireNonNull(sourceMap, "sourceMap");
+            text = Objects.requireNonNull(text, "text");
             diagnostics = List.copyOf(diagnostics);
             format = Objects.requireNonNull(format, "format");
         }
-
-        String text() { return sourceMap.text(); }
     }
 
     private enum Indicator { NORMAL, COMMENT, PAGE_EJECT_COMMENT, CONTINUATION, DEBUG }
@@ -70,13 +68,8 @@ final class SourceNormalizer {
     private record CommentEntryHeader(CommentEntryOwner owner, int period) {}
     private record CommentEntryDecision(NormalizedLine line, CommentEntryState state) {}
 
-    private record PhysicalLine(String content, String terminator, int start, int contentEnd,
-                                int end, int lineNumber) {}
-    private record NormalizedLine(String content, String terminator,
-                                  int contentOriginalStart, int contentOriginalEnd,
-                                  int terminatorOriginalStart, int terminatorOriginalEnd,
-                                  boolean contentExact, boolean terminatorExact,
-                                  LineRole role) {}
+    private record PhysicalLine(String content, String terminator, int start, int lineNumber) {}
+    private record NormalizedLine(String content, String terminator, LineRole role) {}
 
     private SourceNormalizer() {}
 
@@ -128,7 +121,7 @@ final class SourceNormalizer {
             }
         }
         List<NormalizedLine> normalized = normalizeCommentEntries(output, file);
-        Result result = mappedResult(normalized, raw, file);
+        Result result = textResult(normalized);
         LOG.debug("event=normalization_completed source={} phase=NORMALIZATION elapsedMs={} physicalLines={} outputLines={} diagnostics={}",
                 file, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - started), physicalLines.size(),
                 normalized.size(), result.diagnostics().size());
@@ -331,7 +324,7 @@ final class SourceNormalizer {
             String content, NormalizedLine line, CommentEntryState state) {
         return new IllegalArgumentException("Incomplete PROGRAM-ID syntax in state " + state
                 + " near '" + content.strip() + "' at source offset "
-                + line.contentOriginalStart());
+                + " in normalized source");
     }
 
     private static boolean isProgramIdQualifier(String line, int start, int end) {
@@ -439,7 +432,7 @@ final class SourceNormalizer {
                 int terminatorEnd = character == '\r' && index + 1 < raw.length()
                         && raw.charAt(index + 1) == '\n' ? index + 2 : index + 1;
                 result.add(new PhysicalLine(raw.substring(start, index),
-                        raw.substring(index, terminatorEnd), start, index, terminatorEnd, lineNumber++));
+                        raw.substring(index, terminatorEnd), start, lineNumber++));
                 start = terminatorEnd;
                 index = terminatorEnd;
             } else if (character == '\u0085' || character == '\u2028' || character == '\u2029') {
@@ -451,8 +444,7 @@ final class SourceNormalizer {
             }
         }
         if (start < raw.length()) {
-            result.add(new PhysicalLine(raw.substring(start), "", start, raw.length(), raw.length(),
-                    lineNumber));
+            result.add(new PhysicalLine(raw.substring(start), "", start, lineNumber));
         }
         return result;
     }
@@ -480,15 +472,11 @@ final class SourceNormalizer {
     }
 
     private static NormalizedLine transformedLine(String content, PhysicalLine physical) {
-        return new NormalizedLine(content, physical.terminator(), physical.start(), physical.contentEnd(),
-                physical.contentEnd(), physical.end(), false, true, LineRole.NON_PROGRAM);
+        return new NormalizedLine(content, physical.terminator(), LineRole.NON_PROGRAM);
     }
 
     private static NormalizedLine programTextLine(String area, int areaEnd, PhysicalLine physical) {
-        int contentStart = Math.min(physical.start() + 7, physical.contentEnd());
-        int contentEnd = Math.min(physical.start() + areaEnd, physical.contentEnd());
-        return new NormalizedLine(area, physical.terminator(), contentStart, contentEnd,
-                physical.contentEnd(), physical.end(), true, true, LineRole.PROGRAM_TEXT);
+        return new NormalizedLine(area, physical.terminator(), LineRole.PROGRAM_TEXT);
     }
 
     private static Indicator indicator(char indicator, PhysicalLine physical) {
@@ -533,11 +521,8 @@ final class SourceNormalizer {
             }
         }
         output.set(target, new NormalizedLine(previous + continuation,
-                previousLine.terminator(), previousLine.contentOriginalStart(), physical.contentEnd(),
-                previousLine.terminatorOriginalStart(), previousLine.terminatorOriginalEnd(),
-                false, previousLine.terminatorExact(), LineRole.PROGRAM_TEXT));
-        output.add(new NormalizedLine("", physical.terminator(), physical.start(), physical.contentEnd(),
-                physical.contentEnd(), physical.end(), false, true,
+                previousLine.terminator(), LineRole.PROGRAM_TEXT));
+        output.add(new NormalizedLine("", physical.terminator(),
                 LineRole.CONTINUATION_PLACEHOLDER));
     }
 
@@ -594,33 +579,15 @@ final class SourceNormalizer {
 
     private static NormalizedLine transformedFrom(NormalizedLine original, String content,
                                                   String terminator, boolean originalTerminator) {
-        return new NormalizedLine(content, terminator,
-                original.contentOriginalStart(), original.contentOriginalEnd(),
-                originalTerminator ? original.terminatorOriginalStart() : original.contentOriginalStart(),
-                originalTerminator ? original.terminatorOriginalEnd() : original.contentOriginalEnd(),
-                false, originalTerminator && original.terminatorExact(), original.role());
+        return new NormalizedLine(content, terminator, original.role());
     }
 
-    private static Result mappedResult(List<NormalizedLine> lines, String raw, String file) {
+    private static Result textResult(List<NormalizedLine> lines) {
         StringBuilder text = new StringBuilder();
-        List<SourceMap.Segment> segments = new ArrayList<>();
         for (NormalizedLine line : lines) {
-            appendMapped(text, segments, file, line.content(), line.contentOriginalStart(),
-                    line.contentOriginalEnd(), line.contentExact());
-            appendMapped(text, segments, file, line.terminator(), line.terminatorOriginalStart(),
-                    line.terminatorOriginalEnd(), line.terminatorExact());
+            text.append(line.content());
+            text.append(line.terminator());
         }
-        SourceMap sourceMap = SourceMap.mapped(text.toString(), file, raw, segments);
-        return new Result(sourceMap, List.of(), SourceFormat.FIXED);
-    }
-
-    private static void appendMapped(StringBuilder text, List<SourceMap.Segment> segments,
-                                     String file, String value, int originalStart,
-                                     int originalEnd, boolean exact) {
-        if (value.isEmpty()) return;
-        int start = text.length();
-        text.append(value);
-        segments.add(new SourceMap.Segment(start, text.length(), file, originalStart, originalEnd,
-                List.of(), exact));
+        return new Result(text.toString(), List.of(), SourceFormat.FIXED);
     }
 }

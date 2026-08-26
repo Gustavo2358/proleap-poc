@@ -49,7 +49,7 @@ class FrontendLoggingTest {
 
         Captured<PreprocessorEngine.Outcome> captured = captureResult(
                 PreprocessorEngine.class, Level.WARN,
-                () -> engine.process(SourceMap.identity(source.toString(), "many-copies.cbl"),
+                () -> engine.process(source.toString(),
                         "many-copies.cbl"));
 
         assertEquals(100, captured.result().unresolved());
@@ -74,10 +74,10 @@ class FrontendLoggingTest {
         PreprocessorEngine engine = new PreprocessorEngine(Bindings.cobol(), library);
 
         List<ILoggingEvent> cycle = capture(PreprocessorEngine.class, Level.WARN,
-                () -> engine.process(SourceMap.identity("COPY CYCLE.\n", "cycle-main.cbl"),
+                () -> engine.process("COPY CYCLE.\n",
                         "cycle-main.cbl"));
         List<ILoggingEvent> io = capture(PreprocessorEngine.class, Level.WARN,
-                () -> engine.process(SourceMap.identity("COPY UNREADABLE.\n", "io-main.cbl"),
+                () -> engine.process("COPY UNREADABLE.\n",
                         "io-main.cbl"));
 
         assertEquals(1, cycle.size());
@@ -99,7 +99,7 @@ class FrontendLoggingTest {
                 + "EXEC CICS RETURN END-EXEC.\n";
 
         List<ILoggingEvent> events = capture(PreprocessorEngine.class, Level.TRACE,
-                () -> engine.process(SourceMap.identity(source, "trace.cbl"), "trace.cbl"));
+                () -> engine.process(source, "trace.cbl"));
 
         for (String event : List.of("preprocess_policy_selected", "compiler_option_detected",
                 "copy_resolved", "copy_replacing_applied", "embedded_language_preserved")) {

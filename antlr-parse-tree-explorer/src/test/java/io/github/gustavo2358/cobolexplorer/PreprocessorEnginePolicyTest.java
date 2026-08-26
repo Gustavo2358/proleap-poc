@@ -36,7 +36,7 @@ class PreprocessorEnginePolicyTest {
 
         PreprocessorEngine.Outcome outcome = new PreprocessorEngine(
                 binding, new CopybookLibrary(FIXTURE.getParent()))
-                .process(SourceMap.identity(normalized, FIXTURE.getFileName().toString()),
+                .process(normalized,
                         FIXTURE.getFileName().toString());
 
         assertEquals(normalized.length(), outcome.text().length());
@@ -46,16 +46,7 @@ class PreprocessorEnginePolicyTest {
             assertFalse(outcome.text().contains(directive), directive + " leaked through preprocessing");
         }
 
-        int moveStart = outcome.text().indexOf("MOVE");
-        Ast.SourceProvenance move = outcome.sourceMap().provenance(moveStart, moveStart + 4);
-        assertEquals(normalized.indexOf("MOVE"), moveStart);
-        assertEquals(12, move.original().startLine());
-        assertTrue(move.exact());
-
-        int ejectStart = normalized.indexOf("EJECT");
-        Ast.SourceProvenance removed = outcome.sourceMap().provenance(ejectStart, ejectStart + 5);
-        assertEquals(3, removed.original().startLine());
-        assertFalse(removed.exact());
+        assertEquals(normalized.indexOf("MOVE"), outcome.text().indexOf("MOVE"));
 
         Parser parser = cobolParser(binding, outcome.text());
         ParseTree tree = binding.cobolStart(parser);
@@ -106,12 +97,12 @@ class PreprocessorEnginePolicyTest {
 
         UnsupportedOperationException areaFailure = assertThrows(
                 UnsupportedOperationException.class,
-                () -> engine.process(SourceMap.identity(
-                        "REPLACE ==OLD== BY ==NEW==.\nOLD\nREPLACE OFF.\n", "replace.cbl"),
+                () -> engine.process(
+                        "REPLACE ==OLD== BY ==NEW==.\nOLD\nREPLACE OFF.\n",
                         "replace.cbl"));
         UnsupportedOperationException offFailure = assertThrows(
                 UnsupportedOperationException.class,
-                () -> engine.process(SourceMap.identity("REPLACE OFF.\n", "replace-off.cbl"),
+                () -> engine.process("REPLACE OFF.\n",
                         "replace-off.cbl"));
 
         assertTrue(areaFailure.getMessage().contains("replaceArea"), areaFailure.getMessage());
@@ -131,7 +122,7 @@ class PreprocessorEnginePolicyTest {
         IdentityHashMap<ParseTree, Integer> ids = new IdentityHashMap<>();
         IdentityHashMap<ParseTree, Integer> sizes = new IdentityHashMap<>();
         index(tree, ids, sizes, new int[]{0});
-        return new AstBuilder(parser, outcome.text(), outcome.sourceMap(), ids, sizes)
+        return new AstBuilder(parser, outcome.text(), ids, sizes)
                 .build(tree).program();
     }
 

@@ -62,7 +62,7 @@ class SemanticModelLoggingTest {
         IdentityHashMap<ParseTree, Integer> ids = new IdentityHashMap<>();
         IdentityHashMap<ParseTree, Integer> sizes = new IdentityHashMap<>();
         index(tree, ids, sizes, new int[]{0});
-        return new AstBuilder(parser, source, SourceMap.identity(source, fixture), ids, sizes).build(tree);
+        return new AstBuilder(parser, source, ids, sizes).build(tree);
     }
 
     private static int index(ParseTree tree, IdentityHashMap<ParseTree, Integer> ids,

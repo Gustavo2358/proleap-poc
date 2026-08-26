@@ -89,27 +89,21 @@ final class CoverageSnapshot {
             for (int i = 0; i < report.findings().size(); i++) {
                 if (i > 0) out.write(',');
                 SemanticCoverage.Finding finding = report.findings().get(i);
-                Ast.SourceProvenance provenance = finding.meta().provenance();
                 out.write("{\"id\":" + finding.id() + ",\"ast\":" + finding.astNodeId()
                         + ",\"parse\":" + finding.meta().origin().rootNodeId() + ",\"line\":"
-                        + finding.meta().span().startLine() + ",\"sourceLine\":"
-                        + provenance.original().startLine() + ",\"rule\":"); string(out, finding.grammarRule());
+                        + finding.meta().span().startLine() + ",\"rule\":"); string(out, finding.grammarRule());
                 out.write(",\"coverage\":"); string(out, finding.coverage().name());
                 out.write(",\"dependency\":"); string(out, finding.dependencyKnowledge().name());
-                out.write(",\"sourceFile\":"); string(out, provenance.original().file());
                 out.write(",\"text\":"); string(out, finding.writtenText());
                 out.write(",\"reason\":"); string(out, finding.reason()); out.write('}');
             }
             for (int i = 0; i < structuralGaps.size(); i++) {
                 if (!report.findings().isEmpty() || i > 0) out.write(',');
                 Gap gap = structuralGaps.get(i);
-                Ast.SourceProvenance provenance = gap.meta().provenance();
                 out.write("{\"id\":" + (report.findings().size() + i) + ",\"ast\":" + gap.meta().id()
                         + ",\"parse\":" + gap.meta().origin().rootNodeId() + ",\"line\":"
-                        + gap.meta().span().startLine() + ",\"sourceLine\":"
-                        + provenance.original().startLine() + ",\"rule\":"); string(out, gap.grammarRule());
-                out.write(",\"coverage\":\"PRESERVED_UNINTERPRETED\",\"dependency\":\"DEPENDENCY_UNKNOWN\",\"sourceFile\":");
-                string(out, provenance.original().file()); out.write(",\"text\":"); string(out, gap.writtenText());
+                        + gap.meta().span().startLine() + ",\"rule\":"); string(out, gap.grammarRule());
+                out.write(",\"coverage\":\"PRESERVED_UNINTERPRETED\",\"dependency\":\"DEPENDENCY_UNKNOWN\",\"text\":"); string(out, gap.writtenText());
                 out.write(",\"reason\":"); string(out, gap.reason()); out.write('}');
             }
             out.write("],\n\"blockingReasons\":[");

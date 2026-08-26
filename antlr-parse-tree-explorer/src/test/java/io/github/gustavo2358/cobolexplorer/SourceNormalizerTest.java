@@ -67,29 +67,14 @@ class SourceNormalizerTest {
     }
 
     @Test
-    void mapsNormalizedTextBackToPhysicalLinesAndColumns() throws Exception {
+    void normalizesInlineCommentEntriesWithoutChangingCobolText() throws Exception {
         String raw = Files.readString(INLINE_COMMENT_ENTRY, StandardCharsets.UTF_8);
         SourceNormalizer.Result result = SourceNormalizer.normalize(raw,
                 INLINE_COMMENT_ENTRY.getFileName().toString(), SourceNormalizer.SourceFormat.FIXED);
 
-        int environmentStart = result.text().indexOf("ENVIRONMENT");
-        Ast.SourceProvenance environment = result.sourceMap().provenance(
-                environmentStart, environmentStart + "ENVIRONMENT".length());
-        assertEquals(4, environment.original().startLine());
-        assertEquals(7, environment.original().startColumn());
-        org.junit.jupiter.api.Assertions.assertTrue(environment.exact());
-
-        int moveStart = result.text().indexOf("MOVE");
-        Ast.SourceProvenance move = result.sourceMap().provenance(moveStart, moveStart + 4);
-        assertEquals(9, move.original().startLine());
-        assertEquals(11, move.original().startColumn());
-        org.junit.jupiter.api.Assertions.assertTrue(move.exact());
-
-        int commentEntryStart = result.text().indexOf("*>CE ORIGINAL AUTHOR.");
-        Ast.SourceProvenance commentEntry = result.sourceMap().provenance(
-                commentEntryStart, commentEntryStart + "*>CE ORIGINAL AUTHOR.".length());
-        assertEquals(3, commentEntry.original().startLine());
-        org.junit.jupiter.api.Assertions.assertFalse(commentEntry.exact());
+        assertTrue(result.text().contains("ENVIRONMENT"));
+        assertTrue(result.text().contains("MOVE"));
+        assertTrue(result.text().contains("*>CE ORIGINAL AUTHOR."));
     }
 
     @Test
@@ -198,24 +183,15 @@ class SourceNormalizerTest {
     }
 
     @Test
-    void continuationSourceMapKeepsRawLineCoordinates() {
+    void continuationProducesSemanticallyContinuousText() {
         String raw = "       DISPLAY 'OPEN\n"
                 + "      -' CONTINUED'.\n"
                 + "       GOBACK.\n";
         SourceNormalizer.Result result = SourceNormalizer.normalize(
                 raw, "continuation.cbl", SourceNormalizer.SourceFormat.FIXED);
 
-        int displayStart = result.text().indexOf("DISPLAY");
-        Ast.SourceProvenance combined = result.sourceMap().provenance(
-                displayStart, result.text().indexOf(".\n") + 1);
-        assertEquals(1, combined.original().startLine());
-        assertFalse(combined.exact());
-
-        int gobackStart = result.text().indexOf("GOBACK");
-        Ast.SourceProvenance goback = result.sourceMap().provenance(gobackStart, gobackStart + 6);
-        assertEquals(3, goback.original().startLine());
-        assertEquals(7, goback.original().startColumn());
-        assertTrue(goback.exact());
+        assertTrue(result.text().contains("DISPLAY 'OPEN CONTINUED'."));
+        assertTrue(result.text().contains("GOBACK."));
     }
 
     @Test
@@ -266,12 +242,7 @@ class SourceNormalizerTest {
                 result.text());
         assertFalse(result.text().contains("*>CE ENVIRONMENT"), result.text());
 
-        int environmentStart = result.text().indexOf("ENVIRONMENT");
-        Ast.SourceProvenance environment = result.sourceMap().provenance(
-                environmentStart, environmentStart + "ENVIRONMENT".length());
-        assertEquals(8, environment.original().startLine());
-        assertEquals(7, environment.original().startColumn());
-        assertTrue(environment.exact());
+        assertTrue(result.text().contains("ENVIRONMENT DIVISION."));
     }
 
     @Test
@@ -434,7 +405,7 @@ class SourceNormalizerTest {
         IdentityHashMap<ParseTree, Integer> ids = new IdentityHashMap<>();
         IdentityHashMap<ParseTree, Integer> sizes = new IdentityHashMap<>();
         index(tree, ids, sizes, new int[]{0});
-        return new AstBuilder(parser, normalized.text(), normalized.sourceMap(), ids, sizes)
+        return new AstBuilder(parser, normalized.text(), ids, sizes)
                 .build(tree).program();
     }
 

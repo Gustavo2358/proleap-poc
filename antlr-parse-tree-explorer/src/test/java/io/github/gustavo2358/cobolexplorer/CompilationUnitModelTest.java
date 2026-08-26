@@ -103,8 +103,7 @@ class CompilationUnitModelTest {
         IdentityHashMap<ParseTree, Integer> ids = new IdentityHashMap<>();
         IdentityHashMap<ParseTree, Integer> sizes = new IdentityHashMap<>();
         index(tree, ids, sizes, new int[]{0});
-        AstBuilder builder = new AstBuilder(parser, source,
-                SourceMap.identity(source, file.getFileName().toString()), ids, sizes);
+        AstBuilder builder = new AstBuilder(parser, source, ids, sizes);
         return new Parsed(tree, builder);
     }
 

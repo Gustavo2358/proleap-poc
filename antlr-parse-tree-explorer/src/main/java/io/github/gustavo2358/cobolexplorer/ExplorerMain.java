@@ -65,7 +65,7 @@ public final class ExplorerMain {
         phaseStarted = System.nanoTime();
         PreprocessorEngine.Outcome preprocessed =
                 new PreprocessorEngine(binding, new CopybookLibrary(copybooks))
-                        .process(sourceNormalization.sourceMap(), source.getFileName().toString());
+                        .process(sourceNormalization.text(), source.getFileName().toString());
         String normalized = preprocessed.text();
         diagnostics.addAll(preprocessed.diagnostics());
         LOG.debug("event=preprocessing_completed phase=PREPROCESSING elapsedMs={} unresolvedCopies={} errors={} compilerOptions={}",
@@ -119,7 +119,7 @@ public final class ExplorerMain {
         progress.phase = "AST_BUILD";
         phaseStarted = System.nanoTime();
         CompilationUnitBuildResult compilationBuild = new AstBuilder(parser, normalized,
-                preprocessed.sourceMap(), parseIds, parseSubtreeSizes)
+                parseIds, parseSubtreeSizes)
                 .buildCompilationUnit(tree, source.getFileName().toString());
         CompilationUnitModel compilationUnit = compilationBuild.compilationUnit();
         if (compilationUnit.programUnits().isEmpty())

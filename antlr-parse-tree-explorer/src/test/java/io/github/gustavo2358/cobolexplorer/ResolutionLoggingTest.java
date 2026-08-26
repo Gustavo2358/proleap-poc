@@ -67,7 +67,7 @@ class ResolutionLoggingTest {
         ParseTree tree = binding.cobolStart(parser);
         IdentityHashMap<ParseTree, Integer> ids = new IdentityHashMap<>(), sizes = new IdentityHashMap<>();
         index(tree, ids, sizes, new int[]{0});
-        CompilationUnitBuildResult build = new AstBuilder(parser, source, SourceMap.identity(source, "coverage-states.cbl"), ids, sizes).buildCompilationUnit(tree, "coverage-states.cbl");
+        CompilationUnitBuildResult build = new AstBuilder(parser, source, ids, sizes).buildCompilationUnit(tree, "coverage-states.cbl");
         CompilationUnitModel model = build.compilationUnit();
         CompilationUnitSymbolTables tables = new CompilationUnitSymbolTableBuilder().build(model);
         ReferenceOccurrences occurrences = collect(model, tables);

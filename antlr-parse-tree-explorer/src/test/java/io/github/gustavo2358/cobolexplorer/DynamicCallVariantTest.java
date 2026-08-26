@@ -28,7 +28,7 @@ class DynamicCallVariantTest {
                 sourceFile.getFileName().toString(), SourceNormalizer.SourceFormat.FIXED);
         PreprocessorEngine.Outcome preprocessing = new PreprocessorEngine(
                 binding, new CopybookLibrary(project.resolve("corpus/cpy")))
-                .process(normalized.sourceMap(), sourceFile.getFileName().toString());
+                .process(normalized.text(), sourceFile.getFileName().toString());
         String source = preprocessing.text();
         Lexer lexer = binding.cobolLexer(CharStreams.fromString(source));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
@@ -39,7 +39,7 @@ class DynamicCallVariantTest {
         IdentityHashMap<ParseTree, Integer> ids = new IdentityHashMap<>();
         IdentityHashMap<ParseTree, Integer> sizes = new IdentityHashMap<>();
         index(tree, ids, sizes, new int[] {0});
-        Ast.Program ast = new AstBuilder(parser, source, preprocessing.sourceMap(), ids, sizes)
+        Ast.Program ast = new AstBuilder(parser, source, ids, sizes)
                 .build(tree).program();
         List<Ast.CallStatement> calls = flatten(ast).stream()
                 .filter(Ast.CallStatement.class::isInstance)

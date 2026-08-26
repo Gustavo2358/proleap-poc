@@ -11,26 +11,7 @@ public final class Ast {
 
     public record ParseTreeOrigin(int rootNodeId, String grammarRule, int subtreeNodeCount) {}
 
-    public record SourceLocation(String file, int startLine, int startColumn,
-                                 int endLine, int endColumn) {}
-
-    public record CopyFrame(String includingFile, String requestedName, String includedFile,
-                            int includeLine) {}
-
-    public record SourceProvenance(SourceLocation expanded, SourceLocation original,
-                                   List<CopyFrame> includeChain, boolean exact) {
-        public SourceProvenance { includeChain = List.copyOf(includeChain); }
-    }
-
-    public record Meta(int id, SourceSpan span, ParseTreeOrigin origin,
-                       SourceProvenance provenance) {
-        public Meta(int id, SourceSpan span, ParseTreeOrigin origin) {
-            this(id, span, origin, new SourceProvenance(
-                    new SourceLocation("<unknown>", span.startLine(), span.startColumn(), span.endLine(), span.endColumn()),
-                    new SourceLocation("<unknown>", span.startLine(), span.startColumn(), span.endLine(), span.endColumn()),
-                    List.of(), false));
-        }
-    }
+    public record Meta(int id, SourceSpan span, ParseTreeOrigin origin) {}
 
     public sealed interface Node permits Program, Division, Section, FileBinding, FileDescription,
             DataEntry, Paragraph, Sentence, CallArgument, EvaluateBranch, DataQualifier,

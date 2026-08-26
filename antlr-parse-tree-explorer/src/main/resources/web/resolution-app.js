@@ -118,7 +118,7 @@
       ["Regra", entry.grammarRule], ["Escopo", `#${entry.scopeId}`],
       ["Preservação", entry.preservation], ["AST", `#${entry.astNodeId}`],
       ["Parse tree", `#${entry.parseNodeId}`], ["Candidatos", entry.candidates.length],
-      ["Fonte original", `${entry.provenance.original.file}:${entry.provenance.original.startLine}`]
+      ["Fonte preprocessada", `${entry.span.startLine}:${entry.span.startColumn}`]
     ]);
     renderCandidates(entry);
     renderSource(entry);

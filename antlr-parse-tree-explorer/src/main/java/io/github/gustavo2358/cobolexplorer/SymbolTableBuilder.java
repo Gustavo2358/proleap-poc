@@ -23,7 +23,7 @@ final class SymbolTableBuilder {
     SymbolTable build(Ast.Program program) {
         long started = System.nanoTime();
         scopes.clear(); symbols.clear(); diagnostics.clear(); entities.clear(); declarationRelations.clear();
-        source = program.meta().provenance().original().file();
+        source = "<preprocessed>";
         programUnit = program.name();
         int root = addScope(-1, SymbolTable.ScopeKind.ROOT, "<root>", -1, -1);
         int programSymbol = addSymbol(SymbolTable.SymbolKind.PROGRAM, SymbolTable.Namespace.PROGRAM,
