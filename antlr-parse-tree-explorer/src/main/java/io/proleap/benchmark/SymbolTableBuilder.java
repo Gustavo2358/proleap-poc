@@ -1,9 +1,15 @@
 package io.proleap.benchmark;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 /** Collects declarations and scopes from an AST. It never visits statement references. */
 final class SymbolTableBuilder {
+    private static final Logger LOG = LoggerFactory.getLogger(SymbolTableBuilder.class);
+
     private record DataLevel(int level, int scopeId) {}
 
     private final List<SymbolTable.Scope> scopes = new ArrayList<>();
@@ -11,9 +17,14 @@ final class SymbolTableBuilder {
     private final List<SymbolTable.Diagnostic> diagnostics = new ArrayList<>();
     private final List<SymbolTable.Entity> entities = new ArrayList<>();
     private final List<SymbolTable.DeclarationRelation> declarationRelations = new ArrayList<>();
+    private String source;
+    private String programUnit;
 
     SymbolTable build(Ast.Program program) {
+        long started = System.nanoTime();
         scopes.clear(); symbols.clear(); diagnostics.clear(); entities.clear(); declarationRelations.clear();
+        source = program.meta().provenance().original().file();
+        programUnit = program.name();
         int root = addScope(-1, SymbolTable.ScopeKind.ROOT, "<root>", -1, -1);
         int programSymbol = addSymbol(SymbolTable.SymbolKind.PROGRAM, SymbolTable.Namespace.PROGRAM,
                 program.name(), root, program, programAttributes(program));
@@ -32,7 +43,12 @@ final class SymbolTableBuilder {
         }
         detectDuplicateDeclarations();
         buildFileEntities();
-        return new SymbolTable(scopes, symbols, diagnostics, entities, declarationRelations);
+        SymbolTable table = new SymbolTable(scopes, symbols, diagnostics, entities, declarationRelations);
+        LOG.debug("event=symbol_table_built scope=PROGRAM_UNIT source={} programUnit={} phase=SYMBOL_TABLE_BUILD elapsedMs={} scopes={} symbols={} entities={} declarationRelations={} diagnostics={}",
+                source, programUnit, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - started),
+                table.scopes().size(), table.symbols().size(), table.entities().size(),
+                table.declarationRelations().size(), table.diagnostics().size());
+        return table;
     }
 
     private void collectEnvironment(Ast.Division division, int divisionScope) {
@@ -128,8 +144,11 @@ final class SymbolTableBuilder {
                              Map<String, String> attributes) {
         String written = reference instanceof Ast.DataReference data ? data.writtenText()
                 : reference instanceof Ast.IndexReference index ? index.writtenText() : "";
-        declarationRelations.add(new SymbolTable.DeclarationRelation(declarationRelations.size(), kind,
+        int id = declarationRelations.size();
+        declarationRelations.add(new SymbolTable.DeclarationRelation(id, kind,
                 ownerSymbolId, reference.meta().id(), written, "NOT_PERFORMED", attributes));
+        LOG.trace("event=declaration_relation_registered source={} programUnit={} phase=SYMBOL_TABLE_BUILD relationId={} kind={} ownerSymbolId={} referenceAstNodeId={}",
+                source, programUnit, id, kind, ownerSymbolId, reference.meta().id());
     }
 
     private void buildFileEntities() {
@@ -193,6 +212,8 @@ final class SymbolTableBuilder {
                          int ownerSymbolId, int astNodeId) {
         int id = scopes.size();
         scopes.add(new SymbolTable.Scope(id, parentId, kind, name, ownerSymbolId, astNodeId));
+        LOG.trace("event=scope_created source={} programUnit={} phase=SYMBOL_TABLE_BUILD scopeId={} parentScopeId={} kind={} ownerSymbolId={} astNodeId={}",
+                source, programUnit, id, parentId, kind, ownerSymbolId, astNodeId);
         return id;
     }
 
@@ -203,6 +224,8 @@ final class SymbolTableBuilder {
         symbols.add(new SymbolTable.Symbol(id, kind, namespace, name,
                 SymbolTable.canonical(name), scopeId, declaration.meta().id(),
                 declaration.meta().span(), attributes));
+        LOG.trace("event=symbol_declared source={} programUnit={} phase=SYMBOL_TABLE_BUILD symbolId={} kind={} namespace={} writtenName={} scopeId={} astNodeId={}",
+                source, programUnit, id, kind, namespace, name, scopeId, declaration.meta().id());
         return id;
     }
 

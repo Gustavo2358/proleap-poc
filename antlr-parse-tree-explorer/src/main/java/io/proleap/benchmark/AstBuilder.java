@@ -2,11 +2,15 @@ package io.proleap.benchmark;
 
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 /** Builds one immutable semantic AST from the ANTLR parse tree. */
 final class AstBuilder {
+    private static final Logger LOG = LoggerFactory.getLogger(AstBuilder.class);
     private static final Set<String> MODELED_GENERIC_STATEMENTS = Set.of(
             "acceptStatement", "addStatement", "closeStatement", "computeStatement",
             "continueStatement", "deleteStatement", "divideStatement", "exitStatement",
@@ -39,6 +43,7 @@ final class AstBuilder {
 
     private record CoverageDraft(String grammarRule, Ast.Meta meta, String writtenText,
                                  int astNodeId) { }
+    private record LogMetrics(int nodes, int unsupportedStatements, int preservedStatements) { }
 
     AstBuilder(Parser parser, String source, SourceMap sourceMap,
                IdentityHashMap<ParseTree, Integer> parseIds,
@@ -94,6 +99,7 @@ final class AstBuilder {
     }
 
     private AstBuildResult buildProgramUnit(ParserRuleContext unit) {
+        long started = System.nanoTime();
         nextId = 0;
         coverageDrafts.clear();
         semanticDiagnostics.clear();
@@ -113,7 +119,31 @@ final class AstBuilder {
         Ast.Program program = new Ast.Program(meta,
                 programName == null ? "<anonymous>" : clean(sourceText(programName)),
                 programAttributes(programId), divisions);
-        return new AstBuildResult(program, buildCoverageReport(), semanticDiagnostics);
+        AstBuildResult result = new AstBuildResult(program, buildCoverageReport(), semanticDiagnostics);
+        if (LOG.isDebugEnabled()) {
+            LogMetrics metrics = logMetrics(program);
+            LOG.debug("event=ast_built scope=PROGRAM_UNIT source={} programUnit={} phase=AST_BUILD elapsedMs={} nodes={} semanticDiagnostics={} unsupportedStatements={} preservedStatements={}",
+                    program.meta().provenance().original().file(), program.name(),
+                    TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - started), metrics.nodes(),
+                    result.diagnostics().size(), metrics.unsupportedStatements(), metrics.preservedStatements());
+        }
+        return result;
+    }
+
+    private static LogMetrics logMetrics(Ast.Node root) {
+        int nodes = 0;
+        int unsupported = 0;
+        int preserved = 0;
+        Deque<Ast.Node> pending = new ArrayDeque<>();
+        pending.push(root);
+        while (!pending.isEmpty()) {
+            Ast.Node node = pending.pop();
+            nodes++;
+            if (node instanceof Ast.UnsupportedStatement) unsupported++;
+            if (node instanceof Ast.PreservedStatement) preserved++;
+            for (Ast.Node child : Ast.children(node)) pending.push(child);
+        }
+        return new LogMetrics(nodes, unsupported, preserved);
     }
 
     private Ast.ProgramAttributes programAttributes(ParserRuleContext programId) {
@@ -440,6 +470,16 @@ final class AstBuilder {
         };
         coverageDrafts.add(new CoverageDraft(rule(concrete), statement.meta(), sourceText(concrete),
                 statement.meta().id()));
+        if (LOG.isTraceEnabled()) {
+            String sourceFile = statement.meta().provenance().original().file();
+            if (statement instanceof Ast.PreservedStatement) {
+                LOG.trace("event=ast_statement_preserved source={} phase=AST_BUILD grammarRule={} line={}",
+                        sourceFile, grammarRule, statement.meta().span().startLine());
+            } else {
+                LOG.trace("event=ast_statement_modeled source={} phase=AST_BUILD grammarRule={} line={}",
+                        sourceFile, grammarRule, statement.meta().span().startLine());
+            }
+        }
         return statement;
     }
 
@@ -624,6 +664,8 @@ final class AstBuilder {
 
     private Ast.UnsupportedStatement buildUnsupported(ParserRuleContext context) {
         Ast.Meta meta = meta(context);
+        LOG.trace("event=ast_construct_unsupported source={} phase=AST_BUILD grammarRule={} line={}",
+                meta.provenance().original().file(), rule(context), meta.span().startLine());
         List<Ast.Node> references = nearestDescendants(context,
                 Set.of("procedureName", "fileName", "indexName")).stream().map(this::nominalReference).toList();
         return new Ast.UnsupportedStatement(meta, rule(context), compact(sourceText(context)), references,
