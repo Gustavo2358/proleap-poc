@@ -1,5 +1,8 @@
 package io.proleap.benchmark;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.*;
 
 /**
@@ -7,20 +10,36 @@ import java.util.*;
  * It performs no lookup, candidate selection, source-text parsing or binding.
  */
 final class ReferenceOccurrenceCollector {
+    private static final Logger LOG = LoggerFactory.getLogger(ReferenceOccurrenceCollector.class);
     private final List<ReferenceOccurrences.Occurrence> occurrences = new ArrayList<>();
     private final Set<Integer> visitedReferenceNodeIds = new HashSet<>();
     private ResolutionContracts.ProgramUnitId programUnitId;
     private AstScopeIndex scopes;
+    private String source;
 
     ReferenceOccurrences collect(ResolutionContracts.ProgramUnitId programUnitId,
                                  Ast.Program program, AstScopeIndex scopes) {
         this.programUnitId = Objects.requireNonNull(programUnitId, "programUnitId");
         this.scopes = Objects.requireNonNull(scopes, "scopes");
+        this.source = program.meta().provenance().original().file();
         occurrences.clear();
         visitedReferenceNodeIds.clear();
         visit(program, ResolutionContracts.ReferenceRole.CONTEXT_DEPENDENT,
                 ReferenceOccurrences.Preservation.STRUCTURED);
-        return new ReferenceOccurrences(occurrences);
+        ReferenceOccurrences result = new ReferenceOccurrences(occurrences);
+        if (LOG.isDebugEnabled()) {
+            Map<ResolutionContracts.ReferenceKind, Long> byKind = result.occurrences().stream()
+                    .collect(java.util.stream.Collectors.groupingBy(ReferenceOccurrences.Occurrence::kind,
+                            () -> new EnumMap<>(ResolutionContracts.ReferenceKind.class),
+                            java.util.stream.Collectors.counting()));
+            Map<ResolutionContracts.ReferenceRole, Long> byRole = result.occurrences().stream()
+                    .collect(java.util.stream.Collectors.groupingBy(ReferenceOccurrences.Occurrence::role,
+                            () -> new EnumMap<>(ResolutionContracts.ReferenceRole.class),
+                            java.util.stream.Collectors.counting()));
+            LOG.debug("event=references_collected scope=PROGRAM_UNIT source={} programUnit={} phase=REFERENCE_COLLECTION total={} byKind={} byRole={}",
+                    source, programUnitId.canonicalProgramName(), result.occurrences().size(), byKind, byRole);
+        }
+        return result;
     }
 
     private void visit(Ast.Node node, ResolutionContracts.ReferenceRole role,
@@ -260,8 +279,14 @@ final class ReferenceOccurrenceCollector {
                      Set<ResolutionContracts.ReferenceKind> admissibleKinds) {
         if (!visitedReferenceNodeIds.add(reference.meta().id()))
             throw new IllegalStateException("reference AST node reached twice: " + reference.meta().id());
-        occurrences.add(new ReferenceOccurrences.Occurrence(occurrences.size(), programUnitId,
+        int id = occurrences.size();
+        occurrences.add(new ReferenceOccurrences.Occurrence(id, programUnitId,
                 reference.meta().id(), scopes.scopeId(reference), kind, admissibleKinds, role,
                 reference.meta().origin().grammarRule(), writtenText, reference.meta(), preservation));
+        if (LOG.isTraceEnabled()) {
+            LOG.trace("event=reference_collected source={} programUnit={} phase=REFERENCE_COLLECTION occurrenceId={} kind={} role={} writtenName={} line={} grammarRule={} preservation={}",
+                    source, programUnitId.canonicalProgramName(), id, kind, role, writtenText,
+                    reference.meta().span().startLine(), reference.meta().origin().grammarRule(), preservation);
+        }
     }
 }

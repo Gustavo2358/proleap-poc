@@ -115,19 +115,19 @@ O comando/harness, diretório temporário e resultados de cada execução serão
 - [x] Confirmar que logging não altera AST ou symbol tables.
 - [x] Executar testes focados/relacionados, suíte e regressão real.
 - [x] Revisar diff completo e executar `git diff --check`.
-- [ ] Commit da fase e hash: `feat: trace semantic model construction`.
+- [x] Commit da fase e hash: `03235db` — `feat: trace semantic model construction`.
 
 ## Fase 5 — Coleta e resolução de referências
 
-- [ ] Escrever testes de resolved/unresolved/ambiguous, agregação e fonte semântica; confirmar RED.
-- [ ] Adicionar resumo `references_collected` por program unit e `TRACE` individual controlado.
-- [ ] Adicionar resumo `resolution_completed` e decisões `TRACE` sem despejar objetos.
-- [ ] Proteger construção de listas de candidatos com `isTraceEnabled()`.
-- [ ] Usar `ResolutionAnalysisReport` como fonte da completude.
-- [ ] Emitir um `WARN analysis_degraded` agregado quando `dependencyAnalysisReady=false`.
-- [ ] Confirmar ausência de `INFO/WARN` por ocorrência.
-- [ ] Executar testes focados/relacionados, suíte e regressão real.
-- [ ] Revisar diff completo e executar `git diff --check`.
+- [x] Escrever testes de resolved/unresolved/ambiguous, agregação e fonte semântica; confirmar RED.
+- [x] Adicionar resumo `references_collected` por program unit e `TRACE` individual controlado.
+- [x] Adicionar resumo `resolution_completed` e decisões `TRACE` sem despejar objetos.
+- [x] Proteger construção de listas de candidatos com `isTraceEnabled()`.
+- [x] Usar `ResolutionAnalysisReport` como fonte da completude.
+- [x] Emitir um `WARN analysis_degraded` agregado quando `dependencyAnalysisReady=false`.
+- [x] Confirmar ausência de `INFO/WARN` por ocorrência.
+- [x] Executar testes focados/relacionados, suíte e regressão real.
+- [x] Revisar diff completo e executar `git diff --check`.
 - [ ] Commit da fase e hash: `feat: trace reference resolution decisions`.
 
 ## Fase 6 — Códigos, severidade e consistência de diagnósticos
@@ -176,6 +176,7 @@ O comando/harness, diretório temporário e resultados de cada execução serão
 - Fase 2: `ExplorerMainLoggingTest` (2 contratos): lifecycle/timings/correlação e produtos preservados; falha escapando com um único stacktrace e MDC limpo.
 - Fase 3: `FrontendLoggingTest` (6 contratos): decisões de normalização, agregação de 100 COPYs ausentes, ciclos/I/O, decisões trace de preprocessamento, 250 diagnósticos ANTLR sem WARN e resumo único de degradação após recuperação.
 - Fase 4: `SemanticModelLoggingTest` (2 contratos): resumo/decisões da AST e das tabelas por program unit, incluindo escopos/símbolos/relações; AST e tabelas equivalentes com logging habilitado.
+- Fase 5: `ResolutionLoggingTest` (2 contratos): resumos/decisões de coleta e resolução sem alterar produtos; `analysis_degraded` único e agregado a partir do relatório.
 
 ## Comandos de regressão e resultados
 
@@ -196,6 +197,10 @@ O comando/harness, diretório temporário e resultados de cada execução serão
 - Fase 4: relacionados `SemanticModelLoggingTest,AstBuilderTest,AstBuildCoverageTest,SymbolTableBuilderTest,DeclarationModelAstTest,CompilationUnitModelTest` — 11 testes verdes.
 - Fase 4: `mvn test` — 123 testes verdes, 0 falhas/erros/skips, 46.473s.
 - Fase 4: `./scripts/source-normalizer-regression.sh phase4` — passou, artefatos em `/tmp/proleap-source-normalizer-phase4.t2NAzR`; todos os nove artefatos de cada uma das três jornadas estavam presentes e não vazios; métricas canônicas preservadas.
+- Fase 5: `mvn -Dtest=ResolutionLoggingTest test` — RED pelos eventos ausentes; GREEN com 2 testes.
+- Fase 5: relacionados `ResolutionLoggingTest,ExplorerMainLoggingTest,FrontendLoggingTest` — 10 testes verdes; conjunto de resolução — 32 testes verdes.
+- Fase 5: `mvn test` — 125 testes verdes, 0 falhas/erros/skips, 46.568s.
+- Fase 5: `./scripts/source-normalizer-regression.sh phase5` — passou, artefatos em `/tmp/proleap-source-normalizer-phase5.1Yuv90`; todos os nove artefatos de cada uma das três jornadas estavam presentes e não vazios; métricas canônicas preservadas.
 
 ## Medição de overhead
 
@@ -215,6 +220,7 @@ _A preencher na fase 7 e repetir na fase 8._
 - `Diagnostic` continua sendo o único detalhe individual de ANTLR; `AntlrDiagnosticListener` só fornece campos técnicos mínimos em `TRACE`, protegido por `isTraceEnabled()` e sem token/mensagem arbitrária.
 - COPY ausente, ciclo e I/O são sumarizados uma vez por processamento, com `count`, `reason`, `fallback` e `impact`; decisões individuais ficam em `TRACE`. O `WARN parse_degraded` é emitido uma vez após lexer/parser quando há erros e a árvore foi produzida.
 - A Fase 4 diferencia o resumo de uma unidade semântica com `scope=PROGRAM_UNIT`; o lifecycle do `ExplorerMain` continua sendo o resumo de fase. Métricas de nós da AST são percorridas somente com `DEBUG` habilitado; traces de construção carregam somente identificadores, regra, linha e IDs, sem texto COBOL.
+- A Fase 5 deriva `analysis_degraded` apenas de `ResolutionAnalysisReport.completeness()`. A lista de IDs de candidatos é construída exclusivamente com `TRACE` habilitado; o warning limita `blockingReasons` a cinco códigos estáveis.
 - Demais decisões serão registradas quando tomadas.
 
 ## Desvios e exceções de escopo
@@ -227,3 +233,4 @@ _A preencher na fase 7 e repetir na fase 8._
 2. `0aec643` — `feat: establish analyzer logging infrastructure`
 3. `fbafb84` — `feat: instrument analyzer pipeline lifecycle`
 4. `de6de81` — `feat: add frontend diagnostic logging`
+5. `03235db` — `feat: trace semantic model construction`

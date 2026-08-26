@@ -193,6 +193,11 @@ public final class ExplorerMain {
                 resolutionReport.statusCounts().get(ResolutionContracts.ResolutionStatus.UNSUPPORTED),
                 resolutionMetrics.indexedDeclarations(), resolutionMetrics.nominalLookups(),
                 resolutionMetrics.candidateInspections(), resolutionMetrics.maximumCandidates());
+        if (!resolutionReport.completeness().dependencyAnalysisReady()) {
+            List<String> blockingReasons = resolutionReport.completeness().blockingReasons().stream().limit(5).toList();
+            LOG.warn("event=analysis_degraded phase=REFERENCE_RESOLUTION gaps={} blockingReasons={} reason=RESOLUTION_GAPS fallback=RESULT_PUBLISHED_WITH_GAPS impact=DEPENDENCY_ANALYSIS_NOT_READY statusCounts={}",
+                    resolutionReport.gaps().size(), blockingReasons, resolutionReport.statusCounts());
+        }
 
         System.out.printf(Locale.ROOT,
                 "Generated %s, %s, %s and %s%nSource: %s%nParse tree: %,d nodes | %,d tokens | depth %d%n" +

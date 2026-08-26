@@ -144,13 +144,15 @@ class FrontendLoggingTest {
 
         List<ILoggingEvent> warnings = events.stream()
                 .filter(event -> event.getLevel() == Level.WARN).toList();
-        assertEquals(1, warnings.size());
-        String message = warnings.get(0).getFormattedMessage();
+        assertEquals(2, warnings.size());
+        String message = warnings.stream().filter(event -> event.getFormattedMessage()
+                .contains("event=parse_degraded")).findFirst().orElseThrow().getFormattedMessage();
         assertAll(
                 () -> assertTrue(message.contains("event=parse_degraded")),
                 () -> assertTrue(message.contains("result=PARSE_TREE_PRODUCED")),
                 () -> assertTrue(message.contains("fallback=CONTINUE_WITH_PARTIAL_PARSE_TREE")),
                 () -> assertTrue(message.contains("impact=ANALYSIS_INCOMPLETE")));
+        assertEquals(1, count(warnings, "event=analysis_degraded"));
         assertTrue(Files.size(output.resolve("ast-data.js")) > 0);
     }
 

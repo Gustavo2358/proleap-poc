@@ -34,11 +34,12 @@ class ExplorerMainLoggingTest {
             assertEvent(events, Level.DEBUG, "event=" + event, "elapsedMs=");
         }
         assertEvent(events, Level.INFO, "event=analysis_completed", "elapsedMs=");
+        assertEvent(events, Level.WARN, "event=analysis_degraded", "fallback=RESULT_PUBLISHED_WITH_GAPS");
 
         List<ILoggingEvent> lifecycle = events.stream()
                 .filter(event -> event.getFormattedMessage().contains("event=analysis_"))
                 .toList();
-        assertEquals(2, lifecycle.size());
+        assertEquals(3, lifecycle.size());
         String runId = lifecycle.get(0).getMDCPropertyMap().get("runId");
         assertNotNull(runId);
         assertEquals(runId, lifecycle.get(1).getMDCPropertyMap().get("runId"));

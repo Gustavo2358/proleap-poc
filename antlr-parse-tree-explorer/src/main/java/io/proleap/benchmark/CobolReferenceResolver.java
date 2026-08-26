@@ -1,9 +1,14 @@
 package io.proleap.benchmark;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 /** Completes nominal binding for PROCEDURE, FILE and PROGRAM over DATA/INDEX results. */
 final class CobolReferenceResolver {
+    private static final Logger LOG = LoggerFactory.getLogger(CobolReferenceResolver.class);
     private record UnitIndex(CompilationUnitModel.ProgramUnit unit, SymbolTable table,
                              Map<String, List<SymbolTable.Symbol>> procedures,
                              Map<String, List<SymbolTable.Symbol>> nominalNames,
@@ -38,6 +43,7 @@ final class CobolReferenceResolver {
 
     ReferenceResolution resolve(CompilationUnitModel model, CompilationUnitSymbolTables symbolTables,
                                 Map<ResolutionContracts.ProgramUnitId, ReferenceOccurrences> occurrences) {
+        long started = System.nanoTime();
         ReferenceResolution data = new DataAndIndexReferenceResolver(policy)
                 .resolve(model, symbolTables, occurrences);
         buildIndexes(model, symbolTables);
@@ -66,14 +72,43 @@ final class CobolReferenceResolver {
             entries.add(new ReferenceResolution.Entry(entries.size(), occurrence, decision.status(),
                     decision.reason(), decision.candidates(), diagnosticIds,
                     callSemantics(occurrence, decision)));
+            logDecision(occurrence, decision);
         }
         ReferenceResolution.Metrics baseMetrics = data.metrics();
-        return new ReferenceResolution(policy, entries, diagnostics,
+        ReferenceResolution result = new ReferenceResolution(policy, entries, diagnostics,
                 new ReferenceResolution.Metrics(baseMetrics.indexedDeclarations() + additionalIndexed,
                         baseMetrics.nominalLookups() + additionalLookups,
                         baseMetrics.candidateInspections() + additionalInspections,
                         Math.max(baseMetrics.maximumCandidates(), additionalMaximum)),
                 data.declarationRelations());
+        if (LOG.isDebugEnabled()) {
+            String source = model.programUnits().isEmpty() ? model.compilationUnitId()
+                    : model.programUnits().get(0).program().meta().provenance().original().file();
+            LOG.debug("event=resolution_completed scope=RESOLVER source={} phase=REFERENCE_RESOLUTION elapsedMs={} references={} resolved={} unresolved={} ambiguous={} unsupported={} indexedDeclarations={} nominalLookups={} candidateInspections={} maximumCandidates={}",
+                    source, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - started), result.entries().size(),
+                    count(result, ResolutionContracts.ResolutionStatus.RESOLVED),
+                    count(result, ResolutionContracts.ResolutionStatus.UNRESOLVED),
+                    count(result, ResolutionContracts.ResolutionStatus.AMBIGUOUS),
+                    count(result, ResolutionContracts.ResolutionStatus.UNSUPPORTED), result.metrics().indexedDeclarations(),
+                    result.metrics().nominalLookups(), result.metrics().candidateInspections(),
+                    result.metrics().maximumCandidates());
+        }
+        return result;
+    }
+
+    private static int count(ReferenceResolution resolution, ResolutionContracts.ResolutionStatus status) {
+        return (int) resolution.entries().stream().filter(entry -> entry.status() == status).count();
+    }
+
+    private static void logDecision(ReferenceOccurrences.Occurrence occurrence, Decision decision) {
+        if (!LOG.isTraceEnabled()) return;
+        List<String> candidateIds = decision.candidates().stream()
+                .map(candidate -> candidate.entityId().toString()).toList();
+        LOG.trace("event=reference_resolution source={} programUnit={} phase=REFERENCE_RESOLUTION occurrenceId={} kind={} role={} writtenName={} line={} candidateCount={} candidateIds={} status={} reason={}",
+                occurrence.meta().provenance().original().file(), occurrence.programUnitId().canonicalProgramName(),
+                occurrence.id(), occurrence.kind(), occurrence.role(), occurrence.writtenText(),
+                occurrence.meta().span().startLine(), candidateIds.size(), candidateIds,
+                decision.status(), decision.reason());
     }
 
     private Optional<ReferenceResolution.CallSemantics> callSemantics(
