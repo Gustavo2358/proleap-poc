@@ -35,6 +35,27 @@ class SourceNormalizerTest {
         assertNotNull(firstRule(tree, parser, "environmentDivision"));
     }
 
+    @Test
+    void preservesSupportedPhysicalLineEndingsWithoutAddingPhantomRecords() {
+        assertEquals("", SourceNormalizer.fixed(""));
+        assertEquals("DISPLAY 'A'.", SourceNormalizer.fixed("       DISPLAY 'A'."));
+        assertEquals("DISPLAY 'A'.\n", SourceNormalizer.fixed("       DISPLAY 'A'.\n"));
+        assertEquals("DISPLAY 'A'.\r\nDISPLAY 'B'.\r\n",
+                SourceNormalizer.fixed("       DISPLAY 'A'.\r\n       DISPLAY 'B'.\r\n"));
+        assertEquals("DISPLAY 'A'.\rDISPLAY 'B'.",
+                SourceNormalizer.fixed("       DISPLAY 'A'.\r       DISPLAY 'B'."));
+    }
+
+    @Test
+    void rejectsUnsupportedUnicodeLineSeparatorsExplicitly() {
+        IllegalArgumentException failure = org.junit.jupiter.api.Assertions.assertThrows(
+                IllegalArgumentException.class,
+                () -> SourceNormalizer.fixed("       DISPLAY 'A'.\u2028       DISPLAY 'B'."));
+
+        org.junit.jupiter.api.Assertions.assertTrue(
+                failure.getMessage().contains("Unsupported line separator"), failure.getMessage());
+    }
+
     private static ParserRuleContext firstRule(ParseTree tree, Parser parser, String expected) {
         if (tree instanceof ParserRuleContext context
                 && parser.getRuleNames()[context.getRuleIndex()].equals(expected)) return context;

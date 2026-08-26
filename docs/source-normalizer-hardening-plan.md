@@ -152,17 +152,17 @@ não depender de interface gráfica.
 
 ### Fase 2 — Scanner exato de registros físicos e line endings
 
-- [ ] Substituir `split("\\R", -1)` por leitura que preserve cada separador
+- [x] Substituir `split("\\R", -1)` por leitura que preserve cada separador
       físico e a presença ou ausência de terminador final.
-- [ ] Corrigir arquivo vazio, arquivo sem newline final, LF, CRLF e CR sem
+- [x] Corrigir arquivo vazio, arquivo sem newline final, LF, CRLF e CR sem
       adicionar linha fantasma.
-- [ ] Modelar cada registro físico com offsets bruto inicial/final, conteúdo e
+- [x] Modelar cada registro físico com offsets bruto inicial/final, conteúdo e
       terminador.
-- [ ] Testar round-trip de linhas e offsets para todos os terminadores aceitos.
-- [ ] Definir política explícita para separadores Unicode: suportar com mapa
+- [x] Testar round-trip de linhas e offsets para todos os terminadores aceitos.
+- [x] Definir política explícita para separadores Unicode: suportar com mapa
       correto ou rejeitar com diagnóstico, sem normalização implícita.
-- [ ] Rodar teste focado, suíte completa e gate da aplicação.
-- [ ] Commit: `fix: preserve physical source records and line endings`.
+- [x] Rodar teste focado, suíte completa e gate da aplicação.
+- [x] Commit: `fix: preserve physical source records and line endings`.
 
 ### Fase 3 — Contrato fechado de source format e margens
 
