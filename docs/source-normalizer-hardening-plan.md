@@ -197,21 +197,21 @@ não depender de interface gráfica.
 
 ### Fase 5 — Continuação COBOL sem contagem heurística de aspas
 
-- [ ] Remover `oddQuote()` e qualquer decisão baseada apenas em paridade de
+- [x] Remover `oddQuote()` e qualquer decisão baseada apenas em paridade de
       caracteres.
-- [ ] Implementar continuação a partir de categorias lexicais/sintáticas
+- [x] Implementar continuação a partir de categorias lexicais/sintáticas
       explícitas: literal, palavra/token e casos não suportados.
-- [ ] Cobrir aspas simples e duplas, aspas do outro tipo dentro do literal,
+- [x] Cobrir aspas simples e duplas, aspas do outro tipo dentro do literal,
       escaping COBOL, literais hexadecimais, nacionais e null-terminated.
-- [ ] Cobrir continuação de palavra, espaços significativos e separação de
+- [x] Cobrir continuação de palavra, espaços significativos e separação de
       tokens conforme a gramática/dialeto suportado.
-- [ ] Rejeitar continuação órfã, continuação após registro incompatível e formas
+- [x] Rejeitar continuação órfã, continuação após registro incompatível e formas
       reconhecidas mas ainda não implementadas.
-- [ ] Mapear o texto lógico resultante para todos os registros físicos que o
+- [x] Mapear o texto lógico resultante para todos os registros físicos que o
       originaram e marcar regiões transformadas como não exatas.
-- [ ] Garantir que a fusão lógica não reduza linhas reportadas no fonte original.
-- [ ] Rodar teste focado, suíte completa e gate da aplicação.
-- [ ] Commit: `fix: implement mapped cobol continuation semantics`.
+- [x] Garantir que a fusão lógica não reduza linhas reportadas no fonte original.
+- [x] Rodar teste focado, suíte completa e gate da aplicação.
+- [x] Commit: `fix: implement mapped cobol continuation semantics`.
 
 ### Fase 6 — Comment entries definidos pela sintaxe, sem regex global
 

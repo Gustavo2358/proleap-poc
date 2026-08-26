@@ -27,13 +27,16 @@ final class SourceNormalizer {
     }
 
     private enum Indicator { NORMAL, COMMENT, PAGE_EJECT_COMMENT, CONTINUATION, DEBUG }
+    private enum LineRole { PROGRAM_TEXT, NON_PROGRAM, CONTINUATION_PLACEHOLDER }
+    private enum ContinuationKind { SINGLE_QUOTED_LITERAL, DOUBLE_QUOTED_LITERAL, WORD }
 
     private record PhysicalLine(String content, String terminator, int start, int contentEnd,
                                 int end, int lineNumber) {}
     private record NormalizedLine(String content, String terminator,
                                   int contentOriginalStart, int contentOriginalEnd,
                                   int terminatorOriginalStart, int terminatorOriginalEnd,
-                                  boolean contentExact, boolean terminatorExact) {}
+                                  boolean contentExact, boolean terminatorExact,
+                                  LineRole role) {}
 
     private SourceNormalizer() {}
 
@@ -78,10 +81,6 @@ final class SourceNormalizer {
             }
         }
         return mappedResult(markCommentEntries(output), raw, file);
-    }
-
-    private static boolean oddQuote(String value, char quote) {
-        return value.chars().filter(c -> c == quote).count() % 2 == 1;
     }
 
     private static List<NormalizedLine> markCommentEntries(List<NormalizedLine> input) {
@@ -181,14 +180,14 @@ final class SourceNormalizer {
 
     private static NormalizedLine transformedLine(String content, PhysicalLine physical) {
         return new NormalizedLine(content, physical.terminator(), physical.start(), physical.contentEnd(),
-                physical.contentEnd(), physical.end(), false, true);
+                physical.contentEnd(), physical.end(), false, true, LineRole.NON_PROGRAM);
     }
 
     private static NormalizedLine programTextLine(String area, int areaEnd, PhysicalLine physical) {
         int contentStart = Math.min(physical.start() + 7, physical.contentEnd());
         int contentEnd = Math.min(physical.start() + areaEnd, physical.contentEnd());
         return new NormalizedLine(area, physical.terminator(), contentStart, contentEnd,
-                physical.contentEnd(), physical.end(), true, true);
+                physical.contentEnd(), physical.end(), true, true, LineRole.PROGRAM_TEXT);
     }
 
     private static Indicator indicator(char indicator, PhysicalLine physical) {
@@ -205,20 +204,86 @@ final class SourceNormalizer {
 
     private static void appendContinuation(List<NormalizedLine> output, String area,
                                            PhysicalLine physical) {
-        if (output.isEmpty()) {
-            output.add(transformedLine(area.stripLeading(), physical));
-            return;
+        int target = output.size() - 1;
+        while (target >= 0 && output.get(target).role() == LineRole.CONTINUATION_PLACEHOLDER) {
+            target--;
         }
-        NormalizedLine previousLine = output.get(output.size() - 1);
+        if (target < 0) {
+            throw continuationFailure(physical, "orphan continuation has no preceding source record");
+        }
+        NormalizedLine previousLine = output.get(target);
+        if (previousLine.role() != LineRole.PROGRAM_TEXT) {
+            throw continuationFailure(physical,
+                    "continuation cannot follow a comment or excluded source record");
+        }
         String previous = previousLine.content().stripTrailing();
         String continuation = area.stripLeading();
-        char quote = oddQuote(previous, '\'') ? '\'' : oddQuote(previous, '"') ? '"' : 0;
-        if (quote != 0 && !continuation.isEmpty() && continuation.charAt(0) == quote) {
-            continuation = continuation.substring(1);
+        ContinuationKind kind = continuationKind(previous, physical);
+        switch (kind) {
+            case SINGLE_QUOTED_LITERAL -> continuation = literalContinuation(
+                    continuation, '\'', physical);
+            case DOUBLE_QUOTED_LITERAL -> continuation = literalContinuation(
+                    continuation, '"', physical);
+            case WORD -> {
+                if (continuation.isEmpty() || !isCobolWordCharacter(continuation.charAt(0))) {
+                    throw continuationFailure(physical,
+                            "word continuation must begin with a COBOL word character");
+                }
+            }
         }
-        output.set(output.size() - 1, new NormalizedLine(previous + continuation,
-                physical.terminator(), previousLine.contentOriginalStart(), physical.contentEnd(),
-                physical.contentEnd(), physical.end(), false, true));
+        output.set(target, new NormalizedLine(previous + continuation,
+                previousLine.terminator(), previousLine.contentOriginalStart(), physical.contentEnd(),
+                previousLine.terminatorOriginalStart(), previousLine.terminatorOriginalEnd(),
+                false, previousLine.terminatorExact(), LineRole.PROGRAM_TEXT));
+        output.add(new NormalizedLine("", physical.terminator(), physical.start(), physical.contentEnd(),
+                physical.contentEnd(), physical.end(), false, true,
+                LineRole.CONTINUATION_PLACEHOLDER));
+    }
+
+    private static ContinuationKind continuationKind(String previous, PhysicalLine physical) {
+        char openQuote = 0;
+        for (int index = 0; index < previous.length(); index++) {
+            char character = previous.charAt(index);
+            if (openQuote == 0) {
+                if (character == '\'' || character == '"') openQuote = character;
+            } else if (character == openQuote) {
+                if (index + 1 < previous.length() && previous.charAt(index + 1) == openQuote) {
+                    index++;
+                } else {
+                    openQuote = 0;
+                }
+            }
+        }
+        if (openQuote == '\'') return ContinuationKind.SINGLE_QUOTED_LITERAL;
+        if (openQuote == '"') return ContinuationKind.DOUBLE_QUOTED_LITERAL;
+        if (!previous.isEmpty() && isCobolWordCharacter(previous.charAt(previous.length() - 1))) {
+            return ContinuationKind.WORD;
+        }
+        throw continuationFailure(physical,
+                "continuation requires an open literal or a split COBOL word");
+    }
+
+    private static String literalContinuation(String continuation, char expectedQuote,
+                                              PhysicalLine physical) {
+        if (continuation.isEmpty() || continuation.charAt(0) != expectedQuote) {
+            throw continuationFailure(physical,
+                    "literal continuation must begin with matching quote '" + expectedQuote + "'");
+        }
+        return continuation.substring(1);
+    }
+
+    private static boolean isCobolWordCharacter(char character) {
+        return character >= 'A' && character <= 'Z'
+                || character >= 'a' && character <= 'z'
+                || character >= '0' && character <= '9'
+                || character == '-'
+                || character == '_';
+    }
+
+    private static IllegalArgumentException continuationFailure(PhysicalLine physical,
+                                                                String reason) {
+        return new IllegalArgumentException("Invalid fixed-format continuation at line "
+                + physical.lineNumber() + ", column 7: " + reason);
     }
 
     private static NormalizedLine transformedFrom(NormalizedLine original, String content,
@@ -227,7 +292,7 @@ final class SourceNormalizer {
                 original.contentOriginalStart(), original.contentOriginalEnd(),
                 originalTerminator ? original.terminatorOriginalStart() : original.contentOriginalStart(),
                 originalTerminator ? original.terminatorOriginalEnd() : original.contentOriginalEnd(),
-                false, originalTerminator && original.terminatorExact());
+                false, originalTerminator && original.terminatorExact(), original.role());
     }
 
     private static Result mappedResult(List<NormalizedLine> lines, String raw, String file) {

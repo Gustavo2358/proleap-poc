@@ -14,6 +14,8 @@ import java.nio.file.Path;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SourceNormalizerTest {
     private static final Path COMMENT_BEFORE_ENVIRONMENT = Path.of(
@@ -135,6 +137,71 @@ class SourceNormalizerTest {
                 invalid.getMessage());
         org.junit.jupiter.api.Assertions.assertTrue(invalid.getMessage().contains("column 7"),
                 invalid.getMessage());
+    }
+
+    @Test
+    void continuationUsesLexicalLiteralStateAndPreservesPhysicalRecords() {
+        assertEquals("DISPLAY 'DON\"T AND MORE'.\n\nGOBACK.\n", SourceNormalizer.fixed(
+                "       DISPLAY 'DON\"T AND\n"
+                        + "      -' MORE'.\n"
+                        + "       GOBACK.\n"));
+        assertEquals("DISPLAY \"DON'T AND MORE\".\n\n", SourceNormalizer.fixed(
+                "       DISPLAY \"DON'T AND\n"
+                        + "      -\" MORE\".\n"));
+        assertEquals("DISPLAY 'DON''T AND MORE'.\n\n", SourceNormalizer.fixed(
+                "       DISPLAY 'DON''T AND\n"
+                        + "      -' MORE'.\n"));
+        assertEquals("MOVE LONG-NAME TO TARGET.\n\n", SourceNormalizer.fixed(
+                "       MOVE LONG-\n"
+                        + "      -NAME TO TARGET.\n"));
+        assertEquals("DISPLAY X'ABCD', N\"EFGH\", Z'IJKL'.\n\n\n\n",
+                SourceNormalizer.fixed(
+                        "       DISPLAY X'AB\n"
+                                + "      -'CD', N\"EF\n"
+                                + "      -\"GH\", Z'IJ\n"
+                                + "      -'KL'.\n"));
+        assertEquals("MOVE LONG_NAME TO TARGET.\n\n", SourceNormalizer.fixed(
+                "       MOVE LONG_\n"
+                        + "      -NAME TO TARGET.\n"));
+    }
+
+    @Test
+    void continuationRejectsOrphanIncompatibleAndMismatchedRecordsLocally() {
+        IllegalArgumentException orphan = assertThrows(IllegalArgumentException.class,
+                () -> SourceNormalizer.fixed("      -ORPHAN\n"));
+        assertTrue(orphan.getMessage().contains("line 1"), orphan.getMessage());
+        assertTrue(orphan.getMessage().contains("orphan"), orphan.getMessage());
+
+        IllegalArgumentException afterComment = assertThrows(IllegalArgumentException.class,
+                () -> SourceNormalizer.fixed("      * COMMENT\n      -TEXT\n"));
+        assertTrue(afterComment.getMessage().contains("line 2"), afterComment.getMessage());
+        assertTrue(afterComment.getMessage().contains("comment"), afterComment.getMessage());
+
+        IllegalArgumentException mismatchedQuote = assertThrows(IllegalArgumentException.class,
+                () -> SourceNormalizer.fixed("       DISPLAY 'OPEN\n      -\"CLOSE'.\n"));
+        assertTrue(mismatchedQuote.getMessage().contains("line 2"), mismatchedQuote.getMessage());
+        assertTrue(mismatchedQuote.getMessage().contains("quote"), mismatchedQuote.getMessage());
+    }
+
+    @Test
+    void continuationSourceMapKeepsRawLineCoordinates() {
+        String raw = "       DISPLAY 'OPEN\n"
+                + "      -' CONTINUED'.\n"
+                + "       GOBACK.\n";
+        SourceNormalizer.Result result = SourceNormalizer.normalize(
+                raw, "continuation.cbl", SourceNormalizer.SourceFormat.FIXED);
+
+        int displayStart = result.text().indexOf("DISPLAY");
+        Ast.SourceProvenance combined = result.sourceMap().provenance(
+                displayStart, result.text().indexOf(".\n") + 1);
+        assertEquals(1, combined.original().startLine());
+        assertFalse(combined.exact());
+
+        int gobackStart = result.text().indexOf("GOBACK");
+        Ast.SourceProvenance goback = result.sourceMap().provenance(gobackStart, gobackStart + 6);
+        assertEquals(3, goback.original().startLine());
+        assertEquals(7, goback.original().startColumn());
+        assertTrue(goback.exact());
     }
 
     private static ParserRuleContext firstRule(ParseTree tree, Parser parser, String expected) {
