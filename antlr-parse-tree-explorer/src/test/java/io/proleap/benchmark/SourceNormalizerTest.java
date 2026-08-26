@@ -32,7 +32,7 @@ class SourceNormalizerTest {
     @Test
     void fixedCommentAfterEmptyCommentEntryDoesNotConsumeEnvironmentDivision() throws Exception {
         String raw = Files.readString(COMMENT_BEFORE_ENVIRONMENT, StandardCharsets.UTF_8);
-        String normalized = SourceNormalizer.fixed(raw);
+        String normalized = SourceNormalizerTestSupport.fixed(raw);
 
         assertFalse(normalized.contains("*>CE ENVIRONMENT DIVISION."), normalized);
 
@@ -47,20 +47,20 @@ class SourceNormalizerTest {
 
     @Test
     void preservesSupportedPhysicalLineEndingsWithoutAddingPhantomRecords() {
-        assertEquals("", SourceNormalizer.fixed(""));
-        assertEquals("DISPLAY 'A'.", SourceNormalizer.fixed("       DISPLAY 'A'."));
-        assertEquals("DISPLAY 'A'.\n", SourceNormalizer.fixed("       DISPLAY 'A'.\n"));
+        assertEquals("", SourceNormalizerTestSupport.fixed(""));
+        assertEquals("DISPLAY 'A'.", SourceNormalizerTestSupport.fixed("       DISPLAY 'A'."));
+        assertEquals("DISPLAY 'A'.\n", SourceNormalizerTestSupport.fixed("       DISPLAY 'A'.\n"));
         assertEquals("DISPLAY 'A'.\r\nDISPLAY 'B'.\r\n",
-                SourceNormalizer.fixed("       DISPLAY 'A'.\r\n       DISPLAY 'B'.\r\n"));
+                SourceNormalizerTestSupport.fixed("       DISPLAY 'A'.\r\n       DISPLAY 'B'.\r\n"));
         assertEquals("DISPLAY 'A'.\rDISPLAY 'B'.",
-                SourceNormalizer.fixed("       DISPLAY 'A'.\r       DISPLAY 'B'."));
+                SourceNormalizerTestSupport.fixed("       DISPLAY 'A'.\r       DISPLAY 'B'."));
     }
 
     @Test
     void rejectsUnsupportedUnicodeLineSeparatorsExplicitly() {
         IllegalArgumentException failure = org.junit.jupiter.api.Assertions.assertThrows(
                 IllegalArgumentException.class,
-                () -> SourceNormalizer.fixed("       DISPLAY 'A'.\u2028       DISPLAY 'B'."));
+                () -> SourceNormalizerTestSupport.fixed("       DISPLAY 'A'.\u2028       DISPLAY 'B'."));
 
         org.junit.jupiter.api.Assertions.assertTrue(
                 failure.getMessage().contains("Unsupported line separator"), failure.getMessage());
@@ -101,7 +101,7 @@ class SourceNormalizerTest {
 
         assertEquals("DISPLAY 'A'." + " ".repeat(72 - "000100 DISPLAY 'A'.".length()) + "\n",
                 result.text());
-        assertEquals("", SourceNormalizer.fixed("123456"),
+        assertEquals("", SourceNormalizerTestSupport.fixed("123456"),
                 "a short record containing only sequence-area columns has no program text");
 
         IllegalArgumentException tab = org.junit.jupiter.api.Assertions.assertThrows(
@@ -120,9 +120,9 @@ class SourceNormalizerTest {
 
     @Test
     void indicatorAreaHasAnExplicitPolicyForEverySupportedKind() {
-        assertEquals("*>  ordinary comment\n", SourceNormalizer.fixed(
+        assertEquals("*>  ordinary comment\n", SourceNormalizerTestSupport.fixed(
                 "      * ordinary comment\n"));
-        assertEquals("*>  page eject comment\n", SourceNormalizer.fixed(
+        assertEquals("*>  page eject comment\n", SourceNormalizerTestSupport.fixed(
                 "      / page eject comment\n"));
 
         SourceNormalizer.Options excludeDebug = new SourceNormalizer.Options(
@@ -138,7 +138,7 @@ class SourceNormalizerTest {
 
         IllegalArgumentException invalid = org.junit.jupiter.api.Assertions.assertThrows(
                 IllegalArgumentException.class,
-                () -> SourceNormalizer.fixed("      ?DISPLAY 'A'.\n"));
+                () -> SourceNormalizerTestSupport.fixed("      ?DISPLAY 'A'.\n"));
         org.junit.jupiter.api.Assertions.assertTrue(invalid.getMessage().contains("line 1"),
                 invalid.getMessage());
         org.junit.jupiter.api.Assertions.assertTrue(invalid.getMessage().contains("column 7"),
@@ -147,26 +147,26 @@ class SourceNormalizerTest {
 
     @Test
     void continuationUsesLexicalLiteralStateAndPreservesPhysicalRecords() {
-        assertEquals("DISPLAY 'DON\"T AND MORE'.\n\nGOBACK.\n", SourceNormalizer.fixed(
+        assertEquals("DISPLAY 'DON\"T AND MORE'.\n\nGOBACK.\n", SourceNormalizerTestSupport.fixed(
                 "       DISPLAY 'DON\"T AND\n"
                         + "      -' MORE'.\n"
                         + "       GOBACK.\n"));
-        assertEquals("DISPLAY \"DON'T AND MORE\".\n\n", SourceNormalizer.fixed(
+        assertEquals("DISPLAY \"DON'T AND MORE\".\n\n", SourceNormalizerTestSupport.fixed(
                 "       DISPLAY \"DON'T AND\n"
                         + "      -\" MORE\".\n"));
-        assertEquals("DISPLAY 'DON''T AND MORE'.\n\n", SourceNormalizer.fixed(
+        assertEquals("DISPLAY 'DON''T AND MORE'.\n\n", SourceNormalizerTestSupport.fixed(
                 "       DISPLAY 'DON''T AND\n"
                         + "      -' MORE'.\n"));
-        assertEquals("MOVE LONG-NAME TO TARGET.\n\n", SourceNormalizer.fixed(
+        assertEquals("MOVE LONG-NAME TO TARGET.\n\n", SourceNormalizerTestSupport.fixed(
                 "       MOVE LONG-\n"
                         + "      -NAME TO TARGET.\n"));
         assertEquals("DISPLAY X'ABCD', N\"EFGH\", Z'IJKL'.\n\n\n\n",
-                SourceNormalizer.fixed(
+                SourceNormalizerTestSupport.fixed(
                         "       DISPLAY X'AB\n"
                                 + "      -'CD', N\"EF\n"
                                 + "      -\"GH\", Z'IJ\n"
                                 + "      -'KL'.\n"));
-        assertEquals("MOVE LONG_NAME TO TARGET.\n\n", SourceNormalizer.fixed(
+        assertEquals("MOVE LONG_NAME TO TARGET.\n\n", SourceNormalizerTestSupport.fixed(
                 "       MOVE LONG_\n"
                         + "      -NAME TO TARGET.\n"));
     }
@@ -174,17 +174,25 @@ class SourceNormalizerTest {
     @Test
     void continuationRejectsOrphanIncompatibleAndMismatchedRecordsLocally() {
         IllegalArgumentException orphan = assertThrows(IllegalArgumentException.class,
-                () -> SourceNormalizer.fixed("      -ORPHAN\n"));
+                () -> SourceNormalizerTestSupport.fixed("      -ORPHAN\n"));
         assertTrue(orphan.getMessage().contains("line 1"), orphan.getMessage());
         assertTrue(orphan.getMessage().contains("orphan"), orphan.getMessage());
 
         IllegalArgumentException afterComment = assertThrows(IllegalArgumentException.class,
-                () -> SourceNormalizer.fixed("      * COMMENT\n      -TEXT\n"));
+                () -> SourceNormalizerTestSupport.fixed("      * COMMENT\n      -TEXT\n"));
         assertTrue(afterComment.getMessage().contains("line 2"), afterComment.getMessage());
         assertTrue(afterComment.getMessage().contains("comment"), afterComment.getMessage());
 
+        IllegalArgumentException afterInlineComment = assertThrows(IllegalArgumentException.class,
+                () -> SourceNormalizerTestSupport.fixed(
+                        "       DISPLAY 'DONE'. *> INLINE COMMENT\n      -TEXT\n"));
+        assertTrue(afterInlineComment.getMessage().contains("line 2"),
+                afterInlineComment.getMessage());
+        assertTrue(afterInlineComment.getMessage().contains("inline comment"),
+                afterInlineComment.getMessage());
+
         IllegalArgumentException mismatchedQuote = assertThrows(IllegalArgumentException.class,
-                () -> SourceNormalizer.fixed("       DISPLAY 'OPEN\n      -\"CLOSE'.\n"));
+                () -> SourceNormalizerTestSupport.fixed("       DISPLAY 'OPEN\n      -\"CLOSE'.\n"));
         assertTrue(mismatchedQuote.getMessage().contains("line 2"), mismatchedQuote.getMessage());
         assertTrue(mismatchedQuote.getMessage().contains("quote"), mismatchedQuote.getMessage());
     }
@@ -222,6 +230,16 @@ class SourceNormalizerTest {
                 .collect(Collectors.toSet());
 
         assertEquals(grammarOwners, SourceNormalizer.commentEntryOwnerRules());
+
+        Set<String> grammarQualifiers = Arrays.stream(
+                        CobolParser.ProgramIdParagraphContext.class.getDeclaredMethods())
+                .filter(method -> method.getParameterCount() == 0)
+                .filter(method -> method.getReturnType()
+                        == org.antlr.v4.runtime.tree.TerminalNode.class)
+                .map(java.lang.reflect.Method::getName)
+                .filter(token -> !Set.of("PROGRAM_ID", "IS", "PROGRAM").contains(token))
+                .collect(Collectors.toSet());
+        assertEquals(grammarQualifiers, SourceNormalizer.programIdQualifierTokens());
     }
 
     @Test
@@ -259,29 +277,77 @@ class SourceNormalizerTest {
     @Test
     void programIdCommentEntryHandlesSplitNameOptionalClauseAndOptionalPeriod() {
         assertEquals("PROGRAM-ID.\n    SPLIT.\n*>CE NOTE AFTER NAME.\nENVIRONMENT DIVISION.\n",
-                SourceNormalizer.fixed(
+                SourceNormalizerTestSupport.fixed(
                         "       PROGRAM-ID.\n"
                                 + "           SPLIT.\n"
                                 + "           NOTE AFTER NAME.\n"
                                 + "       ENVIRONMENT DIVISION.\n"));
         assertEquals("PROGRAM-ID. QUALIFIED IS INITIAL PROGRAM.\n"
                         + "*>CE QUALIFIED NOTE.\nENVIRONMENT DIVISION.\n",
-                SourceNormalizer.fixed(
+                SourceNormalizerTestSupport.fixed(
                         "       PROGRAM-ID. QUALIFIED IS INITIAL PROGRAM.\n"
                                 + "           QUALIFIED NOTE.\n"
                                 + "       ENVIRONMENT DIVISION.\n"));
         assertEquals("PROGRAM-ID. NODOT\n*>CE NOTE WITHOUT PROGRAM PERIOD\n"
                         + "ENVIRONMENT DIVISION.\n",
-                SourceNormalizer.fixed(
+                SourceNormalizerTestSupport.fixed(
                         "       PROGRAM-ID. NODOT\n"
                                 + "           NOTE WITHOUT PROGRAM PERIOD\n"
                                 + "       ENVIRONMENT DIVISION.\n"));
         assertEquals("PROGRAM-ID. 'Quoted''Name'. *>CE LITERAL NAME NOTE.\n",
-                SourceNormalizer.fixed(
+                SourceNormalizerTestSupport.fixed(
                         "       PROGRAM-ID. 'Quoted''Name'. LITERAL NAME NOTE.\n"));
         assertEquals("PROGRAM-ID. N\"National\". *>CE NATIONAL NAME NOTE.\n",
-                SourceNormalizer.fixed(
+                SourceNormalizerTestSupport.fixed(
                         "       PROGRAM-ID. N\"National\". NATIONAL NAME NOTE.\n"));
+        assertEquals("PROGRAM-ID. MULTILINE\n"
+                        + "    IS\n"
+                        + "    INITIAL\n"
+                        + "    PROGRAM\n"
+                        + "    .\n"
+                        + "*>CE COMMENT AFTER MULTILINE CLAUSE\n"
+                        + "ENVIRONMENT DIVISION.\n",
+                SourceNormalizerTestSupport.fixed(
+                        "       PROGRAM-ID. MULTILINE\n"
+                                + "           IS\n"
+                                + "           INITIAL\n"
+                                + "           PROGRAM\n"
+                                + "           .\n"
+                                + "           COMMENT AFTER MULTILINE CLAUSE\n"
+                                + "       ENVIRONMENT DIVISION.\n"));
+        assertEquals("PROGRAM-ID. QUALIFIER-SPLIT\n"
+                        + "    RECURSIVE\n"
+                        + "*>CE COMMENT AFTER QUALIFIER\n",
+                SourceNormalizerTestSupport.fixed(
+                        "       PROGRAM-ID. QUALIFIER-SPLIT\n"
+                                + "           RECURSIVE\n"
+                                + "           COMMENT AFTER QUALIFIER\n"));
+
+        String complete = SourceNormalizerTestSupport.fixed(
+                "       IDENTIFICATION DIVISION.\n"
+                        + "       PROGRAM-ID. PARSE-SPLIT\n"
+                        + "           IS\n"
+                        + "           INITIAL\n"
+                        + "           PROGRAM.\n"
+                        + "           COMMENT ENTRY\n"
+                        + "       ENVIRONMENT DIVISION.\n"
+                        + "       DATA DIVISION.\n"
+                        + "       PROCEDURE DIVISION.\n"
+                        + "           GOBACK.\n");
+        GrammarBinding binding = Bindings.proleap();
+        Parser parser = binding.cobolParser(new CommonTokenStream(
+                binding.cobolLexer(CharStreams.fromString(complete, "program-id-split.cbl"))));
+        binding.cobolStart(parser);
+        assertEquals(0, parser.getNumberOfSyntaxErrors(), complete);
+
+        IllegalArgumentException missingName = assertThrows(IllegalArgumentException.class,
+                () -> SourceNormalizerTestSupport.fixed("       PROGRAM-ID.\n"));
+        assertTrue(missingName.getMessage().contains("PROGRAM_NAME_PENDING"),
+                missingName.getMessage());
+        IllegalArgumentException missingQualifier = assertThrows(IllegalArgumentException.class,
+                () -> SourceNormalizerTestSupport.fixed("       PROGRAM-ID. FOO IS\n"));
+        assertTrue(missingQualifier.getMessage().contains("PROGRAM_QUALIFIER_PENDING"),
+                missingQualifier.getMessage());
     }
 
     @Test
@@ -302,7 +368,7 @@ class SourceNormalizerTest {
                 + "       DATA DIVISION.\n"
                 + "       PROCEDURE DIVISION.\n"
                 + "           GOBACK.\n";
-        String normalized = SourceNormalizer.fixed(raw);
+        String normalized = SourceNormalizerTestSupport.fixed(raw);
 
         GrammarBinding binding = Bindings.proleap();
         Parser parser = binding.cobolParser(new CommonTokenStream(
@@ -316,15 +382,15 @@ class SourceNormalizerTest {
     void remarksHasAnExplicitEndRemarksBoundaryAndHeadersRequireDotFs() {
         assertEquals("REMARKS.\n*>CE TEXT WITH PERIODS.\n    END-REMARKS.\n"
                         + "ENVIRONMENT DIVISION.\n",
-                SourceNormalizer.fixed(
+                SourceNormalizerTestSupport.fixed(
                         "       REMARKS.\n"
                                 + "           TEXT WITH PERIODS.\n"
                                 + "           END-REMARKS.\n"
                                 + "       ENVIRONMENT DIVISION.\n"));
-        assertEquals("AUTHOR.X\n", SourceNormalizer.fixed("       AUTHOR.X\n"),
+        assertEquals("AUTHOR.X\n", SourceNormalizerTestSupport.fixed("       AUTHOR.X\n"),
                 "a period without a following separator is not DOT_FS and cannot open an entry");
         assertEquals("AUTHOR.\n*>CE FINAL ENTRY AT EOF",
-                SourceNormalizer.fixed("       AUTHOR.\n           FINAL ENTRY AT EOF"));
+                SourceNormalizerTestSupport.fixed("       AUTHOR.\n           FINAL ENTRY AT EOF"));
     }
 
     @Test

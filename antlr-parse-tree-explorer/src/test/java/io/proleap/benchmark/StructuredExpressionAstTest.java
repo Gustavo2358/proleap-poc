@@ -144,7 +144,7 @@ class StructuredExpressionAstTest {
 
     private static Ast.Program parseFixture(String fileName) throws Exception {
         Path file = Path.of("src/test/resources/cobol/semantic", fileName).toAbsolutePath().normalize();
-        String source = SourceNormalizer.fixed(Files.readString(file, StandardCharsets.UTF_8));
+        String source = SourceNormalizerTestSupport.fixed(Files.readString(file, StandardCharsets.UTF_8));
         GrammarBinding binding = Bindings.proleap();
         Lexer lexer = binding.cobolLexer(CharStreams.fromString(source, fileName));
         CommonTokenStream tokens = new CommonTokenStream(lexer);

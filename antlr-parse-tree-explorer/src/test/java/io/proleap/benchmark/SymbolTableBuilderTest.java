@@ -86,10 +86,13 @@ class SymbolTableBuilderTest {
         Path project = Path.of("").toAbsolutePath().normalize();
         Path sourceFile = project.resolve("corpus/cbl/COACTUPC.cbl");
         GrammarBinding binding = Bindings.proleap();
-        String fixed = SourceNormalizer.fixed(Files.readString(sourceFile, StandardCharsets.UTF_8));
-        String source = new PreprocessorEngine(binding, new CopybookLibrary(project.resolve("corpus/cpy")))
-                .process(SourceMap.identity(fixed, sourceFile.getFileName().toString()),
-                        sourceFile.getFileName().toString()).text();
+        SourceNormalizer.Result normalized = SourceNormalizer.normalize(
+                Files.readString(sourceFile, StandardCharsets.UTF_8),
+                sourceFile.getFileName().toString(), SourceNormalizer.SourceFormat.FIXED);
+        PreprocessorEngine.Outcome preprocessing = new PreprocessorEngine(
+                binding, new CopybookLibrary(project.resolve("corpus/cpy")))
+                .process(normalized.sourceMap(), sourceFile.getFileName().toString());
+        String source = preprocessing.text();
         Lexer lexer = binding.cobolLexer(CharStreams.fromString(source));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         Parser parser = binding.cobolParser(tokens);
@@ -99,7 +102,8 @@ class SymbolTableBuilderTest {
         IdentityHashMap<ParseTree, Integer> ids = new IdentityHashMap<>();
         IdentityHashMap<ParseTree, Integer> sizes = new IdentityHashMap<>();
         index(tree, ids, sizes, new int[] {0});
-        return new AstBuilder(parser, source, ids, sizes).build(tree).program();
+        return new AstBuilder(parser, source, preprocessing.sourceMap(), ids, sizes)
+                .build(tree).program();
     }
 
     private static int index(ParseTree tree, IdentityHashMap<ParseTree, Integer> ids,

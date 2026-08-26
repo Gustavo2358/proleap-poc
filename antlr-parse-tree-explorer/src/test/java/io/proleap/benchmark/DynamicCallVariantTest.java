@@ -24,10 +24,12 @@ class DynamicCallVariantTest {
         assertEquals(0, occurrences(raw, "CALL 'CEE3ABD'"));
 
         GrammarBinding binding = Bindings.proleap();
-        String fixed = SourceNormalizer.fixed(raw);
-        String source = new PreprocessorEngine(binding, new CopybookLibrary(project.resolve("corpus/cpy")))
-                .process(SourceMap.identity(fixed, sourceFile.getFileName().toString()),
-                        sourceFile.getFileName().toString()).text();
+        SourceNormalizer.Result normalized = SourceNormalizer.normalize(raw,
+                sourceFile.getFileName().toString(), SourceNormalizer.SourceFormat.FIXED);
+        PreprocessorEngine.Outcome preprocessing = new PreprocessorEngine(
+                binding, new CopybookLibrary(project.resolve("corpus/cpy")))
+                .process(normalized.sourceMap(), sourceFile.getFileName().toString());
+        String source = preprocessing.text();
         Lexer lexer = binding.cobolLexer(CharStreams.fromString(source));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         Parser parser = binding.cobolParser(tokens);
@@ -37,7 +39,8 @@ class DynamicCallVariantTest {
         IdentityHashMap<ParseTree, Integer> ids = new IdentityHashMap<>();
         IdentityHashMap<ParseTree, Integer> sizes = new IdentityHashMap<>();
         index(tree, ids, sizes, new int[] {0});
-        Ast.Program ast = new AstBuilder(parser, source, ids, sizes).build(tree).program();
+        Ast.Program ast = new AstBuilder(parser, source, preprocessing.sourceMap(), ids, sizes)
+                .build(tree).program();
         List<Ast.CallStatement> calls = flatten(ast).stream()
                 .filter(Ast.CallStatement.class::isInstance)
                 .map(Ast.CallStatement.class::cast)

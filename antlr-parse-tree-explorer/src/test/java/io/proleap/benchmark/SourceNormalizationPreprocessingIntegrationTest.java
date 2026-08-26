@@ -67,6 +67,7 @@ class SourceNormalizationPreprocessingIntegrationTest {
         PreprocessorEngine.Outcome missing = engine.process(
                 SourceMap.identity("COPY MISSING.\n", "missing.cbl"), "missing.cbl");
         assertEquals(1, missing.unresolved());
+        assertEquals(0, missing.errors());
         assertTrue(missing.text().contains("UNRESOLVED COPY MISSING"));
         Diagnostic missingDiagnostic = missing.diagnostics().stream()
                 .filter(diagnostic -> diagnostic.message().startsWith("unresolved_copy"))
@@ -78,6 +79,7 @@ class SourceNormalizationPreprocessingIntegrationTest {
         PreprocessorEngine.Outcome cyclic = engine.process(
                 SourceMap.identity("COPY CYCLE.\n", "cycle-main.cbl"), "cycle-main.cbl");
         assertTrue(cyclic.text().contains("CYCLIC COPY CYCLE"));
+        assertEquals(0, cyclic.errors());
         assertTrue(cyclic.diagnostics().stream().anyMatch(diagnostic ->
                 diagnostic.message().contains("cyclic COPY: CYCLE")));
         Diagnostic cycleDiagnostic = cyclic.diagnostics().stream()
@@ -111,7 +113,7 @@ class SourceNormalizationPreprocessingIntegrationTest {
                 + "       SKIP1\n"
                 + "       TITLE 'IGNORED'\n"
                 + "           EXEC CICS RETURN END-EXEC.\n"
-                + "           EXEC SQL SELECT 1 END-EXEC.\n"
+                + "           EXEC SQL SELECT 'A  B' END-EXEC.\n"
                 + "           EXEC SQLIMS SELECT 1 END-EXEC.\n"
                 + "           GOBACK.\n";
         SourceNormalizer.Result normalized = SourceNormalizer.normalize(
@@ -125,7 +127,8 @@ class SourceNormalizationPreprocessingIntegrationTest {
         assertEquals(ResolutionContracts.DllMode.NODLL, outcome.dllMode());
         assertEquals(ResolutionContracts.PgmnameMode.LONGMIXED, outcome.pgmnameMode());
         assertTrue(outcome.text().contains("*>EXECCICS EXEC CICS RETURN END-EXEC"));
-        assertTrue(outcome.text().contains("*>EXECSQL EXEC SQL SELECT 1 END-EXEC"));
+        assertTrue(outcome.text().contains("*>EXECSQL EXEC SQL SELECT 'A  B' END-EXEC"),
+                "opaque embedded-language whitespace must be preserved");
         assertTrue(outcome.text().contains("*>EXECSQLIMS EXEC SQLIMS SELECT 1 END-EXEC"));
         for (String removed : List.of("EJECT", "SKIP1", "TITLE 'IGNORED'")) {
             assertFalse(outcome.text().contains(removed), removed + " leaked through preprocessing");

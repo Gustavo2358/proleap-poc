@@ -63,7 +63,7 @@ class NominalReferenceAstTest {
 
     private static Ast.Program parse() throws Exception {
         Path file = Path.of("src/test/resources/cobol/semantic/nominal-references.cbl").toAbsolutePath();
-        String source = SourceNormalizer.fixed(Files.readString(file, StandardCharsets.UTF_8));
+        String source = SourceNormalizerTestSupport.fixed(Files.readString(file, StandardCharsets.UTF_8));
         GrammarBinding binding = Bindings.proleap();
         Lexer lexer = binding.cobolLexer(CharStreams.fromString(source, file.getFileName().toString()));
         Parser parser = binding.cobolParser(new CommonTokenStream(lexer));

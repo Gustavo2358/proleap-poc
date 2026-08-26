@@ -754,7 +754,7 @@ class ProcedureFileProgramReferenceResolverTest {
     private static Analysis analyze(Path sourcePath, Optional<ExternalProgramCatalog> catalog,
                                     ResolutionContracts.PgmnameMode pgmnameMode) throws Exception {
         Path file = sourcePath.toAbsolutePath();
-        String source = SourceNormalizer.fixed(Files.readString(file, StandardCharsets.UTF_8));
+        String source = SourceNormalizerTestSupport.fixed(Files.readString(file, StandardCharsets.UTF_8));
         return analyzeSource(file, source, catalog, pgmnameMode);
     }
 
@@ -765,7 +765,7 @@ class ProcedureFileProgramReferenceResolverTest {
         Path copybooks = file.startsWith(project.resolve("corpus"))
                 ? project.resolve("corpus/cpy") : project.getParent().resolve("cpy");
         GrammarBinding binding = Bindings.proleap();
-        String fixed = SourceNormalizer.fixed(Files.readString(file, StandardCharsets.UTF_8));
+        String fixed = SourceNormalizerTestSupport.fixed(Files.readString(file, StandardCharsets.UTF_8));
         String source = new PreprocessorEngine(binding, new CopybookLibrary(copybooks))
                 .process(SourceMap.identity(fixed, file.getFileName().toString()),
                         file.getFileName().toString()).text();

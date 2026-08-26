@@ -32,7 +32,7 @@ class PreprocessorEnginePolicyTest {
     @Test
     void removesPageDirectivesWithoutMovingSourceAndTheyNeverReachTheSemanticAst() throws Exception {
         GrammarBinding binding = Bindings.proleap();
-        String normalized = SourceNormalizer.fixed(Files.readString(FIXTURE, StandardCharsets.UTF_8));
+        String normalized = SourceNormalizerTestSupport.fixed(Files.readString(FIXTURE, StandardCharsets.UTF_8));
 
         PreprocessorEngine.Outcome outcome = new PreprocessorEngine(
                 binding, new CopybookLibrary(FIXTURE.getParent()))

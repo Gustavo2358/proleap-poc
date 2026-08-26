@@ -66,10 +66,12 @@ final class PreprocessorEngine {
         List<Diagnostic> diagnostics = new ArrayList<>();
         List<CompilerOption> compilerOptions = new ArrayList<>();
         int[] unresolved = {0};
+        int[] toleratedPreprocessorDiagnostics = {0};
         SourceMap document = processRecursive(normalized, file,
-                diagnostics, compilerOptions, unresolved, new HashSet<>());
+                diagnostics, compilerOptions, unresolved, toleratedPreprocessorDiagnostics,
+                new HashSet<>());
         long errors = diagnostics.stream().filter(d -> d.phase() == Diagnostic.Phase.PREPROCESSOR)
-                .filter(d -> !d.message().startsWith("unresolved_copy") && !d.message().startsWith("cyclic COPY")).count();
+                .count() - toleratedPreprocessorDiagnostics[0];
         ResolutionContracts.PgmnameMode pgmnameMode = compilerOptions.stream()
                 .filter(option -> option.name().equals("PGMNAME") || option.name().equals("PGMN"))
                 .map(CompilerOption::value).map(ResolutionContracts.PgmnameMode::fromCompilerValue)
@@ -90,7 +92,8 @@ final class PreprocessorEngine {
 
     private SourceMap processRecursive(SourceMap document, String file, List<Diagnostic> diagnostics,
                                        List<CompilerOption> compilerOptions,
-                                       int[] unresolved, Set<Path> expansionStack) {
+                                       int[] unresolved, int[] toleratedPreprocessorDiagnostics,
+                                       Set<Path> expansionStack) {
         String source = document.text();
         Lexer lexer = binding.preprocessorLexer(CharStreams.fromString(source, file));
         lexer.removeErrorListeners();
@@ -145,11 +148,13 @@ final class PreprocessorEngine {
                 Optional<Path> path = library.resolve(requested);
                 if (path.isEmpty()) {
                     unresolved[0]++;
+                    toleratedPreprocessorDiagnostics[0]++;
                     diagnostics.add(sourceDiagnostic(document, Diagnostic.Phase.PREPROCESSOR,
                             start, end, "unresolved_copy: " + requested, requested, ""));
                     edits.add(new Edit(start, end, document.transformedSlice(start, end,
                             "*> UNRESOLVED COPY " + requested + "\n")));
                 } else if (!expansionStack.add(path.get().toAbsolutePath().normalize())) {
+                    toleratedPreprocessorDiagnostics[0]++;
                     diagnostics.add(sourceDiagnostic(document, Diagnostic.Phase.PREPROCESSOR,
                             start, end, "cyclic COPY: " + requested, requested, ""));
                     edits.add(new Edit(start, end, document.transformedSlice(start, end,
@@ -159,7 +164,8 @@ final class PreprocessorEngine {
                         String includedFile = path.get().getFileName().toString();
                         SourceMap copySource = library.readNormalized(path.get());
                         SourceMap copyText = processRecursive(copySource, includedFile,
-                                diagnostics, compilerOptions, unresolved, expansionStack);
+                                diagnostics, compilerOptions, unresolved,
+                                toleratedPreprocessorDiagnostics, expansionStack);
                         for (CopyReplacement replacement : copyReplacements(
                                 context, parser.getRuleNames(), source)) {
                             copyText = copyText.replaceLiteral(
@@ -185,9 +191,10 @@ final class PreprocessorEngine {
                     default -> throw new IllegalStateException(
                             "Embedded-language policy has no renderer: " + rule);
                 };
-                String opaque = original.replaceAll("[\\r\\n]+", " ").replaceAll("\\s+", " ").trim();
-                boolean sentenceEnd = opaque.endsWith(".");
-                if (sentenceEnd) opaque = opaque.substring(0, opaque.length() - 1).stripTrailing();
+                boolean sentenceEnd = hasDirectTerminal(context, parser, "DOT");
+                String embeddedSource = sentenceEnd
+                        ? original.substring(0, original.length() - 1) : original;
+                String opaque = flattenPhysicalLines(embeddedSource).strip();
                 edits.add(new Edit(start, end, document.transformedSlice(start, end,
                         tag + " " + opaque + "\n" + (sentenceEnd ? ". \n" : ""))));
             } else if (policy == PreprocessorPolicy.UNSUPPORTED) {
@@ -218,6 +225,34 @@ final class PreprocessorEngine {
         Ast.SourceLocation original = document.provenance(start, end).original();
         return new Diagnostic(binding.name(), phase, original.file(), original.startLine(),
                 original.startColumn(), message, offendingToken, exceptionClass);
+    }
+
+    private static boolean hasDirectTerminal(ParserRuleContext context, Parser parser,
+                                             String symbolicName) {
+        for (int child = 0; child < context.getChildCount(); child++) {
+            if (context.getChild(child) instanceof TerminalNode terminal) {
+                String actual = parser.getVocabulary().getSymbolicName(
+                        terminal.getSymbol().getType());
+                if (symbolicName.equals(actual)) return true;
+            }
+        }
+        return false;
+    }
+
+    private static String flattenPhysicalLines(String value) {
+        StringBuilder result = new StringBuilder(value.length());
+        boolean inLineBreak = false;
+        for (int index = 0; index < value.length(); index++) {
+            char character = value.charAt(index);
+            if (character == '\r' || character == '\n') {
+                if (!inLineBreak) result.append(' ');
+                inLineBreak = true;
+            } else {
+                result.append(character);
+                inLineBreak = false;
+            }
+        }
+        return result.toString();
     }
 
     static Map<String, PreprocessorPolicy> policies() {

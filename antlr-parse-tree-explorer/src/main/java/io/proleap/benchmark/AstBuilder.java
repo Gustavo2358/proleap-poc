@@ -40,11 +40,6 @@ final class AstBuilder {
     private record CoverageDraft(String grammarRule, Ast.Meta meta, String writtenText,
                                  int astNodeId) { }
 
-    AstBuilder(Parser parser, String source, IdentityHashMap<ParseTree, Integer> parseIds,
-               IdentityHashMap<ParseTree, Integer> parseSubtreeSizes) {
-        this(parser, source, SourceMap.identity(source, "<preprocessed>"), parseIds, parseSubtreeSizes);
-    }
-
     AstBuilder(Parser parser, String source, SourceMap sourceMap,
                IdentityHashMap<ParseTree, Integer> parseIds,
                IdentityHashMap<ParseTree, Integer> parseSubtreeSizes) {

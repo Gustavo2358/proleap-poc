@@ -65,7 +65,7 @@ class DeclarationModelAstTest {
     private static Ast.DataClause clause(Ast.DataEntry entry, Class<? extends Ast.DataClause> type) { return entry.clauses().stream().filter(type::isInstance).findFirst().orElseThrow(); }
     private static List<Ast.Section> sections(Ast.Program ast) { return nodes(ast, Ast.Section.class).stream().filter(s -> s.dataSectionKind() != null).toList(); }
     private static Ast.Program parse() throws Exception {
-        Path file=Path.of("src/test/resources/cobol/semantic/declarations.cbl").toAbsolutePath(); String source=SourceNormalizer.fixed(Files.readString(file,StandardCharsets.UTF_8));
+        Path file=Path.of("src/test/resources/cobol/semantic/declarations.cbl").toAbsolutePath(); String source=SourceNormalizerTestSupport.fixed(Files.readString(file,StandardCharsets.UTF_8));
         GrammarBinding b=Bindings.proleap(); Parser p=b.cobolParser(new CommonTokenStream(b.cobolLexer(CharStreams.fromString(source)))); ParseTree t=b.cobolStart(p); assertEquals(0,p.getNumberOfSyntaxErrors());
         IdentityHashMap<ParseTree,Integer> ids=new IdentityHashMap<>(), sizes=new IdentityHashMap<>(); index(t,ids,sizes,new int[]{0}); return new AstBuilder(p,source,SourceMap.identity(source,"declarations.cbl"),ids,sizes).build(t).program();
     }

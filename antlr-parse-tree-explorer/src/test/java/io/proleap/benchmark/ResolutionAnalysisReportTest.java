@@ -189,7 +189,7 @@ class ResolutionAnalysisReportTest {
     }
 
     private static Analysis analyze(String rawSource, String sourceName) throws Exception {
-        String source = SourceNormalizer.fixed(rawSource);
+        String source = SourceNormalizerTestSupport.fixed(rawSource);
         GrammarBinding binding = Bindings.proleap();
         Parser parser = binding.cobolParser(new CommonTokenStream(
                 binding.cobolLexer(CharStreams.fromString(source, sourceName))));

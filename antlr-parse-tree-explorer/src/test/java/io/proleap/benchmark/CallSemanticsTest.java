@@ -47,7 +47,7 @@ class CallSemanticsTest {
     @Test
     void separatesLiteralTargetSyntaxFromCompilerSelectedLinkage() throws Exception {
         GrammarBinding grammar = Bindings.proleap();
-        String source = SourceNormalizer.fixed(Files.readString(DYNAM, StandardCharsets.UTF_8));
+        String source = SourceNormalizerTestSupport.fixed(Files.readString(DYNAM, StandardCharsets.UTF_8));
         PreprocessorEngine.Outcome outcome = new PreprocessorEngine(
                 grammar, new CopybookLibrary(Path.of("src/test/resources")))
                 .process(SourceMap.identity(source, DYNAM.getFileName().toString()),
@@ -291,7 +291,7 @@ class CallSemanticsTest {
 
     private static Analysis analyze(Path sourcePath, ExternalProgramCatalog catalog) throws Exception {
         GrammarBinding grammar = Bindings.proleap();
-        String normalized = SourceNormalizer.fixed(Files.readString(sourcePath, StandardCharsets.UTF_8));
+        String normalized = SourceNormalizerTestSupport.fixed(Files.readString(sourcePath, StandardCharsets.UTF_8));
         PreprocessorEngine.Outcome outcome = new PreprocessorEngine(
                 grammar, new CopybookLibrary(Path.of("src/test/resources")))
                 .process(SourceMap.identity(normalized, sourcePath.getFileName().toString()),

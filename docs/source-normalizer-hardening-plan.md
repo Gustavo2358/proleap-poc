@@ -254,40 +254,40 @@ não depender de interface gráfica.
 
 ### Fase 8 — Fail-closed, remoção de compatibilidade heurística e review global
 
-- [ ] Buscar e remover regexes, `startsWith`, allowlists parciais, branches
+- [x] Buscar e remover regexes, `startsWith`, allowlists parciais, branches
       default permissivos e `continue` silencioso na fronteira de leitura.
-- [ ] Verificar exaustividade entre gramática, formatos, indicadores,
+- [x] Verificar exaustividade entre gramática, formatos, indicadores,
       continuações, comment entries e políticas conhecidas.
-- [ ] Confirmar que toda forma reconhecida possui uma decisão: preservar,
+- [x] Confirmar que toda forma reconhecida possui uma decisão: preservar,
       transformar, ignorar deliberadamente ou rejeitar localmente.
-- [ ] Remover APIs/transições temporárias que permitam perder provenance.
-- [ ] Atualizar README com o contrato de source format, limitações deliberadas,
+- [x] Remover APIs/transições temporárias que permitam perder provenance.
+- [x] Atualizar README com o contrato de source format, limitações deliberadas,
       diagnósticos e procedimento de regressão.
-- [ ] Executar a suíte completa pelo menos duas vezes em árvore limpa.
-- [ ] Executar o gate da aplicação para o caso canônico e todas as fixtures de
+- [x] Executar a suíte completa pelo menos duas vezes em árvore limpa.
+- [x] Executar o gate da aplicação para o caso canônico e todas as fixtures de
       integração.
-- [ ] Inspecionar o diff completo e confirmar ausência de mudanças de artefatos
+- [x] Inspecionar o diff completo e confirmar ausência de mudanças de artefatos
       gerados ou unrelated.
-- [ ] Commit: `docs: finalize source normalization hardening`.
+- [x] Commit: `docs: finalize source normalization hardening`.
 
 ## Critérios de aceite finais
 
-- [ ] O caso `comment entry -> comentário -> ENVIRONMENT DIVISION` parseia sem
+- [x] O caso `comment entry -> comentário -> ENVIRONMENT DIVISION` parseia sem
       comentar ou perder a Environment Division.
-- [ ] Nenhum comment entry é delimitado por regex global ou ponto final.
-- [ ] Nenhuma continuação usa paridade de aspas.
-- [ ] O número de linhas físicas e os line endings possuem política e mapa
+- [x] Nenhum comment entry é delimitado por regex global ou ponto final.
+- [x] Nenhuma continuação usa paridade de aspas.
+- [x] O número de linhas físicas e os line endings possuem política e mapa
       verificáveis.
-- [ ] Linha e coluna originais referem-se ao arquivo bruto, inclusive depois de
+- [x] Linha e coluna originais referem-se ao arquivo bruto, inclusive depois de
       comment entries, continuações e COPYs.
-- [ ] `exact=true` nunca é atribuído a trecho transformado.
-- [ ] Indicadores e formatos desconhecidos falham de forma localizada.
-- [ ] Existe teste automático de exaustividade para cada catálogo fechado.
-- [ ] Todos os testes Maven passam.
-- [ ] A regressão real da aplicação passa e seus artefatos são semanticamente
+- [x] `exact=true` nunca é atribuído a trecho transformado.
+- [x] Indicadores e formatos desconhecidos falham de forma localizada.
+- [x] Existe teste automático de exaustividade para cada catálogo fechado.
+- [x] Todos os testes Maven passam.
+- [x] A regressão real da aplicação passa e seus artefatos são semanticamente
       coerentes.
-- [ ] Cada fase possui seu próprio commit verde e revisado.
-- [ ] A árvore de trabalho termina limpa.
+- [x] Cada fase possui seu próprio commit verde e revisado.
+- [x] A árvore de trabalho termina limpa.
 
 ## Sequência esperada de commits
 

@@ -120,11 +120,12 @@ class SemanticModelBaselineCharacterizationTest {
 
     private static Analysis analyze(Path sourceFile, Path copybooks) throws Exception {
         GrammarBinding binding = Bindings.proleap();
-        String fixed = SourceNormalizer.fixed(Files.readString(sourceFile, StandardCharsets.UTF_8));
+        SourceNormalizer.Result normalized = SourceNormalizer.normalize(
+                Files.readString(sourceFile, StandardCharsets.UTF_8),
+                sourceFile.getFileName().toString(), SourceNormalizer.SourceFormat.FIXED);
         PreprocessorEngine.Outcome preprocessing =
                 new PreprocessorEngine(binding, new CopybookLibrary(copybooks))
-                        .process(SourceMap.identity(fixed, sourceFile.getFileName().toString()),
-                                sourceFile.getFileName().toString());
+                        .process(normalized.sourceMap(), sourceFile.getFileName().toString());
         Lexer lexer = binding.cobolLexer(CharStreams.fromString(preprocessing.text()));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         Parser parser = binding.cobolParser(tokens);
@@ -133,7 +134,8 @@ class SemanticModelBaselineCharacterizationTest {
         IdentityHashMap<ParseTree, Integer> ids = new IdentityHashMap<>();
         IdentityHashMap<ParseTree, Integer> sizes = new IdentityHashMap<>();
         index(tree, ids, sizes, new int[]{0});
-        Ast.Program ast = new AstBuilder(parser, preprocessing.text(), ids, sizes).build(tree).program();
+        Ast.Program ast = new AstBuilder(parser, preprocessing.text(), preprocessing.sourceMap(),
+                ids, sizes).build(tree).program();
         return new Analysis(ast, AstSnapshot.from(ast), new SymbolTableBuilder().build(ast),
                 parser.getNumberOfSyntaxErrors(), preprocessing.unresolved());
     }

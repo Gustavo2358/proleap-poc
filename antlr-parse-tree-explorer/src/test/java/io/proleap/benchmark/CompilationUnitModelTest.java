@@ -94,7 +94,7 @@ class CompilationUnitModelTest {
 
     private static Parsed parseFixture() throws Exception {
         Path file = FIXTURE.toAbsolutePath();
-        String source = SourceNormalizer.fixed(Files.readString(file, StandardCharsets.UTF_8));
+        String source = SourceNormalizerTestSupport.fixed(Files.readString(file, StandardCharsets.UTF_8));
         GrammarBinding binding = Bindings.proleap();
         Parser parser = binding.cobolParser(new CommonTokenStream(
                 binding.cobolLexer(CharStreams.fromString(source, file.getFileName().toString()))));

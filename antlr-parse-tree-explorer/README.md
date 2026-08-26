@@ -8,7 +8,7 @@ No resultado do benchmark com a gramática ProLeap, ele é o maior programa do c
 
 - 4.236 linhas originais;
 - 57.227 nós;
-- 37.736 tokens;
+- 37.682 tokens;
 - profundidade máxima 39;
 - 51 ocorrências de `GO TO`, 64 de `PERFORM` e 10 nós `evaluateStatement`.
 
@@ -36,6 +36,47 @@ Também é possível executar manualmente:
 ```bash
 mvn compile exec:java
 ```
+
+## Contrato de source format e provenance
+
+O frontend aceita fonte COBOL em formato fixo por uma fronteira explícita. O
+arquivo bruto origina o `SourceMap` antes de qualquer transformação; normalização,
+COPY e preprocessing compõem esse mapa, sem recriar um mapa `identity` no meio do
+pipeline.
+
+- colunas 1–6 são sequence area, coluna 7 é indicator area, colunas 8–72 são
+  program text e o restante é identification area;
+- LF, CRLF e CR são preservados exatamente; separadores Unicode, caracteres
+  não ASCII e tabs ambíguos no program text falham localmente;
+- blank, `*`, `/`, `-` e `D`/`d` possuem políticas fechadas. Debug lines são
+  incluídas ou excluídas por opção explícita; indicador desconhecido não possui
+  fallback;
+- continuação usa estado lexical para literais com aspas simples/duplas e
+  palavras COBOL. Continuação órfã, após comentário ou em categoria não
+  implementada produz diagnóstico localizado;
+- comment entries são derivados dos parágrafos que a gramática declara,
+  delimitados por Area A e por `END-REMARKS` quando aplicável. Pontos no texto
+  não encerram a entrada, e nenhuma regex global decide seu estado;
+- texto transformado preserva seus registros físicos e recebe `exact=false`.
+  Conteúdo intocado e line endings mantêm segmentos exatos, inclusive dentro
+  de COPYs aninhados.
+
+O preprocessor também é fail-closed: cada alternativa top-level de
+`CobolPreprocessor.startRule` possui política testada contra o parser gerado.
+`EJECT`, `SKIP1/2/3` e `TITLE` são branqueados preservando quebras de linha;
+EXECs são preservados de forma opaca; compiler options são extraídas; COPY é
+expandido. `REPLACE` top-level permanece deliberadamente unsupported e falha na
+fronteira de preprocessing, em vez de chegar silenciosamente ao parser COBOL.
+
+O gate de regressão executa a suíte Maven e a aplicação real para o caso
+canônico, a regressão de comment entry e COPYs com normalização aninhada:
+
+```bash
+MAVEN_BIN="${MAVEN_BIN:-mvn}" ./scripts/source-normalizer-regression.sh manual
+```
+
+O comando verifica erros de lexer/parser, baseline semântico, artefatos web,
+provenance e ausência de comment entries na AST semântica.
 
 Argumentos opcionais do gerador:
 
