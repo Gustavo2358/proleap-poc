@@ -55,6 +55,13 @@ class SourceProvenanceTest {
         assertEquals(6, missing.original().startLine());
         assertTrue(missing.includeChain().isEmpty());
         assertFalse(missing.exact(), "generated diagnostic text is not an exact source slice");
+
+        Diagnostic missingDiagnostic = outcome.diagnostics().stream()
+                .filter(diagnostic -> diagnostic.message().startsWith("unresolved_copy"))
+                .findFirst().orElseThrow();
+        assertEquals("main.cbl", missingDiagnostic.file());
+        assertEquals(6, missingDiagnostic.line());
+        assertEquals(7, missingDiagnostic.column());
     }
 
     @Test

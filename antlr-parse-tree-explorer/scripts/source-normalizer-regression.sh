@@ -12,6 +12,7 @@ maven_bin="${MAVEN_BIN:-mvn}"
 run_root="$(mktemp -d "/tmp/proleap-source-normalizer-${phase}.XXXXXX")"
 canonical_output="$run_root/coactupc"
 fixture_output="$run_root/comment-entry"
+integration_output="$run_root/copybook-normalization"
 
 cd "$project_dir"
 "$maven_bin" -q test
@@ -24,12 +25,16 @@ cd "$project_dir"
   -Dexec.args="--source src/test/resources/cobol/source-format/comment-before-environment.cbl --copybooks src/test/resources/cobol/provenance/cpy --output $fixture_output" \
   >"$run_root/comment-entry.log"
 
+"$maven_bin" -q compile exec:java \
+  -Dexec.args="--source src/test/resources/cobol/source-format-integration/main.cbl --copybooks src/test/resources/cobol/source-format-integration/cpy --output $integration_output" \
+  >"$run_root/copybook-normalization.log"
+
 required_files=(
   index.html ast.html symbols.html resolution.html
   tree-data.js ast-data.js symbol-data.js resolution-data.js
 )
 
-for output in "$canonical_output" "$fixture_output"; do
+for output in "$canonical_output" "$fixture_output" "$integration_output"; do
   for file in "${required_files[@]}"; do
     if [[ ! -s "$output/$file" ]]; then
       echo "Missing or empty regression artifact: $output/$file" >&2
@@ -57,6 +62,18 @@ if grep -Fq '*>CE ENVIRONMENT DIVISION.' "$fixture_output/preprocessed.cbl"; the
 fi
 grep -Fq '"sf":"comment-before-environment.cbl","sl":5' "$fixture_output/ast-data.js"
 
+grep -Fq '"n":"COPY-NORMALIZED"' "$integration_output/ast-data.js"
+grep -Fq '"n":"01 LONG-NAME"' "$integration_output/ast-data.js"
+grep -Fq '"sf":"FIELDS.cpy","sl":1' "$integration_output/ast-data.js"
+grep -Fq '"sf":"UNIT.cpy","sl":10' "$integration_output/ast-data.js"
+grep -Fq 'AUTHOR. *>CE ENTRY INSIDE COPY. WITH PERIODS.' \
+  "$integration_output/preprocessed.cbl"
+if grep -Fq '"g":"commentEntry"' "$integration_output/ast-data.js"; then
+  echo "Comment entry leaked into the semantic AST" >&2
+  exit 1
+fi
+
 echo "Source-normalizer regression passed: $run_root"
 sed -n '1,8p' "$run_root/coactupc.log"
 sed -n '1,8p' "$run_root/comment-entry.log"
+sed -n '1,8p' "$run_root/copybook-normalization.log"

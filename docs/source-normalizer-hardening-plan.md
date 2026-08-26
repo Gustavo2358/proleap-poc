@@ -240,17 +240,17 @@ não depender de interface gráfica.
 
 ### Fase 7 — Integração completa com preprocessing e copybooks
 
-- [ ] Testar normalização + COPY simples, aninhado, `REPLACING`, ausente,
+- [x] Testar normalização + COPY simples, aninhado, `REPLACING`, ausente,
       cíclico e com erro de leitura.
-- [ ] Testar comment entry e continuação dentro de copybook com include chain.
-- [ ] Testar `EJECT`, `SKIP1/2/3`, `TITLE`, EXECs e compiler options depois da
+- [x] Testar comment entry e continuação dentro de copybook com include chain.
+- [x] Testar `EJECT`, `SKIP1/2/3`, `TITLE`, EXECs e compiler options depois da
       nova fronteira de source format.
-- [ ] Confirmar que transformações do preprocessor preservam o mapa bruto criado
+- [x] Confirmar que transformações do preprocessor preservam o mapa bruto criado
       pelo normalizador, sem voltar a `identity` intermediário.
-- [ ] Confirmar que diagnósticos do lexer, parser e preprocessor apontam para
+- [x] Confirmar que diagnósticos do lexer, parser e preprocessor apontam para
       arquivo, linha e coluna físicos.
-- [ ] Rodar teste focado, suíte completa e gate da aplicação.
-- [ ] Commit: `test: cover normalization and preprocessing provenance`.
+- [x] Rodar teste focado, suíte completa e gate da aplicação.
+- [x] Commit: `test: cover normalization and preprocessing provenance`.
 
 ### Fase 8 — Fail-closed, remoção de compatibilidade heurística e review global
 

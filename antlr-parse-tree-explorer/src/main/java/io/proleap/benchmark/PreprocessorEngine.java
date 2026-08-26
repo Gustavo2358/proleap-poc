@@ -145,14 +145,13 @@ final class PreprocessorEngine {
                 Optional<Path> path = library.resolve(requested);
                 if (path.isEmpty()) {
                     unresolved[0]++;
-                    int line = 1 + (int) source.substring(0, start).chars().filter(c -> c == '\n').count();
-                    diagnostics.add(new Diagnostic(binding.name(), Diagnostic.Phase.PREPROCESSOR, file, line, 0,
-                            "unresolved_copy: " + requested, requested, ""));
+                    diagnostics.add(sourceDiagnostic(document, Diagnostic.Phase.PREPROCESSOR,
+                            start, end, "unresolved_copy: " + requested, requested, ""));
                     edits.add(new Edit(start, end, document.transformedSlice(start, end,
                             "*> UNRESOLVED COPY " + requested + "\n")));
                 } else if (!expansionStack.add(path.get().toAbsolutePath().normalize())) {
-                    diagnostics.add(new Diagnostic(binding.name(), Diagnostic.Phase.PREPROCESSOR, file, 0, 0,
-                            "cyclic COPY: " + requested, requested, ""));
+                    diagnostics.add(sourceDiagnostic(document, Diagnostic.Phase.PREPROCESSOR,
+                            start, end, "cyclic COPY: " + requested, requested, ""));
                     edits.add(new Edit(start, end, document.transformedSlice(start, end,
                             "*> CYCLIC COPY " + requested + "\n")));
                 } else {
@@ -170,8 +169,8 @@ final class PreprocessorEngine {
                         Ast.CopyFrame frame = new Ast.CopyFrame(file, requested, includedFile, includeLine);
                         edits.add(new Edit(start, end, copyText.withCopyFrame(frame)));
                     } catch (IOException e) {
-                        diagnostics.add(new Diagnostic(binding.name(), Diagnostic.Phase.IO, file, 0, 0,
-                                e.getMessage(), requested, e.getClass().getName()));
+                        diagnostics.add(sourceDiagnostic(document, Diagnostic.Phase.IO,
+                                start, end, e.getMessage(), requested, e.getClass().getName()));
                         edits.add(new Edit(start, end, document.transformedSlice(start, end,
                                 "*> COPY IO ERROR " + requested + "\n")));
                     } finally {
@@ -211,6 +210,14 @@ final class PreprocessorEngine {
             lastStart = edit.start();
         }
         return result;
+    }
+
+    private Diagnostic sourceDiagnostic(SourceMap document, Diagnostic.Phase phase,
+                                        int start, int end, String message,
+                                        String offendingToken, String exceptionClass) {
+        Ast.SourceLocation original = document.provenance(start, end).original();
+        return new Diagnostic(binding.name(), phase, original.file(), original.startLine(),
+                original.startColumn(), message, offendingToken, exceptionClass);
     }
 
     static Map<String, PreprocessorPolicy> policies() {
