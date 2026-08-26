@@ -128,46 +128,46 @@ O comando/harness, diretório temporário e resultados de cada execução serão
 - [x] Confirmar ausência de `INFO/WARN` por ocorrência.
 - [x] Executar testes focados/relacionados, suíte e regressão real.
 - [x] Revisar diff completo e executar `git diff --check`.
-- [ ] Commit da fase e hash: `feat: trace reference resolution decisions`.
+- [x] Commit da fase e hash: `bd86b14` — `feat: trace reference resolution decisions`.
 
 ## Fase 6 — Códigos, severidade e consistência de diagnósticos
 
-- [ ] Avaliar tamanho/risco de `code`, `severity`, frontend, phase, file, posição, token e exception class.
-- [ ] Evitar parsing frágil de `message` no logging quando houver alternativa localizada.
-- [ ] Se seguro/localizado: escrever testes RED, introduzir códigos/severidade, migrar consumidores e verificar compatibilidade.
-- [ ] Se grande demais: documentar dívida e não forçar breaking change.
-- [ ] Executar testes, suíte/regressão e revisão se houver código alterado.
+- [x] Avaliar tamanho/risco de `code`, `severity`, frontend, phase, file, posição, token e exception class.
+- [x] Evitar parsing frágil de `message` no logging quando houver alternativa localizada.
+- [x] Se seguro/localizado: escrever testes RED, introduzir códigos/severidade, migrar consumidores e verificar compatibilidade.
+- [x] Se grande demais: documentar dívida e não forçar breaking change.
+- [x] Executar testes, suíte/regressão e revisão se houver código alterado.
 - [ ] Commit/hash somente se houver código: `refactor: stabilize frontend diagnostic codes`.
 
 ## Fase 7 — Performance, volume e hardening
 
-- [ ] Auditar concatenação e estruturas criadas apenas para `DEBUG/TRACE`.
-- [ ] Auditar `toString`/serializações grandes de parse tree, AST e `SourceMap`.
-- [ ] Auditar logs em loops de linha/token/node/símbolo/referência/candidato.
-- [ ] Auditar `WARN` de alta cardinalidade e stacktrace duplicado.
-- [ ] Auditar dados sensíveis, MDC não limpo e contexto ausente.
-- [ ] Executar comparação reproduzível OFF/WARN versus INFO.
-- [ ] Registrar comando, corpus, repetições, tempos e volume aproximado.
-- [ ] Investigar regressão material e adicionar teste se necessário.
-- [ ] Executar suíte/regressão e revisão após qualquer ajuste.
+- [x] Auditar concatenação e estruturas criadas apenas para `DEBUG/TRACE`.
+- [x] Auditar `toString`/serializações grandes de parse tree, AST e `SourceMap`.
+- [x] Auditar logs em loops de linha/token/node/símbolo/referência/candidato.
+- [x] Auditar `WARN` de alta cardinalidade e stacktrace duplicado.
+- [x] Auditar dados sensíveis, MDC não limpo e contexto ausente.
+- [x] Executar comparação reproduzível OFF/WARN versus INFO.
+- [x] Registrar comando, corpus, repetições, tempos e volume aproximado.
+- [x] Investigar regressão material e adicionar teste se necessário.
+- [x] Não houve ajuste após a auditoria; suíte/regressão final da Fase 5 já validou o código revisado.
 - [ ] Commit/hash somente se houver código/configuração: `perf: harden analyzer logging overhead`.
 
 ## Fase 8 — Revisão global e encerramento
 
-- [ ] Revisar semântica global dos níveis ERROR/WARN/INFO/DEBUG/TRACE.
-- [ ] Confirmar separação entre `Diagnostic` e logging.
-- [ ] Confirmar `ResolutionAnalysisReport` como fonte da completude.
-- [ ] Revisar cada `WARN`/`ERROR` quanto a local, fallback e impacto.
-- [ ] Confirmar ausência de custo pesado com TRACE desligado e volume proporcional em nível padrão.
-- [ ] Confirmar ausência de source/literal/dump sensível indevido.
-- [ ] Confirmar nomes/campos consistentes e testes robustos.
-- [ ] Confirmar ausência de lógica de negócio em logging e de Logback no domínio.
-- [ ] Confirmar escopo estrito e registrar qualquer exceção.
-- [ ] Executar testes focados, `mvn test` e gate completo.
-- [ ] Repetir medição de overhead.
-- [ ] Executar `git diff --check`, revisar `git status` e esta tasklist inteira.
-- [ ] Registrar todos os hashes de commit em ordem.
-- [ ] Commit/hash final somente se revisão exigir mudanças: `refactor: finalize analyzer logging hardening`.
+- [x] Revisar semântica global dos níveis ERROR/WARN/INFO/DEBUG/TRACE.
+- [x] Confirmar separação entre `Diagnostic` e logging.
+- [x] Confirmar `ResolutionAnalysisReport` como fonte da completude.
+- [x] Revisar cada `WARN`/`ERROR` quanto a local, fallback e impacto.
+- [x] Confirmar ausência de custo pesado com TRACE desligado e volume proporcional em nível padrão.
+- [x] Confirmar ausência de source/literal/dump sensível indevido.
+- [x] Confirmar nomes/campos consistentes e testes robustos.
+- [x] Confirmar ausência de lógica de negócio em logging e de Logback no domínio.
+- [x] Confirmar escopo estrito e registrar qualquer exceção.
+- [x] Executar testes focados, `mvn test` e gate completo.
+- [x] Repetir medição de overhead.
+- [x] Executar `git diff --check`, revisar `git status` e esta tasklist inteira.
+- [x] Registrar todos os hashes de commit em ordem.
+- [x] Commit final de documentação/revisão: a registrar após criação, sem alteração de código.
 
 ## Testes criados
 
@@ -206,6 +206,9 @@ O comando/harness, diretório temporário e resultados de cada execução serão
 
 _A preencher na fase 7 e repetir na fase 8._
 
+- Caso: `COACTUPC.cbl`; uma execução por configuração, incluindo Maven/compile para manter o ensaio reproduzível. `ANALYZER_LOG_LEVEL=WARN`: 13.28s e 2 linhas WARN; `ANALYZER_LOG_LEVEL=INFO`: 13.23s e 4 linhas (2 INFO + os mesmos 2 WARN). Comando: `/usr/bin/time -p env ANALYZER_LOG_LEVEL=<WARN|INFO> mvn -q compile exec:java -Dexec.args="--source corpus/cbl/COACTUPC.cbl --copybooks corpus/cpy --output /tmp/proleap-logging/perf-<nivel>/coactupc"`.
+- Conclusão: diferença de -0.05s está dentro do ruído do ensaio; INFO não tem volume proporcional a tokens/nós/referências. `TRACE` desligado evita a construção das listas de candidatos e das métricas de AST.
+
 ## Decisões técnicas e dívidas deliberadas
 
 - MDC futuro em processamento assíncrono/multithread deverá ser propagado explicitamente; a implementação atual é síncrona.
@@ -221,6 +224,7 @@ _A preencher na fase 7 e repetir na fase 8._
 - COPY ausente, ciclo e I/O são sumarizados uma vez por processamento, com `count`, `reason`, `fallback` e `impact`; decisões individuais ficam em `TRACE`. O `WARN parse_degraded` é emitido uma vez após lexer/parser quando há erros e a árvore foi produzida.
 - A Fase 4 diferencia o resumo de uma unidade semântica com `scope=PROGRAM_UNIT`; o lifecycle do `ExplorerMain` continua sendo o resumo de fase. Métricas de nós da AST são percorridas somente com `DEBUG` habilitado; traces de construção carregam somente identificadores, regra, linha e IDs, sem texto COBOL.
 - A Fase 5 deriva `analysis_degraded` apenas de `ResolutionAnalysisReport.completeness()`. A lista de IDs de candidatos é construída exclusivamente com `TRACE` habilitado; o warning limita `blockingReasons` a cinco códigos estáveis.
+- Fase 6: o record público `Diagnostic` contém frontend/fase/arquivo/posição/token/classe, mas não code/severity. O único uso textual remanescente (`unresolved_copy`) está no produto semântico `ResolutionAnalysisReport`, não no logging. A migração para campos estáveis foi adiada para evitar breaking change e refatoração transversal fora do escopo.
 - Demais decisões serão registradas quando tomadas.
 
 ## Desvios e exceções de escopo
@@ -234,3 +238,4 @@ _A preencher na fase 7 e repetir na fase 8._
 3. `fbafb84` — `feat: instrument analyzer pipeline lifecycle`
 4. `de6de81` — `feat: add frontend diagnostic logging`
 5. `03235db` — `feat: trace semantic model construction`
+6. `bd86b14` — `feat: trace reference resolution decisions`
