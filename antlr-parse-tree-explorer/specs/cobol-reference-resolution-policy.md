@@ -2,7 +2,7 @@
 
 ## Identidade
 
-- policy ID: `proleap-cobol/ibm-enterprise-compatible`;
+- policy ID: `cobol-explorer/ibm-enterprise-compatible`;
 - versão: `1.0.0`;
 - grammar frontend: `Cobol.g4` e `CobolPreprocessor.g4` versionadas no projeto;
 - `QUALIFY` default: `UNSPECIFIED` — nenhuma variante será presumida.

@@ -9,15 +9,15 @@
     </encoder>
   </appender>
 
-  <logger name="io.proleap.benchmark.ExplorerMain" level="${ANALYZER_LOG_LEVEL}"/>
-  <logger name="io.proleap.benchmark.SourceNormalizer" level="${NORMALIZER_LOG_LEVEL:-WARN}"/>
-  <logger name="io.proleap.benchmark.PreprocessorEngine" level="${PREPROCESSOR_LOG_LEVEL:-WARN}"/>
-  <logger name="io.proleap.benchmark.AntlrDiagnosticListener" level="${ANTLR_DIAGNOSTIC_LOG_LEVEL:-WARN}"/>
-  <logger name="io.proleap.benchmark.AstBuilder" level="${AST_LOG_LEVEL:-WARN}"/>
-  <logger name="io.proleap.benchmark.CompilationUnitSymbolTableBuilder" level="${SYMBOL_LOG_LEVEL:-WARN}"/>
-  <logger name="io.proleap.benchmark.SymbolTableBuilder" level="${SYMBOL_LOG_LEVEL:-WARN}"/>
-  <logger name="io.proleap.benchmark.ReferenceOccurrenceCollector" level="${REFERENCE_COLLECTOR_LOG_LEVEL:-WARN}"/>
-  <logger name="io.proleap.benchmark.CobolReferenceResolver" level="${RESOLVER_LOG_LEVEL:-WARN}"/>
+  <logger name="io.github.gustavo2358.cobolexplorer.ExplorerMain" level="${ANALYZER_LOG_LEVEL}"/>
+  <logger name="io.github.gustavo2358.cobolexplorer.SourceNormalizer" level="${NORMALIZER_LOG_LEVEL:-WARN}"/>
+  <logger name="io.github.gustavo2358.cobolexplorer.PreprocessorEngine" level="${PREPROCESSOR_LOG_LEVEL:-WARN}"/>
+  <logger name="io.github.gustavo2358.cobolexplorer.AntlrDiagnosticListener" level="${ANTLR_DIAGNOSTIC_LOG_LEVEL:-WARN}"/>
+  <logger name="io.github.gustavo2358.cobolexplorer.AstBuilder" level="${AST_LOG_LEVEL:-WARN}"/>
+  <logger name="io.github.gustavo2358.cobolexplorer.CompilationUnitSymbolTableBuilder" level="${SYMBOL_LOG_LEVEL:-WARN}"/>
+  <logger name="io.github.gustavo2358.cobolexplorer.SymbolTableBuilder" level="${SYMBOL_LOG_LEVEL:-WARN}"/>
+  <logger name="io.github.gustavo2358.cobolexplorer.ReferenceOccurrenceCollector" level="${REFERENCE_COLLECTOR_LOG_LEVEL:-WARN}"/>
+  <logger name="io.github.gustavo2358.cobolexplorer.CobolReferenceResolver" level="${RESOLVER_LOG_LEVEL:-WARN}"/>
 
   <root level="WARN">
     <appender-ref ref="STDERR"/>

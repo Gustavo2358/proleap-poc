@@ -21,9 +21,9 @@
 IDENTIFICATION DIVISION.
 PROGRAM-ID.
     COACTUPC.
-DATE-WRITTEN. 
+DATE-WRITTEN.
 *>CE July 2022.
-DATE-COMPILED. 
+DATE-COMPILED.
 *>CE Today.
 
 ENVIRONMENT DIVISION.
@@ -252,7 +252,6 @@ WORKING-STORAGE SECTION.
 *> 
 *>  Ver: CardDemo_v1.0-15-g27d6c6f-68 Date: 2022-07-19 23:15:59 CDT
 *> 
-
 
 *> *****************************************************************
   05  WS-DATACHANGED-FLAG                   PIC X(1).
@@ -730,7 +729,6 @@ WORKING-STORAGE SECTION.
 *> 
 *>  Ver: CardDemo_v1.0-15-g27d6c6f-68 Date: 2022-07-19 23:16:00 CDT
 *> 
-
 
 *> *****************************************************************
 *> Lookups
@@ -2056,7 +2054,6 @@ WORKING-STORAGE SECTION.
 
 
 
-
 *> *****************************************************************
 *>  Variables for use in INSPECT statements
 *> *****************************************************************
@@ -2102,7 +2099,6 @@ WORKING-STORAGE SECTION.
 *> 
 *>  Ver: CardDemo_v1.0-15-g27d6c6f-68 Date: 2022-07-19 23:15:58 CDT
 *> 
-
 
 
 *> Account Update Screen Layout
@@ -2170,7 +2166,6 @@ WORKING-STORAGE SECTION.
 *> 
 
 
-
 *> Common Messages
 *> *****************************************************************
 *>  Copyright Amazon.com, Inc. or its affiliates.                   
@@ -2196,7 +2191,6 @@ WORKING-STORAGE SECTION.
 *> 
 *>  Ver: CardDemo_v1.0-15-g27d6c6f-68 Date: 2022-07-19 23:15:58 CDT
 *> 
-
 
 
 *> Abend Variables
@@ -2237,7 +2231,6 @@ WORKING-STORAGE SECTION.
 *> 
 
 
-
 *> Signed on user data
 *> *****************************************************************
 *>  Copyright Amazon.com, Inc. or its affiliates.                   
@@ -2267,7 +2260,6 @@ WORKING-STORAGE SECTION.
 *> 
 
 
-
 *> Dataset layouts
 
 *> ACCT RECORD LAYOUT
@@ -2293,7 +2285,6 @@ WORKING-STORAGE SECTION.
 *> 
 
 
-
 *> CARD XREF LAYOUT
 *> **************************************************************** 
 *>     Data-structure for card xref (RECLN 50)                      
@@ -2306,7 +2297,6 @@ WORKING-STORAGE SECTION.
 *> 
 *>  Ver: CardDemo_v1.0-15-g27d6c6f-68 Date: 2022-07-19 23:16:00 CDT
 *> 
-
 
 
 *> CUSTOMER LAYOUT
@@ -2336,7 +2326,6 @@ WORKING-STORAGE SECTION.
 *> 
 *>  Ver: CardDemo_v1.0-15-g27d6c6f-68 Date: 2022-07-19 23:16:00 CDT
 *> 
-
 
 
 *> *****************************************************************
@@ -2388,7 +2377,6 @@ WORKING-STORAGE SECTION.
 *> 
 *>  Ver: CardDemo_v1.0-15-g27d6c6f-68 Date: 2022-07-19 23:15:57 CDT
 *> 
-
 
 
 01 WS-THIS-PROGCOMMAREA.
@@ -2601,7 +2589,7 @@ PROCEDURE DIVISION.
 0000-MAIN.
 
 
-    *>EXECCICS EXEC CICS HANDLE ABEND LABEL(ABEND-ROUTINE) END-EXEC
+    *>EXECCICS EXEC CICS HANDLE ABEND               LABEL(ABEND-ROUTINE)     END-EXEC
 
 
     INITIALIZE CC-WORK-AREA
@@ -2690,10 +2678,10 @@ PROCEDURE DIVISION.
             MOVE LIT-THISMAPSET     TO CDEMO-LAST-MAPSET
             MOVE LIT-THISMAP        TO CDEMO-LAST-MAP
 
-            *>EXECCICS EXEC CICS SYNCPOINT END-EXEC
+            *>EXECCICS EXEC CICS                  SYNCPOINT             END-EXEC
 
 *> 
-            *>EXECCICS EXEC CICS XCTL PROGRAM (CDEMO-TO-PROGRAM) COMMAREA(CARDDEMO-COMMAREA) END-EXEC
+            *>EXECCICS EXEC CICS XCTL                  PROGRAM (CDEMO-TO-PROGRAM)                  COMMAREA(CARDDEMO-COMMAREA)             END-EXEC
 
 *> *****************************************************************
 *>        FRESH ENTRY INTO PROGRAM
@@ -2750,7 +2738,7 @@ COMMON-RETURN.
            WS-COMMAREA(LENGTH OF CARDDEMO-COMMAREA + 1:
                         LENGTH OF WS-THIS-PROGCOMMAREA )
 
-    *>EXECCICS EXEC CICS RETURN TRANSID (LIT-THISTRANID) COMMAREA (WS-COMMAREA) LENGTH(LENGTH OF WS-COMMAREA) END-EXEC
+    *>EXECCICS EXEC CICS RETURN          TRANSID (LIT-THISTRANID)          COMMAREA (WS-COMMAREA)          LENGTH(LENGTH OF WS-COMMAREA)     END-EXEC
 
     .
 0000-MAIN-EXIT.
@@ -2772,7 +2760,7 @@ COMMON-RETURN.
     EXIT
     .
 1100-RECEIVE-MAP.
-    *>EXECCICS EXEC CICS RECEIVE MAP(LIT-THISMAP) MAPSET(LIT-THISMAPSET) INTO(CACTUPAI) RESP(WS-RESP-CD) RESP2(WS-REAS-CD) END-EXEC
+    *>EXECCICS EXEC CICS RECEIVE MAP(LIT-THISMAP)               MAPSET(LIT-THISMAPSET)               INTO(CACTUPAI)               RESP(WS-RESP-CD)               RESP2(WS-REAS-CD)     END-EXEC
 
 *> 
     INITIALIZE ACUP-NEW-DETAILS
@@ -4968,7 +4956,6 @@ EDIT-US-PHONE-EXIT.
 *> 
 
 
-
 *>     Open Year
     *> *****************************************************************
 *>  Copyright Amazon.com, Inc. or its affiliates.                   
@@ -5000,7 +4987,6 @@ EDIT-US-PHONE-EXIT.
 *> 
 *>  Ver: CardDemo_v1.0-15-g27d6c6f-68 Date: 2022-07-19 23:15:58 CDT
 *> 
-
 
 
 *>     Open Month
@@ -5036,7 +5022,6 @@ EDIT-US-PHONE-EXIT.
 *> 
 
 
-
 *>     Open Day
     *> *****************************************************************
 *>  Copyright Amazon.com, Inc. or its affiliates.                   
@@ -5068,7 +5053,6 @@ EDIT-US-PHONE-EXIT.
 *> 
 *>  Ver: CardDemo_v1.0-15-g27d6c6f-68 Date: 2022-07-19 23:15:58 CDT
 *> 
-
 
 
 *>     Credit Limit
@@ -5104,7 +5088,6 @@ EDIT-US-PHONE-EXIT.
 *> 
 
 
-
 *>     Expiry Year
     *> *****************************************************************
 *>  Copyright Amazon.com, Inc. or its affiliates.                   
@@ -5136,7 +5119,6 @@ EDIT-US-PHONE-EXIT.
 *> 
 *>  Ver: CardDemo_v1.0-15-g27d6c6f-68 Date: 2022-07-19 23:15:58 CDT
 *> 
-
 
 
 *>     Expiry Month
@@ -5172,7 +5154,6 @@ EDIT-US-PHONE-EXIT.
 *> 
 
 
-
 *>     Expiry Day
     *> *****************************************************************
 *>  Copyright Amazon.com, Inc. or its affiliates.                   
@@ -5204,7 +5185,6 @@ EDIT-US-PHONE-EXIT.
 *> 
 *>  Ver: CardDemo_v1.0-15-g27d6c6f-68 Date: 2022-07-19 23:15:58 CDT
 *> 
-
 
 
 *>     Cash Credit Limit
@@ -5240,7 +5220,6 @@ EDIT-US-PHONE-EXIT.
 *> 
 
 
-
 *>     Reissue Year
     *> *****************************************************************
 *>  Copyright Amazon.com, Inc. or its affiliates.                   
@@ -5272,7 +5251,6 @@ EDIT-US-PHONE-EXIT.
 *> 
 *>  Ver: CardDemo_v1.0-15-g27d6c6f-68 Date: 2022-07-19 23:15:58 CDT
 *> 
-
 
 
 *>     Reissue Month
@@ -5308,7 +5286,6 @@ EDIT-US-PHONE-EXIT.
 *> 
 
 
-
 *>     Reissue Day
     *> *****************************************************************
 *>  Copyright Amazon.com, Inc. or its affiliates.                   
@@ -5340,7 +5317,6 @@ EDIT-US-PHONE-EXIT.
 *> 
 *>  Ver: CardDemo_v1.0-15-g27d6c6f-68 Date: 2022-07-19 23:15:58 CDT
 *> 
-
 
 
 *>     Current Balance
@@ -5376,7 +5352,6 @@ EDIT-US-PHONE-EXIT.
 *> 
 
 
-
 *>     Current Cycle Credit
     *> *****************************************************************
 *>  Copyright Amazon.com, Inc. or its affiliates.                   
@@ -5408,7 +5383,6 @@ EDIT-US-PHONE-EXIT.
 *> 
 *>  Ver: CardDemo_v1.0-15-g27d6c6f-68 Date: 2022-07-19 23:15:58 CDT
 *> 
-
 
 
 *>     Current Cycle Debit
@@ -5444,7 +5418,6 @@ EDIT-US-PHONE-EXIT.
 *> 
 
 
-
 *>     SSN Part 1
     *> *****************************************************************
 *>  Copyright Amazon.com, Inc. or its affiliates.                   
@@ -5476,7 +5449,6 @@ EDIT-US-PHONE-EXIT.
 *> 
 *>  Ver: CardDemo_v1.0-15-g27d6c6f-68 Date: 2022-07-19 23:15:58 CDT
 *> 
-
 
 
 *>     SSN Part 2
@@ -5512,7 +5484,6 @@ EDIT-US-PHONE-EXIT.
 *> 
 
 
-
 *>     SSN Part 3
     *> *****************************************************************
 *>  Copyright Amazon.com, Inc. or its affiliates.                   
@@ -5544,7 +5515,6 @@ EDIT-US-PHONE-EXIT.
 *> 
 *>  Ver: CardDemo_v1.0-15-g27d6c6f-68 Date: 2022-07-19 23:15:58 CDT
 *> 
-
 
 
 *>     Date of Birth Year
@@ -5580,7 +5550,6 @@ EDIT-US-PHONE-EXIT.
 *> 
 
 
-
 *>     Date of Birth Month
     *> *****************************************************************
 *>  Copyright Amazon.com, Inc. or its affiliates.                   
@@ -5612,7 +5581,6 @@ EDIT-US-PHONE-EXIT.
 *> 
 *>  Ver: CardDemo_v1.0-15-g27d6c6f-68 Date: 2022-07-19 23:15:58 CDT
 *> 
-
 
 
 *>     Date of Birth Day
@@ -5648,7 +5616,6 @@ EDIT-US-PHONE-EXIT.
 *> 
 
 
-
 *>     FICO Score
     *> *****************************************************************
 *>  Copyright Amazon.com, Inc. or its affiliates.                   
@@ -5680,7 +5647,6 @@ EDIT-US-PHONE-EXIT.
 *> 
 *>  Ver: CardDemo_v1.0-15-g27d6c6f-68 Date: 2022-07-19 23:15:58 CDT
 *> 
-
 
 
 *>     First Name
@@ -5716,7 +5682,6 @@ EDIT-US-PHONE-EXIT.
 *> 
 
 
-
 *>     Middle Name (no edits coded)
     *> *****************************************************************
 *>  Copyright Amazon.com, Inc. or its affiliates.                   
@@ -5748,7 +5713,6 @@ EDIT-US-PHONE-EXIT.
 *> 
 *>  Ver: CardDemo_v1.0-15-g27d6c6f-68 Date: 2022-07-19 23:15:58 CDT
 *> 
-
 
 
 *>     Last Name
@@ -5784,7 +5748,6 @@ EDIT-US-PHONE-EXIT.
 *> 
 
 
-
 *>     Address Line 1
     *> *****************************************************************
 *>  Copyright Amazon.com, Inc. or its affiliates.                   
@@ -5816,7 +5779,6 @@ EDIT-US-PHONE-EXIT.
 *> 
 *>  Ver: CardDemo_v1.0-15-g27d6c6f-68 Date: 2022-07-19 23:15:58 CDT
 *> 
-
 
 
 *>     State
@@ -5852,7 +5814,6 @@ EDIT-US-PHONE-EXIT.
 *> 
 
 
-
 *>     Address Line 2 (NO EDITS CODED AS YET)
     *> *****************************************************************
 *>  Copyright Amazon.com, Inc. or its affiliates.                   
@@ -5884,7 +5845,6 @@ EDIT-US-PHONE-EXIT.
 *> 
 *>  Ver: CardDemo_v1.0-15-g27d6c6f-68 Date: 2022-07-19 23:15:58 CDT
 *> 
-
 
 
 *>     State
@@ -5920,7 +5880,6 @@ EDIT-US-PHONE-EXIT.
 *> 
 
 
-
 *>     City
     *> *****************************************************************
 *>  Copyright Amazon.com, Inc. or its affiliates.                   
@@ -5952,7 +5911,6 @@ EDIT-US-PHONE-EXIT.
 *> 
 *>  Ver: CardDemo_v1.0-15-g27d6c6f-68 Date: 2022-07-19 23:15:58 CDT
 *> 
-
 
 
 *>     Country
@@ -5988,7 +5946,6 @@ EDIT-US-PHONE-EXIT.
 *> 
 
 
-
 *>     Phone 1 Area Code
     *> *****************************************************************
 *>  Copyright Amazon.com, Inc. or its affiliates.                   
@@ -6020,7 +5977,6 @@ EDIT-US-PHONE-EXIT.
 *> 
 *>  Ver: CardDemo_v1.0-15-g27d6c6f-68 Date: 2022-07-19 23:15:58 CDT
 *> 
-
 
 
 *>     Phone 1 Prefix
@@ -6055,7 +6011,6 @@ EDIT-US-PHONE-EXIT.
 *>  Ver: CardDemo_v1.0-15-g27d6c6f-68 Date: 2022-07-19 23:15:58 CDT
 *> 
 
-
 *>     Phone 1 Line number
     *> *****************************************************************
 *>  Copyright Amazon.com, Inc. or its affiliates.                   
@@ -6087,7 +6042,6 @@ EDIT-US-PHONE-EXIT.
 *> 
 *>  Ver: CardDemo_v1.0-15-g27d6c6f-68 Date: 2022-07-19 23:15:58 CDT
 *> 
-
 
 
 *>     Phone 2 Area Code
@@ -6123,7 +6077,6 @@ EDIT-US-PHONE-EXIT.
 *> 
 
 
-
 *>     Phone 2 Prefix
     *> *****************************************************************
 *>  Copyright Amazon.com, Inc. or its affiliates.                   
@@ -6155,7 +6108,6 @@ EDIT-US-PHONE-EXIT.
 *> 
 *>  Ver: CardDemo_v1.0-15-g27d6c6f-68 Date: 2022-07-19 23:15:58 CDT
 *> 
-
 
 *>     Phone 2 Line number
     *> *****************************************************************
@@ -6189,7 +6141,6 @@ EDIT-US-PHONE-EXIT.
 *>  Ver: CardDemo_v1.0-15-g27d6c6f-68 Date: 2022-07-19 23:15:58 CDT
 *> 
 
-
 *>     EFT Account Id
     *> *****************************************************************
 *>  Copyright Amazon.com, Inc. or its affiliates.                   
@@ -6222,7 +6173,6 @@ EDIT-US-PHONE-EXIT.
 *>  Ver: CardDemo_v1.0-15-g27d6c6f-68 Date: 2022-07-19 23:15:58 CDT
 *> 
 
-
 *>     Primary Card Holder
     *> *****************************************************************
 *>  Copyright Amazon.com, Inc. or its affiliates.                   
@@ -6254,7 +6204,6 @@ EDIT-US-PHONE-EXIT.
 *> 
 *>  Ver: CardDemo_v1.0-15-g27d6c6f-68 Date: 2022-07-19 23:15:58 CDT
 *> 
-
 
     .
 3300-SETUP-SCREEN-ATTRS-EXIT.
@@ -6414,7 +6363,7 @@ EDIT-US-PHONE-EXIT.
     MOVE LIT-THISMAPSET         TO CCARD-NEXT-MAPSET
     MOVE LIT-THISMAP            TO CCARD-NEXT-MAP
 
-    *>EXECCICS EXEC CICS SEND MAP(CCARD-NEXT-MAP) MAPSET(CCARD-NEXT-MAPSET) FROM(CACTUPAO) CURSOR ERASE FREEKB RESP(WS-RESP-CD) END-EXEC
+    *>EXECCICS EXEC CICS SEND MAP(CCARD-NEXT-MAP)                    MAPSET(CCARD-NEXT-MAPSET)                    FROM(CACTUPAO)                    CURSOR                    ERASE                    FREEKB                    RESP(WS-RESP-CD)     END-EXEC
 
     .
 3400-SEND-SCREEN-EXIT.
@@ -6468,7 +6417,7 @@ EDIT-US-PHONE-EXIT.
 
 *>     Read the Card file. Access via alternate index ACCTID
 *> 
-    *>EXECCICS EXEC CICS READ DATASET (LIT-CARDXREFNAME-ACCT-PATH) RIDFLD (WS-CARD-RID-ACCT-ID-X) KEYLENGTH (LENGTH OF WS-CARD-RID-ACCT-ID-X) INTO (CARD-XREF-RECORD) LENGTH (LENGTH OF CARD-XREF-RECORD) RESP (WS-RESP-CD) RESP2 (WS-REAS-CD) END-EXEC
+    *>EXECCICS EXEC CICS READ          DATASET   (LIT-CARDXREFNAME-ACCT-PATH)          RIDFLD    (WS-CARD-RID-ACCT-ID-X)          KEYLENGTH (LENGTH OF WS-CARD-RID-ACCT-ID-X)          INTO      (CARD-XREF-RECORD)          LENGTH    (LENGTH OF CARD-XREF-RECORD)          RESP      (WS-RESP-CD)          RESP2     (WS-REAS-CD)     END-EXEC
 
 
     EVALUATE WS-RESP-CD
@@ -6510,7 +6459,7 @@ EDIT-US-PHONE-EXIT.
     .
 9300-GETACCTDATA-BYACCT.
 
-    *>EXECCICS EXEC CICS READ DATASET (LIT-ACCTFILENAME) RIDFLD (WS-CARD-RID-ACCT-ID-X) KEYLENGTH (LENGTH OF WS-CARD-RID-ACCT-ID-X) INTO (ACCOUNT-RECORD) LENGTH (LENGTH OF ACCOUNT-RECORD) RESP (WS-RESP-CD) RESP2 (WS-REAS-CD) END-EXEC
+    *>EXECCICS EXEC CICS READ          DATASET   (LIT-ACCTFILENAME)          RIDFLD    (WS-CARD-RID-ACCT-ID-X)          KEYLENGTH (LENGTH OF WS-CARD-RID-ACCT-ID-X)          INTO      (ACCOUNT-RECORD)          LENGTH    (LENGTH OF ACCOUNT-RECORD)          RESP      (WS-RESP-CD)          RESP2     (WS-REAS-CD)     END-EXEC
 
 
     EVALUATE WS-RESP-CD
@@ -6553,7 +6502,7 @@ EDIT-US-PHONE-EXIT.
     .
 
 9400-GETCUSTDATA-BYCUST.
-    *>EXECCICS EXEC CICS READ DATASET (LIT-CUSTFILENAME) RIDFLD (WS-CARD-RID-CUST-ID-X) KEYLENGTH (LENGTH OF WS-CARD-RID-CUST-ID-X) INTO (CUSTOMER-RECORD) LENGTH (LENGTH OF CUSTOMER-RECORD) RESP (WS-RESP-CD) RESP2 (WS-REAS-CD) END-EXEC
+    *>EXECCICS EXEC CICS READ          DATASET   (LIT-CUSTFILENAME)          RIDFLD    (WS-CARD-RID-CUST-ID-X)          KEYLENGTH (LENGTH OF WS-CARD-RID-CUST-ID-X)          INTO      (CUSTOMER-RECORD)          LENGTH    (LENGTH OF CUSTOMER-RECORD)          RESP      (WS-RESP-CD)          RESP2     (WS-REAS-CD)     END-EXEC
 
 
     EVALUATE WS-RESP-CD
@@ -6687,7 +6636,7 @@ EDIT-US-PHONE-EXIT.
 
     MOVE CC-ACCT-ID              TO WS-CARD-RID-ACCT-ID
 
-    *>EXECCICS EXEC CICS READ FILE (LIT-ACCTFILENAME) UPDATE RIDFLD (WS-CARD-RID-ACCT-ID-X) KEYLENGTH (LENGTH OF WS-CARD-RID-ACCT-ID-X) INTO (ACCOUNT-RECORD) LENGTH (LENGTH OF ACCOUNT-RECORD) RESP (WS-RESP-CD) RESP2 (WS-REAS-CD) END-EXEC
+    *>EXECCICS EXEC CICS READ          FILE      (LIT-ACCTFILENAME)          UPDATE          RIDFLD    (WS-CARD-RID-ACCT-ID-X)          KEYLENGTH (LENGTH OF WS-CARD-RID-ACCT-ID-X)          INTO      (ACCOUNT-RECORD)          LENGTH    (LENGTH OF ACCOUNT-RECORD)          RESP      (WS-RESP-CD)          RESP2     (WS-REAS-CD)     END-EXEC
 
 *> ****************************************************************
 *>     Could we lock the account record ?
@@ -6706,7 +6655,7 @@ EDIT-US-PHONE-EXIT.
 
     MOVE CDEMO-CUST-ID                   TO WS-CARD-RID-CUST-ID
 
-    *>EXECCICS EXEC CICS READ FILE (LIT-CUSTFILENAME) UPDATE RIDFLD (WS-CARD-RID-CUST-ID-X) KEYLENGTH (LENGTH OF WS-CARD-RID-CUST-ID-X) INTO (CUSTOMER-RECORD) LENGTH (LENGTH OF CUSTOMER-RECORD) RESP (WS-RESP-CD) RESP2 (WS-REAS-CD) END-EXEC
+    *>EXECCICS EXEC CICS READ          FILE      (LIT-CUSTFILENAME)          UPDATE          RIDFLD    (WS-CARD-RID-CUST-ID-X)          KEYLENGTH (LENGTH OF WS-CARD-RID-CUST-ID-X)          INTO      (CUSTOMER-RECORD)          LENGTH    (LENGTH OF CUSTOMER-RECORD)          RESP      (WS-RESP-CD)          RESP2     (WS-REAS-CD)     END-EXEC
 
 *> ****************************************************************
 *>     Could we lock the customer record ?
@@ -6842,7 +6791,7 @@ EDIT-US-PHONE-EXIT.
 *> ****************************************************************
 
 
-    *>EXECCICS EXEC CICS REWRITE FILE(LIT-ACCTFILENAME) FROM(ACCT-UPDATE-RECORD) LENGTH(LENGTH OF ACCT-UPDATE-RECORD) RESP (WS-RESP-CD) RESP2 (WS-REAS-CD) END-EXEC
+    *>EXECCICS EXEC CICS          REWRITE FILE(LIT-ACCTFILENAME)                  FROM(ACCT-UPDATE-RECORD)                  LENGTH(LENGTH OF ACCT-UPDATE-RECORD)                  RESP      (WS-RESP-CD)                  RESP2     (WS-REAS-CD)     END-EXEC
 . 
 
 *> 
@@ -6858,7 +6807,7 @@ EDIT-US-PHONE-EXIT.
 *> ****************************************************************
 *>  Update customer *
 *> ****************************************************************
-    *>EXECCICS EXEC CICS REWRITE FILE(LIT-CUSTFILENAME) FROM(CUST-UPDATE-RECORD) LENGTH(LENGTH OF CUST-UPDATE-RECORD) RESP (WS-RESP-CD) RESP2 (WS-REAS-CD) END-EXEC
+    *>EXECCICS EXEC CICS                  REWRITE FILE(LIT-CUSTFILENAME)                  FROM(CUST-UPDATE-RECORD)                  LENGTH(LENGTH OF CUST-UPDATE-RECORD)                  RESP      (WS-RESP-CD)                  RESP2     (WS-REAS-CD)     END-EXEC
 . 
 
 *> ****************************************************************
@@ -6868,7 +6817,7 @@ EDIT-US-PHONE-EXIT.
       CONTINUE
     ELSE
       SET LOCKED-BUT-UPDATE-FAILED    TO TRUE
-      *>EXECCICS EXEC CICS SYNCPOINT ROLLBACK END-EXEC
+      *>EXECCICS EXEC CICS          SYNCPOINT ROLLBACK       END-EXEC
 
       GO TO 9600-WRITE-PROCESSING-EXIT
     END-IF
@@ -7055,7 +7004,6 @@ YYYY-STORE-PFKEY-EXIT.
 
 
 
-
 ABEND-ROUTINE.
 
     IF ABEND-MSG EQUAL LOW-VALUES
@@ -7064,13 +7012,13 @@ ABEND-ROUTINE.
 
     MOVE LIT-THISPGM       TO ABEND-CULPRIT
 
-    *>EXECCICS EXEC CICS SEND FROM (ABEND-DATA) LENGTH(LENGTH OF ABEND-DATA) NOHANDLE ERASE END-EXEC
+    *>EXECCICS EXEC CICS SEND                      FROM (ABEND-DATA)                      LENGTH(LENGTH OF ABEND-DATA)                      NOHANDLE                      ERASE     END-EXEC
 
 
-    *>EXECCICS EXEC CICS HANDLE ABEND CANCEL END-EXEC
+    *>EXECCICS EXEC CICS HANDLE ABEND          CANCEL     END-EXEC
 
 
-    *>EXECCICS EXEC CICS ABEND ABCODE('9999') END-EXEC
+    *>EXECCICS EXEC CICS ABEND          ABCODE('9999')     END-EXEC
 
     .
 ABEND-ROUTINE-EXIT.
@@ -7455,8 +7403,6 @@ EDIT-DATE-OF-BIRTH-EXIT.
 *>  Ver: CardDemo_v1.0-15-g27d6c6f-68 Date: 2022-07-19 23:15:59 CDT
 *> 
 
-
 *> 
 *>  Ver: CardDemo_v1.0-15-g27d6c6f-68 Date: 2022-07-19 23:12:32 CDT
 *> 
-

@@ -107,7 +107,7 @@ O plano anterior será atualizado nos seguintes pontos:
 
 ## Base semântica e dialeto
 
-A gramática ProLeap aceita COBOL amplo e extensões. Sintaxe não define sozinha
+A gramática COBOL aceita COBOL amplo e extensões. Sintaxe não define sozinha
 as regras de visibilidade. A implementação deverá possuir uma política
 versionada, por exemplo `CobolResolutionPolicy`, com nome e versão observáveis.
 

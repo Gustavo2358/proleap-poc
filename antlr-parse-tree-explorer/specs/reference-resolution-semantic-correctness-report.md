@@ -995,7 +995,7 @@ O caminho de perda e falsa certeza foi confirmado em quatro camadas:
 
 1. `CobolPreprocessor.g4` representa `compilerOption` e enumera os modos de `PGMNAME`;
 2. `PreprocessorEngine.Collector` torna apenas `COPY` e `EXEC` acionáveis, enquanto `PreprocessorEngine.Outcome` não transporta compiler options; a informação reconhecida pela grammar desaparece antes da análise semântica;
-3. `CobolResolutionPolicy` modela somente `policyId`, `version` e `QualifyMode`, embora o policy ID declare genericamente `proleap-cobol/ibm-enterprise-compatible`;
+3. `CobolResolutionPolicy` modela somente `policyId`, `version` e `QualifyMode`, embora o policy ID declare genericamente `cobol-explorer/ibm-enterprise-compatible`;
 4. `SymbolTable.canonical` e `CobolReferenceResolver.resolveProgram` reduzem nomes a uppercase e consultam o catálogo com essa identidade, independentemente de truncamento, tradução de hífen ou preservação de case.
 
 Assim, `mixed-Child` é transformado em `MIXED-CHILD`, e `LONG-NAME-ABC` permanece longo e hifenizado; ambos são entregues ao catálogo como se a identidade estivesse determinada. Isso conflita respectivamente com `LONGMIXED` e `COMPAT` e transforma ausência de configuração em certeza.

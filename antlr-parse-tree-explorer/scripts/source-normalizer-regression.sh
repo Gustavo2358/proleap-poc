@@ -9,7 +9,7 @@ fi
 
 project_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 maven_bin="${MAVEN_BIN:-mvn}"
-run_root="$(mktemp -d "/tmp/proleap-source-normalizer-${phase}.XXXXXX")"
+run_root="$(mktemp -d "/tmp/cobol-source-normalizer-${phase}.XXXXXX")"
 canonical_output="$run_root/coactupc"
 fixture_output="$run_root/comment-entry"
 integration_output="$run_root/copybook-normalization"

@@ -21,7 +21,7 @@ gramática não possuem tratamento explícito no `AstBuilder`.
 
 O corpus local é pequeno e não pode determinar o desenho da solução. Ele será
 usado exclusivamente como regressão e evidência de exemplos reais. O contrato
-de cobertura será dirigido pela totalidade das gramáticas ProLeap versionadas no
+de cobertura será dirigido pela totalidade das gramáticas COBOL versionadas no
 projeto:
 
 - 598 regras de parser em `Cobol.g4`;
@@ -31,7 +31,7 @@ projeto:
   pelas regras relevantes para fluxo e dependências.
 
 “COBOL como um todo”, neste plano, significa todo o dialeto aceito pela
-`Cobol.g4` e `CobolPreprocessor.g4` ProLeap presentes no repositório. Uma forma
+`Cobol.g4` e `CobolPreprocessor.g4` COBOL presentes no repositório. Uma forma
 externa a essas gramáticas não poderá ser declarada suportada; deverá aparecer
 como limitação do frontend.
 

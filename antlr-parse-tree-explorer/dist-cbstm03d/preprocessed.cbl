@@ -1,7 +1,6 @@
 IDENTIFICATION DIVISION.
 PROGRAM-ID.    CBSTM03D.
-AUTHOR. 
-*>CE AWS.
+AUTHOR. *>CE AWS.
 *> *****************************************************************
 *>  Program     : CBSTM03A.CBL
 *>  Application : CardDemo
@@ -92,7 +91,6 @@ WORKING-STORAGE SECTION.
 
 
 
-
 *> **************************************************************** 
 *>     Data-structure for card xref (RECLN 50)                      
 *> **************************************************************** 
@@ -104,7 +102,6 @@ WORKING-STORAGE SECTION.
 *> 
 *>  Ver: CardDemo_v1.0-15-g27d6c6f-68 Date: 2022-07-19 23:16:00 CDT
 *> 
-
 
 
 *> ****************************************************************
@@ -135,7 +132,6 @@ WORKING-STORAGE SECTION.
 *> 
 
 
-
 *> ****************************************************************
 *>     Data-structure for  account entity (RECLN 300)
 *> ****************************************************************
@@ -156,7 +152,6 @@ WORKING-STORAGE SECTION.
 *> 
 *>  Ver: CardDemo_v1.0-15-g27d6c6f-68 Date: 2022-07-19 23:15:59 CDT
 *> 
-
 
 
 01  COMP-VARIABLES          COMP.
@@ -258,12 +253,15 @@ WORKING-STORAGE SECTION.
       88  HTML-L06 VALUE '</head>'.
       88  HTML-L07 VALUE '<body style="margin:0px;">'.
       88  HTML-L08 VALUE '<table  align="center" frame="box" style="width:70%; font:12px Segoe UI,sans-serif;">'.
+
       88  HTML-LTRS VALUE '<tr>'.
       88  HTML-LTRE VALUE '</tr>'.
       88  HTML-LTDS VALUE '<td>'.
       88  HTML-LTDE VALUE '</td>'.
       88  HTML-L10 VALUE '<td colspan="3" style="padding:0px 5px;background-color:#1d1d96b3;">'.
+
       88  HTML-L15 VALUE '<td colspan="3" style="padding:0px 5px;background-color:#FFAF33;">'.
+
       88  HTML-L16
         VALUE '<p style="font-size:16px">Bank of XYZ</p>'.
       88  HTML-L17
@@ -272,30 +270,38 @@ WORKING-STORAGE SECTION.
         VALUE '<p>Seattle WA 99999</p>'.
       88  HTML-L22-35
                    VALUE '<td colspan="3" style="padding:0px 5px;background-color:#f2f2f2;">'.
+
       88  HTML-L30-42
                    VALUE '<td colspan="3" style="padding:0px 5px;background-color:#33FFD1; text-align:center;">'.
+
       88  HTML-L31
         VALUE '<p style="font-size:16px">Basic Details</p>'.
       88  HTML-L43
        VALUE '<p style="font-size:16px">Transaction Summary</p>'.
       88  HTML-L47
         VALUE '<td style="width:25%; padding:0px 5px; background-color:#33FF5E; text-align:left;">'.
+
       88  HTML-L48
         VALUE '<p style="font-size:16px">Tran ID</p>'.
       88  HTML-L50
         VALUE '<td style="width:55%; padding:0px 5px; background-color:#33FF5E; text-align:left;">'.
+
       88  HTML-L51
         VALUE '<p style="font-size:16px">Tran Details</p>'.
       88  HTML-L53
         VALUE '<td style="width:20%; padding:0px 5px; background-color:#33FF5E; text-align:right;">'.
+
       88  HTML-L54
         VALUE '<p style="font-size:16px">Amount</p>'.
       88  HTML-L58
         VALUE '<td style="width:25%; padding:0px 5px; background-color:#f2f2f2; text-align:left;">'.
+
       88  HTML-L61
         VALUE '<td style="width:55%; padding:0px 5px; background-color:#f2f2f2; text-align:left;">'.
+
       88  HTML-L64
         VALUE '<td style="width:20%; padding:0px 5px; background-color:#f2f2f2; text-align:right;">'.
+
       88  HTML-L75
         VALUE '<h3>End of Statement</h3>'.
       88  HTML-L78 VALUE '</table>'.
@@ -1015,7 +1021,6 @@ PROCEDURE DIVISION.
     DISPLAY 'ABENDING PROGRAM'
     MOVE 'CEE3ABD' TO WS-CALL-TARGET.
     CALL WS-CALL-TARGET.
-
 
 
 

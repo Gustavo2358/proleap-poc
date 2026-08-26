@@ -1,10 +1,10 @@
 # COBOL Structure Atlas
 
-Explorador visual e interativo da jornada `parse tree → AST → symbol table → resolução de referências` produzida a partir de `Cobol.g4`. O projeto é autocontido: contém cópias da gramática escolhida, do programa selecionado, dos copybooks disponíveis e da infraestrutura de normalização/preprocessamento criada no benchmark.
+Explorador visual e interativo da jornada `parse tree → AST → symbol table → resolução de referências` produzida a partir de `Cobol.g4`. O projeto é autocontido: contém cópias da gramática escolhida, do programa selecionado, dos copybooks disponíveis e da infraestrutura de normalização/preprocessamento criada no baseline.
 
 ## Por que `COACTUPC.cbl`?
 
-No resultado do benchmark com a gramática ProLeap, ele é o maior programa do corpus e gera a maior árvore:
+No resultado do baseline com a gramática COBOL, ele é o maior programa do corpus e gera a maior árvore:
 
 - 4.236 linhas originais;
 - 57.227 nós;
@@ -12,7 +12,7 @@ No resultado do benchmark com a gramática ProLeap, ele é o maior programa do c
 - profundidade máxima 39;
 - 51 ocorrências de `GO TO`, 64 de `PERFORM` e 10 nós `evaluateStatement`.
 
-Três COPYs de sistema/aplicação não estão presentes no corpus original. Como no benchmark, elas viram comentários diagnósticos; o parser principal ainda reconhece o programa sem erros léxicos ou sintáticos.
+Três COPYs de sistema/aplicação não estão presentes no corpus original. Como no baseline, elas viram comentários diagnósticos; o parser principal ainda reconhece o programa sem erros léxicos ou sintáticos.
 
 ## Gerar e abrir
 
@@ -77,6 +77,12 @@ MAVEN_BIN="${MAVEN_BIN:-mvn}" ./scripts/source-normalizer-regression.sh manual
 
 O comando verifica erros de lexer/parser, baseline semântico, artefatos web,
 provenance e ausência de comment entries na AST semântica.
+
+Para verificar que a identidade do projeto não regrediu, execute:
+
+```bash
+./scripts/verify-naming.sh
+```
 
 Argumentos opcionais do gerador:
 

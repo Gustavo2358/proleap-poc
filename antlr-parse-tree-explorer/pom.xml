@@ -3,7 +3,7 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>io.proleap.spike</groupId>
+  <groupId>io.github.gustavo2358.cobolexplorer</groupId>
   <artifactId>antlr-parse-tree-explorer</artifactId>
   <version>1.0.0-SNAPSHOT</version>
 
@@ -51,7 +51,7 @@
           <visitor>true</visitor>
           <arguments>
             <argument>-package</argument>
-            <argument>io.proleap.benchmark.antlr</argument>
+            <argument>io.github.gustavo2358.cobolexplorer.antlr</argument>
           </arguments>
         </configuration>
         <executions>
@@ -68,7 +68,7 @@
         <artifactId>exec-maven-plugin</artifactId>
         <version>3.5.0</version>
         <configuration>
-          <mainClass>io.proleap.benchmark.ExplorerMain</mainClass>
+          <mainClass>io.github.gustavo2358.cobolexplorer.ExplorerMain</mainClass>
         </configuration>
       </plugin>
       <plugin>

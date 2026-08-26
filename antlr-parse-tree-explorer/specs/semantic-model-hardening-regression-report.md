@@ -232,7 +232,7 @@ a Fase 7.
    `complete=false`. COACTUPC expõe três COPYs ausentes e 14 CICS opacos;
    CBSTM03A/CBSTM03D expõem 37 statements e nove expressões preservadas. Essas
    lacunas permanecem `DEPENDENCY_UNKNOWN`, nunca “nenhuma dependência”.
-9. Os tree IDs de `benchmark`, `cbl`, `cpy`, gramáticas e corpus são idênticos
+9. Os tree IDs de `baseline`, `cbl`, `cpy`, gramáticas e corpus são idênticos
    entre `ffa053f` e o HEAD auditado. As três fontes principais e o plano
    suspenso também mantêm exatamente os SHA-256 registrados no baseline.
 10. A revisão do diff encontrou mudanças apenas no explorer. A AST não contém

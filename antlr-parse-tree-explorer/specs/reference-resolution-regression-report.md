@@ -329,7 +329,7 @@ ignorados. Nenhum arquivo de produção, grammar, corpus ou output foi alterado.
     e `f89cf02782dc26f3a4a79e37fc98c35112f0003d36423e674785251152b4b10e`.
 13. As fontes principais mantêm os SHA-256 originais:
     `23c875…32b5` (CBSTM03A), `d75535…7fac` (CBSTM03D) e
-    `b5bb7d…9396` (COACTUPC). O diff desde o baseline não altera `benchmark`,
+    `b5bb7d…9396` (COACTUPC). O diff desde o baseline não altera `baseline`,
     `cbl`, `cpy`, grammars, corpus ou o relatório final do hardening.
 14. O Java de produção possui agora o agregado esperado
     `48a57a66efd499c59a8536d43141ed43a854ff592ba9425aa485071dd63fea11`;

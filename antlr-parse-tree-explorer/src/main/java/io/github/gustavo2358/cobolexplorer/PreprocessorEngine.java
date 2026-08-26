@@ -1,0 +1,459 @@
+package io.github.gustavo2358.cobolexplorer;
+
+import org.antlr.v4.runtime.*;
+import org.antlr.v4.runtime.tree.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import java.io.IOException;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.nio.file.Path;
+import java.util.*;
+
+final class PreprocessorEngine {
+    private static final Logger LOG = LoggerFactory.getLogger(PreprocessorEngine.class);
+
+    enum PreprocessorPolicy {
+        PASS_THROUGH,
+        REMOVE,
+        EXPAND_COPY,
+        UNSUPPORTED,
+        PRESERVE_EMBEDDED_LANGUAGE,
+        EXTRACT_COMPILER_OPTIONS
+    }
+
+    private static final Map<String, PreprocessorPolicy> POLICIES = Map.ofEntries(
+            Map.entry("compilerOptions", PreprocessorPolicy.EXTRACT_COMPILER_OPTIONS),
+            Map.entry("copyStatement", PreprocessorPolicy.EXPAND_COPY),
+            Map.entry("execCicsStatement", PreprocessorPolicy.PRESERVE_EMBEDDED_LANGUAGE),
+            Map.entry("execSqlStatement", PreprocessorPolicy.PRESERVE_EMBEDDED_LANGUAGE),
+            Map.entry("execSqlImsStatement", PreprocessorPolicy.PRESERVE_EMBEDDED_LANGUAGE),
+            Map.entry("replaceOffStatement", PreprocessorPolicy.UNSUPPORTED),
+            Map.entry("replaceArea", PreprocessorPolicy.UNSUPPORTED),
+            Map.entry("ejectStatement", PreprocessorPolicy.REMOVE),
+            Map.entry("skipStatement", PreprocessorPolicy.REMOVE),
+            Map.entry("titleStatement", PreprocessorPolicy.REMOVE),
+            Map.entry("charDataLine", PreprocessorPolicy.PASS_THROUGH),
+            Map.entry("NEWLINE", PreprocessorPolicy.PASS_THROUGH));
+
+    record CompilerOption(String name, String value, String writtenText) {
+        CompilerOption {
+            name = Objects.requireNonNull(name, "name");
+            value = value == null ? "" : value;
+            writtenText = Objects.requireNonNull(writtenText, "writtenText");
+        }
+    }
+    record Outcome(String text, int errors, int unresolved, List<Diagnostic> diagnostics,
+                   List<CompilerOption> compilerOptions,
+                   ResolutionContracts.PgmnameMode pgmnameMode,
+                   ResolutionContracts.DynamMode dynamMode,
+                   ResolutionContracts.DllMode dllMode, SourceMap sourceMap) {
+        Outcome {
+            diagnostics = List.copyOf(diagnostics);
+            compilerOptions = List.copyOf(compilerOptions);
+            pgmnameMode = Objects.requireNonNull(pgmnameMode, "pgmnameMode");
+            dynamMode = Objects.requireNonNull(dynamMode, "dynamMode");
+            dllMode = Objects.requireNonNull(dllMode, "dllMode");
+        }
+    }
+    private record Edit(int start, int end, SourceMap replacement) {}
+    private record CopyReplacement(String replaceable, String replacement) {}
+    private static final class LogSummary {
+        private int cycles;
+        private int ioFailures;
+    }
+
+    private final GrammarBinding binding;
+    private final CopybookLibrary library;
+
+    PreprocessorEngine(GrammarBinding binding, CopybookLibrary library) {
+        this.binding = binding; this.library = library;
+    }
+
+    Outcome process(SourceMap normalized, String file) {
+        List<Diagnostic> diagnostics = new ArrayList<>();
+        List<CompilerOption> compilerOptions = new ArrayList<>();
+        int[] unresolved = {0};
+        int[] toleratedPreprocessorDiagnostics = {0};
+        LogSummary logSummary = new LogSummary();
+        SourceMap document = processRecursive(normalized, file,
+                diagnostics, compilerOptions, unresolved, toleratedPreprocessorDiagnostics,
+                new HashSet<>(), logSummary);
+        long errors = diagnostics.stream().filter(d -> d.phase() == Diagnostic.Phase.PREPROCESSOR)
+                .count() - toleratedPreprocessorDiagnostics[0];
+        ResolutionContracts.PgmnameMode pgmnameMode = compilerOptions.stream()
+                .filter(option -> option.name().equals("PGMNAME") || option.name().equals("PGMN"))
+                .map(CompilerOption::value).map(ResolutionContracts.PgmnameMode::fromCompilerValue)
+                .reduce((first, second) -> second).orElse(ResolutionContracts.PgmnameMode.UNSPECIFIED);
+        ResolutionContracts.DynamMode dynamMode = compilerOptions.stream()
+                .map(option -> ResolutionContracts.DynamMode.fromCompilerOption(
+                        option.name(), option.value()))
+                .filter(mode -> mode != ResolutionContracts.DynamMode.UNSPECIFIED)
+                .reduce((first, second) -> second).orElse(ResolutionContracts.DynamMode.UNSPECIFIED);
+        ResolutionContracts.DllMode dllMode = compilerOptions.stream()
+                .map(option -> ResolutionContracts.DllMode.fromCompilerOption(
+                        option.name(), option.value()))
+                .filter(mode -> mode != ResolutionContracts.DllMode.UNSPECIFIED)
+                .reduce((first, second) -> second).orElse(ResolutionContracts.DllMode.UNSPECIFIED);
+        if (unresolved[0] > 0) {
+            LOG.warn("event=copy_unresolved source={} phase=PREPROCESSING count={} reason=NOT_FOUND fallback=KEEP_UNRESOLVED_PLACEHOLDER impact=ANALYSIS_INCOMPLETE",
+                    file, unresolved[0]);
+        }
+        if (logSummary.cycles > 0) {
+            LOG.warn("event=copy_cycle source={} phase=PREPROCESSING count={} reason=EXPANSION_CYCLE fallback=KEEP_CYCLIC_PLACEHOLDER impact=ANALYSIS_INCOMPLETE",
+                    file, logSummary.cycles);
+        }
+        if (logSummary.ioFailures > 0) {
+            LOG.warn("event=copy_io_failure source={} phase=PREPROCESSING count={} reason=IO_EXCEPTION fallback=KEEP_IO_ERROR_PLACEHOLDER impact=ANALYSIS_INCOMPLETE",
+                    file, logSummary.ioFailures);
+        }
+        return new Outcome(document.text(), Math.toIntExact(errors), unresolved[0],
+                diagnostics, compilerOptions, pgmnameMode, dynamMode, dllMode, document);
+    }
+
+    private SourceMap processRecursive(SourceMap document, String file, List<Diagnostic> diagnostics,
+                                       List<CompilerOption> compilerOptions,
+                                       int[] unresolved, int[] toleratedPreprocessorDiagnostics,
+                                       Set<Path> expansionStack, LogSummary logSummary) {
+        String source = document.text();
+        Lexer lexer = binding.preprocessorLexer(CharStreams.fromString(source, file));
+        lexer.removeErrorListeners();
+        lexer.addErrorListener(new AntlrDiagnosticListener(binding.name(), Diagnostic.Phase.PREPROCESSOR, file, diagnostics));
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        Parser parser = binding.preprocessorParser(tokens);
+        parser.removeErrorListeners();
+        parser.addErrorListener(new AntlrDiagnosticListener(binding.name(), Diagnostic.Phase.PREPROCESSOR, file, diagnostics));
+        ParseTree tree = binding.preprocessorStart(parser);
+        validatePolicyCatalog(tree.getClass());
+
+        List<ParserRuleContext> actionable = new ArrayList<>();
+        for (int i = 0; i < tree.getChildCount(); i++) {
+            ParseTree child = tree.getChild(i);
+            if (child instanceof ParserRuleContext context) {
+                String rule = parser.getRuleNames()[context.getRuleIndex()];
+                PreprocessorPolicy policy = policyFor(rule);
+                if (policy == PreprocessorPolicy.EXTRACT_COMPILER_OPTIONS) {
+                    collectCompilerOptions(context, parser.getRuleNames(), source, file, compilerOptions);
+                }
+                if (policy != PreprocessorPolicy.PASS_THROUGH) actionable.add(context);
+            } else if (child instanceof TerminalNode terminal
+                    && terminal.getSymbol().getType() != Token.EOF) {
+                String token = parser.getVocabulary().getSymbolicName(terminal.getSymbol().getType());
+                PreprocessorPolicy policy = policyFor(token);
+                if (policy != PreprocessorPolicy.PASS_THROUGH) {
+                    throw new IllegalStateException(
+                            "Terminal preprocessing construct requires rule-based handling: " + token);
+                }
+            }
+        }
+        List<Edit> edits = new ArrayList<>();
+        for (ParserRuleContext context : actionable) {
+            Token startToken = context.getStart(), stopToken = context.getStop();
+            if (startToken == null || stopToken == null || startToken.getStartIndex() < 0
+                    || stopToken.getStopIndex() < startToken.getStartIndex()
+                    || stopToken.getStopIndex() >= source.length()) {
+                throw new IllegalStateException("Actionable preprocessing context has no valid source interval: "
+                        + context.getClass().getSimpleName());
+            }
+            int start = startToken.getStartIndex();
+            int end = stopToken.getStopIndex() + 1;
+            String rule = parser.getRuleNames()[context.getRuleIndex()];
+            PreprocessorPolicy policy = policyFor(rule);
+            LOG.trace("event=preprocess_policy_selected source={} phase=PREPROCESSING rule={} policy={} line={}",
+                    file, rule, policy, startToken.getLine());
+            String original = source.substring(start, end);
+            if (policy == PreprocessorPolicy.EXTRACT_COMPILER_OPTIONS
+                    || policy == PreprocessorPolicy.REMOVE) {
+                edits.add(new Edit(start, end, document.transformedSlice(
+                        start, end, blankPreservingLineBreaks(original))));
+            } else if (policy == PreprocessorPolicy.EXPAND_COPY) {
+                String requested = copySourceName(context, parser.getRuleNames(), source);
+                Optional<Path> path = library.resolve(requested);
+                if (path.isEmpty()) {
+                    unresolved[0]++;
+                    LOG.trace("event=copy_resolution source={} phase=PREPROCESSING requested={} line={} status=UNRESOLVED reason=NOT_FOUND fallback=KEEP_UNRESOLVED_PLACEHOLDER",
+                            file, requested, startToken.getLine());
+                    toleratedPreprocessorDiagnostics[0]++;
+                    diagnostics.add(sourceDiagnostic(document, Diagnostic.Phase.PREPROCESSOR,
+                            start, end, "unresolved_copy: " + requested, requested, ""));
+                    edits.add(new Edit(start, end, document.transformedSlice(start, end,
+                            "*> UNRESOLVED COPY " + requested + "\n")));
+                } else if (!expansionStack.add(path.get().toAbsolutePath().normalize())) {
+                    logSummary.cycles++;
+                    LOG.trace("event=copy_resolution source={} phase=PREPROCESSING requested={} line={} status=CYCLIC reason=EXPANSION_CYCLE fallback=KEEP_CYCLIC_PLACEHOLDER",
+                            file, requested, startToken.getLine());
+                    toleratedPreprocessorDiagnostics[0]++;
+                    diagnostics.add(sourceDiagnostic(document, Diagnostic.Phase.PREPROCESSOR,
+                            start, end, "cyclic COPY: " + requested, requested, ""));
+                    edits.add(new Edit(start, end, document.transformedSlice(start, end,
+                            "*> CYCLIC COPY " + requested + "\n")));
+                } else {
+                    try {
+                        String includedFile = path.get().getFileName().toString();
+                        LOG.trace("event=copy_resolved source={} phase=PREPROCESSING requested={} line={} includedFile={}",
+                                file, requested, startToken.getLine(), includedFile);
+                        SourceMap copySource = library.readNormalized(path.get());
+                        SourceMap copyText = processRecursive(copySource, includedFile,
+                                diagnostics, compilerOptions, unresolved,
+                                toleratedPreprocessorDiagnostics, expansionStack, logSummary);
+                        List<CopyReplacement> replacements = copyReplacements(
+                                context, parser.getRuleNames(), source);
+                        for (CopyReplacement replacement : replacements) {
+                            copyText = copyText.replaceLiteral(
+                                    replacement.replaceable(), replacement.replacement());
+                        }
+                        if (!replacements.isEmpty()) {
+                            LOG.trace("event=copy_replacing_applied source={} phase=PREPROCESSING requested={} line={} replacements={}",
+                                    file, requested, startToken.getLine(), replacements.size());
+                        }
+                        int includeLine = document.provenance(start, end).original().startLine();
+                        Ast.CopyFrame frame = new Ast.CopyFrame(file, requested, includedFile, includeLine);
+                        edits.add(new Edit(start, end, copyText.withCopyFrame(frame)));
+                    } catch (IOException e) {
+                        logSummary.ioFailures++;
+                        LOG.trace("event=copy_resolution source={} phase=PREPROCESSING requested={} line={} status=IO_FAILURE reason={}",
+                                file, requested, startToken.getLine(), e.getClass().getSimpleName());
+                        diagnostics.add(sourceDiagnostic(document, Diagnostic.Phase.IO,
+                                start, end, e.getMessage(), requested, e.getClass().getName()));
+                        edits.add(new Edit(start, end, document.transformedSlice(start, end,
+                                "*> COPY IO ERROR " + requested + "\n")));
+                    } finally {
+                        expansionStack.remove(path.get().toAbsolutePath().normalize());
+                    }
+                }
+            } else if (policy == PreprocessorPolicy.PRESERVE_EMBEDDED_LANGUAGE) {
+                String tag = switch (rule) {
+                    case "execCicsStatement" -> "*>EXECCICS";
+                    case "execSqlStatement" -> "*>EXECSQL";
+                    case "execSqlImsStatement" -> "*>EXECSQLIMS";
+                    default -> throw new IllegalStateException(
+                            "Embedded-language policy has no renderer: " + rule);
+                };
+                boolean sentenceEnd = hasDirectTerminal(context, parser, "DOT");
+                String embeddedSource = sentenceEnd
+                        ? original.substring(0, original.length() - 1) : original;
+                String opaque = flattenPhysicalLines(embeddedSource).strip();
+                LOG.trace("event=embedded_language_preserved source={} phase=PREPROCESSING rule={} line={} sentenceEnd={}",
+                        file, rule, startToken.getLine(), sentenceEnd);
+                edits.add(new Edit(start, end, document.transformedSlice(start, end,
+                        tag + " " + opaque + "\n" + (sentenceEnd ? ". \n" : ""))));
+            } else if (policy == PreprocessorPolicy.UNSUPPORTED) {
+                throw new UnsupportedOperationException(
+                        "Unsupported preprocessing construct: " + rule);
+            } else {
+                throw new IllegalStateException(
+                        "Unexpected actionable preprocessing policy for " + rule + ": " + policy);
+            }
+        }
+        edits.sort(Comparator.comparingInt(Edit::start).reversed());
+        SourceMap result = document;
+        int lastStart = Integer.MAX_VALUE;
+        for (Edit edit : edits) {
+            if (edit.end() > lastStart) {
+                throw new IllegalStateException("Overlapping top-level preprocessing edits at "
+                        + edit.start() + ".." + edit.end());
+            }
+            result = result.replace(edit.start(), edit.end(), edit.replacement());
+            lastStart = edit.start();
+        }
+        return result;
+    }
+
+    private Diagnostic sourceDiagnostic(SourceMap document, Diagnostic.Phase phase,
+                                        int start, int end, String message,
+                                        String offendingToken, String exceptionClass) {
+        Ast.SourceLocation original = document.provenance(start, end).original();
+        return new Diagnostic(binding.name(), phase, original.file(), original.startLine(),
+                original.startColumn(), message, offendingToken, exceptionClass);
+    }
+
+    private static boolean hasDirectTerminal(ParserRuleContext context, Parser parser,
+                                             String symbolicName) {
+        for (int child = 0; child < context.getChildCount(); child++) {
+            if (context.getChild(child) instanceof TerminalNode terminal) {
+                String actual = parser.getVocabulary().getSymbolicName(
+                        terminal.getSymbol().getType());
+                if (symbolicName.equals(actual)) return true;
+            }
+        }
+        return false;
+    }
+
+    private static String flattenPhysicalLines(String value) {
+        StringBuilder result = new StringBuilder(value.length());
+        boolean inLineBreak = false;
+        for (int index = 0; index < value.length(); index++) {
+            char character = value.charAt(index);
+            if (character == '\r' || character == '\n') {
+                if (!inLineBreak) result.append(' ');
+                inLineBreak = true;
+            } else {
+                result.append(character);
+                inLineBreak = false;
+            }
+        }
+        return result.toString();
+    }
+
+    static Map<String, PreprocessorPolicy> policies() {
+        return POLICIES;
+    }
+
+    static PreprocessorPolicy policyFor(String construct) {
+        PreprocessorPolicy policy = POLICIES.get(construct);
+        if (policy == null) {
+            throw new IllegalStateException(
+                    "Preprocessor grammar construct has no explicit policy: " + construct);
+        }
+        return policy;
+    }
+
+    private static void validatePolicyCatalog(Class<?> startRuleContextClass) {
+        Set<String> grammarConstructs = new HashSet<>();
+        for (java.lang.reflect.Method method : startRuleContextClass.getDeclaredMethods()) {
+            if (method.getParameterCount() != 0
+                    || !(method.getGenericReturnType() instanceof ParameterizedType listType)) continue;
+            Type[] arguments = listType.getActualTypeArguments();
+            if (arguments.length != 1 || !(arguments[0] instanceof Class<?> elementType)) continue;
+            if (ParserRuleContext.class.isAssignableFrom(elementType)
+                    || TerminalNode.class.isAssignableFrom(elementType)) {
+                grammarConstructs.add(method.getName());
+            }
+        }
+        if (!grammarConstructs.equals(POLICIES.keySet())) {
+            Set<String> missing = new TreeSet<>(grammarConstructs);
+            missing.removeAll(POLICIES.keySet());
+            Set<String> stale = new TreeSet<>(POLICIES.keySet());
+            stale.removeAll(grammarConstructs);
+            throw new IllegalStateException("Preprocessor policy catalog does not match startRule; "
+                    + "missing policies=" + missing + ", stale policies=" + stale);
+        }
+    }
+
+    private static String blankPreservingLineBreaks(String value) {
+        StringBuilder result = new StringBuilder(value.length());
+        for (int i = 0; i < value.length(); i++) {
+            char character = value.charAt(i);
+            result.append(character == '\n' || character == '\r' ? character : ' ');
+        }
+        return result.toString();
+    }
+
+    private static String copySourceName(ParserRuleContext copyStatement, String[] ruleNames,
+                                         String source) {
+        ParserRuleContext copySource = directRuleChild(copyStatement, ruleNames, "copySource");
+        if (copySource == null) {
+            throw new IllegalStateException("COPY recognized without copySource context");
+        }
+        for (int i = 0; i < copySource.getChildCount(); i++) {
+            if (!(copySource.getChild(i) instanceof ParserRuleContext candidate)) continue;
+            String rule = ruleNames[candidate.getRuleIndex()];
+            if (rule.equals("literal") || rule.equals("cobolWord") || rule.equals("filename")) {
+                return unquote(sourceText(candidate, source).trim());
+            }
+        }
+        throw new IllegalStateException("COPY recognized without a supported source name");
+    }
+
+    private static List<CopyReplacement> copyReplacements(ParserRuleContext copyStatement,
+                                                            String[] ruleNames, String source) {
+        List<CopyReplacement> result = new ArrayList<>();
+        collectCopyReplacements(copyStatement, ruleNames, source, result);
+        return result;
+    }
+
+    private static void collectCopyReplacements(ParseTree tree, String[] ruleNames, String source,
+                                                List<CopyReplacement> out) {
+        if (tree instanceof ParserRuleContext context
+                && ruleNames[context.getRuleIndex()].equals("replaceClause")) {
+            ParserRuleContext replaceable = directRuleChild(context, ruleNames, "replaceable");
+            ParserRuleContext replacement = directRuleChild(context, ruleNames, "replacement");
+            if (replaceable == null || replacement == null) {
+                throw new IllegalStateException("COPY REPLACING clause has an incomplete parse tree");
+            }
+            out.add(new CopyReplacement(replacementOperand(replaceable, ruleNames, source),
+                    replacementOperand(replacement, ruleNames, source)));
+            return;
+        }
+        for (int i = 0; i < tree.getChildCount(); i++) {
+            collectCopyReplacements(tree.getChild(i), ruleNames, source, out);
+        }
+    }
+
+    private static String replacementOperand(ParserRuleContext operand, String[] ruleNames,
+                                             String source) {
+        ParserRuleContext pseudoText = directRuleChild(operand, ruleNames, "pseudoText");
+        String written = sourceText(pseudoText == null ? operand : pseudoText, source).trim();
+        if (pseudoText != null) {
+            if (written.length() < 4 || !written.startsWith("==") || !written.endsWith("==")) {
+                throw new IllegalStateException("Malformed pseudo-text in COPY REPLACING: " + written);
+            }
+            return written.substring(2, written.length() - 2).trim();
+        }
+        return written;
+    }
+
+    private static ParserRuleContext directRuleChild(ParserRuleContext parent, String[] ruleNames,
+                                                     String expectedRule) {
+        for (int i = 0; i < parent.getChildCount(); i++) {
+            if (parent.getChild(i) instanceof ParserRuleContext child
+                    && ruleNames[child.getRuleIndex()].equals(expectedRule)) return child;
+        }
+        return null;
+    }
+
+    private static String sourceText(ParserRuleContext context, String source) {
+        Token start = context.getStart();
+        Token stop = context.getStop();
+        if (start == null || stop == null || start.getStartIndex() < 0
+                || stop.getStopIndex() < start.getStartIndex()
+                || stop.getStopIndex() >= source.length()) {
+            throw new IllegalStateException("Preprocessor context has no valid source interval: "
+                    + context.getClass().getSimpleName());
+        }
+        return source.substring(start.getStartIndex(), stop.getStopIndex() + 1);
+    }
+
+    private static String unquote(String value) {
+        if (value.length() >= 2) {
+            char first = value.charAt(0);
+            char last = value.charAt(value.length() - 1);
+            if ((first == '\'' && last == '\'') || (first == '"' && last == '"')) {
+                return value.substring(1, value.length() - 1);
+            }
+        }
+        return value;
+    }
+
+    private static void collectCompilerOptions(ParseTree tree, String[] ruleNames, String source, String file,
+                                               List<CompilerOption> out) {
+        if (tree instanceof ParserRuleContext context
+                && ruleNames[context.getRuleIndex()].equals("compilerOption")) {
+            List<String> terminals = new ArrayList<>();
+            collectTerminals(context, terminals);
+            if (!terminals.isEmpty()) {
+                String name = terminals.get(0).toUpperCase(Locale.ROOT);
+                String value = terminals.stream()
+                        .filter(token -> !token.equals("(") && !token.equals(")") && !token.equals(","))
+                        .skip(1).reduce((first, second) -> second).orElse("");
+                Token start = context.getStart(), stop = context.getStop();
+                int from = start == null ? -1 : start.getStartIndex();
+                int to = stop == null ? -1 : stop.getStopIndex() + 1;
+                String written = from >= 0 && to >= from && to <= source.length()
+                        ? source.substring(from, to) : context.getText();
+                out.add(new CompilerOption(name, value, written));
+                LOG.trace("event=compiler_option_detected source={} phase=PREPROCESSING name={}", file, name);
+            }
+        }
+        for (int i = 0; i < tree.getChildCount(); i++)
+            collectCompilerOptions(tree.getChild(i), ruleNames, source, file, out);
+    }
+
+    private static void collectTerminals(ParseTree tree, List<String> out) {
+        if (tree instanceof TerminalNode terminal) {
+            out.add(terminal.getText());
+            return;
+        }
+        for (int i = 0; i < tree.getChildCount(); i++) collectTerminals(tree.getChild(i), out);
+    }
+}
