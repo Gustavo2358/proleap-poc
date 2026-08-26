@@ -52,10 +52,22 @@ final class SourceNormalizer {
                     inEntry = !value.stripTrailing().endsWith(".");
                 } else inEntry = true;
             } else if (inEntry && !line.isBlank() && !line.stripLeading().startsWith("*>")) {
-                output.add("*>CE " + line.strip());
-                if (line.stripTrailing().endsWith(".")) inEntry = false;
+                if (startsInAreaA(line)) {
+                    inEntry = false;
+                    output.add(line);
+                } else {
+                    output.add("*>CE " + line.strip());
+                }
             } else output.add(line);
         }
         return String.join("\n", output) + "\n";
+    }
+
+    private static boolean startsInAreaA(String line) {
+        int areaAWidth = Math.min(4, line.length());
+        for (int i = 0; i < areaAWidth; i++) {
+            if (!Character.isWhitespace(line.charAt(i))) return true;
+        }
+        return false;
     }
 }
