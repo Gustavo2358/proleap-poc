@@ -84,6 +84,37 @@ Argumentos opcionais do gerador:
 mvn exec:java -Dexec.args="--source corpus/cbl/COACTUPC.cbl --copybooks corpus/cpy --output dist"
 ```
 
+## Logging do analisador
+
+O logging usa SLF4J com Logback. A configuração padrão mantém `root=WARN` e
+`ExplorerMain=INFO`: uma execução normal mostra apenas o lifecycle de baixa
+cardinalidade e degradações relevantes. O formato inclui `runId`, `source` e
+`programUnit` via MDC, além de timestamp, nível, logger e thread.
+
+Os níveis podem ser alterados sem recompilar, por propriedade de sistema ou
+variável de ambiente. Para observar métricas de todas as fases instrumentadas no
+boundary principal:
+
+```bash
+mvn exec:java -DANALYZER_LOG_LEVEL=DEBUG
+```
+
+Para tracing seletivo de decisões, use a propriedade da classe de interesse:
+
+```bash
+mvn exec:java -DPREPROCESSOR_LOG_LEVEL=TRACE
+mvn exec:java -DRESOLVER_LOG_LEVEL=TRACE
+```
+
+Também estão disponíveis `NORMALIZER_LOG_LEVEL`,
+`ANTLR_DIAGNOSTIC_LOG_LEVEL`, `AST_LOG_LEVEL`, `SYMBOL_LOG_LEVEL` e
+`REFERENCE_COLLECTOR_LOG_LEVEL`. Uma configuração Logback externa completa pode
+ser escolhida com `-Dlogback.configurationFile=/caminho/logback.xml`; nunca é
+necessário habilitar `root=TRACE`.
+
+O pipeline atual é síncrono. Se no futuro houver execução assíncrona ou
+multithread, o mapa MDC precisará ser propagado explicitamente para cada tarefa.
+
 Os três caminhos são efetivamente usados pelo pipeline; `COACTUPC.cbl` e `dist` são apenas defaults. Cada execução analisa um programa-fonte e pode escrever em uma pasta independente, permitindo manter várias jornadas lado a lado. Por exemplo, o candidato com mais `CALLs` do corpus foi gerado com:
 
 ```bash

@@ -49,7 +49,7 @@ O comando/harness, diretório temporário e resultados de cada execução serão
 - [x] Executar regressão real.
 - [x] Revisar diff, logging, segurança, semântica e escopo.
 - [x] Executar `git diff --check` e conferir arquivos da fase.
-- [ ] Commit da fase e hash: `test: establish logging regression baseline`.
+- [x] Commit da fase e hash: `b13a996` — `test: establish logging regression baseline`.
 
 ### Evidências e decisões da fase 0
 
@@ -66,17 +66,17 @@ O comando/harness, diretório temporário e resultados de cada execução serão
 
 ## Fase 1 — Infraestrutura de logging
 
-- [ ] Escrever testes dos contratos de configuração e confirmar RED.
-- [ ] Adicionar SLF4J compatível com Java 17 e o Maven atual.
-- [ ] Adicionar Logback como implementação padrão.
-- [ ] Criar configuração default conservadora e formato estruturado.
-- [ ] Permitir override de níveis sem recompilação.
-- [ ] Introduzir `runId` e MDC de baixa cardinalidade.
-- [ ] Garantir limpeza do MDC em sucesso e falha.
-- [ ] Definir logger por classe, sem dependência Logback no domínio.
-- [ ] Executar testes focados/relacionados, suíte e regressão real.
-- [ ] Medir comportamento com configuração padrão.
-- [ ] Revisar diff completo e executar `git diff --check`.
+- [x] Escrever testes dos contratos de configuração e confirmar RED.
+- [x] Adicionar SLF4J compatível com Java 17 e o Maven atual.
+- [x] Adicionar Logback como implementação padrão.
+- [x] Criar configuração default conservadora e formato estruturado.
+- [x] Permitir override de níveis sem recompilação.
+- [x] Introduzir `runId` e MDC de baixa cardinalidade.
+- [x] Garantir limpeza do MDC em sucesso e falha.
+- [x] Definir logger por classe, sem dependência Logback no domínio.
+- [x] Executar testes focados/relacionados, suíte e regressão real.
+- [x] Medir comportamento com configuração padrão.
+- [x] Revisar diff completo e executar `git diff --check`.
 - [ ] Commit da fase e hash: `feat: establish analyzer logging infrastructure`.
 
 ## Fase 2 — Observabilidade do pipeline no `ExplorerMain`
@@ -172,11 +172,15 @@ O comando/harness, diretório temporário e resultados de cada execução serão
 ## Testes criados
 
 - Fase 0: baseline de artefatos `coactupc-semantic-baseline.txt` consumido pelo harness existente; cobertura ampliada para `coverage-data.js` e métricas canônicas de frontend/AST/símbolos/resolução.
+- Fase 1: `LoggingInfrastructureTest` (4 contratos): níveis default, override global, override seletivo por classe e lifecycle/restauração de MDC.
 
 ## Comandos de regressão e resultados
 
 - Fase 0: `mvn test` — 109 testes verdes.
 - Fase 0: `./scripts/source-normalizer-regression.sh phase0` — passou, artefatos em `/tmp/proleap-source-normalizer-phase0.6nNOVI`.
+- Fase 1: `mvn -Dtest=LoggingInfrastructureTest test` — 4 testes verdes após RED por dependências/contexto ausentes e RED seletivo (`TRACE` esperado, herança `WARN` observada).
+- Fase 1: `mvn test` — 113 testes verdes, 0 falhas/erros/skips, 46.124s.
+- Fase 1: `./scripts/source-normalizer-regression.sh phase1` — passou, artefatos em `/tmp/proleap-source-normalizer-phase1.qZVn2a`; métricas idênticas à baseline.
 
 ## Medição de overhead
 
@@ -185,6 +189,11 @@ _A preencher na fase 7 e repetir na fase 8._
 ## Decisões técnicas e dívidas deliberadas
 
 - MDC futuro em processamento assíncrono/multithread deverá ser propagado explicitamente; a implementação atual é síncrona.
+- Versões verificadas nas fontes oficiais em 2026-08-26: SLF4J 2.0.18 e Logback 1.6.3. Ambos suportam Java 17 (Logback 1.6.x requer Java 11+ e SLF4J 2.0.1+). `slf4j-api` é dependência de compilação; `logback-classic` fica em runtime/default provider.
+- Default: `root=WARN`, `ExplorerMain=INFO`; categorias de decisões permanecem `WARN`. Overrides por propriedades/ambiente (`ANALYZER_LOG_LEVEL`, `PREPROCESSOR_LOG_LEVEL`, `RESOLVER_LOG_LEVEL` etc.) ou `logback.configurationFile`.
+- Formato estruturado em stderr inclui timestamp, nível, classe, thread, `runId`, `source`, `programUnit` e mensagem `event=...`; stdout permanece reservado à CLI.
+- O escopo MDC restaura o mapa anterior no fechamento, inclusive diante de exceção via try-with-resources. Nenhuma classe de domínio importa Logback; somente o teste de configuração o faz.
+- Com configuração padrão na Fase 1, as execuções reais não geraram avisos internos do provider nem volume adicional; eventos de lifecycle começam na Fase 2.
 - Demais decisões serão registradas quando tomadas.
 
 ## Desvios e exceções de escopo
@@ -193,4 +202,4 @@ _A preencher na fase 7 e repetir na fase 8._
 
 ## Commits em ordem
 
-_A preencher após cada commit efetivamente concluído._
+1. `b13a996` — `test: establish logging regression baseline`

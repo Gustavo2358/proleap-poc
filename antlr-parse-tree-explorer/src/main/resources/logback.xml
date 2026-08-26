@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <property name="ANALYZER_LOG_LEVEL" value="${ANALYZER_LOG_LEVEL:-INFO}"/>
+
+  <appender name="STDERR" class="ch.qos.logback.core.ConsoleAppender">
+    <target>System.err</target>
+    <encoder>
+      <pattern>%date{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} level=%level logger=%logger{36} thread=%thread runId=%X{runId:-none} source=%X{source:-none} programUnit=%X{programUnit:-none} %msg%n%ex</pattern>
+    </encoder>
+  </appender>
+
+  <logger name="io.proleap.benchmark.ExplorerMain" level="${ANALYZER_LOG_LEVEL}"/>
+  <logger name="io.proleap.benchmark.SourceNormalizer" level="${NORMALIZER_LOG_LEVEL:-WARN}"/>
+  <logger name="io.proleap.benchmark.PreprocessorEngine" level="${PREPROCESSOR_LOG_LEVEL:-WARN}"/>
+  <logger name="io.proleap.benchmark.AntlrDiagnosticListener" level="${ANTLR_DIAGNOSTIC_LOG_LEVEL:-WARN}"/>
+  <logger name="io.proleap.benchmark.AstBuilder" level="${AST_LOG_LEVEL:-WARN}"/>
+  <logger name="io.proleap.benchmark.CompilationUnitSymbolTableBuilder" level="${SYMBOL_LOG_LEVEL:-WARN}"/>
+  <logger name="io.proleap.benchmark.SymbolTableBuilder" level="${SYMBOL_LOG_LEVEL:-WARN}"/>
+  <logger name="io.proleap.benchmark.ReferenceOccurrenceCollector" level="${REFERENCE_COLLECTOR_LOG_LEVEL:-WARN}"/>
+  <logger name="io.proleap.benchmark.CobolReferenceResolver" level="${RESOLVER_LOG_LEVEL:-WARN}"/>
+
+  <root level="WARN">
+    <appender-ref ref="STDERR"/>
+  </root>
+</configuration>
