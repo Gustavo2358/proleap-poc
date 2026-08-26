@@ -25,7 +25,9 @@ public final class ExplorerMain {
         List<Diagnostic> diagnostics = new ArrayList<>();
         String raw = Files.readString(source, StandardCharsets.UTF_8);
         SourceNormalizer.Result sourceNormalization = SourceNormalizer.normalize(raw,
-                source.getFileName().toString(), SourceNormalizer.SourceFormat.FIXED);
+                source.getFileName().toString(), new SourceNormalizer.Options(
+                        SourceNormalizer.SourceFormat.FIXED,
+                        SourceNormalizer.DebugLinePolicy.EXCLUDE));
         PreprocessorEngine.Outcome preprocessed =
                 new PreprocessorEngine(binding, new CopybookLibrary(copybooks))
                         .process(sourceNormalization.sourceMap(), source.getFileName().toString());

@@ -182,18 +182,18 @@ não depender de interface gráfica.
 
 ### Fase 4 — Indicator area exaustiva
 
-- [ ] Criar enum/política fechada para blank, comment, page-eject comment,
+- [x] Criar enum/política fechada para blank, comment, page-eject comment,
       continuation e debug; listar explicitamente extensões de dialeto aceitas.
-- [ ] Fazer indicador desconhecido/ilegal falhar localmente, incluindo linha e
+- [x] Fazer indicador desconhecido/ilegal falhar localmente, incluindo linha e
       coluna física.
-- [ ] Preservar comentários e page-eject sem alterar número de linhas e com
+- [x] Preservar comentários e page-eject sem alterar número de linhas e com
       provenance não enganosa.
-- [ ] Tornar debug line dependente de política explícita, sem removê-la sempre
+- [x] Tornar debug line dependente de política explícita, sem removê-la sempre
       por default.
-- [ ] Criar teste de exaustividade para que um novo tipo de indicador/política
+- [x] Criar teste de exaustividade para que um novo tipo de indicador/política
       não ganhe fallback silencioso.
-- [ ] Rodar teste focado, suíte completa e gate da aplicação.
-- [ ] Commit: `refactor: close fixed format indicator policies`.
+- [x] Rodar teste focado, suíte completa e gate da aplicação.
+- [x] Commit: `refactor: close fixed format indicator policies`.
 
 ### Fase 5 — Continuação COBOL sem contagem heurística de aspas
 

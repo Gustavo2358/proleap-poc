@@ -29,6 +29,7 @@ final class CopybookLibrary {
     SourceMap readNormalized(Path path) throws IOException {
         String file = path.getFileName().toString();
         return SourceNormalizer.normalize(Files.readString(path, StandardCharsets.UTF_8), file,
-                SourceNormalizer.SourceFormat.FIXED).sourceMap();
+                new SourceNormalizer.Options(SourceNormalizer.SourceFormat.FIXED,
+                        SourceNormalizer.DebugLinePolicy.EXCLUDE)).sourceMap();
     }
 }

@@ -110,6 +110,33 @@ class SourceNormalizerTest {
                 nonAscii.getMessage().contains("non-ASCII"), nonAscii.getMessage());
     }
 
+    @Test
+    void indicatorAreaHasAnExplicitPolicyForEverySupportedKind() {
+        assertEquals("*>  ordinary comment\n", SourceNormalizer.fixed(
+                "      * ordinary comment\n"));
+        assertEquals("*>  page eject comment\n", SourceNormalizer.fixed(
+                "      / page eject comment\n"));
+
+        SourceNormalizer.Options excludeDebug = new SourceNormalizer.Options(
+                SourceNormalizer.SourceFormat.FIXED,
+                SourceNormalizer.DebugLinePolicy.EXCLUDE);
+        SourceNormalizer.Options includeDebug = new SourceNormalizer.Options(
+                SourceNormalizer.SourceFormat.FIXED,
+                SourceNormalizer.DebugLinePolicy.INCLUDE);
+        assertEquals("*> DEBUG DISPLAY 'D'.\n", SourceNormalizer.normalize(
+                "      DDISPLAY 'D'.\n", "debug.cbl", excludeDebug).text());
+        assertEquals("DISPLAY 'D'.\n", SourceNormalizer.normalize(
+                "      dDISPLAY 'D'.\n", "debug.cbl", includeDebug).text());
+
+        IllegalArgumentException invalid = org.junit.jupiter.api.Assertions.assertThrows(
+                IllegalArgumentException.class,
+                () -> SourceNormalizer.fixed("      ?DISPLAY 'A'.\n"));
+        org.junit.jupiter.api.Assertions.assertTrue(invalid.getMessage().contains("line 1"),
+                invalid.getMessage());
+        org.junit.jupiter.api.Assertions.assertTrue(invalid.getMessage().contains("column 7"),
+                invalid.getMessage());
+    }
+
     private static ParserRuleContext firstRule(ParseTree tree, Parser parser, String expected) {
         if (tree instanceof ParserRuleContext context
                 && parser.getRuleNames()[context.getRuleIndex()].equals(expected)) return context;
