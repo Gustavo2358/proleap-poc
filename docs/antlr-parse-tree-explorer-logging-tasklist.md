@@ -77,18 +77,18 @@ O comando/harness, diretório temporário e resultados de cada execução serão
 - [x] Executar testes focados/relacionados, suíte e regressão real.
 - [x] Medir comportamento com configuração padrão.
 - [x] Revisar diff completo e executar `git diff --check`.
-- [ ] Commit da fase e hash: `feat: establish analyzer logging infrastructure`.
+- [x] Commit da fase e hash: `0aec643` — `feat: establish analyzer logging infrastructure`.
 
 ## Fase 2 — Observabilidade do pipeline no `ExplorerMain`
 
-- [ ] Escrever testes de início, fim, falha e campos essenciais; confirmar RED.
-- [ ] Instrumentar `analysis_started` e `analysis_completed` em `INFO`.
-- [ ] Instrumentar resumos/timings de normalização, preprocessing, parsing, AST, símbolos, ocorrências e resolução em `DEBUG`.
-- [ ] Correlacionar `runId`, `source` e `programUnit` quando aplicável.
-- [ ] Registrar `analysis_failed` em `ERROR` com stacktrace único no boundary.
-- [ ] Preservar semântica e decidir/documentar saída user-facing da CLI.
-- [ ] Executar testes focados/relacionados, suíte e regressão real.
-- [ ] Revisar diff completo e executar `git diff --check`.
+- [x] Escrever testes de início, fim, falha e campos essenciais; confirmar RED.
+- [x] Instrumentar `analysis_started` e `analysis_completed` em `INFO`.
+- [x] Instrumentar resumos/timings de normalização, preprocessing, parsing, AST, símbolos, ocorrências e resolução em `DEBUG`.
+- [x] Correlacionar `runId`, `source` e `programUnit` quando aplicável.
+- [x] Registrar `analysis_failed` em `ERROR` com stacktrace único no boundary.
+- [x] Preservar semântica e decidir/documentar saída user-facing da CLI.
+- [x] Executar testes focados/relacionados, suíte e regressão real.
+- [x] Revisar diff completo e executar `git diff --check`.
 - [ ] Commit da fase e hash: `feat: instrument analyzer pipeline lifecycle`.
 
 ## Fase 3 — Normalização, preprocessing e ANTLR
@@ -173,6 +173,7 @@ O comando/harness, diretório temporário e resultados de cada execução serão
 
 - Fase 0: baseline de artefatos `coactupc-semantic-baseline.txt` consumido pelo harness existente; cobertura ampliada para `coverage-data.js` e métricas canônicas de frontend/AST/símbolos/resolução.
 - Fase 1: `LoggingInfrastructureTest` (4 contratos): níveis default, override global, override seletivo por classe e lifecycle/restauração de MDC.
+- Fase 2: `ExplorerMainLoggingTest` (2 contratos): lifecycle/timings/correlação e produtos preservados; falha escapando com um único stacktrace e MDC limpo.
 
 ## Comandos de regressão e resultados
 
@@ -181,6 +182,10 @@ O comando/harness, diretório temporário e resultados de cada execução serão
 - Fase 1: `mvn -Dtest=LoggingInfrastructureTest test` — 4 testes verdes após RED por dependências/contexto ausentes e RED seletivo (`TRACE` esperado, herança `WARN` observada).
 - Fase 1: `mvn test` — 113 testes verdes, 0 falhas/erros/skips, 46.124s.
 - Fase 1: `./scripts/source-normalizer-regression.sh phase1` — passou, artefatos em `/tmp/proleap-source-normalizer-phase1.qZVn2a`; métricas idênticas à baseline.
+- Fase 2: `mvn -Dtest=ExplorerMainLoggingTest test` — RED com zero eventos; GREEN com 2 testes.
+- Fase 2: relacionados `ExplorerMainLoggingTest,ResolutionSnapshotTest,LoggingInfrastructureTest` — 9 testes verdes.
+- Fase 2: `mvn test` — 115 testes verdes, 0 falhas/erros/skips, 44.795s.
+- Fase 2: `./scripts/source-normalizer-regression.sh phase2` — passou, artefatos em `/tmp/proleap-source-normalizer-phase2.4csHzW`; métricas canônicas idênticas.
 
 ## Medição de overhead
 
@@ -194,6 +199,9 @@ _A preencher na fase 7 e repetir na fase 8._
 - Formato estruturado em stderr inclui timestamp, nível, classe, thread, `runId`, `source`, `programUnit` e mensagem `event=...`; stdout permanece reservado à CLI.
 - O escopo MDC restaura o mapa anterior no fechamento, inclusive diante de exceção via try-with-resources. Nenhuma classe de domínio importa Logback; somente o teste de configuração o faz.
 - Com configuração padrão na Fase 1, as execuções reais não geraram avisos internos do provider nem volume adicional; eventos de lifecycle começam na Fase 2.
+- `System.out.printf` foi mantido como contrato user-facing da CLI e continua alimentando o baseline; eventos operacionais são enviados separadamente a stderr.
+- O boundary mantém a fase operacional corrente e registra exceção escapando uma vez em `analysis_failed`; camadas internas não registram stacktrace.
+- Default da Fase 2 produz exatamente dois eventos `INFO` por execução normal. Contagens que exigem varrer texto/mapas para `DEBUG` estão protegidas por `isDebugEnabled()`.
 - Demais decisões serão registradas quando tomadas.
 
 ## Desvios e exceções de escopo
@@ -203,3 +211,4 @@ _A preencher na fase 7 e repetir na fase 8._
 ## Commits em ordem
 
 1. `b13a996` — `test: establish logging regression baseline`
+2. `0aec643` — `feat: establish analyzer logging infrastructure`

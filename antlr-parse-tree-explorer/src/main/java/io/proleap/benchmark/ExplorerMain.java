@@ -2,13 +2,18 @@ package io.proleap.benchmark;
 
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 public final class ExplorerMain {
+    private static final Logger LOG = LoggerFactory.getLogger(ExplorerMain.class);
+
     private record Node(int id, int parent, String kind, String name, String text,
                         int line, int column, int stopLine, int tokenStart, int tokenStop,
                         int depth, int childCount) {}
@@ -21,19 +26,54 @@ public final class ExplorerMain {
         Path copybooks = project.resolve(argument(args, "--copybooks", "corpus/cpy"));
         Path output = project.resolve(argument(args, "--output", "dist"));
 
+        AnalysisProgress progress = new AnalysisProgress();
+        long analysisStarted = System.nanoTime();
+        try (AnalysisLogContext logContext = AnalysisLogContext.open(source)) {
+            LOG.info("event=analysis_started phase=ANALYSIS output={}", output);
+            try {
+                analyze(source, copybooks, output, logContext, progress, analysisStarted);
+            } catch (Exception exception) {
+                LOG.error("event=analysis_failed phase={} elapsedMs={} reason={} impact=NO_RESULT",
+                        progress.phase, elapsedMs(analysisStarted), exception.getClass().getSimpleName(), exception);
+                throw exception;
+            }
+        }
+    }
+
+    private static void analyze(Path source, Path copybooks, Path output,
+                                AnalysisLogContext logContext, AnalysisProgress progress,
+                                long analysisStarted) throws Exception {
+
         GrammarBinding binding = Bindings.proleap();
         List<Diagnostic> diagnostics = new ArrayList<>();
+        progress.phase = "SOURCE_READ";
         String raw = Files.readString(source, StandardCharsets.UTF_8);
+
+        progress.phase = "NORMALIZATION";
+        long phaseStarted = System.nanoTime();
         SourceNormalizer.Result sourceNormalization = SourceNormalizer.normalize(raw,
                 source.getFileName().toString(), new SourceNormalizer.Options(
                         SourceNormalizer.SourceFormat.FIXED,
                         SourceNormalizer.DebugLinePolicy.EXCLUDE));
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("event=normalization_completed phase=NORMALIZATION elapsedMs={} originalLines={} normalizedLines={} diagnostics={}",
+                    elapsedMs(phaseStarted), raw.lines().count(), sourceNormalization.text().lines().count(),
+                    sourceNormalization.diagnostics().size());
+        }
+
+        progress.phase = "PREPROCESSING";
+        phaseStarted = System.nanoTime();
         PreprocessorEngine.Outcome preprocessed =
                 new PreprocessorEngine(binding, new CopybookLibrary(copybooks))
                         .process(sourceNormalization.sourceMap(), source.getFileName().toString());
         String normalized = preprocessed.text();
         diagnostics.addAll(preprocessed.diagnostics());
+        LOG.debug("event=preprocessing_completed phase=PREPROCESSING elapsedMs={} unresolvedCopies={} errors={} compilerOptions={}",
+                elapsedMs(phaseStarted), preprocessed.unresolved(), preprocessed.errors(),
+                preprocessed.compilerOptions().size());
 
+        progress.phase = "LEXING";
+        phaseStarted = System.nanoTime();
         Lexer lexer = binding.cobolLexer(CharStreams.fromString(normalized, source.getFileName().toString()));
         lexer.removeErrorListeners();
         lexer.addErrorListener(new AntlrDiagnosticListener(binding.name(), Diagnostic.Phase.LEXER,
@@ -41,7 +81,13 @@ public final class ExplorerMain {
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         tokens.fill();
         tokens.seek(0);
+        long tokenCount = tokens.getTokens().stream().filter(t -> t.getType() != Token.EOF).count();
+        long lexerErrors = diagnostics.stream().filter(d -> d.phase() == Diagnostic.Phase.LEXER).count();
+        LOG.debug("event=lexing_completed phase=LEXING elapsedMs={} tokens={} lexerErrors={}",
+                elapsedMs(phaseStarted), tokenCount, lexerErrors);
 
+        progress.phase = "PARSING";
+        phaseStarted = System.nanoTime();
         Parser parser = binding.cobolParser(tokens);
         parser.removeErrorListeners();
         parser.addErrorListener(new AntlrDiagnosticListener(binding.name(), Diagnostic.Phase.PARSER,
@@ -54,10 +100,11 @@ public final class ExplorerMain {
         IdentityHashMap<ParseTree, Integer> parseSubtreeSizes = new IdentityHashMap<>();
         walk(tree, -1, 0, parser, nodes, ruleCounts, parseIds, parseSubtreeSizes);
         int maxDepth = nodes.stream().mapToInt(Node::depth).max().orElse(0);
-        long tokenCount = tokens.getTokens().stream().filter(t -> t.getType() != Token.EOF).count();
-        long lexerErrors = diagnostics.stream().filter(d -> d.phase() == Diagnostic.Phase.LEXER).count();
         long parserErrors = diagnostics.stream().filter(d -> d.phase() == Diagnostic.Phase.PARSER).count();
+        LOG.debug("event=parsing_completed phase=PARSING elapsedMs={} nodes={} maxDepth={} parserErrors={}",
+                elapsedMs(phaseStarted), nodes.size(), maxDepth, parserErrors);
 
+        progress.phase = "ARTIFACT_EXPORT";
         Files.createDirectories(output);
         copyWebResources(output);
         Files.writeString(output.resolve("preprocessed.cbl"), normalized, StandardCharsets.UTF_8);
@@ -65,6 +112,8 @@ public final class ExplorerMain {
                 normalized, preprocessed.unresolved(), tokenCount, maxDepth, lexerErrors, parserErrors,
                 nodes, ruleCounts, diagnostics);
 
+        progress.phase = "AST_BUILD";
+        phaseStarted = System.nanoTime();
         CompilationUnitBuildResult compilationBuild = new AstBuilder(parser, normalized,
                 preprocessed.sourceMap(), parseIds, parseSubtreeSizes)
                 .buildCompilationUnit(tree, source.getFileName().toString());
@@ -72,6 +121,7 @@ public final class ExplorerMain {
         if (compilationUnit.programUnits().isEmpty())
             throw new IllegalStateException("No COBOL program unit was produced by the semantic frontend");
         CompilationUnitModel.ProgramUnit primaryUnit = compilationUnit.programUnits().get(0);
+        logContext.setProgramUnit(primaryUnit.id().canonicalProgramName());
         Ast.Program ast = primaryUnit.program();
         AstSnapshot astSnapshot = AstSnapshot.from(ast);
         astSnapshot.write(output.resolve("ast-data.js"), source.getFileName().toString(), nodes.size(),
@@ -80,19 +130,42 @@ public final class ExplorerMain {
                 compilationBuild.coverageByProgramUnit().get(primaryUnit.id()), preprocessed.unresolved(),
                 (int) lexerErrors, (int) parserErrors);
         coverageSnapshot.write(output.resolve("coverage-data.js"));
+        if (LOG.isDebugEnabled()) {
+            int semanticDiagnostics = compilationBuild.diagnosticsByProgramUnit().values().stream()
+                    .mapToInt(List::size).sum();
+            LOG.debug("event=ast_built phase=AST_BUILD elapsedMs={} programUnits={} nodes={} semanticDiagnostics={}",
+                    elapsedMs(phaseStarted), compilationUnit.programUnits().size(), astSnapshot.metrics().nodes(),
+                    semanticDiagnostics);
+        }
 
+        progress.phase = "SYMBOL_TABLE_BUILD";
+        phaseStarted = System.nanoTime();
         CompilationUnitSymbolTables symbolTables = new CompilationUnitSymbolTableBuilder().build(compilationUnit);
         SymbolTable symbolTable = symbolTables.forProgramUnit(primaryUnit.id()).orElseThrow().symbolTable();
         SymbolTableSnapshot symbolSnapshot = SymbolTableSnapshot.from(symbolTable);
         symbolSnapshot.write(output.resolve("symbol-data.js"), source.getFileName().toString(),
                 Arrays.asList(normalized.split("\\R", -1)));
+        LOG.debug("event=symbol_tables_built phase=SYMBOL_TABLE_BUILD elapsedMs={} programUnits={} symbols={} scopes={} diagnostics={}",
+                elapsedMs(phaseStarted), symbolTables.units().size(), symbolSnapshot.metrics().symbols(),
+                symbolSnapshot.metrics().scopes(), symbolSnapshot.metrics().diagnostics());
 
+        progress.phase = "REFERENCE_COLLECTION";
+        phaseStarted = System.nanoTime();
         Map<ResolutionContracts.ProgramUnitId, ReferenceOccurrences> occurrences = new LinkedHashMap<>();
         for (CompilationUnitModel.ProgramUnit unit : compilationUnit.programUnits()) {
             SymbolTable unitTable = symbolTables.forProgramUnit(unit.id()).orElseThrow().symbolTable();
             occurrences.put(unit.id(), new ReferenceOccurrenceCollector().collect(unit.id(), unit.program(),
                     AstScopeIndex.build(unit.program(), unitTable)));
         }
+        if (LOG.isDebugEnabled()) {
+            long referenceCount = occurrences.values().stream()
+                    .mapToLong(value -> value.occurrences().size()).sum();
+            LOG.debug("event=references_collected phase=REFERENCE_COLLECTION elapsedMs={} programUnits={} references={}",
+                    elapsedMs(phaseStarted), occurrences.size(), referenceCount);
+        }
+
+        progress.phase = "REFERENCE_RESOLUTION";
+        phaseStarted = System.nanoTime();
         ResolutionContracts.CobolResolutionPolicy policy = ResolutionContracts.CobolResolutionPolicy.initial()
                 .withPgmnameMode(preprocessed.pgmnameMode())
                 .withDynamMode(preprocessed.dynamMode())
@@ -107,6 +180,15 @@ public final class ExplorerMain {
                         Arrays.asList(normalized.split("\\R", -1)), compilationUnit, resolution,
                         resolutionReport, "NONE (not provided)")
                 .write(output.resolve("resolution-data.js"));
+        ReferenceResolution.Metrics resolutionMetrics = resolution.metrics();
+        LOG.debug("event=resolution_completed phase=REFERENCE_RESOLUTION elapsedMs={} references={} resolved={} unresolved={} ambiguous={} unsupported={} indexedDeclarations={} nominalLookups={} candidateInspections={} maximumCandidates={}",
+                elapsedMs(phaseStarted), resolution.entries().size(),
+                resolutionReport.statusCounts().get(ResolutionContracts.ResolutionStatus.RESOLVED),
+                resolutionReport.statusCounts().get(ResolutionContracts.ResolutionStatus.UNRESOLVED),
+                resolutionReport.statusCounts().get(ResolutionContracts.ResolutionStatus.AMBIGUOUS),
+                resolutionReport.statusCounts().get(ResolutionContracts.ResolutionStatus.UNSUPPORTED),
+                resolutionMetrics.indexedDeclarations(), resolutionMetrics.nominalLookups(),
+                resolutionMetrics.candidateInspections(), resolutionMetrics.maximumCandidates());
 
         System.out.printf(Locale.ROOT,
                 "Generated %s, %s, %s and %s%nSource: %s%nParse tree: %,d nodes | %,d tokens | depth %d%n" +
@@ -121,6 +203,18 @@ public final class ExplorerMain {
                 symbolSnapshot.metrics().scopes(), symbolSnapshot.metrics().diagnostics(), parserErrors,
                 resolution.entries().size(), resolutionReport.gaps().size(),
                 resolutionReport.completeness().dependencyAnalysisReady());
+        progress.phase = "COMPLETED";
+        LOG.info("event=analysis_completed phase=ANALYSIS elapsedMs={} programUnits={} references={} gaps={} dependencyAnalysisReady={} output={}",
+                elapsedMs(analysisStarted), compilationUnit.programUnits().size(), resolution.entries().size(),
+                resolutionReport.gaps().size(), resolutionReport.completeness().dependencyAnalysisReady(), output);
+    }
+
+    private static long elapsedMs(long startedNanos) {
+        return TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startedNanos);
+    }
+
+    private static final class AnalysisProgress {
+        private String phase = "INITIALIZATION";
     }
 
     private static int walk(ParseTree tree, int parent, int depth, Parser parser,
