@@ -26,7 +26,8 @@ class SourceProvenanceTest {
         Path main = fixture.resolve("main.cbl");
         GrammarBinding binding = Bindings.proleap();
         SourceNormalizer.Result normalized = SourceNormalizer.normalize(
-                Files.readString(main, StandardCharsets.UTF_8), "main.cbl");
+                Files.readString(main, StandardCharsets.UTF_8), "main.cbl",
+                SourceNormalizer.SourceFormat.FIXED);
 
         PreprocessorEngine.Outcome outcome = new PreprocessorEngine(binding,
                 new CopybookLibrary(fixture.resolve("cpy"))).process(normalized.sourceMap(), "main.cbl");
@@ -62,7 +63,8 @@ class SourceProvenanceTest {
         Path main = fixture.resolve("main.cbl");
         GrammarBinding binding = Bindings.proleap();
         SourceNormalizer.Result normalized = SourceNormalizer.normalize(
-                Files.readString(main, StandardCharsets.UTF_8), "main.cbl");
+                Files.readString(main, StandardCharsets.UTF_8), "main.cbl",
+                SourceNormalizer.SourceFormat.FIXED);
         PreprocessorEngine.Outcome outcome = new PreprocessorEngine(binding,
                 new CopybookLibrary(fixture.resolve("cpy"))).process(normalized.sourceMap(), "main.cbl");
 

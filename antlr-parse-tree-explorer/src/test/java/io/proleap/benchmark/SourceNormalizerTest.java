@@ -61,8 +61,8 @@ class SourceNormalizerTest {
     @Test
     void mapsNormalizedTextBackToPhysicalLinesAndColumns() throws Exception {
         String raw = Files.readString(INLINE_COMMENT_ENTRY, StandardCharsets.UTF_8);
-        SourceNormalizer.Result result = SourceNormalizer.normalize(
-                raw, INLINE_COMMENT_ENTRY.getFileName().toString());
+        SourceNormalizer.Result result = SourceNormalizer.normalize(raw,
+                INLINE_COMMENT_ENTRY.getFileName().toString(), SourceNormalizer.SourceFormat.FIXED);
 
         int environmentStart = result.text().indexOf("ENVIRONMENT");
         Ast.SourceProvenance environment = result.sourceMap().provenance(
@@ -82,6 +82,32 @@ class SourceNormalizerTest {
                 commentEntryStart, commentEntryStart + "*>CE ORIGINAL AUTHOR.".length());
         assertEquals(3, commentEntry.original().startLine());
         org.junit.jupiter.api.Assertions.assertFalse(commentEntry.exact());
+    }
+
+    @Test
+    void fixedFormatHasExplicitMarginsAndRejectsAmbiguousColumns() {
+        String code = "000100 DISPLAY 'A'." + " ".repeat(72 - "000100 DISPLAY 'A'.".length())
+                + "IDENTIFICATION-AREA\n";
+        SourceNormalizer.Result result = SourceNormalizer.normalize(
+                code, "margins.cbl", SourceNormalizer.SourceFormat.FIXED);
+
+        assertEquals("DISPLAY 'A'." + " ".repeat(72 - "000100 DISPLAY 'A'.".length()) + "\n",
+                result.text());
+        assertEquals("", SourceNormalizer.fixed("123456"),
+                "a short record containing only sequence-area columns has no program text");
+
+        IllegalArgumentException tab = org.junit.jupiter.api.Assertions.assertThrows(
+                IllegalArgumentException.class,
+                () -> SourceNormalizer.normalize("      \tDISPLAY 'A'.", "tab.cbl",
+                        SourceNormalizer.SourceFormat.FIXED));
+        org.junit.jupiter.api.Assertions.assertTrue(tab.getMessage().contains("tab"), tab.getMessage());
+
+        IllegalArgumentException nonAscii = org.junit.jupiter.api.Assertions.assertThrows(
+                IllegalArgumentException.class,
+                () -> SourceNormalizer.normalize("       DISPLAY 'Á'.", "non-ascii.cbl",
+                        SourceNormalizer.SourceFormat.FIXED));
+        org.junit.jupiter.api.Assertions.assertTrue(
+                nonAscii.getMessage().contains("non-ASCII"), nonAscii.getMessage());
     }
 
     private static ParserRuleContext firstRule(ParseTree tree, Parser parser, String expected) {

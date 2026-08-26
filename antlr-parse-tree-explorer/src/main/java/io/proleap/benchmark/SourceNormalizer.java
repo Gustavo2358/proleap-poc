@@ -27,13 +27,21 @@ final class SourceNormalizer {
     private SourceNormalizer() {}
 
     static String fixed(String raw) {
-        return normalize(raw, "<source>").text();
+        return normalize(raw, "<source>", SourceFormat.FIXED).text();
     }
 
-    static Result normalize(String raw, String file) {
+    static Result normalize(String raw, String file, SourceFormat format) {
+        Objects.requireNonNull(format, "format");
+        return switch (format) {
+            case FIXED -> normalizeFixed(raw, file);
+        };
+    }
+
+    private static Result normalizeFixed(String raw, String file) {
         List<NormalizedLine> output = new ArrayList<>();
         for (PhysicalLine physical : physicalLines(raw)) {
             String line = physical.content();
+            validateFixedCharacters(line, physical.start());
             String padded = line.length() < 7 ? line + "       ".substring(Math.min(7, line.length())) : line;
             char indicator = padded.charAt(6);
             int end = Math.min(padded.length(), 72);
@@ -138,6 +146,28 @@ final class SourceNormalizer {
             result.add(new PhysicalLine(raw.substring(start), "", start, raw.length(), raw.length()));
         }
         return result;
+    }
+
+    private static void validateFixedCharacters(String line, int rawStart) {
+        for (int index = 0; index < line.length(); index++) {
+            char character = line.charAt(index);
+            if (character == '\t' && index >= 6 && hasNonWhitespaceAfter(line, index)) {
+                throw new IllegalArgumentException("Unsupported tab in fixed-format source at offset "
+                        + (rawStart + index));
+            }
+            if (character > 0x7f) {
+                throw new IllegalArgumentException("Unsupported non-ASCII character U+"
+                        + String.format(Locale.ROOT, "%04X", (int) character)
+                        + " in fixed-format source at offset " + (rawStart + index));
+            }
+        }
+    }
+
+    private static boolean hasNonWhitespaceAfter(String line, int index) {
+        for (int following = index + 1; following < line.length(); following++) {
+            if (!Character.isWhitespace(line.charAt(following))) return true;
+        }
+        return false;
     }
 
     private static NormalizedLine transformedLine(String content, PhysicalLine physical) {

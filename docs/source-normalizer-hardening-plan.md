@@ -166,19 +166,19 @@ não depender de interface gráfica.
 
 ### Fase 3 — Contrato fechado de source format e margens
 
-- [ ] Introduzir política explícita de formato, inicialmente com os formatos
+- [x] Introduzir política explícita de formato, inicialmente com os formatos
       realmente suportados (`FIXED` e quaisquer outros comprovadamente
       implementados), sem autodetecção heurística silenciosa.
-- [ ] Modelar sequence area, indicator area, Area A/B e identification area com
+- [x] Modelar sequence area, indicator area, Area A/B e identification area com
       posições físicas, sem descartar sua relação com o fonte.
-- [ ] Definir margens/dialeto como configuração explícita quando variáveis.
-- [ ] Tratar linhas curtas, tabs, caracteres não ASCII e conteúdo após a margem
+- [x] Definir margens/dialeto como configuração explícita quando variáveis.
+- [x] Tratar linhas curtas, tabs, caracteres não ASCII e conteúdo após a margem
       direita de maneira deliberada e testada.
-- [ ] Preservar caracteres fora da área compilável como whitespace mapeado ou
+- [x] Preservar caracteres fora da área compilável como whitespace mapeado ou
       metadado, em vez de cortar offsets sem registro.
-- [ ] Rejeitar formato não suportado com diagnóstico localizado.
-- [ ] Rodar teste focado, suíte completa e gate da aplicação.
-- [ ] Commit: `refactor: define exhaustive cobol source format contract`.
+- [x] Rejeitar formato não suportado com diagnóstico localizado.
+- [x] Rodar teste focado, suíte completa e gate da aplicação.
+- [x] Commit: `refactor: define exhaustive cobol source format contract`.
 
 ### Fase 4 — Indicator area exaustiva
 
