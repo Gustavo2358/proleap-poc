@@ -63,3 +63,21 @@ Avaliar evolução compatível de `Diagnostic` para code/severity estáveis, eli
 ### BACKLOG-UI-001 — Navegação multi-unit
 
 Evoluir AST/Symbol Table HTML para nested e múltiplos program units, preservando links honestos quando uma unidade não está materializada na página.
+
+## Evals e desempenho
+
+### BACKLOG-EVAL-001 — Propriedades metamórficas semânticas
+
+Adicionar geradores e transformações controladas para provar invariância a case, comentários, sequence area e renome de símbolos não relacionados. Cada propriedade deve declarar precondições e comparar o produto semântico apropriado, não snapshots textuais acidentais.
+
+### BACKLOG-EVAL-002 — Oracle diferencial de referência
+
+Criar um resolver de referência lento e obviamente correto para topologias pequenas, usado somente em testes. Compará-lo ao resolver indexado por geração de casos para proteger futuras otimizações contra perda de candidatos, alteração de visibilidade ou desempate indevido.
+
+### BACKLOG-EVAL-003 — Mutation testing focalizado
+
+Avaliar mutation testing nos contratos de maior risco — ambiguidade, GLOBAL, qualification, incompletude e CALL — com orçamento e conjunto de mutantes explícitos. Não transformar score global em métrica de vaidade nem introduzir gate instável.
+
+### BACKLOG-PERF-001 — Escala das fases pré-resolução
+
+Adicionar cenários sintéticos grandes para normalização, preprocessing, AST, compilation units e símbolos. Verificar cardinalidades, limites de recursão e ausência de scans multiplicativos por métricas determinísticas, sem threshold de tempo dependente de hardware.

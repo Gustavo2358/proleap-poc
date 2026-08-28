@@ -34,4 +34,4 @@ O builder percorre a parse tree e cria o inventário semântico uma vez. Metadad
 
 ## Relações
 
-Invariantes: INV-AST-001, INV-AST-002, INV-PROV-002, INV-COV-001, INV-COV-002 e INV-EMB-001. ADRs: ADR-0002, ADR-0003, ADR-0007, ADR-0008 e ADR-0009.
+Evals: EVAL-AST-001 a EVAL-AST-004, EVAL-COV-001 e EVAL-COV-002. Invariantes: INV-AST-001, INV-AST-002, INV-PROV-002, INV-COV-001, INV-COV-002 e INV-EMB-001. ADRs: ADR-0002, ADR-0003, ADR-0007, ADR-0008 e ADR-0009.

@@ -40,4 +40,4 @@ O preprocessor não resolve símbolos COBOL, não interpreta payload de SQL/CICS
 
 ## Relações
 
-Invariantes: INV-PROV-001, INV-PROV-002, INV-COV-001 e INV-COV-002. ADRs: ADR-0002, ADR-0007, ADR-0008 e ADR-0009.
+Evals: EVAL-PRE-001, EVAL-PRE-002 e EVAL-PROV-001. Invariantes: INV-PROV-001, INV-PROV-002, INV-COV-001 e INV-COV-002. ADRs: ADR-0002, ADR-0007, ADR-0008 e ADR-0009.

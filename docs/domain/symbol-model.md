@@ -33,4 +33,4 @@ Symbol table não infere runtime values, não escolhe candidato para ocorrência
 
 ## Relações
 
-Invariantes: INV-SYM-001, INV-RES-001, INV-DET-001 e INV-PERF-001. ADRs: ADR-0003 e ADR-0005.
+Evals: EVAL-SYM-001, EVAL-SYM-002, EVAL-RES-REL-001 e EVAL-RES-PERF-001. Invariantes: INV-SYM-001, INV-RES-001, INV-DET-001 e INV-PERF-001. ADRs: ADR-0003 e ADR-0005.

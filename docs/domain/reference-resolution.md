@@ -48,6 +48,6 @@ Resolvers usam índices por nome canônico, unit, scope e domínio semântico. M
 
 ## Evidência executável e relações
 
-Testes principais: `DataAndIndexReferenceResolverTest`, `ProcedureFileProgramReferenceResolverTest`, `CallSemanticsTest`, `ProgramNameCanonicalizerTest`, `ReferenceResolutionManifestTest` e `ResolutionAnalysisReportTest`.
+Testes principais: `DataAndIndexReferenceResolverTest`, `ProcedureFileProgramReferenceResolverTest`, `CallSemanticsTest`, `ProgramNameCanonicalizerTest`, `ReferenceResolutionManifestTest` e `ResolutionAnalysisReportTest`. Evals: EVAL-RES-DATA-001 a EVAL-RES-DATA-003, EVAL-RES-REL-001, EVAL-RES-PROC-001, EVAL-RES-FILE-001, EVAL-RES-PROG-001, EVAL-RES-PROG-002, EVAL-RES-CALL-001, EVAL-RES-CALL-002, EVAL-RES-COV-001, EVAL-RES-REPORT-001, EVAL-RES-DET-001 e EVAL-RES-PERF-001.
 
 Invariantes: INV-RES-001, INV-RES-002, INV-RES-003, INV-COV-001, INV-DET-001 e INV-PERF-001. ADRs: ADR-0003, ADR-0004, ADR-0005, ADR-0006 e ADR-0008.

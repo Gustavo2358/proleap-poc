@@ -4,4 +4,4 @@ Evals tornam oráculos semânticos localizáveis por capacidade. O teste execut�
 
 Nesta versão, o catálogo será canônico em Markdown. Não haverá manifesto YAML duplicado enquanto nenhum gate precisar consumi-lo.
 
-O catálogo semântico será criado na Fase 6 a partir dos testes, fixtures, manifestos e scripts existentes. Ele distinguirá fixtures sintéticas, regressões do corpus e testes de escala.
+O [catálogo de evals semânticos](semantic-eval-catalog.md) registra IDs estáveis, capacidade provada, oracle executável, fixtures, tier e o tipo de implementação ingênua rejeitada. Lacunas reais permanecem no [backlog](../work/backlog.md), sem serem apresentadas como cobertura existente.

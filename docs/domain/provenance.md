@@ -29,4 +29,4 @@ O parser pode oferecer posições de token, mas elas não substituem a abstraç�
 
 ## Relações
 
-Invariantes: INV-PROV-001, INV-PROV-002 e INV-COV-001. ADR: ADR-0002.
+Evals: EVAL-PROV-001, EVAL-PROV-002 e EVAL-PRE-002. Invariantes: INV-PROV-001, INV-PROV-002 e INV-COV-001. ADR: ADR-0002.

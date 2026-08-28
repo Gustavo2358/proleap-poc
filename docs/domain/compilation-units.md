@@ -33,4 +33,4 @@ O índice por ID é construído uma vez; parentage é validado na construção. 
 
 ## Relações
 
-Invariantes: INV-DET-001, INV-PERF-001, INV-RES-002 e INV-RES-003. ADRs: ADR-0005 e ADR-0006.
+Evals: EVAL-UNIT-001, EVAL-RES-DATA-003, EVAL-RES-PROG-001 e EVAL-RES-DET-001. Invariantes: INV-DET-001, INV-PERF-001, INV-RES-002 e INV-RES-003. ADRs: ADR-0005 e ADR-0006.

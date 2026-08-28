@@ -38,4 +38,4 @@ O scanner percorre os registros e mantém estado limitado, com custo linear no t
 
 ## Relações
 
-Invariantes: INV-AST-002, INV-PROV-001, INV-PROV-002 e INV-COV-002. ADRs: ADR-0001, ADR-0002 e ADR-0009.
+Evals: EVAL-SRC-001, EVAL-SRC-002, EVAL-PRE-002 e EVAL-PROV-002. Invariantes: INV-AST-002, INV-PROV-001, INV-PROV-002 e INV-COV-002. ADRs: ADR-0001, ADR-0002 e ADR-0009.
