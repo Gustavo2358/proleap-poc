@@ -67,6 +67,22 @@ class HarnessDocsTest {
     }
 
     @Test
+    void readmeRemainsAHumanFacingBridgeToCanonicalDocumentation() throws Exception {
+        String content = read(ROOT.resolve("README.md"));
+        for (String section : List.of("Requisitos", "Gerar e abrir", "Exemplos", "Verificação", "Documentação")) {
+            assertTrue(content.contains("## " + section + "\n"), "seção ausente no README: " + section);
+        }
+        for (String destination : List.of("docs/index.md", "docs/architecture/index.md",
+                "docs/domain/index.md", "docs/engineering/index.md", "docs/evals/index.md")) {
+            assertTrue(content.contains(destination), "README não aponta para documentação canônica: " + destination);
+        }
+        assertFalse(content.contains("## Contrato da AST"),
+                "contratos semânticos detalhados devem morar nos documentos de domínio");
+        assertFalse(content.contains("## Contrato da tabela de símbolos"),
+                "contratos semânticos detalhados devem morar nos documentos de domínio");
+    }
+
+    @Test
     void activeWorkItemsFollowTheRoutingProtocol() throws Exception {
         Path active = DOCS.resolve("work/active");
         assertTrue(Files.isRegularFile(DOCS.resolve("engineering/work-item-protocol.md")),

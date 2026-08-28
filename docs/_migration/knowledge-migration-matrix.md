@@ -14,7 +14,7 @@ se tornam canônicos quando a fase correspondente os criar e validar.
 
 | Fonte | Seção/unidade | ID temporário | Classificação | Validade atual | Destino proposto | ID canônico | Estado | Notas |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `README.md` | propósito, execução e navegação | KM-README-001 | OPERATIONAL_PROCEDURE | atual | `README.md` | — | UNMAPPED | reduzir duplicação sem remover instruções de uso |
+| `README.md` | propósito, execução e navegação | KM-README-001 | OPERATIONAL_PROCEDURE | atual | `README.md` | — | MIGRATED | ponte humana curta, com exemplos e links para as fontes canônicas |
 | `README.md` | source format e preprocessing | KM-README-002 | DOMAIN_RULE | validado contra código/testes | `docs/domain/source-format-and-normalization.md`, `docs/domain/preprocessing.md` | ADR-0001, ADR-0002 | MIGRATED | README ficará como ponte curta na Fase 11 |
 | `README.md` | provenance | KM-README-003 | INVARIANT | validado contra código/testes | `docs/domain/provenance.md`, invariantes | INV-PROV-001, INV-PROV-002 | MIGRATED | provenance nasce no fonte físico |
 | `README.md` | AST, símbolos e resolução | KM-README-004 | ARCHITECTURE_BOUNDARY | validado contra código/testes | `ARCHITECTURE.md`, pipeline, ADRs e invariantes | ADR-0003–0008, INV-* | MIGRATED | detalhes de domínio ainda serão consolidados na Fase 4 |

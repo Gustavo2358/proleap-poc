@@ -2,7 +2,7 @@
 
 ## Onde estamos
 
-Fases 0–10 concluídas. O protocolo e o work item ativo estão instalados; `AGENTS.md` agora roteia contexto, trabalho e gates.
+Fases 0–11 concluídas. O protocolo e o work item ativo estão instalados; `AGENTS.md` agora roteia contexto, trabalho e gates. O README foi reduzido a uma porta de entrada de uso e navegação.
 
 ## Verde conhecido
 
@@ -10,7 +10,7 @@ Os gates `fast`, `semantic`, `performance` e `full` estão disponíveis. O full 
 
 ## Restante
 
-Reduzir duplicação do README, fechar a matriz de migração e remover/arquivar o legado elegível.
+Fechar a matriz de migração e remover/arquivar o legado elegível.
 
 ## Descobertas que afetam o plano
 
