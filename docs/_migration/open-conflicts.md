@@ -15,7 +15,7 @@ da matriz estar completa.
 
 ## Decisões da grill já aplicáveis
 
-- `WORK-HARNESS-001` será criado somente na Fase 9.
+- `WORK-HARNESS-001` foi criado na Fase 9 e cobre o encerramento das Fases 9–12.
 - Gates terão pirâmide incremental: fast estrutural, semantic Maven/semântico,
   full agregando cenário E2E e nomenclatura.
 - Enforcement arquitetural usará teste Java próprio baseado em dependências de

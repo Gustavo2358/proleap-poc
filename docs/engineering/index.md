@@ -8,10 +8,7 @@ Políticas disponíveis:
 - [testes semânticos](semantic-testing.md);
 - [desempenho](performance-policy.md);
 - [observabilidade](observability-policy.md);
-- [gates do harness](gates.md).
-
-Políticas que nascerão quando houver consolidação adicional:
-
-- `work-item-protocol.md`: será criado na Fase 9 para trabalho ativo pequeno e roteável.
+- [gates do harness](gates.md);
+- [protocolo de work items](work-item-protocol.md).
 
 Use esta família para método de engenharia. Para saber o comportamento atual de normalização, AST ou resolução, navegue para `../domain/`.

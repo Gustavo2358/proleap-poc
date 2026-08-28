@@ -11,7 +11,7 @@ Quando fontes divergem, aplicar a seguinte ordem para a pergunta em questão:
 3. Para uma fronteira arquitetural, `architecture/invariants.md`.
 4. Para o contrato atual de um subsistema, o documento em `domain/`.
 5. Para comprovação executável, o teste, fixture e gate relacionados.
-6. Para uma mudança proposta, o work item ativo quando o protocolo existir.
+6. Para uma mudança proposta, o work item ativo.
 7. Para investigação, a evidência em `history/`.
 
 Testes, corpus e artefatos gerados são evidência executável; não definem a semântica isoladamente. Uma regra normativa possui um único texto canônico. Outros documentos devem apontar para ele em vez de repeti-lo.
@@ -27,10 +27,10 @@ Testes, corpus e artefatos gerados são evidência executável; não definem a s
 | AST, unidades, símbolos e resolução nominal | [domain/](domain/index.md) |
 | política para mudança semântica, testes, desempenho ou observabilidade | [engineering/](engineering/index.md) |
 | oracle, teste, fixture ou cenário de regressão | [evals/](evals/index.md) |
-| trabalho futuro ainda válido | [work/backlog.md](work/backlog.md) |
+| trabalho ativo, histórico curto ou backlog | [work/](work/index.md) |
 | decisão antiga, relatório, baseline ou matriz de migração | [history/](history/index.md), somente quando necessário |
 
-Ainda não existe um work item ativo: o protocolo e `WORK-HARNESS-001` serão instalados na Fase 9 do plano. Até lá, `docs/_migration/` registra somente o estado transitório da migração e não é rota normal de contexto.
+O work item ativo atual é [WORK-HARNESS-001](work/active/WORK-HARNESS-001/work-item.yaml). `docs/_migration/` permanece transitório e não é rota normal de contexto, salvo quando o work item de migração o exigir.
 
 ## Fronteira entre famílias documentais
 

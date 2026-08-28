@@ -1,0 +1,40 @@
+id: WORK-HARNESS-001
+title: Concluir Harness Engineering v1
+status: active
+risk: medium
+goal: Concluir a migração do conhecimento e instalar o roteamento operacional sem alterar a semântica COBOL atual.
+must_read:
+  - specs/HARNESS_ENGINEERING_IMPLEMENTATION_PLAN.md
+  - docs/index.md
+  - docs/engineering/work-item-protocol.md
+  - docs/engineering/gates.md
+  - docs/_migration/knowledge-migration-matrix.md
+related_domain_rules:
+  - docs/architecture/pipeline.md
+  - docs/domain/index.md
+related_decisions:
+  - ADR-0003
+  - ADR-0005
+related_invariants:
+  - INV-AST-001
+  - INV-DET-001
+evals:
+  - EVAL-ARCH-001
+  - EVAL-PROV-002
+source_scope:
+  - README.md
+  - docs/
+  - scripts/harness/
+  - src/test/java/io/github/gustavo2358/cobolexplorer/HarnessDocsTest.java
+test_scope:
+  - src/test/java/io/github/gustavo2358/cobolexplorer/HarnessDocsTest.java
+  - scripts/harness/check-docs.sh
+  - scripts/harness/check-fast.sh
+  - scripts/harness/check-full.sh
+must_not_change:
+  - Regras COBOL, AST semântica, resolução nominal e escopo CFG/dataflow fora do necessário para preservar fronteiras já aprovadas.
+  - Backlog de refatoração por pacotes e Clean Architecture.
+gates:
+  - fast
+  - semantic
+  - full

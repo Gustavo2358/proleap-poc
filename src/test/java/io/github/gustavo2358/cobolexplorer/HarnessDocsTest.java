@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -31,6 +32,13 @@ class HarnessDocsTest {
     private static final Pattern BACKLOG_HEADING = Pattern.compile("(?m)^### (BACKLOG-[A-Z]+-\\d{3}) — ");
     private static final Pattern CANONICAL_ID = Pattern.compile(
             "\\b(?:ADR-\\d{4}|INV-[A-Z]+-\\d{3}|EVAL-[A-Z0-9-]+-\\d{3}|BACKLOG-[A-Z]+-\\d{3})\\b");
+    private static final Pattern YAML_KEY = Pattern.compile("^([a-z_]+):(?:\\s*(.*))?$");
+    private static final Pattern YAML_LIST_ITEM = Pattern.compile("^  - (.+)$");
+    private static final Set<String> WORK_ITEM_FIELDS = Set.of("id", "title", "status", "risk", "goal",
+            "must_read", "related_domain_rules", "related_decisions", "related_invariants", "evals",
+            "source_scope", "test_scope", "must_not_change", "gates");
+    private static final Set<String> HARNESS_GATES = Set.of("docs", "fast", "architecture", "semantic",
+            "performance", "full");
 
     @Test
     void stableGateEntrypointsExistAndAreExecutable() {
@@ -39,6 +47,59 @@ class HarnessDocsTest {
             Path entrypoint = ROOT.resolve("scripts/harness").resolve(gate);
             assertTrue(Files.isRegularFile(entrypoint), "entrypoint ausente: " + ROOT.relativize(entrypoint));
             assertTrue(Files.isExecutable(entrypoint), "entrypoint não executável: " + ROOT.relativize(entrypoint));
+        }
+    }
+
+    @Test
+    void activeWorkItemsFollowTheRoutingProtocol() throws Exception {
+        Path active = DOCS.resolve("work/active");
+        assertTrue(Files.isRegularFile(DOCS.resolve("engineering/work-item-protocol.md")),
+                "protocolo de work items ausente");
+        assertTrue(Files.isDirectory(active), "diretório de work items ativos ausente");
+        List<Path> workItems;
+        try (Stream<Path> directories = Files.list(active)) {
+            workItems = directories.filter(Files::isDirectory).sorted().toList();
+        }
+        assertFalse(workItems.isEmpty(), "nenhum work item ativo encontrado");
+
+        Set<String> knownIds = knownCanonicalIds();
+        for (Path workItem : workItems) {
+            assertTrue(workItem.getFileName().toString().matches("WORK-[A-Z0-9-]+-\\d{3}"),
+                    "diretório de work item inválido: " + ROOT.relativize(workItem));
+            assertEquals(Set.of("work-item.yaml", "spec.md", "plan.md", "eval.md", "state.md"),
+                    directFileNames(workItem), "estrutura inválida: " + ROOT.relativize(workItem));
+
+            Map<String, List<String>> yaml = simpleYaml(workItem.resolve("work-item.yaml"));
+            assertTrue(yaml.keySet().containsAll(WORK_ITEM_FIELDS),
+                    "campos obrigatórios ausentes em " + ROOT.relativize(workItem));
+            for (String field : WORK_ITEM_FIELDS) {
+                assertFalse(yaml.get(field).isEmpty(), "campo vazio " + field + " em " + ROOT.relativize(workItem));
+            }
+            assertEquals(workItem.getFileName().toString(), scalar(yaml, "id"), "ID e diretório divergem");
+            assertTrue(Set.of("active", "blocked").contains(scalar(yaml, "status")), "status ativo inválido");
+            assertTrue(Set.of("low", "medium", "high").contains(scalar(yaml, "risk")), "risk inválido");
+
+            assertPathsExist(yaml.get("must_read"), "must_read");
+            assertPathsExist(yaml.get("related_domain_rules"), "related_domain_rules");
+            assertPathsExist(yaml.get("source_scope"), "source_scope");
+            assertPathsExist(yaml.get("test_scope"), "test_scope");
+            assertKnownIds(yaml.get("related_decisions"), knownIds, "related_decisions");
+            assertKnownIds(yaml.get("related_invariants"), knownIds, "related_invariants");
+            assertKnownIds(yaml.get("evals"), knownIds, "evals");
+            for (String gate : yaml.get("gates")) {
+                assertTrue(HARNESS_GATES.contains(gate), "gate desconhecido: " + gate);
+            }
+
+            assertSections(workItem.resolve("spec.md"), List.of("Problema", "Objetivo", "Domínio de entrada suportado",
+                    "Classes semânticas", "Premissas", "Comportamento esperado", "Comportamento diante de incerteza",
+                    "Fora de escopo", "Regras de domínio relacionadas", "ADRs/invariantes relacionados"));
+            assertSections(workItem.resolve("plan.md"), List.of("Fatiamento", "Dependências",
+                    "Superfície arquitetural provável", "Migrações requeridas", "Artefatos esperados"));
+            assertSections(workItem.resolve("eval.md"), List.of("O que prova corretude", "Classes positivas",
+                    "Classes negativas", "Classes ambíguas", "Casos adversariais", "Casos de regressão",
+                    "Propriedades/relações metamórficas", "Expectativas de escala"));
+            assertSections(workItem.resolve("state.md"), List.of("Onde estamos", "Verde conhecido", "Restante",
+                    "Descobertas que afetam o plano"));
         }
     }
 
@@ -138,6 +199,73 @@ class HarnessDocsTest {
             assertTrue(ids.add(matcher.group(1)), "ID duplicado em " + ROOT.relativize(document) + ": " + matcher.group(1));
         }
         return ids;
+    }
+
+    private static Set<String> knownCanonicalIds() throws IOException {
+        Set<String> ids = new HashSet<>();
+        Path decisions = DOCS.resolve("architecture/decisions");
+        try (Stream<Path> files = Files.list(decisions)) {
+            for (Path adr : files.filter(path -> path.getFileName().toString().matches("\\d{4}-.*\\.md")).toList()) {
+                ids.addAll(definitions(adr, ADR_HEADING));
+            }
+        }
+        ids.addAll(definitions(DOCS.resolve("architecture/invariants.md"), INVARIANT_HEADING));
+        ids.addAll(definitions(DOCS.resolve("evals/semantic-eval-catalog.md"), EVAL_ROW));
+        ids.addAll(definitions(DOCS.resolve("work/backlog.md"), BACKLOG_HEADING));
+        return ids;
+    }
+
+    private static Set<String> directFileNames(Path directory) throws IOException {
+        try (Stream<Path> paths = Files.list(directory)) {
+            return paths.filter(Files::isRegularFile)
+                    .map(path -> path.getFileName().toString())
+                    .collect(java.util.stream.Collectors.toSet());
+        }
+    }
+
+    private static Map<String, List<String>> simpleYaml(Path yaml) throws IOException {
+        Map<String, List<String>> fields = new LinkedHashMap<>();
+        String current = null;
+        for (String line : read(yaml).split("\\R")) {
+            if (line.isBlank() || line.startsWith("#")) continue;
+            Matcher key = YAML_KEY.matcher(line);
+            if (key.matches()) {
+                current = key.group(1);
+                assertTrue(fields.putIfAbsent(current, new ArrayList<>()) == null,
+                        "campo YAML duplicado em " + ROOT.relativize(yaml) + ": " + current);
+                if (!key.group(2).isBlank()) fields.get(current).add(key.group(2));
+                continue;
+            }
+            Matcher item = YAML_LIST_ITEM.matcher(line);
+            assertTrue(item.matches() && current != null, "YAML fora do subconjunto permitido em "
+                    + ROOT.relativize(yaml) + ": " + line);
+            fields.get(current).add(item.group(1));
+        }
+        return fields;
+    }
+
+    private static String scalar(Map<String, List<String>> yaml, String field) {
+        assertEquals(1, yaml.get(field).size(), "campo escalar inválido: " + field);
+        return yaml.get(field).get(0);
+    }
+
+    private static void assertPathsExist(List<String> paths, String field) {
+        for (String value : paths) {
+            String path = value.split("#", 2)[0];
+            assertTrue(Files.exists(ROOT.resolve(path)), field + " inexistente: " + value);
+        }
+    }
+
+    private static void assertKnownIds(List<String> ids, Set<String> knownIds, String field) {
+        for (String id : ids) assertTrue(knownIds.contains(id), field + " desconhecido: " + id);
+    }
+
+    private static void assertSections(Path document, List<String> sections) throws IOException {
+        String content = read(document);
+        for (String section : sections) {
+            assertTrue(content.contains("## " + section + "\n"), "seção ausente em "
+                    + ROOT.relativize(document) + ": " + section);
+        }
     }
 
     private static void registerUnique(Map<String, String> owners, Set<String> ids, String owner) {
