@@ -62,7 +62,7 @@ final class AstBuilder {
     }
 
     CompilationUnitBuildResult buildCompilationUnit(ParseTree tree, String writtenCompilationUnitId) {
-        String compilationUnitId = SymbolTable.canonical(writtenCompilationUnitId);
+        String compilationUnitId = canonicalName(writtenCompilationUnitId);
         ParserRuleContext compilation = firstDescendant(tree, "compilationUnit");
         if (compilation == null) throw new IllegalStateException("compilationUnit not found");
         List<CompilationUnitModel.ProgramUnit> units = new ArrayList<>();
@@ -85,7 +85,7 @@ final class AstBuilder {
         AstBuildResult built = buildProgramUnit(context);
         ResolutionContracts.ProgramUnitId id = new ResolutionContracts.ProgramUnitId(
                 compilationUnitId, structuralPath,
-                SymbolTable.canonical(unquote(built.program().name())));
+                canonicalName(unquote(built.program().name())));
         units.add(new CompilationUnitModel.ProgramUnit(id, parentId, built.program()));
         coverage.put(id, built.coverage());
         diagnostics.put(id, built.diagnostics());
@@ -128,6 +128,10 @@ final class AstBuilder {
                     result.diagnostics().size(), metrics.unsupportedStatements(), metrics.preservedStatements());
         }
         return result;
+    }
+
+    private static String canonicalName(String writtenName) {
+        return writtenName == null ? "" : writtenName.trim().toUpperCase(Locale.ROOT);
     }
 
     private static LogMetrics logMetrics(Ast.Node root) {

@@ -68,6 +68,12 @@ Este catálogo dá IDs estáveis às capacidades críticas do harness. Ele não 
 | EVAL-OBS-003 | property / semantic | Instrumentação das fases semânticas preserva AST, símbolos e resolução. | `SemanticModelLoggingTest`, `ResolutionLoggingTest` | observability e pipeline; INV-DET-001 | Fazer o logger participar da decisão semântica. |
 | EVAL-UI-001 | regression / semantic | Snapshots materializam produtos separados e estados de coverage/resolution de forma determinística. | `CoverageSnapshotTest`, `ResolutionSnapshotTest` | pipeline; INV-AST-001, INV-COV-001, INV-DET-001 | Apresentação recomputar ou completar fatos ausentes. |
 
+## Fronteiras arquiteturais
+
+| ID | Tipo / tier | Contrato observado | Oracle executável e fixtures | Regras relacionadas | Rejeita implementação ingênua |
+| --- | --- | --- | --- | --- | --- |
+| EVAL-ARCH-001 | contract / fast | Produtos iniciais não dependem diretamente de símbolos, resolução ou apresentação; símbolo não depende do parser/resolver. | `ArchitectureBoundaryTest`; bytecode compilado | ADR-0003; INV-AST-001, INV-SYM-001 | Acrescentar uma dependência reversa no package único e escondê-la atrás de import ou helper. |
+
 ## Lacunas deliberadamente fora do catálogo executável atual
 
 Os itens `BACKLOG-EVAL-001` a `BACKLOG-EVAL-003` e `BACKLOG-PERF-001` registram famílias ainda sem oracle suficiente: propriedades metamórficas amplas, modelo diferencial, mutation testing focalizado e escala das fases anteriores à resolução. A ausência desses evals não é apresentada como cobertura existente.

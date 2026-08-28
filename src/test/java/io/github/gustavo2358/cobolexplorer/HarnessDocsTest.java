@@ -35,7 +35,7 @@ class HarnessDocsTest {
     @Test
     void stableGateEntrypointsExistAndAreExecutable() {
         for (String gate : List.of("check-docs.sh", "check-fast.sh", "check-semantic.sh",
-                "check-performance.sh", "check-full.sh")) {
+                "check-performance.sh", "check-architecture.sh", "check-full.sh")) {
             Path entrypoint = ROOT.resolve("scripts/harness").resolve(gate);
             assertTrue(Files.isRegularFile(entrypoint), "entrypoint ausente: " + ROOT.relativize(entrypoint));
             assertTrue(Files.isExecutable(entrypoint), "entrypoint não executável: " + ROOT.relativize(entrypoint));

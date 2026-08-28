@@ -10,7 +10,7 @@ IDs neste documento são estáveis. `AUTOMATED` indica proteção executável at
 - **Rationale:** mantém estrutura semântica reutilizável e evita ciclos entre fases.
 - **Scope:** `Ast`, `AstBuilder` e consumidores.
 - **Related ADRs:** ADR-0003.
-- **Enforcement:** `PARTIALLY_AUTOMATED` — testes de AST/ocorrências e futuro check de bytecode.
+- **Enforcement:** `AUTOMATED` — `ArchitectureBoundaryTest` bloqueia dependências diretas da AST/construção para símbolos, resolução e apresentação; testes de AST completam o contrato comportamental.
 - **Known exceptions:** nenhuma.
 
 ### INV-AST-002 — Estrutura deriva da gramática
@@ -28,7 +28,7 @@ IDs neste documento são estáveis. `AUTOMATED` indica proteção executável at
 - **Rationale:** separa inventário nominal de decisão de lookup.
 - **Scope:** builders e modelos de símbolos.
 - **Related ADRs:** ADR-0003.
-- **Enforcement:** `AUTOMATED` — testes de symbol table, occurrences e compilation units.
+- **Enforcement:** `AUTOMATED` — `ArchitectureBoundaryTest` bloqueia dependência direta de construção de símbolos para ANTLR/resolução; testes de symbol table, occurrences e compilation units completam o contrato comportamental.
 - **Known exceptions:** nenhuma.
 
 ## Provenance
