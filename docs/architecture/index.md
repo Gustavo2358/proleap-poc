@@ -2,7 +2,7 @@
 
 Esta área descreve o mapa estável de componentes, suas fronteiras e as decisões que explicam alternativas arquiteturais relevantes.
 
-O pipeline atual será documentado aqui depois da arqueologia da Fase 3. Até então, o código, os testes e a matriz transitória são a evidência de trabalho; este índice não antecipa contratos ainda não validados.
+O [pipeline atual](pipeline.md) registra as fronteiras já confirmadas. A arqueologia da Fase 3 acrescentará invariantes com IDs, ADRs retrospectivos e o mapa detalhado de dependências.
 
 ## Rotas
 
