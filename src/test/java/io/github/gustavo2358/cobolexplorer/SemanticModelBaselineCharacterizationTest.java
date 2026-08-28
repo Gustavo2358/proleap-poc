@@ -27,7 +27,7 @@ class SemanticModelBaselineCharacterizationTest {
     void characterizesCurrentDemonstrationPrograms() throws Exception {
         Path project = Path.of("").toAbsolutePath().normalize();
         Analysis coactupc = analyze(project.resolve("corpus/cbl/COACTUPC.cbl"), project.resolve("corpus/cpy"));
-        Analysis cbstm03a = analyze(project.resolve("../cbl/CBSTM03A.CBL"), project.resolve("../cpy"));
+        Analysis cbstm03a = analyze(project.resolve("corpus/cbl/CBSTM03A.CBL"), project.resolve("corpus/cpy"));
         Analysis cbstm03d = analyze(project.resolve("corpus/cbl/CBSTM03D.CBL"), project.resolve("corpus/cpy"));
 
         assertAll("frontend baseline",
