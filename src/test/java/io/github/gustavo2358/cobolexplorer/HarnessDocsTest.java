@@ -60,10 +60,7 @@ class HarnessDocsTest {
             assertTrue(content.contains("## " + section + "\n"), "seção ausente em AGENTS.md: " + section);
         }
         assertTrue(content.contains("docs/work/index.md"), "AGENTS.md não roteia para o índice de trabalho");
-        assertTrue(content.contains("WORK-HARNESS-001"), "AGENTS.md não identifica o work item ativo");
         assertFalse(content.contains("docs/history/evidence/"), "AGENTS.md não deve rotear diretamente para reports");
-        assertFalse(content.contains("docs/_migration/knowledge-migration-matrix.md"),
-                "AGENTS.md não deve carregar a matriz transitória por padrão");
     }
 
     @Test
@@ -87,13 +84,14 @@ class HarnessDocsTest {
         Path active = DOCS.resolve("work/active");
         assertTrue(Files.isRegularFile(DOCS.resolve("engineering/work-item-protocol.md")),
                 "protocolo de work items ausente");
-        assertTrue(Files.isDirectory(active), "diretório de work items ativos ausente");
         List<Path> workItems;
-        try (Stream<Path> directories = Files.list(active)) {
-            workItems = directories.filter(Files::isDirectory).sorted().toList();
+        if (Files.isDirectory(active)) {
+            try (Stream<Path> directories = Files.list(active)) {
+                workItems = directories.filter(Files::isDirectory).sorted().toList();
+            }
+        } else {
+            workItems = List.of();
         }
-        assertFalse(workItems.isEmpty(), "nenhum work item ativo encontrado");
-
         Set<String> knownIds = knownCanonicalIds();
         for (Path workItem : workItems) {
             assertTrue(workItem.getFileName().toString().matches("WORK-[A-Z0-9-]+-\\d{3}"),
@@ -133,6 +131,22 @@ class HarnessDocsTest {
             assertSections(workItem.resolve("state.md"), List.of("Onde estamos", "Verde conhecido", "Restante",
                     "Descobertas que afetam o plano"));
         }
+    }
+
+    @Test
+    void completedHarnessMigrationIsArchivedOutsideDefaultRouting() throws Exception {
+        Path archive = DOCS.resolve("history/harness-v1-migration");
+        for (String document : List.of("README.md", "HARNESS_ENGINEERING_IMPLEMENTATION_PLAN.md",
+                "knowledge-migration-matrix.md", "source-inventory.md", "open-conflicts.md")) {
+            assertTrue(Files.isRegularFile(archive.resolve(document)), "arquivo histórico ausente: " + document);
+        }
+        String matrix = read(archive.resolve("knowledge-migration-matrix.md"));
+        assertFalse(matrix.contains("| UNMAPPED |"), "a matriz final não pode conter conhecimento sem destino");
+        assertFalse(matrix.contains("| UNCERTAIN |"), "a matriz final não pode conter conhecimento incerto");
+        assertFalse(Files.exists(ROOT.resolve("specs/HARNESS_ENGINEERING_IMPLEMENTATION_PLAN.md")),
+                "o plano-base concluído não deve continuar em specs/");
+        assertTrue(Files.isRegularFile(DOCS.resolve("work/history/WORK-HARNESS-001.md")),
+                "resumo do work item concluído ausente");
     }
 
     @Test
@@ -210,7 +224,8 @@ class HarnessDocsTest {
     private static List<Path> markdownDocuments() throws IOException {
         List<Path> documents = new ArrayList<>();
         try (Stream<Path> paths = Files.walk(DOCS)) {
-            documents.addAll(paths.filter(path -> path.toString().endsWith(".md")).sorted().toList());
+            documents.addAll(paths.filter(path -> path.toString().endsWith(".md"))
+                    .filter(path -> !path.startsWith(DOCS.resolve("history"))).sorted().toList());
         }
         documents.add(ROOT.resolve("README.md"));
         documents.add(ROOT.resolve("ARCHITECTURE.md"));

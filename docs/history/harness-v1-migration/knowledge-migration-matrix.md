@@ -1,12 +1,11 @@
 # Matriz de migração de conhecimento — Harness v1
 
-Status: transitório. Esta é a matriz de controle da migração; seus destinos só
-se tornam canônicos quando a fase correspondente os criar e validar.
+Status: final e histórico. Esta é a prova de controle da migração concluída em
+2026-08-28; os destinos indicados já foram validados pelos gates do harness.
 
 ## Convenções
 
-- `UNMAPPED` significa que a unidade foi identificada, mas ainda não recebeu
-  destino definitivo.
+- Não há unidades `UNMAPPED` ou `UNCERTAIN` neste corte final.
 - `MIGRATED`, `MERGED`, `ARCHIVED`, `SUPERSEDED`,
   `OBSOLETE_WITH_REASON` e `TRANSIENT_NO_MIGRATION` serão usados somente com
   evidência na fase apropriada.
@@ -61,4 +60,4 @@ se tornam canônicos quando a fase correspondente os criar e validar.
 | `scripts/verify-naming.sh` | proteção de identidade | KM-GATE-002 | OPERATIONAL_PROCEDURE | atual | `scripts/harness/check-full.sh` | — | MIGRATED | gramáticas/notices e fontes históricas/transitórias ficam fora do escopo; arquivos ignorados não entram no gate |
 | testes, fixtures e manifests | contratos executáveis | KM-EXEC-001 | EVAL_ORACLE | atual | `docs/evals/semantic-eval-catalog.md` | EVAL-* | MIGRATED | catálogo aponta para os asserts sem duplicá-los |
 | fontes de produção | fronteiras e algoritmos | KM-CODE-001 | ARCHITECTURE_BOUNDARY | validado no corte atual | `ARCHITECTURE.md`, pipeline, ADRs, invariantes e check de bytecode | ADR-0002–0009, INV-*, EVAL-ARCH-001 | MIGRATED | código permanece evidência executável; fronteiras verificáveis não dependem só de texto |
-| `specs/HARNESS_ENGINEERING_IMPLEMENTATION_PLAN.md` | plano integral | KM-HARNESS-PLAN-001 | HISTORICAL_EVIDENCE | ativo até o encerramento | `docs/work/active/WORK-HARNESS-001/` e depois `docs/history/harness-v1-migration/` | WORK-HARNESS-001 | UNMAPPED | decisão A da grill: work item ativo agora; arquivar o plano no final |
+| `specs/HARNESS_ENGINEERING_IMPLEMENTATION_PLAN.md` | plano integral | KM-HARNESS-PLAN-001 | HISTORICAL_EVIDENCE | histórico | `docs/history/harness-v1-migration/HARNESS_ENGINEERING_IMPLEMENTATION_PLAN.md` e `docs/work/history/WORK-HARNESS-001.md` | WORK-HARNESS-001 | ARCHIVED | baseline preservada fora do roteamento padrão; work item encerrado |

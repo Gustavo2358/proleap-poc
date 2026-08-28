@@ -30,7 +30,7 @@ Testes, corpus e artefatos gerados são evidência executável; não definem a s
 | trabalho ativo, histórico curto ou backlog | [work/](work/index.md) |
 | decisão antiga, relatório, baseline ou matriz de migração | [history/](history/index.md), somente quando necessário |
 
-O work item ativo atual é [WORK-HARNESS-001](work/active/WORK-HARNESS-001/work-item.yaml). `docs/_migration/` permanece transitório e não é rota normal de contexto, salvo quando o work item de migração o exigir.
+No corte atual, não há work item ativo. O [índice de trabalho](work/index.md) informa quando houver um e preserva resumos úteis dos itens concluídos.
 
 ## Fronteira entre famílias documentais
 
@@ -41,6 +41,5 @@ O work item ativo atual é [WORK-HARNESS-001](work/active/WORK-HARNESS-001/work-
 | `engineering/` | como implementar e avaliar trabalho com rigor | contrato detalhado de cada domínio |
 | `evals/` | qual teste/fixture prova qual capacidade | cópia integral de asserts |
 | `history/` | qual evidência levou a uma decisão ou baseline | norma atual por padrão |
-| `_migration/` | como o conhecimento legado está sendo classificado | contrato definitivo |
 
-Não carregar `history/` ou `_migration/` por padrão. Use-os apenas quando uma fonte canônica, um work item ou uma investigação exigir evidência histórica.
+Não carregar `history/` por padrão. Use-o apenas quando uma fonte canônica, um work item ou uma investigação exigir evidência histórica.

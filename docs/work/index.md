@@ -4,8 +4,10 @@ Work items delimitam a mudança em execução; o [backlog](backlog.md) registra 
 
 ## Ativo
 
-- [WORK-HARNESS-001 — Concluir Harness Engineering v1](active/WORK-HARNESS-001/work-item.yaml)
+Não há work item ativo neste corte.
 
 ## Histórico
 
-`history/` recebe somente resumos de work items concluídos que ainda ajudem a explicar uma decisão ou migração. Não há item histórico criado neste corte.
+`history/` recebe somente resumos de work items concluídos que ainda ajudem a explicar uma decisão ou migração.
+
+- [WORK-HARNESS-001 — Concluir Harness Engineering v1](history/WORK-HARNESS-001.md)

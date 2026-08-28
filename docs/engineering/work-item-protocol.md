@@ -50,4 +50,4 @@ gates:
 
 `state.md` contém: Onde estamos, Verde conhecido, Restante e Descobertas que afetam o plano. É memória curta e factual da execução, não histórico detalhado.
 
-O [WORK-HARNESS-001](../work/active/WORK-HARNESS-001/work-item.yaml) é o primeiro exemplo válido. Templates separados ficam adiados até que um segundo work item demonstre uma repetição útil.
+O [resumo de WORK-HARNESS-001](../work/history/WORK-HARNESS-001.md) registra o primeiro ciclo concluído. Templates separados ficam adiados até que um segundo work item demonstre uma repetição útil.

@@ -28,7 +28,7 @@ O mapa curto está em [ARCHITECTURE.md](ARCHITECTURE.md). Fronteiras detalhadas 
 - Binding nominal não autoriza inferir valores de runtime ou targets dinâmicos finais.
 - Não enfraqueça fixture, baseline, manifesto ou gramática apenas para fazer um teste passar.
 - Em mudança semântica não trivial, identifique antes a regra, o invariant/ADR e o eval aplicáveis.
-- Respeite `source_scope`, `must_not_change` e os gates declarados no work item ativo.
+- Quando houver work item ativo, respeite `source_scope`, `must_not_change` e os gates declarados nele.
 - Backlog descreve trabalho futuro; não é autorização para iniciá-lo.
 
 ## Roteamento inicial
@@ -52,7 +52,7 @@ Comece no [índice de conhecimento](docs/index.md). Carregue somente o contexto 
 
 ## Trabalho ativo
 
-O índice de trabalho está em [docs/work/index.md](docs/work/index.md). O item ativo atual é [WORK-HARNESS-001](docs/work/active/WORK-HARNESS-001/work-item.yaml).
+O índice de trabalho está em [docs/work/index.md](docs/work/index.md). Não há item ativo neste corte; crie um somente para uma mudança autorizada, conforme o protocolo.
 
 Ao trabalhar em um item:
 
@@ -66,7 +66,7 @@ Novo trabalho ativo segue o [protocolo](docs/engineering/work-item-protocol.md).
 
 ## Contexto histórico
 
-Não carregue `docs/history/`, `docs/_migration/`, tasklists, reports ou commits antigos por padrão. Consulte história somente para investigar uma decisão, verificar provenance documental ou executar uma migração que a referencie explicitamente.
+Não carregue `docs/history/`, tasklists, reports ou commits antigos por padrão. Consulte história somente para investigar uma decisão, verificar provenance documental ou executar uma migração que a referencie explicitamente.
 
 Fonte histórica não prevalece sobre ADR aceito, invariant ou contrato de domínio atual. Divergência deve permanecer explícita até ser resolvida pela autoridade adequada.
 
