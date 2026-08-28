@@ -1,5 +1,7 @@
 # Reference-resolution semantic correctness hardening
 
+> Evidência histórica arquivada. Para o contrato atual, consulte [resolução de referências](../../domain/reference-resolution.md).
+
 ## 1. BASELINE
 
 ### Fase 0 — 2026-08-24

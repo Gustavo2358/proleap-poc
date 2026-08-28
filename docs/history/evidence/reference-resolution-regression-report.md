@@ -1,5 +1,7 @@
 # Relatório de regressão — Resolução de referências
 
+> Evidência histórica arquivada. Para o contrato atual, consulte [resolução de referências](../../domain/reference-resolution.md).
+
 ## Estado
 
 Concluído. A auditoria da Fase 8 e a criação do commit isolado de encerramento

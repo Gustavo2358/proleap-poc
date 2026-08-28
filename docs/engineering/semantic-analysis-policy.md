@@ -58,3 +58,7 @@ Diagnósticos são resultados semânticos. Eles devem comunicar a construção, 
 Antes de concluir, desafiar a solução: qual entrada COBOL válida quebra a premissa? A regra veio de especificação ou do corpus? Alguma incerteza virou ausência? A solução usa regex, nearest-match ou ordem de declaração no lugar de semântica? Está reivindicando conhecimento de uma fase futura? O algoritmo continuaria correto se todos os fixtures atuais fossem trocados?
 
 Comentários em produção devem explicar regra, invariante ou motivo da postura conservadora; não o nome do teste ou a história de um incidente.
+
+## Guardas do repositório
+
+As gramáticas vendorizadas preservam autoria, copyright e atribuições. Alterá-las só é correto quando a gramática é a origem comprovada do defeito ou quando a superfície suportada muda deliberadamente; fixtures e grammar não são ajustadas apenas para satisfazer produção. `scripts/verify-naming.sh` protege a identidade atual sem remover referências exigidas pelas atribuições das gramáticas.

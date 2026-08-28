@@ -1,5 +1,7 @@
 # Relatório de regressão — Semantic Model Hardening
 
+> Evidência histórica arquivada. Para o contrato atual, consulte [AST semântica](../../domain/semantic-ast.md).
+
 ## Estado
 
 Concluído em 2026-08-23. A auditoria final e seus resultados foram aprovados

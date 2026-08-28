@@ -27,6 +27,7 @@ Testes, corpus e artefatos gerados são evidência executável; não definem a s
 | AST, unidades, símbolos e resolução nominal | [domain/](domain/index.md) |
 | política para mudança semântica, testes, desempenho ou observabilidade | [engineering/](engineering/index.md) |
 | oracle, teste, fixture ou cenário de regressão | [evals/](evals/index.md) |
+| trabalho futuro ainda válido | [work/backlog.md](work/backlog.md) |
 | decisão antiga, relatório, baseline ou matriz de migração | [history/](history/index.md), somente quando necessário |
 
 Ainda não existe um work item ativo: o protocolo e `WORK-HARNESS-001` serão instalados na Fase 9 do plano. Até lá, `docs/_migration/` registra somente o estado transitório da migração e não é rota normal de contexto.
