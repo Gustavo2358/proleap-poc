@@ -7,7 +7,8 @@ Políticas disponíveis:
 - [análise semântica](semantic-analysis-policy.md);
 - [testes semânticos](semantic-testing.md);
 - [desempenho](performance-policy.md);
-- [observabilidade](observability-policy.md).
+- [observabilidade](observability-policy.md);
+- [gates do harness](gates.md).
 
 Políticas que nascerão quando houver consolidação adicional:
 
