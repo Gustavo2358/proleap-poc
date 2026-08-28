@@ -26,4 +26,4 @@ Cada seta produz um artefato para a fase seguinte; uma fase não deve gravar con
 - `ReferenceResolution` é produto separado e imutável; preserva candidatos, status e diagnósticos para binding nominal.
 - CFG, reaching definitions, propagação de valores e análise de linguagens embarcadas ainda não são produtos do pipeline. A ausência deles deve continuar observável como boundary/incompletude, não como resultado vazio.
 
-Este documento descreve a fronteira consolidada. Os invariantes com IDs, ADRs e mapa detalhado de dependências serão produzidos pela arqueologia da Fase 3.
+Este documento descreve a fronteira consolidada. Consulte os [invariantes com IDs](invariants.md), os [ADRs](decisions/index.md) e o [mapa curto de componentes](../../ARCHITECTURE.md).

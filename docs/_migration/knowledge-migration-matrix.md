@@ -17,7 +17,7 @@ se tornam canônicos quando a fase correspondente os criar e validar.
 | `README.md` | propósito, execução e navegação | KM-README-001 | OPERATIONAL_PROCEDURE | atual | `README.md` | — | UNMAPPED | reduzir duplicação sem remover instruções de uso |
 | `README.md` | source format e preprocessing | KM-README-002 | DOMAIN_RULE | atual | `docs/domain/source-format-and-normalization.md`, `docs/domain/preprocessing.md` | a definir | UNMAPPED | README ficará como ponte curta |
 | `README.md` | provenance | KM-README-003 | INVARIANT | atual | `docs/domain/provenance.md`, invariantes | INV-PROV-* | UNMAPPED | provenance nasce no fonte físico |
-| `README.md` | AST, símbolos e resolução | KM-README-004 | ARCHITECTURE_BOUNDARY | atual | domain docs, ADRs e invariantes | a definir | UNMAPPED | não manter como manual semântico duplicado |
+| `README.md` | AST, símbolos e resolução | KM-README-004 | ARCHITECTURE_BOUNDARY | validado contra código/testes | `ARCHITECTURE.md`, pipeline, ADRs e invariantes | ADR-0003–0008, INV-* | MIGRATED | detalhes de domínio ainda serão consolidados na Fase 4 |
 | `README.md` | logging | KM-README-005 | OBSERVABILITY_CONTRACT | atual | `docs/engineering/observability-policy.md` | a definir | UNMAPPED | conteúdo atual é suficiente para doc próprio |
 | `README.md` | números do corpus | KM-README-006 | REGRESSION_BASELINE | histórico | histórico/evals quando útil | — | UNMAPPED | não são regra COBOL |
 | `specs/AGENTS.md — antlr-parse-tree-explorer.md` | §§1–6, 11–12, 21–22, 27–35, 38–39 | KM-IMP-SEM-001 | TESTING_POLICY | validado contra README, código e testes no corte atual | `docs/engineering/semantic-analysis-policy.md` | — | MIGRATED | política semântica e fail-closed |
@@ -29,7 +29,7 @@ se tornam canônicos quando a fase correspondente os criar e validar.
 | mesmo | QUALIFY | KM-RES-POL-002 | ALGORITHM_CONTRACT | atual | domain resolução | RULE-RES-* opcional | UNMAPPED | STANDARD/EXTEND/UNSPECIFIED |
 | mesmo | namespaces e CALL | KM-RES-POL-003 | SUPPORTED_SCOPE | atual | domain resolução, ADRs/invariantes | a definir | UNMAPPED | catálogo externo e fronteira de dataflow |
 | mesmo | manifesto | KM-RES-POL-004 | EVAL_ORACLE | atual | domain resolução + eval catalog | EVAL-RES-* | UNMAPPED | classificação conservadora das regras |
-| `specs/adr/0001-comment-entry-normalization.md` | decisão integral | KM-ADR-0001 | DECISION | atual | `docs/architecture/decisions/0001-comment-entry-normalization.md` | ADR-0001 | UNMAPPED | preservar identidade e evidência |
+| `specs/adr/0001-comment-entry-normalization.md` | decisão integral | KM-ADR-0001 | DECISION | atual | `docs/architecture/decisions/0001-comment-entry-normalization.md` | ADR-0001 | MIGRATED | identidade e data preservadas; fonte movida |
 | `specs/source-normalizer-hardening-plan.md` | fases 1–7 | KM-NORM-001 | DOMAIN_RULE | validar contra código/testes | source format, preprocessing e provenance | a definir | UNMAPPED | extrair contrato atual, não narrativa TDD |
 | mesmo | princípios, TDD e gate | KM-NORM-002 | TESTING_POLICY | atual quando geral | semantic policy/testing + gates | a definir | UNMAPPED | não duplicar workflow específico |
 | mesmo | commits e checkboxes concluídos | KM-NORM-003 | COMPLETED_TRANSIENT_WORK | histórico | nenhum | — | UNMAPPED | preservar Git; não copiar |
@@ -60,5 +60,5 @@ se tornam canônicos quando a fase correspondente os criar e validar.
 | `scripts/source-normalizer-regression.sh` | cenário E2E | KM-GATE-001 | EVAL_ORACLE | atual | check-full + eval catalog | EVAL-PROV-* | UNMAPPED | encapsular, não reimplementar |
 | `scripts/verify-naming.sh` | proteção de identidade | KM-GATE-002 | OPERATIONAL_PROCEDURE | atual | check-full/check-fast conforme custo | INV-PROJ-* | UNMAPPED | preservar exceção das gramáticas |
 | testes, fixtures e manifests | contratos executáveis | KM-EXEC-001 | EVAL_ORACLE | atual | docs/evals catalog | EVAL-* | UNMAPPED | classificação detalhada na Fase 6 |
-| fontes de produção | fronteiras e algoritmos | KM-CODE-001 | ARCHITECTURE_BOUNDARY | atual | arquitetura/domain/ADRs/invariantes | a definir | UNMAPPED | fonte de evidência, não documento canônico |
+| fontes de produção | fronteiras e algoritmos | KM-CODE-001 | ARCHITECTURE_BOUNDARY | validado no corte atual | `ARCHITECTURE.md`, pipeline, ADRs e invariantes | ADR-0002–0009, INV-* | MIGRATED | código permanece evidência executável, não texto normativo |
 | `specs/HARNESS_ENGINEERING_IMPLEMENTATION_PLAN.md` | plano integral | KM-HARNESS-PLAN-001 | HISTORICAL_EVIDENCE | ativo até o encerramento | `docs/history/harness-v1-migration/` | — | UNMAPPED | decisão A da grill: arquivar no final |

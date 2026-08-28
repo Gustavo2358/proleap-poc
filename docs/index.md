@@ -22,7 +22,7 @@ Testes, corpus e artefatos gerados são evidência executável; não definem a s
 | --- | --- |
 | mapa do pipeline, responsabilidades e dependências | [architecture/](architecture/index.md) |
 | decisão e racional arquitetural | [architecture/decisions/](architecture/decisions/index.md) |
-| fronteira que não pode regredir | `architecture/invariants.md` quando criado |
+| fronteira que não pode regredir | [architecture/invariants.md](architecture/invariants.md) |
 | formato de fonte, preprocessing e provenance | [domain/](domain/index.md) |
 | AST, unidades, símbolos e resolução nominal | [domain/](domain/index.md) |
 | política para mudança semântica, testes, desempenho ou observabilidade | [engineering/](engineering/index.md) |
