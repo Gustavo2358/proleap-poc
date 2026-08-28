@@ -22,6 +22,7 @@ evals:
   - EVAL-ARCH-001
   - EVAL-PROV-002
 source_scope:
+  - AGENTS.md
   - README.md
   - docs/
   - scripts/harness/

@@ -51,6 +51,22 @@ class HarnessDocsTest {
     }
 
     @Test
+    void agentsFileRoutesWithoutLoadingHistoryByDefault() throws Exception {
+        Path agents = ROOT.resolve("AGENTS.md");
+        assertTrue(Files.isRegularFile(agents), "AGENTS.md raiz ausente");
+        String content = read(agents);
+        for (String section : List.of("Escopo", "Propósito", "Pipeline", "Regras universais",
+                "Roteamento inicial", "Trabalho ativo", "Contexto histórico", "Verificação")) {
+            assertTrue(content.contains("## " + section + "\n"), "seção ausente em AGENTS.md: " + section);
+        }
+        assertTrue(content.contains("docs/work/index.md"), "AGENTS.md não roteia para o índice de trabalho");
+        assertTrue(content.contains("WORK-HARNESS-001"), "AGENTS.md não identifica o work item ativo");
+        assertFalse(content.contains("docs/history/evidence/"), "AGENTS.md não deve rotear diretamente para reports");
+        assertFalse(content.contains("docs/_migration/knowledge-migration-matrix.md"),
+                "AGENTS.md não deve carregar a matriz transitória por padrão");
+    }
+
+    @Test
     void activeWorkItemsFollowTheRoutingProtocol() throws Exception {
         Path active = DOCS.resolve("work/active");
         assertTrue(Files.isRegularFile(DOCS.resolve("engineering/work-item-protocol.md")),
@@ -182,6 +198,7 @@ class HarnessDocsTest {
         }
         documents.add(ROOT.resolve("README.md"));
         documents.add(ROOT.resolve("ARCHITECTURE.md"));
+        documents.add(ROOT.resolve("AGENTS.md"));
         return documents;
     }
 

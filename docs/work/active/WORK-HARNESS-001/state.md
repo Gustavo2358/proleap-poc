@@ -2,15 +2,15 @@
 
 ## Onde estamos
 
-Fases 0–8 concluídas. Esta Fase 9 instala o protocolo e formaliza o work item ativo que cobre as Fases 9–12.
+Fases 0–10 concluídas. O protocolo e o work item ativo estão instalados; `AGENTS.md` agora roteia contexto, trabalho e gates.
 
 ## Verde conhecido
 
-Os gates `fast`, `semantic`, `performance` e `full` estão disponíveis. O full gate passou após a Fase 8, incluindo documentação, bytecode, suíte Maven, regressão COACTUPC e naming.
+Os gates `fast`, `semantic`, `performance` e `full` estão disponíveis. O full gate passou após a Fase 8, incluindo documentação, bytecode, suíte Maven, regressão COACTUPC e naming. O check documental valida o protocolo e o roteador.
 
 ## Restante
 
-Criar o novo roteador `AGENTS.md`, reduzir duplicação do README, fechar a matriz de migração e remover/arquivar o legado elegível.
+Reduzir duplicação do README, fechar a matriz de migração e remover/arquivar o legado elegível.
 
 ## Descobertas que afetam o plano
 
