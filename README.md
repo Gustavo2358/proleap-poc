@@ -124,7 +124,7 @@ Os três caminhos são efetivamente usados pelo pipeline; `COACTUPC.cbl` e `dist
 
 ```bash
 mvn compile exec:java \
-  -Dexec.args="--source ../cbl/CBSTM03A.CBL --copybooks ../cpy --output dist-cbstm03a"
+  -Dexec.args="--source corpus/cbl/CBSTM03A.CBL --copybooks corpus/cpy --output dist-cbstm03a"
 ```
 
 Abra `dist-cbstm03a/ast.html` e selecione a aba **CALLs**. Esse programa contém 14 call sites estáticos: 13 para `CBSTM03B` e um para `CEE3ABD`. O corpus atual não contém `CALL` cujo alvo seja uma variável; portanto, `dynamicCalls` continua zero nesse segundo exemplo.
