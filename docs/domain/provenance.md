@@ -1,6 +1,13 @@
 # Provenance
 
+## Propósito e escopo
+
 Provenance é parte do contrato de análise. O `SourceMap` nasce no arquivo físico antes de normalização, preprocessing ou expansão de COPY e é composto por todas as transformações posteriores.
+
+## Entradas e saídas
+
+- **Entrada:** texto físico e nome do arquivo; depois, operações de slice, replacement e expansão.
+- **Saída:** texto corrente, segmentos para arquivos originais, include chains e flag de exatidão.
 
 ## Regras atuais
 
@@ -12,8 +19,14 @@ Provenance é parte do contrato de análise. O `SourceMap` nasce no arquivo fís
 
 Uma perda de input, COPY ausente ou construção opaca continua visível na cobertura e nos diagnostics. Não é permitido converter perda de provenance em ausência de efeito semântico.
 
-## Fronteiras
+## Fronteiras e complexidade
 
-O parser pode oferecer posições de token, mas elas não substituem a abstração de provenance. Source format, normalização e preprocessing são responsáveis por compor o mapa; AST, símbolos e resolução o consomem sem reconstruí-lo.
+O parser pode oferecer posições de token, mas elas não substituem a abstração de provenance. Source format, normalização e preprocessing são responsáveis por compor o mapa; AST, símbolos e resolução o consomem sem reconstruí-lo. Segmentos adjacentes compatíveis são mesclados; consultas localizam os segmentos que cobrem o intervalo solicitado.
 
-Os invariantes com IDs e os evals associados serão indexados nas fases de arqueologia e catálogo.
+## Evidência executável
+
+`SourceProvenanceTest`, `SourceNormalizerTest`, `SourceNormalizationPreprocessingIntegrationTest` e o cenário E2E do normalizador.
+
+## Relações
+
+Invariantes: INV-PROV-001, INV-PROV-002 e INV-COV-001. ADR: ADR-0002.
