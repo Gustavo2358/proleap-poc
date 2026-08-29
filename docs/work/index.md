@@ -4,7 +4,7 @@ Work items delimitam a mudança em execução; o [backlog](backlog.md) registra 
 
 ## Ativo
 
-- [WORK-GRAMMAR-001 — Validar literais especializados DFHRESP e DFHVALUE](active/WORK-GRAMMAR-001/spec.md)
+Nenhum work item ativo.
 
 ## Histórico
 
@@ -17,3 +17,4 @@ Work items delimitam a mudança em execução; o [backlog](backlog.md) registra 
 - [WORK-RES-003 — Resolver SET de condition-name sem namespace DATA espúrio](history/WORK-RES-003.md)
 - [WORK-RES-004 — Classificar condition-names em EVALUATE TRUE/FALSE](history/WORK-RES-004.md)
 - [WORK-TEST-001 — Restaurar relatório PIT focalizado](history/WORK-TEST-001.md)
+- [WORK-GRAMMAR-001 — Especializar literais DFHRESP e DFHVALUE](history/WORK-GRAMMAR-001.md)

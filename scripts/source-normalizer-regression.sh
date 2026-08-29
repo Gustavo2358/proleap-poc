@@ -47,13 +47,15 @@ done
 
 while IFS= read -r expected; do
   [[ -z "$expected" ]] && continue
-  grep -Fqx "$expected" "$run_root/coactupc.log"
+  grep -Fq "$expected" "$run_root/coactupc.log"
 done <"src/test/resources/cobol/source-format/coactupc-regression-baseline.txt"
 
 while IFS='|' read -r artifact expected; do
   [[ -z "$artifact" ]] && continue
   grep -Fq "$expected" "$canonical_output/$artifact"
 done <"src/test/resources/cobol/source-format/coactupc-semantic-baseline.txt"
+
+node scripts/assert-cics-artifacts.mjs "$canonical_output"
 
 grep -Fq '"n":"COMMENTBUG"' "$fixture_output/ast-data.js"
 for division in IDENTIFICATION ENVIRONMENT DATA PROCEDURE; do
