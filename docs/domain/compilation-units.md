@@ -21,7 +21,7 @@
 
 ## Fronteiras e incerteza
 
-O modelo representa containment e identidade, não um call graph nem catálogo da codebase. Programas externos pertencem a `ExternalProgramCatalog`. Input que não produz nenhuma unit é erro do frontend/orquestração, não compilation unit vazia válida para análise completa.
+O modelo representa containment e identidade, não um call graph nem catálogo da codebase. Programas externos não são procurados fora do artefato: `CALL` literal sem alvo interno é registrado separadamente como dependência externa observada. Input que não produz nenhuma unit é erro do frontend/orquestração, não compilation unit vazia válida para análise completa.
 
 ## Complexidade e determinismo
 

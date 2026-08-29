@@ -174,20 +174,20 @@ public final class ExplorerMain {
                 .withPgmnameMode(preprocessed.pgmnameMode())
                 .withDynamMode(preprocessed.dynamMode())
                 .withDllMode(preprocessed.dllMode());
-        Optional<ExternalProgramCatalog> externalCatalog = Optional.empty();
-        ReferenceResolution resolution = new CobolReferenceResolver(policy, externalCatalog)
+        ReferenceResolution resolution = new CobolReferenceResolver(policy)
                 .resolve(compilationUnit, symbolTables, occurrences);
         ResolutionAnalysisReport resolutionReport = ResolutionAnalysisReport.compose(compilationBuild,
                 new ResolutionAnalysisReport.FrontendState(preprocessed.unresolved(), preprocessed.errors(),
                         (int) lexerErrors, (int) parserErrors, diagnostics), occurrences, resolution);
         ResolutionSnapshot.from(source.getFileName().toString(),
                         Arrays.asList(normalized.split("\\R", -1)), compilationUnit, resolution,
-                        resolutionReport, "NONE (not provided)")
+                        resolutionReport)
                 .write(output.resolve("resolution-data.js"));
         ReferenceResolution.Metrics resolutionMetrics = resolution.metrics();
-        LOG.debug("event=resolution_completed phase=REFERENCE_RESOLUTION elapsedMs={} references={} resolved={} unresolved={} ambiguous={} unsupported={} indexedDeclarations={} nominalLookups={} candidateInspections={} maximumCandidates={}",
+        LOG.debug("event=resolution_completed phase=REFERENCE_RESOLUTION elapsedMs={} references={} resolved={} externalObserved={} unresolved={} ambiguous={} unsupported={} indexedDeclarations={} nominalLookups={} candidateInspections={} maximumCandidates={}",
                 elapsedMs(phaseStarted), resolution.entries().size(),
                 resolutionReport.statusCounts().get(ResolutionContracts.ResolutionStatus.RESOLVED),
+                resolutionReport.statusCounts().get(ResolutionContracts.ResolutionStatus.EXTERNAL_OBSERVED),
                 resolutionReport.statusCounts().get(ResolutionContracts.ResolutionStatus.UNRESOLVED),
                 resolutionReport.statusCounts().get(ResolutionContracts.ResolutionStatus.AMBIGUOUS),
                 resolutionReport.statusCounts().get(ResolutionContracts.ResolutionStatus.UNSUPPORTED),

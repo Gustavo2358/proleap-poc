@@ -45,6 +45,8 @@ public final class ReferenceResolution {
                 throw new IllegalArgumentException("RESOLVED entry must have exactly one candidate");
             if (status == ResolutionContracts.ResolutionStatus.AMBIGUOUS && candidates.size() < 2)
                 throw new IllegalArgumentException("AMBIGUOUS entry must preserve every candidate");
+            if (status == ResolutionContracts.ResolutionStatus.EXTERNAL_OBSERVED && !candidates.isEmpty())
+                throw new IllegalArgumentException("EXTERNAL_OBSERVED entry must not invent a candidate");
         }
 
         public Entry(int id, ReferenceOccurrences.Occurrence occurrence,

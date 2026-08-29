@@ -316,18 +316,21 @@ kbd { padding: 2px 6px; border: 1px solid var(--line); color: var(--faint); font
 .resolution-card.selected { background: rgba(255,159,116,.08); box-shadow: inset 2px 0 var(--cyan); }
 .resolution-state { width: 8px; height: 8px; border-radius: 50%; background: var(--faint); }
 .resolution-card.resolved .resolution-state { background: #5fd18b; }
+.resolution-card.external_observed .resolution-state { background: #6ec8ff; }
 .resolution-card.ambiguous .resolution-state { background: var(--amber); }
 .resolution-card.unresolved .resolution-state { background: var(--red); }
 .resolution-card-name, .resolution-card-decision, .resolution-card-location { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
 .resolution-card-name b, .resolution-card-decision b { overflow: hidden; color: var(--ink); font: 10px ui-monospace, monospace; text-overflow: ellipsis; white-space: nowrap; }
 .resolution-card-name small, .resolution-card-decision small, .resolution-card-location { overflow: hidden; color: var(--faint); font: 7px ui-monospace, monospace; text-overflow: ellipsis; white-space: nowrap; }
 .resolution-card.resolved .resolution-card-decision b { color: #5fd18b; }
+.resolution-card.external_observed .resolution-card-decision b { color: #6ec8ff; }
 .resolution-card.ambiguous .resolution-card-decision b { color: var(--amber); }
 .resolution-card.unresolved .resolution-card-decision b { color: var(--red); }
 .resolution-legend { gap: 12px; }
 .resolution-inspector { border-right: 1px solid var(--line); }
 .status-badge { display: inline-flex; margin-right: 6px; padding: 3px 5px; border: 1px solid var(--line); font: 7px ui-monospace, monospace; }
 .status-badge.resolved { color: #5fd18b; border-color: rgba(95,209,139,.4); }
+.status-badge.external_observed { color: #6ec8ff; border-color: rgba(110,200,255,.4); }
 .status-badge.ambiguous { color: var(--amber); border-color: rgba(244,184,96,.4); }
 .status-badge.unresolved { color: var(--red); border-color: rgba(255,107,122,.4); }
 .status-badge.unsupported { color: var(--muted); }

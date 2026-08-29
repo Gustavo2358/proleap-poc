@@ -50,6 +50,7 @@ public final class ResolutionContracts {
 
     public enum ResolutionStatus {
         RESOLVED,
+        EXTERNAL_OBSERVED,
         AMBIGUOUS,
         UNRESOLVED,
         UNSUPPORTED
@@ -58,9 +59,9 @@ public final class ResolutionContracts {
     public enum ResolutionReason {
         UNIQUE_VISIBLE_DECLARATION,
         QUALIFIED_HIERARCHY_MATCH,
+        LITERAL_EXTERNAL_PROGRAM,
         MULTIPLE_VALID_CANDIDATES,
         DECLARATION_NOT_FOUND,
-        EXTERNAL_CATALOG_NOT_PROVIDED,
         INPUT_INCOMPLETE,
         UNSUPPORTED_GRAMMAR_FORM,
         UNSUPPORTED_DIALECT_OPTION,
@@ -130,8 +131,7 @@ public final class ResolutionContracts {
         INDEX_SYMBOL,
         PROCEDURE_SYMBOL,
         FILE_ENTITY,
-        PROGRAM_UNIT,
-        EXTERNAL_PROGRAM
+        PROGRAM_UNIT
     }
 
     /** Namespaces local integer IDs by one deterministic program unit. */

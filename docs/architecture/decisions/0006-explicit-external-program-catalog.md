@@ -1,6 +1,6 @@
 # ADR-0006 — Programas externos dependem de catálogo explícito
 
-Status: Accepted
+Status: Superseded
 Type: Retrospective
 Recorded: 2026-08-28
 
@@ -10,7 +10,11 @@ Decision predates this ADR.
 
 O fonte analisado não contém necessariamente todos os programas chamáveis. Ausência de declaração local e ausência de inventário externo são estados diferentes.
 
-## Decision
+## Superseded by
+
+ADR-0010 — Dependências literais externas são observadas por artefato.
+
+## Former decision
 
 Resolver programas internos pelas regras COBOL de visibilidade e programas externos somente pela porta opcional `ExternalProgramCatalog`. Catálogo não fornecido produz `EXTERNAL_CATALOG_NOT_PROVIDED`; catálogo fornecido e vazio pode produzir `DECLARATION_NOT_FOUND` no domínio consultado.
 

@@ -11,10 +11,11 @@ ADRs são a fonte canônica para decisões arquiteturais aceitas. Eles não deve
 | ADR-0003 | [Produtos de análise semântica permanecem separados](0003-separate-semantic-analysis-products.md) | Retrospective |
 | ADR-0004 | [Binding nominal não resolve valores de runtime](0004-nominal-binding-excludes-runtime-values.md) | Retrospective |
 | ADR-0005 | [Program unit é fronteira de identidade e análise](0005-program-unit-is-analysis-boundary.md) | Retrospective |
-| ADR-0006 | [Programas externos dependem de catálogo explícito](0006-explicit-external-program-catalog.md) | Retrospective |
+| ADR-0006 | [Programas externos dependem de catálogo explícito](0006-explicit-external-program-catalog.md) | Retrospective, superseded |
 | ADR-0007 | [Linguagens embarcadas usam fronteiras dedicadas](0007-dedicated-embedded-language-boundaries.md) | Retrospective |
 | ADR-0008 | [Incompletude é resultado de primeira classe](0008-incompleteness-is-first-class.md) | Retrospective |
 | ADR-0009 | [Superfície gramatical possui cobertura explícita](0009-explicit-grammar-coverage.md) | Retrospective |
+| ADR-0010 | [Dependências literais externas são observadas por artefato](0010-observe-external-literal-dependencies-per-artifact.md) | Contemporary |
 
 ADRs retrospectivos só são criados quando código, testes e fontes documentais sustentam a decisão; não se inventa narrativa histórica.
 

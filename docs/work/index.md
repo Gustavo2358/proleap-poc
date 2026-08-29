@@ -12,3 +12,4 @@ Não há work item ativo neste corte.
 
 - [WORK-HARNESS-001 — Concluir Harness Engineering v1](history/WORK-HARNESS-001.md)
 - [WORK-AST-001 — Construção da AST dirigida por contextos tipados](history/WORK-AST-001.md)
+- [WORK-RES-001 — Observar CALLs literais externos por artefato](history/WORK-RES-001.md)

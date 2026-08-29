@@ -127,7 +127,7 @@ final class ReferenceResolutionManifest {
         origin(result, "fileName", ResolutionContracts.ReferenceKind.FILE,
                 "file-entities", "File connector occurrence; SELECT and FD/SD entity relations are handled later.");
         origin(result, "programName", ResolutionContracts.ReferenceKind.PROGRAM,
-                "program-visibility", "Program occurrence for compilation-unit or external-catalog policy.");
+                "program-visibility", "Program occurrence for internal visibility or external literal observation.");
         origin(result, "indexName", ResolutionContracts.ReferenceKind.INDEX,
                 "index-names", "OCCURS index occurrence with DATA-scope visibility.");
 

@@ -23,7 +23,7 @@ class ResolutionSnapshotTest {
                 analysis.resolution());
         ResolutionSnapshot snapshot = ResolutionSnapshot.from(FIXTURE.getFileName().toString(),
                 Arrays.asList(analysis.source().split("\\R", -1)), analysis.model(),
-                analysis.resolution(), report, "NONE (explicit empty catalog)");
+                analysis.resolution(), report);
 
         Path first = Files.createTempFile("resolution-one", ".js");
         Path second = Files.createTempFile("resolution-two", ".js");
@@ -33,7 +33,7 @@ class ResolutionSnapshotTest {
 
         assertEquals(text, Files.readString(second, StandardCharsets.UTF_8));
         assertTrue(text.startsWith("window.RESOLUTION_DATA={"));
-        assertTrue(text.contains("\"catalog\":\"NONE (explicit empty catalog)\""));
+        assertFalse(text.contains("\"catalog\":"));
         assertTrue(text.contains("\"policyId\":\"cobol-explorer/explicit-options\""));
         assertTrue(text.contains("\"pgmnameMode\":\"UNSPECIFIED\""));
         assertTrue(text.contains("\"status\":\"RESOLVED\""));
@@ -79,7 +79,7 @@ class ResolutionSnapshotTest {
                 "resolution-data.js"))
             assertTrue(Files.isRegularFile(output.resolve(artifact)), artifact);
         String resolution = Files.readString(output.resolve("resolution-data.js"));
-        assertTrue(resolution.contains("\"catalog\":\"NONE (not provided)\""));
+        assertFalse(resolution.contains("\"catalog\":"));
         assertTrue(resolution.contains("\"qualifyMode\":\"UNSPECIFIED\""));
     }
 
@@ -110,7 +110,7 @@ class ResolutionSnapshotTest {
                     AstScopeIndex.build(unit.program(), table)));
         }
         ReferenceResolution resolution = new CobolReferenceResolver(
-                ResolutionContracts.CobolResolutionPolicy.initial(), Optional.empty())
+                ResolutionContracts.CobolResolutionPolicy.initial())
                 .resolve(model, tables, occurrences);
         return new Analysis(source, build, model, occurrences, resolution);
     }

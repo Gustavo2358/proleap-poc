@@ -28,7 +28,7 @@ class ResolutionLoggingTest {
         Captured<ReferenceOccurrences> collected = capture(ReferenceOccurrenceCollector.class, Level.TRACE,
                 () -> collect(baseline.model(), baseline.tables()));
         Captured<ReferenceResolution> resolved = capture(CobolReferenceResolver.class, Level.TRACE,
-                () -> new CobolReferenceResolver(ResolutionContracts.CobolResolutionPolicy.initial(), Optional.empty())
+                () -> new CobolReferenceResolver(ResolutionContracts.CobolResolutionPolicy.initial())
                         .resolve(baseline.model(), baseline.tables(), Map.of(
                                 baseline.model().programUnits().get(0).id(), collected.result())));
 
@@ -71,7 +71,7 @@ class ResolutionLoggingTest {
         CompilationUnitModel model = build.compilationUnit();
         CompilationUnitSymbolTables tables = new CompilationUnitSymbolTableBuilder().build(model);
         ReferenceOccurrences occurrences = collect(model, tables);
-        ReferenceResolution resolution = new CobolReferenceResolver(ResolutionContracts.CobolResolutionPolicy.initial(), Optional.empty()).resolve(model, tables, Map.of(model.programUnits().get(0).id(), occurrences));
+        ReferenceResolution resolution = new CobolReferenceResolver(ResolutionContracts.CobolResolutionPolicy.initial()).resolve(model, tables, Map.of(model.programUnits().get(0).id(), occurrences));
         return new Analysis(model, tables, occurrences, resolution);
     }
 

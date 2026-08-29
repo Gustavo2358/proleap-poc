@@ -4,7 +4,7 @@
 
 Este documento descreve o binding nominal atual. A execução usa `CobolResolutionPolicy.initial()` com ID `cobol-explorer/explicit-options`, versão `3.0.0` e opções `QUALIFY`, `PGMNAME`, `DYNAM` e `DLL` inicialmente `UNSPECIFIED`; compiler options reconhecidas pelo preprocessor substituem os modos correspondentes.
 
-- **Entradas:** compilation units, symbol tables por unit, occurrences tipadas, policy e catálogo externo opcional.
+- **Entradas:** compilation units, symbol tables por unit, occurrences tipadas e policy.
 - **Saída:** `ReferenceResolution` imutável com entries, candidates, diagnostics, métricas e resolução separada de declaration relations.
 
 ## Produto e fronteira
@@ -20,7 +20,7 @@ Resolução é nominal. Ela não faz CFG, reaching definitions, propagação de 
 - Qualificadores DATA seguem ancestry estrutural de dentro para fora; `IN` e `OF` são equivalentes semanticamente. `STANDARD`, `EXTEND` e `UNSPECIFIED` preservam diferenças de dialeto em vez de selecionar uma variante silenciosamente.
 - PROCEDURE é local ao program unit; paragraph qualificado depende da section escrita.
 - FILE representa a entidade formada pelas declarações compatíveis, sem ambiguidade artificial entre `SELECT` e `FD`/`SD`.
-- PROGRAM considera programas internos visíveis segundo regras COBOL. Programa externo só é candidato com `ExternalProgramCatalog` explícito; catálogo ausente não significa programa inexistente.
+- PROGRAM considera programas internos visíveis segundo regras COBOL. Um `CALL` literal sem programa interno visível é uma dependência externa observada (`EXTERNAL_OBSERVED`), com nome preservado e sem candidate, símbolo sintético ou lookup fora do artefato.
 - Formas aceitas pela gramática sem política segura resultam em `UNSUPPORTED`; input ausente e ambiguidade permanecem observáveis com motivo próprio.
 
 Em `QUALIFY(STANDARD)`, todos os candidates que correspondem à sequência ordenada permanecem válidos. Em `EXTEND`, a correspondência totalmente qualificada pode distinguir o único candidate conforme a policy IBM implementada. Em `UNSPECIFIED`, divergência entre as duas variantes resulta em `UNSUPPORTED_DIALECT_OPTION`.
@@ -33,7 +33,7 @@ O algoritmo não pode escolher primeiro candidato, ordem de corpus ou candidato 
 
 `ReferenceResolutionManifest` classifica a superfície do frontend de modo explícito e conservador. O catálogo de evals ligará capacidades, fixtures e oráculos a estas regras na Fase 6.
 
-`RESOLVED` exige exatamente um candidate; `AMBIGUOUS` conserva dois ou mais. `UNRESOLVED` e `UNSUPPORTED` carregam reason específico. O relatório combina binding com frontend coverage, COPYs, parser diagnostics e dependências desconhecidas antes de afirmar readiness.
+`RESOLVED` exige exatamente um candidate; `EXTERNAL_OBSERVED` não possui candidate; `AMBIGUOUS` conserva dois ou mais. `UNRESOLVED` e `UNSUPPORTED` carregam reason específico. O relatório combina binding, frontend coverage, COPYs, parser diagnostics e incertezas reais antes de afirmar readiness. A observação de target literal externo não é, por si, uma lacuna.
 
 ## Complexidade e determinismo
 
@@ -50,4 +50,4 @@ Resolvers usam índices por nome canônico, unit, scope e domínio semântico. M
 
 Testes principais: `DataAndIndexReferenceResolverTest`, `ProcedureFileProgramReferenceResolverTest`, `CallSemanticsTest`, `ProgramNameCanonicalizerTest`, `ReferenceResolutionManifestTest` e `ResolutionAnalysisReportTest`. Evals: EVAL-RES-DATA-001 a EVAL-RES-DATA-003, EVAL-RES-REL-001, EVAL-RES-PROC-001, EVAL-RES-FILE-001, EVAL-RES-PROG-001, EVAL-RES-PROG-002, EVAL-RES-CALL-001, EVAL-RES-CALL-002, EVAL-RES-COV-001, EVAL-RES-REPORT-001, EVAL-RES-DET-001 e EVAL-RES-PERF-001.
 
-Invariantes: INV-RES-001, INV-RES-002, INV-RES-003, INV-COV-001, INV-DET-001 e INV-PERF-001. ADRs: ADR-0003, ADR-0004, ADR-0005, ADR-0006 e ADR-0008.
+Invariantes: INV-RES-001, INV-RES-002, INV-RES-003, INV-COV-001, INV-DET-001 e INV-PERF-001. ADRs: ADR-0003, ADR-0004, ADR-0005, ADR-0008 e ADR-0010.

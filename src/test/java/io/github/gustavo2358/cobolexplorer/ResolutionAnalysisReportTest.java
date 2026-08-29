@@ -162,7 +162,7 @@ class ResolutionAnalysisReportTest {
     }
 
     private static ReferenceResolution resolveAgain(Analysis analysis) {
-        return new CobolReferenceResolver(ResolutionContracts.CobolResolutionPolicy.initial(), Optional.empty())
+        return new CobolReferenceResolver(ResolutionContracts.CobolResolutionPolicy.initial())
                 .resolve(analysis.model(), analysis.tables(), analysis.occurrences());
     }
 
@@ -209,7 +209,7 @@ class ResolutionAnalysisReportTest {
                     AstScopeIndex.build(unit.program(), table)));
         }
         ReferenceResolution resolution = new CobolReferenceResolver(
-                ResolutionContracts.CobolResolutionPolicy.initial(), Optional.empty())
+                ResolutionContracts.CobolResolutionPolicy.initial())
                 .resolve(model, tables, occurrences);
         return new Analysis(build, model, tables, occurrences, resolution);
     }

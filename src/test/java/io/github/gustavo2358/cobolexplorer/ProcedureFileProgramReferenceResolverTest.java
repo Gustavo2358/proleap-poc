@@ -28,16 +28,12 @@ class ProcedureFileProgramReferenceResolverTest {
             "src/test/resources/cobol/resolution/literal-program-name.cbl");
     private static final Path PROGRAM_NAME_POLICY = Path.of(
             "src/test/resources/cobol/resolution/program-name-policy.cbl");
-    private static final Path EXTERNAL_PROGRAM_NAMES = Path.of(
-            "src/test/resources/cobol/resolution/external-program-name-canonicalization.cbl");
     private static final Path LONGMIXED_NESTED_PROGRAM = Path.of(
             "src/test/resources/cobol/resolution/longmixed-nested-program.cbl");
-    private static final Path UNSPECIFIED_EXTERNAL_PROGRAM = Path.of(
-            "src/test/resources/cobol/resolution/unspecified-external-program-name.cbl");
 
     @Test
     void resolvesProcedureTargetsQualificationDependingOnPerformAndPreservedAlter() throws Exception {
-        Analysis analysis = analyze(PROCEDURE, Optional.empty());
+        Analysis analysis = analyze(PROCEDURE);
         ResolutionContracts.ProgramUnitId outer = analysis.model().programUnits().get(0).id();
 
         assertEntry(analysis.resolution(), outer, "UNIQUE-PARA", ResolutionContracts.ReferenceRole.GO_TO_TARGET,
@@ -75,8 +71,7 @@ class ProcedureFileProgramReferenceResolverTest {
 
     @Test
     void resolvesProcedureReferencesInsidePreservedSortAndMergeContainers() throws Exception {
-        Analysis analysis = analyze(Path.of("src/test/resources/cobol/semantic/nominal-references.cbl"),
-                Optional.empty());
+        Analysis analysis = analyze(Path.of("src/test/resources/cobol/semantic/nominal-references.cbl"));
         assertTrue(analysis.resolution().entries().stream()
                 .filter(entry -> entry.occurrence().kind() == ResolutionContracts.ReferenceKind.PROCEDURE)
                 .filter(entry -> entry.occurrence().preservation() == ReferenceOccurrences.Preservation.PRESERVED_CONTAINER)
@@ -90,7 +85,7 @@ class ProcedureFileProgramReferenceResolverTest {
 
     @Test
     void resolvesFileEntitiesWithoutArtificialSelectFdAmbiguity() throws Exception {
-        Analysis analysis = analyze(FILE, Optional.empty());
+        Analysis analysis = analyze(FILE);
         ResolutionContracts.ProgramUnitId unit = analysis.model().programUnits().get(0).id();
 
         ReferenceResolution.Entry both = assertEntry(analysis.resolution(), unit, "BOTH-FILE",
@@ -119,7 +114,7 @@ class ProcedureFileProgramReferenceResolverTest {
 
     @Test
     void resolvesOnlyGlobalAncestorFilesAndPreservesFileEntityOwnershipAndDeclarations() throws Exception {
-        Analysis analysis = analyze(NESTED_GLOBAL_FILE, Optional.empty());
+        Analysis analysis = analyze(NESTED_GLOBAL_FILE);
         ResolutionContracts.ProgramUnitId outer = unit(analysis, "FILE-OUTER");
         ResolutionContracts.ProgramUnitId inner = unit(analysis, "FILE-INNER");
         SymbolTable outerTable = analysis.tables().forProgramUnit(outer).orElseThrow().symbolTable();
@@ -147,7 +142,7 @@ class ProcedureFileProgramReferenceResolverTest {
 
     @Test
     void skipsInvisibleLocalFilesInIntermediateProgramsWhenLookingForGlobalFiles() throws Exception {
-        Analysis analysis = analyze(GLOBAL_FILE_THROUGH_LOCAL, Optional.empty());
+        Analysis analysis = analyze(GLOBAL_FILE_THROUGH_LOCAL);
         ResolutionContracts.ProgramUnitId outerA = unit(analysis, "FILE-OUTER-A");
         ResolutionContracts.ProgramUnitId middleA = unit(analysis, "FILE-MIDDLE-A");
         ResolutionContracts.ProgramUnitId innerA = unit(analysis, "FILE-INNER-A");
@@ -176,7 +171,7 @@ class ProcedureFileProgramReferenceResolverTest {
 
     @Test
     void stopsFileLookupAtIncompatibleLocalNominalDeclarations() throws Exception {
-        Analysis analysis = analyze(FILE_NAMESPACE_SHADOWING, Optional.empty());
+        Analysis analysis = analyze(FILE_NAMESPACE_SHADOWING);
         ResolutionContracts.ProgramUnitId outer = unit(analysis, "FILE-SHADOW-OUTER");
         ResolutionContracts.ProgramUnitId inner = unit(analysis, "FILE-SHADOW-INNER");
         SymbolTable outerTable = analysis.tables().forProgramUnit(outer).orElseThrow().symbolTable();
@@ -212,7 +207,7 @@ class ProcedureFileProgramReferenceResolverTest {
 
     @Test
     void preservesQualifierKindWhenDataAndFileHierarchiesHaveTheSameNames() throws Exception {
-        Analysis analysis = analyze(DATA_FILE_QUALIFIER_COLLISION, Optional.empty());
+        Analysis analysis = analyze(DATA_FILE_QUALIFIER_COLLISION);
         ResolutionContracts.ProgramUnitId unit = unit(analysis, "QUALIFIER-COLLISION");
         SymbolTable table = analysis.tables().forProgramUnit(unit).orElseThrow().symbolTable();
         List<SymbolTable.Symbol> items = table.lookupAll(SymbolTable.Namespace.DATA, "ITEM");
@@ -254,7 +249,7 @@ class ProcedureFileProgramReferenceResolverTest {
 
     @Test
     void resolvesNestedAndCommonProgramsButPreservesVisibilityAndAmbiguity() throws Exception {
-        Analysis analysis = analyze(PROGRAM, Optional.empty());
+        Analysis analysis = analyze(PROGRAM);
         ResolutionContracts.ProgramUnitId outer = unit(analysis, "PROGRAM-OUTER");
         ResolutionContracts.ProgramUnitId privateChild = unit(analysis, "PRIVATE-CHILD");
 
@@ -267,8 +262,8 @@ class ProcedureFileProgramReferenceResolverTest {
                 ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION, 1);
         assertEntry(analysis.resolution(), privateChild, "'PRIVATE-SIBLING'",
                 ResolutionContracts.ReferenceRole.CALL_TARGET,
-                ResolutionContracts.ResolutionStatus.UNRESOLVED,
-                ResolutionContracts.ResolutionReason.EXTERNAL_CATALOG_NOT_PROVIDED, 0);
+                ResolutionContracts.ResolutionStatus.EXTERNAL_OBSERVED,
+                ResolutionContracts.ResolutionReason.LITERAL_EXTERNAL_PROGRAM, 0);
         assertEntry(analysis.resolution(), outer, "'DUPLICATE-CHILD'",
                 ResolutionContracts.ReferenceRole.CALL_TARGET,
                 ResolutionContracts.ResolutionStatus.AMBIGUOUS,
@@ -277,7 +272,7 @@ class ProcedureFileProgramReferenceResolverTest {
 
     @Test
     void excludesCommonProgramAndItsDescendantsFromTheCommonProgramsCallingRegion() throws Exception {
-        Analysis analysis = analyze(COMMON_PROGRAM_VISIBILITY, Optional.empty());
+        Analysis analysis = analyze(COMMON_PROGRAM_VISIBILITY);
         ResolutionContracts.ProgramUnitId root = unit(analysis, "COMMON-ROOT");
         ResolutionContracts.ProgramUnitId sibling = unit(analysis, "SIBLING");
         ResolutionContracts.ProgramUnitId common = unit(analysis, "COMMON-C");
@@ -315,7 +310,7 @@ class ProcedureFileProgramReferenceResolverTest {
 
     @Test
     void separatesLiteralProgramNameSpellingFromCanonicalProgramIdentity() throws Exception {
-        Analysis analysis = analyze(LITERAL_PROGRAM_NAME, Optional.empty());
+        Analysis analysis = analyze(LITERAL_PROGRAM_NAME);
         assertEquals(2, analysis.model().programUnits().size());
         CompilationUnitModel.ProgramUnit outer = analysis.model().programUnits().get(0);
         CompilationUnitModel.ProgramUnit child = analysis.model().programUnits().get(1);
@@ -370,23 +365,12 @@ class ProcedureFileProgramReferenceResolverTest {
                 .map(java.lang.reflect.RecordComponent::getName)
                 .collect(java.util.stream.Collectors.toSet());
 
-        ExternalProgramCatalog catalog = canonicalName -> switch (canonicalName) {
-            case "SIMPLE" -> List.of(new ExternalProgramCatalog.Program(
-                    1, "policy-catalog", canonicalName, Map.of()));
-            case "mixed-Child" -> List.of(new ExternalProgramCatalog.Program(
-                    2, "policy-catalog", canonicalName, Map.of()));
-            case "LONG-NAME-ABC" -> List.of(new ExternalProgramCatalog.Program(
-                    3, "policy-catalog", canonicalName, Map.of()));
-            case "LONG0NAM" -> List.of(new ExternalProgramCatalog.Program(
-                    4, "policy-catalog", canonicalName, Map.of()));
-            default -> List.of();
-        };
-        Analysis analysis = analyze(PROGRAM_NAME_POLICY, Optional.of(catalog),
+        Analysis analysis = analyze(PROGRAM_NAME_POLICY,
                 ResolutionContracts.PgmnameMode.UNSPECIFIED);
         ResolutionContracts.ProgramUnitId caller = unit(analysis, "POLICY-CALLER");
-        Analysis longMixed = analyze(PROGRAM_NAME_POLICY, Optional.of(catalog),
+        Analysis longMixed = analyze(PROGRAM_NAME_POLICY,
                 ResolutionContracts.PgmnameMode.LONGMIXED);
-        Analysis compat = analyze(PROGRAM_NAME_POLICY, Optional.of(catalog),
+        Analysis compat = analyze(PROGRAM_NAME_POLICY,
                 ResolutionContracts.PgmnameMode.COMPAT);
 
         assertAll("PGMNAME is an explicit input to program identity",
@@ -405,114 +389,27 @@ class ProcedureFileProgramReferenceResolverTest {
                 () -> assertTrue(policyComponents.stream().anyMatch(
                                 component -> component.toLowerCase(Locale.ROOT).contains("pgmname")),
                         "CobolResolutionPolicy must expose an explicit PGMNAME mode"),
-                () -> assertAll("only option-independent identity may resolve without PGMNAME",
-                        () -> assertEntry(analysis.resolution(), caller, "'SIMPLE'",
-                                ResolutionContracts.ReferenceRole.CALL_TARGET,
-                                ResolutionContracts.ResolutionStatus.RESOLVED,
-                                ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION, 1),
-                        () -> assertEntry(analysis.resolution(), caller, "'mixed-Child'",
-                                ResolutionContracts.ReferenceRole.CALL_TARGET,
-                                ResolutionContracts.ResolutionStatus.UNSUPPORTED,
-                                ResolutionContracts.ResolutionReason.UNSUPPORTED_DIALECT_OPTION, 1),
-                        () -> assertEntry(analysis.resolution(), caller, "'LONG-NAME-ABC'",
-                                ResolutionContracts.ReferenceRole.CALL_TARGET,
-                                ResolutionContracts.ResolutionStatus.UNSUPPORTED,
-                                ResolutionContracts.ResolutionReason.UNSUPPORTED_DIALECT_OPTION, 2)),
-                () -> assertAll("explicit modes canonicalize external identities",
-                        () -> assertEquals("mixed-Child", assertEntry(longMixed.resolution(),
-                                unit(longMixed, "POLICY-CALLER"), "'mixed-Child'",
-                                ResolutionContracts.ReferenceRole.CALL_TARGET,
-                                ResolutionContracts.ResolutionStatus.RESOLVED,
-                                ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION, 1)
-                                .candidates().get(0).canonicalName()),
-                        () -> assertEquals("LONG0NAM", assertEntry(compat.resolution(),
-                                unit(compat, "POLICY-CALLER"), "'LONG-NAME-ABC'",
-                                ResolutionContracts.ReferenceRole.CALL_TARGET,
-                                ResolutionContracts.ResolutionStatus.RESOLVED,
-                                ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION, 1)
-                                .candidates().get(0).canonicalName())));
-    }
-
-    @Test
-    void appliesPgmnameCanonicalizationBeforeExternalCatalogLookup() throws Exception {
-        ExternalProgramCatalog catalog = canonicalName -> List.of(new ExternalProgramCatalog.Program(
-                Math.abs(canonicalName.hashCode()), "canonicalization-catalog", canonicalName, Map.of()));
-        Analysis compat = analyze(EXTERNAL_PROGRAM_NAMES, Optional.of(catalog),
-                ResolutionContracts.PgmnameMode.COMPAT);
-        Analysis upper = analyze(EXTERNAL_PROGRAM_NAMES, Optional.of(catalog),
-                ResolutionContracts.PgmnameMode.LONGUPPER);
-        Analysis mixed = analyze(EXTERNAL_PROGRAM_NAMES, Optional.of(catalog),
-                ResolutionContracts.PgmnameMode.LONGMIXED);
-
-        assertAll("external catalog receives the policy-dependent canonical name",
-                () -> assertExternalCanonical(compat, "'LONG-NAME-ABC'", "LONG0NAM"),
-                () -> assertExternalCanonical(compat, "'1PROG'", "APROG"),
-                () -> assertExternalCanonical(compat, "'$PROG'", "JPROG"),
-                () -> assertExternalCanonical(upper, "'PROG-A'", "PROG0A"),
-                () -> assertExternalCanonical(upper, "'-PROG'", "JPROG"),
-                () -> assertExternalCanonical(mixed, "'mixed-Child'", "mixed-Child"));
-    }
-
-    @Test
-    void keepsUnspecifiedExternalProgramIdentityConservativeForLeadingDigits() throws Exception {
-        ExternalProgramCatalog catalog = canonicalName -> switch (canonicalName) {
-            case "SIMPLE" -> List.of(new ExternalProgramCatalog.Program(
-                    1, "unspecified-pgmname", "SIMPLE", Map.of()));
-            case "APROG" -> List.of(new ExternalProgramCatalog.Program(
-                    2, "unspecified-pgmname", "COMPAT-1PROG", Map.of("mode", "FOLDED")));
-            case "1PROG" -> List.of(new ExternalProgramCatalog.Program(
-                    3, "unspecified-pgmname", "LONGMIXED-1PROG", Map.of("mode", "MIXED")));
-            default -> List.of();
-        };
-        Analysis unspecified = analyze(UNSPECIFIED_EXTERNAL_PROGRAM, Optional.of(catalog),
-                ResolutionContracts.PgmnameMode.UNSPECIFIED);
-        Analysis compat = analyze(UNSPECIFIED_EXTERNAL_PROGRAM, Optional.of(catalog),
-                ResolutionContracts.PgmnameMode.COMPAT);
-        Analysis upper = analyze(UNSPECIFIED_EXTERNAL_PROGRAM, Optional.of(catalog),
-                ResolutionContracts.PgmnameMode.LONGUPPER);
-        Analysis mixed = analyze(UNSPECIFIED_EXTERNAL_PROGRAM, Optional.of(catalog),
-                ResolutionContracts.PgmnameMode.LONGMIXED);
-
-        ReferenceResolution.Entry simple = assertEntry(unspecified.resolution(),
-                unit(unspecified, "UNSPECIFIED-EXTERNAL-CALLER"), "'SIMPLE'",
-                ResolutionContracts.ReferenceRole.CALL_TARGET,
-                ResolutionContracts.ResolutionStatus.RESOLVED,
-                ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION, 1);
-        assertEquals(1, simple.candidates().get(0).entityId().localId());
-
-        ReferenceResolution.Entry dependent = assertEntry(unspecified.resolution(),
-                unit(unspecified, "UNSPECIFIED-EXTERNAL-CALLER"), "'1PROG'",
-                ResolutionContracts.ReferenceRole.CALL_TARGET,
-                ResolutionContracts.ResolutionStatus.UNSUPPORTED,
-                ResolutionContracts.ResolutionReason.UNSUPPORTED_DIALECT_OPTION, 2);
-        assertEquals(Set.of(2, 3), dependent.candidates().stream()
-                .map(candidate -> candidate.entityId().localId()).collect(
-                        java.util.stream.Collectors.toSet()));
-
-        assertEquals(2, assertEntry(compat.resolution(), unit(compat, "UNSPECIFIED-EXTERNAL-CALLER"),
-                "'1PROG'", ResolutionContracts.ReferenceRole.CALL_TARGET,
-                ResolutionContracts.ResolutionStatus.RESOLVED,
-                ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION, 1)
-                .candidates().get(0).entityId().localId());
-        assertEquals(2, assertEntry(upper.resolution(), unit(upper, "UNSPECIFIED-EXTERNAL-CALLER"),
-                "'1PROG'", ResolutionContracts.ReferenceRole.CALL_TARGET,
-                ResolutionContracts.ResolutionStatus.RESOLVED,
-                ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION, 1)
-                .candidates().get(0).entityId().localId());
-        assertEquals(3, assertEntry(mixed.resolution(), unit(mixed, "UNSPECIFIED-EXTERNAL-CALLER"),
-                "'1PROG'", ResolutionContracts.ReferenceRole.CALL_TARGET,
-                ResolutionContracts.ResolutionStatus.RESOLVED,
-                ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION, 1)
-                .candidates().get(0).entityId().localId());
+                () -> assertEntry(analysis.resolution(), caller, "'SIMPLE'",
+                        ResolutionContracts.ReferenceRole.CALL_TARGET,
+                        ResolutionContracts.ResolutionStatus.EXTERNAL_OBSERVED,
+                        ResolutionContracts.ResolutionReason.LITERAL_EXTERNAL_PROGRAM, 0),
+                () -> assertEntry(longMixed.resolution(), unit(longMixed, "POLICY-CALLER"), "'mixed-Child'",
+                        ResolutionContracts.ReferenceRole.CALL_TARGET,
+                        ResolutionContracts.ResolutionStatus.EXTERNAL_OBSERVED,
+                        ResolutionContracts.ResolutionReason.LITERAL_EXTERNAL_PROGRAM, 0),
+                () -> assertEntry(compat.resolution(), unit(compat, "POLICY-CALLER"), "'LONG-NAME-ABC'",
+                        ResolutionContracts.ReferenceRole.CALL_TARGET,
+                        ResolutionContracts.ResolutionStatus.EXTERNAL_OBSERVED,
+                        ResolutionContracts.ResolutionReason.LITERAL_EXTERNAL_PROGRAM, 0));
     }
 
     @Test
     void honorsLongmixedCaseWhenBindingNestedPrograms() throws Exception {
-        Analysis mixed = analyze(LONGMIXED_NESTED_PROGRAM, Optional.empty(),
+        Analysis mixed = analyze(LONGMIXED_NESTED_PROGRAM,
                 ResolutionContracts.PgmnameMode.LONGMIXED);
-        Analysis upper = analyze(LONGMIXED_NESTED_PROGRAM, Optional.empty(),
+        Analysis upper = analyze(LONGMIXED_NESTED_PROGRAM,
                 ResolutionContracts.PgmnameMode.LONGUPPER);
-        Analysis compat = analyze(LONGMIXED_NESTED_PROGRAM, Optional.empty(),
+        Analysis compat = analyze(LONGMIXED_NESTED_PROGRAM,
                 ResolutionContracts.PgmnameMode.COMPAT);
         ResolutionContracts.ProgramUnitId mixedCaller = unit(mixed, "'Outer'");
         ResolutionContracts.ProgramUnitId mixedChild = unit(mixed, "'mixed-Child'");
@@ -522,12 +419,12 @@ class ProcedureFileProgramReferenceResolverTest {
                 () -> assertEquals(mixedChild, unit(upper, "'mixed-Child'")),
                 () -> assertEquals(mixedChild, unit(compat, "'mixed-Child'")));
         assertAll("LONGMIXED nested lookup preserves written case",
-                () -> assertProgramCandidate(mixed.resolution(), mixedCaller,
-                        "'mixed-Child'", mixedChild),
-                () -> assertEntry(mixed.resolution(), mixedCaller, "'MIXED-CHILD'",
+                        () -> assertProgramCandidate(mixed.resolution(), mixedCaller,
+                                "'mixed-Child'", mixedChild),
+                        () -> assertEntry(mixed.resolution(), mixedCaller, "'MIXED-CHILD'",
                         ResolutionContracts.ReferenceRole.CALL_TARGET,
-                        ResolutionContracts.ResolutionStatus.UNRESOLVED,
-                        ResolutionContracts.ResolutionReason.EXTERNAL_CATALOG_NOT_PROVIDED, 0));
+                        ResolutionContracts.ResolutionStatus.EXTERNAL_OBSERVED,
+                        ResolutionContracts.ResolutionReason.LITERAL_EXTERNAL_PROGRAM, 0));
         assertAll("case-folding modes retain case-insensitive nested lookup",
                 () -> assertProgramCandidate(upper.resolution(), unit(upper, "'Outer'"),
                         "'MIXED-CHILD'", unit(upper, "'mixed-Child'")),
@@ -537,7 +434,7 @@ class ProcedureFileProgramReferenceResolverTest {
 
     @Test
     void keepsUnspecifiedNestedProgramIdentityConservativeWhenModesDisagree() throws Exception {
-        Analysis unspecified = analyze(LONGMIXED_NESTED_PROGRAM, Optional.empty(),
+        Analysis unspecified = analyze(LONGMIXED_NESTED_PROGRAM,
                 ResolutionContracts.PgmnameMode.UNSPECIFIED);
         ResolutionContracts.ProgramUnitId caller = unit(unspecified, "'Outer'");
         ResolutionContracts.ProgramUnitId child = unit(unspecified, "'mixed-Child'");
@@ -553,42 +450,22 @@ class ProcedureFileProgramReferenceResolverTest {
     }
 
     @Test
-    void usesOptionalExternalCatalogAndPreservesAllReturnedCandidates() throws Exception {
-        ExternalProgramCatalog catalog = canonicalName -> switch (canonicalName) {
-            case "EXTERNAL0ONE" -> List.of(new ExternalProgramCatalog.Program(10, "fake", "EXTERNAL-ONE", Map.of()));
-            case "EXTERNAL0MANY" -> List.of(
-                    new ExternalProgramCatalog.Program(20, "fake", "EXTERNAL-MANY", Map.of("library", "A")),
-                    new ExternalProgramCatalog.Program(21, "fake", "EXTERNAL-MANY", Map.of("library", "B")));
-            default -> List.of();
-        };
-        Analysis absent = analyze(PROGRAM, Optional.empty());
-        Analysis empty = analyze(PROGRAM, Optional.of(ExternalProgramCatalog.empty()));
-        Analysis present = analyze(PROGRAM, Optional.of(catalog));
-        ResolutionContracts.ProgramUnitId outer = unit(present, "PROGRAM-OUTER");
+    void observesLiteralProgramsOutsideTheCurrentArtifactWithoutCandidates() throws Exception {
+        Analysis analysis = analyze(PROGRAM);
+        ResolutionContracts.ProgramUnitId outer = unit(analysis, "PROGRAM-OUTER");
 
-        assertEntry(absent.resolution(), unit(absent, "PROGRAM-OUTER"), "'EXTERNAL-ONE'",
-                ResolutionContracts.ReferenceRole.CALL_TARGET,
-                ResolutionContracts.ResolutionStatus.UNRESOLVED,
-                ResolutionContracts.ResolutionReason.EXTERNAL_CATALOG_NOT_PROVIDED, 0);
-        assertEntry(empty.resolution(), unit(empty, "PROGRAM-OUTER"), "'EXTERNAL-ONE'",
-                ResolutionContracts.ReferenceRole.CALL_TARGET,
-                ResolutionContracts.ResolutionStatus.UNRESOLVED,
-                ResolutionContracts.ResolutionReason.DECLARATION_NOT_FOUND, 0);
-        ReferenceResolution.Entry one = assertEntry(present.resolution(), outer, "'EXTERNAL-ONE'",
-                ResolutionContracts.ReferenceRole.CALL_TARGET,
-                ResolutionContracts.ResolutionStatus.RESOLVED,
-                ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION, 1);
-        assertEquals(ResolutionContracts.SemanticEntityDomain.EXTERNAL_PROGRAM,
-                one.candidates().get(0).entityId().domain());
-        assertEntry(present.resolution(), outer, "'EXTERNAL-MANY'",
-                ResolutionContracts.ReferenceRole.CALL_TARGET,
-                ResolutionContracts.ResolutionStatus.AMBIGUOUS,
-                ResolutionContracts.ResolutionReason.MULTIPLE_VALID_CANDIDATES, 2);
+        for (String name : List.of("'EXTERNAL-ONE'", "'EXTERNAL-MANY'")) {
+            ReferenceResolution.Entry entry = assertEntry(analysis.resolution(), outer, name,
+                    ResolutionContracts.ReferenceRole.CALL_TARGET,
+                    ResolutionContracts.ResolutionStatus.EXTERNAL_OBSERVED,
+                    ResolutionContracts.ResolutionReason.LITERAL_EXTERNAL_PROGRAM, 0);
+            assertTrue(entry.diagnosticIds().isEmpty());
+        }
     }
 
     @Test
     void dynamicCallBindsOnlyItsDataVariable() throws Exception {
-        Analysis analysis = analyze(PROGRAM, Optional.empty());
+        Analysis analysis = analyze(PROGRAM);
         ResolutionContracts.ProgramUnitId outer = unit(analysis, "PROGRAM-OUTER");
         ReferenceResolution.Entry dynamic = assertEntry(analysis.resolution(), outer, "WS-CALL-TARGET",
                 ResolutionContracts.ReferenceRole.CALL_TARGET,
@@ -603,7 +480,7 @@ class ProcedureFileProgramReferenceResolverTest {
 
     @Test
     void keepsCbstm03RegressionFactsWithoutPerformingValueResolution() throws Exception {
-        Analysis dynamic = analyzeCorpus("CBSTM03D.CBL", Optional.empty());
+        Analysis dynamic = analyzeCorpus("CBSTM03D.CBL");
         List<ReferenceResolution.Entry> dynamicCalls = dynamic.resolution().entries().stream()
                 .filter(entry -> entry.occurrence().role() == ResolutionContracts.ReferenceRole.CALL_TARGET)
                 .toList();
@@ -616,7 +493,7 @@ class ProcedureFileProgramReferenceResolverTest {
         assertTrue(dynamicCalls.stream().allMatch(entry -> entry.occurrence().writtenText()
                 .equals("WS-CALL-TARGET")));
 
-        Analysis literal = analyzeCorpus("CBSTM03A.CBL", Optional.empty());
+        Analysis literal = analyzeCorpus("CBSTM03A.CBL");
         List<ReferenceResolution.Entry> literalCalls = literal.resolution().entries().stream()
                 .filter(entry -> entry.occurrence().role() == ResolutionContracts.ReferenceRole.CALL_TARGET)
                 .toList();
@@ -624,8 +501,9 @@ class ProcedureFileProgramReferenceResolverTest {
         assertTrue(literalCalls.stream().allMatch(entry -> entry.occurrence().kind()
                 == ResolutionContracts.ReferenceKind.PROGRAM));
         assertTrue(literalCalls.stream().allMatch(entry -> entry.status()
-                == ResolutionContracts.ResolutionStatus.UNRESOLVED
-                && entry.reason() == ResolutionContracts.ResolutionReason.EXTERNAL_CATALOG_NOT_PROVIDED));
+                == ResolutionContracts.ResolutionStatus.EXTERNAL_OBSERVED
+                && entry.reason() == ResolutionContracts.ResolutionReason.LITERAL_EXTERNAL_PROGRAM
+                && entry.candidates().isEmpty()));
     }
 
     private static ResolutionContracts.ProgramUnitId unit(Analysis analysis, String name) {
@@ -697,24 +575,12 @@ class ProcedureFileProgramReferenceResolverTest {
         assertEquals(declarationUnit, candidate.entityId().programUnitId());
     }
 
-    private static void assertExternalCanonical(Analysis analysis, String writtenText,
-                                                String expectedCanonical) {
-        ResolutionContracts.ProgramUnitId caller = unit(analysis, "EXTERNAL-NAME-CALLER");
-        ReferenceResolution.Entry entry = assertEntry(analysis.resolution(), caller, writtenText,
-                ResolutionContracts.ReferenceRole.CALL_TARGET,
-                ResolutionContracts.ResolutionStatus.RESOLVED,
-                ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION, 1);
-        assertEquals(ResolutionContracts.SemanticEntityDomain.EXTERNAL_PROGRAM,
-                entry.candidates().get(0).entityId().domain());
-        assertEquals(expectedCanonical, entry.candidates().get(0).canonicalName());
-    }
-
     private static void assertInvisibleInternalProgram(
             ReferenceResolution resolution, ResolutionContracts.ProgramUnitId caller, String writtenText) {
         assertEntry(resolution, caller, writtenText,
                 ResolutionContracts.ReferenceRole.CALL_TARGET,
-                ResolutionContracts.ResolutionStatus.UNRESOLVED,
-                ResolutionContracts.ResolutionReason.EXTERNAL_CATALOG_NOT_PROVIDED, 0);
+                ResolutionContracts.ResolutionStatus.EXTERNAL_OBSERVED,
+                ResolutionContracts.ResolutionReason.LITERAL_EXTERNAL_PROGRAM, 0);
     }
 
     private static boolean hasFileAncestor(SymbolTable table, SymbolTable.Symbol symbol) {
@@ -747,18 +613,18 @@ class ProcedureFileProgramReferenceResolverTest {
         return entry;
     }
 
-    private static Analysis analyze(Path sourcePath, Optional<ExternalProgramCatalog> catalog) throws Exception {
-        return analyze(sourcePath, catalog, ResolutionContracts.PgmnameMode.LONGUPPER);
+    private static Analysis analyze(Path sourcePath) throws Exception {
+        return analyze(sourcePath, ResolutionContracts.PgmnameMode.LONGUPPER);
     }
 
-    private static Analysis analyze(Path sourcePath, Optional<ExternalProgramCatalog> catalog,
-                                    ResolutionContracts.PgmnameMode pgmnameMode) throws Exception {
+    private static Analysis analyze(Path sourcePath, ResolutionContracts.PgmnameMode pgmnameMode)
+            throws Exception {
         Path file = sourcePath.toAbsolutePath();
         String source = SourceNormalizerTestSupport.fixed(Files.readString(file, StandardCharsets.UTF_8));
-        return analyzeSource(file, source, catalog, pgmnameMode);
+        return analyzeSource(file, source, pgmnameMode);
     }
 
-    private static Analysis analyzeCorpus(String fileName, Optional<ExternalProgramCatalog> catalog) throws Exception {
+    private static Analysis analyzeCorpus(String fileName) throws Exception {
         Path project = Path.of("").toAbsolutePath().normalize();
         Path internal = project.resolve("corpus/cbl").resolve(fileName);
         Path file = Files.exists(internal) ? internal : project.getParent().resolve("cbl").resolve(fileName);
@@ -769,11 +635,10 @@ class ProcedureFileProgramReferenceResolverTest {
         String source = new PreprocessorEngine(binding, new CopybookLibrary(copybooks))
                 .process(SourceMap.identity(fixed, file.getFileName().toString()),
                         file.getFileName().toString()).text();
-        return analyzeSource(file, source, catalog, ResolutionContracts.PgmnameMode.LONGUPPER);
+        return analyzeSource(file, source, ResolutionContracts.PgmnameMode.LONGUPPER);
     }
 
     private static Analysis analyzeSource(Path file, String source,
-                                          Optional<ExternalProgramCatalog> catalog,
                                           ResolutionContracts.PgmnameMode pgmnameMode) throws Exception {
         GrammarBinding binding = Bindings.cobol();
         Parser parser = binding.cobolParser(new CommonTokenStream(
@@ -796,7 +661,7 @@ class ProcedureFileProgramReferenceResolverTest {
         ResolutionContracts.CobolResolutionPolicy policy = new ResolutionContracts.CobolResolutionPolicy(
                 "test-policy", "1", ResolutionContracts.QualifyMode.STANDARD, pgmnameMode,
                 ResolutionContracts.DynamMode.NODYNAM, ResolutionContracts.DllMode.NODLL);
-        ReferenceResolution resolution = new CobolReferenceResolver(policy, catalog)
+        ReferenceResolution resolution = new CobolReferenceResolver(policy)
                 .resolve(model, tables, occurrences);
         return new Analysis(model, tables, resolution);
     }

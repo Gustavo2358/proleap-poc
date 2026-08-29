@@ -32,7 +32,7 @@ public final class ResolutionAnalysisReport {
                       String grammarRule, int line, int occurrenceId) { }
 
     public record ProgramUnitSummary(ResolutionContracts.ProgramUnitId programUnitId,
-                                     int references, int resolved, int ambiguous,
+                                     int references, int resolved, int externalObserved, int ambiguous,
                                      int unresolved, int unsupported, int gaps,
                                      boolean referenceBindingComplete,
                                      boolean dependencyAnalysisReady) { }
@@ -227,7 +227,8 @@ public final class ResolutionAnalysisReport {
         for (ReferenceResolution.Entry entry : resolution.entries()) {
             entriesByReferenceNode.put(entry.occurrence().programUnitId() + "#"
                     + entry.occurrence().referenceAstNodeId(), entry);
-            if (entry.status() == ResolutionContracts.ResolutionStatus.RESOLVED) continue;
+            if (entry.status() == ResolutionContracts.ResolutionStatus.RESOLVED
+                    || entry.status() == ResolutionContracts.ResolutionStatus.EXTERNAL_OBSERVED) continue;
             ReferenceOccurrences.Occurrence occurrence = entry.occurrence();
             addGap(gaps, GapCategory.REFERENCE_BINDING,
                     "REFERENCE_" + entry.status() + "_" + entry.reason(),
@@ -290,6 +291,7 @@ public final class ResolutionAnalysisReport {
             boolean dependencyReady = !globalInputGap && unitGaps == 0;
             result.add(new ProgramUnitSummary(unit.id(), entries.size(),
                     count(entries, ResolutionContracts.ResolutionStatus.RESOLVED),
+                    count(entries, ResolutionContracts.ResolutionStatus.EXTERNAL_OBSERVED),
                     count(entries, ResolutionContracts.ResolutionStatus.AMBIGUOUS),
                     count(entries, ResolutionContracts.ResolutionStatus.UNRESOLVED),
                     count(entries, ResolutionContracts.ResolutionStatus.UNSUPPORTED),

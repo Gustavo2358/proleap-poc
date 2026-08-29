@@ -12,26 +12,21 @@ final class ResolutionSnapshot {
     private final CompilationUnitModel model;
     private final ReferenceResolution resolution;
     private final ResolutionAnalysisReport report;
-    private final String externalCatalogDescription;
 
     private ResolutionSnapshot(String sourceName, List<String> sourceLines,
                                CompilationUnitModel model, ReferenceResolution resolution,
-                               ResolutionAnalysisReport report, String externalCatalogDescription) {
+                               ResolutionAnalysisReport report) {
         this.sourceName = Objects.requireNonNull(sourceName, "sourceName");
         this.sourceLines = List.copyOf(sourceLines);
         this.model = Objects.requireNonNull(model, "model");
         this.resolution = Objects.requireNonNull(resolution, "resolution");
         this.report = Objects.requireNonNull(report, "report");
-        this.externalCatalogDescription = Objects.requireNonNull(
-                externalCatalogDescription, "externalCatalogDescription");
     }
 
     static ResolutionSnapshot from(String sourceName, List<String> sourceLines,
                                    CompilationUnitModel model, ReferenceResolution resolution,
-                                   ResolutionAnalysisReport report,
-                                   String externalCatalogDescription) {
-        return new ResolutionSnapshot(sourceName, sourceLines, model, resolution, report,
-                externalCatalogDescription);
+                                   ResolutionAnalysisReport report) {
+        return new ResolutionSnapshot(sourceName, sourceLines, model, resolution, report);
     }
 
     void write(Path path) throws IOException {
@@ -45,7 +40,6 @@ final class ResolutionSnapshot {
             field(out, "pgmnameMode", resolution.policy().pgmnameMode().name()); out.write(',');
             field(out, "dynamMode", resolution.policy().dynamMode().name()); out.write(',');
             field(out, "dllMode", resolution.policy().dllMode().name()); out.write(',');
-            field(out, "catalog", externalCatalogDescription); out.write(',');
             field(out, "claim", report.analysisClaim().name()); out.write(',');
             out.write("\"referenceBindingComplete\":" + report.completeness().referenceBindingComplete() + ',');
             out.write("\"dependencyAnalysisReady\":" + report.completeness().dependencyAnalysisReady() + ',');
@@ -141,6 +135,7 @@ final class ResolutionSnapshot {
             if (summary != null) {
                 out.write(",\"references\":" + summary.references());
                 out.write(",\"resolved\":" + summary.resolved());
+                out.write(",\"externalObserved\":" + summary.externalObserved());
                 out.write(",\"ambiguous\":" + summary.ambiguous());
                 out.write(",\"unresolved\":" + summary.unresolved());
                 out.write(",\"unsupported\":" + summary.unsupported());

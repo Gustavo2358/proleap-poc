@@ -17,14 +17,7 @@ final class CobolReferenceResolver {
     private record Decision(ResolutionContracts.ResolutionStatus status,
                             ResolutionContracts.ResolutionReason reason,
                             List<ReferenceResolution.Candidate> candidates) { }
-    private record ExternalProgramId(String catalogId, int programId) {
-        private ExternalProgramId(ExternalProgramCatalog.Program program) {
-            this(program.catalogId().toUpperCase(Locale.ROOT), program.id());
-        }
-    }
-
     private final ResolutionContracts.CobolResolutionPolicy policy;
-    private final Optional<ExternalProgramCatalog> externalCatalog;
     private final Map<ResolutionContracts.ProgramUnitId, UnitIndex> units = new LinkedHashMap<>();
     private final Map<String, List<CompilationUnitModel.ProgramUnit>> programsByName = new LinkedHashMap<>();
     private final Map<String, List<CompilationUnitModel.ProgramUnit>> longMixedProgramsByName =
@@ -35,10 +28,8 @@ final class CobolReferenceResolver {
     private int additionalIndexed;
     private int additionalMaximum;
 
-    CobolReferenceResolver(ResolutionContracts.CobolResolutionPolicy policy,
-                           Optional<ExternalProgramCatalog> externalCatalog) {
+    CobolReferenceResolver(ResolutionContracts.CobolResolutionPolicy policy) {
         this.policy = Objects.requireNonNull(policy, "policy");
-        this.externalCatalog = Objects.requireNonNull(externalCatalog, "externalCatalog");
     }
 
     ReferenceResolution resolve(CompilationUnitModel model, CompilationUnitSymbolTables symbolTables,
@@ -60,7 +51,8 @@ final class CobolReferenceResolver {
                         ResolutionContracts.ResolutionReason.UNSUPPORTED_GRAMMAR_FORM, List.of());
             };
             List<Integer> diagnosticIds = List.of();
-            if (decision.status() != ResolutionContracts.ResolutionStatus.RESOLVED) {
+            if (decision.status() != ResolutionContracts.ResolutionStatus.RESOLVED
+                    && decision.status() != ResolutionContracts.ResolutionStatus.EXTERNAL_OBSERVED) {
                 int id = diagnostics.size();
                 diagnostics.add(new ReferenceResolution.Diagnostic(id,
                         "REFERENCE_" + decision.status() + "_" + decision.reason(),
@@ -84,9 +76,10 @@ final class CobolReferenceResolver {
         if (LOG.isDebugEnabled()) {
             String source = model.programUnits().isEmpty() ? model.compilationUnitId()
                     : model.programUnits().get(0).program().meta().provenance().original().file();
-            LOG.debug("event=resolution_completed scope=RESOLVER source={} phase=REFERENCE_RESOLUTION elapsedMs={} references={} resolved={} unresolved={} ambiguous={} unsupported={} indexedDeclarations={} nominalLookups={} candidateInspections={} maximumCandidates={}",
+            LOG.debug("event=resolution_completed scope=RESOLVER source={} phase=REFERENCE_RESOLUTION elapsedMs={} references={} resolved={} externalObserved={} unresolved={} ambiguous={} unsupported={} indexedDeclarations={} nominalLookups={} candidateInspections={} maximumCandidates={}",
                     source, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - started), result.entries().size(),
                     count(result, ResolutionContracts.ResolutionStatus.RESOLVED),
+                    count(result, ResolutionContracts.ResolutionStatus.EXTERNAL_OBSERVED),
                     count(result, ResolutionContracts.ResolutionStatus.UNRESOLVED),
                     count(result, ResolutionContracts.ResolutionStatus.AMBIGUOUS),
                     count(result, ResolutionContracts.ResolutionStatus.UNSUPPORTED), result.metrics().indexedDeclarations(),
@@ -297,58 +290,13 @@ final class CobolReferenceResolver {
         if (invalidExternalCallOptions())
             return new Decision(ResolutionContracts.ResolutionStatus.UNSUPPORTED,
                     ResolutionContracts.ResolutionReason.UNSUPPORTED_DIALECT_OPTION, List.of());
-        if (externalCatalog.isEmpty())
-            return new Decision(ResolutionContracts.ResolutionStatus.UNRESOLVED,
-                    ResolutionContracts.ResolutionReason.EXTERNAL_CATALOG_NOT_PROVIDED, List.of());
-        return resolveExternalProgram(reference.programName());
+        return new Decision(ResolutionContracts.ResolutionStatus.EXTERNAL_OBSERVED,
+                ResolutionContracts.ResolutionReason.LITERAL_EXTERNAL_PROGRAM, List.of());
     }
 
     private boolean invalidExternalCallOptions() {
         return policy.dynamMode() == ResolutionContracts.DynamMode.DYNAM
                 && policy.dllMode() == ResolutionContracts.DllMode.DLL;
-    }
-
-    private Decision resolveExternalProgram(String writtenName) {
-        LinkedHashSet<String> keys = possibleExternalKeys(writtenName);
-        List<Set<ExternalProgramId>> outcomes = new ArrayList<>();
-        LinkedHashMap<ExternalProgramId, ReferenceResolution.Candidate> possible = new LinkedHashMap<>();
-        for (String key : keys) {
-            additionalLookups++;
-            List<ExternalProgramCatalog.Program> programs = lookupExternal(key);
-            additionalInspections += programs.size();
-            LinkedHashSet<ExternalProgramId> ids = programs.stream().map(ExternalProgramId::new)
-                    .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
-            outcomes.add(Set.copyOf(ids));
-            for (ExternalProgramCatalog.Program program : programs)
-                possible.putIfAbsent(new ExternalProgramId(program), externalCandidate(program, key));
-        }
-        if (outcomes.stream().distinct().count() > 1)
-            return new Decision(ResolutionContracts.ResolutionStatus.UNSUPPORTED,
-                    ResolutionContracts.ResolutionReason.UNSUPPORTED_DIALECT_OPTION,
-                    List.copyOf(possible.values()));
-        return nominalDecision(List.copyOf(possible.values()), false);
-    }
-
-    private LinkedHashSet<String> possibleExternalKeys(String writtenName) {
-        LinkedHashSet<String> keys = new LinkedHashSet<>();
-        if (policy.dynamMode() != ResolutionContracts.DynamMode.NODYNAM)
-            keys.add(ProgramNameCanonicalizer.dynamicExternal(writtenName));
-        if (policy.dynamMode() != ResolutionContracts.DynamMode.DYNAM) {
-            if (policy.pgmnameMode() == ResolutionContracts.PgmnameMode.UNSPECIFIED) {
-                EnumSet.of(ResolutionContracts.PgmnameMode.COMPAT,
-                                ResolutionContracts.PgmnameMode.LONGUPPER,
-                                ResolutionContracts.PgmnameMode.LONGMIXED).stream()
-                        .map(mode -> ProgramNameCanonicalizer.external(writtenName, mode))
-                        .forEach(keys::add);
-            } else {
-                keys.add(ProgramNameCanonicalizer.external(writtenName, policy.pgmnameMode()));
-            }
-        }
-        return keys;
-    }
-
-    private List<ExternalProgramCatalog.Program> lookupExternal(String canonicalName) {
-        return List.copyOf(externalCatalog.orElseThrow().lookup(canonicalName));
     }
 
     private List<CompilationUnitModel.ProgramUnit> visiblePrograms(
@@ -419,20 +367,6 @@ final class CobolReferenceResolver {
                 ResolutionContracts.ReferenceKind.PROGRAM, unit.program().name(),
                 ProgramNameCanonicalizer.nested(unit.program().name(), policy.pgmnameMode()), List.of(),
                 Map.of("common", Boolean.toString(unit.program().attributes().common()), "source", "COMPILATION_UNIT"));
-    }
-
-    private static ReferenceResolution.Candidate externalCandidate(ExternalProgramCatalog.Program program,
-                                                                    String canonicalName) {
-        ResolutionContracts.ProgramUnitId catalogOwner = new ResolutionContracts.ProgramUnitId(
-                "EXTERNAL-CATALOG:" + program.catalogId().toUpperCase(Locale.ROOT),
-                List.of(program.id()), SymbolTable.canonical(program.writtenName()));
-        Map<String, String> attributes = new LinkedHashMap<>(program.attributes());
-        attributes.put("catalogId", program.catalogId());
-        attributes.put("source", "EXTERNAL_CATALOG");
-        return new ReferenceResolution.Candidate(new ResolutionContracts.SemanticEntityId(catalogOwner,
-                ResolutionContracts.SemanticEntityDomain.EXTERNAL_PROGRAM, program.id()),
-                ResolutionContracts.ReferenceKind.PROGRAM, program.writtenName(), canonicalName,
-                List.of(), attributes);
     }
 
     private static Decision fromBase(ReferenceResolution.Entry entry) {

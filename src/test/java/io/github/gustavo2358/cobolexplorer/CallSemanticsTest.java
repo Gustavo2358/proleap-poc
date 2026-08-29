@@ -16,7 +16,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -101,64 +100,46 @@ class CallSemanticsTest {
     }
 
     @Test
-    void canonicalizesExternalLiteralCallsAccordingToLinkage() throws Exception {
-        ExternalProgramCatalog catalog = key -> switch (key) {
-            case "LONG0NAM" -> external(10, key, "DYNAMIC");
-            case "LONG-NAME-ABC" -> external(11, key, "STATIC");
-            case "APROG" -> external(20, key, "DYNAMIC");
-            case "1PROG" -> external(21, key, "STATIC");
-            case "MIXED0CH" -> external(30, key, "DYNAMIC");
-            case "mixed-Child" -> external(31, key, "STATIC");
-            default -> List.of();
-        };
-        Analysis dynamic = analyze(DYNAMIC_EXTERNAL, catalog);
-        Analysis staticAnalysis = analyze(STATIC_EXTERNAL, catalog);
-        Analysis unknown = analyze(UNKNOWN_LINKAGE_EXTERNAL, catalog);
+    void observesExternalLiteralCallsWithoutCatalogLookup() throws Exception {
+        Analysis dynamic = analyze(DYNAMIC_EXTERNAL);
+        Analysis staticAnalysis = analyze(STATIC_EXTERNAL);
+        Analysis unknown = analyze(UNKNOWN_LINKAGE_EXTERNAL);
 
-        assertExternal(dynamic, "'LONG-NAME-ABC'", ResolutionContracts.ResolutionStatus.RESOLVED,
-                ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION,
-                ResolutionContracts.CallLinkage.DYNAMIC, Set.of(10));
-        assertExternal(dynamic, "'1PROG'", ResolutionContracts.ResolutionStatus.RESOLVED,
-                ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION,
-                ResolutionContracts.CallLinkage.DYNAMIC, Set.of(20));
-        assertExternal(dynamic, "'mixed-Child'", ResolutionContracts.ResolutionStatus.RESOLVED,
-                ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION,
-                ResolutionContracts.CallLinkage.DYNAMIC, Set.of(30));
+        assertExternal(dynamic, "'LONG-NAME-ABC'", ResolutionContracts.CallLinkage.DYNAMIC);
+        assertExternal(dynamic, "'1PROG'", ResolutionContracts.CallLinkage.DYNAMIC);
+        assertExternal(dynamic, "'mixed-Child'", ResolutionContracts.CallLinkage.DYNAMIC);
 
-        assertExternal(staticAnalysis, "'LONG-NAME-ABC'", ResolutionContracts.ResolutionStatus.RESOLVED,
-                ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION,
-                ResolutionContracts.CallLinkage.STATIC, Set.of(11));
-        assertExternal(staticAnalysis, "'1PROG'", ResolutionContracts.ResolutionStatus.RESOLVED,
-                ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION,
-                ResolutionContracts.CallLinkage.STATIC, Set.of(21));
-        assertExternal(staticAnalysis, "'mixed-Child'", ResolutionContracts.ResolutionStatus.RESOLVED,
-                ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION,
-                ResolutionContracts.CallLinkage.STATIC, Set.of(31));
+        assertExternal(staticAnalysis, "'LONG-NAME-ABC'", ResolutionContracts.CallLinkage.STATIC);
+        assertExternal(staticAnalysis, "'1PROG'", ResolutionContracts.CallLinkage.STATIC);
+        assertExternal(staticAnalysis, "'mixed-Child'", ResolutionContracts.CallLinkage.STATIC);
 
-        assertExternal(unknown, "'LONG-NAME-ABC'", ResolutionContracts.ResolutionStatus.UNSUPPORTED,
-                ResolutionContracts.ResolutionReason.UNSUPPORTED_DIALECT_OPTION,
-                ResolutionContracts.CallLinkage.UNKNOWN, Set.of(10, 11));
-        assertExternal(unknown, "'1PROG'", ResolutionContracts.ResolutionStatus.UNSUPPORTED,
-                ResolutionContracts.ResolutionReason.UNSUPPORTED_DIALECT_OPTION,
-                ResolutionContracts.CallLinkage.UNKNOWN, Set.of(20, 21));
-        assertExternal(unknown, "'mixed-Child'", ResolutionContracts.ResolutionStatus.UNSUPPORTED,
-                ResolutionContracts.ResolutionReason.UNSUPPORTED_DIALECT_OPTION,
-                ResolutionContracts.CallLinkage.UNKNOWN, Set.of(30, 31));
+        assertExternal(unknown, "'LONG-NAME-ABC'", ResolutionContracts.CallLinkage.UNKNOWN);
+        assertExternal(unknown, "'1PROG'", ResolutionContracts.CallLinkage.UNKNOWN);
+        assertExternal(unknown, "'mixed-Child'", ResolutionContracts.CallLinkage.UNKNOWN);
+
+        ResolutionAnalysisReport dynamicReport = ResolutionAnalysisReport.compose(dynamic.build(),
+                ResolutionAnalysisReport.FrontendState.complete(), dynamic.occurrences(), dynamic.resolution());
+        ResolutionAnalysisReport staticReport = ResolutionAnalysisReport.compose(staticAnalysis.build(),
+                ResolutionAnalysisReport.FrontendState.complete(), staticAnalysis.occurrences(), staticAnalysis.resolution());
+        ResolutionAnalysisReport unknownReport = ResolutionAnalysisReport.compose(unknown.build(),
+                ResolutionAnalysisReport.FrontendState.complete(), unknown.occurrences(), unknown.resolution());
+        assertAll("external observation is complete while unknown linkage remains separate",
+                () -> assertTrue(dynamicReport.completeness().dependencyAnalysisReady()),
+                () -> assertTrue(staticReport.completeness().dependencyAnalysisReady()),
+                () -> assertFalse(unknownReport.completeness().dependencyAnalysisReady()),
+                () -> assertTrue(unknownReport.gaps().stream().anyMatch(gap ->
+                        gap.code().equals("CALL_LINKAGE_UNKNOWN"))));
     }
 
     @Test
     void unknownCallSemanticsBlockDependencyReadinessWithoutErasingCertainNameBinding()
             throws Exception {
-        ExternalProgramCatalog catalog = key -> Set.of("TARGET0A", "TARGET-A").contains(key)
-                ? List.of(new ExternalProgramCatalog.Program(
-                        1, "readiness-catalog", "TARGET-A", Map.of()))
-                : List.of();
-        Analysis analysis = analyze(UNKNOWN_LINKAGE_SAME_TARGET, catalog);
+        Analysis analysis = analyze(UNKNOWN_LINKAGE_SAME_TARGET);
         ReferenceResolution.Entry call = analysis.resolution().entries().stream()
                 .filter(entry -> entry.occurrence().role()
                         == ResolutionContracts.ReferenceRole.CALL_TARGET)
                 .findFirst().orElseThrow();
-        assertEquals(ResolutionContracts.ResolutionStatus.RESOLVED, call.status());
+        assertEquals(ResolutionContracts.ResolutionStatus.EXTERNAL_OBSERVED, call.status());
         assertEquals(ResolutionContracts.CallLinkage.UNKNOWN,
                 call.callSemantics().orElseThrow().linkage());
 
@@ -174,7 +155,7 @@ class CallSemanticsTest {
 
     @Test
     void callIdentifierBindingDoesNotClaimItsRuntimeProgramTargetIsKnown() throws Exception {
-        Analysis analysis = analyze(CALL_IDENTIFIER_RUNTIME_TARGET, ExternalProgramCatalog.empty());
+        Analysis analysis = analyze(CALL_IDENTIFIER_RUNTIME_TARGET);
         ReferenceResolution.Entry call = analysis.resolution().entries().stream()
                 .filter(entry -> entry.occurrence().role()
                         == ResolutionContracts.ReferenceRole.CALL_TARGET)
@@ -197,11 +178,7 @@ class CallSemanticsTest {
 
     @Test
     void doesNotClassifyNodynamDllCallsAsStatic() throws Exception {
-        ExternalProgramCatalog catalog = key -> Set.of("TARGET0A", "TARGET-A").contains(key)
-                ? List.of(new ExternalProgramCatalog.Program(
-                        1, "dll-catalog", "TARGET-A", Map.of()))
-                : List.of();
-        Analysis analysis = analyze(DLL, catalog);
+        Analysis analysis = analyze(DLL);
         ReferenceResolution.Entry call = analysis.resolution().entries().stream()
                 .filter(entry -> entry.occurrence().role()
                         == ResolutionContracts.ReferenceRole.CALL_TARGET)
@@ -212,18 +189,14 @@ class CallSemanticsTest {
                 () -> assertEquals(ResolutionContracts.DllMode.DLL, analysis.outcome().dllMode()),
                 () -> assertEquals(ResolutionContracts.DllMode.DLL,
                         analysis.resolution().policy().dllMode()),
-                () -> assertEquals(ResolutionContracts.ResolutionStatus.RESOLVED, call.status()),
+                () -> assertEquals(ResolutionContracts.ResolutionStatus.EXTERNAL_OBSERVED, call.status()),
                 () -> assertEquals(ResolutionContracts.CallLinkage.DLL,
                         call.callSemantics().orElseThrow().linkage()));
     }
 
     @Test
     void rejectsTheInvalidDynamDllCompilerOptionCombination() throws Exception {
-        ExternalProgramCatalog catalog = key -> key.equals("TARGET0A")
-                ? List.of(new ExternalProgramCatalog.Program(
-                        1, "invalid-options-catalog", "TARGET-A", Map.of()))
-                : List.of();
-        Analysis analysis = analyze(INVALID_DYNAM_DLL, catalog);
+        Analysis analysis = analyze(INVALID_DYNAM_DLL);
         ReferenceResolution.Entry call = analysis.resolution().entries().stream()
                 .filter(entry -> entry.occurrence().role()
                         == ResolutionContracts.ReferenceRole.CALL_TARGET)
@@ -240,26 +213,17 @@ class CallSemanticsTest {
                         call.callSemantics().orElseThrow().linkage()));
     }
 
-    private static List<ExternalProgramCatalog.Program> external(int id, String name, String linkage) {
-        return List.of(new ExternalProgramCatalog.Program(
-                id, "linkage-catalog", name, Map.of("expectedLinkage", linkage)));
-    }
-
     private static void assertExternal(Analysis analysis, String writtenText,
-                                       ResolutionContracts.ResolutionStatus status,
-                                       ResolutionContracts.ResolutionReason reason,
-                                       ResolutionContracts.CallLinkage linkage,
-                                       Set<Integer> ids) {
+                                       ResolutionContracts.CallLinkage linkage) {
         ReferenceResolution.Entry entry = analysis.resolution().entries().stream()
                 .filter(candidate -> candidate.occurrence().writtenText().equals(writtenText))
                 .findFirst().orElseThrow();
         assertAll(entry.toString(),
-                () -> assertEquals(status, entry.status()),
-                () -> assertEquals(reason, entry.reason()),
+                () -> assertEquals(ResolutionContracts.ResolutionStatus.EXTERNAL_OBSERVED, entry.status()),
+                () -> assertEquals(ResolutionContracts.ResolutionReason.LITERAL_EXTERNAL_PROGRAM, entry.reason()),
                 () -> assertEquals(linkage, entry.callSemantics().orElseThrow().linkage()),
-                () -> assertEquals(ids, entry.candidates().stream()
-                        .map(candidate -> candidate.entityId().localId())
-                        .collect(Collectors.toSet())));
+                () -> assertTrue(entry.candidates().isEmpty()),
+                () -> assertTrue(entry.diagnosticIds().isEmpty()));
     }
 
     private static void assertCallSyntax(Ast.Program program) {
@@ -283,13 +247,6 @@ class CallSemanticsTest {
     }
 
     private static Analysis analyze(Path sourcePath) throws Exception {
-        ExternalProgramCatalog catalog = key -> key.equals("TARGET-A")
-                ? List.of(new ExternalProgramCatalog.Program(1, "call-semantics", "TARGET-A", Map.of()))
-                : List.of();
-        return analyze(sourcePath, catalog);
-    }
-
-    private static Analysis analyze(Path sourcePath, ExternalProgramCatalog catalog) throws Exception {
         GrammarBinding grammar = Bindings.cobol();
         String normalized = SourceNormalizerTestSupport.fixed(Files.readString(sourcePath, StandardCharsets.UTF_8));
         PreprocessorEngine.Outcome outcome = new PreprocessorEngine(
@@ -317,7 +274,7 @@ class CallSemanticsTest {
         ResolutionContracts.CobolResolutionPolicy policy = ResolutionContracts.CobolResolutionPolicy.initial()
                 .withPgmnameMode(outcome.pgmnameMode()).withDynamMode(outcome.dynamMode())
                 .withDllMode(outcome.dllMode());
-        ReferenceResolution resolution = new CobolReferenceResolver(policy, Optional.of(catalog))
+        ReferenceResolution resolution = new CobolReferenceResolver(policy)
                 .resolve(model, tables, occurrences);
         return new Analysis(outcome, build, model, occurrences, resolution);
     }

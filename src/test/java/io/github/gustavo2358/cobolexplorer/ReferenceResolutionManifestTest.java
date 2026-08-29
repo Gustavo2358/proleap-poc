@@ -54,18 +54,19 @@ class ReferenceResolutionManifestTest {
                 "bank/source/ACCT.cbl", List.of(0, 2), "ACCT01");
         ResolutionContracts.CobolResolutionPolicy policy = ResolutionContracts.CobolResolutionPolicy.initial();
         ResolutionContracts.Completeness incomplete = new ResolutionContracts.Completeness(
-                false, false, List.of("EXTERNAL_CATALOG_NOT_PROVIDED"));
+                false, false, List.of("CALL_LINKAGE_UNKNOWN"));
 
         assertEquals(List.of(0, 2), unit.structuralPath());
         assertThrows(UnsupportedOperationException.class, () -> unit.structuralPath().add(3));
         assertFalse(policy.policyId().isBlank());
         assertFalse(policy.version().isBlank());
         assertEquals(ResolutionContracts.QualifyMode.UNSPECIFIED, policy.qualifyMode());
-        assertEquals(List.of("EXTERNAL_CATALOG_NOT_PROVIDED"), incomplete.blockingReasons());
+        assertEquals(List.of("CALL_LINKAGE_UNKNOWN"), incomplete.blockingReasons());
         assertThrows(UnsupportedOperationException.class,
                 () -> incomplete.blockingReasons().add("MUTATION"));
 
         assertEquals(EnumSet.of(ResolutionContracts.ResolutionStatus.RESOLVED,
+                        ResolutionContracts.ResolutionStatus.EXTERNAL_OBSERVED,
                         ResolutionContracts.ResolutionStatus.AMBIGUOUS,
                         ResolutionContracts.ResolutionStatus.UNRESOLVED,
                         ResolutionContracts.ResolutionStatus.UNSUPPORTED),
@@ -79,9 +80,9 @@ class ReferenceResolutionManifestTest {
                 ResolutionContracts.ReferenceRole.PERFORM_THROUGH)));
         assertTrue(Set.of(ResolutionContracts.ResolutionReason.values()).containsAll(Set.of(
                 ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION,
+                ResolutionContracts.ResolutionReason.LITERAL_EXTERNAL_PROGRAM,
                 ResolutionContracts.ResolutionReason.MULTIPLE_VALID_CANDIDATES,
                 ResolutionContracts.ResolutionReason.DECLARATION_NOT_FOUND,
-                ResolutionContracts.ResolutionReason.EXTERNAL_CATALOG_NOT_PROVIDED,
                 ResolutionContracts.ResolutionReason.UNSUPPORTED_GRAMMAR_FORM)));
     }
 

@@ -71,14 +71,14 @@ IDs neste documento são estáveis. `AUTOMATED` indica proteção executável at
 - **Enforcement:** `AUTOMATED` — testes de CALL dinâmico e contrato de occurrences/resolution.
 - **Known exceptions:** literal de programa continua sendo sintaxe explícita, não inferência de valor.
 
-### INV-RES-003 — Programa externo exige catálogo explícito
+### INV-RES-003 — Dependência externa literal termina no artefato
 
-- **Statement:** ausência do catálogo externo resulta em incerteza própria; não prova inexistência do programa.
-- **Rationale:** falta de input não é fato negativo.
+- **Statement:** `CALL` literal sem program unit interno visível resulta em `EXTERNAL_OBSERVED`, sem candidate externo e sem scan fora da compilation unit.
+- **Rationale:** o literal prova a dependência nominal, mas não autoriza inventar identidade ou análise interartefatos.
 - **Scope:** resolução PROGRAM/CALL externo.
-- **Related ADRs:** ADR-0006.
-- **Enforcement:** `AUTOMATED` — testes de resolução de programas e motivo `EXTERNAL_CATALOG_NOT_PROVIDED`.
-- **Known exceptions:** catálogo fornecido e vazio pode provar ausência dentro do catálogo configurado.
+- **Related ADRs:** ADR-0010.
+- **Enforcement:** `AUTOMATED` — testes de resolução PROGRAM/CALL externo e motivo `LITERAL_EXTERNAL_PROGRAM`.
+- **Known exceptions:** opções de linkage inválidas ou ausentes continuam incertezas separadas.
 
 ## Cobertura e linguagens embarcadas
 
