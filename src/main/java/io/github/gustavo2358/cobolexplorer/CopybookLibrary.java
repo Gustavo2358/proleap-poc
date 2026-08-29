@@ -9,13 +9,19 @@ final class CopybookLibrary {
     private final Map<String, Path> entries = new HashMap<>();
 
     CopybookLibrary(Path directory) throws IOException {
-        try (var files = Files.list(directory)) {
-            files.filter(Files::isRegularFile).forEach(p -> {
-                String file = p.getFileName().toString().toLowerCase(Locale.ROOT);
-                entries.put(file, p);
-                int dot = file.lastIndexOf('.');
-                if (dot > 0) entries.putIfAbsent(file.substring(0, dot), p);
-            });
+        this(List.of(directory));
+    }
+
+    CopybookLibrary(List<Path> directories) throws IOException {
+        for (Path directory : directories) {
+            try (var files = Files.list(directory)) {
+                files.filter(Files::isRegularFile).forEach(p -> {
+                    String file = p.getFileName().toString().toLowerCase(Locale.ROOT);
+                    entries.putIfAbsent(file, p);
+                    int dot = file.lastIndexOf('.');
+                    if (dot > 0) entries.putIfAbsent(file.substring(0, dot), p);
+                });
+            }
         }
     }
 

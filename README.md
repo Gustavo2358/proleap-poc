@@ -36,8 +36,12 @@ Para escolher fonte, copybooks e diretório de saída:
 
 ```bash
 mvn exec:java \
-  -Dexec.args="--source corpus/cbl/COACTUPC.cbl --copybooks corpus/cpy --output dist"
+  -Dexec.args="--source corpus/cbl/COACTUPC.cbl --copybooks corpus/cpy,corpus/cpy-bms --output dist"
 ```
+
+`--copybooks` aceita uma lista de diretórios separada por vírgulas. Quando um
+copybook existe em mais de um diretório, o primeiro diretório informado tem
+precedência.
 
 ## Exemplos
 

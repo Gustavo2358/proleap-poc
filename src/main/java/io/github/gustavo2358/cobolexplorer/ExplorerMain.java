@@ -23,7 +23,8 @@ public final class ExplorerMain {
     public static void main(String[] args) throws Exception {
         Path project = Path.of("").toAbsolutePath().normalize();
         Path source = project.resolve(argument(args, "--source", "corpus/cbl/COACTUPC.cbl"));
-        Path copybooks = project.resolve(argument(args, "--copybooks", "corpus/cpy"));
+        List<Path> copybooks = copybookDirectories(project,
+                argument(args, "--copybooks", "corpus/cpy,corpus/cpy-bms"));
         Path output = project.resolve(argument(args, "--output", "dist"));
 
         AnalysisProgress progress = new AnalysisProgress();
@@ -40,7 +41,7 @@ public final class ExplorerMain {
         }
     }
 
-    private static void analyze(Path source, Path copybooks, Path output,
+    private static void analyze(Path source, List<Path> copybooks, Path output,
                                 AnalysisLogContext logContext, AnalysisProgress progress,
                                 long analysisStarted) throws Exception {
 
@@ -373,5 +374,18 @@ public final class ExplorerMain {
     private static String argument(String[] args, String name, String fallback) {
         for (int i = 0; i < args.length - 1; i++) if (args[i].equals(name)) return args[i + 1];
         return fallback;
+    }
+
+    private static List<Path> copybookDirectories(Path project, String value) {
+        String[] parts = value.split(",", -1);
+        List<Path> directories = new ArrayList<>(parts.length);
+        for (String part : parts) {
+            String trimmed = part.trim();
+            if (trimmed.isEmpty()) {
+                throw new IllegalArgumentException("--copybooks must contain non-empty directories separated by commas");
+            }
+            directories.add(project.resolve(trimmed));
+        }
+        return List.copyOf(directories);
     }
 }
