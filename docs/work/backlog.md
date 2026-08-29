@@ -193,6 +193,47 @@ Antes de implementar, promover este backlog para um novo work item de risco méd
 
 `BACKLOG-CFG-001` e `BACKLOG-DF-001` podem iniciar somente após as garantias estruturais e de coverage relevantes estarem verdes. `BACKLOG-DF-001` continua responsável por storage regions e efeitos de memória; `BACKLOG-DF-002` continua responsável pela interpretação final de targets dinâmicos.
 
+## Resolução nominal
+
+### BACKLOG-RES-003 — Classificar condition-names em `EVALUATE TRUE ... WHEN`
+
+#### Evidência e defeito
+
+Após `WORK-RES-003`, COACTUPC ainda possui 108 occurrences `UNRESOLVED / INVALID_NAMESPACE_FOR_CONTEXT`. Todas têm `role=VALUE_READ`, `grammarRule=qualifiedDataName` e ocorrem como selector de `WHEN` sob `EVALUATE TRUE`, por exemplo:
+
+```cobol
+    EVALUATE TRUE
+       WHEN CCARD-AID-PFK03
+       WHEN ACUP-CHANGES-OKAYED-AND-DONE
+```
+
+Esses nomes são condition-names de nível 88 e devem ser resolvidos no namespace CONDITION. A gramática aceita `evaluateCondition` tanto como `condition` quanto como `evaluateValue`; para um identificador isolado, o parse atual percorre `evaluateValue → identifier`. `AstBuilder.buildEvaluate` preserva somente uma lista de `Expression`, e `ReferenceOccurrenceCollector` visita cada selector como `VALUE_READ` genérico. O contexto `EVALUATE TRUE` se perde, fazendo o coletor emitir DATA e produzindo o falso gap.
+
+Este é um defeito distinto de `SET condition-name TO TRUE/FALSE`: a regra não pode ser ampliada por nome, regex ou pela suposição de que todo `WHEN identifier` é CONDITION. `EVALUATE data-item WHEN identifier` continua comparação de valor e o identifier pode ser DATA/INDEX; `WHEN` também aceita literals, intervalos, `NOT`, condições completas e múltiplos `ALSO`.
+
+#### Resultado esperado
+
+No domínio COBOL explicitamente suportado, cada selector nominal de `WHEN` correspondente a um subject booleano `TRUE` ou `FALSE` deve carregar contexto CONDITION e admitir somente `ReferenceKind.CONDITION`. A resolução deve selecionar a declaração nível 88 visível, preservar ambiguidade entre condition-names reais e continuar reportando namespace incompatível quando não houver condition-name admissível.
+
+Selectors de `EVALUATE` cujo subject correspondente não for booleano, ou cuja forma ainda não tiver regra exata, permanecem DATA/INDEX conforme o contrato atual ou conservadoramente preservados/unsupported; o item não pode converter incerteza em sucesso.
+
+#### Proposta de implementação
+
+1. Antes de alterar produção, criar fixtures adversariais para `EVALUATE TRUE` e `EVALUATE FALSE` com `WHEN condition-name`, `WHEN NOT condition-name`, múltiplos `WHEN` e correspondência posicional entre `EVALUATE ... ALSO ...` e `WHEN ... ALSO ...`.
+2. Criar contracasos: `EVALUATE data-item WHEN data-item`, `WHEN literal`, `WHEN value THRU value`, condition-name homônimo de DATA e condition-name ausente. Os oráculos precisam distinguir kind da occurrence, conjunto admissível, status e candidato selecionado.
+3. Evoluir a AST para preservar o contexto semântico de cada selector de `EVALUATE` (por exemplo, node/record `EvaluateSelector` com expression e contexto), derivado dos contexts `evaluateSelect`, `evaluateCondition`, `evaluateValue` e `booleanLiteral`. Não inferir a decisão pelo texto ou pela grafia de `TRUE`.
+4. No collector, usar o contexto do selector e o subject correspondente para emitir CONDITION somente na classe comprovada; manter a cardinalidade e a ordem determinísticas dos selectors/occurrences.
+5. Atualizar snapshot, catálogo de evals e baseline de COACTUPC somente para diferenças explicadas. A contagem de 108 é evidência de corpus, não especificação da regra.
+6. Rodar PIT focalizado sobre o lowering de `EVALUATE` e o collector. Os novos testes devem matar, no mínimo, mutações que removam a classificação CONDITION, ignorem o subject booleano, troquem a correspondência de `ALSO` ou classifiquem todo selector como CONDITION.
+
+#### Autoridade, restrições e gates
+
+- Regras canônicas: `docs/domain/semantic-ast.md`, `docs/domain/reference-resolution.md` e IBM Enterprise COBOL para `EVALUATE` e condition-names.
+- Invariantes: INV-AST-001, INV-AST-002, INV-RES-001, INV-RES-002, INV-COV-001 e INV-DET-001.
+- Evals a ampliar: EVAL-AST-004, EVAL-RES-DATA-001, EVAL-RES-COV-001 e EVAL-MUT-001.
+- Fora de escopo: avaliação de valores de runtime, CFG/dataflow, CALL dinâmico e resolução de statements sem uma regra gramatical/semântica específica.
+- Promover para work item de risco médio antes de produção; gates mínimos: `fast`, `semantic` e `full`.
+
 ## CFG e efeitos semânticos
 
 ### BACKLOG-CFG-001 — CFG estrutural incremental
