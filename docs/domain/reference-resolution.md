@@ -18,6 +18,7 @@ Resolução é nominal. Ela não faz CFG, reaching definitions, propagação de 
 - Nomes COBOL são comparados pela forma canônica case-insensitive, preservando a grafia escrita para diagnóstico e navegação.
 - Operandos de uma operação AST classificada como relacional admitem DATA ou INDEX; a categoria vem do lowering gramatical e independe de a grafia ser `=`, `GREATER`, `LESS` ou uma forma composta.
 - O alvo de `SET condition-name TO TRUE` ou `FALSE` é uma occurrence CONDITION. A classificação vem de `setToStatement` e `booleanLiteral` tipados; `SET` de dados e índices permanece DATA/INDEX e não é promovido a CONDITION.
+- Um selector nominal direto de `WHEN` é occurrence CONDITION somente quando seu contexto AST o associa, pela posição `ALSO`, a selection subject `TRUE` ou `FALSE` tipado. `WHEN NOT condition-name` pertence à mesma classe. Selector nominal sob subject de valor permanece DATA/INDEX; literals, intervalos `THRU` e formas sem a regra estrutural exata não são promovidos.
 - Estrutura de scopes não é, por si só, a relação completa de visibilidade COBOL. Namespace, kind, unit, nesting, `GLOBAL`, `COMMON`, shadowing e qualificação participam conforme a categoria da referência.
 - Qualificadores DATA seguem ancestry estrutural de dentro para fora; `IN` e `OF` são equivalentes semanticamente. `STANDARD`, `EXTEND` e `UNSPECIFIED` preservam diferenças de dialeto em vez de selecionar uma variante silenciosamente.
 - PROCEDURE é local ao program unit; paragraph qualificado depende da section escrita.

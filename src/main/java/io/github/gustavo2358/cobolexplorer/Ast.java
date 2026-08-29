@@ -54,6 +54,8 @@ public final class Ast {
     public enum OperationCategory { RELATIONAL, OTHER }
     /** Semantic context supplied by the typed statement production; this is not a binding result. */
     public enum StatementOperandContext { DEFAULT, SET_CONDITION_TARGET, SET_DATA_OR_INDEX }
+    /** Context of a WHEN selector derived from its typed evaluateCondition and matching subject position. */
+    public enum EvaluateSelectorContext { BOOLEAN_SUBJECT_NOMINAL, VALUE_COMPARISON, OTHER }
     public enum DataSectionKind { FILE, DATABASE, WORKING_STORAGE, LINKAGE, COMMUNICATION, LOCAL_STORAGE, SCREEN, REPORT, PROGRAM_LIBRARY }
     public enum DataLevelKind { GROUP_OR_ELEMENTARY, STANDALONE_77, RENAMES_66, CONDITION_88, OPAQUE }
     public enum CallArgumentKind { VALUE, OMITTED, ADDRESS_OF, LENGTH_OF }
@@ -185,15 +187,21 @@ public final class Ast {
         }
     }
 
-    public record EvaluateBranch(Meta meta, List<Expression> selectorExpressions,
+    public record EvaluateBranch(Meta meta, List<EvaluateSelector> selectors,
                                  String writtenSelector, boolean other,
                                  List<Statement> statements) implements Node {
         public EvaluateBranch {
-            selectorExpressions = List.copyOf(selectorExpressions);
+            selectors = List.copyOf(selectors);
             statements = List.copyOf(statements);
         }
+        /** Compatibility view for consumers interested only in expression structure. */
+        public List<Expression> selectorExpressions() { return selectors.stream().map(EvaluateSelector::expression).toList(); }
         public String selector() { return writtenSelector; }
     }
+
+    /** A WHEN selection object and the zero-based EVALUATE subject it corresponds to through ALSO. */
+    public record EvaluateSelector(Expression expression, int subjectIndex,
+                                   EvaluateSelectorContext context) {}
 
     public record PerformStatement(Meta meta, PerformKind performKind, ProcedureReference fromReference,
                                    ProcedureReference throughReference, String writtenControl,

@@ -235,6 +235,49 @@ class AstBuilderTypedTraversalTest {
         assertEquals(Ast.StatementOperandContext.SET_DATA_OR_INDEX, contextByName.get("STATE-FIELD"));
     }
 
+    @Test
+    void evaluateSelectorsKeepTypedBooleanContextAndAlsoPosition() {
+        Ast.Program program = parse("""
+                IDENTIFICATION DIVISION.
+                PROGRAM-ID. EVALUATE-CONTEXT.
+                DATA DIVISION.
+                WORKING-STORAGE SECTION.
+                01 STATE-FIELD PIC X.
+                   88 STATE-OPEN VALUE 'O'.
+                01 VALUE-FIELD PIC X.
+                PROCEDURE DIVISION.
+                EVALUATE TRUE ALSO VALUE-FIELD ALSO VALUE-FIELD
+                    WHEN NOT STATE-OPEN ALSO VALUE-FIELD ALSO VALUE-FIELD CONTINUE
+                END-EVALUATE
+                EVALUATE VALUE-FIELD
+                    WHEN VALUE-FIELD CONTINUE
+                    WHEN 'A' THRU 'Z' CONTINUE
+                END-EVALUATE
+                EVALUATE TRUE
+                    WHEN STATE-OPEN ALSO VALUE-FIELD CONTINUE
+                END-EVALUATE.
+                """);
+
+        List<Ast.EvaluateStatement> evaluates = nodes(program, Ast.EvaluateStatement.class);
+        Ast.EvaluateBranch booleanBranch = evaluates.get(0).branches().get(0);
+        Ast.EvaluateBranch valueBranch = evaluates.get(1).branches().get(0);
+        assertEquals(List.of(0, 1, 2), booleanBranch.selectors().stream()
+                .map(Ast.EvaluateSelector::subjectIndex).toList());
+        assertEquals(List.of(Ast.EvaluateSelectorContext.BOOLEAN_SUBJECT_NOMINAL,
+                        Ast.EvaluateSelectorContext.VALUE_COMPARISON,
+                        Ast.EvaluateSelectorContext.VALUE_COMPARISON),
+                booleanBranch.selectors().stream().map(Ast.EvaluateSelector::context).toList());
+        assertEquals(Ast.EvaluateSelectorContext.VALUE_COMPARISON,
+                valueBranch.selectors().get(0).context());
+        assertEquals(Ast.EvaluateSelectorContext.OTHER,
+                evaluates.get(1).branches().get(1).selectors().get(0).context());
+        assertEquals(List.of(Ast.EvaluateSelectorContext.BOOLEAN_SUBJECT_NOMINAL,
+                        Ast.EvaluateSelectorContext.OTHER),
+                evaluates.get(2).branches().get(0).selectors().stream()
+                        .map(Ast.EvaluateSelector::context).toList(),
+                "a selector ALSO without a positional subject stays unsupported rather than borrowing TRUE");
+    }
+
     private static Ast.Program parse(String source) {
         GrammarBinding binding = Bindings.cobol();
         Parser parser = binding.cobolParser(new CommonTokenStream(

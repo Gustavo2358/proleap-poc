@@ -41,6 +41,8 @@ class DataAndIndexReferenceResolverTest {
             "src/test/resources/cobol/resolution/filler-redefines-owner.cbl");
     private static final Path SET_CONDITION_NAME = Path.of(
             "src/test/resources/cobol/resolution/set-condition-name.cbl");
+    private static final Path EVALUATE_CONDITION_NAMES = Path.of(
+            "src/test/resources/cobol/resolution/evaluate-condition-names.cbl");
 
     @Test
     void declaresDeclarationRelationsAsNominalStructuralBindingOnly() throws Exception {
@@ -610,6 +612,51 @@ class DataAndIndexReferenceResolverTest {
                 ResolutionContracts.ReferenceRole.CONTEXT_DEPENDENT, ResolutionContracts.ResolutionStatus.RESOLVED,
                 ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION, 1);
         assertEquals(ResolutionContracts.ReferenceKind.INDEX, indexSet.selectedCandidate().orElseThrow().kind());
+    }
+
+    @Test
+    void evaluateBooleanSubjectsUseConditionNamesWithoutReclassifyingValueSelectors() throws Exception {
+        Analysis analysis = analyze(EVALUATE_CONDITION_NAMES, ResolutionContracts.QualifyMode.STANDARD);
+        ResolutionContracts.ProgramUnitId unit = analysis.model().programUnits().get(0).id();
+
+        List<ReferenceResolution.Entry> conditionSelectors = List.of("STATUS-OPEN", "STATUS-CLOSED",
+                        "FLAG-DATA", "MISSING-CONDITION")
+                .stream().flatMap(name -> analysis.resolution().find(unit, name,
+                        ResolutionContracts.ReferenceRole.VALUE_READ).stream()).toList();
+        assertEquals(5, conditionSelectors.size(), "TRUE/FALSE and ALSO selectors remain individually observable");
+        assertAll("only nominal selectors paired with TRUE/FALSE admit CONDITION",
+                () -> assertTrue(conditionSelectors.stream().allMatch(entry -> entry.occurrence().kind()
+                        == ResolutionContracts.ReferenceKind.CONDITION), conditionSelectors.toString()),
+                () -> assertTrue(conditionSelectors.stream().allMatch(entry -> entry.occurrence().admissibleKinds()
+                        .equals(Set.of(ResolutionContracts.ReferenceKind.CONDITION))), conditionSelectors.toString()));
+
+        assertAll("existing resolution states are retained in the CONDITION namespace",
+                () -> assertEvaluateCondition(analysis.resolution(), unit, "STATUS-OPEN", 1,
+                        ResolutionContracts.ResolutionStatus.RESOLVED),
+                () -> assertEvaluateCondition(analysis.resolution(), unit, "STATUS-CLOSED", 2,
+                        ResolutionContracts.ResolutionStatus.RESOLVED),
+                () -> assertEvaluateCondition(analysis.resolution(), unit, "FLAG-DATA", 1,
+                        ResolutionContracts.ResolutionStatus.RESOLVED),
+                () -> assertEvaluateCondition(analysis.resolution(), unit, "MISSING-CONDITION", 1,
+                        ResolutionContracts.ResolutionStatus.UNRESOLVED));
+
+        List<ReferenceResolution.Entry> dataItems = analysis.resolution().find(unit, "DATA-ITEM",
+                ResolutionContracts.ReferenceRole.VALUE_READ);
+        assertEquals(6, dataItems.size(), "subjects, selectors and nested statements remain separately observable");
+        assertTrue(dataItems.stream().anyMatch(entry -> entry.occurrence().admissibleKinds().equals(
+                        EnumSet.of(ResolutionContracts.ReferenceKind.DATA, ResolutionContracts.ReferenceKind.INDEX))),
+                "EVALUATE data-item selector remains a DATA/INDEX value comparison");
+    }
+
+    private static void assertEvaluateCondition(ReferenceResolution resolution,
+                                                ResolutionContracts.ProgramUnitId unit, String name,
+                                                int expectedOccurrences,
+                                                ResolutionContracts.ResolutionStatus status) {
+        List<ReferenceResolution.Entry> entries = resolution.find(unit, name, ResolutionContracts.ReferenceRole.VALUE_READ);
+        assertEquals(expectedOccurrences, entries.size(), "unexpected selector occurrences for " + name);
+        assertTrue(entries.stream().allMatch(entry -> entry.status() == status), entries.toString());
+        assertTrue(entries.stream().allMatch(entry -> entry.occurrence().admissibleKinds()
+                .equals(Set.of(ResolutionContracts.ReferenceKind.CONDITION))), entries.toString());
     }
 
     private static ReferenceResolution.Entry assertEntry(

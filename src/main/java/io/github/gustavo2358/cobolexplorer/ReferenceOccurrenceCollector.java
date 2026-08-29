@@ -116,8 +116,22 @@ final class ReferenceOccurrenceCollector {
             for (Ast.Expression subject : statement.subjects())
                 visit(subject, ResolutionContracts.ReferenceRole.VALUE_READ, preservation);
             for (Ast.EvaluateBranch branch : statement.branches()) {
-                for (Ast.Expression selector : branch.selectorExpressions())
-                    visit(selector, ResolutionContracts.ReferenceRole.VALUE_READ, preservation);
+                for (Ast.EvaluateSelector selector : branch.selectors()) {
+                    if (selector.context() == Ast.EvaluateSelectorContext.BOOLEAN_SUBJECT_NOMINAL
+                            && selector.expression() instanceof Ast.DataReference reference) {
+                        addDataReference(reference, ResolutionContracts.ReferenceRole.VALUE_READ, preservation,
+                                ResolutionContracts.ReferenceKind.CONDITION,
+                                Set.of(ResolutionContracts.ReferenceKind.CONDITION));
+                    } else if (selector.context() == Ast.EvaluateSelectorContext.VALUE_COMPARISON
+                            && selector.expression() instanceof Ast.DataReference reference) {
+                        addDataReference(reference, ResolutionContracts.ReferenceRole.VALUE_READ, preservation,
+                                ResolutionContracts.ReferenceKind.INDEX,
+                                EnumSet.of(ResolutionContracts.ReferenceKind.DATA,
+                                        ResolutionContracts.ReferenceKind.INDEX));
+                    } else {
+                        visit(selector.expression(), ResolutionContracts.ReferenceRole.VALUE_READ, preservation);
+                    }
+                }
                 for (Ast.Statement nested : branch.statements()) visit(nested, role, preservation);
             }
             return;

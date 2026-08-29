@@ -787,16 +787,21 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
         subjects.add(expression(context.evaluateSelect(), "subject"));
         for (CobolParser.EvaluateAlsoSelectContext also : context.evaluateAlsoSelect())
             subjects.add(expression(also.evaluateSelect(), "subject"));
+        List<CobolParser.EvaluateSelectContext> subjectContexts = new ArrayList<>();
+        subjectContexts.add(context.evaluateSelect());
+        subjectContexts.addAll(context.evaluateAlsoSelect().stream().map(CobolParser.EvaluateAlsoSelectContext::evaluateSelect).toList());
         List<Ast.EvaluateBranch> branches = new ArrayList<>();
         for (CobolParser.EvaluateWhenPhraseContext branch : context.evaluateWhenPhrase()) {
             Ast.Meta branchMeta = meta(branch);
-            List<Ast.Expression> selectors = new ArrayList<>();
+            List<Ast.EvaluateSelector> selectors = new ArrayList<>();
             for (CobolParser.EvaluateWhenContext when : branch.evaluateWhen()) {
-                ParserRuleContext condition = when.evaluateCondition();
-                if (condition != null) selectors.add(expression(condition, "evaluate selector"));
+                CobolParser.EvaluateConditionContext condition = when.evaluateCondition();
+                if (condition != null) selectors.add(evaluateSelector(condition, 0, subjectContexts));
+                int subjectIndex = 1;
                 for (CobolParser.EvaluateAlsoConditionContext also : when.evaluateAlsoCondition()) {
-                    ParserRuleContext alsoCondition = also.evaluateCondition();
-                    if (alsoCondition != null) selectors.add(expression(alsoCondition, "evaluate selector"));
+                    CobolParser.EvaluateConditionContext alsoCondition = also.evaluateCondition();
+                    if (alsoCondition != null) selectors.add(evaluateSelector(alsoCondition, subjectIndex, subjectContexts));
+                    subjectIndex++;
                 }
             }
             branches.add(new Ast.EvaluateBranch(branchMeta, selectors,
@@ -807,6 +812,23 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
         CobolParser.EvaluateWhenOtherContext other = context.evaluateWhenOther();
         if (other != null) branches.add(new Ast.EvaluateBranch(meta(other), List.of(), "OTHER", true, statementsInside(other)));
         return new Ast.EvaluateStatement(meta, subjects, branches, context.END_EVALUATE() != null);
+    }
+
+    private Ast.EvaluateSelector evaluateSelector(CobolParser.EvaluateConditionContext condition,
+                                                   int subjectIndex,
+                                                   List<CobolParser.EvaluateSelectContext> subjects) {
+        Ast.Expression expression = expression(condition, "evaluate selector");
+        boolean correspondingBooleanSubject = subjectIndex < subjects.size()
+                && subjects.get(subjectIndex).literal() != null
+                && subjects.get(subjectIndex).literal().booleanLiteral() != null;
+        boolean directNominalValue = condition.evaluateValue() != null
+                && condition.evaluateValue().identifier() != null
+                && condition.evaluateThrough() == null;
+        Ast.EvaluateSelectorContext selectorContext = !directNominalValue || subjectIndex >= subjects.size()
+                ? Ast.EvaluateSelectorContext.OTHER
+                : correspondingBooleanSubject ? Ast.EvaluateSelectorContext.BOOLEAN_SUBJECT_NOMINAL
+                : Ast.EvaluateSelectorContext.VALUE_COMPARISON;
+        return new Ast.EvaluateSelector(expression, subjectIndex, selectorContext);
     }
 
     private Ast.PerformStatement buildPerform(CobolParser.PerformStatementContext context) {

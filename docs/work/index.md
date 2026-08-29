@@ -4,7 +4,7 @@ Work items delimitam a mudança em execução; o [backlog](backlog.md) registra 
 
 ## Ativo
 
-Não há work item ativo neste corte.
+Não há item ativo neste corte.
 
 ## Histórico
 
@@ -15,3 +15,5 @@ Não há work item ativo neste corte.
 - [WORK-RES-001 — Observar CALLs literais externos por artefato](history/WORK-RES-001.md)
 - [WORK-RES-002 — Veredito sobre W3D-AUX e categorias de resolução](history/WORK-RES-002.md)
 - [WORK-RES-003 — Resolver SET de condition-name sem namespace DATA espúrio](history/WORK-RES-003.md)
+- [WORK-RES-004 — Classificar condition-names em EVALUATE TRUE/FALSE](history/WORK-RES-004.md)
+- [WORK-TEST-001 — Restaurar relatório PIT focalizado](history/WORK-TEST-001.md)
