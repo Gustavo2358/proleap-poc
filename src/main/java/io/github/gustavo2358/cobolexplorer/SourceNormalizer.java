@@ -98,11 +98,14 @@ final class SourceNormalizer {
         for (PhysicalLine physical : physicalLines) {
             String line = physical.content();
             validateFixedCharacters(line, physical.start());
-            String padded = line.length() < 7 ? line + "       ".substring(Math.min(7, line.length())) : line;
-            char indicator = padded.charAt(6);
+            UnicodeText indexedLine = new UnicodeText(line);
+            int lineLength = indexedLine.length();
+            String padded = lineLength < 7 ? line + " ".repeat(7 - lineLength) : line;
+            UnicodeText indexedPadded = new UnicodeText(padded);
+            int indicator = padded.codePointAt(indexedPadded.utf16Offset(6));
             Indicator kind = indicator(indicator, physical);
-            int end = Math.min(padded.length(), 72);
-            String area = padded.substring(7, end);
+            int end = Math.min(indexedPadded.length(), 72);
+            String area = indexedPadded.substring(7, end);
             switch (kind) {
                 case COMMENT ->
                         output.add(transformedLine("*> " + area, physical));
@@ -422,53 +425,63 @@ final class SourceNormalizer {
     }
 
     private static boolean startsInAreaA(String line) {
-        int areaAWidth = Math.min(4, line.length());
+        int areaAWidth = Math.min(4, line.codePointCount(0, line.length()));
+        var codePoints = line.codePoints().iterator();
         for (int i = 0; i < areaAWidth; i++) {
-            if (!Character.isWhitespace(line.charAt(i))) return true;
+            if (!Character.isWhitespace(codePoints.nextInt())) return true;
         }
         return false;
     }
 
     private static List<PhysicalLine> physicalLines(String raw) {
         List<PhysicalLine> result = new ArrayList<>();
-        int start = 0;
+        int startUtf16 = 0;
+        int startOffset = 0;
+        int offset = 0;
         int lineNumber = 1;
         for (int index = 0; index < raw.length();) {
-            char character = raw.charAt(index);
+            int character = raw.codePointAt(index);
+            int width = Character.charCount(character);
             if (character == '\n' || character == '\r') {
-                int terminatorEnd = character == '\r' && index + 1 < raw.length()
-                        && raw.charAt(index + 1) == '\n' ? index + 2 : index + 1;
-                result.add(new PhysicalLine(raw.substring(start, index),
-                        raw.substring(index, terminatorEnd), start, index, terminatorEnd, lineNumber++));
-                start = terminatorEnd;
+                int terminatorEnd = index + width;
+                int terminatorLength = 1;
+                if (character == '\r' && terminatorEnd < raw.length()
+                        && raw.codePointAt(terminatorEnd) == '\n') {
+                    terminatorEnd++;
+                    terminatorLength++;
+                }
+                result.add(new PhysicalLine(raw.substring(startUtf16, index),
+                        raw.substring(index, terminatorEnd), startOffset, offset,
+                        offset + terminatorLength, lineNumber++));
+                startUtf16 = terminatorEnd;
+                startOffset = offset + terminatorLength;
+                offset = startOffset;
                 index = terminatorEnd;
             } else if (character == '\u0085' || character == '\u2028' || character == '\u2029') {
                 throw new IllegalArgumentException("Unsupported line separator U+"
-                        + String.format(Locale.ROOT, "%04X", (int) character)
-                        + " at offset " + index);
+                        + String.format(Locale.ROOT, "%04X", character)
+                        + " at offset " + offset);
             } else {
-                index++;
+                index += width;
+                offset++;
             }
         }
-        if (start < raw.length()) {
-            result.add(new PhysicalLine(raw.substring(start), "", start, raw.length(), raw.length(),
+        if (startUtf16 < raw.length()) {
+            result.add(new PhysicalLine(raw.substring(startUtf16), "", startOffset, offset, offset,
                     lineNumber));
         }
         return result;
     }
 
     private static void validateFixedCharacters(String line, int rawStart) {
-        for (int index = 0; index < line.length(); index++) {
-            char character = line.charAt(index);
-            if (character == '\t' && index >= 6 && hasNonWhitespaceAfter(line, index)) {
+        int offset = 0;
+        for (int index = 0; index < line.length(); offset++) {
+            int character = line.codePointAt(index);
+            if (character == '\t' && offset >= 6 && hasNonWhitespaceAfter(line, index)) {
                 throw new IllegalArgumentException("Unsupported tab in fixed-format source at offset "
-                        + (rawStart + index));
+                        + (rawStart + offset));
             }
-            if (character > 0x7f) {
-                throw new IllegalArgumentException("Unsupported non-ASCII character U+"
-                        + String.format(Locale.ROOT, "%04X", (int) character)
-                        + " in fixed-format source at offset " + (rawStart + index));
-            }
+            index += Character.charCount(character);
         }
     }
 
@@ -491,7 +504,7 @@ final class SourceNormalizer {
                 physical.contentEnd(), physical.end(), true, true, LineRole.PROGRAM_TEXT);
     }
 
-    private static Indicator indicator(char indicator, PhysicalLine physical) {
+    private static Indicator indicator(int indicator, PhysicalLine physical) {
         return switch (indicator) {
             case ' ' -> Indicator.NORMAL;
             case '*' -> Indicator.COMMENT;
@@ -499,7 +512,8 @@ final class SourceNormalizer {
             case '-' -> Indicator.CONTINUATION;
             case 'D', 'd' -> Indicator.DEBUG;
             default -> throw new IllegalArgumentException("Unsupported fixed-format indicator '"
-                    + indicator + "' at line " + physical.lineNumber() + ", column 7");
+                    + new String(Character.toChars(indicator)) + "' at line "
+                    + physical.lineNumber() + ", column 7");
         };
     }
 
@@ -604,23 +618,25 @@ final class SourceNormalizer {
     private static Result mappedResult(List<NormalizedLine> lines, String raw, String file) {
         StringBuilder text = new StringBuilder();
         List<SourceMap.Segment> segments = new ArrayList<>();
+        int offset = 0;
         for (NormalizedLine line : lines) {
-            appendMapped(text, segments, file, line.content(), line.contentOriginalStart(),
+            offset = appendMapped(text, segments, offset, file, line.content(), line.contentOriginalStart(),
                     line.contentOriginalEnd(), line.contentExact());
-            appendMapped(text, segments, file, line.terminator(), line.terminatorOriginalStart(),
+            offset = appendMapped(text, segments, offset, file, line.terminator(), line.terminatorOriginalStart(),
                     line.terminatorOriginalEnd(), line.terminatorExact());
         }
         SourceMap sourceMap = SourceMap.mapped(text.toString(), file, raw, segments);
         return new Result(sourceMap, List.of(), SourceFormat.FIXED);
     }
 
-    private static void appendMapped(StringBuilder text, List<SourceMap.Segment> segments,
-                                     String file, String value, int originalStart,
-                                     int originalEnd, boolean exact) {
-        if (value.isEmpty()) return;
-        int start = text.length();
+    private static int appendMapped(StringBuilder text, List<SourceMap.Segment> segments,
+                                    int start, String file, String value, int originalStart,
+                                    int originalEnd, boolean exact) {
+        if (value.isEmpty()) return start;
         text.append(value);
-        segments.add(new SourceMap.Segment(start, text.length(), file, originalStart, originalEnd,
+        int end = start + value.codePointCount(0, value.length());
+        segments.add(new SourceMap.Segment(start, end, file, originalStart, originalEnd,
                 List.of(), exact));
+        return end;
     }
 }

@@ -46,8 +46,9 @@ pipeline.
 
 - colunas 1–6 são sequence area, coluna 7 é indicator area, colunas 8–72 são
   program text e o restante é identification area;
-- LF, CRLF e CR são preservados exatamente; separadores Unicode, caracteres
-  não ASCII e tabs ambíguos no program text falham localmente;
+- LF, CRLF e CR são preservados exatamente; conteúdo Unicode é preservado
+  verbatim e offsets/colunas são contados por code point. Separadores Unicode
+  de linha e tabs ambíguos no program text falham localmente;
 - blank, `*`, `/`, `-` e `D`/`d` possuem políticas fechadas. Debug lines são
   incluídas ou excluídas por opção explícita; indicador desconhecido não possui
   fallback;

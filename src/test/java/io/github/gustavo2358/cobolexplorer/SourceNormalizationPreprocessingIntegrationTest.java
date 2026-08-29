@@ -3,6 +3,7 @@ package io.github.gustavo2358.cobolexplorer;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Parser;
+import org.antlr.v4.runtime.tree.ParseTree;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -10,6 +11,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.ArrayList;
+import java.util.IdentityHashMap;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -141,13 +144,77 @@ class SourceNormalizationPreprocessingIntegrationTest {
         assertEquals(0, parser.getNumberOfSyntaxErrors(), outcome.text());
     }
 
+    @Test
+    void unicodeBeforeCopyKeepsPreprocessorAndAstOffsetsAligned(@TempDir Path directory)
+            throws Exception {
+        Files.writeString(directory.resolve("UDATA.cpy"),
+                "       01 U-TEXT PIC X(20) VALUE 'AÇÃO 中文 😀'.\n");
+        String raw = "       IDENTIFICATION DIVISION.\n"
+                + "       PROGRAM-ID. UNICODE-COPY.\n"
+                + "       DATA DIVISION.\n"
+                + "       WORKING-STORAGE SECTION.\n"
+                + "      * comentário 😀 antes do COPY\n"
+                + "       COPY UDATA REPLACING ==U-TEXT== BY ==DISPLAY-TEXT==.\n"
+                + "       PROCEDURE DIVISION.\n"
+                + "           DISPLAY DISPLAY-TEXT.\n"
+                + "           GOBACK.\n";
+        SourceNormalizer.Result normalized = SourceNormalizer.normalize(
+                raw, "unicode-copy.cbl", SourceNormalizer.SourceFormat.FIXED);
+        GrammarBinding binding = Bindings.cobol();
+        PreprocessorEngine.Outcome outcome = new PreprocessorEngine(
+                binding, new CopybookLibrary(directory))
+                .process(normalized.sourceMap(), "unicode-copy.cbl");
+
+        assertEquals(0, outcome.errors(), outcome.diagnostics().toString());
+        assertEquals(0, outcome.unresolved(), outcome.diagnostics().toString());
+        assertTrue(outcome.text().contains("VALUE 'AÇÃO 中文 😀'"));
+        Ast.SourceProvenance replaced = provenanceOf(outcome, "DISPLAY-TEXT");
+        assertEquals("UDATA.cpy", replaced.original().file());
+        assertEquals(1, replaced.original().startLine());
+        assertFalse(replaced.exact());
+
+        Parser parser = binding.cobolParser(new CommonTokenStream(
+                binding.cobolLexer(CharStreams.fromString(outcome.text(), "unicode-copy.cbl"))));
+        ParseTree tree = binding.cobolStart(parser);
+        assertEquals(0, parser.getNumberOfSyntaxErrors(), outcome.text());
+        IdentityHashMap<ParseTree, Integer> ids = new IdentityHashMap<>();
+        IdentityHashMap<ParseTree, Integer> sizes = new IdentityHashMap<>();
+        index(tree, ids, sizes, new int[]{0});
+        Ast.Program ast = new AstBuilder(parser, outcome.text(), outcome.sourceMap(), ids, sizes)
+                .build(tree).program();
+        Ast.DataEntry field = nodes(ast, Ast.DataEntry.class).stream()
+                .filter(entry -> entry.name().equals("DISPLAY-TEXT"))
+                .findFirst().orElseThrow();
+        assertEquals("UDATA.cpy", field.meta().provenance().original().file());
+    }
+
     private static Ast.SourceProvenance provenanceOf(PreprocessorEngine.Outcome outcome,
                                                       String text) {
-        int start = outcome.text().indexOf(text);
-        return outcome.sourceMap().provenance(start, start + text.length());
+        UnicodeText indexed = new UnicodeText(outcome.text());
+        int start = indexed.indexOf(text, 0);
+        return outcome.sourceMap().provenance(start,
+                start + text.codePointCount(0, text.length()));
     }
 
     private static List<String> includedFiles(Ast.SourceProvenance provenance) {
         return provenance.includeChain().stream().map(Ast.CopyFrame::includedFile).toList();
+    }
+
+    private static int index(ParseTree tree, IdentityHashMap<ParseTree, Integer> ids,
+                             IdentityHashMap<ParseTree, Integer> sizes, int[] next) {
+        ids.put(tree, next[0]++);
+        int size = 1;
+        for (int child = 0; child < tree.getChildCount(); child++) {
+            size += index(tree.getChild(child), ids, sizes, next);
+        }
+        sizes.put(tree, size);
+        return size;
+    }
+
+    private static <T extends Ast.Node> List<T> nodes(Ast.Node root, Class<T> type) {
+        List<T> result = new ArrayList<>();
+        if (type.isInstance(root)) result.add(type.cast(root));
+        for (Ast.Node child : Ast.children(root)) result.addAll(nodes(child, type));
+        return result;
     }
 }

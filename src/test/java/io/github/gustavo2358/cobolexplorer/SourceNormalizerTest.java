@@ -93,7 +93,7 @@ class SourceNormalizerTest {
     }
 
     @Test
-    void fixedFormatHasExplicitMarginsAndRejectsAmbiguousColumns() {
+    void fixedFormatHasExplicitMarginsAndRejectsAmbiguousTabs() {
         String code = "000100 DISPLAY 'A'." + " ".repeat(72 - "000100 DISPLAY 'A'.".length())
                 + "IDENTIFICATION-AREA\n";
         SourceNormalizer.Result result = SourceNormalizer.normalize(
@@ -109,13 +109,45 @@ class SourceNormalizerTest {
                 () -> SourceNormalizer.normalize("      \tDISPLAY 'A'.", "tab.cbl",
                         SourceNormalizer.SourceFormat.FIXED));
         org.junit.jupiter.api.Assertions.assertTrue(tab.getMessage().contains("tab"), tab.getMessage());
+    }
 
-        IllegalArgumentException nonAscii = org.junit.jupiter.api.Assertions.assertThrows(
-                IllegalArgumentException.class,
-                () -> SourceNormalizer.normalize("       DISPLAY 'Á'.", "non-ascii.cbl",
-                        SourceNormalizer.SourceFormat.FIXED));
-        org.junit.jupiter.api.Assertions.assertTrue(
-                nonAscii.getMessage().contains("non-ASCII"), nonAscii.getMessage());
+    @Test
+    void preservesUnicodeContentAndUsesCodePointFixedColumns() {
+        String raw = "      * comentário ágil 中文 😀\n"
+                + "       DISPLAY 'AÇÃO e\u0301 中文 😀'.\n";
+        SourceNormalizer.Result result = SourceNormalizer.normalize(
+                raw, "unicode.cbl", SourceNormalizer.SourceFormat.FIXED);
+
+        assertEquals("*>  comentário ágil 中文 😀\n"
+                + "DISPLAY 'AÇÃO e\u0301 中文 😀'.\n", result.text());
+
+        assertEquals("*>  COMMENT\n", SourceNormalizerTestSupport.fixed(
+                "😀".repeat(6) + "* COMMENT\n"));
+        String area = "😀" + "A".repeat(64);
+        assertEquals(area + "\n", SourceNormalizerTestSupport.fixed(
+                "       " + area + "IDENTIFICATION-AREA\n"));
+    }
+
+    @Test
+    void mapsTokensAfterSupplementaryCharactersByCodePoint() {
+        String raw = "       DISPLAY '😀' UPON CONSOLE.\n"
+                + "       MOVE A TO B.\n";
+        SourceNormalizer.Result result = SourceNormalizer.normalize(
+                raw, "unicode-map.cbl", SourceNormalizer.SourceFormat.FIXED);
+        UnicodeText normalized = new UnicodeText(result.text());
+
+        int uponStart = normalized.indexOf("UPON", 0);
+        Ast.SourceProvenance upon = result.sourceMap().provenance(uponStart, uponStart + 4);
+        assertEquals(1, upon.original().startLine());
+        assertEquals(19, upon.original().startColumn());
+        assertTrue(upon.exact());
+
+        int moveStart = normalized.indexOf("MOVE", 0);
+        Ast.SourceProvenance move = result.sourceMap().provenance(moveStart, moveStart + 4);
+        assertEquals(2, move.original().startLine());
+        assertEquals(7, move.original().startColumn());
+        assertEquals(10, move.original().endColumn());
+        assertTrue(move.exact());
     }
 
     @Test

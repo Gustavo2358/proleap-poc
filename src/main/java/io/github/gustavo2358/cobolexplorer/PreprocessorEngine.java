@@ -116,6 +116,7 @@ final class PreprocessorEngine {
                                        int[] unresolved, int[] toleratedPreprocessorDiagnostics,
                                        Set<Path> expansionStack, LogSummary logSummary) {
         String source = document.text();
+        UnicodeText indexedSource = new UnicodeText(source);
         Lexer lexer = binding.preprocessorLexer(CharStreams.fromString(source, file));
         lexer.removeErrorListeners();
         lexer.addErrorListener(new AntlrDiagnosticListener(binding.name(), Diagnostic.Phase.PREPROCESSOR, file, diagnostics));
@@ -133,7 +134,7 @@ final class PreprocessorEngine {
                 String rule = parser.getRuleNames()[context.getRuleIndex()];
                 PreprocessorPolicy policy = policyFor(rule);
                 if (policy == PreprocessorPolicy.EXTRACT_COMPILER_OPTIONS) {
-                    collectCompilerOptions(context, parser.getRuleNames(), source, file, compilerOptions);
+                    collectCompilerOptions(context, parser.getRuleNames(), indexedSource, file, compilerOptions);
                 }
                 if (policy != PreprocessorPolicy.PASS_THROUGH) actionable.add(context);
             } else if (child instanceof TerminalNode terminal
@@ -151,7 +152,7 @@ final class PreprocessorEngine {
             Token startToken = context.getStart(), stopToken = context.getStop();
             if (startToken == null || stopToken == null || startToken.getStartIndex() < 0
                     || stopToken.getStopIndex() < startToken.getStartIndex()
-                    || stopToken.getStopIndex() >= source.length()) {
+                    || stopToken.getStopIndex() >= indexedSource.length()) {
                 throw new IllegalStateException("Actionable preprocessing context has no valid source interval: "
                         + context.getClass().getSimpleName());
             }
@@ -161,13 +162,13 @@ final class PreprocessorEngine {
             PreprocessorPolicy policy = policyFor(rule);
             LOG.trace("event=preprocess_policy_selected source={} phase=PREPROCESSING rule={} policy={} line={}",
                     file, rule, policy, startToken.getLine());
-            String original = source.substring(start, end);
+            String original = indexedSource.substring(start, end);
             if (policy == PreprocessorPolicy.EXTRACT_COMPILER_OPTIONS
                     || policy == PreprocessorPolicy.REMOVE) {
                 edits.add(new Edit(start, end, document.transformedSlice(
                         start, end, blankPreservingLineBreaks(original))));
             } else if (policy == PreprocessorPolicy.EXPAND_COPY) {
-                String requested = copySourceName(context, parser.getRuleNames(), source);
+                String requested = copySourceName(context, parser.getRuleNames(), indexedSource);
                 Optional<Path> path = library.resolve(requested);
                 if (path.isEmpty()) {
                     unresolved[0]++;
@@ -197,7 +198,7 @@ final class PreprocessorEngine {
                                 diagnostics, compilerOptions, unresolved,
                                 toleratedPreprocessorDiagnostics, expansionStack, logSummary);
                         List<CopyReplacement> replacements = copyReplacements(
-                                context, parser.getRuleNames(), source);
+                                context, parser.getRuleNames(), indexedSource);
                         for (CopyReplacement replacement : replacements) {
                             copyText = copyText.replaceLiteral(
                                     replacement.replaceable(), replacement.replacement());
@@ -245,18 +246,18 @@ final class PreprocessorEngine {
                         "Unexpected actionable preprocessing policy for " + rule + ": " + policy);
             }
         }
-        edits.sort(Comparator.comparingInt(Edit::start).reversed());
-        SourceMap result = document;
-        int lastStart = Integer.MAX_VALUE;
+        edits.sort(Comparator.comparingInt(Edit::start));
+        int lastEnd = 0;
         for (Edit edit : edits) {
-            if (edit.end() > lastStart) {
+            if (edit.start() < lastEnd) {
                 throw new IllegalStateException("Overlapping top-level preprocessing edits at "
                         + edit.start() + ".." + edit.end());
             }
-            result = result.replace(edit.start(), edit.end(), edit.replacement());
-            lastStart = edit.start();
+            lastEnd = edit.end();
         }
-        return result;
+        return document.replaceAll(edits.stream()
+                .map(edit -> new SourceMap.Replacement(edit.start(), edit.end(), edit.replacement()))
+                .toList());
     }
 
     private Diagnostic sourceDiagnostic(SourceMap document, Diagnostic.Phase phase,
@@ -340,7 +341,7 @@ final class PreprocessorEngine {
     }
 
     private static String copySourceName(ParserRuleContext copyStatement, String[] ruleNames,
-                                         String source) {
+                                         UnicodeText source) {
         ParserRuleContext copySource = directRuleChild(copyStatement, ruleNames, "copySource");
         if (copySource == null) {
             throw new IllegalStateException("COPY recognized without copySource context");
@@ -356,13 +357,13 @@ final class PreprocessorEngine {
     }
 
     private static List<CopyReplacement> copyReplacements(ParserRuleContext copyStatement,
-                                                            String[] ruleNames, String source) {
+                                                            String[] ruleNames, UnicodeText source) {
         List<CopyReplacement> result = new ArrayList<>();
         collectCopyReplacements(copyStatement, ruleNames, source, result);
         return result;
     }
 
-    private static void collectCopyReplacements(ParseTree tree, String[] ruleNames, String source,
+    private static void collectCopyReplacements(ParseTree tree, String[] ruleNames, UnicodeText source,
                                                 List<CopyReplacement> out) {
         if (tree instanceof ParserRuleContext context
                 && ruleNames[context.getRuleIndex()].equals("replaceClause")) {
@@ -381,7 +382,7 @@ final class PreprocessorEngine {
     }
 
     private static String replacementOperand(ParserRuleContext operand, String[] ruleNames,
-                                             String source) {
+                                             UnicodeText source) {
         ParserRuleContext pseudoText = directRuleChild(operand, ruleNames, "pseudoText");
         String written = sourceText(pseudoText == null ? operand : pseudoText, source).trim();
         if (pseudoText != null) {
@@ -402,7 +403,7 @@ final class PreprocessorEngine {
         return null;
     }
 
-    private static String sourceText(ParserRuleContext context, String source) {
+    private static String sourceText(ParserRuleContext context, UnicodeText source) {
         Token start = context.getStart();
         Token stop = context.getStop();
         if (start == null || stop == null || start.getStartIndex() < 0
@@ -425,7 +426,7 @@ final class PreprocessorEngine {
         return value;
     }
 
-    private static void collectCompilerOptions(ParseTree tree, String[] ruleNames, String source, String file,
+    private static void collectCompilerOptions(ParseTree tree, String[] ruleNames, UnicodeText source, String file,
                                                List<CompilerOption> out) {
         if (tree instanceof ParserRuleContext context
                 && ruleNames[context.getRuleIndex()].equals("compilerOption")) {

@@ -33,7 +33,7 @@ final class AstBuilder {
             "atEndPhrase", "notAtEndPhrase", "writeAtEndOfPagePhrase", "writeNotAtEndOfPagePhrase",
             "receiveNoData", "receiveWithData", "searchWhen");
     private final Parser parser;
-    private final String source;
+    private final UnicodeText indexedSource;
     private final SourceMap sourceMap;
     private final IdentityHashMap<ParseTree, Integer> parseIds;
     private final IdentityHashMap<ParseTree, Integer> parseSubtreeSizes;
@@ -49,7 +49,7 @@ final class AstBuilder {
                IdentityHashMap<ParseTree, Integer> parseIds,
                IdentityHashMap<ParseTree, Integer> parseSubtreeSizes) {
         this.parser = parser;
-        this.source = source;
+        this.indexedSource = new UnicodeText(source);
         this.sourceMap = sourceMap;
         this.parseIds = parseIds;
         this.parseSubtreeSizes = parseSubtreeSizes;
@@ -443,7 +443,8 @@ final class AstBuilder {
         List<Ast.Statement> statements = directChildrenNamed(context, "statement").stream().map(this::buildStatement).toList();
         Token stop = context.getStop();
         Ast.SourceSpan terminator = stop == null ? meta.span() : new Ast.SourceSpan(stop.getLine(), stop.getCharPositionInLine(),
-                stop.getLine(), stop.getCharPositionInLine() + Math.max(0, stop.getText().length() - 1),
+                stop.getLine(), stop.getCharPositionInLine() + Math.max(0,
+                        stop.getText().codePointCount(0, stop.getText().length()) - 1),
                 stop.getTokenIndex(), stop.getTokenIndex());
         return new Ast.Sentence(meta, statements, Ast.SentenceTerminator.PERIOD, terminator);
     }
@@ -985,8 +986,8 @@ final class AstBuilder {
 
     private String sourceBetween(ParserRuleContext startContext, ParserRuleContext endContext) {
         int start = Math.max(0, startContext.getStart().getStartIndex());
-        int end = Math.min(source.length(), endContext.getStop().getStopIndex() + 1);
-        return source.substring(start, end).strip();
+        int end = Math.min(indexedSource.length(), endContext.getStop().getStopIndex() + 1);
+        return indexedSource.substring(start, end).strip();
     }
 
     private Ast.Node nominalReference(ParserRuleContext context) {
@@ -1028,12 +1029,13 @@ final class AstBuilder {
         int startLine = start == null ? 0 : start.getLine();
         int startColumn = start == null ? 0 : start.getCharPositionInLine();
         int endLine = stop == null ? startLine : stop.getLine();
-        int endColumn = stop == null ? startColumn : stop.getCharPositionInLine() + Math.max(0, stop.getText().length() - 1);
+        int endColumn = stop == null ? startColumn : stop.getCharPositionInLine() + Math.max(0,
+                stop.getText().codePointCount(0, stop.getText().length()) - 1);
         int startToken = start == null ? -1 : start.getTokenIndex();
         int endToken = stop == null ? startToken : stop.getTokenIndex();
         Ast.SourceSpan span = new Ast.SourceSpan(startLine, startColumn, endLine, endColumn, startToken, endToken);
         int startOffset = start == null ? 0 : Math.max(0, start.getStartIndex());
-        int endOffset = stop == null ? startOffset : Math.min(source.length(), stop.getStopIndex() + 1);
+        int endOffset = stop == null ? startOffset : Math.min(indexedSource.length(), stop.getStopIndex() + 1);
         return new Ast.Meta(id, span,
                 new Ast.ParseTreeOrigin(parseIds.getOrDefault(context, -1), rule(context),
                         parseSubtreeSizes.getOrDefault(context, 1)),
@@ -1108,8 +1110,8 @@ final class AstBuilder {
     private String sourceText(ParserRuleContext context) {
         if (context == null || context.getStart() == null || context.getStop() == null) return "";
         int start = Math.max(0, context.getStart().getStartIndex());
-        int end = Math.min(source.length(), context.getStop().getStopIndex() + 1);
-        return start >= end ? "" : source.substring(start, end);
+        int end = Math.min(indexedSource.length(), context.getStop().getStopIndex() + 1);
+        return start >= end ? "" : indexedSource.substring(start, end);
     }
 
     private boolean containsToken(ParseTree tree, String text) {
