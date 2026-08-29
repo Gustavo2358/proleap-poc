@@ -51,6 +51,9 @@ public final class Ast {
     public enum QualifierConnector { OF, IN }
     public enum QualifierTarget { DATA, FILE, DATA_OR_FILE }
     public enum ReferenceUnderstanding { STRUCTURED, PRESERVED }
+    public enum OperationCategory { RELATIONAL, OTHER }
+    /** Semantic context supplied by the typed statement production; this is not a binding result. */
+    public enum StatementOperandContext { DEFAULT, SET_CONDITION_TARGET, SET_DATA_OR_INDEX }
     public enum DataSectionKind { FILE, DATABASE, WORKING_STORAGE, LINKAGE, COMMUNICATION, LOCAL_STORAGE, SCREEN, REPORT, PROGRAM_LIBRARY }
     public enum DataLevelKind { GROUP_OR_ELEMENTARY, STANDALONE_77, RENAMES_66, CONDITION_88, OPAQUE }
     public enum CallArgumentKind { VALUE, OMITTED, ADDRESS_OF, LENGTH_OF }
@@ -221,7 +224,12 @@ public final class Ast {
 
     public record NextSentenceStatement(Meta meta) implements Statement {}
 
-    public record StatementOperand(Meta meta, String grammarRole, Node value) implements Node {}
+    public record StatementOperand(Meta meta, String grammarRole, StatementOperandContext context,
+                                   Node value) implements Node {
+        public StatementOperand(Meta meta, String grammarRole, Node value) {
+            this(meta, grammarRole, StatementOperandContext.DEFAULT, value);
+        }
+    }
 
     public record StatementClause(Meta meta, String grammarRule, String writtenText,
                                   List<Node> recognizedNodes,
@@ -282,9 +290,16 @@ public final class Ast {
         }
         public String writtenName() { return writtenText; }
     }
-    public record OperationExpression(Meta meta, String operator, List<Expression> operands,
-                                      String writtenText) implements Expression {
-        public OperationExpression { operands = List.copyOf(operands); }
+    public record OperationExpression(Meta meta, OperationCategory category, String operator,
+                                      List<Expression> operands, String writtenText) implements Expression {
+        public OperationExpression {
+            category = Objects.requireNonNull(category, "category");
+            operands = List.copyOf(operands);
+        }
+        public OperationExpression(Meta meta, String operator, List<Expression> operands,
+                                   String writtenText) {
+            this(meta, OperationCategory.OTHER, operator, operands, writtenText);
+        }
     }
     public record FunctionExpression(Meta meta, String functionName, List<Expression> arguments,
                                      ReferenceModification referenceModification,

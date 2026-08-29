@@ -719,7 +719,8 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
             if (child != root && child instanceof CobolParser.StatementContext) continue;
             if (isStatementOperandContext(child)) {
                 Ast.Meta operandMeta = meta(child);
-                output.add(new Ast.StatementOperand(operandMeta, rule(context), statementOperand(child)));
+                output.add(new Ast.StatementOperand(operandMeta, rule(context),
+                        statementOperandContext(root, context), statementOperand(child)));
             } else {
                 collectStatementOperands(root, child, output);
             }
@@ -737,6 +738,26 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
             return new Ast.IndexReference(meta(context), clean(sourceText(context)), sourceText(context).strip());
         if (isLiteralContext(context)) return literalExpression(context);
         return new Ast.NamedReference(meta(context), rule(context), sourceText(context).strip());
+    }
+
+    private static Ast.StatementOperandContext statementOperandContext(ParserRuleContext root,
+                                                                        ParserRuleContext parent) {
+        if (!(root instanceof CobolParser.SetStatementContext)) return Ast.StatementOperandContext.DEFAULT;
+        if (parent instanceof CobolParser.SetToContext setTo) {
+            ParserRuleContext statement = setTo.getParent();
+            if (statement instanceof CobolParser.SetToStatementContext setToStatement
+                    && hasBooleanSetValue(setToStatement))
+                return Ast.StatementOperandContext.SET_CONDITION_TARGET;
+            return Ast.StatementOperandContext.SET_DATA_OR_INDEX;
+        }
+        return parent instanceof CobolParser.SetToValueContext
+                ? Ast.StatementOperandContext.SET_DATA_OR_INDEX : Ast.StatementOperandContext.DEFAULT;
+    }
+
+    private static boolean hasBooleanSetValue(CobolParser.SetToStatementContext context) {
+        return context.setToValue().size() == 1
+                && context.setToValue(0).literal() != null
+                && context.setToValue(0).literal().booleanLiteral() != null;
     }
 
     private Ast.StatementClause buildStatementClause(ParserRuleContext context) {
@@ -1076,9 +1097,11 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
         if (context instanceof CobolParser.RelationArithmeticComparisonContext comparison) {
             Ast.Meta meta = meta(context);
             List<CobolParser.ArithmeticExpressionContext> values = comparison.arithmeticExpression();
-            ParserRuleContext operator = comparison.relationalOperator();
-            return new Ast.OperationExpression(meta, operator == null ? "RELATION" : compact(sourceText(operator)).toUpperCase(Locale.ROOT),
-                    values.stream().map(value -> expression(value, "comparison operand")).toList(), sourceText(context).strip());
+            CobolParser.RelationalOperatorContext operator = comparison.relationalOperator();
+            return new Ast.OperationExpression(meta, Ast.OperationCategory.RELATIONAL,
+                    compact(sourceText(operator)).toUpperCase(Locale.ROOT),
+                    values.stream().map(value -> expression(value, "comparison operand")).toList(),
+                    sourceText(context).strip());
         }
         if (context instanceof CobolParser.ClassConditionContext
                 || context instanceof CobolParser.RelationSignConditionContext) {

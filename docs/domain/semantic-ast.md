@@ -13,7 +13,7 @@ Cada `Meta` contém ID, span, origem gramatical e provenance. IDs seguem ordem d
 
 ## Superfície modelada
 
-O modelo inclui program attributes, divisions, sections, arquivos, hierarquia de dados, clauses relevantes, assinatura de procedure, sentences, statements de fluxo/valor, expressões estruturadas e referências nominais DATA/INDEX/FILE/PROGRAM/PROCEDURE. `CALL` separa forma sintática literal de identifier/expression; linkage efetivo pertence à resolução.
+O modelo inclui program attributes, divisions, sections, arquivos, hierarquia de dados, clauses relevantes, assinatura de procedure, sentences, statements de fluxo/valor, expressões estruturadas e referências nominais DATA/INDEX/FILE/PROGRAM/PROCEDURE. Operações preservam a grafia do operador e uma categoria semântica tipada; relações são classificadas pelo contexto `relationArithmeticComparison`, não por reconhecimento posterior da string. Em `SET`, o alvo de `setToStatement` cujo valor é `booleanLiteral` carrega contexto `SET_CONDITION_TARGET`; os demais operandos de SET preservam `SET_DATA_OR_INDEX`. `CALL` separa forma sintática literal de identifier/expression; linkage efetivo pertence à resolução.
 
 Statements ou clauses parcialmente compreendidos usam `Modeled*`, `Preserved*` ou `Unsupported*` com regra, texto, filhos/referências alcançáveis e coverage correspondente. `EXEC SQL`, `EXEC CICS` e `EXEC SQLIMS` permanecem `EmbeddedLanguageStatement` opacos.
 
@@ -26,7 +26,7 @@ Statements ou clauses parcialmente compreendidos usam `Modeled*`, `Preserved*` o
 
 ## Construção, complexidade e provenance
 
-O `AstBuilder` despacha as fronteiras semânticas por `CobolBaseVisitor` e contextos gerados do ANTLR. Decisões como atributos de programa, terminadores e alternativas de statement usam filhos e tokens diretos do contexto tipado; nomes de regra e texto permanecem somente como metadados ou fidelidade lexical. Helpers locais podem percorrer subárvores para relações que a produção não separa em contextos próprios, mas não substituem decisões estruturais já expressas pela gramática.
+O `AstBuilder` despacha as fronteiras semânticas por `CobolBaseVisitor` e contextos gerados do ANTLR. Decisões como atributos de programa, declaradores de DATA, categorias de operação, terminadores e alternativas de statement usam accessors, filhos e tokens diretos do contexto tipado; nomes de regra e texto permanecem somente como metadados ou fidelidade lexical. Helpers locais podem percorrer subárvores para relações que a produção não separa em contextos próprios, mas não substituem decisões estruturais já expressas pela gramática.
 
 A construção cria o inventário semântico em ordem determinística. Metadados carregam source span, parse origin, arquivo físico e include chain por composição do `SourceMap`.
 

@@ -25,7 +25,7 @@ Este catálogo dá IDs estáveis às capacidades críticas do harness. Ele não 
 
 | ID | Tipo / tier | Contrato observado | Oracle executável e fixtures | Regras relacionadas | Rejeita implementação ingênua |
 | --- | --- | --- | --- | --- | --- |
-| EVAL-AST-001 | semantic / semantic | AST nasce da parse tree, possui metadados rastreáveis e não incorpora produtos posteriores; decisões estruturais críticas usam contextos tipados. | `AstBuilderTest`, `AstBuilderTypedTraversalTest`, `AstBuildCoverageTest`, `SourceProvenanceTest` | semantic AST; INV-AST-001, INV-AST-002, INV-PROV-002 | Reparsear texto achatado, selecionar descendente aninhado por engano ou anexar binding à AST. |
+| EVAL-AST-001 | semantic / semantic | AST nasce da parse tree, possui metadados rastreáveis e não incorpora produtos posteriores; declaradores e categorias de expressão usam contextos tipados. | `AstBuilderTest`, `AstBuilderTypedTraversalTest`, `AstBuildCoverageTest`, `SourceProvenanceTest` | semantic AST; INV-AST-001, INV-AST-002, INV-PROV-002 | Reparsear texto achatado, selecionar referência descendente como declarador, classificar relação pela grafia ou anexar binding à AST. |
 | EVAL-AST-002 | adversarial / semantic | Expressões e referências qualificadas/subscritas permanecem estruturadas. | `StructuredExpressionAstTest`; `semantic/expressions.cbl`, `semantic/references.cbl` | semantic AST; INV-AST-002 | Guardar somente o texto ou nome terminal. |
 | EVAL-AST-003 | semantic / semantic | Statements suportados e preservados mantêm tipo, estrutura e coverage explícitos. | `StatementModelAstTest`, `SemanticCoverageTest`; `semantic/statements.cbl` | semantic AST; INV-COV-001, INV-EMB-001 | Interpretar fallback como statement sem efeito. |
 | EVAL-AST-004 | contract / semantic | Referências nominais e declarações são inventariadas sem binding nem valores de runtime. | `NominalReferenceAstTest`, `DeclarationModelAstTest`; fixtures `semantic/` | semantic AST e symbol model; INV-AST-001, INV-SYM-001, INV-RES-002 | Resolver nomes durante a construção da AST. |
@@ -44,7 +44,7 @@ Este catálogo dá IDs estáveis às capacidades críticas do harness. Ele não 
 
 | ID | Tipo / tier | Contrato observado | Oracle executável e fixtures | Regras relacionadas | Rejeita implementação ingênua |
 | --- | --- | --- | --- | --- | --- |
-| EVAL-RES-DATA-001 | adversarial / semantic | DATA/INDEX distinguem resolved, ambiguous, unresolved e namespace incorreto. | `DataAndIndexReferenceResolverTest`; `data-binding.cbl`, `subscript-semantic-kind.cbl` | reference resolution; INV-RES-001 | Escolher o primeiro candidato por ordem incidental. |
+| EVAL-RES-DATA-001 | adversarial / semantic | DATA/INDEX distinguem resolved, ambiguous, unresolved e namespace incorreto; FILLER não cria candidato pelo nome de uma cláusula, index-name permanece admissível em relações reconhecidas e `SET condition-name TO TRUE/FALSE` usa somente CONDITION. | `DataAndIndexReferenceResolverTest`; `data-binding.cbl`, `filler-redefines-owner.cbl`, `subscript-semantic-kind.cbl`, `index-name-relational-operators.cbl`, `set-condition-name.cbl` | reference resolution; INV-RES-001 | Criar símbolo de referência descendente, escolher o primeiro candidato, inferir namespace relacional por substring ou tratar todo SET como DATA/INDEX/CONDITION. |
 | EVAL-RES-DATA-002 | adversarial / semantic | Qualification STANDARD/EXTEND/UNSPECIFIED aplica hierarquia e policy explícitas. | `DataAndIndexReferenceResolverTest`; fixtures de qualifier/collision | reference resolution; INV-RES-001 | Comparar apenas nome terminal ou aceitar qualifier parcial sempre. |
 | EVAL-RES-DATA-003 | adversarial / semantic | GLOBAL, shadowing e visibilidade nested respeitam unit e caminho estrutural. | `DataAndIndexReferenceResolverTest`; fixtures `global-*`, `nested-*` | reference resolution e compilation units; INV-DET-001 | Tornar toda declaração ancestral visível. |
 | EVAL-RES-REL-001 | adversarial / semantic | REDEFINES e RENAMES resolvem por relação estrutural e nível válido. | `DataAndIndexReferenceResolverTest`; fixtures `redefines-*`, `renames-*` | reference resolution e symbol model; INV-RES-001 | Fazer lookup nominal global da relação. |
@@ -74,6 +74,12 @@ Este catálogo dá IDs estáveis às capacidades críticas do harness. Ele não 
 | --- | --- | --- | --- | --- | --- |
 | EVAL-ARCH-001 | contract / fast | Produtos iniciais não dependem diretamente de símbolos, resolução ou apresentação; símbolo não depende do parser/resolver. | `ArchitectureBoundaryTest`; bytecode compilado | ADR-0003; INV-AST-001, INV-SYM-001 | Acrescentar uma dependência reversa no package único e escondê-la atrás de import ou helper. |
 
+## Força dos oráculos
+
+| ID | Tipo / tier | Contrato observado | Oracle executável e fixtures | Regras relacionadas | Rejeita implementação ingênua |
+| --- | --- | --- | --- | --- | --- |
+| EVAL-MUT-001 | adversarial / semantic | Os oráculos de DATA anônima e categoria relacional detectam mutações nas decisões estruturais que protegem. | perfil Maven `mutation-adversarial`; `AstBuilderTypedTraversalTest`, `StructuredExpressionAstTest`, `DataAndIndexReferenceResolverTest` | semantic testing; INV-AST-002, INV-RES-001 | Inverter detecção de FILLER/relação ou remover a visita relacional sem falha observável. |
+
 ## Lacunas deliberadamente fora do catálogo executável atual
 
-Os itens `BACKLOG-EVAL-001` a `BACKLOG-EVAL-003` e `BACKLOG-PERF-001` registram famílias ainda sem oracle suficiente: propriedades metamórficas amplas, modelo diferencial, mutation testing focalizado e escala das fases anteriores à resolução. A ausência desses evals não é apresentada como cobertura existente.
+Os itens `BACKLOG-EVAL-001` a `BACKLOG-EVAL-003` e `BACKLOG-PERF-001` registram famílias ainda incompletas: propriedades metamórficas amplas, modelo diferencial, extensão do mutation testing focalizado para outros contratos e escala das fases anteriores à resolução. A cobertura de `EVAL-MUT-001` não é generalizada para todo o pipeline.

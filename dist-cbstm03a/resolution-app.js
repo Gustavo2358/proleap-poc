@@ -28,7 +28,8 @@
     const statusCounts = data.counts.status;
     $("#resolution-metrics").innerHTML = [
       [statusCounts.RESOLVED, "resolved"], [statusCounts.AMBIGUOUS, "ambiguous"],
-      [statusCounts.UNRESOLVED, "unresolved"], [statusCounts.UNSUPPORTED, "unsupported"]
+      [statusCounts.UNRESOLVED, "unresolved"], [statusCounts.UNSUPPORTED, "unsupported"],
+      [statusCounts.EXTERNAL_OBSERVED, "external-observed"]
     ].map(([value, label]) => `<div class="metric ${label}"><b>${format(value)}</b><span>${label}</span></div>`).join("");
     const ready = data.meta.dependencyAnalysisReady;
     $("#resolution-status").className = `parse-status ${ready ? "ok" : "warn"}`;
@@ -39,7 +40,7 @@
       : `<b>Análise de dependências incompleta</b><span>${format(data.meta.gaps)} lacunas bloqueantes. Não interprete o resultado como inventário completo de dependências.</span>`;
     $("#policy-strip").innerHTML = [
       ["Política", `${data.meta.policyId} @ ${data.meta.policyVersion}`],
-      ["QUALIFY", data.meta.qualifyMode], ["Catálogo externo", data.meta.catalog],
+      ["QUALIFY", data.meta.qualifyMode], ["Escopo", "artefato atual"],
       ["Custo", `${format(data.metrics.nominalLookups)} lookups · ${format(data.metrics.candidateInspections)} inspeções`]
     ].map(([label, value]) => `<div><span>${label}</span><b>${escapeHtml(value)}</b></div>`).join("");
   }
@@ -133,6 +134,8 @@
     const dynamicCall = entry.role === "CALL_TARGET" && entry.kind === "DATA";
     $("#resolution-insight").textContent = dynamicCall
       ? "Este binding identifica a declaração da variável usada pelo CALL. Ele não afirma qual programa será chamado: os valores possíveis dependem de CFG, reaching definitions e merge de caminhos."
+      : entry.status === "EXTERNAL_OBSERVED"
+        ? "O alvo literal é uma dependência externa observada. Esta análise termina no artefato atual e não procura nem inventa um programa externo."
       : entry.status === "AMBIGUOUS"
         ? "Todos os candidatos semanticamente válidos foram preservados. Nenhuma escolha arbitrária foi feita."
         : entry.status === "UNRESOLVED" || entry.status === "UNSUPPORTED"

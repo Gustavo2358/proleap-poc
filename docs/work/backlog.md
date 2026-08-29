@@ -261,7 +261,7 @@ Criar um resolver de referência lento e obviamente correto para topologias pequ
 
 ### BACKLOG-EVAL-003 — Mutation testing focalizado
 
-Avaliar mutation testing nos contratos de maior risco — ambiguidade, GLOBAL, qualification, incompletude e CALL — com orçamento e conjunto de mutantes explícitos. Não transformar score global em métrica de vaidade nem introduzir gate instável.
+Estender o perfil focalizado introduzido por EVAL-MUT-001 aos contratos de maior risco ainda não cobertos — ambiguidade, GLOBAL, qualification, incompletude e CALL — com orçamento e conjunto de mutantes explícitos. Não transformar score global em métrica de vaidade nem introduzir gate instável.
 
 ### BACKLOG-PERF-001 — Escala das fases pré-resolução
 

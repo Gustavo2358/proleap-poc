@@ -2,4 +2,4 @@ Source: COACTUPC.cbl
 Parse tree: 57,227 nodes | 37,682 tokens | depth 39
 AST: 9,127 nodes | depth 11 | literal-target CALLs 1
 Symbols: 851 declarations | 651 scopes | 2 diagnostics | parser errors 0
-Reference binding: 3,042 entries | 1,470 gaps | dependency analysis ready: false
+Reference binding: 3,042 entries | 1,245 gaps | dependency analysis ready: false

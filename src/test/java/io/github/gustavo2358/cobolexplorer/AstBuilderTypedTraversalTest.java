@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
 import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -150,6 +151,88 @@ class AstBuilderTypedTraversalTest {
         Ast.DataEntry filler = entries.stream().filter(Ast.DataEntry::filler).findFirst().orElseThrow();
         assertEquals("FILLER", filler.name());
         assertTrue(filler.clauses().stream().anyMatch(Ast.RedefinesClause.class::isInstance));
+    }
+
+    @Test
+    void anonymousDataNamesAreNotBorrowedFromAnyNestedClauseReference() {
+        Ast.Program program = parse("""
+                IDENTIFICATION DIVISION.
+                PROGRAM-ID. ANONYMOUS-DATA.
+                DATA DIVISION.
+                WORKING-STORAGE SECTION.
+                01 ROOT-ITEM.
+                   05 BASE-ITEM PIC X.
+                   05 COUNT-ITEM PIC 9.
+                   05 KEY-ITEM PIC X.
+                   05 CONV-NAME PIC X.
+                   05 FILLER REDEFINES BASE-ITEM PIC X.
+                   05 REDEFINES BASE-ITEM PIC X.
+                   05 FILLER OCCURS 1 TO 2 TIMES
+                             DEPENDING ON COUNT-ITEM PIC X.
+                   05 FILLER OCCURS 2 TIMES
+                             ASCENDING KEY IS KEY-ITEM PIC X.
+                   05 FILLER USING CONVENTION OF CONV-NAME PIC X.
+                PROCEDURE DIVISION.
+                GOBACK.
+                """);
+
+        List<Ast.DataEntry> entries = nodes(program, Ast.DataEntry.class);
+        assertEquals(5, entries.stream().filter(Ast.DataEntry::filler).count());
+        for (String declaredName : List.of("BASE-ITEM", "COUNT-ITEM", "KEY-ITEM", "CONV-NAME")) {
+            assertEquals(1, entries.stream().filter(entry -> entry.name().equals(declaredName)).count(),
+                    declaredName + " must only be the direct declaration");
+        }
+    }
+
+    @Test
+    void relationalCategoryComesFromTheGrammarContextNotOperatorSpelling() {
+        Ast.Program program = parse("""
+                IDENTIFICATION DIVISION.
+                PROGRAM-ID. RELATION-CATEGORY.
+                DATA DIVISION.
+                WORKING-STORAGE SECTION.
+                01 LEFT-VALUE PIC 9.
+                01 RIGHT-VALUE PIC 9.
+                PROCEDURE DIVISION.
+                IF LEFT-VALUE = RIGHT-VALUE CONTINUE END-IF.
+                IF LEFT-VALUE GREATER THAN RIGHT-VALUE CONTINUE END-IF.
+                IF LEFT-VALUE IS NOT LESS THAN RIGHT-VALUE CONTINUE END-IF.
+                GOBACK.
+                """);
+
+        List<Ast.OperationExpression> relations = nodes(program, Ast.OperationExpression.class).stream()
+                .filter(operation -> "relationArithmeticComparison".equals(
+                        operation.meta().origin().grammarRule()))
+                .toList();
+        assertEquals(3, relations.size());
+        assertTrue(relations.stream().allMatch(operation ->
+                operation.category() == Ast.OperationCategory.RELATIONAL));
+    }
+
+    @Test
+    void setBooleanTargetsCarryTheConditionContextFromTypedGrammarChildren() {
+        Ast.Program program = parse("""
+                IDENTIFICATION DIVISION.
+                PROGRAM-ID. SET-CONTEXT.
+                DATA DIVISION.
+                WORKING-STORAGE SECTION.
+                01 STATE-FIELD PIC X.
+                   88 STATE-OPEN VALUE 'O'.
+                01 SOURCE-VALUE PIC X.
+                PROCEDURE DIVISION.
+                SET STATE-OPEN TO TRUE.
+                SET SOURCE-VALUE TO STATE-FIELD.
+                GOBACK.
+                """);
+
+        Map<String, Ast.StatementOperandContext> contextByName = nodes(program, Ast.StatementOperand.class).stream()
+                .filter(operand -> operand.value() instanceof Ast.DataReference)
+                .collect(java.util.stream.Collectors.toMap(
+                        operand -> ((Ast.DataReference) operand.value()).baseName(),
+                        Ast.StatementOperand::context));
+        assertEquals(Ast.StatementOperandContext.SET_CONDITION_TARGET, contextByName.get("STATE-OPEN"));
+        assertEquals(Ast.StatementOperandContext.SET_DATA_OR_INDEX, contextByName.get("SOURCE-VALUE"));
+        assertEquals(Ast.StatementOperandContext.SET_DATA_OR_INDEX, contextByName.get("STATE-FIELD"));
     }
 
     private static Ast.Program parse(String source) {

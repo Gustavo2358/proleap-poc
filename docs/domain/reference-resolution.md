@@ -16,6 +16,8 @@ Resolução é nominal. Ela não faz CFG, reaching definitions, propagação de 
 ## Regras e limites atuais
 
 - Nomes COBOL são comparados pela forma canônica case-insensitive, preservando a grafia escrita para diagnóstico e navegação.
+- Operandos de uma operação AST classificada como relacional admitem DATA ou INDEX; a categoria vem do lowering gramatical e independe de a grafia ser `=`, `GREATER`, `LESS` ou uma forma composta.
+- O alvo de `SET condition-name TO TRUE` ou `FALSE` é uma occurrence CONDITION. A classificação vem de `setToStatement` e `booleanLiteral` tipados; `SET` de dados e índices permanece DATA/INDEX e não é promovido a CONDITION.
 - Estrutura de scopes não é, por si só, a relação completa de visibilidade COBOL. Namespace, kind, unit, nesting, `GLOBAL`, `COMMON`, shadowing e qualificação participam conforme a categoria da referência.
 - Qualificadores DATA seguem ancestry estrutural de dentro para fora; `IN` e `OF` são equivalentes semanticamente. `STANDARD`, `EXTEND` e `UNSPECIFIED` preservam diferenças de dialeto em vez de selecionar uma variante silenciosamente.
 - PROCEDURE é local ao program unit; paragraph qualificado depende da section escrita.
@@ -45,6 +47,7 @@ Resolvers usam índices por nome canônico, unit, scope e domínio semântico. M
 - IBM Enterprise COBOL — [References to PROCEDURE DIVISION names](https://www.ibm.com/docs/en/cobol-zos/6.4.0?topic=reference-references-procedure-division-names)
 - IBM Enterprise COBOL — [Scope of names](https://www.ibm.com/docs/en/cobol-zos/6.4?topic=programs-scope-names)
 - IBM Enterprise COBOL — [Calling nested COBOL programs](https://www.ibm.com/docs/en/cobol-aix/5.1.0?topic=subprograms-calling-nested-cobol-programs)
+- IBM Enterprise COBOL — [SET condition-names](https://www.ibm.com/docs/en/cobol-zos/6.3?topic=statement-format-4-set-condition-names)
 
 ## Evidência executável e relações
 

@@ -30,6 +30,14 @@ Quando disponível, usar compilador/documentação confiável, algoritmo exato m
 
 Alta cobertura não prova semântica. Para algoritmos críticos, verificar se a suíte detectaria mutações como trocar ordem de lookup, ignorar qualifier, colapsar ambiguidade, remover busca de ancestor ou filtrar namespace errado. Ferramenta de mutation testing só deve ser adicionada se trouxer benefício real.
 
+O perfil Maven `mutation-adversarial` executa PIT de forma deliberadamente focalizada sobre `AstBuilder` e `ReferenceOccurrenceCollector`, usando os oráculos de traversal tipado, expressão estruturada e resolução DATA/INDEX. Ele é uma avaliação sob demanda, não um threshold global nem parte dos gates estáveis:
+
+```bash
+mvn -Pmutation-adversarial test-compile org.pitest:pitest-maven:mutationCoverage
+```
+
+O resultado relevante é se os mutantes nas decisões sob investigação são mortos. Sobreviventes em código fora do slice indicam lacunas futuras, mas não devem ser ocultados nem convertidos em score de vaidade.
+
 ## Challenge pass
 
 Depois da implementação, fazer revisão independente orientada à falsificação:

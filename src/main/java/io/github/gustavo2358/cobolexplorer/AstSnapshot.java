@@ -191,7 +191,10 @@ final class AstSnapshot {
             result.put("grammarRule", n.grammarRule()); result.put("writtenText", n.writtenText());
             result.put("coverage", "PRESERVED_UNINTERPRETED");
             result.put("dependencyKnowledge", "DEPENDENCY_UNKNOWN");
-        } else if (node instanceof Ast.StatementOperand n) result.put("grammarRole", n.grammarRole());
+        } else if (node instanceof Ast.StatementOperand n) {
+            result.put("grammarRole", n.grammarRole());
+            result.put("context", n.context().name());
+        }
         else if (node instanceof Ast.StatementClause n) {
             result.put("grammarRule", n.grammarRule()); result.put("writtenText", n.writtenText());
         }
@@ -230,7 +233,8 @@ final class AstSnapshot {
         } else if (node instanceof Ast.NamedReference n) {
             result.put("grammarKind", n.grammarKind()); result.put("writtenText", n.writtenText());
         } else if (node instanceof Ast.OperationExpression n) {
-            result.put("operator", n.operator()); result.put("writtenText", n.writtenText());
+            result.put("category", n.category().name()); result.put("operator", n.operator());
+            result.put("writtenText", n.writtenText());
         } else if (node instanceof Ast.FunctionExpression n) {
             result.put("functionName", n.functionName()); result.put("writtenText", n.writtenText());
         } else if (node instanceof Ast.SpecialRegisterExpression n) {

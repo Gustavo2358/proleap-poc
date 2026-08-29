@@ -33,8 +33,14 @@ class DataAndIndexReferenceResolverTest {
             "src/test/resources/cobol/resolution/subscript-semantic-kind.cbl");
     private static final Path INDEX_NAME_VALUE_CONTEXT = Path.of(
             "src/test/resources/cobol/resolution/index-name-value-context.cbl");
+    private static final Path INDEX_NAME_RELATIONAL_OPERATORS = Path.of(
+            "src/test/resources/cobol/resolution/index-name-relational-operators.cbl");
     private static final Path REDEFINES_POSITIONAL_TARGET = Path.of(
             "src/test/resources/cobol/resolution/redefines-positional-target.cbl");
+    private static final Path FILLER_REDEFINES_OWNER = Path.of(
+            "src/test/resources/cobol/resolution/filler-redefines-owner.cbl");
+    private static final Path SET_CONDITION_NAME = Path.of(
+            "src/test/resources/cobol/resolution/set-condition-name.cbl");
 
     @Test
     void declaresDeclarationRelationsAsNominalStructuralBindingOnly() throws Exception {
@@ -525,6 +531,35 @@ class DataAndIndexReferenceResolverTest {
     }
 
     @Test
+    void resolvesIndexNameForEveryRelationalOperatorSpelling() throws Exception {
+        Analysis analysis = analyze(INDEX_NAME_RELATIONAL_OPERATORS, ResolutionContracts.QualifyMode.STANDARD);
+        ResolutionContracts.ProgramUnitId unit = analysis.model().programUnits().get(0).id();
+        List<ReferenceResolution.Entry> comparisons = analysis.resolution().find(
+                unit, "TABLE-IDX", ResolutionContracts.ReferenceRole.VALUE_READ);
+
+        assertEquals(15, comparisons.size());
+        assertAll(comparisons.stream().map(entry -> () -> assertAll(entry.toString(),
+                () -> assertEquals(EnumSet.of(ResolutionContracts.ReferenceKind.DATA,
+                                ResolutionContracts.ReferenceKind.INDEX),
+                        entry.occurrence().admissibleKinds()),
+                () -> assertEquals(ResolutionContracts.ResolutionStatus.RESOLVED, entry.status()),
+                () -> assertEquals(ResolutionContracts.ReferenceKind.INDEX,
+                        entry.selectedCandidate().orElseThrow().kind()))));
+    }
+
+    @Test
+    void fillerRedefinesTargetDoesNotBecomeASecondDeclarationCandidate() throws Exception {
+        Analysis analysis = analyze(FILLER_REDEFINES_OWNER, ResolutionContracts.QualifyMode.STANDARD);
+        ResolutionContracts.ProgramUnitId unit = analysis.model().programUnits().get(0).id();
+        SymbolTable table = analysis.tables().forProgramUnit(unit).orElseThrow().symbolTable();
+
+        assertEquals(1, table.lookupAll(SymbolTable.Namespace.DATA, "W3D-AUX").size());
+        assertEntry(analysis.resolution(), unit, "W3D-AUX", ResolutionContracts.ReferenceRole.VALUE_WRITE,
+                ResolutionContracts.ResolutionStatus.RESOLVED,
+                ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION, 1);
+    }
+
+    @Test
     void bindsRedefinesToTheImmediatelyPrecedingSameLevelItem() throws Exception {
         Analysis analysis = analyze(REDEFINES_POSITIONAL_TARGET, ResolutionContracts.QualifyMode.STANDARD);
         ResolutionContracts.ProgramUnitId unit = analysis.model().programUnits().get(0).id();
@@ -538,6 +573,43 @@ class DataAndIndexReferenceResolverTest {
 
         assertNotEquals(firstX.id(), secondX.id());
         assertRelationCandidate(relation, secondX.id());
+    }
+
+    @Test
+    void setConditionNamesUseConditionNamespaceWithoutReclassifyingOtherSetForms() throws Exception {
+        Analysis analysis = analyze(SET_CONDITION_NAME, ResolutionContracts.QualifyMode.STANDARD);
+        ResolutionContracts.ProgramUnitId unit = analysis.model().programUnits().get(0).id();
+
+        List<ReferenceResolution.Entry> conditions = analysis.resolution().find(unit, "STATUS-OPEN",
+                ResolutionContracts.ReferenceRole.CONTEXT_DEPENDENT);
+        assertEquals(2, conditions.size());
+        assertTrue(conditions.stream().allMatch(entry -> entry.occurrence().kind()
+                == ResolutionContracts.ReferenceKind.CONDITION));
+        assertTrue(conditions.stream().allMatch(entry -> entry.occurrence().admissibleKinds()
+                .equals(Set.of(ResolutionContracts.ReferenceKind.CONDITION))));
+        assertTrue(conditions.stream().allMatch(entry -> entry.status()
+                == ResolutionContracts.ResolutionStatus.RESOLVED));
+
+        List<ReferenceResolution.Entry> collision = analysis.resolution().find(unit, "FLAG-DATA",
+                ResolutionContracts.ReferenceRole.CONTEXT_DEPENDENT);
+        assertEquals(2, collision.size());
+        ReferenceResolution.Entry conditionTarget = collision.stream().filter(entry -> entry.occurrence().kind()
+                == ResolutionContracts.ReferenceKind.CONDITION).findFirst().orElseThrow();
+        ReferenceResolution.Entry dataValue = collision.stream().filter(entry -> entry.occurrence().kind()
+                == ResolutionContracts.ReferenceKind.DATA).findFirst().orElseThrow();
+        assertEquals(ResolutionContracts.ReferenceKind.CONDITION,
+                conditionTarget.selectedCandidate().orElseThrow().kind());
+        assertEquals(ResolutionContracts.ReferenceKind.DATA, dataValue.selectedCandidate().orElseThrow().kind());
+
+        ReferenceResolution.Entry dataSet = assertEntry(analysis.resolution(), unit, "SOURCE-VALUE",
+                ResolutionContracts.ReferenceRole.CONTEXT_DEPENDENT, ResolutionContracts.ResolutionStatus.RESOLVED,
+                ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION, 1);
+        assertEquals(EnumSet.of(ResolutionContracts.ReferenceKind.DATA, ResolutionContracts.ReferenceKind.INDEX),
+                dataSet.occurrence().admissibleKinds());
+        ReferenceResolution.Entry indexSet = assertEntry(analysis.resolution(), unit, "TABLE-IDX",
+                ResolutionContracts.ReferenceRole.CONTEXT_DEPENDENT, ResolutionContracts.ResolutionStatus.RESOLVED,
+                ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION, 1);
+        assertEquals(ResolutionContracts.ReferenceKind.INDEX, indexSet.selectedCandidate().orElseThrow().kind());
     }
 
     private static ReferenceResolution.Entry assertEntry(

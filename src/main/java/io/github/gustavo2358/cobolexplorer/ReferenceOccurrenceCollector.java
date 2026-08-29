@@ -179,7 +179,8 @@ final class ReferenceOccurrenceCollector {
                     ReferenceOccurrences.Preservation.PRESERVED_CONTAINER);
             return;
         }
-        if (node instanceof Ast.OperationExpression expression && isRelationalOperator(expression.operator())) {
+        if (node instanceof Ast.OperationExpression expression
+                && expression.category() == Ast.OperationCategory.RELATIONAL) {
             for (Ast.Expression operand : expression.operands())
                 visitRelationalOperand(operand, preservation);
             return;
@@ -231,18 +232,18 @@ final class ReferenceOccurrenceCollector {
             ResolutionContracts.ReferenceRole role = operand.value() instanceof Ast.FileReference
                     ? ResolutionContracts.ReferenceRole.FILE_OPERATION
                     : ResolutionContracts.ReferenceRole.CONTEXT_DEPENDENT;
-            if (isIndexOperandOfSet(statementGrammarRule, operand) && operand.value() instanceof Ast.DataReference reference)
+            if (operand.context() == Ast.StatementOperandContext.SET_CONDITION_TARGET
+                    && operand.value() instanceof Ast.DataReference reference)
+                addDataReference(reference, role, preservation, ResolutionContracts.ReferenceKind.CONDITION,
+                        Set.of(ResolutionContracts.ReferenceKind.CONDITION));
+            else if (operand.context() == Ast.StatementOperandContext.SET_DATA_OR_INDEX
+                    && operand.value() instanceof Ast.DataReference reference)
                 addDataReference(reference, role, preservation, null,
                         EnumSet.of(ResolutionContracts.ReferenceKind.DATA, ResolutionContracts.ReferenceKind.INDEX));
             else visit(operand.value(), role, preservation);
         }
         for (Ast.StatementClause clause : clauses) visit(clause,
                 ResolutionContracts.ReferenceRole.CONTEXT_DEPENDENT, preservation);
-    }
-
-    private static boolean isIndexOperandOfSet(String statementGrammarRule, Ast.StatementOperand operand) {
-        return "setStatement".equals(statementGrammarRule)
-                && ("setTo".equals(operand.grammarRole()) || "setToValue".equals(operand.grammarRole()));
     }
 
     private void visitRelationalOperand(Ast.Expression expression,
@@ -258,13 +259,6 @@ final class ReferenceOccurrenceCollector {
             return;
         }
         visit(expression, ResolutionContracts.ReferenceRole.VALUE_READ, preservation);
-    }
-
-    private static boolean isRelationalOperator(String operator) {
-        return "RELATION".equals(operator)
-                || operator.contains("EQUAL")
-                || operator.startsWith(">")
-                || operator.startsWith("<");
     }
 
     private void addDataReference(Ast.DataReference reference, ResolutionContracts.ReferenceRole role,
