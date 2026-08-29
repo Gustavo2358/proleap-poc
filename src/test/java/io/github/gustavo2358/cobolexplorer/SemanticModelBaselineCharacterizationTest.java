@@ -38,7 +38,7 @@ class SemanticModelBaselineCharacterizationTest {
                 () -> assertEquals(0, cbstm03a.unresolvedCopies()),
                 () -> assertEquals(0, cbstm03d.unresolvedCopies()));
 
-        assertMetrics(coactupc, "COACTUPC", 9_189, 11, 1, 0, 14, 0, 651, 853, 2);
+        assertMetrics(coactupc, "COACTUPC", 9_127, 11, 1, 0, 14, 0, 651, 851, 2);
         assertMetrics(cbstm03a, "CBSTM03A", 2_740, 11, 14, 0, 0, 0, 219, 209, 0);
         assertMetrics(cbstm03d, "CBSTM03D", 2_752, 11, 0, 14, 0, 0, 221, 211, 0);
 
@@ -53,12 +53,12 @@ class SemanticModelBaselineCharacterizationTest {
 
         assertEquals(Map.of(
                 "computeStatement", 9,
-                "continueStatement", 59,
+                "continueStatement", 57,
                 "divideStatement", 1,
                 "exitStatement", 49,
                 "initializeStatement", 10,
                 "inspectStatement", 4,
-                "setStatement", 226,
+                "setStatement", 225,
                 "stringStatement", 53), structuredByRule(coactupc.ast()));
         assertEquals(Map.ofEntries(
                 Map.entry("addStatement", 3),
@@ -84,7 +84,7 @@ class SemanticModelBaselineCharacterizationTest {
                 .map(Ast.DataReference::writtenName)
                 .toList();
 
-        assertEquals(2_871, names.size());
+        assertEquals(2_853, names.size());
         assertTrue(names.contains("ACCTSIDI OF CACTUPAI"),
                 "OF qualification keeps the source spelling and separators");
         assertTrue(names.contains("DFHCOMMAREA (1:LENGTH OF CARDDEMO-COMMAREA)"),

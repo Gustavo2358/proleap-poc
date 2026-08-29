@@ -1,5 +1,5 @@
 Source: COACTUPC.cbl
 Parse tree: 57,227 nodes | 37,682 tokens | depth 39
-AST: 9,189 nodes | depth 11 | literal-target CALLs 1
-Symbols: 853 declarations | 651 scopes | 2 diagnostics | parser errors 0
-Reference binding: 3,058 entries | 1,467 gaps | dependency analysis ready: false
+AST: 9,127 nodes | depth 11 | literal-target CALLs 1
+Symbols: 851 declarations | 651 scopes | 2 diagnostics | parser errors 0
+Reference binding: 3,042 entries | 1,471 gaps | dependency analysis ready: false

@@ -1,5 +1,7 @@
 package io.github.gustavo2358.cobolexplorer;
 
+import io.github.gustavo2358.cobolexplorer.antlr.CobolBaseVisitor;
+import io.github.gustavo2358.cobolexplorer.antlr.CobolParser;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.*;
 import org.slf4j.Logger;
@@ -7,9 +9,10 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 
 /** Builds one immutable semantic AST from the ANTLR parse tree. */
-final class AstBuilder {
+final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
     private static final Logger LOG = LoggerFactory.getLogger(AstBuilder.class);
     private static final Set<String> MODELED_GENERIC_STATEMENTS = Set.of(
             "acceptStatement", "addStatement", "closeStatement", "computeStatement",
@@ -23,16 +26,7 @@ final class AstBuilder {
             "enableStatement", "entryStatement", "exhibitStatement", "generateStatement",
             "initiateStatement", "mergeStatement", "purgeStatement", "receiveStatement",
             "searchStatement", "sendStatement", "sortStatement", "terminateStatement");
-    private static final Set<String> OPERAND_RULES = Set.of(
-            "identifier", "qualifiedDataName", "procedureName", "fileName", "indexName",
-            "literal", "integerLiteral", "numericLiteral", "dataName", "recordName",
-            "reportName", "cdName", "libraryName", "mnemonicName", "environmentName", "alphabetName");
-    private static final Set<String> FLOW_CLAUSE_RULES = Set.of(
-            "onExceptionClause", "notOnExceptionClause", "onOverflowPhrase", "notOnOverflowPhrase",
-            "onSizeErrorPhrase", "notOnSizeErrorPhrase", "invalidKeyPhrase", "notInvalidKeyPhrase",
-            "atEndPhrase", "notAtEndPhrase", "writeAtEndOfPagePhrase", "writeNotAtEndOfPagePhrase",
-            "receiveNoData", "receiveWithData", "searchWhen");
-    private final Parser parser;
+    private final CobolParser parser;
     private final UnicodeText indexedSource;
     private final SourceMap sourceMap;
     private final IdentityHashMap<ParseTree, Integer> parseIds;
@@ -45,10 +39,26 @@ final class AstBuilder {
                                  int astNodeId) { }
     private record LogMetrics(int nodes, int unsupportedStatements, int preservedStatements) { }
 
+    @Override
+    protected Ast.Node defaultResult() {
+        return null;
+    }
+
+    @Override
+    protected Ast.Node aggregateResult(Ast.Node aggregate, Ast.Node nextResult) {
+        if (aggregate != null && nextResult != null) {
+            throw new IllegalStateException("Grammar wrapper produced multiple semantic AST results");
+        }
+        return nextResult != null ? nextResult : aggregate;
+    }
+
     AstBuilder(Parser parser, String source, SourceMap sourceMap,
                IdentityHashMap<ParseTree, Integer> parseIds,
                IdentityHashMap<ParseTree, Integer> parseSubtreeSizes) {
-        this.parser = parser;
+        if (!(parser instanceof CobolParser cobolParser)) {
+            throw new IllegalArgumentException("AstBuilder requires the versioned COBOL parser");
+        }
+        this.parser = cobolParser;
         this.indexedSource = new UnicodeText(source);
         this.sourceMap = sourceMap;
         this.parseIds = parseIds;
@@ -56,19 +66,19 @@ final class AstBuilder {
     }
 
     AstBuildResult build(ParseTree tree) {
-        ParserRuleContext unit = firstDescendant(tree, "programUnit");
+        CobolParser.ProgramUnitContext unit = firstProgramUnit(tree);
         if (unit == null) throw new IllegalStateException("programUnit not found");
         return buildProgramUnit(unit);
     }
 
     CompilationUnitBuildResult buildCompilationUnit(ParseTree tree, String writtenCompilationUnitId) {
         String compilationUnitId = canonicalName(writtenCompilationUnitId);
-        ParserRuleContext compilation = firstDescendant(tree, "compilationUnit");
+        CobolParser.CompilationUnitContext compilation = compilationUnit(tree);
         if (compilation == null) throw new IllegalStateException("compilationUnit not found");
         List<CompilationUnitModel.ProgramUnit> units = new ArrayList<>();
         Map<ResolutionContracts.ProgramUnitId, SemanticCoverage.Report> coverage = new LinkedHashMap<>();
         Map<ResolutionContracts.ProgramUnitId, List<SemanticCoverage.Diagnostic>> diagnostics = new LinkedHashMap<>();
-        List<ParserRuleContext> topLevel = directChildrenNamed(compilation, "programUnit");
+        List<CobolParser.ProgramUnitContext> topLevel = compilation.programUnit();
         for (int index = 0; index < topLevel.size(); index++) {
             collectProgramUnits(topLevel.get(index), List.of(index), null, compilationUnitId,
                     units, coverage, diagnostics);
@@ -77,7 +87,7 @@ final class AstBuilder {
         return new CompilationUnitBuildResult(model, coverage, diagnostics);
     }
 
-    private void collectProgramUnits(ParserRuleContext context, List<Integer> structuralPath,
+    private void collectProgramUnits(CobolParser.ProgramUnitContext context, List<Integer> structuralPath,
                                      ResolutionContracts.ProgramUnitId parentId, String compilationUnitId,
                                      List<CompilationUnitModel.ProgramUnit> units,
                                      Map<ResolutionContracts.ProgramUnitId, SemanticCoverage.Report> coverage,
@@ -89,7 +99,7 @@ final class AstBuilder {
         units.add(new CompilationUnitModel.ProgramUnit(id, parentId, built.program()));
         coverage.put(id, built.coverage());
         diagnostics.put(id, built.diagnostics());
-        List<ParserRuleContext> nested = directChildrenNamed(context, "programUnit");
+        List<CobolParser.ProgramUnitContext> nested = context.programUnit();
         for (int index = 0; index < nested.size(); index++) {
             List<Integer> childPath = new ArrayList<>(structuralPath);
             childPath.add(index);
@@ -98,27 +108,12 @@ final class AstBuilder {
         }
     }
 
-    private AstBuildResult buildProgramUnit(ParserRuleContext unit) {
+    private AstBuildResult buildProgramUnit(CobolParser.ProgramUnitContext unit) {
         long started = System.nanoTime();
         nextId = 0;
         coverageDrafts.clear();
         semanticDiagnostics.clear();
-        Ast.Meta meta = meta(unit);
-        ParserRuleContext programId = firstDescendant(unit, "programIdParagraph");
-        ParserRuleContext programName = firstDescendant(programId, "programName");
-        List<Ast.Division> divisions = new ArrayList<>();
-        for (ParserRuleContext child : directRuleChildren(unit)) {
-            switch (rule(child)) {
-                case "identificationDivision" -> divisions.add(buildIdentification(child));
-                case "environmentDivision" -> divisions.add(buildEnvironment(child));
-                case "dataDivision" -> divisions.add(buildData(child));
-                case "procedureDivision" -> divisions.add(buildProcedure(child));
-                default -> { }
-            }
-        }
-        Ast.Program program = new Ast.Program(meta,
-                programName == null ? "<anonymous>" : clean(sourceText(programName)),
-                programAttributes(programId), divisions);
+        Ast.Program program = (Ast.Program) visit(unit);
         AstBuildResult result = new AstBuildResult(program, buildCoverageReport(), semanticDiagnostics);
         if (LOG.isDebugEnabled()) {
             LogMetrics metrics = logMetrics(program);
@@ -129,6 +124,23 @@ final class AstBuilder {
         }
         return result;
     }
+
+    @Override
+    public Ast.Node visitProgramUnit(CobolParser.ProgramUnitContext context) {
+        Ast.Meta meta = meta(context);
+        CobolParser.ProgramIdParagraphContext programId = context.identificationDivision().programIdParagraph();
+        List<Ast.Division> divisions = new ArrayList<>();
+        divisions.add((Ast.Division) visit(context.identificationDivision()));
+        if (context.environmentDivision() != null) divisions.add((Ast.Division) visit(context.environmentDivision()));
+        if (context.dataDivision() != null) divisions.add((Ast.Division) visit(context.dataDivision()));
+        if (context.procedureDivision() != null) divisions.add((Ast.Division) visit(context.procedureDivision()));
+        return new Ast.Program(meta, clean(sourceText(programId.programName())), programAttributes(programId), divisions);
+    }
+
+    @Override public Ast.Node visitIdentificationDivision(CobolParser.IdentificationDivisionContext ctx) { return buildIdentification(ctx); }
+    @Override public Ast.Node visitEnvironmentDivision(CobolParser.EnvironmentDivisionContext ctx) { return buildEnvironment(ctx); }
+    @Override public Ast.Node visitDataDivision(CobolParser.DataDivisionContext ctx) { return buildData(ctx); }
+    @Override public Ast.Node visitProcedureDivision(CobolParser.ProcedureDivisionContext ctx) { return buildProcedure(ctx); }
 
     private static String canonicalName(String writtenName) {
         return writtenName == null ? "" : writtenName.trim().toUpperCase(Locale.ROOT);
@@ -150,27 +162,27 @@ final class AstBuilder {
         return new LogMetrics(nodes, unsupported, preserved);
     }
 
-    private Ast.ProgramAttributes programAttributes(ParserRuleContext programId) {
+    private Ast.ProgramAttributes programAttributes(CobolParser.ProgramIdParagraphContext programId) {
         if (programId == null) return Ast.ProgramAttributes.none();
-        return new Ast.ProgramAttributes(containsToken(programId, "COMMON"),
-                containsToken(programId, "INITIAL"), containsToken(programId, "RECURSIVE"),
-                containsToken(programId, "LIBRARY"), containsToken(programId, "DEFINITION"),
+        return new Ast.ProgramAttributes(programId.COMMON() != null,
+                programId.INITIAL() != null, programId.RECURSIVE() != null,
+                programId.LIBRARY() != null, programId.DEFINITION() != null,
                 sourceText(programId).strip());
     }
 
-    private Ast.Division buildIdentification(ParserRuleContext context) {
+    private Ast.Division buildIdentification(CobolParser.IdentificationDivisionContext context) {
         Ast.Meta meta = meta(context);
         return new Ast.Division(meta, Ast.DivisionKind.IDENTIFICATION, List.of());
     }
 
-    private Ast.Division buildEnvironment(ParserRuleContext context) {
+    private Ast.Division buildEnvironment(CobolParser.EnvironmentDivisionContext context) {
         Ast.Meta meta = meta(context);
         List<Ast.Node> children = new ArrayList<>();
-        for (ParserRuleContext entry : nearestDescendants(context, "fileControlEntry")) {
+        for (CobolParser.FileControlEntryContext entry : nearestDescendants(context, CobolParser.FileControlEntryContext.class)) {
             Ast.Meta entryMeta = meta(entry);
-            ParserRuleContext select = firstDescendant(entry, "selectClause");
-            ParserRuleContext fileName = firstDescendant(select, "fileName");
-            ParserRuleContext assign = firstDescendant(entry, "assignClause");
+            CobolParser.SelectClauseContext select = entry.selectClause();
+            ParserRuleContext fileName = select.fileName();
+            ParserRuleContext assign = firstDescendant(entry, CobolParser.AssignClauseContext.class);
             children.add(new Ast.FileBinding(entryMeta,
                     fileName == null ? "<unknown>" : clean(sourceText(fileName)),
                     assign == null ? "" : compact(sourceText(assign))));
@@ -178,45 +190,88 @@ final class AstBuilder {
         return new Ast.Division(meta, Ast.DivisionKind.ENVIRONMENT, children);
     }
 
-    private Ast.Division buildData(ParserRuleContext context) {
+    private Ast.Division buildData(CobolParser.DataDivisionContext context) {
         Ast.Meta meta = meta(context);
         List<Ast.Node> sections = new ArrayList<>();
-        for (ParserRuleContext wrapper : directChildrenNamed(context, "dataDivisionSection")) {
-            ParserRuleContext sectionContext = directRuleChildren(wrapper).stream().findFirst().orElse(wrapper);
+        for (CobolParser.DataDivisionSectionContext wrapper : context.dataDivisionSection()) {
+            ParserRuleContext sectionContext = dataSectionContext(wrapper);
             Ast.Meta sectionMeta = meta(sectionContext);
             List<Ast.Node> entries = new ArrayList<>();
-            if (rule(sectionContext).equals("fileSection")) {
-                for (ParserRuleContext fd : directChildrenNamed(sectionContext, "fileDescriptionEntry")) {
+            if (sectionContext instanceof CobolParser.FileSectionContext fileSection) {
+                for (CobolParser.FileDescriptionEntryContext fd : fileSection.fileDescriptionEntry()) {
                     Ast.Meta fdMeta = meta(fd);
-                    ParserRuleContext fileName = firstDescendant(fd, "fileName");
+                    ParserRuleContext fileName = fd.fileName();
                     List<Ast.DataEntry> dataEntries = new ArrayList<>();
-                    dataEntries.addAll(buildDataHierarchy(directChildrenNamed(fd, "dataDescriptionEntry")));
+                    dataEntries.addAll(buildDataHierarchy(fd.dataDescriptionEntry()));
                     entries.add(new Ast.FileDescription(fdMeta,
                             fileName == null ? "<unknown>" : clean(sourceText(fileName)),
-                            declarationVisibility(fd, "externalClause", "globalClause"), dataEntries));
+                            declarationVisibility(fd,
+                                    firstDescendant(fd, CobolParser.ExternalClauseContext.class) != null,
+                                    firstDescendant(fd, CobolParser.GlobalClauseContext.class) != null), dataEntries));
                 }
             } else {
-                entries.addAll(buildDataHierarchy(nearestDescendants(sectionContext, "dataDescriptionEntry")));
+                entries.addAll(buildDataHierarchy(nearestDescendants(sectionContext,
+                        CobolParser.DataDescriptionEntryContext.class)));
             }
-            sections.add(new Ast.Section(sectionMeta, displayRule(rule(sectionContext)), dataSectionKind(rule(sectionContext)), entries));
+            sections.add(new Ast.Section(sectionMeta, displayRule(rule(sectionContext)), dataSectionKind(sectionContext), entries));
         }
         return new Ast.Division(meta, Ast.DivisionKind.DATA, sections);
     }
 
+    private static ParserRuleContext dataSectionContext(CobolParser.DataDivisionSectionContext context) {
+        if (context.fileSection() != null) return context.fileSection();
+        if (context.dataBaseSection() != null) return context.dataBaseSection();
+        if (context.workingStorageSection() != null) return context.workingStorageSection();
+        if (context.linkageSection() != null) return context.linkageSection();
+        if (context.communicationSection() != null) return context.communicationSection();
+        if (context.localStorageSection() != null) return context.localStorageSection();
+        if (context.screenSection() != null) return context.screenSection();
+        if (context.reportSection() != null) return context.reportSection();
+        if (context.programLibrarySection() != null) return context.programLibrarySection();
+        throw new IllegalStateException("Data division section has no recognized grammar alternative");
+    }
+
     private Ast.DataEntry buildDataEntry(ParserRuleContext wrapper) {
-        ParserRuleContext format = directRuleChildren(wrapper).stream().findFirst().orElse(wrapper);
+        if (!(wrapper instanceof CobolParser.DataDescriptionEntryContext entryContext)) {
+            throw new IllegalArgumentException("Expected data description entry, got " + rule(wrapper));
+        }
+        ParserRuleContext format = dataEntryFormat(entryContext);
         Ast.Meta meta = meta(format);
         String raw = compact(sourceText(format));
-        String level = raw.matches("^\\d+.*") ? raw.replaceFirst("^(\\d+).*", "$1") : rule(format).contains("ExecSql") ? "SQL" : "?";
-        ParserRuleContext name = firstDescendant(format, "dataName");
-        if (name == null) name = firstDescendant(format, "conditionName");
+        String level;
+        ParserRuleContext name;
+        boolean external = false;
+        boolean global = false;
+        if (format instanceof CobolParser.DataDescriptionEntryFormat1Context value) {
+            level = value.INTEGERLITERAL() != null ? value.INTEGERLITERAL().getText() : "77";
+            name = value.dataName();
+            external = !value.dataExternalClause().isEmpty();
+            global = !value.dataGlobalClause().isEmpty();
+        } else if (format instanceof CobolParser.DataDescriptionEntryFormat2Context value) {
+            level = "66";
+            name = value.dataName();
+        } else if (format instanceof CobolParser.DataDescriptionEntryFormat3Context value) {
+            level = "88";
+            name = value.conditionName();
+        } else {
+            level = "SQL";
+            name = null;
+        }
         boolean filler = name == null;
         List<Ast.DataClause> clauses = directRuleChildren(format).stream()
-                .filter(child -> rule(child).startsWith("data") && rule(child).endsWith("Clause"))
+                .filter(AstBuilder::isDataClauseContext)
                 .map(this::buildDataClause).toList();
         return new Ast.DataEntry(meta, level, levelKind(level), filler ? "FILLER" : clean(sourceText(name)),
-                filler, declarationVisibility(format, "dataExternalClause", "dataGlobalClause"),
+                filler, declarationVisibility(format, external, global),
                 raw, clauses, List.of());
+    }
+
+    private static ParserRuleContext dataEntryFormat(CobolParser.DataDescriptionEntryContext context) {
+        if (context.dataDescriptionEntryFormat1() != null) return context.dataDescriptionEntryFormat1();
+        if (context.dataDescriptionEntryFormat2() != null) return context.dataDescriptionEntryFormat2();
+        if (context.dataDescriptionEntryFormat3() != null) return context.dataDescriptionEntryFormat3();
+        if (context.dataDescriptionEntryExecSql() != null) return context.dataDescriptionEntryExecSql();
+        throw new IllegalStateException("Data description entry has no recognized grammar alternative");
     }
 
     private static final class DataDraft {
@@ -228,7 +283,7 @@ final class AstBuilder {
         }
     }
 
-    private List<Ast.DataEntry> buildDataHierarchy(List<ParserRuleContext> contexts) {
+    private List<Ast.DataEntry> buildDataHierarchy(List<? extends ParserRuleContext> contexts) {
         List<DataDraft> roots = new ArrayList<>();
         Deque<Map.Entry<Integer, DataDraft>> stack = new ArrayDeque<>();
         DataDraft previous = null;
@@ -265,9 +320,7 @@ final class AstBuilder {
     }
 
     private Ast.DeclarationVisibility declarationVisibility(ParserRuleContext context,
-                                                             String externalRule, String globalRule) {
-        boolean external = firstDescendant(context, externalRule) != null;
-        boolean global = firstDescendant(context, globalRule) != null;
+                                                             boolean external, boolean global) {
         if (external && global) {
             semanticDiagnostics.add(new SemanticCoverage.Diagnostic(
                     "CONFLICTING_DECLARATION_VISIBILITY",
@@ -280,56 +333,66 @@ final class AstBuilder {
     }
 
     private Ast.DataClause buildDataClause(ParserRuleContext context) {
+        Ast.Node visited = visit(context);
+        if (visited instanceof Ast.DataClause dataClause) return dataClause;
+        throw new IllegalStateException("Data clause visitor produced no AST node for " + rule(context));
+    }
+
+    private Ast.DataClause mapDataClause(ParserRuleContext context) {
         String grammarRule = rule(context);
         String writtenText = sourceText(context).strip();
         Ast.Meta meta = meta(context);
-        if (grammarRule.equals("dataPictureClause")) {
-            ParserRuleContext picture = firstDescendant(context, "pictureString");
+        if (context instanceof CobolParser.DataPictureClauseContext) {
+            ParserRuleContext picture = ((CobolParser.DataPictureClauseContext) context).pictureString();
             return new Ast.PictureClause(meta, picture == null ? "" : sourceText(picture).strip(), writtenText);
         }
-        if (grammarRule.equals("dataUsageClause")) {
+        if (context instanceof CobolParser.DataUsageClauseContext) {
             String usage = writtenText.replaceFirst("(?i)^USAGE\\s+(IS\\s+)?", "");
             return new Ast.UsageClause(meta, usage, writtenText);
         }
-        if (grammarRule.equals("dataValueClause")) {
-            List<String> values = directChildrenNamed(context, "dataValueInterval").stream()
+        if (context instanceof CobolParser.DataValueClauseContext) {
+            List<String> values = ((CobolParser.DataValueClauseContext) context).dataValueInterval().stream()
                     .map(this::sourceText).map(String::strip).toList();
             return new Ast.ValueClause(meta, values, writtenText);
         }
-        if (grammarRule.equals("dataRedefinesClause")) {
+        if (context instanceof CobolParser.DataRedefinesClauseContext) {
             return new Ast.RedefinesClause(meta,
-                    simpleDataReference(firstDescendant(context, "dataName")), writtenText);
+                    simpleDataReference(((CobolParser.DataRedefinesClauseContext) context).dataName()), writtenText);
         }
-        if (grammarRule.equals("dataRenamesClause")) {
-            List<ParserRuleContext> names = nearestDescendants(context, "qualifiedDataName");
+        if (context instanceof CobolParser.DataRenamesClauseContext) {
+            List<CobolParser.QualifiedDataNameContext> names = nearestDescendants(context,
+                    CobolParser.QualifiedDataNameContext.class);
             Ast.DataReference from = (Ast.DataReference) expression(names.get(0), "renames");
             Ast.DataReference through = names.size() > 1
                     ? (Ast.DataReference) expression(names.get(1), "renames through") : null;
             return new Ast.RenamesClause(meta, from, through, writtenText);
         }
-        if (grammarRule.equals("dataOccursClause")) {
-            ParserRuleContext first = firstDirectOrNearest(context, Set.of("identifier", "integerLiteral"));
-            ParserRuleContext to = firstDescendant(context, "dataOccursTo");
-            ParserRuleContext depending = firstDescendant(context, "dataOccursDepending");
+        if (context instanceof CobolParser.DataOccursClauseContext) {
+            ParserRuleContext first = firstDirectOrNearest(context,
+                    child -> child instanceof CobolParser.IdentifierContext
+                            || child instanceof CobolParser.IntegerLiteralContext);
+            CobolParser.DataOccursClauseContext occurs = (CobolParser.DataOccursClauseContext) context;
+            CobolParser.DataOccursToContext to = occurs.dataOccursTo();
+            CobolParser.DataOccursDependingContext depending = occurs.dataOccursDepending();
             Ast.Expression minimum = expression(first, "occurs minimum");
             Ast.Expression maximum = to == null ? null
-                    : expression(firstDescendant(to, "integerLiteral"), "occurs maximum");
+                    : expression(to.integerLiteral(), "occurs maximum");
             Ast.DataReference dependingOn = depending == null ? null
-                    : (Ast.DataReference) expression(firstDescendant(depending, "qualifiedDataName"),
+                    : (Ast.DataReference) expression(depending.qualifiedDataName(),
                     "occurs depending");
-            List<Ast.DataReference> keys = nearestDescendants(context, "dataOccursSort").stream()
-                    .flatMap(x -> nearestDescendants(x, "qualifiedDataName").stream())
+            List<Ast.DataReference> keys = occurs.dataOccursSort().stream()
+                    .flatMap(x -> x.qualifiedDataName().stream())
                     .map(x -> (Ast.DataReference) expression(x, "occurs key"))
                     .toList();
-            List<Ast.IndexReference> indexes = nearestDescendants(context, "dataOccursIndexed").stream()
-                    .flatMap(x -> nearestDescendants(x, "indexName").stream())
+            List<Ast.IndexReference> indexes = occurs.dataOccursIndexed().stream()
+                    .flatMap(x -> x.indexName().stream())
                     .map(x -> new Ast.IndexReference(meta(x), clean(sourceText(x)), sourceText(x).strip()))
                     .toList();
             return new Ast.OccursClause(meta, minimum, maximum, dependingOn, keys, indexes, writtenText);
         }
-        List<Ast.Node> references = nearestDescendants(context,
-                Set.of("qualifiedDataName", "identifier", "fileName", "indexName")).stream()
-                .map(node -> rule(node).equals("qualifiedDataName") || rule(node).equals("identifier")
+        List<Ast.Node> references = nearestDescendants(context, AstBuilder::isDataClauseReferenceContext).stream()
+                .map(node -> node instanceof CobolParser.QualifiedDataNameContext
+                        || node instanceof CobolParser.IdentifierContext
                         ? expression(node, "data clause") : nominalReference(node))
                 .map(Ast.Node.class::cast).toList();
         return new Ast.PreservedDataClause(meta, grammarRule, writtenText, references);
@@ -355,38 +418,37 @@ final class AstBuilder {
         catch (NumberFormatException ignored) { return -1; }
     }
 
-    private static Ast.DataSectionKind dataSectionKind(String grammarRule) {
-        return switch (grammarRule) {
-            case "fileSection" -> Ast.DataSectionKind.FILE;
-            case "dataBaseSection" -> Ast.DataSectionKind.DATABASE;
-            case "workingStorageSection" -> Ast.DataSectionKind.WORKING_STORAGE;
-            case "linkageSection" -> Ast.DataSectionKind.LINKAGE;
-            case "communicationSection" -> Ast.DataSectionKind.COMMUNICATION;
-            case "localStorageSection" -> Ast.DataSectionKind.LOCAL_STORAGE;
-            case "screenSection" -> Ast.DataSectionKind.SCREEN;
-            case "reportSection" -> Ast.DataSectionKind.REPORT;
-            default -> Ast.DataSectionKind.PROGRAM_LIBRARY;
-        };
+    private static Ast.DataSectionKind dataSectionKind(ParserRuleContext context) {
+        if (context instanceof CobolParser.FileSectionContext) return Ast.DataSectionKind.FILE;
+        if (context instanceof CobolParser.DataBaseSectionContext) return Ast.DataSectionKind.DATABASE;
+        if (context instanceof CobolParser.WorkingStorageSectionContext) return Ast.DataSectionKind.WORKING_STORAGE;
+        if (context instanceof CobolParser.LinkageSectionContext) return Ast.DataSectionKind.LINKAGE;
+        if (context instanceof CobolParser.CommunicationSectionContext) return Ast.DataSectionKind.COMMUNICATION;
+        if (context instanceof CobolParser.LocalStorageSectionContext) return Ast.DataSectionKind.LOCAL_STORAGE;
+        if (context instanceof CobolParser.ScreenSectionContext) return Ast.DataSectionKind.SCREEN;
+        if (context instanceof CobolParser.ReportSectionContext) return Ast.DataSectionKind.REPORT;
+        if (context instanceof CobolParser.ProgramLibrarySectionContext) return Ast.DataSectionKind.PROGRAM_LIBRARY;
+        throw new IllegalArgumentException("Unknown data section context: " + context.getClass().getSimpleName());
     }
 
-    private Ast.Division buildProcedure(ParserRuleContext context) {
+    private Ast.Division buildProcedure(CobolParser.ProcedureDivisionContext context) {
         Ast.Meta meta = meta(context);
         List<Ast.Node> children = new ArrayList<>();
         Ast.ProcedureSignature signature = buildProcedureSignature(context);
         if (signature != null) children.add(signature);
-        ParserRuleContext body = firstDescendant(context, "procedureDivisionBody");
+        CobolParser.ProcedureDivisionBodyContext body = context.procedureDivisionBody();
         if (body != null) {
-            for (ParserRuleContext child : directRuleChildren(body)) {
-                if (rule(child).equals("paragraphs")) children.addAll(buildParagraphGroup(child));
-                else if (rule(child).equals("procedureSection")) children.add(buildProcedureSection(child));
+            children.addAll(buildParagraphGroup(body.paragraphs()));
+            for (CobolParser.ProcedureSectionContext section : body.procedureSection()) {
+                children.add(buildProcedureSection(section));
             }
         }
         return new Ast.Division(meta, Ast.DivisionKind.PROCEDURE, children);
     }
 
-    private Ast.ProcedureSignature buildProcedureSignature(ParserRuleContext context) {
-        ParserRuleContext using = firstDescendant(context, "procedureDivisionUsingClause");
-        ParserRuleContext giving = firstDescendant(context, "procedureDivisionGivingClause");
+    private Ast.ProcedureSignature buildProcedureSignature(CobolParser.ProcedureDivisionContext context) {
+        CobolParser.ProcedureDivisionUsingClauseContext using = context.procedureDivisionUsingClause();
+        CobolParser.ProcedureDivisionGivingClauseContext giving = context.procedureDivisionGivingClause();
         if (using == null && giving == null) return null;
 
         ParserRuleContext anchor = using != null ? using : giving;
@@ -394,13 +456,12 @@ final class AstBuilder {
         List<Ast.ProcedureParameter> parameters = new ArrayList<>();
         if (using != null) {
             for (ParserRuleContext parameter : nearestDescendants(using,
-                    Set.of("procedureDivisionByReference", "procedureDivisionByValue"))) {
+                    AstBuilder::isProcedureParameterContext)) {
                 Ast.Meta parameterMeta = meta(parameter);
-                boolean any = containsToken(parameter, "ANY");
-                boolean optional = containsToken(parameter, "OPTIONAL");
-                ParserRuleContext value = firstDirectOrNearest(parameter,
-                        Set.of("identifier", "fileName", "literal"));
-                Ast.PassingMode mode = rule(parameter).contains("ByValue")
+                boolean any = parameter.getToken(CobolParser.ANY, 0) != null;
+                boolean optional = parameter.getToken(CobolParser.OPTIONAL, 0) != null;
+                ParserRuleContext value = firstDirectOrNearest(parameter, AstBuilder::isParameterValueContext);
+                Ast.PassingMode mode = parameter instanceof CobolParser.ProcedureDivisionByValueContext
                         ? Ast.PassingMode.VALUE : Ast.PassingMode.REFERENCE;
                 parameters.add(new Ast.ProcedureParameter(parameterMeta, mode,
                         any ? null : expression(value, "procedure parameter"), optional, any,
@@ -408,43 +469,43 @@ final class AstBuilder {
             }
         }
         Ast.DataReference returning = giving == null ? null
-                : simpleDataReference(firstDescendant(giving, "dataName"));
+                : simpleDataReference(giving.dataName());
         String writtenText = sourceText(anchor).strip()
                 + (giving == null ? "" : " " + sourceText(giving).strip());
-        return new Ast.ProcedureSignature(meta, using != null && containsToken(using, "CHAINING"),
+        return new Ast.ProcedureSignature(meta, using != null && using.CHAINING() != null,
                 parameters, returning, writtenText);
     }
 
-    private Ast.Section buildProcedureSection(ParserRuleContext context) {
+    private Ast.Section buildProcedureSection(CobolParser.ProcedureSectionContext context) {
         Ast.Meta meta = meta(context);
-        ParserRuleContext name = firstDescendant(context, "sectionName");
-        ParserRuleContext paragraphs = firstDescendant(context, "paragraphs");
+        ParserRuleContext name = context.procedureSectionHeader().sectionName();
+        CobolParser.ParagraphsContext paragraphs = context.paragraphs();
         return new Ast.Section(meta, name == null ? "<section>" : clean(sourceText(name)),
                 paragraphs == null ? List.of() : buildParagraphGroup(paragraphs));
     }
 
-    private List<Ast.Node> buildParagraphGroup(ParserRuleContext context) {
+    private List<Ast.Node> buildParagraphGroup(CobolParser.ParagraphsContext context) {
         List<Ast.Node> result = new ArrayList<>();
-        List<ParserRuleContext> leading = directChildrenNamed(context, "sentence");
+        List<CobolParser.SentenceContext> leading = context.sentence();
         if (!leading.isEmpty()) {
             Ast.Meta syntheticMeta = meta(context);
             List<Ast.Sentence> sentences = leading.stream().map(this::buildSentence).toList();
             result.add(new Ast.Paragraph(syntheticMeta, "<entry>", sentences));
         }
-        for (ParserRuleContext paragraph : directChildrenNamed(context, "paragraph")) result.add(buildParagraph(paragraph));
+        for (CobolParser.ParagraphContext paragraph : context.paragraph()) result.add(buildParagraph(paragraph));
         return result;
     }
 
-    private Ast.Paragraph buildParagraph(ParserRuleContext context) {
+    private Ast.Paragraph buildParagraph(CobolParser.ParagraphContext context) {
         Ast.Meta meta = meta(context);
-        ParserRuleContext name = firstDescendant(context, "paragraphName");
-        List<Ast.Sentence> sentences = directChildrenNamed(context, "sentence").stream().map(this::buildSentence).toList();
+        ParserRuleContext name = context.paragraphName();
+        List<Ast.Sentence> sentences = context.sentence().stream().map(this::buildSentence).toList();
         return new Ast.Paragraph(meta, name == null ? "<paragraph>" : clean(sourceText(name)), sentences);
     }
 
-    private Ast.Sentence buildSentence(ParserRuleContext context) {
+    private Ast.Sentence buildSentence(CobolParser.SentenceContext context) {
         Ast.Meta meta = meta(context);
-        List<Ast.Statement> statements = directChildrenNamed(context, "statement").stream().map(this::buildStatement).toList();
+        List<Ast.Statement> statements = context.statement().stream().map(this::buildStatement).toList();
         Token stop = context.getStop();
         Ast.SourceSpan terminator = stop == null ? meta.span() : new Ast.SourceSpan(stop.getLine(), stop.getCharPositionInLine(),
                 stop.getLine(), stop.getCharPositionInLine() + Math.max(0,
@@ -454,26 +515,15 @@ final class AstBuilder {
     }
 
     private Ast.Statement buildStatement(ParserRuleContext wrapper) {
-        ParserRuleContext concrete = directRuleChildren(wrapper).stream().findFirst().orElse(wrapper);
-        String grammarRule = rule(concrete);
-        Ast.Statement statement = switch (grammarRule) {
-            case "callStatement" -> buildCall(concrete);
-            case "ifStatement" -> buildIf(concrete);
-            case "evaluateStatement" -> buildEvaluate(concrete);
-            case "performStatement" -> buildPerform(concrete);
-            case "goToStatement" -> buildGoTo(concrete);
-            case "moveStatement" -> buildMove(concrete);
-            case "execSqlStatement" -> buildEmbedded(concrete, Ast.EmbeddedLanguage.SQL);
-            case "execCicsStatement" -> buildEmbedded(concrete, Ast.EmbeddedLanguage.CICS);
-            case "execSqlImsStatement" -> buildEmbedded(concrete, Ast.EmbeddedLanguage.SQLIMS);
-            case "nextSentenceStatement" -> new Ast.NextSentenceStatement(meta(concrete));
-            default -> {
-                if (MODELED_GENERIC_STATEMENTS.contains(grammarRule)) yield buildStructuredStatement(concrete, false);
-                if (PRESERVED_STATEMENTS.contains(grammarRule)) yield buildStructuredStatement(concrete, true);
-                throw new IllegalStateException("Unclassified statement alternative: " + grammarRule);
-            }
-        };
-        coverageDrafts.add(new CoverageDraft(rule(concrete), statement.meta(), sourceText(concrete),
+        if (!(wrapper instanceof CobolParser.StatementContext statementContext)) {
+            throw new IllegalArgumentException("Expected statement context, got " + rule(wrapper));
+        }
+        Ast.Node visited = visit(statementContext);
+        if (!(visited instanceof Ast.Statement statement)) {
+            throw new IllegalStateException("Statement visitor produced no AST node for " + sourceText(wrapper));
+        }
+        String grammarRule = statement.meta().origin().grammarRule();
+        coverageDrafts.add(new CoverageDraft(grammarRule, statement.meta(), sourceText(wrapper),
                 statement.meta().id()));
         if (LOG.isTraceEnabled()) {
             String sourceFile = statement.meta().provenance().original().file();
@@ -487,6 +537,125 @@ final class AstBuilder {
         }
         return statement;
     }
+
+    private Ast.Node modeled(ParserRuleContext context) {
+        return buildStructuredStatement(context, false);
+    }
+
+    private Ast.Node preserved(ParserRuleContext context) {
+        return buildStructuredStatement(context, true);
+    }
+
+    @Override public Ast.Node visitAcceptStatement(CobolParser.AcceptStatementContext ctx) { return modeled(ctx); }
+    @Override public Ast.Node visitAddStatement(CobolParser.AddStatementContext ctx) { return modeled(ctx); }
+    @Override public Ast.Node visitAlterStatement(CobolParser.AlterStatementContext ctx) { return preserved(ctx); }
+    @Override public Ast.Node visitCallStatement(CobolParser.CallStatementContext ctx) { return buildCall(ctx); }
+    @Override public Ast.Node visitCancelStatement(CobolParser.CancelStatementContext ctx) { return preserved(ctx); }
+    @Override public Ast.Node visitCloseStatement(CobolParser.CloseStatementContext ctx) { return modeled(ctx); }
+    @Override public Ast.Node visitComputeStatement(CobolParser.ComputeStatementContext ctx) { return modeled(ctx); }
+    @Override public Ast.Node visitContinueStatement(CobolParser.ContinueStatementContext ctx) { return modeled(ctx); }
+    @Override public Ast.Node visitDeleteStatement(CobolParser.DeleteStatementContext ctx) { return modeled(ctx); }
+    @Override public Ast.Node visitDisableStatement(CobolParser.DisableStatementContext ctx) { return preserved(ctx); }
+    @Override public Ast.Node visitDisplayStatement(CobolParser.DisplayStatementContext ctx) { return preserved(ctx); }
+    @Override public Ast.Node visitDivideStatement(CobolParser.DivideStatementContext ctx) { return modeled(ctx); }
+    @Override public Ast.Node visitEnableStatement(CobolParser.EnableStatementContext ctx) { return preserved(ctx); }
+    @Override public Ast.Node visitEntryStatement(CobolParser.EntryStatementContext ctx) { return preserved(ctx); }
+    @Override public Ast.Node visitEvaluateStatement(CobolParser.EvaluateStatementContext ctx) { return buildEvaluate(ctx); }
+    @Override public Ast.Node visitExhibitStatement(CobolParser.ExhibitStatementContext ctx) { return preserved(ctx); }
+    @Override public Ast.Node visitExecCicsStatement(CobolParser.ExecCicsStatementContext ctx) { return buildEmbedded(ctx, Ast.EmbeddedLanguage.CICS); }
+    @Override public Ast.Node visitExecSqlStatement(CobolParser.ExecSqlStatementContext ctx) { return buildEmbedded(ctx, Ast.EmbeddedLanguage.SQL); }
+    @Override public Ast.Node visitExecSqlImsStatement(CobolParser.ExecSqlImsStatementContext ctx) { return buildEmbedded(ctx, Ast.EmbeddedLanguage.SQLIMS); }
+    @Override public Ast.Node visitExitStatement(CobolParser.ExitStatementContext ctx) { return modeled(ctx); }
+    @Override public Ast.Node visitGenerateStatement(CobolParser.GenerateStatementContext ctx) { return preserved(ctx); }
+    @Override public Ast.Node visitGobackStatement(CobolParser.GobackStatementContext ctx) { return modeled(ctx); }
+    @Override public Ast.Node visitGoToStatement(CobolParser.GoToStatementContext ctx) { return buildGoTo(ctx); }
+    @Override public Ast.Node visitIfStatement(CobolParser.IfStatementContext ctx) { return buildIf(ctx); }
+    @Override public Ast.Node visitInitializeStatement(CobolParser.InitializeStatementContext ctx) { return modeled(ctx); }
+    @Override public Ast.Node visitInitiateStatement(CobolParser.InitiateStatementContext ctx) { return preserved(ctx); }
+    @Override public Ast.Node visitInspectStatement(CobolParser.InspectStatementContext ctx) { return modeled(ctx); }
+    @Override public Ast.Node visitMergeStatement(CobolParser.MergeStatementContext ctx) { return preserved(ctx); }
+    @Override public Ast.Node visitMoveStatement(CobolParser.MoveStatementContext ctx) { return buildMove(ctx); }
+    @Override public Ast.Node visitMultiplyStatement(CobolParser.MultiplyStatementContext ctx) { return modeled(ctx); }
+    @Override public Ast.Node visitNextSentenceStatement(CobolParser.NextSentenceStatementContext ctx) { return new Ast.NextSentenceStatement(meta(ctx)); }
+    @Override public Ast.Node visitOpenStatement(CobolParser.OpenStatementContext ctx) { return modeled(ctx); }
+    @Override public Ast.Node visitPerformStatement(CobolParser.PerformStatementContext ctx) { return buildPerform(ctx); }
+    @Override public Ast.Node visitPurgeStatement(CobolParser.PurgeStatementContext ctx) { return preserved(ctx); }
+    @Override public Ast.Node visitReadStatement(CobolParser.ReadStatementContext ctx) { return modeled(ctx); }
+    @Override public Ast.Node visitReceiveStatement(CobolParser.ReceiveStatementContext ctx) { return preserved(ctx); }
+    @Override public Ast.Node visitReleaseStatement(CobolParser.ReleaseStatementContext ctx) { return modeled(ctx); }
+    @Override public Ast.Node visitReturnStatement(CobolParser.ReturnStatementContext ctx) { return modeled(ctx); }
+    @Override public Ast.Node visitRewriteStatement(CobolParser.RewriteStatementContext ctx) { return modeled(ctx); }
+    @Override public Ast.Node visitSearchStatement(CobolParser.SearchStatementContext ctx) { return preserved(ctx); }
+    @Override public Ast.Node visitSendStatement(CobolParser.SendStatementContext ctx) { return preserved(ctx); }
+    @Override public Ast.Node visitSetStatement(CobolParser.SetStatementContext ctx) { return modeled(ctx); }
+    @Override public Ast.Node visitSortStatement(CobolParser.SortStatementContext ctx) { return preserved(ctx); }
+    @Override public Ast.Node visitStartStatement(CobolParser.StartStatementContext ctx) { return modeled(ctx); }
+    @Override public Ast.Node visitStopStatement(CobolParser.StopStatementContext ctx) { return modeled(ctx); }
+    @Override public Ast.Node visitStringStatement(CobolParser.StringStatementContext ctx) { return modeled(ctx); }
+    @Override public Ast.Node visitSubtractStatement(CobolParser.SubtractStatementContext ctx) { return modeled(ctx); }
+    @Override public Ast.Node visitTerminateStatement(CobolParser.TerminateStatementContext ctx) { return preserved(ctx); }
+    @Override public Ast.Node visitUnstringStatement(CobolParser.UnstringStatementContext ctx) { return modeled(ctx); }
+    @Override public Ast.Node visitWriteStatement(CobolParser.WriteStatementContext ctx) { return modeled(ctx); }
+
+    @Override public Ast.Node visitIdentifier(CobolParser.IdentifierContext ctx) { return identifierExpression(ctx); }
+    @Override public Ast.Node visitFileName(CobolParser.FileNameContext ctx) { return new Ast.FileReference(meta(ctx), clean(sourceText(ctx)), sourceText(ctx).strip()); }
+    @Override public Ast.Node visitIndexName(CobolParser.IndexNameContext ctx) { return new Ast.IndexReference(meta(ctx), clean(sourceText(ctx)), sourceText(ctx).strip()); }
+    @Override public Ast.Node visitQualifiedDataName(CobolParser.QualifiedDataNameContext ctx) { return dataReference(ctx); }
+    @Override public Ast.Node visitConditionNameReference(CobolParser.ConditionNameReferenceContext ctx) { return dataReference(ctx); }
+    @Override public Ast.Node visitTableCall(CobolParser.TableCallContext ctx) { return tableReference(ctx); }
+    @Override public Ast.Node visitFunctionCall(CobolParser.FunctionCallContext ctx) { return functionExpression(ctx); }
+    @Override public Ast.Node visitSpecialRegister(CobolParser.SpecialRegisterContext ctx) { return specialRegisterExpression(ctx); }
+    @Override public Ast.Node visitArithmeticExpression(CobolParser.ArithmeticExpressionContext ctx) { return arithmeticExpression(ctx); }
+    @Override public Ast.Node visitMultDivs(CobolParser.MultDivsContext ctx) { return arithmeticExpression(ctx); }
+    @Override public Ast.Node visitPowers(CobolParser.PowersContext ctx) { return arithmeticExpression(ctx); }
+    @Override public Ast.Node visitBasis(CobolParser.BasisContext ctx) { return arithmeticExpression(ctx); }
+    @Override public Ast.Node visitCondition(CobolParser.ConditionContext ctx) { return conditionExpression(ctx); }
+    @Override public Ast.Node visitCombinableCondition(CobolParser.CombinableConditionContext ctx) { return conditionExpression(ctx); }
+    @Override public Ast.Node visitSimpleCondition(CobolParser.SimpleConditionContext ctx) { return conditionExpression(ctx); }
+    @Override public Ast.Node visitRelationCondition(CobolParser.RelationConditionContext ctx) { return conditionExpression(ctx); }
+    @Override public Ast.Node visitRelationSignCondition(CobolParser.RelationSignConditionContext ctx) { return conditionExpression(ctx); }
+    @Override public Ast.Node visitRelationArithmeticComparison(CobolParser.RelationArithmeticComparisonContext ctx) { return conditionExpression(ctx); }
+    @Override public Ast.Node visitRelationCombinedComparison(CobolParser.RelationCombinedComparisonContext ctx) { return conditionExpression(ctx); }
+    @Override public Ast.Node visitRelationCombinedCondition(CobolParser.RelationCombinedConditionContext ctx) { return conditionExpression(ctx); }
+    @Override public Ast.Node visitClassCondition(CobolParser.ClassConditionContext ctx) { return conditionExpression(ctx); }
+    @Override public Ast.Node visitAbbreviation(CobolParser.AbbreviationContext ctx) { return conditionExpression(ctx); }
+    @Override public Ast.Node visitSubscript(CobolParser.SubscriptContext ctx) { return subscriptExpression(ctx); }
+    @Override public Ast.Node visitEvaluateSelect(CobolParser.EvaluateSelectContext ctx) { return expressionWrapper(ctx, "evaluate select"); }
+    @Override public Ast.Node visitEvaluateValue(CobolParser.EvaluateValueContext ctx) { return expressionWrapper(ctx, "evaluate value"); }
+    @Override public Ast.Node visitEvaluateCondition(CobolParser.EvaluateConditionContext ctx) { return expressionWrapper(ctx, "evaluate condition"); }
+    @Override public Ast.Node visitArgument(CobolParser.ArgumentContext ctx) { return expressionWrapper(ctx, "argument"); }
+    @Override public Ast.Node visitCharacterPosition(CobolParser.CharacterPositionContext ctx) { return expressionWrapper(ctx, "character position"); }
+    @Override public Ast.Node visitLength(CobolParser.LengthContext ctx) { return expressionWrapper(ctx, "length"); }
+    @Override public Ast.Node visitPerformFrom(CobolParser.PerformFromContext ctx) { return expressionWrapper(ctx, "perform from"); }
+    @Override public Ast.Node visitPerformBy(CobolParser.PerformByContext ctx) { return expressionWrapper(ctx, "perform by"); }
+    @Override public Ast.Node visitLiteral(CobolParser.LiteralContext ctx) { return literalExpression(ctx); }
+    @Override public Ast.Node visitIntegerLiteral(CobolParser.IntegerLiteralContext ctx) { return literalExpression(ctx); }
+    @Override public Ast.Node visitNumericLiteral(CobolParser.NumericLiteralContext ctx) { return literalExpression(ctx); }
+    @Override public Ast.Node visitBooleanLiteral(CobolParser.BooleanLiteralContext ctx) { return literalExpression(ctx); }
+    @Override public Ast.Node visitCicsDfhRespLiteral(CobolParser.CicsDfhRespLiteralContext ctx) { return literalExpression(ctx); }
+    @Override public Ast.Node visitCicsDfhValueLiteral(CobolParser.CicsDfhValueLiteralContext ctx) { return literalExpression(ctx); }
+    @Override public Ast.Node visitDataAlignedClause(CobolParser.DataAlignedClauseContext ctx) { return mapDataClause(ctx); }
+    @Override public Ast.Node visitDataBlankWhenZeroClause(CobolParser.DataBlankWhenZeroClauseContext ctx) { return mapDataClause(ctx); }
+    @Override public Ast.Node visitDataCommonOwnLocalClause(CobolParser.DataCommonOwnLocalClauseContext ctx) { return mapDataClause(ctx); }
+    @Override public Ast.Node visitDataExternalClause(CobolParser.DataExternalClauseContext ctx) { return mapDataClause(ctx); }
+    @Override public Ast.Node visitDataGlobalClause(CobolParser.DataGlobalClauseContext ctx) { return mapDataClause(ctx); }
+    @Override public Ast.Node visitDataIntegerStringClause(CobolParser.DataIntegerStringClauseContext ctx) { return mapDataClause(ctx); }
+    @Override public Ast.Node visitDataJustifiedClause(CobolParser.DataJustifiedClauseContext ctx) { return mapDataClause(ctx); }
+    @Override public Ast.Node visitDataOccursClause(CobolParser.DataOccursClauseContext ctx) { return mapDataClause(ctx); }
+    @Override public Ast.Node visitDataPictureClause(CobolParser.DataPictureClauseContext ctx) { return mapDataClause(ctx); }
+    @Override public Ast.Node visitDataReceivedByClause(CobolParser.DataReceivedByClauseContext ctx) { return mapDataClause(ctx); }
+    @Override public Ast.Node visitDataRecordAreaClause(CobolParser.DataRecordAreaClauseContext ctx) { return mapDataClause(ctx); }
+    @Override public Ast.Node visitDataRedefinesClause(CobolParser.DataRedefinesClauseContext ctx) { return mapDataClause(ctx); }
+    @Override public Ast.Node visitDataRenamesClause(CobolParser.DataRenamesClauseContext ctx) { return mapDataClause(ctx); }
+    @Override public Ast.Node visitDataSignClause(CobolParser.DataSignClauseContext ctx) { return mapDataClause(ctx); }
+    @Override public Ast.Node visitDataSynchronizedClause(CobolParser.DataSynchronizedClauseContext ctx) { return mapDataClause(ctx); }
+    @Override public Ast.Node visitDataThreadLocalClause(CobolParser.DataThreadLocalClauseContext ctx) { return mapDataClause(ctx); }
+    @Override public Ast.Node visitDataTypeClause(CobolParser.DataTypeClauseContext ctx) { return mapDataClause(ctx); }
+    @Override public Ast.Node visitDataTypeDefClause(CobolParser.DataTypeDefClauseContext ctx) { return mapDataClause(ctx); }
+    @Override public Ast.Node visitDataUsageClause(CobolParser.DataUsageClauseContext ctx) { return mapDataClause(ctx); }
+    @Override public Ast.Node visitDataUsingClause(CobolParser.DataUsingClauseContext ctx) { return mapDataClause(ctx); }
+    @Override public Ast.Node visitDataValueClause(CobolParser.DataValueClauseContext ctx) { return mapDataClause(ctx); }
+    @Override public Ast.Node visitDataWithLowerBoundsClause(CobolParser.DataWithLowerBoundsClauseContext ctx) { return mapDataClause(ctx); }
 
     private SemanticCoverage.Report buildCoverageReport() {
         Comparator<CoverageDraft> bySourceOrder = Comparator
@@ -504,34 +673,32 @@ final class AstBuilder {
         return new SemanticCoverage.Report(findings);
     }
 
-    private Ast.CallStatement buildCall(ParserRuleContext context) {
+    private Ast.CallStatement buildCall(CobolParser.CallStatementContext context) {
         Ast.Meta meta = meta(context);
-        ParserRuleContext targetContext = firstDirectOrNearest(context, Set.of("identifier", "literal"));
-        Ast.Expression target = targetContext != null && rule(targetContext).equals("literal")
+        ParserRuleContext targetContext = context.identifier() != null ? context.identifier() : context.literal();
+        Ast.Expression target = targetContext instanceof CobolParser.LiteralContext
                 ? new Ast.ProgramReference(meta(targetContext), unquote(sourceText(targetContext).strip()), sourceText(targetContext).strip())
                 : expression(targetContext, "call target");
         Ast.CallTargetSyntax kind = target instanceof Ast.ProgramReference
                 ? Ast.CallTargetSyntax.LITERAL_PROGRAM_NAME : Ast.CallTargetSyntax.IDENTIFIER_OR_EXPRESSION;
         List<Ast.CallArgument> arguments = new ArrayList<>();
-        for (ParserRuleContext arg : nearestDescendants(context, Set.of("callByReference", "callByValue", "callByContent"))) {
-            Ast.PassingMode mode = switch (rule(arg)) {
-                case "callByValue" -> Ast.PassingMode.VALUE;
-                case "callByContent" -> Ast.PassingMode.CONTENT;
-                default -> Ast.PassingMode.REFERENCE;
-            };
+        for (ParserRuleContext arg : nearestDescendants(context, AstBuilder::isCallArgumentContext)) {
+            Ast.PassingMode mode = arg instanceof CobolParser.CallByValueContext ? Ast.PassingMode.VALUE
+                    : arg instanceof CobolParser.CallByContentContext ? Ast.PassingMode.CONTENT
+                    : Ast.PassingMode.REFERENCE;
             Ast.Meta argMeta = meta(arg);
-            Ast.CallArgumentKind argumentKind = containsToken(arg, "OMITTED")
-                    ? Ast.CallArgumentKind.OMITTED : containsToken(arg, "ADDRESS")
-                    ? Ast.CallArgumentKind.ADDRESS_OF : containsToken(arg, "LENGTH")
+            Ast.CallArgumentKind argumentKind = arg.getToken(CobolParser.OMITTED, 0) != null
+                    ? Ast.CallArgumentKind.OMITTED : arg.getToken(CobolParser.ADDRESS, 0) != null
+                    ? Ast.CallArgumentKind.ADDRESS_OF : arg.getToken(CobolParser.LENGTH, 0) != null
                     ? Ast.CallArgumentKind.LENGTH_OF : Ast.CallArgumentKind.VALUE;
-            ParserRuleContext value = firstDirectOrNearest(arg, Set.of("identifier", "literal", "fileName"));
+            ParserRuleContext value = firstDirectOrNearest(arg, AstBuilder::isParameterValueContext);
             arguments.add(new Ast.CallArgument(argMeta, mode, argumentKind,
                     argumentKind == Ast.CallArgumentKind.OMITTED ? null : expression(value, "argument"),
                     sourceText(arg).strip()));
         }
-        ParserRuleContext giving = firstDescendant(context, "callGivingPhrase");
+        CobolParser.CallGivingPhraseContext giving = context.callGivingPhrase();
         Ast.Expression returning = giving == null ? null
-                : expression(firstDescendant(giving, "identifier"), "call returning");
+                : expression(giving.identifier(), "call returning");
         return new Ast.CallStatement(meta, kind, target, arguments, returning, directNestedStatements(context));
     }
 
@@ -539,7 +706,7 @@ final class AstBuilder {
         Ast.Meta meta = meta(context);
         List<Ast.StatementOperand> operands = new ArrayList<>();
         collectStatementOperands(context, context, operands);
-        List<Ast.StatementClause> clauses = nearestDescendants(context, FLOW_CLAUSE_RULES).stream()
+        List<Ast.StatementClause> clauses = nearestDescendants(context, AstBuilder::isFlowClauseContext).stream()
                 .map(this::buildStatementClause).toList();
         return preserved
                 ? new Ast.PreservedStatement(meta, rule(context), sourceText(context).strip(), operands, clauses)
@@ -549,8 +716,8 @@ final class AstBuilder {
     private void collectStatementOperands(ParserRuleContext root, ParserRuleContext context,
                                           List<Ast.StatementOperand> output) {
         for (ParserRuleContext child : directRuleChildren(context)) {
-            if (child != root && rule(child).equals("statement")) continue;
-            if (OPERAND_RULES.contains(rule(child))) {
+            if (child != root && child instanceof CobolParser.StatementContext) continue;
+            if (isStatementOperandContext(child)) {
                 Ast.Meta operandMeta = meta(child);
                 output.add(new Ast.StatementOperand(operandMeta, rule(context), statementOperand(child)));
             } else {
@@ -560,14 +727,16 @@ final class AstBuilder {
     }
 
     private Ast.Node statementOperand(ParserRuleContext context) {
-        return switch (rule(context)) {
-            case "identifier", "qualifiedDataName" -> expression(context, "statement operand");
-            case "procedureName" -> procedureReference(context);
-            case "fileName" -> new Ast.FileReference(meta(context), clean(sourceText(context)), sourceText(context).strip());
-            case "indexName" -> new Ast.IndexReference(meta(context), clean(sourceText(context)), sourceText(context).strip());
-            case "literal", "integerLiteral", "numericLiteral" -> literalExpression(context);
-            default -> new Ast.NamedReference(meta(context), rule(context), sourceText(context).strip());
-        };
+        if (context instanceof CobolParser.IdentifierContext
+                || context instanceof CobolParser.QualifiedDataNameContext)
+            return expression(context, "statement operand");
+        if (context instanceof CobolParser.ProcedureNameContext) return procedureReference(context);
+        if (context instanceof CobolParser.FileNameContext)
+            return new Ast.FileReference(meta(context), clean(sourceText(context)), sourceText(context).strip());
+        if (context instanceof CobolParser.IndexNameContext)
+            return new Ast.IndexReference(meta(context), clean(sourceText(context)), sourceText(context).strip());
+        if (isLiteralContext(context)) return literalExpression(context);
+        return new Ast.NamedReference(meta(context), rule(context), sourceText(context).strip());
     }
 
     private Ast.StatementClause buildStatementClause(ParserRuleContext context) {
@@ -585,136 +754,109 @@ final class AstBuilder {
         return Set.copyOf(result);
     }
 
-    private Ast.IfStatement buildIf(ParserRuleContext context) {
+    private Ast.IfStatement buildIf(CobolParser.IfStatementContext context) {
         Ast.Meta meta = meta(context);
-        ParserRuleContext condition = firstDescendant(context, "condition");
-        ParserRuleContext thenContext = firstDescendant(context, "ifThen");
-        ParserRuleContext elseContext = firstDescendant(context, "ifElse");
-        return new Ast.IfStatement(meta, expression(condition, "condition"),
-                statementsInside(thenContext), statementsInside(elseContext), containsToken(context, "END-IF"));
+        return new Ast.IfStatement(meta, expression(context.condition(), "condition"),
+                statementsInside(context.ifThen()), statementsInside(context.ifElse()), context.END_IF() != null);
     }
 
-    private Ast.EvaluateStatement buildEvaluate(ParserRuleContext context) {
+    private Ast.EvaluateStatement buildEvaluate(CobolParser.EvaluateStatementContext context) {
         Ast.Meta meta = meta(context);
         List<Ast.Expression> subjects = new ArrayList<>();
-        for (ParserRuleContext child : directRuleChildren(context)) {
-            if (rule(child).equals("evaluateSelect")) subjects.add(expression(child, "subject"));
-            else if (rule(child).equals("evaluateAlsoSelect")) {
-                ParserRuleContext select = firstDescendant(child, "evaluateSelect");
-                if (select != null) subjects.add(expression(select, "subject"));
-            }
-        }
+        subjects.add(expression(context.evaluateSelect(), "subject"));
+        for (CobolParser.EvaluateAlsoSelectContext also : context.evaluateAlsoSelect())
+            subjects.add(expression(also.evaluateSelect(), "subject"));
         List<Ast.EvaluateBranch> branches = new ArrayList<>();
-        for (ParserRuleContext branch : directChildrenNamed(context, "evaluateWhenPhrase")) {
+        for (CobolParser.EvaluateWhenPhraseContext branch : context.evaluateWhenPhrase()) {
             Ast.Meta branchMeta = meta(branch);
             List<Ast.Expression> selectors = new ArrayList<>();
-            for (ParserRuleContext when : directChildrenNamed(branch, "evaluateWhen")) {
-                ParserRuleContext condition = firstDescendant(when, "evaluateCondition");
+            for (CobolParser.EvaluateWhenContext when : branch.evaluateWhen()) {
+                ParserRuleContext condition = when.evaluateCondition();
                 if (condition != null) selectors.add(expression(condition, "evaluate selector"));
-                for (ParserRuleContext also : directChildrenNamed(when, "evaluateAlsoCondition")) {
-                    ParserRuleContext alsoCondition = firstDescendant(also, "evaluateCondition");
+                for (CobolParser.EvaluateAlsoConditionContext also : when.evaluateAlsoCondition()) {
+                    ParserRuleContext alsoCondition = also.evaluateCondition();
                     if (alsoCondition != null) selectors.add(expression(alsoCondition, "evaluate selector"));
                 }
             }
             branches.add(new Ast.EvaluateBranch(branchMeta, selectors,
-                    directChildrenNamed(branch, "evaluateWhen").stream()
+                    branch.evaluateWhen().stream()
                             .map(this::sourceText).map(AstBuilder::compact).reduce((a, b) -> a + " " + b).orElse(""), false,
-                    directChildrenNamed(branch, "statement").stream().map(this::buildStatement).toList()));
+                    branch.statement().stream().map(this::buildStatement).toList()));
         }
-        ParserRuleContext other = firstDescendant(context, "evaluateWhenOther");
+        CobolParser.EvaluateWhenOtherContext other = context.evaluateWhenOther();
         if (other != null) branches.add(new Ast.EvaluateBranch(meta(other), List.of(), "OTHER", true, statementsInside(other)));
-        return new Ast.EvaluateStatement(meta, subjects, branches, containsToken(context, "END-EVALUATE"));
+        return new Ast.EvaluateStatement(meta, subjects, branches, context.END_EVALUATE() != null);
     }
 
-    private Ast.PerformStatement buildPerform(ParserRuleContext context) {
+    private Ast.PerformStatement buildPerform(CobolParser.PerformStatementContext context) {
         Ast.Meta meta = meta(context);
-        ParserRuleContext inline = firstDescendant(context, "performInlineStatement");
-        ParserRuleContext procedure = firstDescendant(context, "performProcedureStatement");
-        ParserRuleContext type = firstDescendant(context, "performType");
+        CobolParser.PerformInlineStatementContext inline = context.performInlineStatement();
+        CobolParser.PerformProcedureStatementContext procedure = context.performProcedureStatement();
+        CobolParser.PerformTypeContext type = inline != null ? inline.performType() : procedure.performType();
         List<Ast.Expression> controls = type == null ? List.of() : controlExpressions(type);
         if (inline != null) return new Ast.PerformStatement(meta, Ast.PerformKind.INLINE, null, null,
                 type == null ? "once" : compact(sourceText(type)), controls, statementsInside(inline));
-        List<ParserRuleContext> names = procedure == null ? List.of() : nearestDescendants(procedure, "procedureName");
+        List<CobolParser.ProcedureNameContext> names = procedure == null ? List.of()
+                : nearestDescendants(procedure, CobolParser.ProcedureNameContext.class);
         return new Ast.PerformStatement(meta, Ast.PerformKind.PROCEDURE,
                 names.isEmpty() ? null : procedureReference(names.get(0)),
                 names.size() < 2 ? null : procedureReference(names.get(1)),
                 type == null ? "once" : compact(sourceText(type)), controls, List.of());
     }
 
-    private Ast.GoToStatement buildGoTo(ParserRuleContext context) {
+    private Ast.GoToStatement buildGoTo(CobolParser.GoToStatementContext context) {
         Ast.Meta meta = meta(context);
-        ParserRuleContext depending = firstDescendant(context, "goToDependingOnStatement");
-        List<Ast.ProcedureReference> targets = nearestDescendants(context, "procedureName").stream()
+        CobolParser.GoToDependingOnStatementContext depending = context.goToDependingOnStatement();
+        List<Ast.ProcedureReference> targets = nearestDescendants(context, CobolParser.ProcedureNameContext.class).stream()
                 .map(this::procedureReference).toList();
-        ParserRuleContext selector = depending == null ? null : firstDescendant(depending, "identifier");
+        ParserRuleContext selector = depending == null ? null : depending.identifier();
         return new Ast.GoToStatement(meta, depending == null ? Ast.GoToKind.SIMPLE : Ast.GoToKind.DEPENDING_ON,
                 targets, selector == null ? null : expression(selector, "selector"));
     }
 
-    private Ast.MoveStatement buildMove(ParserRuleContext context) {
+    private Ast.MoveStatement buildMove(CobolParser.MoveStatementContext context) {
         Ast.Meta meta = meta(context);
         ParserRuleContext sending = firstDirectOrNearest(context,
-                Set.of("moveToSendingArea", "moveCorrespondingToSendingArea"));
-        List<ParserRuleContext> identifiers = nearestDescendants(context, "identifier");
-        Ast.Expression sourceExpression = expression(firstDirectOrNearest(sending, Set.of("identifier", "literal")), "source");
+                child -> child instanceof CobolParser.MoveToSendingAreaContext
+                        || child instanceof CobolParser.MoveCorrespondingToSendingAreaContext);
+        List<CobolParser.IdentifierContext> identifiers = nearestDescendants(context, CobolParser.IdentifierContext.class);
+        Ast.Expression sourceExpression = expression(firstDirectOrNearest(sending,
+                child -> child instanceof CobolParser.IdentifierContext
+                        || child instanceof CobolParser.LiteralContext), "source");
         int sourceToken = sourceExpression.meta().span().startToken();
         List<Ast.Expression> targets = identifiers.stream().filter(i -> i.getStart().getTokenIndex() != sourceToken)
                 .map(i -> expression(i, "target")).toList();
-        return new Ast.MoveStatement(meta, sourceExpression, targets, containsToken(context, "CORRESPONDING") || containsToken(context, "CORR"));
+        return new Ast.MoveStatement(meta, sourceExpression, targets,
+                context.moveCorrespondingToStatement() != null);
     }
 
     private Ast.EmbeddedLanguageStatement buildEmbedded(ParserRuleContext context, Ast.EmbeddedLanguage language) {
         return new Ast.EmbeddedLanguageStatement(meta(context), language, sourceText(context).strip());
     }
 
-    private Ast.UnsupportedStatement buildUnsupported(ParserRuleContext context) {
-        Ast.Meta meta = meta(context);
-        LOG.trace("event=ast_construct_unsupported source={} phase=AST_BUILD grammarRule={} line={}",
-                meta.provenance().original().file(), rule(context), meta.span().startLine());
-        List<Ast.Node> references = nearestDescendants(context,
-                Set.of("procedureName", "fileName", "indexName")).stream().map(this::nominalReference).toList();
-        return new Ast.UnsupportedStatement(meta, rule(context), compact(sourceText(context)), references,
-                directNestedStatements(context));
-    }
-
     private Ast.Expression expression(ParserRuleContext context, String role) {
         if (context == null) return new Ast.RawExpression(syntheticMeta(role), role, "<missing>");
-        String contextRule = rule(context);
-        if (contextRule.equals("identifier")) return identifierExpression(context);
-        if (contextRule.equals("fileName")) return new Ast.FileReference(meta(context), clean(sourceText(context)),
-                sourceText(context).strip());
-        if (contextRule.equals("indexName")) return new Ast.IndexReference(meta(context), clean(sourceText(context)),
-                sourceText(context).strip());
-        if (contextRule.equals("qualifiedDataName") || contextRule.equals("conditionNameReference"))
-            return dataReference(context);
-        if (contextRule.equals("tableCall")) return tableReference(context);
-        if (contextRule.equals("functionCall")) return functionExpression(context);
-        if (contextRule.equals("specialRegister")) return specialRegisterExpression(context);
-        if (contextRule.equals("arithmeticExpression") || contextRule.equals("multDivs")
-                || contextRule.equals("powers") || contextRule.equals("basis"))
-            return arithmeticExpression(context);
-        if (isConditionRule(contextRule)) return conditionExpression(context);
-        if (contextRule.equals("subscript")) return subscriptExpression(context);
-        if (Set.of("evaluateSelect", "evaluateValue", "evaluateCondition", "argument", "characterPosition", "length",
-                "performFrom", "performBy").contains(contextRule)) {
-            ParserRuleContext child = firstDirectOrNearest(context, Set.of("condition", "arithmeticExpression",
-                    "identifier", "qualifiedDataName", "literal", "integerLiteral"));
-            if (child != null) return expression(child, role);
+        if (isVisitorExpressionContext(context)) {
+            Ast.Node visited = visit(context);
+            if (visited instanceof Ast.Expression result) return result;
+            throw new IllegalStateException("Expression visitor produced no AST node for " + rule(context));
         }
-        if (contextRule.equals("literal") || contextRule.endsWith("Literal")) return literalExpression(context);
-        ParserRuleContext exact = firstDirectOrNearest(context, Set.of("condition", "arithmeticExpression",
-                "identifier", "literal"));
+        ParserRuleContext exact = firstDirectOrNearest(context, AstBuilder::isRecognizedExpressionContext);
         if (exact != null && compact(sourceText(context)).equals(compact(sourceText(exact))))
             return expression(exact, role);
         Ast.Meta meta = meta(context);
-        List<Ast.Expression> recognized = nearestDescendants(context,
-                Set.of("condition", "arithmeticExpression", "identifier", "literal")).stream()
+        List<Ast.Expression> recognized = nearestDescendants(context, AstBuilder::isRecognizedExpressionContext).stream()
                 .map(child -> expression(child, role)).toList();
-        return new Ast.PreservedExpression(meta, contextRule, sourceText(context).strip(), recognized,
+        return new Ast.PreservedExpression(meta, rule(context), sourceText(context).strip(), recognized,
                 Ast.ReferenceUnderstanding.PRESERVED);
     }
 
-    private Ast.Expression subscriptExpression(ParserRuleContext context) {
+    private Ast.Expression expressionWrapper(ParserRuleContext context, String role) {
+        ParserRuleContext child = firstDirectOrNearest(context, AstBuilder::isExpressionWrapperValueContext);
+        return child == null ? preservedExpression(context, role) : expression(child, role);
+    }
+
+    private Ast.Expression subscriptExpression(CobolParser.SubscriptContext context) {
         List<ParserRuleContext> parts = directRuleChildren(context);
         if (parts.size() > 1) {
             Ast.Meta meta = meta(context);
@@ -727,49 +869,42 @@ final class AstBuilder {
     }
 
     private List<Ast.Expression> controlExpressions(ParserRuleContext performType) {
-        return nearestDescendants(performType,
-                Set.of("condition", "arithmeticExpression", "identifier", "literal")).stream()
+        return nearestDescendants(performType, AstBuilder::isRecognizedExpressionContext).stream()
                 .map(context -> expression(context, "perform control")).toList();
     }
 
-    private Ast.Expression identifierExpression(ParserRuleContext identifier) {
-        ParserRuleContext child = directRuleChildren(identifier).stream().findFirst().orElse(null);
-        if (child == null) return preservedExpression(identifier, "identifier");
-        return switch (rule(child)) {
-            case "qualifiedDataName" -> dataReference(child);
-            case "tableCall" -> tableReference(child);
-            case "functionCall" -> functionExpression(child);
-            case "specialRegister" -> specialRegisterExpression(child);
-            default -> preservedExpression(identifier, "identifier");
-        };
+    private Ast.Expression identifierExpression(CobolParser.IdentifierContext identifier) {
+        if (identifier.qualifiedDataName() != null) return dataReference(identifier.qualifiedDataName());
+        if (identifier.tableCall() != null) return tableReference(identifier.tableCall());
+        if (identifier.functionCall() != null) return functionExpression(identifier.functionCall());
+        if (identifier.specialRegister() != null) return specialRegisterExpression(identifier.specialRegister());
+        return preservedExpression(identifier, "identifier");
     }
 
     private Ast.DataReference dataReference(ParserRuleContext context) {
         Ast.Meta meta = meta(context);
-        ParserRuleContext qualified = rule(context).equals("qualifiedDataName") ? context
-                : firstDescendant(context, "qualifiedDataName");
-        ParserRuleContext base = qualified == null ? firstDirectOrNearest(context,
-                Set.of("dataName", "conditionName", "paragraphName", "textName"))
-                : firstDirectOrNearest(qualified, Set.of("dataName", "conditionName", "paragraphName", "textName"));
+        ParserRuleContext qualified = context instanceof CobolParser.QualifiedDataNameContext ? context
+                : firstDescendant(context, CobolParser.QualifiedDataNameContext.class);
+        ParserRuleContext base = qualified == null ? firstDirectOrNearest(context, AstBuilder::isReferenceBaseContext)
+                : firstDirectOrNearest(qualified, AstBuilder::isReferenceBaseContext);
         String baseName = base == null ? firstSemanticWord(context) : clean(sourceText(base));
         List<Ast.DataQualifier> qualifiers = buildQualifiers(qualified == null ? context : qualified);
         return new Ast.DataReference(meta, baseName, sourceText(context).strip(), qualifiers, List.of(), null,
                 Ast.ReferenceUnderstanding.STRUCTURED);
     }
 
-    private Ast.DataReference tableReference(ParserRuleContext context) {
+    private Ast.DataReference tableReference(CobolParser.TableCallContext context) {
         Ast.Meta meta = meta(context);
-        ParserRuleContext qualified = firstDescendant(context, "qualifiedDataName");
-        ParserRuleContext base = firstDirectOrNearest(qualified,
-                Set.of("dataName", "conditionName", "paragraphName", "textName"));
+        ParserRuleContext qualified = context.qualifiedDataName();
+        ParserRuleContext base = firstDirectOrNearest(qualified, AstBuilder::isReferenceBaseContext);
         List<Ast.DataQualifier> qualifiers = qualified == null ? List.of() : buildQualifiers(qualified);
         List<Ast.SubscriptGroup> groups = new ArrayList<>();
         List<ParserRuleContext> current = null;
         for (int i = 0; i < context.getChildCount(); i++) {
             ParseTree child = context.getChild(i);
-            if (child instanceof ParserRuleContext ruleContext && rule(ruleContext).equals("referenceModifier")) break;
+            if (child instanceof CobolParser.ReferenceModifierContext) break;
             if (child instanceof TerminalNode terminal && terminal.getText().equals("(")) current = new ArrayList<>();
-            else if (child instanceof ParserRuleContext ruleContext && rule(ruleContext).equals("subscript") && current != null)
+            else if (child instanceof CobolParser.SubscriptContext ruleContext && current != null)
                 current.add(ruleContext);
             else if (child instanceof TerminalNode terminal && terminal.getText().equals(")") && current != null) {
                 if (!current.isEmpty()) {
@@ -781,7 +916,7 @@ final class AstBuilder {
                 current = null;
             }
         }
-        ParserRuleContext modifier = firstDescendant(context, "referenceModifier");
+        ParserRuleContext modifier = context.referenceModifier();
         Ast.ReferenceModification referenceModification = modifier == null ? null : referenceModification(modifier);
         return new Ast.DataReference(meta, base == null ? firstSemanticWord(context) : clean(sourceText(base)),
                 sourceText(context).strip(), qualifiers, groups, referenceModification,
@@ -789,23 +924,23 @@ final class AstBuilder {
     }
 
     private List<Ast.DataQualifier> buildQualifiers(ParserRuleContext qualified) {
-        List<ParserRuleContext> contexts = nearestDescendants(qualified, Set.of("inData", "inTable", "inFile"));
+        List<ParserRuleContext> contexts = nearestDescendants(qualified, AstBuilder::isQualifierContext);
         List<Ast.DataQualifier> result = new ArrayList<>();
-        boolean generalFormat = rule(qualified).equals("qualifiedDataNameFormat1")
-                || firstDescendant(qualified, "qualifiedDataNameFormat1") != null;
+        boolean generalFormat = qualified instanceof CobolParser.QualifiedDataNameFormat1Context
+                || qualified instanceof CobolParser.QualifiedDataNameContext name
+                && name.qualifiedDataNameFormat1() != null;
         for (int i = 0; i < contexts.size(); i++) {
             ParserRuleContext qualifier = contexts.get(i);
             String written = sourceText(qualifier).strip();
-            Ast.QualifierConnector connector = containsToken(qualifier, "IN")
+            Ast.QualifierConnector connector = qualifier.getToken(CobolParser.IN, 0) != null
                     ? Ast.QualifierConnector.IN : Ast.QualifierConnector.OF;
-            String qualifierRule = rule(qualifier);
-            Ast.QualifierTarget target = qualifierRule.equals("inFile") ? Ast.QualifierTarget.FILE
-                    : qualifierRule.equals("inData") && generalFormat && i == contexts.size() - 1
+            Ast.QualifierTarget target = qualifier instanceof CobolParser.InFileContext ? Ast.QualifierTarget.FILE
+                    : qualifier instanceof CobolParser.InDataContext && generalFormat && i == contexts.size() - 1
                     ? Ast.QualifierTarget.DATA_OR_FILE : Ast.QualifierTarget.DATA;
             Ast.Meta qualifierMeta = meta(qualifier);
             ParserRuleContext value = directRuleChildren(qualifier).stream().reduce((first, second) -> second).orElse(null);
             Ast.DataReference reference;
-            if (value != null && rule(value).equals("tableCall")) reference = tableReference(value);
+            if (value instanceof CobolParser.TableCallContext tableCall) reference = tableReference(tableCall);
             else {
                 String name = value == null ? written.replaceFirst("(?i)^(IN|OF)\\s+", "") : clean(sourceText(value));
                 reference = new Ast.DataReference(value == null ? qualifierMeta : meta(value), name,
@@ -819,26 +954,27 @@ final class AstBuilder {
 
     private Ast.ReferenceModification referenceModification(ParserRuleContext modifier) {
         Ast.Meta meta = meta(modifier);
-        ParserRuleContext offset = firstDescendant(modifier, "characterPosition");
-        ParserRuleContext length = firstDescendant(modifier, "length");
+        CobolParser.ReferenceModifierContext referenceModifier = (CobolParser.ReferenceModifierContext) modifier;
+        ParserRuleContext offset = referenceModifier.characterPosition();
+        ParserRuleContext length = referenceModifier.length();
         return new Ast.ReferenceModification(meta, expression(offset, "reference offset"),
                 length == null ? null : expression(length, "reference length"), sourceText(modifier).strip());
     }
 
-    private Ast.FunctionExpression functionExpression(ParserRuleContext context) {
+    private Ast.FunctionExpression functionExpression(CobolParser.FunctionCallContext context) {
         Ast.Meta meta = meta(context);
-        ParserRuleContext name = firstDescendant(context, "functionName");
-        List<Ast.Expression> arguments = directChildrenNamed(context, "argument").stream()
+        ParserRuleContext name = context.functionName();
+        List<Ast.Expression> arguments = context.argument().stream()
                 .map(argument -> expression(argument, "function argument")).toList();
-        ParserRuleContext modifier = firstDescendant(context, "referenceModifier");
+        ParserRuleContext modifier = context.referenceModifier();
         return new Ast.FunctionExpression(meta, name == null ? "<unknown>" : clean(sourceText(name)), arguments,
                 modifier == null ? null : referenceModification(modifier), sourceText(context).strip());
     }
 
-    private Ast.SpecialRegisterExpression specialRegisterExpression(ParserRuleContext context) {
+    private Ast.SpecialRegisterExpression specialRegisterExpression(CobolParser.SpecialRegisterContext context) {
         Ast.Meta meta = meta(context);
-        List<Ast.Expression> operands = nearestDescendants(context, "identifier").stream()
-                .map(this::identifierExpression).toList();
+        List<Ast.Expression> operands = context.identifier() == null
+                ? List.of() : List.of(identifierExpression(context.identifier()));
         return new Ast.SpecialRegisterExpression(meta, specialRegisterName(context), operands,
                 sourceText(context).strip());
     }
@@ -854,134 +990,288 @@ final class AstBuilder {
     }
 
     private Ast.Expression arithmeticExpression(ParserRuleContext context) {
-        String contextRule = rule(context);
-        if (contextRule.equals("arithmeticExpression"))
-            return sequenceOperation(context, "multDivs", "plusMinus", Set.of("+", "-"));
-        if (contextRule.equals("multDivs"))
-            return sequenceOperation(context, "powers", "multDiv", Set.of("*", "/"));
-        if (contextRule.equals("powers")) {
-            List<ParserRuleContext> powers = directChildrenNamed(context, "power");
-            ParserRuleContext basis = firstDescendant(context, "basis");
+        if (context instanceof CobolParser.ArithmeticExpressionContext arithmetic) {
+            if (arithmetic.plusMinus().isEmpty()) return expression(arithmetic.multDivs(), "arithmetic operand");
+            Ast.Meta meta = meta(context);
+            List<Ast.Expression> operands = new ArrayList<>();
+            operands.add(expression(arithmetic.multDivs(), "arithmetic operand"));
+            String operator = null;
+            for (CobolParser.PlusMinusContext item : arithmetic.plusMinus()) {
+                String itemOperator = item.PLUSCHAR() != null ? "+" : "-";
+                operator = operator == null ? itemOperator : operator.equals(itemOperator) ? operator : "MIXED_ARITHMETIC";
+                operands.add(expression(item.multDivs(), "arithmetic operand"));
+            }
+            return new Ast.OperationExpression(meta, operator, operands, sourceText(context).strip());
+        }
+        if (context instanceof CobolParser.MultDivsContext multDivs) {
+            if (multDivs.multDiv().isEmpty()) return expression(multDivs.powers(), "arithmetic operand");
+            Ast.Meta meta = meta(context);
+            List<Ast.Expression> operands = new ArrayList<>();
+            operands.add(expression(multDivs.powers(), "arithmetic operand"));
+            String operator = null;
+            for (CobolParser.MultDivContext item : multDivs.multDiv()) {
+                String itemOperator = item.ASTERISKCHAR() != null ? "*" : "/";
+                operator = operator == null ? itemOperator : operator.equals(itemOperator) ? operator : "MIXED_ARITHMETIC";
+                operands.add(expression(item.powers(), "arithmetic operand"));
+            }
+            return new Ast.OperationExpression(meta, operator, operands, sourceText(context).strip());
+        }
+        if (context instanceof CobolParser.PowersContext powersContext) {
+            List<CobolParser.PowerContext> powers = powersContext.power();
+            ParserRuleContext basis = powersContext.basis();
             String text = sourceText(context).strip();
             if (!powers.isEmpty()) {
                 Ast.Meta meta = meta(context);
                 List<Ast.Expression> operands = new ArrayList<>();
                 operands.add(expression(basis, "power base"));
-                for (ParserRuleContext power : powers) operands.add(expression(firstDescendant(power, "basis"), "exponent"));
+                for (CobolParser.PowerContext power : powers) operands.add(expression(power.basis(), "exponent"));
                 return new Ast.OperationExpression(meta, "**", operands, text);
             }
-            if (text.startsWith("+") || text.startsWith("-"))
-                return new Ast.OperationExpression(meta(context), text.substring(0, 1),
+            if (powersContext.PLUSCHAR() != null || powersContext.MINUSCHAR() != null)
+                return new Ast.OperationExpression(meta(context), powersContext.PLUSCHAR() != null ? "+" : "-",
                         List.of(expression(basis, "unary operand")), text);
             return expression(basis, "arithmetic basis");
         }
-        if (contextRule.equals("basis")) {
-            ParserRuleContext grouped = firstDescendant(context, "arithmeticExpression");
-            if (sourceText(context).strip().startsWith("(") && grouped != null)
+        if (context instanceof CobolParser.BasisContext basis) {
+            if (basis.arithmeticExpression() != null)
                 return new Ast.OperationExpression(meta(context), "GROUP",
-                        List.of(expression(grouped, "grouped arithmetic")), sourceText(context).strip());
-            ParserRuleContext child = firstDirectOrNearest(context, Set.of("identifier", "literal"));
+                        List.of(expression(basis.arithmeticExpression(), "grouped arithmetic")), sourceText(context).strip());
+            ParserRuleContext child = basis.identifier() != null ? basis.identifier() : basis.literal();
             return expression(child, "arithmetic value");
         }
         return preservedExpression(context, "arithmetic");
     }
 
-    private Ast.Expression sequenceOperation(ParserRuleContext context, String firstRule,
-                                               String remainderRule, Set<String> operators) {
-        List<ParserRuleContext> remainder = directChildrenNamed(context, remainderRule);
-        ParserRuleContext first = directChildrenNamed(context, firstRule).stream().findFirst().orElse(null);
-        if (remainder.isEmpty()) return expression(first, "arithmetic operand");
-        Ast.Meta meta = meta(context);
-        List<Ast.Expression> operands = new ArrayList<>();
-        operands.add(expression(first, "arithmetic operand"));
-        String operator = null;
-        for (ParserRuleContext item : remainder) {
-            String itemText = sourceText(item).strip();
-            String itemOperator = operators.stream().filter(itemText::startsWith).findFirst().orElse(remainderRule);
-            if (operator == null) operator = itemOperator;
-            else if (!operator.equals(itemOperator)) operator = "MIXED_ARITHMETIC";
-            ParserRuleContext operand = firstDescendant(item, firstRule);
-            if (operand == null) operand = firstDescendant(item, "basis");
-            operands.add(expression(operand, "arithmetic operand"));
-        }
-        return new Ast.OperationExpression(meta, operator, operands, sourceText(context).strip());
-    }
-
     private Ast.Expression conditionExpression(ParserRuleContext context) {
-        String contextRule = rule(context);
-        if (contextRule.equals("condition")) {
-            List<ParserRuleContext> combinables = new ArrayList<>(directChildrenNamed(context, "combinableCondition"));
-            List<ParserRuleContext> tails = directChildrenNamed(context, "andOrCondition");
-            if (tails.isEmpty()) return expression(combinables.get(0), "condition");
+        if (context instanceof CobolParser.ConditionContext condition) {
+            List<CobolParser.AndOrConditionContext> tails = condition.andOrCondition();
+            if (tails.isEmpty()) return expression(condition.combinableCondition(), "condition");
             Ast.Meta meta = meta(context);
             List<Ast.Expression> operands = new ArrayList<>();
-            operands.add(expression(combinables.get(0), "condition"));
+            operands.add(expression(condition.combinableCondition(), "condition"));
             String operator = null;
-            for (ParserRuleContext tail : tails) {
-                String next = firstKeyword(tail, Set.of("AND", "OR"));
+            for (CobolParser.AndOrConditionContext tail : tails) {
+                String next = tail.AND() != null ? "AND" : "OR";
                 operator = operator == null ? next : operator.equals(next) ? operator : "MIXED_LOGICAL";
-                ParserRuleContext operand = firstDirectOrNearest(tail, Set.of("combinableCondition", "abbreviation"));
+                ParserRuleContext operand = tail.combinableCondition() != null
+                        ? tail.combinableCondition() : tail.abbreviation(0);
                 operands.add(expression(operand, "condition"));
             }
             return new Ast.OperationExpression(meta, operator, operands, sourceText(context).strip());
         }
-        if (contextRule.equals("combinableCondition")) {
-            ParserRuleContext simple = firstDescendant(context, "simpleCondition");
-            if (containsToken(context, "NOT")) return new Ast.OperationExpression(meta(context), "NOT",
+        if (context instanceof CobolParser.CombinableConditionContext combinable) {
+            ParserRuleContext simple = combinable.simpleCondition();
+            if (combinable.NOT() != null) return new Ast.OperationExpression(meta(context), "NOT",
                     List.of(expression(simple, "negated condition")), sourceText(context).strip());
             return expression(simple, "condition");
         }
-        if (contextRule.equals("simpleCondition")) {
-            ParserRuleContext child = directRuleChildren(context).stream().findFirst().orElse(null);
-            if (sourceText(context).strip().startsWith("(") && child != null)
-                return new Ast.OperationExpression(meta(context), "GROUP", List.of(expression(child, "condition")),
+        if (context instanceof CobolParser.SimpleConditionContext simple) {
+            if (simple.condition() != null)
+                return new Ast.OperationExpression(meta(context), "GROUP", List.of(expression(simple.condition(), "condition")),
                         sourceText(context).strip());
+            ParserRuleContext child = simple.relationCondition() != null ? simple.relationCondition()
+                    : simple.classCondition() != null ? simple.classCondition() : simple.conditionNameReference();
             return expression(child, "condition");
         }
-        if (contextRule.equals("relationArithmeticComparison")) {
+        if (context instanceof CobolParser.RelationArithmeticComparisonContext comparison) {
             Ast.Meta meta = meta(context);
-            List<ParserRuleContext> values = directChildrenNamed(context, "arithmeticExpression");
-            ParserRuleContext operator = firstDescendant(context, "relationalOperator");
+            List<CobolParser.ArithmeticExpressionContext> values = comparison.arithmeticExpression();
+            ParserRuleContext operator = comparison.relationalOperator();
             return new Ast.OperationExpression(meta, operator == null ? "RELATION" : compact(sourceText(operator)).toUpperCase(Locale.ROOT),
                     values.stream().map(value -> expression(value, "comparison operand")).toList(), sourceText(context).strip());
         }
-        if (contextRule.equals("classCondition") || contextRule.equals("relationSignCondition")) {
+        if (context instanceof CobolParser.ClassConditionContext
+                || context instanceof CobolParser.RelationSignConditionContext) {
             Ast.Meta meta = meta(context);
             List<Ast.Expression> operands = nearestDescendants(context,
-                    Set.of("arithmeticExpression", "identifier")).stream()
+                    AstBuilder::isPredicateOperandContext).stream()
                     .map(value -> expression(value, "predicate operand")).toList();
-            return new Ast.OperationExpression(meta, contextRule, operands, sourceText(context).strip());
+            return new Ast.OperationExpression(meta, rule(context), operands, sourceText(context).strip());
         }
-        if (contextRule.equals("conditionNameReference")) return dataReference(context);
+        if (context instanceof CobolParser.ConditionNameReferenceContext) return dataReference(context);
         ParserRuleContext child = directRuleChildren(context).stream().findFirst().orElse(null);
-        if (child != null && isConditionRule(rule(child))) return expression(child, "condition");
+        if (child != null && isConditionContext(child)) return expression(child, "condition");
         return preservedExpression(context, "condition");
     }
 
     private Ast.PreservedExpression preservedExpression(ParserRuleContext context, String role) {
         Ast.Meta meta = meta(context);
-        List<Ast.Expression> recognized = nearestDescendants(context,
-                Set.of("condition", "arithmeticExpression", "identifier", "literal")).stream()
+        List<Ast.Expression> recognized = nearestDescendants(context, AstBuilder::isRecognizedExpressionContext).stream()
                 .map(child -> expression(child, role)).toList();
         return new Ast.PreservedExpression(meta, rule(context), sourceText(context).strip(), recognized,
                 Ast.ReferenceUnderstanding.PRESERVED);
     }
 
-    private boolean isConditionRule(String rule) {
-        return Set.of("condition", "combinableCondition", "simpleCondition", "relationCondition",
-                "relationSignCondition", "relationArithmeticComparison", "relationCombinedComparison",
-                "relationCombinedCondition", "classCondition", "conditionNameReference", "abbreviation").contains(rule);
+    private static boolean isArithmeticContext(ParserRuleContext context) {
+        return context instanceof CobolParser.ArithmeticExpressionContext
+                || context instanceof CobolParser.MultDivsContext
+                || context instanceof CobolParser.PowersContext
+                || context instanceof CobolParser.BasisContext;
     }
 
-    private String firstKeyword(ParseTree tree, Set<String> keywords) {
-        for (int i = 0; i < tree.getChildCount(); i++) {
-            ParseTree child = tree.getChild(i);
-            String cleaned = clean(child.getText()).toUpperCase(Locale.ROOT);
-            if (child instanceof TerminalNode && keywords.contains(cleaned)) return cleaned;
-            String nested = firstKeyword(child, keywords);
-            if (nested != null) return nested;
-        }
-        return "UNKNOWN";
+    private static boolean isConditionContext(ParserRuleContext context) {
+        return context instanceof CobolParser.ConditionContext
+                || context instanceof CobolParser.CombinableConditionContext
+                || context instanceof CobolParser.SimpleConditionContext
+                || context instanceof CobolParser.RelationConditionContext
+                || context instanceof CobolParser.RelationSignConditionContext
+                || context instanceof CobolParser.RelationArithmeticComparisonContext
+                || context instanceof CobolParser.RelationCombinedComparisonContext
+                || context instanceof CobolParser.RelationCombinedConditionContext
+                || context instanceof CobolParser.ClassConditionContext
+                || context instanceof CobolParser.ConditionNameReferenceContext
+                || context instanceof CobolParser.AbbreviationContext;
+    }
+
+    private static boolean isExpressionWrapper(ParserRuleContext context) {
+        return context instanceof CobolParser.EvaluateSelectContext
+                || context instanceof CobolParser.EvaluateValueContext
+                || context instanceof CobolParser.EvaluateConditionContext
+                || context instanceof CobolParser.ArgumentContext
+                || context instanceof CobolParser.CharacterPositionContext
+                || context instanceof CobolParser.LengthContext
+                || context instanceof CobolParser.PerformFromContext
+                || context instanceof CobolParser.PerformByContext;
+    }
+
+    private static boolean isLiteralContext(ParserRuleContext context) {
+        return context instanceof CobolParser.LiteralContext
+                || context instanceof CobolParser.IntegerLiteralContext
+                || context instanceof CobolParser.NumericLiteralContext
+                || context instanceof CobolParser.BooleanLiteralContext
+                || context instanceof CobolParser.CicsDfhRespLiteralContext
+                || context instanceof CobolParser.CicsDfhValueLiteralContext;
+    }
+
+    private static boolean isVisitorExpressionContext(ParserRuleContext context) {
+        return context instanceof CobolParser.IdentifierContext
+                || context instanceof CobolParser.FileNameContext
+                || context instanceof CobolParser.IndexNameContext
+                || context instanceof CobolParser.QualifiedDataNameContext
+                || context instanceof CobolParser.ConditionNameReferenceContext
+                || context instanceof CobolParser.TableCallContext
+                || context instanceof CobolParser.FunctionCallContext
+                || context instanceof CobolParser.SpecialRegisterContext
+                || context instanceof CobolParser.SubscriptContext
+                || isArithmeticContext(context)
+                || isConditionContext(context)
+                || isExpressionWrapper(context)
+                || isLiteralContext(context);
+    }
+
+    private static boolean isDataClauseContext(ParserRuleContext context) {
+        return context instanceof CobolParser.DataAlignedClauseContext
+                || context instanceof CobolParser.DataBlankWhenZeroClauseContext
+                || context instanceof CobolParser.DataCommonOwnLocalClauseContext
+                || context instanceof CobolParser.DataExternalClauseContext
+                || context instanceof CobolParser.DataGlobalClauseContext
+                || context instanceof CobolParser.DataIntegerStringClauseContext
+                || context instanceof CobolParser.DataJustifiedClauseContext
+                || context instanceof CobolParser.DataOccursClauseContext
+                || context instanceof CobolParser.DataPictureClauseContext
+                || context instanceof CobolParser.DataReceivedByClauseContext
+                || context instanceof CobolParser.DataRecordAreaClauseContext
+                || context instanceof CobolParser.DataRedefinesClauseContext
+                || context instanceof CobolParser.DataRenamesClauseContext
+                || context instanceof CobolParser.DataSignClauseContext
+                || context instanceof CobolParser.DataSynchronizedClauseContext
+                || context instanceof CobolParser.DataThreadLocalClauseContext
+                || context instanceof CobolParser.DataTypeClauseContext
+                || context instanceof CobolParser.DataTypeDefClauseContext
+                || context instanceof CobolParser.DataUsageClauseContext
+                || context instanceof CobolParser.DataUsingClauseContext
+                || context instanceof CobolParser.DataValueClauseContext
+                || context instanceof CobolParser.DataWithLowerBoundsClauseContext;
+    }
+
+    private static boolean isStatementOperandContext(ParserRuleContext context) {
+        return context instanceof CobolParser.IdentifierContext
+                || context instanceof CobolParser.QualifiedDataNameContext
+                || context instanceof CobolParser.ProcedureNameContext
+                || context instanceof CobolParser.FileNameContext
+                || context instanceof CobolParser.IndexNameContext
+                || isLiteralContext(context)
+                || context instanceof CobolParser.DataNameContext
+                || context instanceof CobolParser.RecordNameContext
+                || context instanceof CobolParser.ReportNameContext
+                || context instanceof CobolParser.CdNameContext
+                || context instanceof CobolParser.LibraryNameContext
+                || context instanceof CobolParser.MnemonicNameContext
+                || context instanceof CobolParser.EnvironmentNameContext
+                || context instanceof CobolParser.AlphabetNameContext;
+    }
+
+    private static boolean isFlowClauseContext(ParserRuleContext context) {
+        return context instanceof CobolParser.OnExceptionClauseContext
+                || context instanceof CobolParser.NotOnExceptionClauseContext
+                || context instanceof CobolParser.OnOverflowPhraseContext
+                || context instanceof CobolParser.NotOnOverflowPhraseContext
+                || context instanceof CobolParser.OnSizeErrorPhraseContext
+                || context instanceof CobolParser.NotOnSizeErrorPhraseContext
+                || context instanceof CobolParser.InvalidKeyPhraseContext
+                || context instanceof CobolParser.NotInvalidKeyPhraseContext
+                || context instanceof CobolParser.AtEndPhraseContext
+                || context instanceof CobolParser.NotAtEndPhraseContext
+                || context instanceof CobolParser.WriteAtEndOfPagePhraseContext
+                || context instanceof CobolParser.WriteNotAtEndOfPagePhraseContext
+                || context instanceof CobolParser.ReceiveNoDataContext
+                || context instanceof CobolParser.ReceiveWithDataContext
+                || context instanceof CobolParser.SearchWhenContext;
+    }
+
+    private static boolean isDataClauseReferenceContext(ParserRuleContext context) {
+        return context instanceof CobolParser.QualifiedDataNameContext
+                || context instanceof CobolParser.IdentifierContext
+                || context instanceof CobolParser.FileNameContext
+                || context instanceof CobolParser.IndexNameContext;
+    }
+
+    private static boolean isProcedureParameterContext(ParserRuleContext context) {
+        return context instanceof CobolParser.ProcedureDivisionByReferenceContext
+                || context instanceof CobolParser.ProcedureDivisionByValueContext;
+    }
+
+    private static boolean isCallArgumentContext(ParserRuleContext context) {
+        return context instanceof CobolParser.CallByReferenceContext
+                || context instanceof CobolParser.CallByValueContext
+                || context instanceof CobolParser.CallByContentContext;
+    }
+
+    private static boolean isParameterValueContext(ParserRuleContext context) {
+        return context instanceof CobolParser.IdentifierContext
+                || context instanceof CobolParser.FileNameContext
+                || context instanceof CobolParser.LiteralContext;
+    }
+
+    private static boolean isRecognizedExpressionContext(ParserRuleContext context) {
+        return context instanceof CobolParser.ConditionContext
+                || context instanceof CobolParser.ArithmeticExpressionContext
+                || context instanceof CobolParser.IdentifierContext
+                || context instanceof CobolParser.LiteralContext;
+    }
+
+    private static boolean isExpressionWrapperValueContext(ParserRuleContext context) {
+        return isRecognizedExpressionContext(context)
+                || context instanceof CobolParser.QualifiedDataNameContext
+                || context instanceof CobolParser.IntegerLiteralContext;
+    }
+
+    private static boolean isReferenceBaseContext(ParserRuleContext context) {
+        return context instanceof CobolParser.DataNameContext
+                || context instanceof CobolParser.ConditionNameContext
+                || context instanceof CobolParser.ParagraphNameContext
+                || context instanceof CobolParser.TextNameContext;
+    }
+
+    private static boolean isQualifierContext(ParserRuleContext context) {
+        return context instanceof CobolParser.InDataContext
+                || context instanceof CobolParser.InTableContext
+                || context instanceof CobolParser.InFileContext;
+    }
+
+    private static boolean isPredicateOperandContext(ParserRuleContext context) {
+        return context instanceof CobolParser.ArithmeticExpressionContext
+                || context instanceof CobolParser.IdentifierContext;
     }
 
     private String firstSemanticWord(ParserRuleContext context) {
@@ -995,26 +1285,30 @@ final class AstBuilder {
     }
 
     private Ast.Node nominalReference(ParserRuleContext context) {
-        return switch (rule(context)) {
-            case "procedureName" -> procedureReference(context);
-            case "fileName" -> new Ast.FileReference(meta(context), clean(sourceText(context)), sourceText(context).strip());
-            case "indexName" -> new Ast.IndexReference(meta(context), clean(sourceText(context)), sourceText(context).strip());
-            default -> throw new IllegalArgumentException("unsupported nominal reference: " + rule(context));
-        };
+        if (context instanceof CobolParser.ProcedureNameContext) return procedureReference(context);
+        if (context instanceof CobolParser.FileNameContext)
+            return new Ast.FileReference(meta(context), clean(sourceText(context)), sourceText(context).strip());
+        if (context instanceof CobolParser.IndexNameContext)
+            return new Ast.IndexReference(meta(context), clean(sourceText(context)), sourceText(context).strip());
+        throw new IllegalArgumentException("unsupported nominal reference: " + rule(context));
     }
 
     private Ast.ProcedureReference procedureReference(ParserRuleContext context) {
+        if (!(context instanceof CobolParser.ProcedureNameContext procedureName)) {
+            throw new IllegalArgumentException("Expected procedureName, got " + rule(context));
+        }
         Ast.Meta meta = meta(context);
-        ParserRuleContext paragraph = directChildrenNamed(context, "paragraphName").stream().findFirst().orElse(null);
-        ParserRuleContext section = directChildrenNamed(context, "sectionName").stream().findFirst().orElse(null);
-        ParserRuleContext qualification = directChildrenNamed(context, "inSection").stream().findFirst().orElse(null);
+        ParserRuleContext paragraph = procedureName.paragraphName();
+        ParserRuleContext section = procedureName.sectionName();
+        CobolParser.InSectionContext qualification = procedureName.inSection();
         String baseName = paragraph != null ? clean(sourceText(paragraph))
                 : section != null ? clean(sourceText(section)) : firstSemanticWord(context);
         Ast.ProcedureQualifier qualifier = null;
         if (qualification != null) {
-            ParserRuleContext qualifiedSection = firstDescendant(qualification, "sectionName");
+            ParserRuleContext qualifiedSection = qualification.sectionName();
             qualifier = new Ast.ProcedureQualifier(meta(qualification),
-                    containsToken(qualification, "IN") ? Ast.QualifierConnector.IN : Ast.QualifierConnector.OF,
+                    qualification.getToken(CobolParser.IN, 0) != null
+                            ? Ast.QualifierConnector.IN : Ast.QualifierConnector.OF,
                     qualifiedSection == null ? "<unknown>" : clean(sourceText(qualifiedSection)),
                     sourceText(qualification).strip());
         }
@@ -1048,59 +1342,91 @@ final class AstBuilder {
 
     private List<Ast.Statement> statementsInside(ParserRuleContext context) {
         if (context == null) return List.of();
-        List<ParserRuleContext> statements = directChildrenNamed(context, "statement");
-        if (statements.isEmpty() && containsToken(context, "NEXT") && containsToken(context, "SENTENCE"))
+        List<CobolParser.StatementContext> statements = directChildren(context, CobolParser.StatementContext.class);
+        if (statements.isEmpty() && context.getToken(CobolParser.NEXT, 0) != null
+                && context.getToken(CobolParser.SENTENCE, 0) != null)
             return List.of(new Ast.NextSentenceStatement(meta(context)));
         return statements.stream().map(this::buildStatement).toList();
     }
 
     private List<Ast.Statement> directNestedStatements(ParserRuleContext context) {
-        List<ParserRuleContext> result = new ArrayList<>();
-        collectNearest(context, Set.of("statement"), result, true);
+        List<CobolParser.StatementContext> result = nearestDescendants(context,
+                CobolParser.StatementContext.class);
         return result.stream().map(this::buildStatement).toList();
     }
 
-    private ParserRuleContext firstDirectOrNearest(ParserRuleContext context, Set<String> names) {
+    private ParserRuleContext firstDirectOrNearest(ParserRuleContext context,
+                                                   Predicate<ParserRuleContext> predicate) {
         if (context == null) return null;
-        for (ParserRuleContext child : directRuleChildren(context)) if (names.contains(rule(child))) return child;
-        List<ParserRuleContext> found = nearestDescendants(context, names);
+        for (ParserRuleContext child : directRuleChildren(context)) if (predicate.test(child)) return child;
+        List<ParserRuleContext> found = nearestDescendants(context, predicate);
         return found.isEmpty() ? null : found.get(0);
     }
 
-    private ParserRuleContext firstDescendant(ParseTree tree, String name) {
+    private static CobolParser.CompilationUnitContext compilationUnit(ParseTree tree) {
+        if (tree instanceof CobolParser.CompilationUnitContext context) return context;
+        if (tree instanceof CobolParser.StartRuleContext context) return context.compilationUnit();
+        if (tree instanceof CobolParser.ProgramUnitContext context
+                && context.getParent() instanceof CobolParser.CompilationUnitContext compilation) {
+            return compilation;
+        }
+        return null;
+    }
+
+    private static CobolParser.ProgramUnitContext firstProgramUnit(ParseTree tree) {
+        if (tree instanceof CobolParser.ProgramUnitContext context) return context;
+        CobolParser.CompilationUnitContext compilation = compilationUnit(tree);
+        return compilation == null || compilation.programUnit().isEmpty()
+                ? null : compilation.programUnit(0);
+    }
+
+    private static <T extends ParserRuleContext> T firstDescendant(ParseTree tree, Class<T> type) {
         if (tree == null) return null;
-        if (tree instanceof ParserRuleContext context && rule(context).equals(name)) return context;
+        if (type.isInstance(tree)) return type.cast(tree);
         for (int i = 0; i < tree.getChildCount(); i++) {
-            ParserRuleContext found = firstDescendant(tree.getChild(i), name);
+            T found = firstDescendant(tree.getChild(i), type);
             if (found != null) return found;
         }
         return null;
     }
 
-    private List<ParserRuleContext> nearestDescendants(ParseTree tree, String name) {
-        return nearestDescendants(tree, Set.of(name));
-    }
-
-    private List<ParserRuleContext> nearestDescendants(ParseTree tree, Set<String> names) {
-        List<ParserRuleContext> result = new ArrayList<>();
-        collectNearest(tree, names, result, false);
+    private static <T extends ParserRuleContext> List<T> nearestDescendants(ParseTree tree, Class<T> type) {
+        List<T> result = new ArrayList<>();
+        collectNearest(tree, type::isInstance, result, type);
         return result;
     }
 
-    private void collectNearest(ParseTree tree, Set<String> names, List<ParserRuleContext> result, boolean skipRoot) {
+    private static List<ParserRuleContext> nearestDescendants(ParseTree tree,
+                                                               Predicate<ParserRuleContext> predicate) {
+        List<ParserRuleContext> result = new ArrayList<>();
+        collectNearest(tree, predicate, result);
+        return result;
+    }
+
+    private static void collectNearest(ParseTree tree, Predicate<ParserRuleContext> predicate,
+                                       List<ParserRuleContext> result) {
         for (int i = 0; i < tree.getChildCount(); i++) {
             ParseTree child = tree.getChild(i);
-            if (child instanceof ParserRuleContext context && names.contains(rule(context))) result.add(context);
-            else collectNearest(child, names, result, false);
+            if (child instanceof ParserRuleContext context && predicate.test(context)) result.add(context);
+            else collectNearest(child, predicate, result);
         }
     }
 
-    private List<ParserRuleContext> directChildrenNamed(ParserRuleContext context, String name) {
-        if (context == null) return List.of();
-        return directRuleChildren(context).stream().filter(c -> rule(c).equals(name)).toList();
+    private static <T extends ParserRuleContext> void collectNearest(
+            ParseTree tree, Predicate<ParserRuleContext> predicate, List<T> result, Class<T> type) {
+        for (int i = 0; i < tree.getChildCount(); i++) {
+            ParseTree child = tree.getChild(i);
+            if (child instanceof ParserRuleContext context && predicate.test(context)) result.add(type.cast(context));
+            else collectNearest(child, predicate, result, type);
+        }
     }
 
-    private List<ParserRuleContext> directRuleChildren(ParseTree context) {
+    private static <T extends ParserRuleContext> List<T> directChildren(ParserRuleContext context, Class<T> type) {
+        if (context == null) return List.of();
+        return directRuleChildren(context).stream().filter(type::isInstance).map(type::cast).toList();
+    }
+
+    private static List<ParserRuleContext> directRuleChildren(ParseTree context) {
         List<ParserRuleContext> result = new ArrayList<>();
         for (int i = 0; i < context.getChildCount(); i++)
             if (context.getChild(i) instanceof ParserRuleContext child) result.add(child);
@@ -1116,15 +1442,6 @@ final class AstBuilder {
         int start = Math.max(0, context.getStart().getStartIndex());
         int end = Math.min(indexedSource.length(), context.getStop().getStopIndex() + 1);
         return start >= end ? "" : indexedSource.substring(start, end);
-    }
-
-    private boolean containsToken(ParseTree tree, String text) {
-        for (int i = 0; i < tree.getChildCount(); i++) {
-            ParseTree child = tree.getChild(i);
-            if (child instanceof TerminalNode && clean(child.getText()).equalsIgnoreCase(text)) return true;
-            if (containsToken(child, text)) return true;
-        }
-        return false;
     }
 
     private static String compact(String text) { return text == null ? "" : text.replaceAll("\\s+", " ").trim(); }

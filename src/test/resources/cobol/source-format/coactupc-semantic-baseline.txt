@@ -1,6 +1,6 @@
 tree-data.js|"source":"COACTUPC.cbl","originalLines":4236,"preprocessedLines":7408,"nodes":57227,"tokens":37682,"maxDepth":39,"unresolvedCopies":3,"lexerErrors":0,"parserErrors":0
-ast-data.js|"nodes":9189,"parseTreeNodes":57227,"maxDepth":11,"literalTargetCalls":1,"identifierTargetCalls":0,"embeddedLanguages":14,"unsupportedStatements":0,"preservedStatements":0
-symbol-data.js|"scopes":651,"symbols":853,"dataSymbols":751,"procedureSymbols":101,"fileSymbols":0,"diagnostics":2
-resolution-data.js|"claim":"INCOMPLETE","referenceBindingComplete":false,"dependencyAnalysisReady":false,"programUnits":1,"references":3058,"gaps":1467
-resolution-data.js|"status":{"RESOLVED":1607,"AMBIGUOUS":0,"UNRESOLVED":1451,"UNSUPPORTED":0}
-resolution-data.js|"metrics":{"indexedDeclarations":955,"nominalLookups":3496,"candidateInspections":1887,"maximumCandidates":1,"collectedReferences":3058}
+ast-data.js|"nodes":9127,"parseTreeNodes":57227,"maxDepth":11,"literalTargetCalls":1,"identifierTargetCalls":0,"embeddedLanguages":14,"unsupportedStatements":0,"preservedStatements":0
+symbol-data.js|"scopes":651,"symbols":851,"dataSymbols":749,"procedureSymbols":101,"fileSymbols":0,"diagnostics":2
+resolution-data.js|"claim":"INCOMPLETE","referenceBindingComplete":false,"dependencyAnalysisReady":false,"programUnits":1,"references":3042,"gaps":1471
+resolution-data.js|"status":{"RESOLVED":1588,"AMBIGUOUS":2,"UNRESOLVED":1451,"UNSUPPORTED":0}
+resolution-data.js|"metrics":{"indexedDeclarations":953,"nominalLookups":3482,"candidateInspections":1873,"maximumCandidates":2,"collectedReferences":3042}

@@ -24,13 +24,15 @@ Statements ou clauses parcialmente compreendidos usam `Modeled*`, `Preserved*` o
 - `PRESERVED_UNINTERPRETED`, `UNSUPPORTED` e `DEPENDENCY_UNKNOWN` continuam visíveis.
 - Modelagem de um statement para name binding não implica que seus efeitos de memória ou controle estejam interpretados.
 
-## Complexidade e provenance
+## Construção, complexidade e provenance
 
-O builder percorre a parse tree e cria o inventário semântico uma vez. Metadados carregam source span, parse origin, arquivo físico e include chain por composição do `SourceMap`.
+O `AstBuilder` despacha as fronteiras semânticas por `CobolBaseVisitor` e contextos gerados do ANTLR. Decisões como atributos de programa, terminadores e alternativas de statement usam filhos e tokens diretos do contexto tipado; nomes de regra e texto permanecem somente como metadados ou fidelidade lexical. Helpers locais podem percorrer subárvores para relações que a produção não separa em contextos próprios, mas não substituem decisões estruturais já expressas pela gramática.
+
+A construção cria o inventário semântico em ordem determinística. Metadados carregam source span, parse origin, arquivo físico e include chain por composição do `SourceMap`.
 
 ## Evidência executável
 
-`AstBuilderTest`, `AstBuildCoverageTest`, `StructuredExpressionAstTest`, `StatementModelAstTest`, `NominalReferenceAstTest`, `DeclarationModelAstTest` e fixtures em `src/test/resources/cobol/semantic/`.
+`AstBuilderTest`, `AstBuildCoverageTest`, `AstBuilderTypedTraversalTest`, `StructuredExpressionAstTest`, `StatementModelAstTest`, `NominalReferenceAstTest`, `DeclarationModelAstTest` e fixtures em `src/test/resources/cobol/semantic/`.
 
 ## Relações
 
