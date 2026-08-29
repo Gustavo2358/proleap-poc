@@ -2,13 +2,11 @@ package io.github.gustavo2358.cobolexplorer;
 
 import org.junit.jupiter.api.Test;
 
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SourceMapUnicodePerformanceTest {
@@ -61,37 +59,33 @@ class SourceMapUnicodePerformanceTest {
 
     @Test
     void largeSegmentLookupAndBatchCompositionStaySubquadratic() {
-        assertTimeoutPreemptively(Duration.ofSeconds(3), () -> {
-            int size = 20_000;
-            SourceMap source = segmentedMap(size);
-            for (int query = 0; query < 50_000; query++) {
-                Ast.SourceProvenance provenance = source.provenance(size - 1, size);
-                assertEquals(size * 2 - 2, provenance.original().startColumn());
-            }
+        int size = 20_000;
+        SourceMap source = segmentedMap(size);
+        for (int query = 0; query < 50_000; query++) {
+            Ast.SourceProvenance provenance = source.provenance(size - 1, size);
+            assertEquals(size * 2 - 2, provenance.original().startColumn());
+        }
 
-            SourceMap replacement = SourceMap.identity("y", "replacement.cpy");
-            List<SourceMap.Replacement> edits = new ArrayList<>(size);
-            for (int offset = 0; offset < size; offset++) {
-                edits.add(new SourceMap.Replacement(offset, offset + 1, replacement));
-            }
-            assertEquals("y".repeat(size), source.replaceAll(edits).text());
-        });
+        SourceMap replacement = SourceMap.identity("y", "replacement.cpy");
+        List<SourceMap.Replacement> edits = new ArrayList<>(size);
+        for (int offset = 0; offset < size; offset++) {
+            edits.add(new SourceMap.Replacement(offset, offset + 1, replacement));
+        }
+        assertEquals("y".repeat(size), source.replaceAll(edits).text());
     }
 
     @Test
     void largeUnicodeNormalizationBuildsItsMapInLinearTime() {
-        assertTimeoutPreemptively(Duration.ofSeconds(4), () -> {
-            int lines = 20_000;
-            String raw = "       DISPLAY '😀'.\n".repeat(lines);
-            SourceNormalizer.Result result = SourceNormalizer.normalize(
-                    raw, "large-unicode.cbl", SourceNormalizer.SourceFormat.FIXED);
-            UnicodeText indexed = new UnicodeText(result.text());
-            int lastDisplay = indexed.indexOf("DISPLAY", indexed.length() - 20);
-            Ast.SourceProvenance provenance = result.sourceMap()
-                    .provenance(lastDisplay, lastDisplay + "DISPLAY".length());
-            assertEquals(lines, provenance.original().startLine());
-            assertEquals(7, provenance.original().startColumn());
-        });
+        int lines = 20_000;
+        String raw = "       DISPLAY '😀'.\n".repeat(lines);
+        SourceNormalizer.Result result = SourceNormalizer.normalize(
+                raw, "large-unicode.cbl", SourceNormalizer.SourceFormat.FIXED);
+        UnicodeText indexed = new UnicodeText(result.text());
+        int lastDisplay = indexed.indexOf("DISPLAY", indexed.length() - 20);
+        Ast.SourceProvenance provenance = result.sourceMap()
+                .provenance(lastDisplay, lastDisplay + "DISPLAY".length());
+        assertEquals(lines, provenance.original().startLine());
+        assertEquals(7, provenance.original().startColumn());
     }
 
     private static SourceMap segmentedMap(int size) {

@@ -76,6 +76,16 @@ final class DataAndIndexReferenceResolver {
     private Decision resolveDataOccurrence(ResolutionContracts.ProgramUnitId startingUnitId,
                                            ReferenceOccurrences.Occurrence occurrence) {
         IndexedUnit startingUnit = units.get(startingUnitId);
+        if (occurrence.role() == ResolutionContracts.ReferenceRole.REDEFINES_TARGET) {
+            Optional<SymbolTable.DeclarationRelation> relation = startingUnit.table().declarationRelations().stream()
+                    .filter(candidate -> candidate.kind() == SymbolTable.RelationKind.REDEFINES)
+                    .filter(candidate -> candidate.referenceAstNodeId() == occurrence.referenceAstNodeId())
+                    .findFirst();
+            if (relation.isPresent()) {
+                Decision structural = resolveRedefines(startingUnitId, startingUnit.table(), relation.get());
+                if (structural.status() == ResolutionContracts.ResolutionStatus.RESOLVED) return structural;
+            }
+        }
         Ast.Node node = startingUnit.astNodes().get(occurrence.referenceAstNodeId());
         String baseName = baseName(node, occurrence);
         String canonical = SymbolTable.canonical(baseName);
@@ -357,22 +367,46 @@ final class DataAndIndexReferenceResolver {
     private Decision resolveRedefines(ResolutionContracts.ProgramUnitId unitId, SymbolTable table,
                                       SymbolTable.DeclarationRelation relation) {
         SymbolTable.Symbol owner = table.symbols().get(relation.ownerSymbolId());
-        nominalLookups++;
-        List<SymbolTable.Symbol> named = table.lookupLocal(
-                owner.scopeId(), SymbolTable.Namespace.DATA, relation.writtenTarget());
-        candidateInspections += named.size();
-        List<ReferenceResolution.Candidate> candidates = named.stream()
-                .filter(symbol -> symbol.kind() == SymbolTable.SymbolKind.DATA_ITEM)
-                .map(symbol -> candidate(new SymbolOwner(unitId, table, symbol))).toList();
+        Optional<SymbolTable.Symbol> target = structuralRedefinesTarget(unitId, table, relation, new HashSet<>());
+        List<ReferenceResolution.Candidate> candidates = target.map(symbol ->
+                List.of(candidate(new SymbolOwner(unitId, table, symbol)))).orElseGet(List::of);
         maximumCandidates = Math.max(maximumCandidates, candidates.size());
         if (candidates.isEmpty())
             return new Decision(ResolutionContracts.ResolutionStatus.UNRESOLVED,
                     ResolutionContracts.ResolutionReason.INVALID_NAMESPACE_FOR_CONTEXT, List.of());
-        if (candidates.size() == 1)
-            return new Decision(ResolutionContracts.ResolutionStatus.RESOLVED,
-                    ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION, candidates);
-        return new Decision(ResolutionContracts.ResolutionStatus.AMBIGUOUS,
-                ResolutionContracts.ResolutionReason.MULTIPLE_VALID_CANDIDATES, candidates);
+        return new Decision(ResolutionContracts.ResolutionStatus.RESOLVED,
+                ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION, candidates);
+    }
+
+    private Optional<SymbolTable.Symbol> structuralRedefinesTarget(
+            ResolutionContracts.ProgramUnitId unitId, SymbolTable table,
+            SymbolTable.DeclarationRelation relation, Set<Integer> visitedRelations) {
+        if (!visitedRelations.add(relation.id())) return Optional.empty();
+        SymbolTable.Symbol owner = table.symbols().get(relation.ownerSymbolId());
+        Optional<SymbolTable.Scope> predecessor = immediatelyPrecedingSibling(unitId, table, owner);
+        if (predecessor.isEmpty() || predecessor.get().ownerSymbolId() < 0) return Optional.empty();
+        SymbolTable.Symbol previous = table.symbols().get(predecessor.get().ownerSymbolId());
+        if (previous.kind() != SymbolTable.SymbolKind.DATA_ITEM) return Optional.empty();
+        if (previous.canonicalName().equals(SymbolTable.canonical(relation.writtenTarget()))) return Optional.of(previous);
+
+        return table.declarationRelations().stream()
+                .filter(candidate -> candidate.ownerSymbolId() == previous.id())
+                .filter(candidate -> candidate.kind() == SymbolTable.RelationKind.REDEFINES)
+                .findFirst()
+                .flatMap(previousRelation -> structuralRedefinesTarget(unitId, table, previousRelation, visitedRelations))
+                .filter(target -> target.canonicalName().equals(SymbolTable.canonical(relation.writtenTarget())));
+    }
+
+    private Optional<SymbolTable.Scope> immediatelyPrecedingSibling(
+            ResolutionContracts.ProgramUnitId unitId, SymbolTable table, SymbolTable.Symbol owner) {
+        int ownerStart = owner.span().startToken();
+        return table.scopes().stream()
+                .filter(scope -> scope.kind() == SymbolTable.ScopeKind.DATA_ITEM)
+                .filter(scope -> scope.parentId() == owner.scopeId())
+                .filter(scope -> scope.astNodeId() >= 0)
+                .filter(scope -> units.get(unitId).astNodes().get(scope.astNodeId()).meta().span().endToken() < ownerStart)
+                .max(Comparator.comparingInt(scope ->
+                        units.get(unitId).astNodes().get(scope.astNodeId()).meta().span().endToken()));
     }
 
     private static String baseName(Ast.Node node, ReferenceOccurrences.Occurrence occurrence) {

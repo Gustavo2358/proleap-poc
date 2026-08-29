@@ -31,6 +31,10 @@ class DataAndIndexReferenceResolverTest {
             "src/test/resources/cobol/resolution/renames-structural-binding.cbl");
     private static final Path SUBSCRIPT_SEMANTIC_KIND = Path.of(
             "src/test/resources/cobol/resolution/subscript-semantic-kind.cbl");
+    private static final Path INDEX_NAME_VALUE_CONTEXT = Path.of(
+            "src/test/resources/cobol/resolution/index-name-value-context.cbl");
+    private static final Path REDEFINES_POSITIONAL_TARGET = Path.of(
+            "src/test/resources/cobol/resolution/redefines-positional-target.cbl");
 
     @Test
     void declaresDeclarationRelationsAsNominalStructuralBindingOnly() throws Exception {
@@ -494,6 +498,46 @@ class DataAndIndexReferenceResolverTest {
                         indexSubscript.selectedCandidate().orElseThrow().kind()),
                 () -> assertEquals(ResolutionContracts.SemanticEntityDomain.INDEX_SYMBOL,
                         indexSubscript.selectedCandidate().orElseThrow().entityId().domain()));
+    }
+
+    @Test
+    void resolvesAnIndexNameInSetAndRelationalContexts() throws Exception {
+        Analysis analysis = analyze(INDEX_NAME_VALUE_CONTEXT, ResolutionContracts.QualifyMode.STANDARD);
+        ResolutionContracts.ProgramUnitId unit = analysis.model().programUnits().get(0).id();
+
+        ReferenceResolution.Entry subscript = assertEntry(analysis.resolution(), unit, "TABLE-IDX",
+                ResolutionContracts.ReferenceRole.SUBSCRIPT, ResolutionContracts.ResolutionStatus.RESOLVED,
+                ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION, 1);
+        ReferenceResolution.Entry setTarget = assertEntry(analysis.resolution(), unit, "TABLE-IDX",
+                ResolutionContracts.ReferenceRole.CONTEXT_DEPENDENT,
+                ResolutionContracts.ResolutionStatus.RESOLVED,
+                ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION, 1);
+        ReferenceResolution.Entry comparison = assertEntry(analysis.resolution(), unit, "TABLE-IDX",
+                ResolutionContracts.ReferenceRole.VALUE_READ, ResolutionContracts.ResolutionStatus.RESOLVED,
+                ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION, 1);
+
+        assertEquals(ResolutionContracts.ReferenceKind.INDEX,
+                subscript.selectedCandidate().orElseThrow().kind());
+        assertEquals(ResolutionContracts.ReferenceKind.INDEX,
+                setTarget.selectedCandidate().orElseThrow().kind());
+        assertEquals(ResolutionContracts.ReferenceKind.INDEX,
+                comparison.selectedCandidate().orElseThrow().kind());
+    }
+
+    @Test
+    void bindsRedefinesToTheImmediatelyPrecedingSameLevelItem() throws Exception {
+        Analysis analysis = analyze(REDEFINES_POSITIONAL_TARGET, ResolutionContracts.QualifyMode.STANDARD);
+        ResolutionContracts.ProgramUnitId unit = analysis.model().programUnits().get(0).id();
+        SymbolTable table = analysis.tables().forProgramUnit(unit).orElseThrow().symbolTable();
+        SymbolTable.Symbol y = symbolUnder(table, "Y", "GROUP-A");
+        List<SymbolTable.Symbol> xCandidates = table.lookupLocal(y.scopeId(), SymbolTable.Namespace.DATA, "X");
+        SymbolTable.Symbol firstX = xCandidates.get(0);
+        SymbolTable.Symbol secondX = xCandidates.get(1);
+        DeclarationRelationResolution.Entry relation = relationForOwner(
+                analysis, table, unit, y.id(), SymbolTable.RelationKind.REDEFINES);
+
+        assertNotEquals(firstX.id(), secondX.id());
+        assertRelationCandidate(relation, secondX.id());
     }
 
     private static ReferenceResolution.Entry assertEntry(
