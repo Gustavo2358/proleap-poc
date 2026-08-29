@@ -4,7 +4,7 @@ Work items delimitam a mudança em execução; o [backlog](backlog.md) registra 
 
 ## Ativo
 
-Não há item ativo neste corte.
+- [WORK-GRAMMAR-001 — Validar literais especializados DFHRESP e DFHVALUE](active/WORK-GRAMMAR-001/spec.md)
 
 ## Histórico
 
