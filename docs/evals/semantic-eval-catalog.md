@@ -19,7 +19,7 @@ Este catálogo dá IDs estáveis às capacidades críticas do harness. Ele não 
 | EVAL-PRE-001 | contract / semantic | Diretivas e alternativas do preprocessor têm classificação exaustiva e falham fechadas. | `PreprocessorEnginePolicyTest`; `page-directives.cbl` | preprocessing; INV-COV-001, INV-COV-002 | Ignorar regra nova ou `REPLACE` não suportado. |
 | EVAL-PRE-002 | adversarial / semantic | COPY aninhado compõe normalização e reporta ausência, ciclo ou fonte ilegível. | `SourceNormalizationPreprocessingIntegrationTest`; `source-format-integration/` | preprocessing e source format; INV-PROV-001 | Expandir texto sem preservar as fronteiras do include. |
 | EVAL-PROV-001 | semantic / semantic | Source map atravessa COPY/REPLACING e chega à AST com origem, cadeia e exatidão observáveis. | `SourceProvenanceTest`; `provenance/` | provenance; INV-PROV-001, INV-PROV-002 | Recriar mapa identidade depois de transformar o texto. |
-| EVAL-PROV-002 | e2e / full | O corpus COACTUPC mantém baseline normalizado e semântico versionado. | `scripts/source-normalizer-regression.sh`; `coactupc-*-baseline.txt` e corpus configurado pelo script | source format, preprocessing e provenance | Validar apenas exemplos sintéticos e perder regressões do corpus. |
+| EVAL-PROV-002 | e2e / full | O corpus COACTUPC mantém contratos operacionais e semânticos versionados sem congelar cardinalidades globais da representação. | `scripts/source-normalizer-regression.sh`; `coactupc-*-baseline.txt` e corpus configurado pelo script | source format, preprocessing e provenance | Validar apenas exemplos sintéticos ou usar totais globais como substituto da semântica. |
 
 ## AST e cobertura
 

@@ -17,3 +17,4 @@ Não há item ativo neste corte.
 - [WORK-RES-003 — Resolver SET de condition-name sem namespace DATA espúrio](history/WORK-RES-003.md)
 - [WORK-RES-004 — Classificar condition-names em EVALUATE TRUE/FALSE](history/WORK-RES-004.md)
 - [WORK-TEST-001 — Restaurar relatório PIT focalizado](history/WORK-TEST-001.md)
+- [WORK-TEST-002 — Substituir cardinalidades globais por oráculos semânticos](history/WORK-TEST-002.md)

@@ -12,6 +12,19 @@ regra semântica → classes de equivalência → casos adversariais → comport
 
 Não derivar o teste a partir do comportamento que a implementação acabou de produzir. Criar a menor fixture útil para reproduzir a classe de problema e preservar também regressão do exemplo original quando ela tiver valor.
 
+## Baselines de corpus e cardinalidade
+
+Totais globais de nós, profundidade, scopes, símbolos, referências ou gaps em um
+programa grande são telemetria e detectores de mudança, não oráculos semânticos
+isolados. Eles podem permanecer visíveis nos relatórios, mas não devem bloquear
+uma mudança apenas por congelarem a forma incidental de uma representação.
+
+Contagem exata é apropriada quando decorre diretamente do contrato de uma fixture
+pequena e controlada, como a quantidade explícita de CALLs ou ocorrências nela.
+Em corpus amplo, preferir categorias semânticas, relações, estados de coverage,
+readiness, provenance e propriedades de consistência. Qualquer migração de
+baseline continua exigindo diff explicado e revisão da evidência.
+
 ## Classes de equivalência e adversariais
 
 Cobrir classes que alteram a decisão: inexistência, candidato único, múltiplos candidatos, namespace incompatível, qualificação válida/inválida, shadowing, aninhamento, variação de caixa, input ausente, construção não suportada e ambiguidade. Para resolução, considerar também visibilidade COBOL, `GLOBAL`, `COMMON`, FILE, índices e nomes de procedimento conforme o domínio suportado.

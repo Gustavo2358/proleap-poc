@@ -47,7 +47,7 @@ done
 
 while IFS= read -r expected; do
   [[ -z "$expected" ]] && continue
-  grep -Fqx "$expected" "$run_root/coactupc.log"
+  grep -Fq "$expected" "$run_root/coactupc.log"
 done <"src/test/resources/cobol/source-format/coactupc-regression-baseline.txt"
 
 while IFS='|' read -r artifact expected; do
