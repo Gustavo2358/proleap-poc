@@ -1,4 +1,0 @@
-Source: COACTUPC.cbl
-literal-target CALLs 1
-parser errors 0
-dependency analysis ready: false

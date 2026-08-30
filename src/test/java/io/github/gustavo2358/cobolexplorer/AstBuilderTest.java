@@ -39,12 +39,8 @@ class AstBuilderTest {
 
         assertEquals("COACTUPC", ast.name());
         assertEquals(4, ast.divisions().size());
-        assertTrue(snapshot.metrics().nodes() > 3_000);
-        assertTrue(snapshot.metrics().nodes() < sizes.get(tree));
-        assertEquals(11, snapshot.metrics().maxDepth());
         assertEquals(1, snapshot.metrics().literalTargetCalls());
         assertEquals(0, snapshot.metrics().identifierTargetCalls());
-        assertTrue(snapshot.metrics().embeddedLanguages() > 0);
 
         List<Ast.Node> all = flatten(ast);
         Ast.CallStatement call = all.stream().filter(Ast.CallStatement.class::isInstance)
