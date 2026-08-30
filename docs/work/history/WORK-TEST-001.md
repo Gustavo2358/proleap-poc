@@ -11,7 +11,7 @@ O XML `mutations.xml` tem `partial="true"` mesmo após conclusão. A inspeção 
 Executar o comando focalizado em sessão persistente (PTY) e fazer polling até o exit code, em vez de encerrar a chamada inicial:
 
 ```bash
-mvn -Dmaven.repo.local=/tmp/proleap-poc-m2 -Pmutation-adversarial \
+mvn -Dmaven.repo.local=/tmp/work-test-001-pit-m2 -Pmutation-adversarial \
   test-compile org.pitest:pitest-maven:mutationCoverage
 ```
 
