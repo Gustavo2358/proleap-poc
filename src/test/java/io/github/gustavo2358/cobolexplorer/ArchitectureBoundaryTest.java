@@ -27,6 +27,7 @@ class ArchitectureBoundaryTest {
                 names(SymbolTable.class, SymbolTableBuilder.class, CompilationUnitSymbolTables.class,
                         ReferenceOccurrences.class, ReferenceOccurrenceCollector.class, ReferenceResolution.class,
                         CobolReferenceResolver.class, DataAndIndexReferenceResolver.class,
+                        ExternalClassification.class, CicsIntrinsicClassifier.class,
                         ResolutionAnalysisReport.class, AstSnapshot.class, SymbolTableSnapshot.class,
                         ResolutionSnapshot.class, CoverageSnapshot.class, ExplorerMain.class));
     }
@@ -38,6 +39,7 @@ class ArchitectureBoundaryTest {
         assertNoDirectDependencies("INV-SYM-001", symbolComponents,
                 names(ReferenceOccurrences.class, ReferenceOccurrenceCollector.class, ReferenceResolution.class,
                         CobolReferenceResolver.class, DataAndIndexReferenceResolver.class,
+                        ExternalClassification.class, CicsIntrinsicClassifier.class,
                         ResolutionAnalysisReport.class));
         for (Class<?> component : symbolComponents) {
             assertTrue(directDependencies(component).stream().noneMatch(name -> name.startsWith("org/antlr/v4/")),
@@ -49,9 +51,20 @@ class ArchitectureBoundaryTest {
     void semanticProductsDoNotDependOnSnapshotsOrTheApplicationEntrypoint() throws Exception {
         assertNoDirectDependencies("ADR-0003", List.of(Ast.class, AstBuildResult.class,
                         CompilationUnitModel.class, CompilationUnitSymbolTables.class, SymbolTable.class,
-                        ReferenceOccurrences.class, ReferenceResolution.class, ResolutionAnalysisReport.class),
+                        ReferenceOccurrences.class, ReferenceResolution.class, ExternalClassification.class,
+                        ResolutionAnalysisReport.class),
                 names(AstSnapshot.class, SymbolTableSnapshot.class, CoverageSnapshot.class,
                         ResolutionSnapshot.class, ExplorerMain.class));
+    }
+
+    @Test
+    void canonicalCobolProductsDoNotDependOnConcretePlatformClassification() throws Exception {
+        assertNoDirectDependencies("INV-EXT-001", List.of(
+                        Ast.class, AstBuilder.class, SymbolTable.class, SymbolTableBuilder.class,
+                        CompilationUnitSymbolTableBuilder.class, ReferenceOccurrences.class,
+                        ReferenceOccurrenceCollector.class, ReferenceResolution.class,
+                        CobolReferenceResolver.class, DataAndIndexReferenceResolver.class),
+                names(ExternalClassification.class, CicsIntrinsicClassifier.class));
     }
 
     private static void assertNoDirectDependencies(String boundary, List<Class<?>> components,

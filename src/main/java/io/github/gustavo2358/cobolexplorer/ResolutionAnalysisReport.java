@@ -11,7 +11,8 @@ public final class ResolutionAnalysisReport {
         COLLECTOR_INTEGRITY,
         PRESERVED_CONTAINER,
         REFERENCE_BINDING,
-        CALL_SEMANTICS
+        CALL_SEMANTICS,
+        EXTERNAL_CLASSIFICATION
     }
 
     public enum AnalysisClaim { COMPLETE, INCOMPLETE }
@@ -42,6 +43,7 @@ public final class ResolutionAnalysisReport {
                                      long collectedReferences, int programUnits) { }
 
     private final ResolutionContracts.CobolResolutionPolicy policy;
+    private final ExternalClassification externalClassifications;
     private final ResolutionContracts.Completeness completeness;
     private final AnalysisClaim analysisClaim;
     private final List<Gap> gaps;
@@ -54,6 +56,7 @@ public final class ResolutionAnalysisReport {
     private final OperationalMetrics operationalMetrics;
 
     private ResolutionAnalysisReport(ResolutionContracts.CobolResolutionPolicy policy,
+                                     ExternalClassification externalClassifications,
                                      ResolutionContracts.Completeness completeness,
                                      List<Gap> gaps, List<ProgramUnitSummary> programUnits,
                                      Map<ResolutionContracts.ResolutionStatus, Long> statusCounts,
@@ -63,6 +66,8 @@ public final class ResolutionAnalysisReport {
                                      Map<ResolutionContracts.ReferenceRole, Long> roleCounts,
                                      OperationalMetrics operationalMetrics) {
         this.policy = policy;
+        this.externalClassifications = Objects.requireNonNull(
+                externalClassifications, "externalClassifications");
         this.completeness = completeness;
         this.analysisClaim = completeness.dependencyAnalysisReady()
                 ? AnalysisClaim.COMPLETE : AnalysisClaim.INCOMPLETE;
@@ -81,17 +86,31 @@ public final class ResolutionAnalysisReport {
             FrontendState frontendState,
             Map<ResolutionContracts.ProgramUnitId, ReferenceOccurrences> occurrencesByUnit,
             ReferenceResolution resolution) {
+        return compose(frontend, frontendState, occurrencesByUnit, resolution,
+                ExternalClassification.empty());
+    }
+
+    public static ResolutionAnalysisReport compose(
+            CompilationUnitBuildResult frontend,
+            FrontendState frontendState,
+            Map<ResolutionContracts.ProgramUnitId, ReferenceOccurrences> occurrencesByUnit,
+            ReferenceResolution resolution,
+            ExternalClassification externalClassifications) {
         Objects.requireNonNull(frontend, "frontend");
         Objects.requireNonNull(frontendState, "frontendState");
         Objects.requireNonNull(occurrencesByUnit, "occurrencesByUnit");
         Objects.requireNonNull(resolution, "resolution");
+        Objects.requireNonNull(externalClassifications, "externalClassifications");
 
         List<Gap> gaps = new ArrayList<>();
         addInputGaps(frontendState, gaps);
         addFrontendGaps(frontend, gaps);
         addCollectorGaps(frontend.compilationUnit(), occurrencesByUnit, resolution, gaps);
-        addResolutionGaps(resolution, gaps);
+        ExternalProjection projection = validateExternalClassifications(
+                resolution, externalClassifications, gaps);
+        addResolutionGaps(resolution, projection.coveredOccurrences(), gaps);
         addCallSemanticsGaps(resolution, gaps);
+        addExternalClassificationGaps(projection.classifications(), gaps);
 
         EnumMap<ResolutionContracts.ResolutionStatus, Long> statuses = zeroed(
                 ResolutionContracts.ResolutionStatus.class);
@@ -126,11 +145,13 @@ public final class ResolutionAnalysisReport {
         OperationalMetrics operational = new OperationalMetrics(metrics.indexedDeclarations(),
                 metrics.nominalLookups(), metrics.candidateInspections(), metrics.maximumCandidates(),
                 referenceCount, frontend.compilationUnit().programUnits().size());
-        return new ResolutionAnalysisReport(resolution.policy(), completeness, gaps, summaries,
+        return new ResolutionAnalysisReport(resolution.policy(), projection.classifications(),
+                completeness, gaps, summaries,
                 statuses, reasons, syntacticKinds, resolvedSemanticKinds, roles, operational);
     }
 
     public ResolutionContracts.CobolResolutionPolicy policy() { return policy; }
+    public ExternalClassification externalClassifications() { return externalClassifications; }
     public ResolutionContracts.Completeness completeness() { return completeness; }
     public AnalysisClaim analysisClaim() { return analysisClaim; }
     public List<Gap> gaps() { return gaps; }
@@ -222,7 +243,9 @@ public final class ResolutionAnalysisReport {
         }
     }
 
-    private static void addResolutionGaps(ReferenceResolution resolution, List<Gap> gaps) {
+    private static void addResolutionGaps(ReferenceResolution resolution,
+                                          Set<OccurrenceKey> externallyCovered,
+                                          List<Gap> gaps) {
         Map<String, ReferenceResolution.Entry> entriesByReferenceNode = new HashMap<>();
         for (ReferenceResolution.Entry entry : resolution.entries()) {
             entriesByReferenceNode.put(entry.occurrence().programUnitId() + "#"
@@ -230,6 +253,8 @@ public final class ResolutionAnalysisReport {
             if (entry.status() == ResolutionContracts.ResolutionStatus.RESOLVED
                     || entry.status() == ResolutionContracts.ResolutionStatus.EXTERNAL_OBSERVED) continue;
             ReferenceOccurrences.Occurrence occurrence = entry.occurrence();
+            if (externallyCovered.contains(new OccurrenceKey(
+                    occurrence.programUnitId(), occurrence.id()))) continue;
             addGap(gaps, GapCategory.REFERENCE_BINDING,
                     "REFERENCE_" + entry.status() + "_" + entry.reason(),
                     entry.status() + " " + occurrence.kind() + " reference '"
@@ -250,6 +275,53 @@ public final class ResolutionAnalysisReport {
                     occurrence == null ? "" : occurrence.grammarRule(),
                     occurrence == null ? 0 : occurrence.meta().span().startLine(),
                     occurrence == null ? -1 : occurrence.id());
+        }
+    }
+
+    private static ExternalProjection validateExternalClassifications(
+            ReferenceResolution resolution, ExternalClassification classifications, List<Gap> gaps) {
+        Map<OccurrenceKey, ReferenceResolution.Entry> entries = new HashMap<>();
+        for (ReferenceResolution.Entry entry : resolution.entries()) {
+            ReferenceOccurrences.Occurrence occurrence = entry.occurrence();
+            entries.put(new OccurrenceKey(occurrence.programUnitId(), occurrence.id()), entry);
+        }
+        Set<OccurrenceKey> covered = new HashSet<>();
+        for (ExternalClassification.Entry classification : classifications.entries()) {
+            OccurrenceKey rootKey = new OccurrenceKey(
+                    classification.programUnitId(), classification.rootOccurrenceId());
+            ReferenceResolution.Entry root = entries.get(rootKey);
+            boolean coherent = root != null
+                    && root.occurrence().referenceAstNodeId() == classification.rootAstNodeId()
+                    && root.occurrence().meta().equals(classification.meta())
+                    && root.occurrence().writtenText().equals(classification.constructWrittenText())
+                    && root.status() == ResolutionContracts.ResolutionStatus.UNRESOLVED;
+            for (int occurrenceId : classification.coveredOccurrenceIds()) {
+                OccurrenceKey key = new OccurrenceKey(classification.programUnitId(), occurrenceId);
+                coherent &= entries.containsKey(key) && covered.add(key);
+            }
+            if (!coherent) {
+                addGap(gaps, GapCategory.COLLECTOR_INTEGRITY,
+                        "INCONSISTENT_EXTERNAL_CLASSIFICATION",
+                        "External classification does not match the immutable occurrence/resolution products",
+                        classification.programUnitId(), classification.meta().origin().grammarRule(),
+                        classification.meta().span().startLine(), classification.rootOccurrenceId());
+                return new ExternalProjection(ExternalClassification.empty(), Set.of());
+            }
+        }
+        return new ExternalProjection(classifications, Set.copyOf(covered));
+    }
+
+    private static void addExternalClassificationGaps(
+            ExternalClassification classifications, List<Gap> gaps) {
+        for (ExternalClassification.Entry classification : classifications.entries()) {
+            addGap(gaps, GapCategory.EXTERNAL_CLASSIFICATION,
+                    "EXTERNAL_" + classification.certainty() + "_"
+                            + classification.technology() + "_" + classification.kind(),
+                    classification.certainty() + " " + classification.technology() + " "
+                            + classification.kind() + " construct '"
+                            + classification.constructWrittenText() + "': " + classification.reason(),
+                    classification.programUnitId(), classification.meta().origin().grammarRule(),
+                    classification.meta().span().startLine(), classification.rootOccurrenceId());
         }
     }
 
@@ -317,4 +389,9 @@ public final class ResolutionAnalysisReport {
         for (E value : type.getEnumConstants()) result.put(value, 0L);
         return result;
     }
+
+    private record OccurrenceKey(ResolutionContracts.ProgramUnitId programUnitId, int occurrenceId) { }
+
+    private record ExternalProjection(ExternalClassification classifications,
+                                      Set<OccurrenceKey> coveredOccurrences) { }
 }

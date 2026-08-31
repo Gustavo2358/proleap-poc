@@ -61,11 +61,11 @@ Este catálogo dá IDs estáveis às capacidades críticas do harness. Ele não 
 
 ## Classificação externa pós-resolução
 
-O eval abaixo está em estado **oracle-first** no work item ativo: seu contrato e classes já são normativos, mas os testes ainda não existem e ele não conta como cobertura verde. A promoção para cobertura executável ocorrerá somente quando os oráculos indicados estiverem implementados e passando.
+O primeiro slice executável mantém classificação externa separada do binding nominal e restrita à shape estrutural autorizada. Capacidades genéricas e outras tecnologias continuam fora deste catálogo executável.
 
 | ID | Tipo / tier | Contrato observado | Oracle executável e fixtures | Regras relacionadas | Rejeita implementação ingênua |
 | --- | --- | --- | --- | --- | --- |
-| EVAL-EXT-001 | adversarial / semantic (planned) | `DFHRESP(...)`/`DFHVALUE(...)` só recebem classificação CICS inferida após fracasso COBOL do construct inteiro; binding, incerteza, provenance e precedência COBOL permanecem separados. | Oracle especificado em `docs/work/active/WORK-EXT-001/eval.md`; futuros testes/fixtures sob os paths do `test_scope` | ADR-0011; INV-EXT-001 a INV-EXT-004; INV-AST-002, INV-PROV-002, INV-COV-001 | Alterar gramática/resolver, classificar por prefixo/argumento, sobrescrever referência resolvida, apagar `UNRESOLVED` ou deixar gaps internos artificiais. |
+| EVAL-EXT-001 | adversarial / semantic | `DFHRESP(...)`/`DFHVALUE(...)` só recebem classificação CICS inferida após fracasso COBOL do construct inteiro; binding, incerteza, provenance, coverage de occurrences e precedência COBOL permanecem separados. | `ExternalCicsCharacterizationTest`, `CicsIntrinsicClassifierTest`, `ExternalClassificationProductTest`, `ExternalClassificationProjectionTest`, `ArchitectureBoundaryTest`; fixtures `semantic/external-cics-*.cbl` e fontes sintéticas | ADR-0011; INV-EXT-001 a INV-EXT-004; INV-AST-002, INV-PROV-002, INV-COV-001 | Alterar gramática/resolver, classificar por prefixo/argumento, sobrescrever referência resolvida, apagar `UNRESOLVED`, absorver gaps vizinhos ou deixar gaps internos artificiais. |
 
 ## Observabilidade e apresentação
 

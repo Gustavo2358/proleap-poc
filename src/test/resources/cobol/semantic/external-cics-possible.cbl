@@ -1,0 +1,15 @@
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID. DFHPOSSIBLE.
+       DATA DIVISION.
+       WORKING-STORAGE SECTION.
+       01 WS-RESP PIC S9(8) COMP.
+       01 SINK PIC S9(8) COMP.
+       PROCEDURE DIVISION.
+           IF WS-RESP = DFHRESP(NORMAL)
+               CONTINUE
+           END-IF.
+           IF WS-RESP = DFHVALUE(SOME-NAME)
+               CONTINUE
+           END-IF.
+           GOBACK.
+       END PROGRAM DFHPOSSIBLE.

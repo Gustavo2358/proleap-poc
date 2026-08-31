@@ -177,21 +177,30 @@ public final class ExplorerMain {
                 .withDllMode(preprocessed.dllMode());
         ReferenceResolution resolution = new CobolReferenceResolver(policy)
                 .resolve(compilationUnit, symbolTables, occurrences);
+
+        progress.phase = "EXTERNAL_CLASSIFICATION";
+        boolean externalClassificationInputsComplete = preprocessed.unresolved() == 0
+                && preprocessed.errors() == 0 && lexerErrors == 0 && parserErrors == 0;
+        ExternalClassification externalClassifications = externalClassificationInputsComplete
+                ? new CicsIntrinsicClassifier().classify(compilationUnit, occurrences, resolution)
+                : ExternalClassification.empty();
         ResolutionAnalysisReport resolutionReport = ResolutionAnalysisReport.compose(compilationBuild,
                 new ResolutionAnalysisReport.FrontendState(preprocessed.unresolved(), preprocessed.errors(),
-                        (int) lexerErrors, (int) parserErrors, diagnostics), occurrences, resolution);
+                        (int) lexerErrors, (int) parserErrors, diagnostics), occurrences, resolution,
+                externalClassifications);
         ResolutionSnapshot.from(source.getFileName().toString(),
                         Arrays.asList(normalized.split("\\R", -1)), compilationUnit, resolution,
                         resolutionReport)
                 .write(output.resolve("resolution-data.js"));
         ReferenceResolution.Metrics resolutionMetrics = resolution.metrics();
-        LOG.debug("event=resolution_completed phase=REFERENCE_RESOLUTION elapsedMs={} references={} resolved={} externalObserved={} unresolved={} ambiguous={} unsupported={} indexedDeclarations={} nominalLookups={} candidateInspections={} maximumCandidates={}",
+        LOG.debug("event=resolution_completed phase=REFERENCE_RESOLUTION elapsedMs={} references={} resolved={} externalObserved={} unresolved={} ambiguous={} unsupported={} externalClassifications={} indexedDeclarations={} nominalLookups={} candidateInspections={} maximumCandidates={}",
                 elapsedMs(phaseStarted), resolution.entries().size(),
                 resolutionReport.statusCounts().get(ResolutionContracts.ResolutionStatus.RESOLVED),
                 resolutionReport.statusCounts().get(ResolutionContracts.ResolutionStatus.EXTERNAL_OBSERVED),
                 resolutionReport.statusCounts().get(ResolutionContracts.ResolutionStatus.UNRESOLVED),
                 resolutionReport.statusCounts().get(ResolutionContracts.ResolutionStatus.AMBIGUOUS),
                 resolutionReport.statusCounts().get(ResolutionContracts.ResolutionStatus.UNSUPPORTED),
+                externalClassifications.entries().size(),
                 resolutionMetrics.indexedDeclarations(), resolutionMetrics.nominalLookups(),
                 resolutionMetrics.candidateInspections(), resolutionMetrics.maximumCandidates());
         if (!resolutionReport.completeness().dependencyAnalysisReady()) {

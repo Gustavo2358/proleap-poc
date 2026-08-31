@@ -4,7 +4,7 @@ Work items delimitam a mudança em execução; o [backlog](backlog.md) registra 
 
 ## Ativo
 
-- [WORK-EXT-001 — Classificar `DFHRESP` e `DFHVALUE` unresolved como possíveis intrínsecos CICS](active/WORK-EXT-001/spec.md). O slice está em estado oracle-first e não autoriza os itens futuros de extensibilidade.
+Nenhum work item ativo.
 
 ## Histórico
 
@@ -18,3 +18,4 @@ Work items delimitam a mudança em execução; o [backlog](backlog.md) registra 
 - [WORK-RES-004 — Classificar condition-names em EVALUATE TRUE/FALSE](history/WORK-RES-004.md)
 - [WORK-TEST-001 — Restaurar relatório PIT focalizado](history/WORK-TEST-001.md)
 - [WORK-TEST-002 — Substituir cardinalidades globais por oráculos semânticos](history/WORK-TEST-002.md)
+- [WORK-EXT-001 — Classificar `DFHRESP` e `DFHVALUE` unresolved como possíveis intrínsecos CICS](history/WORK-EXT-001.md)
