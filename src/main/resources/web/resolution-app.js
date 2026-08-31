@@ -15,6 +15,9 @@
   }
 
   const units = new Map(data.units.map((unit) => [unit.id, unit]));
+  const classifications = data.classifications || [];
+  const classificationsByRootOccurrence = new Map(classifications.map((classification) =>
+    [`${classification.unitId}#${classification.rootOccurrenceId}`, classification]));
   let selectedId = entryFromHash() ?? data.entries[0]?.id ?? null;
 
   renderHeader();
@@ -29,7 +32,8 @@
     $("#resolution-metrics").innerHTML = [
       [statusCounts.RESOLVED, "resolved"], [statusCounts.AMBIGUOUS, "ambiguous"],
       [statusCounts.UNRESOLVED, "unresolved"], [statusCounts.UNSUPPORTED, "unsupported"],
-      [statusCounts.EXTERNAL_OBSERVED, "external-observed"]
+      [statusCounts.EXTERNAL_OBSERVED, "external-observed"],
+      [classifications.length, "external-inferred"]
     ].map(([value, label]) => `<div class="metric ${label}"><b>${format(value)}</b><span>${label}</span></div>`).join("");
     const ready = data.meta.dependencyAnalysisReady;
     $("#resolution-status").className = `parse-status ${ready ? "ok" : "warn"}`;
@@ -41,6 +45,7 @@
     $("#policy-strip").innerHTML = [
       ["Política", `${data.meta.policyId} @ ${data.meta.policyVersion}`],
       ["QUALIFY", data.meta.qualifyMode], ["Escopo", "artefato atual"],
+      ["Classificações externas", `${format(classifications.length)} inferidas`],
       ["Custo", `${format(data.metrics.nominalLookups)} lookups · ${format(data.metrics.candidateInspections)} inspeções`]
     ].map(([label, value]) => `<div><span>${label}</span><b>${escapeHtml(value)}</b></div>`).join("");
   }
@@ -168,9 +173,15 @@
 
   function renderGaps() {
     $("#gap-count").textContent = `${format(data.gaps.length)} lacunas`;
-    $("#gap-list").innerHTML = data.gaps.length ? data.gaps.slice(0, 500).map((gap) =>
-      `<button class="gap-card" data-occurrence="${gap.occurrenceId}" data-unit="${escapeHtml(gap.unitId || "")}"><span>${escapeHtml(gap.category)}</span><b>${escapeHtml(gap.code)}</b><p>${escapeHtml(gap.message)}</p><small>${escapeHtml(gap.grammarRule || "frontend")} · linha ${format(gap.line)}</small></button>`
-    ).join("") : `<div class="empty-state"><b>Sem lacunas bloqueantes</b><span>O binding nominal está completo para a entrada observada.</span></div>`;
+    $("#gap-list").innerHTML = data.gaps.length ? data.gaps.slice(0, 500).map((gap) => {
+      const classification = classificationsByRootOccurrence.get(`${gap.unitId}#${gap.occurrenceId}`);
+      const detail = classification
+        ? `${classification.technology} · ${classification.kind} · ${classification.certainty} · ${format(classification.coveredOccurrenceIds.length)} occurrences cobertas`
+        : `${gap.grammarRule || "frontend"} · linha ${format(gap.line)}`;
+      const message = classification
+        ? `${classification.constructWrittenText} · ${classification.reason}` : gap.message;
+      return `<button class="gap-card" data-occurrence="${gap.occurrenceId}" data-unit="${escapeHtml(gap.unitId || "")}"><span>${escapeHtml(gap.category)}</span><b>${escapeHtml(gap.code)}</b><p>${escapeHtml(message)}</p><small>${escapeHtml(detail)}</small></button>`;
+    }).join("") : `<div class="empty-state"><b>Sem lacunas bloqueantes</b><span>O binding nominal está completo para a entrada observada.</span></div>`;
     $$("#gap-list .gap-card").forEach((card) => card.addEventListener("click", () => {
       const occurrence = Number(card.dataset.occurrence);
       if (occurrence < 0) return;

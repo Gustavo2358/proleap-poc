@@ -88,7 +88,7 @@ IDs neste documento são estáveis. `AUTOMATED` indica proteção executável at
 - **Rationale:** preservar sintaxe reconhecida mantém fidelidade e provenance; interpretá-la nas fases COBOL redefiniria silenciosamente a linguagem e forçaria mudanças transversais para cada tecnologia.
 - **Scope:** frontend/AST como fronteira de preservação, produtos semânticos COBOL e futuras extensões.
 - **Related ADRs:** ADR-0003, ADR-0007 e ADR-0011.
-- **Enforcement:** `PARTIALLY_AUTOMATED` — `ArchitectureBoundaryTest`, oráculos do primeiro classifier e review de dependências/interpretação.
+- **Enforcement:** `PARTIALLY_AUTOMATED` — `ArchitectureBoundaryTest` bloqueia dependências reversas do core COBOL para classificação concreta; `ExternalCicsCharacterizationTest` e `CicsIntrinsicClassifierTest` protegem a separação comportamental; interpretação de plataforma adicional continua sujeita a review.
 - **Known exceptions:** nenhuma; identificação opaca de SQL/CICS/SQLIMS é parte permitida do statement, não interpretação semântica externa.
 
 ### INV-EXT-002 — Evidência COBOL precede classificação externa inferida
@@ -97,7 +97,7 @@ IDs neste documento são estáveis. `AUTOMATED` indica proteção executável at
 - **Rationale:** o modo real de compilação pode estar ausente e nomes de plataforma também podem ser nomes COBOL válidos.
 - **Scope:** classifiers pós-resolução e composição de resultados.
 - **Related ADRs:** ADR-0011.
-- **Enforcement:** `REVIEW` — EVAL-EXT-001 será o oracle executável do primeiro slice.
+- **Enforcement:** `AUTOMATED` — EVAL-EXT-001 em `CicsIntrinsicClassifierTest` cobre precedência COBOL, estados `AMBIGUOUS`/`UNSUPPORTED`, filho unresolved e relações metamórficas de declaração.
 - **Known exceptions:** metadata futura de compilação, quando explícita e confiável, poderá governar outro caminho mediante work item e policy próprios.
 
 ### INV-EXT-003 — Classificação externa inferida preserva incerteza e provenance
@@ -106,7 +106,7 @@ IDs neste documento são estáveis. `AUTOMATED` indica proteção executável at
 - **Rationale:** hipótese plausível não equivale a verdade sintática nem pode elevar a claim de completude.
 - **Scope:** produto de classificação externa, relatórios, snapshots e diagnostics.
 - **Related ADRs:** ADR-0002, ADR-0008 e ADR-0011.
-- **Enforcement:** `REVIEW` — EVAL-EXT-001 será o oracle executável do primeiro slice; INV-PROV-002 e INV-COV-001 continuam aplicáveis.
+- **Enforcement:** `AUTOMATED` — `ExternalClassificationProductTest` e `ExternalClassificationProjectionTest` verificam imutabilidade, certeza inferida, motivo, span, origem, include chain serializável e claim conservadora; INV-PROV-002 e INV-COV-001 continuam aplicáveis.
 - **Known exceptions:** nenhuma.
 
 ### INV-EXT-004 — Classificação externa possui fronteira de construct
@@ -115,7 +115,7 @@ IDs neste documento são estáveis. `AUTOMATED` indica proteção executável at
 - **Rationale:** classificar somente o nome-base deixaria argumentos/subscripts como falsos defeitos de binding; removê-los silenciosamente perderia auditabilidade.
 - **Scope:** classifiers, composição do relatório e apresentação.
 - **Related ADRs:** ADR-0003, ADR-0008 e ADR-0011.
-- **Enforcement:** `REVIEW` — EVAL-EXT-001 será o oracle executável do primeiro slice.
+- **Enforcement:** `AUTOMATED` — `CicsIntrinsicClassifierTest` e `ExternalClassificationProjectionTest` verificam coverage determinística do subtree, substituição dos gaps cobertos e preservação dos gaps externos ao construct.
 - **Known exceptions:** occurrences externas ao subtree ou não cobertas explicitamente continuam com seu resultado COBOL original.
 
 ## Cobertura e linguagens embarcadas

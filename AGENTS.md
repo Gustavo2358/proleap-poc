@@ -52,7 +52,7 @@ Comece no [índice de conhecimento](docs/index.md). Carregue somente o contexto 
 
 ## Trabalho ativo
 
-O índice de trabalho está em [docs/work/index.md](docs/work/index.md). WORK-EXT-001 é o único item ativo neste corte e autoriza somente a classificação pós-resolução de `DFHRESP`/`DFHVALUE`; os itens BACKLOG-EXT permanecem trabalho futuro não autorizado.
+O índice de trabalho está em [docs/work/index.md](docs/work/index.md). Não há work item ativo neste corte. A conclusão de WORK-EXT-001 não autoriza iniciar itens `BACKLOG-EXT`, CFG, dataflow ou outras tecnologias.
 
 Ao trabalhar em um item:
 

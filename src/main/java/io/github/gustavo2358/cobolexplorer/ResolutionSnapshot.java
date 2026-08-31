@@ -45,6 +45,8 @@ final class ResolutionSnapshot {
             out.write("\"dependencyAnalysisReady\":" + report.completeness().dependencyAnalysisReady() + ',');
             out.write("\"programUnits\":" + model.programUnits().size() + ',');
             out.write("\"references\":" + resolution.entries().size() + ',');
+            out.write("\"externalClassifications\":"
+                    + report.externalClassifications().entries().size() + ',');
             out.write("\"gaps\":" + report.gaps().size() + "},\n");
             writeCompleteness(out);
             out.write(",\n");
@@ -57,6 +59,8 @@ final class ResolutionSnapshot {
             writeUnits(out);
             out.write(",\n");
             writeEntries(out);
+            out.write(",\n");
+            writeClassifications(out);
             out.write(",\n");
             writeGaps(out);
             out.write(",\n");
@@ -241,6 +245,31 @@ final class ResolutionSnapshot {
             field(out, attribute.getKey(), attribute.getValue());
         }
         out.write("}}");
+    }
+
+    private void writeClassifications(Writer out) throws IOException {
+        out.write("\"classifications\":[");
+        List<ExternalClassification.Entry> classifications =
+                report.externalClassifications().entries();
+        for (int index = 0; index < classifications.size(); index++) {
+            if (index > 0) out.write(',');
+            ExternalClassification.Entry classification = classifications.get(index);
+            out.write("{\"id\":" + classification.id() + ',');
+            field(out, "unitId", unitKey(classification.programUnitId())); out.write(',');
+            out.write("\"rootAstNodeId\":" + classification.rootAstNodeId() + ',');
+            out.write("\"rootOccurrenceId\":" + classification.rootOccurrenceId() + ',');
+            field(out, "constructWrittenText", classification.constructWrittenText()); out.write(',');
+            field(out, "technology", classification.technology().name()); out.write(',');
+            field(out, "kind", classification.kind().name()); out.write(',');
+            field(out, "certainty", classification.certainty().name()); out.write(',');
+            field(out, "reason", classification.reason().name()); out.write(',');
+            writeSpan(out, classification.meta().span()); out.write(',');
+            writeProvenance(out, classification.meta().provenance()); out.write(',');
+            out.write("\"coveredOccurrenceIds\":[");
+            integers(out, classification.coveredOccurrenceIds());
+            out.write("]}");
+        }
+        out.write(']');
     }
 
     private void writeGaps(Writer out) throws IOException {
