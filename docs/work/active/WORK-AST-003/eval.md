@@ -8,7 +8,7 @@ O Discovery é correto se reproduz a falha depois da construção da AST, discri
 
 - Procedure `PERFORM TARGET-PARA UNTIL` com condição composta.
 - Procedure `PERFORM FIRST-PARA THRU LAST-PARA UNTIL` com condição simples.
-- Declaração aceita pela grammar com `EXTERNAL GLOBAL`, que produz diagnostic metadata sem nó.
+- Os dois call sites atuais de `declarationVisibility`: `FileDescription` e `DataEntry`. Ambos podem receber `external=true` e `global=true` por construções aceitas pela grammar e então produzir diagnostic metadata sem nó.
 - Superfície representativa existente em `ast-cfg-boundary.cbl`, `statements.cbl`, `declarations.cbl`, `expressions.cbl` e `references.cbl`.
 
 ## Classes negativas
@@ -26,8 +26,8 @@ O Discovery é correto se reproduz a falha depois da construção da AST, discri
 ## Casos adversariais
 
 - A profundidade diferente das duas condições altera o offset real (`21` versus `17`), rejeitando correção por constante.
-- `THRU` adiciona duas referências estruturalmente anteriores ao controle.
-- Metadata diagnóstica consome o mesmo contador sem materializar nó, provando uma segunda forma da classe de defeito.
+- `THRU + UNTIL` adiciona duas referências estruturalmente anteriores ao controle; a fixture não contém `VARYING`.
+- Metadata diagnóstica consome o mesmo contador sem materializar nó em qualquer call site conflitante de `declarationVisibility`, provando uma segunda forma da classe de defeito.
 - O oracle verifica também duplicação de instância, ciclos e filhos nulos nos caminhos exercitados.
 
 ## Casos de regressão
@@ -42,6 +42,7 @@ O Discovery é correto se reproduz a falha depois da construção da AST, discri
 - Trocar procedure `PERFORM` controlado por inline mantém a mesma expressão, mas remove a inversão porque a ordem estrutural muda.
 - Adicionar metadata não estrutural não deveria alterar IDs dos nós posteriores; o comportamento atual viola essa propriedade.
 - Para uma AST válida, traversal canônica produz IDs únicos exatamente no intervalo `0..nodeCount-1`, sem ciclos nem instância compartilhada.
+- Os IDs quebrados exatos são observações de Discovery. A regressão futura deriva posições pelo pre-order de `Ast.children` e exige `id == posição`; ela não troca os hardcodes antigos por números novos.
 
 ## Expectativas de escala
 

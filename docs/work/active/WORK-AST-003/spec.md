@@ -31,11 +31,12 @@ Program units aceitos pelo frontend COBOL configurado após normalização e pre
 
 1. O Discovery distingue sucesso de preprocessing, lexer, parser e AST da falha posterior de apresentação.
 2. Cada discrepância registra trigger, nó, ID esperado, ID real e cadeia causal.
-3. Todos os 48 tipos de `Ast.Node` são classificados contra seu builder e `Ast.children`.
+3. Todos os 48 tipos de `Ast.Node` são classificados contra seu builder e `Ast.children`, e todos os call sites de helpers que podem consumir o contador são auditados.
 4. Consumidores são classificados por unicidade, determinismo, contiguidade, pre-order ou uso não ordinal.
 5. Reachability, duplicação e ciclos são auditados sem confundir objetos intermediários do builder com a árvore final.
 6. Oráculos intencionalmente vermelhos ficam opt-in; gates normais continuam verdes.
 7. Nenhuma hipótese vira correção de produção nesta fase.
+8. IDs quebrados específicos permanecem evidência observacional; o aceite futuro é derivado do pre-order de `Ast.children`, com `id == posição esperada`, e não de hardcodes substitutos.
 
 ## Comportamento diante de incerteza
 

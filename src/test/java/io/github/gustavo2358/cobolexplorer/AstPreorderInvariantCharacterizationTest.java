@@ -22,7 +22,15 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** Characterizes BUG-AST-PREORDER-001 without changing production behavior. */
+/**
+ * Characterizes BUG-AST-PREORDER-001 without changing production behavior.
+ *
+ * <p>The exact broken IDs asserted by the focused tests are Discovery evidence only. They must not
+ * become Phase 2 acceptance values or be updated to whatever numbers a future implementation emits.
+ * The future regression contract is structural: traverse with {@link Ast#children(Ast.Node)} and
+ * require each node ID to equal its canonical pre-order position, as encoded by
+ * {@link #assertCanonicalPreOrder(Ast.Program)}.</p>
+ */
 class AstPreorderInvariantCharacterizationTest {
     private static final Path FIXTURES = Path.of("src/test/resources/cobol/semantic");
 
@@ -36,9 +44,11 @@ class AstPreorderInvariantCharacterizationTest {
         assertNotNull(perform.fromReference());
         assertEquals("TARGET-PARA", perform.fromReference().baseName());
         assertEquals(1, perform.controlExpressions().size());
+        // Discovery-only snapshot of the current defect; not a future implementation contract.
         assertEquals(List.of(21, 14), List.of(
                 perform.fromReference().meta().id(), perform.controlExpressions().get(0).meta().id()),
-                "the control subtree is allocated before the structurally preceding procedure reference");
+                "observed broken IDs: the control subtree is allocated before the structurally "
+                        + "preceding procedure reference");
 
         IllegalStateException failure = assertThrows(IllegalStateException.class,
                 () -> AstSnapshot.from(analysis.program()));
@@ -47,7 +57,7 @@ class AstPreorderInvariantCharacterizationTest {
     }
 
     @Test
-    void procedurePerformThruShowsTheSameDefectWithAConditionDependentOffset() throws Exception {
+    void procedurePerformThruUntilShowsTheSameDefectWithAConditionDependentOffset() throws Exception {
         Analysis analysis = analyze("ast-preorder-perform-thru.cbl");
         Ast.PerformStatement perform = onlyPerform(analysis.program());
 
@@ -58,10 +68,12 @@ class AstPreorderInvariantCharacterizationTest {
         assertEquals(List.of("FIRST-PARA", "LAST-PARA"), List.of(
                 perform.fromReference().baseName(), perform.throughReference().baseName()));
         assertEquals(1, perform.controlExpressions().size());
+        // Discovery-only snapshot of the current THRU + UNTIL defect; not a future acceptance value.
         assertEquals(List.of(17, 18, 14), List.of(
                 perform.fromReference().meta().id(), perform.throughReference().meta().id(),
                 perform.controlExpressions().get(0).meta().id()),
-                "both procedure references are allocated after the structurally later control subtree");
+                "observed broken IDs: both procedure references are allocated after the "
+                        + "structurally later UNTIL control subtree");
 
         IllegalStateException failure = assertThrows(IllegalStateException.class,
                 () -> AstSnapshot.from(analysis.program()));
@@ -130,6 +142,7 @@ class AstPreorderInvariantCharacterizationTest {
     @Test
     @EnabledIfSystemProperty(named = "ast.preorder.required", matches = "true")
     void everyAstNodeIdMatchesCanonicalPreOrder() throws Exception {
+        // This property—not replacement hardcodes in the focused tests—is the future regression oracle.
         for (String fixture : List.of(
                 "ast-preorder-perform-until.cbl",
                 "ast-preorder-perform-thru.cbl",

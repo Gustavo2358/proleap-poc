@@ -9,7 +9,7 @@ Base reproduzível: `c6d9b6e1b597f34db06b41f4e8e04cdcf1d68a3a`, merge do PR #10 
 O bug está **confirmado** e deve bloquear WORK-AST-002 Slice 2. A hipótese inicial explica o trigger reportado, mas era incompleta: a auditoria encontrou duas violações confirmadas da mesma classe sistêmica.
 
 1. `buildPerform` aloca o subtree de controle antes de `fromReference`/`throughReference` no ramo procedure, enquanto `Ast.children(PerformStatement)` declara referências antes de controles.
-2. `declarationVisibility` chama `meta(context)` para um diagnostic que não é `Ast.Node`; essa metadata consome `nextId` e cria um gap na árvore final.
+2. O helper compartilhado `declarationVisibility`, alcançado pelos call sites de `FileDescription` e `DataEntry`, chama `meta(context)` para um diagnostic que não é `Ast.Node`; essa metadata consome `nextId` e cria um gap na árvore final.
 
 A severidade é alta para a fronteira AST: fonte aceito pelo parser produz AST imutável alcançável, mas a apresentação falha fechada antes de símbolos/resolução. Além do incidente visível, qualquer chamada nova a `meta()` fora de um nó ou qualquer inversão entre builder e `Ast.children` pode repetir a classe.
 
@@ -54,6 +54,8 @@ PerformStatement 13
 
 Caso B:
 
+Forma COBOL caracterizada: procedure `PERFORM FIRST-PARA THRU LAST-PARA` com controle `UNTIL`. Não há `VARYING` nesta fixture.
+
 ```text
 alocação Java:
 PerformStatement 13
@@ -71,6 +73,8 @@ PerformStatement 13
 ```
 
 O offset não é constante: ele varia com a shape da expressão. Isso rejeita qualquer remendo baseado em `expected/got` específico.
+
+Os números `21, 14` e `17, 18, 14` acima são fotografias reproduzíveis do comportamento defeituoso na base do Discovery. Eles não são valores de aceite da implementação futura e não devem ser simplesmente atualizados após uma correção. A regressão definitiva da Fase 2 deve derivar a sequência pela traversal canônica de `Ast.children` e exigir, para cada nó, `meta.id == posição esperada no pre-order`.
 
 No caso diagnóstico, os IDs alcançáveis são `0..7, 9..12`; o diagnostic `CONFLICTING_DECLARATION_VISIBILITY` possui `Meta.id=8`. O primeiro nó posterior, a `Division` de procedure, recebe 9 e falha na posição 8.
 
@@ -127,12 +131,12 @@ Finding documental: pre-order/contiguidade são intencionais e executáveis, mas
 ### Trigger
 
 - Primário: procedure `PERFORM` com ao menos uma expressão de controle materializada.
-- Secundário descoberto: declaração aceita pela grammar que gera diagnostic de visibilidade conflitante.
+- Secundário descoberto: qualquer call site atual de `declarationVisibility` que receba simultaneamente `external=true` e `global=true`.
 
 ### Causa imediata
 
 - `buildPerform` calcula `controls` antes de construir referências, invertendo a ordem declarada por `Ast.children`.
-- `declarationVisibility` chama `meta(context)` para diagnostic sem nó e deixa um gap.
+- Os call sites de `FileDescription` e `DataEntry` delegam o conflito ao mesmo `declarationVisibility`; o helper chama `meta(context)` para diagnostic sem nó e deixa um gap.
 
 ### Causa sistêmica
 
@@ -148,8 +152,8 @@ Status usa `CONSISTENTE`, `VIOLAÇÃO CONFIRMADA` e `NÃO APLICÁVEL`. Nenhum ti
 | `Division` | `buildIdentification/Environment/Data/Procedure` | meta; children em ordem publicada × children | CONSISTENTE |
 | `Section` | `buildData`, `buildProcedureSection` | meta; entries/paragraphs × children | CONSISTENTE |
 | `FileBinding` | `buildEnvironment` | leaf | NÃO APLICÁVEL |
-| `FileDescription` | `buildData` | meta; entries × entries | CONSISTENTE |
-| `DataEntry` | `buildDataEntry`, `buildDataHierarchy`, `freezeDataDraft` | meta; clauses; entradas subsequentes em source pre-order; freeze reutiliza meta × clauses; nested entries | CONSISTENTE; objetos draft substituídos não alocam novo ID |
+| `FileDescription` | `buildData` | meta; entries × entries | CONSISTENTE entre nós; o call site de `declarationVisibility` pode intercalar metadata não-node quando FD/SD combina `EXTERNAL` e `GLOBAL` |
+| `DataEntry` | `buildDataEntry`, `buildDataHierarchy`, `freezeDataDraft` | meta; clauses; entradas subsequentes em source pre-order; freeze reutiliza meta × clauses; nested entries | CONSISTENTE entre nós; objetos draft não alocam ID, mas o call site de visibility pode intercalar metadata não-node no format 1 |
 | `PictureClause` | `mapDataClause` | leaf | NÃO APLICÁVEL |
 | `UsageClause` | `mapDataClause` | leaf | NÃO APLICÁVEL |
 | `ValueClause` | `mapDataClause` | leaf | NÃO APLICÁVEL |
@@ -201,7 +205,12 @@ Status usa `CONSISTENTE`, `VIOLAÇÃO CONFIRMADA` e `NÃO APLICÁVEL`. Nenhum ti
 - `DataDraft/freeze` reconstrói records finais sem chamar `meta`; IDs e filhos não são duplicados.
 - `syntheticMeta` só é usado por `RawExpression` e portanto materializa nó.
 - A meta “sintética” do paragraph de entry usa `meta(context)` e materializa `Paragraph`.
-- **Violação extra:** `declarationVisibility` chama `meta(context)` para `SemanticCoverage.Diagnostic`, que não é Node. É a única alocação confirmada sem nó na auditoria das chamadas atuais.
+- **Call sites atuais:** a busca global encontra exatamente duas chamadas a `declarationVisibility`.
+  - `buildData` chama o helper ao construir `FileDescription`. Ele deriva os flags de `externalClause` e `globalClause`; como `fileDescriptionEntryClause*` admite ambas as alternativas na mesma FD/SD, esse caminho pode produzir `CONFLICTING_DECLARATION_VISIBILITY`.
+  - `buildDataEntry` chama o helper ao construir `DataEntry`. No `dataDescriptionEntryFormat1`, as listas `dataExternalClause()` e `dataGlobalClause()` podem ser simultaneamente não vazias porque a grammar repete a união de cláusulas. Formats 2, 3 e EXEC SQL mantêm ambos os flags falsos e não produzem esse conflito.
+- **Violação extra confirmada no nível correto:** em qualquer um desses dois caminhos conflitantes, o helper compartilhado cria `SemanticCoverage.Diagnostic` com `meta(context)`. O diagnostic não é `Ast.Node`, mas a chamada avança `nextId`; portanto, a cadeia causal é `declarationVisibility/call site → metadata diagnóstica não-AST → consumo indevido do contador estrutural → gap nos IDs alcançáveis`.
+- A fixture `01 CONFLICTING-ITEM EXTERNAL GLOBAL` é uma reprodução pelo call site `DataEntry`, não o limite do defeito. O call site `FileDescription` é igualmente vulnerável pela análise conjunta do builder e da grammar.
+- Essa é a única alocação confirmada sem nó na auditoria de todas as chamadas atuais a `meta`/`syntheticMeta`.
 
 ## F. Auditoria de consumidores
 
@@ -281,9 +290,9 @@ Sem implementar nesta fase:
 
 1. Explicitar no domínio/invariant que, dentro de cada program unit, a traversal pre-order de `Ast.children` possui exatamente IDs `0..N-1`.
 2. No ramo procedure de `buildPerform`, construir `fromReference` e `throughReference` antes de `controlExpressions`; manter inline na ordem atual. A ordem textual/parse tree não é a justificativa: a justificativa é a ordem estrutural publicada.
-3. Impedir metadata não estrutural de avançar o contador AST. Para `CONFLICTING_DECLARATION_VISIBILITY`, reutilizar a meta do nó declarativo ao qual o diagnostic pertence ou passar explicitamente essa anchor meta ao helper; não inventar ID sentinela silencioso.
+3. Impedir metadata não estrutural de avançar o contador AST em ambos os call sites de `declarationVisibility`. Para `CONFLICTING_DECLARATION_VISIBILITY`, reutilizar a meta do nó declarativo (`FileDescription` ou `DataEntry`) ao qual o diagnostic pertence ou passar explicitamente essa anchor meta ao helper; não inventar ID sentinela silencioso.
 4. Promover o oracle opt-in para teste normal. Ele deve validar em um passe: instância alcançada uma vez, ausência de ciclos/nulos, IDs únicos, ID igual à posição, faixa contígua e `nodeCount == maxId+1`.
-5. Manter regressões específicas para os dois `PERFORM`, o diagnostic gap e os controles negativos.
+5. Manter regressões específicas para os dois `PERFORM`, o diagnostic gap e os controles negativos. As sequências quebradas deste Discovery permanecem evidência histórica; o aceite futuro deve ser a propriedade estrutural `id == posição no pre-order de Ast.children`, não novos hardcodes numéricos.
 
 Essa solução corrige a causa imediata nas duas fontes conhecidas e protege a causa sistêmica por um oracle independente de cada builder. Ela não trata apenas `expected 14` nem altera semântica COBOL.
 
