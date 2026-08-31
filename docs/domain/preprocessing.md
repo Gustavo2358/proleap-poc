@@ -7,7 +7,7 @@
 ## Entradas e saídas
 
 - **Entrada:** fonte normalizada e mapeada, binding das gramáticas e `CopybookLibrary`.
-- **Saída:** `Outcome` imutável com texto, mapa composto, diagnostics, contagens, compiler options e modos `PGMNAME`, `DYNAM` e `DLL`.
+- **Saída:** `Outcome` imutável com texto, mapa composto, diagnostics tipados, contagens derivadas, compiler options e modos `PGMNAME`, `DYNAM` e `DLL`.
 
 ## Políticas atuais
 
@@ -20,7 +20,7 @@ Cada alternativa top-level de `CobolPreprocessor.startRule` possui classificaç�
 - texto COBOL comum é mantido;
 - `REPLACE` top-level e `REPLACE OFF` permanecem `UNSUPPORTED` e falham antes do parser COBOL.
 
-COPY ausente, cíclico ou com erro de I/O produz placeholder mapeado e diagnostic. Ausência de copybook mantém a execução observável como incompleta; não equivale a COPY vazio.
+COPY ausente, cíclico ou com erro de I/O produz placeholder mapeado e diagnostic. Para membro não encontrado, `Diagnostic.Code.UNRESOLVED_COPY` é a identidade semântica estruturada; `Outcome.unresolved()` é derivado desses fatos, que preservam nome solicitado e localização em ordem determinística. A mensagem humana continua útil, mas seu wording não participa de contagem, composição ou geração de gaps. Ausência de copybook mantém a execução observável como incompleta; não equivale a COPY vazio nem exige interromper fases posteriores quando o placeholder ainda permite construir seus produtos coerentemente. COPY cíclico e falha de I/O conservam a política anterior e não pertencem a esse fallback.
 
 ## Provenance e determinismo
 
@@ -35,7 +35,7 @@ O processamento percorre a parse tree e resolve COPYs pelo repositório configur
 
 ## Fronteiras explícitas
 
-O preprocessor não resolve símbolos COBOL, não interpreta payload de SQL/CICS/SQLIMS e não inventa configuração ausente. Modos não especificados permanecem valores explícitos na policy posterior.
+O preprocessor não resolve símbolos COBOL, não interpreta payload de SQL/CICS/SQLIMS, não busca membros fora dos diretórios configurados e não inventa configuração ausente. Modos não especificados permanecem valores explícitos na policy posterior. A composição posterior, não o preprocessor, decide quais fases possuem pré-requisitos estruturais sob input incompleto.
 
 ## Evidência executável
 
@@ -43,4 +43,4 @@ O preprocessor não resolve símbolos COBOL, não interpreta payload de SQL/CICS
 
 ## Relações
 
-Evals: EVAL-PRE-001, EVAL-PRE-002 e EVAL-PROV-001. Invariantes: INV-PROV-001, INV-PROV-002, INV-COV-001 e INV-COV-002. ADRs: ADR-0002, ADR-0007, ADR-0008 e ADR-0009.
+Evals: EVAL-PRE-001, EVAL-PRE-002, EVAL-PROV-001 e EVAL-COV-003. Invariantes: INV-PROV-001, INV-PROV-002, INV-COV-001, INV-COV-002 e INV-COV-003. ADRs: ADR-0002, ADR-0007, ADR-0008 e ADR-0009.

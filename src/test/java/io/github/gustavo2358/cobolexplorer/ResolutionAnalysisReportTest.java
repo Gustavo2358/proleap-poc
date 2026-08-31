@@ -49,7 +49,8 @@ class ResolutionAnalysisReportTest {
                 "       END PROGRAM INPUTGAP.", "");
         Analysis analysis = analyze(source, "input-gap.cbl");
         ResolutionAnalysisReport.FrontendState incomplete = new ResolutionAnalysisReport.FrontendState(
-                1, 0, 0, 0, List.of(new Diagnostic("COBOL", Diagnostic.Phase.PREPROCESSOR,
+                0, 0, 0, List.of(new Diagnostic("COBOL", Diagnostic.Phase.PREPROCESSOR,
+                Diagnostic.Code.UNRESOLVED_COPY,
                 "input-gap.cbl", 1, 0, "unresolved_copy: MISSING", "MISSING", "")));
         ResolutionAnalysisReport report = ResolutionAnalysisReport.compose(
                 analysis.build(), incomplete, analysis.occurrences(), analysis.resolution());
@@ -60,6 +61,68 @@ class ResolutionAnalysisReportTest {
         assertTrue(report.gaps().stream().anyMatch(gap -> gap.code().equals("PRESERVED_REFERENCE_CONTAINER")));
         assertTrue(report.unknownDependencyCount() > 0);
         assertNotEquals(ResolutionAnalysisReport.AnalysisClaim.COMPLETE, report.analysisClaim());
+    }
+
+    @Test
+    void unresolvedCopyCountIsDerivedFromTypedDiagnostics() {
+        Diagnostic presentationOnly = new Diagnostic("COBOL", Diagnostic.Phase.PREPROCESSOR,
+                "input-gap.cbl", 4, 7, "unresolved_copy: TEXT-ONLY", "TEXT-ONLY", "");
+        Diagnostic missing = new Diagnostic("COBOL", Diagnostic.Phase.PREPROCESSOR,
+                Diagnostic.Code.UNRESOLVED_COPY, "input-gap.cbl", 8, 3,
+                "wording is deliberately unrelated", "TYPED", "");
+
+        ResolutionAnalysisReport.FrontendState state =
+                new ResolutionAnalysisReport.FrontendState(0, 0, 0,
+                        List.of(presentationOnly, missing));
+
+        assertAll("typed diagnostics are the single source of truth",
+                () -> assertEquals(1, state.unresolvedCopies()),
+                () -> assertEquals(List.of(missing), state.unresolvedCopyDiagnostics()));
+    }
+
+    @Test
+    void parserErrorsBlockClassificationWithoutChangingCopySpecificCompleteness() {
+        ResolutionAnalysisReport.FrontendState state =
+                new ResolutionAnalysisReport.FrontendState(0, 0, 1, List.of());
+
+        assertAll("COPY availability is independent from structural frontend integrity",
+                () -> assertFalse(state.supportsExternalClassification()),
+                () -> assertEquals(0, state.unresolvedCopies()),
+                () -> assertEquals(ExternalClassification.CopyInputCompleteness.COMPLETE,
+                        state.copyInputCompleteness()));
+    }
+
+    @Test
+    void unresolvedCopyIdentityAndGapDoNotDependOnHumanDiagnosticWording() throws Exception {
+        String source = String.join("\n",
+                "       IDENTIFICATION DIVISION.",
+                "       PROGRAM-ID. TYPEDCOPY.",
+                "       PROCEDURE DIVISION.",
+                "           GOBACK.",
+                "       END PROGRAM TYPEDCOPY.", "");
+        Analysis analysis = analyze(source, "typed-copy.cbl");
+        Diagnostic missing = new Diagnostic("COBOL", Diagnostic.Phase.PREPROCESSOR,
+                Diagnostic.Code.UNRESOLVED_COPY, "typed-copy.cbl", 7, 11,
+                "COPY member TESTCP is unavailable in the configured libraries",
+                "TESTCP", "");
+        ResolutionAnalysisReport.FrontendState state =
+                new ResolutionAnalysisReport.FrontendState(0, 0, 0, List.of(missing));
+
+        ResolutionAnalysisReport report = ResolutionAnalysisReport.compose(
+                analysis.build(), state, analysis.occurrences(), analysis.resolution());
+
+        ResolutionAnalysisReport.Gap gap = report.gaps().stream()
+                .filter(candidate -> candidate.code().equals("UNRESOLVED_COPY"))
+                .findFirst().orElseThrow();
+        assertAll("typed missing COPY remains semantic when wording changes",
+                () -> assertEquals(1, state.unresolvedCopies()),
+                () -> assertEquals(ExternalClassification.CopyInputCompleteness
+                        .INCOMPLETE_UNRESOLVED_COPY, state.copyInputCompleteness()),
+                () -> assertEquals(7, gap.line()),
+                () -> assertTrue(gap.message().contains("TESTCP")),
+                () -> assertTrue(gap.message().contains("typed-copy.cbl")),
+                () -> assertEquals(ResolutionAnalysisReport.AnalysisClaim.INCOMPLETE,
+                        report.analysisClaim()));
     }
 
     @Test

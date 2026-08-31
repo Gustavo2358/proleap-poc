@@ -15,10 +15,13 @@ public final class ExternalClassification {
 
     public enum Reason { COBOL_REFERENCE_UNRESOLVED_WITH_KNOWN_CICS_SHAPE }
 
+    public enum CopyInputCompleteness { COMPLETE, INCOMPLETE_UNRESOLVED_COPY }
+
     public record Entry(int id, ResolutionContracts.ProgramUnitId programUnitId,
                         int rootAstNodeId, int rootOccurrenceId, String constructWrittenText,
                         Technology technology, Kind kind, Certainty certainty, Reason reason,
-                        Ast.Meta meta, List<Integer> coveredOccurrenceIds) {
+                        CopyInputCompleteness copyInputCompleteness, Ast.Meta meta,
+                        List<Integer> coveredOccurrenceIds) {
         public Entry {
             if (id < 0) throw new IllegalArgumentException("classification id must be non-negative");
             programUnitId = Objects.requireNonNull(programUnitId, "programUnitId");
@@ -31,6 +34,8 @@ public final class ExternalClassification {
             kind = Objects.requireNonNull(kind, "kind");
             certainty = Objects.requireNonNull(certainty, "certainty");
             reason = Objects.requireNonNull(reason, "reason");
+            copyInputCompleteness = Objects.requireNonNull(
+                    copyInputCompleteness, "copyInputCompleteness");
             meta = Objects.requireNonNull(meta, "meta");
             if (meta.id() != rootAstNodeId)
                 throw new IllegalArgumentException("classification meta must belong to the root AST node");
@@ -45,6 +50,15 @@ public final class ExternalClassification {
             if (!coveredOccurrenceIds.equals(sorted)
                     || new HashSet<>(coveredOccurrenceIds).size() != coveredOccurrenceIds.size())
                 throw new IllegalArgumentException("covered occurrence ids must be unique and sorted");
+        }
+
+        public Entry(int id, ResolutionContracts.ProgramUnitId programUnitId,
+                     int rootAstNodeId, int rootOccurrenceId, String constructWrittenText,
+                     Technology technology, Kind kind, Certainty certainty, Reason reason,
+                     Ast.Meta meta, List<Integer> coveredOccurrenceIds) {
+            this(id, programUnitId, rootAstNodeId, rootOccurrenceId, constructWrittenText,
+                    technology, kind, certainty, reason, CopyInputCompleteness.COMPLETE,
+                    meta, coveredOccurrenceIds);
         }
     }
 

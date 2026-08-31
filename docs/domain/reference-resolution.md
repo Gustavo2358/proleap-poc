@@ -11,7 +11,7 @@ Este documento descreve o binding nominal atual. A execução usa `CobolResoluti
 
 `ReferenceOccurrenceCollector` coleta ocorrências tipadas da AST sem lookup. `CobolReferenceResolver` consome occurrences, compilation units e symbol tables e produz `ReferenceResolution` separado, imutável, com candidates, status, motivos e diagnostics.
 
-`ReferenceResolution` registra somente a explicação nominal COBOL. Uma classificação posterior de plataforma não altera `status`, `reason`, candidates ou diagnostics desse produto. Sem contexto confiável de compilação, uma construção COBOL não resolvida pode receber um fato externo inferido em produto ortogonal; a composição de relatório pode agrupar as occurrences artificiais do mesmo construct, mas deve manter a hipótese, sua incerteza e provenance observáveis. Uma referência COBOL resolvida sempre precede essa classificação inferida.
+`ReferenceResolution` registra somente a explicação nominal COBOL. Uma classificação posterior de plataforma não altera `status`, `reason`, candidates ou diagnostics desse produto. Sem contexto confiável de compilação, uma construção COBOL não resolvida pode receber um fato externo inferido em produto ortogonal; a composição de relatório pode agrupar as occurrences artificiais do mesmo construct somente quando todos os COPYs solicitados estão disponíveis, mas deve manter a hipótese, sua incerteza e provenance observáveis. `CopyInputCompleteness` representa somente esse eixo de disponibilidade e não afirma integridade estrutural do frontend. Sob COPY não resolvido, a classificação registra `INCOMPLETE_UNRESOLVED_COPY` e permanece ao lado dos gaps nominais cobertos, pois uma declaration ausente ainda poderia refinar o binding. Uma referência COBOL resolvida sempre precede essa classificação inferida.
 
 Resolução é nominal. Ela não faz CFG, reaching definitions, propagação de constantes ou inferência de valores de runtime. Assim, `CALL WS-CALL-TARGET` pode resolver a declaração de `WS-CALL-TARGET`, mas não os programas que a variável pode conter. Futuras análises devem preservar targets estáticos conhecidos e um remainder dinâmico/incerto quando ambos coexistirem.
 
@@ -38,7 +38,7 @@ O algoritmo não pode escolher primeiro candidato, ordem de corpus ou candidato 
 
 `ReferenceResolutionManifest` classifica a superfície do frontend de modo explícito e conservador. O catálogo de evals ligará capacidades, fixtures e oráculos a estas regras na Fase 6.
 
-`RESOLVED` exige exatamente um candidate; `EXTERNAL_OBSERVED` não possui candidate; `AMBIGUOUS` conserva dois ou mais. `UNRESOLVED` e `UNSUPPORTED` carregam reason específico. O relatório combina binding, frontend coverage, COPYs, parser diagnostics e incertezas reais antes de afirmar readiness. A observação de target literal externo não é, por si, uma lacuna.
+`RESOLVED` exige exatamente um candidate; `EXTERNAL_OBSERVED` não possui candidate; `AMBIGUOUS` conserva dois ou mais. `UNRESOLVED` e `UNSUPPORTED` carregam reason específico. O relatório combina binding, frontend coverage, COPYs, parser diagnostics e incertezas reais antes de afirmar readiness. Cada fato tipado `Diagnostic.Code.UNRESOLVED_COPY` vira gap com nome e linha; o contador é derivado desses fatos e permanece no snapshot. `FrontendState` distingue `copyInputCompleteness()` dos erros estruturais que impedem o classifier: zero COPY ausente pode coexistir com parser error sem afirmar frontend completo. A observação de target literal externo não é, por si, uma lacuna.
 
 ## Complexidade e determinismo
 
@@ -54,6 +54,6 @@ Resolvers usam índices por nome canônico, unit, scope e domínio semântico. M
 
 ## Evidência executável e relações
 
-Testes principais: `DataAndIndexReferenceResolverTest`, `ProcedureFileProgramReferenceResolverTest`, `CallSemanticsTest`, `ProgramNameCanonicalizerTest`, `ReferenceResolutionManifestTest` e `ResolutionAnalysisReportTest`. Evals: EVAL-RES-DATA-001 a EVAL-RES-DATA-003, EVAL-RES-REL-001, EVAL-RES-PROC-001, EVAL-RES-FILE-001, EVAL-RES-PROG-001, EVAL-RES-PROG-002, EVAL-RES-CALL-001, EVAL-RES-CALL-002, EVAL-RES-COV-001, EVAL-RES-REPORT-001, EVAL-RES-DET-001 e EVAL-RES-PERF-001.
+Testes principais: `DataAndIndexReferenceResolverTest`, `ProcedureFileProgramReferenceResolverTest`, `CallSemanticsTest`, `ProgramNameCanonicalizerTest`, `ReferenceResolutionManifestTest`, `ResolutionAnalysisReportTest`, `ExternalClassificationProjectionTest` e `PartialAnalysisMissingCopyTest`. Evals: EVAL-RES-DATA-001 a EVAL-RES-DATA-003, EVAL-RES-REL-001, EVAL-RES-PROC-001, EVAL-RES-FILE-001, EVAL-RES-PROG-001, EVAL-RES-PROG-002, EVAL-RES-CALL-001, EVAL-RES-CALL-002, EVAL-RES-COV-001, EVAL-RES-REPORT-001, EVAL-RES-DET-001, EVAL-RES-PERF-001 e EVAL-COV-003.
 
-Invariantes: INV-RES-001, INV-RES-002, INV-RES-003, INV-EXT-001 a INV-EXT-004, INV-COV-001, INV-DET-001 e INV-PERF-001. ADRs: ADR-0003, ADR-0004, ADR-0005, ADR-0008, ADR-0010 e ADR-0011.
+Invariantes: INV-RES-001, INV-RES-002, INV-RES-003, INV-EXT-001 a INV-EXT-004, INV-COV-001, INV-COV-003, INV-DET-001 e INV-PERF-001. ADRs: ADR-0003, ADR-0004, ADR-0005, ADR-0008, ADR-0010 e ADR-0011.
