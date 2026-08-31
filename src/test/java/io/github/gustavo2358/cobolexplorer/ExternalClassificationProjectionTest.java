@@ -64,6 +64,52 @@ class ExternalClassificationProjectionTest {
     }
 
     @Test
+    void incompleteCopyInputKeepsClassificationAndNominalGapsSideBySide() throws Exception {
+        ExternalClassificationTestSupport.Analysis analysis =
+                ExternalClassificationTestSupport.analyze(POSSIBLE);
+        ExternalClassification classifications = new CicsIntrinsicClassifier().classify(
+                analysis.model(), analysis.occurrences(), analysis.resolution(),
+                ExternalClassification.InputCompleteness.INCOMPLETE_UNRESOLVED_COPY);
+        ResolutionAnalysisReport.FrontendState incomplete = missingCopyState("MISSINGCP");
+
+        ResolutionAnalysisReport report = ResolutionAnalysisReport.compose(
+                analysis.build(), incomplete, analysis.occurrences(), analysis.resolution(),
+                classifications);
+
+        assertAll("partial projection preserves independently established and uncertain facts",
+                () -> assertSame(classifications, report.externalClassifications()),
+                () -> assertEquals(7, report.gaps().size()),
+                () -> assertEquals(1, report.gaps().stream().filter(gap ->
+                        gap.code().equals("UNRESOLVED_COPY")).count()),
+                () -> assertEquals(4, report.gaps().stream().filter(gap ->
+                        gap.category() == ResolutionAnalysisReport.GapCategory.REFERENCE_BINDING).count()),
+                () -> assertEquals(2, report.gaps().stream().filter(gap ->
+                        gap.category() == ResolutionAnalysisReport.GapCategory.EXTERNAL_CLASSIFICATION).count()),
+                () -> assertEquals(ResolutionAnalysisReport.AnalysisClaim.INCOMPLETE,
+                        report.analysisClaim()),
+                () -> assertFalse(report.completeness().referenceBindingComplete()));
+    }
+
+    @Test
+    void classificationInputContextMismatchFailsClosedWithoutSuppressingNominalGaps()
+            throws Exception {
+        ExternalClassificationTestSupport.Analysis analysis =
+                ExternalClassificationTestSupport.analyze(POSSIBLE);
+        ExternalClassification completeInputClassifications = classify(analysis);
+
+        ResolutionAnalysisReport report = ResolutionAnalysisReport.compose(
+                analysis.build(), missingCopyState("MISSINGCP"), analysis.occurrences(),
+                analysis.resolution(), completeInputClassifications);
+
+        assertAll("classification context is part of product integrity",
+                () -> assertTrue(report.externalClassifications().entries().isEmpty()),
+                () -> assertTrue(report.gaps().stream().anyMatch(gap ->
+                        gap.code().equals("INCONSISTENT_EXTERNAL_CLASSIFICATION"))),
+                () -> assertEquals(4, report.gaps().stream().filter(gap ->
+                        gap.category() == ResolutionAnalysisReport.GapCategory.REFERENCE_BINDING).count()));
+    }
+
+    @Test
     void uncoveredBindingGapsRemainVisibleBesideTheExternalConstruct() throws Exception {
         ExternalClassificationTestSupport.Analysis analysis = ExternalClassificationTestSupport.analyze(
                 fixed("""
@@ -164,6 +210,7 @@ class ExternalClassificationProjectionTest {
                 () -> assertTrue(text.contains("\"kind\":\"POSSIBLE_INTRINSIC\"")),
                 () -> assertTrue(text.contains("\"certainty\":\"INFERRED\"")),
                 () -> assertTrue(text.contains("\"reason\":\"COBOL_REFERENCE_UNRESOLVED_WITH_KNOWN_CICS_SHAPE\"")),
+                () -> assertTrue(text.contains("\"inputCompleteness\":\"COMPLETE\"")),
                 () -> assertTrue(text.contains("\"coveredOccurrenceIds\":[")),
                 () -> assertTrue(text.contains("\"includeChain\":[]")),
                 () -> assertTrue(text.contains("\"status\":\"UNRESOLVED\"")),
@@ -176,7 +223,7 @@ class ExternalClassificationProjectionTest {
         String script = Files.readString(Path.of("src/main/resources/web/resolution-app.js"));
 
         for (String field : List.of("classifications", "technology", "kind", "certainty", "reason",
-                "coveredOccurrenceIds")) assertTrue(script.contains(field), field);
+                "inputCompleteness", "coveredOccurrenceIds")) assertTrue(script.contains(field), field);
         assertFalse(script.contains("startsWith(\"DFH\")"));
         assertFalse(script.contains("DFHRESP"));
         assertFalse(script.contains("DFHVALUE"));
@@ -228,6 +275,12 @@ class ExternalClassificationProjectionTest {
     private static ExternalClassification classify(ExternalClassificationTestSupport.Analysis analysis) {
         return new CicsIntrinsicClassifier().classify(
                 analysis.model(), analysis.occurrences(), analysis.resolution());
+    }
+
+    private static ResolutionAnalysisReport.FrontendState missingCopyState(String name) {
+        return new ResolutionAnalysisReport.FrontendState(1, 0, 0, 0, List.of(
+                new Diagnostic("COBOL", Diagnostic.Phase.PREPROCESSOR, "fixture.cbl", 1, 7,
+                        "unresolved_copy: " + name, name, "")));
     }
 
     private static ExternalClassification.Entry copyClassification(

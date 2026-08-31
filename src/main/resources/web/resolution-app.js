@@ -45,6 +45,7 @@
     $("#policy-strip").innerHTML = [
       ["Política", `${data.meta.policyId} @ ${data.meta.policyVersion}`],
       ["QUALIFY", data.meta.qualifyMode], ["Escopo", "artefato atual"],
+      ["Input COBOL", `${data.meta.inputCompleteness} · ${format(data.meta.unresolvedCopies)} COPYs ausentes`],
       ["Classificações externas", `${format(classifications.length)} inferidas`],
       ["Custo", `${format(data.metrics.nominalLookups)} lookups · ${format(data.metrics.candidateInspections)} inspeções`]
     ].map(([label, value]) => `<div><span>${label}</span><b>${escapeHtml(value)}</b></div>`).join("");
@@ -119,6 +120,8 @@
     $("#resolution-name").textContent = entry.writtenText || "<texto preservado>";
     $("#resolution-decision").innerHTML = `<span class="status-badge ${entry.status.toLowerCase()}">${entry.status}</span> ${escapeHtml(entry.reason)}`;
     const unit = units.get(entry.unitId);
+    const externalClassification = classificationsByRootOccurrence.get(
+      `${entry.unitId}#${entry.occurrenceId}`);
     $("#resolution-facts").innerHTML = facts([
       ["Unidade", unit ? `${unit.path} · ${unit.name}` : entry.unitId],
       ["Regra", entry.grammarRule], ["Escopo", `#${entry.scopeId}`],
@@ -137,7 +140,9 @@
       : "A página AST legada exibe somente a unidade primária; a identidade namespaced foi preservada aqui.";
     $("#open-reference-parse").href = `index.html#node=${entry.parseNodeId}`;
     const dynamicCall = entry.role === "CALL_TARGET" && entry.kind === "DATA";
-    $("#resolution-insight").textContent = dynamicCall
+    $("#resolution-insight").textContent = externalClassification?.inputCompleteness === "INCOMPLETE_UNRESOLVED_COPY"
+      ? "Há uma hipótese externa inferida para este construct, mas COPYs ausentes tornam o universo nominal COBOL incompleto. O binding UNRESOLVED e essa incerteza permanecem observáveis."
+      : dynamicCall
       ? "Este binding identifica a declaração da variável usada pelo CALL. Ele não afirma qual programa será chamado: os valores possíveis dependem de CFG, reaching definitions e merge de caminhos."
       : entry.status === "EXTERNAL_OBSERVED"
         ? "O alvo literal é uma dependência externa observada. Esta análise termina no artefato atual e não procura nem inventa um programa externo."
@@ -176,7 +181,7 @@
     $("#gap-list").innerHTML = data.gaps.length ? data.gaps.slice(0, 500).map((gap) => {
       const classification = classificationsByRootOccurrence.get(`${gap.unitId}#${gap.occurrenceId}`);
       const detail = classification
-        ? `${classification.technology} · ${classification.kind} · ${classification.certainty} · ${format(classification.coveredOccurrenceIds.length)} occurrences cobertas`
+        ? `${classification.technology} · ${classification.kind} · ${classification.certainty} · ${classification.inputCompleteness} · ${format(classification.coveredOccurrenceIds.length)} occurrences cobertas`
         : `${gap.grammarRule || "frontend"} · linha ${format(gap.line)}`;
       const message = classification
         ? `${classification.constructWrittenText} · ${classification.reason}` : gap.message;

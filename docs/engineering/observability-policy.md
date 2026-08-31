@@ -21,6 +21,7 @@ O formato inclui timestamp, nível, logger, thread, `runId`, `source`, `programU
 - Classes de domínio dependem somente da API SLF4J, não de Logback.
 - `Diagnostic` continua sendo o resultado individual e navegável; logging não faz parsing frágil de sua mensagem para reconstruir semântica.
 - `ResolutionAnalysisReport.completeness()` é a fonte do `analysis_degraded` agregado.
+- O composition root registra uma decisão agregada por execução do classifier, incluindo `executed`, motivo, quantidade de COPYs unresolved, completude de input, fallback e impacto; não emite evento por occurrence.
 - Camadas internas não repetem stacktrace já registrado pelo boundary.
 - Fonte COBOL, literals, parse trees, ASTs e `SourceMap` completos não são despejados em logs por padrão.
 

@@ -129,6 +129,15 @@ IDs neste documento são estáveis. `AUTOMATED` indica proteção executável at
 - **Enforcement:** `AUTOMATED` — `SemanticCoverage` e testes de relatório/snapshot.
 - **Known exceptions:** `NOT_DEPENDENCY_BEARING` somente quando classificado explicitamente.
 
+### INV-COV-003 — Incompletude preserva fatos independentes
+
+- **Statement:** input externo ausente adiciona incerteza e bloqueia claims incompatíveis de completude, mas não elimina fatos semânticos independentemente sustentados pelos inputs e produtos estruturalmente disponíveis; uma fase só deixa de produzir o resultado afetado quando faltam seus pré-requisitos estruturais.
+- **Rationale:** ausência de input e corrupção interna têm consequências epistemológicas distintas; transformar ambas em produto vazio apaga conhecimento válido, enquanto ignorar a ausência inventa certeza.
+- **Scope:** composição de produtos parciais, gaps, classifiers pós-resolução e apresentação.
+- **Related ADRs:** ADR-0008 e ADR-0011.
+- **Enforcement:** `PARTIALLY_AUTOMATED` — EVAL-COV-003 cobre COPY COBOL não resolvido, projeção externa conservadora, fail-closed estrutural e relações metamórficas; outras categorias de input externo permanecem sujeitas a review e work item próprio.
+- **Known exceptions:** quando ausência ou corrupção impede construir coerentemente o produto exigido, a fase afetada continua fail-closed; o slice automatizado atual não cobre parser recovery, lexer errors, preprocessing inválido, CFG ou dataflow.
+
 ### INV-COV-002 — Cobertura gramatical fechada
 
 - **Statement:** toda regra do frontend versionado possui classificação explícita; regra nova sem política falha.

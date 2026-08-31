@@ -19,3 +19,4 @@ Nenhum work item ativo.
 - [WORK-TEST-001 — Restaurar relatório PIT focalizado](history/WORK-TEST-001.md)
 - [WORK-TEST-002 — Substituir cardinalidades globais por oráculos semânticos](history/WORK-TEST-002.md)
 - [WORK-EXT-001 — Classificar `DFHRESP` e `DFHVALUE` unresolved como possíveis intrínsecos CICS](history/WORK-EXT-001.md)
+- [WORK-COV-001 — Preservar análise parcial diante de COPY ausente](history/WORK-COV-001.md)

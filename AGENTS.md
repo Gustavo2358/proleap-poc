@@ -52,7 +52,7 @@ Comece no [índice de conhecimento](docs/index.md). Carregue somente o contexto 
 
 ## Trabalho ativo
 
-O índice de trabalho está em [docs/work/index.md](docs/work/index.md). Não há work item ativo neste corte. A conclusão de WORK-EXT-001 não autoriza iniciar itens `BACKLOG-EXT`, CFG, dataflow ou outras tecnologias.
+O índice de trabalho está em [docs/work/index.md](docs/work/index.md). Não há work item ativo neste corte. As conclusões de WORK-EXT-001 e WORK-COV-001 são baselines válidas, mas não autorizam iniciar taint localizado, itens `BACKLOG-EXT`, CFG, dataflow ou outras tecnologias.
 
 Ao trabalhar em um item:
 

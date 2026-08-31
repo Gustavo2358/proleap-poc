@@ -20,9 +20,19 @@ final class CicsIntrinsicClassifier {
             CompilationUnitModel model,
             Map<ResolutionContracts.ProgramUnitId, ReferenceOccurrences> occurrencesByUnit,
             ReferenceResolution resolution) {
+        return classify(model, occurrencesByUnit, resolution,
+                ExternalClassification.InputCompleteness.COMPLETE);
+    }
+
+    ExternalClassification classify(
+            CompilationUnitModel model,
+            Map<ResolutionContracts.ProgramUnitId, ReferenceOccurrences> occurrencesByUnit,
+            ReferenceResolution resolution,
+            ExternalClassification.InputCompleteness inputCompleteness) {
         Objects.requireNonNull(model, "model");
         Objects.requireNonNull(occurrencesByUnit, "occurrencesByUnit");
         Objects.requireNonNull(resolution, "resolution");
+        Objects.requireNonNull(inputCompleteness, "inputCompleteness");
 
         Map<ResolutionContracts.ProgramUnitId, Map<Integer, ReferenceOccurrences.Occurrence>>
                 occurrencesByAstNode = indexOccurrences(occurrencesByUnit);
@@ -51,7 +61,7 @@ final class CicsIntrinsicClassifier {
                         ExternalClassification.Kind.POSSIBLE_INTRINSIC,
                         ExternalClassification.Certainty.INFERRED,
                         ExternalClassification.Reason.COBOL_REFERENCE_UNRESOLVED_WITH_KNOWN_CICS_SHAPE,
-                        root.meta(), coveredOccurrenceIds));
+                        inputCompleteness, root.meta(), coveredOccurrenceIds));
             }
         }
         return new ExternalClassification(classifications);

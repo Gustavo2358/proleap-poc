@@ -24,8 +24,32 @@ public final class ResolutionAnalysisReport {
             if (unresolvedCopies < 0 || preprocessorErrors < 0 || lexerErrors < 0 || parserErrors < 0)
                 throw new IllegalArgumentException("frontend counts must be non-negative");
             diagnostics = List.copyOf(diagnostics);
+            long unresolvedDiagnostics = diagnostics.stream().filter(
+                    FrontendState::isUnresolvedCopyDiagnostic).count();
+            if (unresolvedDiagnostics != unresolvedCopies)
+                throw new IllegalArgumentException(
+                        "unresolved COPY count must match its detailed diagnostics");
         }
         public static FrontendState complete() { return new FrontendState(0, 0, 0, 0, List.of()); }
+
+        public boolean supportsExternalClassification() {
+            return preprocessorErrors == 0 && lexerErrors == 0 && parserErrors == 0;
+        }
+
+        public ExternalClassification.InputCompleteness externalClassificationInputCompleteness() {
+            return unresolvedCopies == 0
+                    ? ExternalClassification.InputCompleteness.COMPLETE
+                    : ExternalClassification.InputCompleteness.INCOMPLETE_UNRESOLVED_COPY;
+        }
+
+        public List<Diagnostic> unresolvedCopyDiagnostics() {
+            return diagnostics.stream().filter(FrontendState::isUnresolvedCopyDiagnostic).toList();
+        }
+
+        private static boolean isUnresolvedCopyDiagnostic(Diagnostic diagnostic) {
+            return diagnostic.phase() == Diagnostic.Phase.PREPROCESSOR
+                    && diagnostic.message().startsWith("unresolved_copy:");
+        }
     }
 
     public record Gap(int id, GapCategory category, String code, String message,
@@ -43,6 +67,7 @@ public final class ResolutionAnalysisReport {
                                      long collectedReferences, int programUnits) { }
 
     private final ResolutionContracts.CobolResolutionPolicy policy;
+    private final FrontendState frontendState;
     private final ExternalClassification externalClassifications;
     private final ResolutionContracts.Completeness completeness;
     private final AnalysisClaim analysisClaim;
@@ -56,6 +81,7 @@ public final class ResolutionAnalysisReport {
     private final OperationalMetrics operationalMetrics;
 
     private ResolutionAnalysisReport(ResolutionContracts.CobolResolutionPolicy policy,
+                                     FrontendState frontendState,
                                      ExternalClassification externalClassifications,
                                      ResolutionContracts.Completeness completeness,
                                      List<Gap> gaps, List<ProgramUnitSummary> programUnits,
@@ -66,6 +92,7 @@ public final class ResolutionAnalysisReport {
                                      Map<ResolutionContracts.ReferenceRole, Long> roleCounts,
                                      OperationalMetrics operationalMetrics) {
         this.policy = policy;
+        this.frontendState = Objects.requireNonNull(frontendState, "frontendState");
         this.externalClassifications = Objects.requireNonNull(
                 externalClassifications, "externalClassifications");
         this.completeness = completeness;
@@ -107,7 +134,7 @@ public final class ResolutionAnalysisReport {
         addFrontendGaps(frontend, gaps);
         addCollectorGaps(frontend.compilationUnit(), occurrencesByUnit, resolution, gaps);
         ExternalProjection projection = validateExternalClassifications(
-                resolution, externalClassifications, gaps);
+                resolution, frontendState, externalClassifications, gaps);
         addResolutionGaps(resolution, projection.coveredOccurrences(), gaps);
         addCallSemanticsGaps(resolution, gaps);
         addExternalClassificationGaps(projection.classifications(), gaps);
@@ -145,12 +172,14 @@ public final class ResolutionAnalysisReport {
         OperationalMetrics operational = new OperationalMetrics(metrics.indexedDeclarations(),
                 metrics.nominalLookups(), metrics.candidateInspections(), metrics.maximumCandidates(),
                 referenceCount, frontend.compilationUnit().programUnits().size());
-        return new ResolutionAnalysisReport(resolution.policy(), projection.classifications(),
+        return new ResolutionAnalysisReport(resolution.policy(), frontendState,
+                projection.classifications(),
                 completeness, gaps, summaries,
                 statuses, reasons, syntacticKinds, resolvedSemanticKinds, roles, operational);
     }
 
     public ResolutionContracts.CobolResolutionPolicy policy() { return policy; }
+    public FrontendState frontendState() { return frontendState; }
     public ExternalClassification externalClassifications() { return externalClassifications; }
     public ResolutionContracts.Completeness completeness() { return completeness; }
     public AnalysisClaim analysisClaim() { return analysisClaim; }
@@ -170,10 +199,12 @@ public final class ResolutionAnalysisReport {
     public long unknownDependencyCount() { return gaps.size(); }
 
     private static void addInputGaps(FrontendState state, List<Gap> gaps) {
-        if (state.unresolvedCopies() > 0)
+        for (Diagnostic diagnostic : state.unresolvedCopyDiagnostics()) {
             addGap(gaps, GapCategory.INPUT, "UNRESOLVED_COPY",
-                    state.unresolvedCopies() + " COPY statement(s) could not be expanded",
-                    null, "copyStatement", 0, -1);
+                    "COPY '" + diagnostic.offendingToken() + "' from '"
+                            + diagnostic.file() + "' could not be expanded",
+                    null, "copyStatement", diagnostic.line(), -1);
+        }
         if (state.preprocessorErrors() > 0)
             addGap(gaps, GapCategory.INPUT, "PREPROCESSOR_ERROR",
                     state.preprocessorErrors() + " preprocessing error(s)", null, "", 0, -1);
@@ -279,13 +310,15 @@ public final class ResolutionAnalysisReport {
     }
 
     private static ExternalProjection validateExternalClassifications(
-            ReferenceResolution resolution, ExternalClassification classifications, List<Gap> gaps) {
+            ReferenceResolution resolution, FrontendState frontendState,
+            ExternalClassification classifications, List<Gap> gaps) {
         Map<OccurrenceKey, ReferenceResolution.Entry> entries = new HashMap<>();
         for (ReferenceResolution.Entry entry : resolution.entries()) {
             ReferenceOccurrences.Occurrence occurrence = entry.occurrence();
             entries.put(new OccurrenceKey(occurrence.programUnitId(), occurrence.id()), entry);
         }
-        Set<OccurrenceKey> covered = new HashSet<>();
+        Set<OccurrenceKey> claimedCovered = new HashSet<>();
+        Set<OccurrenceKey> suppressibleCovered = new HashSet<>();
         for (ExternalClassification.Entry classification : classifications.entries()) {
             OccurrenceKey rootKey = new OccurrenceKey(
                     classification.programUnitId(), classification.rootOccurrenceId());
@@ -294,10 +327,16 @@ public final class ResolutionAnalysisReport {
                     && root.occurrence().referenceAstNodeId() == classification.rootAstNodeId()
                     && root.occurrence().meta().equals(classification.meta())
                     && root.occurrence().writtenText().equals(classification.constructWrittenText())
-                    && root.status() == ResolutionContracts.ResolutionStatus.UNRESOLVED;
+                    && root.status() == ResolutionContracts.ResolutionStatus.UNRESOLVED
+                    && classification.inputCompleteness()
+                    == frontendState.externalClassificationInputCompleteness();
             for (int occurrenceId : classification.coveredOccurrenceIds()) {
                 OccurrenceKey key = new OccurrenceKey(classification.programUnitId(), occurrenceId);
-                coherent &= entries.containsKey(key) && covered.add(key);
+                coherent &= entries.containsKey(key) && claimedCovered.add(key);
+                if (classification.inputCompleteness()
+                        == ExternalClassification.InputCompleteness.COMPLETE) {
+                    suppressibleCovered.add(key);
+                }
             }
             if (!coherent) {
                 addGap(gaps, GapCategory.COLLECTOR_INTEGRITY,
@@ -308,7 +347,7 @@ public final class ResolutionAnalysisReport {
                 return new ExternalProjection(ExternalClassification.empty(), Set.of());
             }
         }
-        return new ExternalProjection(classifications, Set.copyOf(covered));
+        return new ExternalProjection(classifications, Set.copyOf(suppressibleCovered));
     }
 
     private static void addExternalClassificationGaps(

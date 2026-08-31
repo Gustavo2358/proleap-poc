@@ -179,15 +179,27 @@ public final class ExplorerMain {
                 .resolve(compilationUnit, symbolTables, occurrences);
 
         progress.phase = "EXTERNAL_CLASSIFICATION";
-        boolean externalClassificationInputsComplete = preprocessed.unresolved() == 0
-                && preprocessed.errors() == 0 && lexerErrors == 0 && parserErrors == 0;
-        ExternalClassification externalClassifications = externalClassificationInputsComplete
-                ? new CicsIntrinsicClassifier().classify(compilationUnit, occurrences, resolution)
+        ResolutionAnalysisReport.FrontendState frontendState =
+                new ResolutionAnalysisReport.FrontendState(
+                        preprocessed.unresolved(), preprocessed.errors(),
+                        (int) lexerErrors, (int) parserErrors, diagnostics);
+        boolean classifierExecuted = frontendState.supportsExternalClassification();
+        ExternalClassification externalClassifications = classifierExecuted
+                ? new CicsIntrinsicClassifier().classify(compilationUnit, occurrences, resolution,
+                        frontendState.externalClassificationInputCompleteness())
                 : ExternalClassification.empty();
+        String classifierReason = classifierExecuted
+                ? "STRUCTURAL_PREREQUISITES_AVAILABLE" : "STRUCTURAL_FRONTEND_ERRORS";
+        String classifierFallback = !classifierExecuted ? "SKIP_CLASSIFIER_FAIL_CLOSED"
+                : preprocessed.unresolved() > 0
+                ? "CONTINUE_WITH_PARTIAL_ANALYSIS" : "NONE";
+        LOG.debug("event=external_classification_completed phase=EXTERNAL_CLASSIFICATION elapsedMs={} executed={} reason={} unresolvedCopies={} inputCompleteness={} classifications={} fallback={} impact={}",
+                elapsedMs(phaseStarted), classifierExecuted, classifierReason, preprocessed.unresolved(),
+                frontendState.externalClassificationInputCompleteness(),
+                externalClassifications.entries().size(), classifierFallback,
+                preprocessed.unresolved() > 0 ? "ANALYSIS_INCOMPLETE" : "NO_ADDITIONAL_IMPACT");
         ResolutionAnalysisReport resolutionReport = ResolutionAnalysisReport.compose(compilationBuild,
-                new ResolutionAnalysisReport.FrontendState(preprocessed.unresolved(), preprocessed.errors(),
-                        (int) lexerErrors, (int) parserErrors, diagnostics), occurrences, resolution,
-                externalClassifications);
+                frontendState, occurrences, resolution, externalClassifications);
         ResolutionSnapshot.from(source.getFileName().toString(),
                         Arrays.asList(normalized.split("\\R", -1)), compilationUnit, resolution,
                         resolutionReport)

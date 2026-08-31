@@ -19,6 +19,8 @@ class ExternalClassificationProductTest {
 
         assertAll("immutable identity-bearing product",
                 () -> assertEquals(List.of(3, 4), entry.coveredOccurrenceIds()),
+                () -> assertEquals(ExternalClassification.InputCompleteness.COMPLETE,
+                        entry.inputCompleteness()),
                 () -> assertThrows(UnsupportedOperationException.class,
                         () -> product.entries().add(entry)),
                 () -> assertThrows(IllegalArgumentException.class,

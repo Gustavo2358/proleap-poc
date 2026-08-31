@@ -63,6 +63,19 @@ class ResolutionAnalysisReportTest {
     }
 
     @Test
+    void missingCopyCountAndDetailedDiagnosticsMustRemainReconciled() {
+        Diagnostic missing = new Diagnostic("COBOL", Diagnostic.Phase.PREPROCESSOR,
+                "input-gap.cbl", 4, 7, "unresolved_copy: MISSING", "MISSING", "");
+
+        assertAll("missing inputs remain enumerable rather than aggregate-only",
+                () -> assertThrows(IllegalArgumentException.class, () ->
+                        new ResolutionAnalysisReport.FrontendState(1, 0, 0, 0, List.of())),
+                () -> assertThrows(IllegalArgumentException.class, () ->
+                        new ResolutionAnalysisReport.FrontendState(0, 0, 0, 0,
+                                List.of(missing))));
+    }
+
+    @Test
     void scalesByIndexedCandidatesAndProducesDeterministicResults() throws Exception {
         int declarations = 1_200;
         Analysis analysis = analyze(scaleSource(declarations), "scale.cbl");

@@ -5,11 +5,13 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -30,7 +32,8 @@ class ExplorerMainLoggingTest {
         assertEvent(events, Level.INFO, "event=analysis_started", "phase=ANALYSIS");
         for (String event : List.of("normalization_completed", "preprocessing_completed",
                 "lexing_completed", "parsing_completed", "ast_built",
-                "symbol_tables_built", "references_collected", "resolution_completed")) {
+                "symbol_tables_built", "references_collected",
+                "external_classification_completed", "resolution_completed")) {
             assertEvent(events, Level.DEBUG, "event=" + event, "elapsedMs=");
         }
         assertEvent(events, Level.INFO, "event=analysis_completed", "elapsedMs=");
@@ -51,6 +54,35 @@ class ExplorerMainLoggingTest {
         assertTrue(Files.size(output.resolve("ast-data.js")) > 0);
         assertTrue(Files.size(output.resolve("symbol-data.js")) > 0);
         assertTrue(Files.size(output.resolve("resolution-data.js")) > 0);
+    }
+
+    @Test
+    void logsExecutedPartialFallbackAndStructurallyBlockedClassifier(@TempDir Path directory)
+            throws Exception {
+        Path copybooks = Files.createDirectory(directory.resolve("copybooks"));
+        Path partial = directory.resolve("partial.cbl");
+        Files.writeString(partial, source("COPY MISSINGCP.", "DFHRESP(NORMAL)"),
+                StandardCharsets.UTF_8);
+        List<ILoggingEvent> partialEvents = capture(() -> ExplorerMain.main(new String[]{
+                "--source", partial.toString(), "--copybooks", copybooks.toString(),
+                "--output", directory.resolve("partial-output").toString()}));
+
+        Path recovered = directory.resolve("recovered.cbl");
+        Files.writeString(recovered, source("", "DFHRESP(IDX)(OTHER)"),
+                StandardCharsets.UTF_8);
+        List<ILoggingEvent> recoveredEvents = capture(() -> ExplorerMain.main(new String[]{
+                "--source", recovered.toString(), "--copybooks", copybooks.toString(),
+                "--output", directory.resolve("recovered-output").toString()}));
+
+        assertAll("classifier lifecycle explains partial execution and fail-closed skip",
+                () -> assertEvent(partialEvents, Level.DEBUG,
+                        "event=external_classification_completed", "executed=true",
+                        "unresolvedCopies=1", "inputCompleteness=INCOMPLETE_UNRESOLVED_COPY",
+                        "fallback=CONTINUE_WITH_PARTIAL_ANALYSIS", "impact=ANALYSIS_INCOMPLETE"),
+                () -> assertEvent(recoveredEvents, Level.DEBUG,
+                        "event=external_classification_completed", "executed=false",
+                        "reason=STRUCTURAL_FRONTEND_ERRORS",
+                        "fallback=SKIP_CLASSIFIER_FAIL_CLOSED"));
     }
 
     @Test
@@ -79,6 +111,23 @@ class ExplorerMainLoggingTest {
                         && List.of(fragments).stream().allMatch(event.getFormattedMessage()::contains)),
                 () -> "missing " + level + " event with " + List.of(fragments)
                         + " in " + events.stream().map(ILoggingEvent::getFormattedMessage).toList());
+    }
+
+    private static String source(String copy, String construct) {
+        return String.join("\n",
+                "       IDENTIFICATION DIVISION.",
+                "       PROGRAM-ID. LOGPOLICY.",
+                "       DATA DIVISION.",
+                "       WORKING-STORAGE SECTION.",
+                "       01 WS-RESP PIC S9(8) COMP.",
+                "       01 IDX PIC 9.",
+                copy.isBlank() ? "" : "       " + copy,
+                "       PROCEDURE DIVISION.",
+                "           IF WS-RESP = " + construct,
+                "               CONTINUE",
+                "           END-IF.",
+                "           GOBACK.",
+                "       END PROGRAM LOGPOLICY.", "");
     }
 
     private static List<ILoggingEvent> capture(ThrowingAction action) throws Exception {
