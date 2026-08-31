@@ -159,8 +159,18 @@ Os três slices detalhados em `plan.md` são a menor sequência recomendada: (1)
 
 ## Execução dos oráculos
 
-- Verde focal: `mvn -Dtest=AstSemanticBoundaryCharacterizationTest test` — 8 testes, 0 falhas.
-- Vermelho intencional: `mvn -Dast.boundary.required=true -Dtest=AstSemanticBoundaryRequiredOracleTest test` — 4 testes, 4 falhas esperadas, cada uma ligada a F-01 ou F-02.
-- Gate normal: os required oracles usam `@EnabledIfSystemProperty`; compilam sempre e ficam skipped salvo ativação explícita. Isso mantém o harness normal como sinal de regressão, sem esconder o comando que reproduz as lacunas.
-- Gate `fast`: verde após a promoção e a documentação do discovery.
-- Gate `semantic`: verde; 210 testes, 0 falhas, 0 erros e 4 skips intencionais dos required oracles opt-in.
+### Resultado posterior do Slice 1
+
+- A implementação registra coverage no ponto comum de materialização de `Statement`, `DataEntry`, `DataClause` e `PreservedExpression`; `SemanticCoverage.Report` rejeita dois findings concretos para o mesmo `astNodeId`.
+- `DataEntry` tipada é container `MODELED + NOT_DEPENDENCY_BEARING`; SQL opaco continua preservado/unknown. `PICTURE` e `USAGE` não adicionam dependência nominal e não afirmam layout. `VALUE`, `OCCURS`, `REDEFINES` e `RENAMES` são estruturados como `MODELED`, mas permanecem `DEPENDENCY_UNKNOWN`; clauses/expressions realmente fallback continuam `PRESERVED_UNINTERPRETED + DEPENDENCY_UNKNOWN`.
+- O snapshot deixou de duplicar preserved clauses, preserved expressions e unsupported statements que agora já possuem finding concreto; `RawExpression` estruturalmente ausente mantém o fallback legado.
+- A implementação não alterou AST, scopes, símbolos, occurrences, resolution entries/candidates nem `ResolutionAnalysisReport`. A reconciliação e o teste repetido preservam esses produtos e CALL/FILLER.
+- Essa classificação foi decisão da implementação: o discovery demonstrou o blind spot e a incoerência estrutural, mas deixou a taxonomia exata de clauses aberta.
+
+### Evidência atual
+
+- Focal normal: 23 testes verdes nas fronteiras, snapshot, CALL e required oracles; os dois testes de F-02 ficaram skipped.
+- Gate `fast`: verde.
+- Gate `semantic`: verde após revisão da taxonomia contra os relatórios existentes.
+- Gate `full`: verde, incluindo E2E estruturado do normalizador e naming.
+- Opt-in: `mvn -Dast.boundary.required=true -Dtest=AstSemanticBoundaryRequiredOracleTest test` executa quatro oráculos; somente os dois de F-02 permanecem vermelhos. Os dois de F-01 agora integram o gate normal.

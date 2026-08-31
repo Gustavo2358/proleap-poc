@@ -1,12 +1,12 @@
-# WORK-AST-002 — Discovery do hardening da fronteira AST
+# WORK-AST-002 — Hardening da fronteira AST
 
 ## Problema
 
-`BACKLOG-AST-001` exige garantias de preservação, coverage e rastreabilidade antes de CFG e dataflow, mas o backlog não prova que todas exigem mudança de produção. É necessário confrontar parse contexts, AST, scopes, símbolos, occurrences, resolução e readiness com oráculos exatos, separando lacuna real de capacidade já existente.
+O discovery revisado no PR #9 provou que `BACKLOG-AST-001` exige duas mudanças de produção localizadas: coverage concreto/taxonomia nas fronteiras AST (F-01/F-03) e integridade cross-product fail-closed (F-02). Os produtos normais de AST, símbolos, occurrences e resolução já preservam as demais garantias caracterizadas.
 
 ## Objetivo
 
-Promover o backlog e executar exclusivamente a Fase 0 de discovery/characterization. O resultado deve classificar cada garantia como satisfeita, parcial, ausente ou desconhecida e propor, sem implementar, os menores slices de produção para lacunas comprovadas.
+Implementar as lacunas comprovadas em PRs independentes. A autorização vigente cobre exclusivamente o Slice 1: exatamente um finding por fronteira semântica materializada aprovada, unknown observável sem referência nominal e manifesto coerente com a estrutura AST existente.
 
 ## Domínio de entrada suportado
 
@@ -28,7 +28,7 @@ Parser errors, COPYs ausentes e falhas de preprocessing permanecem input incompl
 - `LANGUAGE_GUARANTEED`: FILLER não declara um nome utilizável; REDEFINES e RENAMES preservam relações declarativas cujas restrições COBOL serão verificadas contra fonte oficial do dialeto quando necessárias.
 - `ARCHITECTURE_GUARANTEED`: produtos permanecem separados; binding nominal não infere valores; identidade entre units inclui `ProgramUnitId`; incompletude bloqueia claims incompatíveis.
 - `SPECIFICATION_GUARANTEED`: findings representam fronteiras semânticas materializadas, não cada wrapper gramatical.
-- `UNCERTAIN`: a menor localização de validação de integridade entre produtos e a taxonomia final de dependency knowledge por data clause dependem da evidência do discovery.
+- `UNCERTAIN`: a menor localização de validação de integridade entre produtos permanece decisão do Slice 2. No Slice 1, entries tipadas são containers não dependency-bearing; `PICTURE`/`USAGE` não adicionam dependência nominal e não alegam layout, enquanto `VALUE`, `OCCURS`, `REDEFINES` e `RENAMES` preservam `DEPENDENCY_UNKNOWN` para valores, cardinalidade e aliases ainda desconhecidos.
 - `OBSERVED_IN_CURRENT_CORPUS_ONLY`: nenhuma cardinalidade ou forma encontrada apenas no corpus será promovida a regra.
 
 ## Comportamento esperado
@@ -50,8 +50,8 @@ Uma construção válida porém não interpretada deve permanecer como node pres
 
 ## Fora de escopo
 
-- Qualquer alteração de produção nesta sessão; `source_scope` é somente superfície de investigação.
-- Gramática, parser behavior, AST/symbol/resolver/coverage/readiness de produção ou baselines.
+- Integridade cross-product, mudanças em `ResolutionAnalysisReport.compose` e os dois oráculos de F-02, reservados ao Slice 2.
+- Gramática, parser behavior, shape/cardinalidade da AST, symbols, occurrences, binding nominal ou baselines não explicados.
 - CFG, statement effects, reaching definitions, possible/runtime values, storage regions/layout/aliases, kills e targets dinâmicos finais.
 - Parsers ou interpretação semântica de SQL, CICS e SQLIMS.
 - IDs persistentes resistentes a edição do fonte.

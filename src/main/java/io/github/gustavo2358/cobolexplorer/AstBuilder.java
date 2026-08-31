@@ -261,9 +261,11 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
         List<Ast.DataClause> clauses = directRuleChildren(format).stream()
                 .filter(AstBuilder::isDataClauseContext)
                 .map(this::buildDataClause).toList();
-        return new Ast.DataEntry(meta, level, levelKind(level), filler ? "FILLER" : clean(sourceText(name)),
-                filler, declarationVisibility(format, external, global),
-                raw, clauses, List.of());
+        Ast.DataEntry entry = new Ast.DataEntry(meta, level, levelKind(level),
+                filler ? "FILLER" : clean(sourceText(name)), filler,
+                declarationVisibility(format, external, global), raw, clauses, List.of());
+        recordCoverage(entry, sourceText(format));
+        return entry;
     }
 
     private static ParserRuleContext dataEntryFormat(CobolParser.DataDescriptionEntryContext context) {
@@ -334,7 +336,10 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
 
     private Ast.DataClause buildDataClause(ParserRuleContext context) {
         Ast.Node visited = visit(context);
-        if (visited instanceof Ast.DataClause dataClause) return dataClause;
+        if (visited instanceof Ast.DataClause dataClause) {
+            recordCoverage(dataClause, sourceText(context));
+            return dataClause;
+        }
         throw new IllegalStateException("Data clause visitor produced no AST node for " + rule(context));
     }
 
@@ -523,8 +528,7 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
             throw new IllegalStateException("Statement visitor produced no AST node for " + sourceText(wrapper));
         }
         String grammarRule = statement.meta().origin().grammarRule();
-        coverageDrafts.add(new CoverageDraft(grammarRule, statement.meta(), sourceText(wrapper),
-                statement.meta().id()));
+        recordCoverage(statement, sourceText(wrapper));
         if (LOG.isTraceEnabled()) {
             String sourceFile = statement.meta().provenance().original().file();
             if (statement instanceof Ast.PreservedStatement) {
@@ -671,6 +675,11 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
                     policy.rationale(), draft.astNodeId()));
         }
         return new SemanticCoverage.Report(findings);
+    }
+
+    private void recordCoverage(Ast.Node node, String writtenText) {
+        Ast.Meta meta = node.meta();
+        coverageDrafts.add(new CoverageDraft(meta.origin().grammarRule(), meta, writtenText, meta.id()));
     }
 
     private Ast.CallStatement buildCall(CobolParser.CallStatementContext context) {
@@ -890,8 +899,10 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
         Ast.Meta meta = meta(context);
         List<Ast.Expression> recognized = nearestDescendants(context, AstBuilder::isRecognizedExpressionContext).stream()
                 .map(child -> expression(child, role)).toList();
-        return new Ast.PreservedExpression(meta, rule(context), sourceText(context).strip(), recognized,
-                Ast.ReferenceUnderstanding.PRESERVED);
+        Ast.PreservedExpression expression = new Ast.PreservedExpression(meta, rule(context),
+                sourceText(context).strip(), recognized, Ast.ReferenceUnderstanding.PRESERVED);
+        recordCoverage(expression, sourceText(context));
+        return expression;
     }
 
     private Ast.Expression expressionWrapper(ParserRuleContext context, String role) {
@@ -1143,8 +1154,10 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
         Ast.Meta meta = meta(context);
         List<Ast.Expression> recognized = nearestDescendants(context, AstBuilder::isRecognizedExpressionContext).stream()
                 .map(child -> expression(child, role)).toList();
-        return new Ast.PreservedExpression(meta, rule(context), sourceText(context).strip(), recognized,
-                Ast.ReferenceUnderstanding.PRESERVED);
+        Ast.PreservedExpression expression = new Ast.PreservedExpression(meta, rule(context),
+                sourceText(context).strip(), recognized, Ast.ReferenceUnderstanding.PRESERVED);
+        recordCoverage(expression, sourceText(context));
+        return expression;
     }
 
     private static boolean isArithmeticContext(ParserRuleContext context) {

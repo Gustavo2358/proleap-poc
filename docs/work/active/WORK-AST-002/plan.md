@@ -2,42 +2,40 @@
 
 ## Fatiamento
 
-1. Promover o backlog e congelar restrições, autoridades, decisões e oráculos da Fase 0.
-2. Inventariar lowering e cardinalidade parse context → AST para statements, entries, clauses e expressões preservadas.
-3. Caracterizar containment DATA, FILLER, VALUE, REDEFINES, RENAMES e separação sintática de CALL.
-4. Reconciliar AST → scopes → symbols/relations → occurrences → resolution/candidates por identidade composta e provenance.
-5. Caracterizar coverage, dependency knowledge e readiness, incluindo unknown sem referência nominal.
-6. Registrar findings, falsos alarmes, decisões abertas e slices recomendados; não executar slices de produção.
+1. Fase 0 concluída e revisada no PR #9: lowering, cardinalidades, joins, provenance e quatro oráculos foram caracterizados sem alteração de produção.
+2. Slice 1 autorizado: registrar coverage concreto para statements, entries, clauses e preserved expressions; alinhar manifesto rule-by-rule e promover somente os dois oráculos de F-01.
+3. Abrir PR independente do Slice 1 e parar para revisão externa.
+4. Slice 2 permanece futuro e sem autorização nesta execução: integridade linear cross-product e dois oráculos de F-02.
+5. Regressão documental final permanece posterior aos slices de produção revisados.
 
 ## Dependências
 
-- Autoridades e evals listados em `work-item.yaml`.
+- Autoridades e evals listados em `work-item.yaml`, mais a revisão independente do discovery no PR #9.
 - Fonte oficial IBM Enterprise COBOL quando a semântica COBOL não estiver suficientemente fechada pelo contrato canônico.
 - `BACKLOG-CFG-001` e `BACKLOG-DF-001` permanecem consumidores futuros bloqueados por lacunas comprovadas relevantes.
 
 ## Superfície arquitetural provável
 
-Superfície apenas investigada nesta fase: `AstBuilder`, `Ast`, `AstScopeIndex`, `SemanticCoverage`, `GrammarCoverageManifest`, symbol model, occurrences, resolution products e `ResolutionAnalysisReport`. Nenhum desses arquivos está autorizado para edição. A provável incisão de produção será reduzida após os oráculos distinguirem coverage ausente, integridade de joins e capacidade já existente.
+No Slice 1, a incisão aprovada fica em `AstBuilder`, no invariant local de `SemanticCoverage` e em `grammar-rule-manifest.tsv`, além dos testes/evals e contratos documentais correspondentes. `Ast`, `AstScopeIndex`, symbol model, occurrences, resolução e `ResolutionAnalysisReport` permanecem inalterados. A superfície cross-product continua reservada ao Slice 2.
 
 ## Migrações requeridas
 
-Nenhuma migração de produção ou baseline nesta fase. A promoção atualiza somente o índice de trabalho. Eventuais migrações canônicas serão propostas para slices posteriores e exigirão revisão independente.
+Não há migração de AST, símbolos, occurrences, resolução ou baseline de corpus. O Slice 1 migra somente a taxonomia do manifesto e a cardinalidade esperada dos findings de coverage; snapshots gerados podem ganhar exclusivamente esses findings explicáveis.
 
 ## Artefatos esperados
 
-- Os cinco artefatos obrigatórios do work item.
-- Fixture integrada focal e helper de teste não produtivo.
-- Matriz versionada de fronteiras com cardinalidades e identidades exatas.
-- Testes verdes do comportamento observado e oráculos de requisito ativáveis que demonstrem lacunas.
-- Relatório de discovery com guarantee matrix, findings, false alarms, decisões, slices e readiness.
-- Commit e PR exclusivos de discovery.
+- Registro comum de coverage nas quatro fronteiras materializadas, sem finding de wrapper.
+- Manifesto coerente com entries/clauses e referências já tipadas, preservando dependency unknown.
+- Matriz versionada com cardinalidade exata, provenance e determinismo.
+- Dois oráculos de F-01 verdes no gate normal e dois oráculos de F-02 ainda opt-in/vermelhos.
+- Commit e PR exclusivos do Slice 1.
 
 ## Slices de produção recomendados após revisão independente
 
 ### Slice 1 — Coverage concreto e taxonomia coerente
 
 - **Problema:** F-01/F-03; entries, clauses e preserved expressions existem na AST, mas não geram findings, e o manifesto descreve várias estruturas tipadas como apenas preservadas.
-- **Oracle atualmente falho:** `everyMaterializedSemanticBoundaryHasExactlyOneFinding` e `unknownDataClauseWithoutNominalReferenceBlocksReadiness` em `AstSemanticBoundaryRequiredOracleTest`.
+- **Oracle do discovery, promovido no Slice 1:** `everyMaterializedSemanticBoundaryHasExactlyOneFinding` e `unknownDataClauseWithoutNominalReferenceBlocksReadiness` em `AstSemanticBoundaryRequiredOracleTest` agora integram o gate normal.
 - **Provável superfície:** `AstBuilder` (registro das fronteiras sem wrappers), `SemanticCoverage` somente se invariants locais precisarem ser reforçados, `grammar-rule-manifest.tsv`; `ResolutionAnalysisReport` já bloqueia um finding unknown e não deve mudar sem necessidade demonstrada.
 - **Invariants/evals:** INV-AST-002, INV-COV-001, INV-COV-002, INV-DET-001; EVAL-AST-001/003/004, EVAL-COV-001/002, EVAL-RES-COV-001 e EVAL-RES-REPORT-001.
 - **must_not_change:** shapes/cardinalidades da AST, símbolos, occurrences e binding; gramática; parser; valores de runtime/storage/effects; baselines não explicados.

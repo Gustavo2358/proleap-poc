@@ -1,9 +1,11 @@
 package io.github.gustavo2358.cobolexplorer;
 
 import java.util.EnumMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 /** Conservative, immutable observability for Parse Tree to AST transformation. */
 public final class SemanticCoverage {
@@ -48,9 +50,14 @@ public final class SemanticCoverage {
     public record Report(List<Finding> findings) {
         public Report {
             findings = List.copyOf(findings);
+            Set<Integer> concreteNodeIds = new HashSet<>();
             for (int index = 0; index < findings.size(); index++) {
                 if (findings.get(index).id() != index)
                     throw new IllegalArgumentException("finding ids must be deterministic and contiguous");
+                int astNodeId = findings.get(index).astNodeId();
+                if (astNodeId >= 0 && !concreteNodeIds.add(astNodeId))
+                    throw new IllegalArgumentException(
+                            "concrete AST node must have exactly one coverage finding: " + astNodeId);
             }
         }
 

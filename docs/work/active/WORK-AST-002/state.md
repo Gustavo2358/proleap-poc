@@ -2,30 +2,24 @@
 
 ## Onde estamos
 
-Fase 0 concluída. BACKLOG-AST-001 foi promovido para WORK-AST-002; `source_scope` permaneceu somente investigação e nenhum arquivo de produção foi alterado. A avaliação recomenda `READY FOR IMPLEMENTATION` somente após revisão independente e nova instrução explícita.
+Slice 1 implementado, validado, commitado e publicado na branch `work/work-ast-002-slice-1-coverage`, aguardando PR independente e revisão externa. Nenhuma implementação do Slice 2 foi iniciada.
 
 ## Verde conhecido
 
-- Caracterização: 8/8 testes verdes; 10/10 statements na fixture integrada, 50 alternativas 1:1, 14/14 DATA entries, 20/20 clauses e 1/1 preserved expression.
-- AST→scope→symbol/relation→occurrence→resolution/candidate reconciliado integralmente nos produtos normais, com IDs locais repetidos sob units distintas e provenance preservada.
-- FILLER, VALUE, REDEFINES/RENAMES, groups e CALL literal/identifier já preservam a estrutura necessária sem antecipar storage/dataflow.
+- Cardinalidade exata: 10/10 statements, 14/14 DATA entries, 20/20 clauses e 1/1 preserved expression possuem um finding concreto; metadata/provenance e ordem determinística são preservadas.
+- `VALUE` e `BLANK WHEN ZERO` sem occurrence nominal produzem gaps e bloqueiam readiness; preserved clause/expression sem referência continuam observáveis.
+- Manifesto separa estrutura de dependency knowledge; `MODELED + DEPENDENCY_UNKNOWN` permanece para VALUE/OCCURS/REDEFINES/RENAMES.
+- Os dois oráculos de F-01 integram o gate normal; 23 testes focais verdes e gates `fast`, `semantic` e `full` verdes.
+- AST→scope→symbols→occurrences→resolution, CALL literal/identifier e ausência de símbolo FILLER permanecem reconciliados e determinísticos.
 
 ## Restante
 
-- Revisar diff e confirmar ausência de produção.
-- Criar commit e PR dedicados ao discovery; então parar.
+- Abrir o PR do Slice 1 e parar para revisão externa.
+- Slice 2/F-02 continua dependente de revisão externa e nova instrução explícita.
 
 ## Descobertas que afetam o plano
 
-- F-01: coverage concreto só existe para statements; VALUE/clause/fallback sem referência pode deixar readiness falsa-positiva.
-- F-02: faltam checks cross-product fail-closed; dois produtos corrompidos controlados são aceitos.
-- F-03: manifesto ainda chama estruturas AST tipadas de preservadas/flattened.
-- F-04 permanece decisão aberta: entrada SQL opaca é distinguível, mas também recebe `filler=true`.
-- Oráculos ativáveis: 4 falhas intencionais exatas; detalhes e slices estão em `eval.md` e `plan.md`.
-
-## Verificação final
-
-- `./scripts/harness/check-fast.sh`: verde.
-- `./scripts/harness/check-semantic.sh`: verde; 210 testes, 0 falhas, 0 erros e 4 skips correspondentes aos required oracles opt-in.
-- `mvn -Dtest=AstSemanticBoundaryCharacterizationTest test`: verde; 8 testes, 0 falhas.
-- `mvn -Dast.boundary.required=true -Dtest=AstSemanticBoundaryRequiredOracleTest test`: vermelho intencional; 4 testes, 4 falhas exatas que reproduzem F-01 e F-02.
+- F-01 e F-03 foram fechados no Slice 1 pela produção, sem busca textual nem alteração de `ResolutionAnalysisReport`.
+- A taxonomia final do slice trata PICTURE/USAGE como não dependency-bearing para a capability nominal atual sem alegar layout; VALUE/OCCURS/REDEFINES/RENAMES preservam unknown.
+- F-02 permanece reproduzível: com opt-in, somente os dois oráculos cross-product falham. Isso é o limite esperado deste PR.
+- F-04 permanece decisão aberta e a shape SQL/FILLER não foi alterada.

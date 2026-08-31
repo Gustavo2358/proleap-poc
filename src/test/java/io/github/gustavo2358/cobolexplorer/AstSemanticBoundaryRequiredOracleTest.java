@@ -12,11 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * Requirement oracles intentionally red against the discovery baseline.
- * Activate only with -Dast.boundary.required=true; normal semantic gates compile but skip them.
- */
-@EnabledIfSystemProperty(named = "ast.boundary.required", matches = "true")
+/** Requirement oracles promoted as their production slices become implemented. */
 class AstSemanticBoundaryRequiredOracleTest {
 
     @Test
@@ -31,12 +27,17 @@ class AstSemanticBoundaryRequiredOracleTest {
         for (CompilationUnitModel.ProgramUnit unit : analysis.model().programUnits()) {
             SemanticCoverage.Report report = analysis.build().coverageByProgramUnit().get(unit.id());
             boundaries.forEach((name, type) -> {
-                List<Integer> nodeIds = AstBoundaryTestSupport.nodes(unit.program()).stream()
-                        .filter(type::isInstance).map(node -> node.meta().id()).toList();
-                long findingCount = report.findings().stream()
-                        .filter(finding -> nodeIds.contains(finding.astNodeId())).count();
-                assertEquals(nodeIds.size(), findingCount,
-                        name + " must have one concrete finding per AST node in " + unit.id());
+                List<Ast.Node> nodes = AstBoundaryTestSupport.nodes(unit.program()).stream()
+                        .filter(type::isInstance).toList();
+                for (Ast.Node node : nodes) {
+                    List<SemanticCoverage.Finding> findings = report.findings().stream()
+                            .filter(finding -> finding.astNodeId() == node.meta().id()).toList();
+                    assertEquals(1, findings.size(),
+                            name + " must have exactly one finding for node "
+                                    + node.meta().id() + " in " + unit.id());
+                    assertEquals(node.meta(), findings.get(0).meta(),
+                            name + " finding must preserve node metadata and provenance");
+                }
             });
         }
     }
@@ -64,6 +65,7 @@ class AstSemanticBoundaryRequiredOracleTest {
     }
 
     @Test
+    @EnabledIfSystemProperty(named = "ast.boundary.required", matches = "true")
     void reportFailsClosedWhenResolutionContainsOccurrenceMissingFromCollectorProduct() {
         String source = """
                 IDENTIFICATION DIVISION.
@@ -90,6 +92,7 @@ class AstSemanticBoundaryRequiredOracleTest {
     }
 
     @Test
+    @EnabledIfSystemProperty(named = "ast.boundary.required", matches = "true")
     void crossProductValidationRejectsSymbolWhoseDeclarationAstNodeDoesNotExist() {
         AstBoundaryTestSupport.Analysis analysis = AstBoundaryTestSupport.analyze("""
                 IDENTIFICATION DIVISION.

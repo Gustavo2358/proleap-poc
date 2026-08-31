@@ -1,8 +1,8 @@
 id: WORK-AST-002
-title: Discovery do hardening da fronteira AST para CFG e dataflow
+title: Hardening da fronteira AST para CFG e dataflow
 status: active
 risk: high
-goal: Caracterizar com oráculos quais garantias de BACKLOG-AST-001 já existem e quais lacunas devem ser fechadas antes de BACKLOG-CFG-001.
+goal: Fechar em slices revisáveis as lacunas comprovadas de coverage e integridade antes de BACKLOG-CFG-001, sem antecipar CFG ou dataflow.
 must_read:
   - docs/work/backlog.md#backlog-ast-001--hardening-da-fronteira-ast-para-cfg-e-dataflow
   - docs/architecture/pipeline.md
@@ -60,22 +60,29 @@ source_scope:
   - src/main/java/io/github/gustavo2358/cobolexplorer/AstScopeIndex.java
   - src/main/java/io/github/gustavo2358/cobolexplorer/SemanticCoverage.java
   - src/main/java/io/github/gustavo2358/cobolexplorer/GrammarCoverageManifest.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/CoverageSnapshot.java
   - src/main/java/io/github/gustavo2358/cobolexplorer/SymbolTable.java
   - src/main/java/io/github/gustavo2358/cobolexplorer/ReferenceOccurrences.java
   - src/main/java/io/github/gustavo2358/cobolexplorer/ReferenceResolution.java
   - src/main/java/io/github/gustavo2358/cobolexplorer/ResolutionAnalysisReport.java
 test_scope:
+  - src/test/java/io/github/gustavo2358/cobolexplorer/AstBuildCoverageTest.java
   - src/test/java/io/github/gustavo2358/cobolexplorer/AstSemanticBoundaryCharacterizationTest.java
   - src/test/java/io/github/gustavo2358/cobolexplorer/AstSemanticBoundaryRequiredOracleTest.java
   - src/test/java/io/github/gustavo2358/cobolexplorer/AstBoundaryTestSupport.java
+  - src/test/java/io/github/gustavo2358/cobolexplorer/CallSemanticsTest.java
+  - src/test/java/io/github/gustavo2358/cobolexplorer/CoverageSnapshotTest.java
+  - src/test/java/io/github/gustavo2358/cobolexplorer/GrammarCoverageManifestTest.java
+  - src/test/java/io/github/gustavo2358/cobolexplorer/SemanticCoverageTest.java
   - src/test/resources/cobol/semantic/ast-cfg-boundary.cbl
 must_not_change:
-  - Qualquer arquivo de produção durante a fase de discovery
   - Gramática ou comportamento do parser
-  - AST symbol model resolver ou coverage readiness de produção
+  - Shape e cardinalidade da AST símbolos occurrences binding nominal ou candidates
+  - Validator cross-product e integridade entre produtos reservados ao Slice 2
   - Baselines para acomodar novos testes
   - CFG dataflow storage layout aliases effects reaching definitions possible values runtime values kills ou targets dinâmicos
   - Semântica opaca de SQL CICS e SQLIMS
 gates:
   - fast
   - semantic
+  - full

@@ -33,4 +33,23 @@ class CoverageSnapshotTest {
         assertTrue(text.contains("\"ast\":0"));
         assertTrue(text.contains("\"parse\":7"));
     }
+
+    @Test
+    void serializesEachPreservedSemanticBoundaryExactlyOnce() throws Exception {
+        AstBoundaryTestSupport.Analysis analysis = AstBoundaryTestSupport.analyzeFixture();
+        CompilationUnitModel.ProgramUnit parent = analysis.model().programUnits().get(0);
+        SemanticCoverage.Report report = analysis.build().coverageByProgramUnit().get(parent.id());
+        Path output = Files.createTempFile("coverage-boundaries", ".js");
+
+        CoverageSnapshot.from("ast-cfg-boundary.cbl", parent.program(), report, 0, 0, 0)
+                .write(output);
+        String text = Files.readString(output, StandardCharsets.UTF_8);
+
+        assertEquals(1, occurrences(text, "\"rule\":\"dataBlankWhenZeroClause\""));
+        assertEquals(1, occurrences(text, "\"rule\":\"abbreviation\""));
+    }
+
+    private static int occurrences(String text, String expected) {
+        return (text.length() - text.replace(expected, "").length()) / expected.length();
+    }
 }
