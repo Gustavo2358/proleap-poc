@@ -80,6 +80,44 @@ IDs neste documento são estáveis. `AUTOMATED` indica proteção executável at
 - **Enforcement:** `AUTOMATED` — testes de resolução PROGRAM/CALL externo e motivo `LITERAL_EXTERNAL_PROGRAM`.
 - **Known exceptions:** opções de linkage inválidas ou ausentes continuam incertezas separadas.
 
+## Extensões de plataforma
+
+### INV-EXT-001 — Core COBOL permanece independente de plataformas
+
+- **Statement:** gramática, AST, symbol table, collector e resolver COBOL não contêm branches por nomes, shapes ou classes concretas de CICS, IMS, DB2, GRBE ou outra plataforma; extensões complementam produtos canônicos por contratos separados.
+- **Rationale:** conhecimento externo não redefine silenciosamente a linguagem COBOL nem força mudanças transversais para cada tecnologia.
+- **Scope:** frontend canônico, produtos semânticos e futuras extensões.
+- **Related ADRs:** ADR-0003 e ADR-0011.
+- **Enforcement:** `PARTIALLY_AUTOMATED` — `ArchitectureBoundaryTest`, oráculos do primeiro classifier e review de dependências.
+- **Known exceptions:** tokens e regras de linguagens embarcadas já vendorizados preservam sintaxe/payload conforme ADR-0007; isso não autoriza interpretação de plataforma no core.
+
+### INV-EXT-002 — Evidência COBOL precede classificação externa inferida
+
+- **Statement:** uma construção explicada pela resolução COBOL não pode ser reclassificada como externa apenas por grafia; classifier inferido só atua após o fracasso da explicação COBOL do construct inteiro.
+- **Rationale:** o modo real de compilação pode estar ausente e nomes de plataforma também podem ser nomes COBOL válidos.
+- **Scope:** classifiers pós-resolução e composição de resultados.
+- **Related ADRs:** ADR-0011.
+- **Enforcement:** `REVIEW` — EVAL-EXT-001 será o oracle executável do primeiro slice.
+- **Known exceptions:** metadata futura de compilação, quando explícita e confiável, poderá governar outro caminho mediante work item e policy próprios.
+
+### INV-EXT-003 — Classificação externa inferida preserva incerteza e provenance
+
+- **Statement:** classificação sem contexto confiável de compilação permanece distinguível de binding e de evidência externa comprovada, com tecnologia, kind, motivo, certeza, construct, source span, origem física e include chain observáveis.
+- **Rationale:** hipótese plausível não equivale a verdade sintática nem pode elevar a claim de completude.
+- **Scope:** produto de classificação externa, relatórios, snapshots e diagnostics.
+- **Related ADRs:** ADR-0002, ADR-0008 e ADR-0011.
+- **Enforcement:** `REVIEW` — EVAL-EXT-001 será o oracle executável do primeiro slice; INV-PROV-002 e INV-COV-001 continuam aplicáveis.
+- **Known exceptions:** nenhuma.
+
+### INV-EXT-004 — Classificação externa possui fronteira de construct
+
+- **Statement:** uma classificação externa referencia o nó-raiz e todas as occurrences artificiais pertencentes à interpretação COBOL intermediária do mesmo subtree; a projeção agregada não mantém esses componentes como gaps COBOL independentes nem os apaga sem fato substituto.
+- **Rationale:** classificar somente o nome-base deixaria argumentos/subscripts como falsos defeitos de binding; removê-los silenciosamente perderia auditabilidade.
+- **Scope:** classifiers, composição do relatório e apresentação.
+- **Related ADRs:** ADR-0003, ADR-0008 e ADR-0011.
+- **Enforcement:** `REVIEW` — EVAL-EXT-001 será o oracle executável do primeiro slice.
+- **Known exceptions:** occurrences externas ao subtree ou não cobertas explicitamente continuam com seu resultado COBOL original.
+
 ## Cobertura e linguagens embarcadas
 
 ### INV-COV-001 — Incompletude bloqueia completude

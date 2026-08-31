@@ -8,6 +8,153 @@ Este arquivo registra trabalho futuro válido que não pertence a um work item a
 
 Refatorar o package único para componentes com dependências direcionais verificáveis (frontend, AST, symbols, occurrences, resolution, presentation). Preservar APIs/produtos e usar os invariantes atuais como oracle. Depois da migração, substituir o check de bytecode por regras primariamente baseadas em package boundaries quando isso proteger o conceito sem acoplar nomes acidentais.
 
+## Extensibilidade de plataforma
+
+Os itens abaixo estão ordenados por dependência arquitetural, não por autorização. `WORK-EXT-001` é o único slice ativo e cobre somente `DFHRESP`/`DFHVALUE`; nenhum item desta seção foi iniciado.
+
+```text
+BACKLOG-EXT-001 infraestrutura de composição
+  ├── BACKLOG-EXT-002 contexto confiável de compilação
+  ├── BACKLOG-EXT-003 external symbols
+  ├── BACKLOG-EXT-004 semantic extractors
+  │     └── BACKLOG-EXT-005 protocolo GRBE
+  └── BACKLOG-EXT-006 control-flow semantics ── depende de BACKLOG-CFG-001
+
+extractors com operandos dinâmicos ── dependem de BACKLOG-CFG-001/BACKLOG-DF-001
+                                 e de possible-values posterior
+```
+
+### BACKLOG-EXT-001 — Infraestrutura mínima de extensibilidade do pipeline
+
+#### Motivação
+
+Capacidades de plataforma podem contribuir antes da resolução, depois do binding COBOL, durante CFG ou depois de dataflow. Hoje `ExplorerMain` compõe diretamente symbol tables, occurrences, `CobolReferenceResolver`, `ResolutionAnalysisReport` e snapshots. Repetir `if (cics)`, `new Ims...` ou branches equivalentes nessa classe e nas fases canônicas transformaria cada tecnologia em mudança transversal.
+
+O classifier mínimo de `WORK-EXT-001` é um primeiro caso focalizado, não a autorização nem o desenho completo dessa infraestrutura.
+
+#### Resultado esperado
+
+Criar o menor mecanismo explícito de composição/injeção capaz de oferecer extension points independentes para unresolved reference classifiers, external symbol providers, semantic extractors e control-flow semantics providers.
+
+Uma tecnologia implementa apenas as capacidades pertinentes. Adicionar implementação futura deve exigir predominantemente o novo componente mais registro/composição/configuração, sem reestruturar repetidamente `ExplorerMain`, o resolver, o futuro CFG builder ou outras fases canônicas.
+
+#### Princípios e incisão controlada
+
+- Aplicar Clean Architecture: contratos estáveis ficam do lado do core/composição; módulos concretos dependem desses contratos, nunca o inverso.
+- Aplicar Open/Closed Principle: fases canônicas permanecem fechadas a branches por tecnologia e abertas a contribuições pelos extension points.
+- Aplicar Dependency Inversion somente onde houver dependência real demonstrada; interfaces devem ser pequenas, coesas e orientadas à capacidade.
+- Localizar precisamente uma incisão pequena no composition root atual e os pontos semânticos em que cada capability recebe/produz artefatos.
+- Manter execução sem extensões como configuração válida e semanticamente equivalente ao pipeline atual.
+- Compor explicitamente ordem, identidade, determinismo, falha fechada, provenance, diagnostics e conflitos entre múltiplas contribuições.
+- Classificação externa continua produto ortogonal conforme ADR-0011; AST e resolver COBOL não passam a conhecer o mecanismo concreto de plugins.
+
+O work item futuro deve comparar composição explícita, registry pequeno, injection por constructor/factory e mecanismos equivalentes. Não está decidido usar `PluginRegistry`, `ServiceLoader`, reflection, magic discovery ou framework de DI.
+
+#### Capacidades, fronteiras e rejeições
+
+O desenho precisa admitir momentos distintos da pipeline sem criar uma interface `PlatformPlugin` gigante com métodos opcionais. Não criar `CicsPlugin` monolítico, service locator global, API antecipada de CFG/dataflow, framework externo de DI ou packages definitivos sem evidência. Providers/extractors não podem mutar AST, symbols, occurrences ou resolution; novos produtos usam identidades compostas, provenance e certeza explícita.
+
+Uma configuração incompatível, contribuição duplicada ou dependência ausente deve falhar fechada ou produzir incompletude tipada conforme o contrato da capability. Ordem de registro não pode selecionar silenciosamente um fato sem regra de precedência.
+
+#### Dependências, fora de escopo e promoção
+
+- Pré-condições: encerrar `WORK-EXT-001` e inspecionar o ponto único de composição que ele deixou; coordenar com BACKLOG-ARCH-001 sem exigir sua execução se boundaries equivalentes puderem ser protegidas no package atual.
+- Fora de escopo: implementar providers/extractors concretos, CFG, dataflow, catálogos extensos ou discovery dinâmico.
+- Risco principal: overengineering antes do segundo caso concreto; a abstração deve ser a menor que suporte as quatro famílias previstas sem exigir implementação de todas por cada módulo.
+- Implementação ingênua rejeitada: condicionais/classes CICS/IMS/DB2/GRBE espalhados pelo `main` ou uma interface monolítica que apenas desloca esses condicionais.
+- Promover quando ao menos uma segunda capability concreta exigir composição além do classifier mínimo. O work item deve mapear incisão, dependency direction, execução vazia, conflito/determinismo e testes arquiteturais antes de produção.
+
+Relações: ADR-0003, ADR-0011, INV-EXT-001 a INV-EXT-004, EVAL-ARCH-001 e EVAL-EXT-001.
+
+### BACKLOG-EXT-002 — Contexto explícito de tradução e compilação
+
+#### Problema e resultado esperado
+
+O source isolado não prova `CICS`/`NOCICS` nem outras opções de plataforma. Evidência como `EXEC CICS` pode provar necessidade local, mas sua ausência não prova modo negativo; usar o próprio `DFHRESP(...)` para inferir modo seria circular.
+
+Definir uma entrada/policy versionada para metadata confiável oriunda de JCL/procedure, build, compiler options ou configuração fornecida pelo usuário. O resultado deve distinguir modo explícito, evidência preservada no source, inferência e desconhecido, e aplicar a precedência da ADR-0011 sem transformar ausência em `NOCICS`.
+
+#### Fronteiras e dependências
+
+- Depende de BACKLOG-EXT-001 para composição e provavelmente de BACKLOG-RUNNER-001 para ingestão por codebase; não autoriza parser de JCL completo.
+- Pode futuramente habilitar lowering/classificação mais forte quando o modo CICS for comprovado, mas não reescreve AST retroativamente nem muda grammar por default.
+- Provenance da metadata, autoridade, escopo por artifact/unit e conflitos entre fontes devem permanecer observáveis.
+- Não inferir tecnologia por prefixos, frequência de corpus ou ausência de statements.
+
+Promover somente com uma fonte concreta de metadata e casos contraditórios. O oracle deve cobrir `CICS`, `NOCICS`, desconhecido, fontes conflitantes e equivalência do pipeline sem metadata. Relações: ADR-0011, INV-EXT-002, INV-EXT-003, INV-COV-001 e BACKLOG-RUNNER-001.
+
+### BACKLOG-EXT-003 — External Symbol Providers e origem de símbolos
+
+#### Problema e resultado esperado
+
+Permitir que ambientes contribuam símbolos reais ausentes do source/copybooks entregues, começando apenas por um caso CICS comprovado como `EIBCALEN` ou `EIBAID`. O resolver COBOL continua genérico e consome um inventário composto antes do lookup; novos providers entram por BACKLOG-EXT-001, sem branches por plataforma.
+
+`bindingStatus` e `symbolOrigin` são dimensões ortogonais: um símbolo provido pode terminar `RESOLVED` com origem `CICS_EXTERNAL`. Uma declaração real expandida de copybook, como constantes de `DFHAID`/`DFHBMSCA`, tem precedência e não pode receber duplicata sintética. Ausência ou falha de `COPY` permanece input/provenance própria, não justificativa automática para inventar catálogo.
+
+#### Fronteiras, dependências e promoção
+
+- Depende de BACKLOG-EXT-001; integração com repositórios/copybooks pode depender de BACKLOG-RUNNER-001.
+- Precisa fechar namespace, kind, scope/visibility, owner unit, identity, atributos, provenance da definição externa, conflito entre providers e precedência com declarações reais.
+- Não criar catálogo amplo antecipadamente, não usar `EXTERNAL` como status de binding e não fazer o resolver chamar classes CICS.
+- O provider não interpreta statements, não classifica unresolved shapes e não deduz valores de runtime.
+- OCP/DIP exigem que um novo provider seja implementação mais composição, mantendo o core fechado a nomes concretos.
+
+Promover com documentação oficial da plataforma e primeiro símbolo necessário. Oráculos mínimos: com provider resolve/origin explícita; sem provider fica unresolved; declaração real vence; colisão/contribuição duplicada falha de forma determinística; programa sem providers permanece inalterado. Relações: ADR-0003, ADR-0011, INV-EXT-001, INV-PROV-002, INV-RES-001 e BACKLOG-EXT-001.
+
+### BACKLOG-EXT-004 — Semantic Extractors para CICS, DB2 e IMS
+
+#### Problema e resultado esperado
+
+Interpretar significado de plataforma depois que o frontend e o core fornecerem estrutura canônica suficiente. Slices concretos previstos incluem `EXEC CICS LINK/START/XCTL`, `EXEC SQL CALL` e tabelas SQL, além de comandos/chamadas IMS preservados. Cada extractor emite facts tipados de dependência/negócio com technology, kind, operand, certainty e provenance; não altera AST, binding ou CFG.
+
+Extractors são capacidades independentes compostas por BACKLOG-EXT-001. Adicionar CICS, DB2 ou IMS deve exigir implementação mais registro/injeção, sem branches novos no pipeline principal. A interface não pode assumir que toda extração roda no mesmo ponto: facts literais podem depender apenas da AST/analisador embutido, enquanto operands variáveis exigem resolução e possible-values em um program point.
+
+#### Dependências e fronteiras
+
+- Depende de BACKLOG-EXT-001 e BACKLOG-EMB-001 para payloads `EXEC` com parser dedicado; regex no raw payload é rejeitada.
+- Facts com operandos dinâmicos dependem de BACKLOG-CFG-001, BACKLOG-DF-001 e análise canônica posterior de constant/possible-values. O extractor consulta esses serviços; não percorre texto para trás nem implementa mini-CFG, reaching definitions ou propagation própria.
+- Fatos finais de dependência devem respeitar BACKLOG-DEPS-001: targets conhecidos e remainder dinâmico/incerto permanecem separados.
+- `XCTL` pode emitir dependência aqui, mas sua ausência de fallthrough pertence a BACKLOG-EXT-006; extractor e control-flow provider não se fundem.
+- Comando preservado, parser dedicado ausente ou operand dinâmico sem dataflow continua `UNKNOWN/INCOMPLETE`, nunca coleção vazia.
+
+#### Promoção incremental
+
+Promover por tecnologia e comando concreto, com fonte oficial e oracle independente. Começar por literal estático, depois host variable nominal, e somente depois possible-values. Testes devem cobrir comando conhecido/desconhecido, literal/variável, payload inválido, COPY provenance, múltiplos targets, remainder dinâmico, execução sem extractor e ordem determinística entre extractors. Rejeitar um extractor universal por regex ou um `CicsPlugin` que também constrói CFG.
+
+Relações: ADR-0007, ADR-0008, ADR-0011, INV-EMB-001, INV-EXT-001, INV-COV-001, BACKLOG-EXT-001, BACKLOG-EMB-001, BACKLOG-CFG-001, BACKLOG-DF-001 e BACKLOG-DEPS-001.
+
+### BACKLOG-EXT-005 — Semantic Extractor organizacional GRBE
+
+#### Problema e resultado esperado
+
+Modelar o protocolo organizacional exemplificado por `CALL MONITOR USING PARM1` sem contaminar a semântica COBOL. O core continua responsável pelo `CALL`, binding do target/argumento, layout futuro, CFG e dataflow; o extractor GRBE reconhece somente o protocolo autorizado e transforma valores possíveis dos campos/bytes relevantes em facts de negócio/dependência auditáveis.
+
+#### Dependências e fronteiras
+
+- Depende de BACKLOG-EXT-001, do modelo de regiões/efeitos de BACKLOG-DF-001, de CFG/possible-values canônicos e de BACKLOG-DEPS-001; não deve ser promovido antes de esses contratos cobrirem o parâmetro necessário.
+- Deve declarar versão do protocolo, layouts suportados, precondições, targets conhecidos, remainder desconhecido, provenance e confiança.
+- Não fazer busca textual, backtracking pelo source, inferência por posição observada no corpus, parser COBOL paralelo nem reaching definitions próprio.
+- OCP/DIP exigem implementação organizacional injetável, sem referência GRBE no resolver, AST, CFG builder ou `ExplorerMain`.
+
+Promover com especificação organizacional autorizada, fixture mínima e um caso real anonimizado/reprodutível. Oráculos devem cobrir protocolo válido, target literal/variável, múltiplas reaching definitions, alias/partial write, layout incompatível e ausência da extensão. Relações: ADR-0004, ADR-0011, INV-RES-002, INV-EXT-001, BACKLOG-EXT-001, BACKLOG-DF-001, BACKLOG-DF-002 e BACKLOG-DEPS-001.
+
+### BACKLOG-EXT-006 — Control-Flow Semantics Providers para statements externos
+
+#### Problema e resultado esperado
+
+Permitir que constructs externos informem ao CFG efeitos como `RETURNING_TRANSFER`, `NON_RETURNING_TRANSFER`, `PROGRAM_EXIT`, `CONDITIONAL_TRANSFER` e `UNKNOWN_EXTERNAL_EFFECT`. Casos iniciais candidatos: `EXEC CICS XCTL` sem fallthrough e `EXEC CICS RETURN` como saída do programa; IMS entra somente quando houver comando e fonte oficial concretos.
+
+Essa capability afeta topologia/semântica do CFG e permanece distinta de Semantic Extractor. O futuro CFG builder ou uma fase explícita de enriquecimento consulta contratos genéricos compostos por BACKLOG-EXT-001; adicionar tecnologia deve ser implementação mais registro, não branch no builder ou no `main`.
+
+#### Dependências, fronteiras e promoção
+
+- Depende obrigatoriamente de BACKLOG-CFG-001, BACKLOG-EXT-001 e, para `EXEC`, BACKLOG-EMB-001. A interface final só pode ser fechada quando o modelo de nodes/edges/program points do CFG existir.
+- Provider não emite facts de dependência como substituto do extractor, não executa dataflow e não transforma efeito desconhecido em fallthrough.
+- Múltiplos providers, ausência de provider, conflito de effects e statements opacos precisam de regra determinística e conservadora.
+- Não antecipar enum/API definitiva, reescrever CFG inteiro ou criar hook genérico de mutação de grafo.
+
+Promover após o CFG estrutural estar verde e com primeiro statement externo cujo efeito mude um oracle de topologia. Testes mínimos: `XCTL`, `RETURN`, statement externo desconhecido, execução sem provider, conflito e inexistência de fallthrough indevido. Relações: ADR-0007, ADR-0008, ADR-0011, INV-EMB-001, INV-EXT-001, INV-COV-001, BACKLOG-EXT-001, BACKLOG-EMB-001 e BACKLOG-CFG-001.
+
 ## AST e cobertura preparatória para dataflow
 
 ### BACKLOG-AST-001 — Hardening da fronteira AST para CFG e dataflow
@@ -256,7 +403,9 @@ Usar CFG e dataflow para calcular conjuntos de programas possíveis sem confundi
 
 ### BACKLOG-EMB-001 — Porta para analisadores embarcados
 
-Definir `EmbeddedLanguageAnalyzer` e plugins com parser dedicado para SQL/CICS/SQLIMS. Ligar host variables às occurrences COBOL; SQL/comando dinâmico permanece desconhecido até análise de valores. Regex não substitui parser.
+Definir a fronteira entre `EmbeddedLanguageStatement` opaco e analisadores dedicados para SQL, CICS e SQLIMS. Cada analyzer deve consumir payload/provenance preservados, produzir AST/facts próprios tipados e ligar host variables às occurrences COBOL por identidade estrutural. Payload inválido, comando não suportado e SQL/comando dinâmico permanecem desconhecidos até parser/análise de valores adequados; regex não substitui parser.
+
+Depende de BACKLOG-EXT-001 para composição sem branches tecnológicos no pipeline. Serve de pré-condição a BACKLOG-EXT-004 e BACKLOG-EXT-006, mas não implementa por si só dependências de programa, efeitos de CFG ou dataflow. O work item futuro deve fechar ownership do parser dedicado, versão/dialeto, provenance através de host variables, coverage e falha fechada; execução sem analyzers preserva o payload opaco atual conforme ADR-0007 e INV-EMB-001.
 
 ### BACKLOG-DIALECT-001 — Built-ins e opções adicionais
 

@@ -30,7 +30,7 @@ Testes, corpus e artefatos gerados são evidência executável; não definem a s
 | trabalho ativo, histórico curto ou backlog | [work/](work/index.md) |
 | decisão antiga, relatório, baseline ou matriz de migração | [history/](history/index.md), somente quando necessário |
 
-No corte atual, não há work item ativo. O [índice de trabalho](work/index.md) informa quando houver um e preserva resumos úteis dos itens concluídos.
+No corte atual, WORK-EXT-001 é o único work item ativo. O [índice de trabalho](work/index.md) delimita o slice e preserva resumos úteis dos itens concluídos.
 
 ## Fronteira entre famílias documentais
 

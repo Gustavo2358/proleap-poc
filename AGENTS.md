@@ -52,7 +52,7 @@ Comece no [índice de conhecimento](docs/index.md). Carregue somente o contexto 
 
 ## Trabalho ativo
 
-O índice de trabalho está em [docs/work/index.md](docs/work/index.md). Não há item ativo neste corte; crie um somente para uma mudança autorizada, conforme o protocolo.
+O índice de trabalho está em [docs/work/index.md](docs/work/index.md). WORK-EXT-001 é o único item ativo neste corte e autoriza somente a classificação pós-resolução de `DFHRESP`/`DFHVALUE`; os itens BACKLOG-EXT permanecem trabalho futuro não autorizado.
 
 Ao trabalhar em um item:
 

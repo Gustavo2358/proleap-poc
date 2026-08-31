@@ -26,4 +26,6 @@ Cada seta produz um artefato para a fase seguinte; uma fase não deve gravar con
 - `ReferenceResolution` é produto separado e imutável; preserva candidatos, status e diagnósticos para binding nominal.
 - CFG, reaching definitions, propagação de valores e análise de linguagens embarcadas ainda não são produtos do pipeline. A ausência deles deve continuar observável como boundary/incompletude, não como resultado vazio.
 
+Classificação externa ainda não é produto materializado neste corte. ADR-0011 reserva para ela uma fase ortogonal após a resolução nominal: poderá complementar um construct que o COBOL não explicou sem mutar o binding, preservando certeza/provenance e agrupando somente occurrences cobertas do mesmo subtree. Infraestrutura genérica e demais capabilities continuam no backlog.
+
 Este documento descreve a fronteira consolidada. Consulte os [invariantes com IDs](invariants.md), os [ADRs](decisions/index.md) e o [mapa curto de componentes](../../ARCHITECTURE.md).

@@ -16,6 +16,7 @@ ADRs são a fonte canônica para decisões arquiteturais aceitas. Eles não deve
 | ADR-0008 | [Incompletude é resultado de primeira classe](0008-incompleteness-is-first-class.md) | Retrospective |
 | ADR-0009 | [Superfície gramatical possui cobertura explícita](0009-explicit-grammar-coverage.md) | Retrospective |
 | ADR-0010 | [Dependências literais externas são observadas por artefato](0010-observe-external-literal-dependencies-per-artifact.md) | Contemporary |
+| ADR-0011 | [Classificação de plataforma permanece ortogonal à semântica COBOL](0011-orthogonal-platform-classification.md) | Contemporary |
 
 ADRs retrospectivos só são criados quando código, testes e fontes documentais sustentam a decisão; não se inventa narrativa histórica.
 
