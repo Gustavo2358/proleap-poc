@@ -4,7 +4,7 @@ Work items delimitam a mudança em execução; o [backlog](backlog.md) registra 
 
 ## Ativo
 
-Nenhum work item ativo.
+- [WORK-AST-002 — Discovery do hardening da fronteira AST para CFG e dataflow](active/WORK-AST-002/spec.md)
 
 ## Histórico
 
