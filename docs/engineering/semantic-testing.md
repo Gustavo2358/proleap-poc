@@ -34,6 +34,11 @@ inventários efetivos e verificar chaves estrangeiras entre os produtos do
 pipeline. O loader deve falhar fechado diante de wrapper, JSON ou schema
 inesperado, sem executar o conteúdo do artefato.
 
+Uma chave local nunca deve ser tratada como identidade global: toda reconciliação
+entre produtos usa a identidade declarada pelo artefato. Em particular,
+occurrences de resolução são identificadas por `(unitId, occurrenceId)`, pois o
+contador local reinicia em cada `ProgramUnit`.
+
 Contagens derivadas do próprio inventário, como `entries.length` igual a
 `collectedReferences` ou a soma dos estados igual ao total de occurrences, são
 propriedades de consistência e não baselines de cardinalidade: permanecem válidas

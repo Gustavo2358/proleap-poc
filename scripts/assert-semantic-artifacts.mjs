@@ -73,6 +73,86 @@ export function assertCountMap(location, declaredValue, values, classifier) {
   }
 }
 
+export function assertCandidateCardinality(location, entry) {
+  const candidates = array(entry.candidates, `${location}.candidates`);
+  const pair = `${entry.status}/${entry.reason}`;
+  switch (pair) {
+    case "RESOLVED/UNIQUE_VISIBLE_DECLARATION":
+    case "RESOLVED/QUALIFIED_HIERARCHY_MATCH":
+      invariant(candidates.length === 1, `${location}.candidates`,
+          "resolved entry must select exactly one candidate");
+      return;
+    case "AMBIGUOUS/MULTIPLE_VALID_CANDIDATES":
+      invariant(candidates.length > 1, `${location}.candidates`,
+          "ambiguous entry must preserve multiple candidates");
+      return;
+    case "EXTERNAL_OBSERVED/LITERAL_EXTERNAL_PROGRAM":
+    case "UNRESOLVED/DECLARATION_NOT_FOUND":
+    case "UNRESOLVED/INPUT_INCOMPLETE":
+    case "UNRESOLVED/INVALID_NAMESPACE_FOR_CONTEXT":
+    case "UNSUPPORTED/UNSUPPORTED_GRAMMAR_FORM":
+      invariant(candidates.length === 0, `${location}.candidates`,
+          `${pair} must not contain a candidate`);
+      return;
+    case "UNSUPPORTED/UNSUPPORTED_DIALECT_OPTION":
+      // An unavailable compiler option prevents selection, not preservation of possibilities.
+      return;
+    default:
+      fail(`${location}.status`, `unsupported status/reason combination ${pair}`);
+  }
+}
+
+function occurrenceKey(unitId, occurrenceId) {
+  return `${unitId}\u0000${occurrenceId}`;
+}
+
+export function assertOccurrenceIdentity(location, entries, diagnostics, gaps, unitIds) {
+  const occurrences = new Set();
+  const localIdsByUnit = new Map();
+  entries.forEach((entry, index) => {
+    invariant(unitIds.has(entry.unitId), `${location}.entries[${index}].unitId`,
+        `unknown unit ${String(entry.unitId)}`);
+    invariant(Number.isInteger(entry.occurrenceId) && entry.occurrenceId >= 0,
+        `${location}.entries[${index}].occurrenceId`, "expected a non-negative integer");
+    const key = occurrenceKey(entry.unitId, entry.occurrenceId);
+    invariant(!occurrences.has(key), `${location}.entries[${index}].occurrenceId`,
+        `duplicate occurrence ${entry.occurrenceId} in unit ${entry.unitId}`);
+    occurrences.add(key);
+    const localIds = localIdsByUnit.get(entry.unitId) ?? new Set();
+    localIds.add(entry.occurrenceId);
+    localIdsByUnit.set(entry.unitId, localIds);
+  });
+  for (const [unitId, localIds] of localIdsByUnit) {
+    for (let occurrenceId = 0; occurrenceId < localIds.size; occurrenceId++)
+      invariant(localIds.has(occurrenceId), `${location}.entries`,
+          `unit ${unitId} is missing local occurrence ${occurrenceId}`);
+  }
+
+  diagnostics.forEach((diagnostic, index) => {
+    invariant(unitIds.has(diagnostic.unitId), `${location}.diagnostics[${index}].unitId`,
+        `unknown unit ${String(diagnostic.unitId)}`);
+    invariant(Number.isInteger(diagnostic.occurrenceId) && diagnostic.occurrenceId >= 0,
+        `${location}.diagnostics[${index}].occurrenceId`, "expected a non-negative integer");
+    invariant(occurrences.has(occurrenceKey(diagnostic.unitId, diagnostic.occurrenceId)),
+        `${location}.diagnostics[${index}].occurrenceId`,
+        `unknown occurrence ${diagnostic.occurrenceId} in unit ${diagnostic.unitId}`);
+  });
+  gaps.forEach((gap, index) => {
+    if (gap.unitId === null) {
+      invariant(gap.occurrenceId === -1, `${location}.gaps[${index}].occurrenceId`,
+          "global gap must use occurrenceId -1");
+      return;
+    }
+    invariant(unitIds.has(gap.unitId), `${location}.gaps[${index}].unitId`,
+        `unknown unit ${String(gap.unitId)}`);
+    invariant(Number.isInteger(gap.occurrenceId) && gap.occurrenceId >= 0,
+        `${location}.gaps[${index}].occurrenceId`, "unit gap must use a non-negative local occurrence id");
+    invariant(occurrences.has(occurrenceKey(gap.unitId, gap.occurrenceId)),
+        `${location}.gaps[${index}].occurrenceId`,
+        `unknown occurrence ${gap.occurrenceId} in unit ${gap.unitId}`);
+  });
+}
+
 function assertIndexed(location, values) {
   values.forEach((value, index) => {
     object(value, `${location}[${index}]`);
@@ -314,17 +394,7 @@ function assertResolution(resolution, ast, tree, symbols, expectedSource) {
 
   const unitIds = new Set(units.map(unit => unit.id));
   invariant(unitIds.size === units.length, `${location}.units`, "unit ids must be unique");
-  const occurrenceIds = new Set();
   entries.forEach((entry, index) => {
-    invariant(Number.isInteger(entry.occurrenceId) && entry.occurrenceId >= 0,
-        `${location}.entries[${index}].occurrenceId`, "expected a non-negative integer");
-    invariant(!occurrenceIds.has(entry.occurrenceId), `${location}.entries[${index}].occurrenceId`,
-        `duplicate occurrence ${entry.occurrenceId}`);
-    occurrenceIds.add(entry.occurrenceId);
-    invariant(entry.occurrenceId === index, `${location}.entries[${index}].occurrenceId`,
-        `expected complete deterministic occurrence inventory at ${index}`);
-    invariant(unitIds.has(entry.unitId), `${location}.entries[${index}].unitId`,
-        `unknown unit ${String(entry.unitId)}`);
     invariant(entry.astNodeId >= 0 && entry.astNodeId < ast.nodes.length,
         `${location}.entries[${index}].astNodeId`, `invalid AST id ${String(entry.astNodeId)}`);
     invariant(entry.parseNodeId >= 0 && entry.parseNodeId < tree.nodes.length,
@@ -341,31 +411,16 @@ function assertResolution(resolution, ast, tree, symbols, expectedSource) {
       entries, entry => entry.kind);
   assertCountMap(`${location}.counts.role`, resolution.counts?.role, entries, entry => entry.role);
   const resolvedEntries = entries.filter(entry => entry.status === "RESOLVED");
-  resolvedEntries.forEach(entry => invariant(entry.candidates.length === 1,
-      `${location}.entries[${entry.id}].candidates`, "resolved entry must select exactly one candidate"));
-  entries.filter(entry => entry.status === "AMBIGUOUS").forEach(entry => invariant(
-      entry.candidates.length > 1, `${location}.entries[${entry.id}].candidates`,
-      "ambiguous entry must preserve multiple candidates"));
-  entries.filter(entry => entry.status === "UNRESOLVED" || entry.status === "EXTERNAL_OBSERVED"
-    || entry.status === "UNSUPPORTED").forEach(entry => invariant(entry.candidates.length === 0,
-    `${location}.entries[${entry.id}].candidates`, `${entry.status} entry must not select a candidate`));
+  entries.forEach(entry => assertCandidateCardinality(`${location}.entries[${entry.id}]`, entry));
   assertCountMap(`${location}.counts.resolvedSemanticKind`, resolution.counts?.resolvedSemanticKind,
       resolvedEntries, entry => entry.candidates[0].kind);
+
+  assertOccurrenceIdentity(location, entries, diagnostics, gaps, unitIds);
 
   const diagnosticIds = new Set(diagnostics.map(diagnostic => diagnostic.id));
   entries.forEach((entry, index) => entry.diagnosticIds.forEach(diagnosticId => invariant(
       diagnosticIds.has(diagnosticId), `${location}.entries[${index}].diagnosticIds`,
       `unknown diagnostic ${String(diagnosticId)}`)));
-  diagnostics.forEach((diagnostic, index) => invariant(occurrenceIds.has(diagnostic.occurrenceId),
-      `${location}.diagnostics[${index}].occurrenceId`,
-      `unknown occurrence ${String(diagnostic.occurrenceId)}`));
-  gaps.forEach((gap, index) => {
-    invariant(gap.unitId === null || unitIds.has(gap.unitId), `${location}.gaps[${index}].unitId`,
-        `unknown unit ${String(gap.unitId)}`);
-    invariant(gap.occurrenceId === -1 || occurrenceIds.has(gap.occurrenceId),
-        `${location}.gaps[${index}].occurrenceId`,
-        `unknown occurrence ${String(gap.occurrenceId)}`);
-  });
   relations.forEach((relation, index) => {
     invariant(unitIds.has(relation.unitId), `${location}.relations[${index}].unitId`,
         `unknown unit ${String(relation.unitId)}`);

@@ -9,6 +9,16 @@ fi
 
 project_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 maven_bin="${MAVEN_BIN:-mvn}"
+
+if ! command -v node >/dev/null 2>&1; then
+  echo "Node.js 18 or newer is required for semantic artifact assertions" >&2
+  exit 1
+fi
+node_major="$(node -p 'process.versions.node.split(".")[0]')"
+if [[ ! "$node_major" =~ ^[0-9]+$ ]] || (( node_major < 18 )); then
+  echo "Node.js 18 or newer is required for semantic artifact assertions; found $(node --version)" >&2
+  exit 1
+fi
 run_root="$(mktemp -d "/tmp/cobol-source-normalizer-${phase}.XXXXXX")"
 canonical_output="$run_root/coactupc"
 fixture_output="$run_root/comment-entry"

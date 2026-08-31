@@ -25,8 +25,7 @@ pequena, consistência interna de inventários e total global observado em corpu
 
 ## Verificação
 
-Os cinco testes Java focalizados e os três testes fail-closed do runner Node
-passaram; `fast`, `semantic` e a regressão E2E também passaram. O agregado
-`full` executou essas fases com sucesso e terminou vermelho somente no check de
-naming por um identificador legado preexistente em
-`docs/work/history/WORK-TEST-001.md`, fora do escopo desta mudança.
+Os cinco testes Java focalizados e os testes fail-closed do runner Node
+passaram; `fast`, `semantic`, a regressão E2E e o agregado `full` passaram
+integralmente após a incorporação do ajuste de naming de `WORK-TEST-001` na
+branch desta entrega.
