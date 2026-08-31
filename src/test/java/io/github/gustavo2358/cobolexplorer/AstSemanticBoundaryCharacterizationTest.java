@@ -18,29 +18,29 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** Green characterization of the production baseline observed by WORK-AST-002. */
+/** Executable boundary matrix and regression evidence for WORK-AST-002. */
 class AstSemanticBoundaryCharacterizationTest {
-    private static final String MATRIX_VERSION = "WORK-AST-002/F0/v1";
+    private static final String MATRIX_VERSION = "WORK-AST-002/SLICE-1/v1";
 
     @Test
     void matrixCountsParseContextsAstNodesAndCurrentCoverageExactly() throws Exception {
         AstBoundaryTestSupport.Analysis analysis = AstBoundaryTestSupport.analyzeFixture();
         List<BoundaryRow> matrix = boundaryMatrix(analysis);
 
-        assertEquals("WORK-AST-002/F0/v1", MATRIX_VERSION);
+        assertEquals("WORK-AST-002/SLICE-1/v1", MATRIX_VERSION);
         assertEquals(List.of(
                         new BoundaryRow("statement", "statement", "Ast.Statement", 10, 10,
                                 "manifest per concrete statement", "manifest per concrete statement",
                                 "only nominal children", "(ProgramUnitId, astNodeId)", 10),
                         new BoundaryRow("data-description", "dataDescriptionEntry", "Ast.DataEntry", 14, 14,
-                                "PRESERVED_UNINTERPRETED", "DEPENDENCY_UNKNOWN",
-                                "no; clauses may contain occurrences", "(ProgramUnitId, astNodeId)", 0),
+                                "MODELED or opaque preserved", "container-specific",
+                                "no; clauses may contain occurrences", "(ProgramUnitId, astNodeId)", 14),
                         new BoundaryRow("data-clause", "direct data clause", "Ast.DataClause", 20, 20,
                                 "typed or PRESERVED_UNINTERPRETED", "clause-specific",
-                                "only nominal endpoints", "(ProgramUnitId, astNodeId)", 0),
+                                "only nominal endpoints", "(ProgramUnitId, astNodeId)", 20),
                         new BoundaryRow("preserved-expression", "abbreviation", "Ast.PreservedExpression", 1, 1,
                                 "PRESERVED_UNINTERPRETED", "DEPENDENCY_UNKNOWN",
-                                "recognized operands only", "(ProgramUnitId, astNodeId)", 0)),
+                                "recognized operands only", "(ProgramUnitId, astNodeId)", 1)),
                 matrix);
     }
 
@@ -57,8 +57,7 @@ class AstSemanticBoundaryCharacterizationTest {
                 () -> assertEquals(parseStatements, astStatements.size()),
                 () -> assertEquals(50, astStatements.stream()
                         .map(statement -> statement.meta().origin().grammarRule()).distinct().count()),
-                () -> assertEquals(astStatements.size(), analysis.build().coverageByProgramUnit().values()
-                        .stream().mapToInt(report -> report.findings().size()).sum()));
+                () -> assertEquals(astStatements.size(), countFindings(analysis, Ast.Statement.class)));
     }
 
     @Test
@@ -216,7 +215,7 @@ class AstSemanticBoundaryCharacterizationTest {
     }
 
     @Test
-    void characterizesCoverageBlindSpotForUnknownClauseWithoutNominalReference() {
+    void unknownClausesWithoutNominalReferencesRemainObservableAndBlockReadiness() {
         String source = """
                 IDENTIFICATION DIVISION.
                 PROGRAM-ID. VALUE-ONLY.
@@ -232,16 +231,81 @@ class AstSemanticBoundaryCharacterizationTest {
         SemanticCoverage.Report coverage = analysis.build().coverageByProgramUnit().values()
                 .iterator().next();
 
-        assertAll("current production observes only the statement boundary",
-                () -> assertEquals(List.of("gobackStatement"), coverage.findings().stream()
+        assertAll("coverage observes DATA boundaries without relying on nominal occurrences",
+                () -> assertEquals(List.of("dataDescriptionEntryFormat1", "dataPictureClause",
+                                "dataValueClause", "dataBlankWhenZeroClause", "gobackStatement"),
+                        coverage.findings().stream()
                         .map(SemanticCoverage.Finding::grammarRule).toList()),
                 () -> assertTrue(AstBoundaryTestSupport.nodes(analysis, Ast.ValueClause.class).size() == 1),
                 () -> assertTrue(AstBoundaryTestSupport.nodes(analysis, Ast.PreservedDataClause.class)
                         .stream().anyMatch(clause -> clause.grammarRule()
                                 .equals("dataBlankWhenZeroClause"))),
-                () -> assertTrue(coverage.dependencyCoverageComplete()),
-                () -> assertTrue(analysis.report().completeness().dependencyAnalysisReady()),
-                () -> assertTrue(analysis.report().gaps().isEmpty()));
+                () -> assertFalse(coverage.dependencyCoverageComplete()),
+                () -> assertFalse(analysis.report().completeness().dependencyAnalysisReady()),
+                () -> assertTrue(analysis.report().gaps().stream().anyMatch(gap ->
+                        gap.grammarRule().equals("dataValueClause"))),
+                () -> assertTrue(analysis.report().gaps().stream().anyMatch(gap ->
+                        gap.grammarRule().equals("dataBlankWhenZeroClause"))));
+    }
+
+    @Test
+    void coverageTaxonomyKeepsKnownStructureSeparateFromUnknownDependencySemantics() throws Exception {
+        AstBoundaryTestSupport.Analysis analysis = AstBoundaryTestSupport.analyzeFixture();
+        List<SemanticCoverage.Finding> findings = analysis.build().coverageByProgramUnit().values().stream()
+                .flatMap(report -> report.findings().stream()).toList();
+
+        SemanticCoverage.Finding value = finding(findings, "dataValueClause");
+        SemanticCoverage.Finding redefines = finding(findings, "dataRedefinesClause");
+        SemanticCoverage.Finding preservedClause = finding(findings, "dataBlankWhenZeroClause");
+        SemanticCoverage.Finding preservedExpression = finding(findings, "abbreviation");
+        Ast.PreservedExpression expressionNode = AstBoundaryTestSupport.nodes(
+                analysis, Ast.PreservedExpression.class).get(0);
+        Ast.PreservedDataClause clauseNode = AstBoundaryTestSupport.nodes(
+                        analysis, Ast.PreservedDataClause.class).stream()
+                .filter(clause -> clause.grammarRule().equals("dataBlankWhenZeroClause"))
+                .findFirst().orElseThrow();
+
+        assertAll("structure coverage and dependency knowledge are independent",
+                () -> assertEquals(SemanticCoverage.ConstructionCoverage.MODELED, value.coverage()),
+                () -> assertEquals(SemanticCoverage.DependencyKnowledge.DEPENDENCY_UNKNOWN,
+                        value.dependencyKnowledge()),
+                () -> assertEquals(SemanticCoverage.ConstructionCoverage.MODELED,
+                        redefines.coverage()),
+                () -> assertEquals(SemanticCoverage.DependencyKnowledge.DEPENDENCY_UNKNOWN,
+                        redefines.dependencyKnowledge()),
+                () -> assertEquals(SemanticCoverage.ConstructionCoverage.PRESERVED_UNINTERPRETED,
+                        preservedClause.coverage()),
+                () -> assertEquals(SemanticCoverage.DependencyKnowledge.DEPENDENCY_UNKNOWN,
+                        preservedClause.dependencyKnowledge()),
+                () -> assertEquals(SemanticCoverage.ConstructionCoverage.PRESERVED_UNINTERPRETED,
+                        preservedExpression.coverage()),
+                () -> assertEquals(SemanticCoverage.DependencyKnowledge.DEPENDENCY_UNKNOWN,
+                        preservedExpression.dependencyKnowledge()),
+                () -> assertTrue(preservedClause.writtenText().contains("BLANK WHEN ZERO")),
+                () -> assertTrue(clauseNode.recognizedReferences().isEmpty()),
+                () -> assertEquals(expressionNode.meta().id(), preservedExpression.astNodeId()),
+                () -> assertTrue(AstBoundaryTestSupport.nodes(expressionNode).stream()
+                        .noneMatch(Ast.DataReference.class::isInstance)),
+                () -> assertTrue(analysis.occurrences().values().stream()
+                        .flatMap(product -> product.occurrences().stream())
+                        .noneMatch(occurrence -> occurrence.referenceAstNodeId()
+                                == expressionNode.meta().id())));
+    }
+
+    @Test
+    void repeatedAnalysisPreservesCoverageAndNominalProductsExactly() throws Exception {
+        AstBoundaryTestSupport.Analysis first = AstBoundaryTestSupport.analyzeFixture();
+        AstBoundaryTestSupport.Analysis repeated = AstBoundaryTestSupport.analyzeFixture();
+
+        assertAll("coverage does not perturb deterministic nominal products",
+                () -> assertEquals(first.build().coverageByProgramUnit(),
+                        repeated.build().coverageByProgramUnit()),
+                () -> assertEquals(first.occurrences().keySet(), repeated.occurrences().keySet()),
+                () -> assertEquals(first.occurrences().entrySet().stream()
+                                .flatMap(entry -> entry.getValue().occurrences().stream()).toList(),
+                        repeated.occurrences().entrySet().stream()
+                                .flatMap(entry -> entry.getValue().occurrences().stream()).toList()),
+                () -> assertEquals(first.resolution().entries(), repeated.resolution().entries()));
     }
 
     private static List<BoundaryRow> boundaryMatrix(AstBoundaryTestSupport.Analysis analysis) {
@@ -259,7 +323,7 @@ class AstSemanticBoundaryCharacterizationTest {
                 new BoundaryRow("data-description", "dataDescriptionEntry", "Ast.DataEntry",
                         AstBoundaryTestSupport.contexts(analysis.tree(),
                                 CobolParser.DataDescriptionEntryContext.class).size(),
-                        entries, "PRESERVED_UNINTERPRETED", "DEPENDENCY_UNKNOWN",
+                        entries, "MODELED or opaque preserved", "container-specific",
                         "no; clauses may contain occurrences", "(ProgramUnitId, astNodeId)",
                         countFindings(analysis, Ast.DataEntry.class)),
                 new BoundaryRow("data-clause", "direct data clause", "Ast.DataClause",
@@ -292,6 +356,12 @@ class AstSemanticBoundaryCharacterizationTest {
         return analysis.resolution().entries().stream().filter(entry ->
                 entry.occurrence().referenceAstNodeId() == call.target().meta().id()
                         && entry.occurrence().role() == ResolutionContracts.ReferenceRole.CALL_TARGET)
+                .findFirst().orElseThrow();
+    }
+
+    private static SemanticCoverage.Finding finding(List<SemanticCoverage.Finding> findings,
+                                                     String grammarRule) {
+        return findings.stream().filter(finding -> finding.grammarRule().equals(grammarRule))
                 .findFirst().orElseThrow();
     }
 

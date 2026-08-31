@@ -122,11 +122,11 @@ IDs neste documento são estáveis. `AUTOMATED` indica proteção executável at
 
 ### INV-COV-001 — Incompletude bloqueia completude
 
-- **Statement:** `UNSUPPORTED`, `INPUT_MISSING` ou `DEPENDENCY_UNKNOWN` impedem alegação de cobertura completa.
+- **Statement:** cada fronteira semântica materializada aprovada possui exatamente um finding concreto; `UNSUPPORTED`, `INPUT_MISSING` ou `DEPENDENCY_UNKNOWN` impedem alegação de cobertura completa mesmo sem occurrence nominal.
 - **Rationale:** construção não compreendida não equivale a efeito vazio.
 - **Scope:** AST coverage e relatório de resolução.
 - **Related ADRs:** ADR-0008.
-- **Enforcement:** `AUTOMATED` — `SemanticCoverage` e testes de relatório/snapshot.
+- **Enforcement:** `AUTOMATED` — `SemanticCoverage`, `AstSemanticBoundaryRequiredOracleTest` e testes de relatório/snapshot.
 - **Known exceptions:** `NOT_DEPENDENCY_BEARING` somente quando classificado explicitamente.
 
 ### INV-COV-003 — Incompletude preserva fatos independentes

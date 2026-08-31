@@ -23,6 +23,8 @@ Statements ou clauses parcialmente compreendidos usam `Modeled*`, `Preserved*` o
 - Texto é preservado para fidelidade, não reparsed para recuperar estrutura já disponível na gramática.
 - `PRESERVED_UNINTERPRETED`, `UNSUPPORTED` e `DEPENDENCY_UNKNOWN` continuam visíveis.
 - Modelagem de um statement para name binding não implica que seus efeitos de memória ou controle estejam interpretados.
+- Cada `Statement`, `DataEntry`, `DataClause` e `PreservedExpression` materializado possui exatamente um finding concreto com o mesmo `Meta`, provenance e `astNodeId`; wrappers gramaticais que apenas encaminham um filho não criam finding adicional.
+- `ConstructionCoverage.MODELED` descreve estrutura tipada, não completude semântica. Entries DATA tipadas são containers não dependency-bearing porque suas clauses possuem findings próprios. `PICTURE` e `USAGE` são não dependency-bearing para a capability nominal atual, sem alegar layout; `VALUE`, `OCCURS`, `REDEFINES` e `RENAMES` permanecem `DEPENDENCY_UNKNOWN` porque valores, cardinalidade ou aliases afetam consumidores futuros. Containers SQL e fallbacks realmente opacos continuam `PRESERVED_UNINTERPRETED`.
 
 ## Construção, complexidade e provenance
 
@@ -32,7 +34,7 @@ A construção cria o inventário semântico em ordem determinística. Metadados
 
 ## Evidência executável
 
-`AstBuilderTest`, `AstBuildCoverageTest`, `AstBuilderTypedTraversalTest`, `StructuredExpressionAstTest`, `StatementModelAstTest`, `NominalReferenceAstTest`, `DeclarationModelAstTest` e fixtures em `src/test/resources/cobol/semantic/`.
+`AstBuilderTest`, `AstBuildCoverageTest`, `AstBuilderTypedTraversalTest`, `StructuredExpressionAstTest`, `StatementModelAstTest`, `NominalReferenceAstTest`, `DeclarationModelAstTest`, `AstSemanticBoundaryCharacterizationTest`, `AstSemanticBoundaryRequiredOracleTest` e fixtures em `src/test/resources/cobol/semantic/`.
 
 ## Relações
 

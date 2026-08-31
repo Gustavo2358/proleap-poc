@@ -215,11 +215,11 @@ COBOL	libraryEntryProcedureWithClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	D
 COBOL	libraryEntryProcedureWithName	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
 COBOL	libraryIsCommonClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
 COBOL	libraryIsGlobalClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
-COBOL	dataDescriptionEntry	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
-COBOL	dataDescriptionEntryFormat1	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
-COBOL	dataDescriptionEntryFormat2	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
-COBOL	dataDescriptionEntryFormat3	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
-COBOL	dataDescriptionEntryExecSql	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	dataDescriptionEntry	DATA_DECLARATION	MODELED	NOT_DEPENDENCY_BEARING	Wrapper dispatches exactly one typed data entry; clauses carry their own dependency findings.
+COBOL	dataDescriptionEntryFormat1	DATA_DECLARATION	MODELED	NOT_DEPENDENCY_BEARING	Level, declarator, visibility, clauses and hierarchy are materialized as a typed data entry.
+COBOL	dataDescriptionEntryFormat2	DATA_DECLARATION	MODELED	NOT_DEPENDENCY_BEARING	Level 66 declarator, RENAMES clause and containment are materialized as a typed data entry.
+COBOL	dataDescriptionEntryFormat3	DATA_DECLARATION	MODELED	NOT_DEPENDENCY_BEARING	Level 88 declarator, VALUE clause and containment are materialized as a typed data entry.
+COBOL	dataDescriptionEntryExecSql	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	SQL data declaration remains an opaque data entry with raw text and provenance.
 COBOL	dataAlignedClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
 COBOL	dataBlankWhenZeroClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
 COBOL	dataCommonOwnLocalClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
@@ -227,27 +227,27 @@ COBOL	dataExternalClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNK
 COBOL	dataGlobalClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
 COBOL	dataIntegerStringClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
 COBOL	dataJustifiedClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
-COBOL	dataOccursClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
-COBOL	dataOccursTo	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
-COBOL	dataOccursDepending	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
-COBOL	dataOccursSort	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
-COBOL	dataOccursIndexed	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
-COBOL	dataPictureClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	dataOccursClause	DATA_DECLARATION	MODELED	DEPENDENCY_UNKNOWN	Bounds, DEPENDING ON, keys and indexes are typed; runtime cardinality and storage layout remain unknown.
+COBOL	dataOccursTo	DATA_DECLARATION	MODELED	DEPENDENCY_UNKNOWN	Upper bound is materialized inside the typed OCCURS clause; runtime cardinality remains unknown.
+COBOL	dataOccursDepending	DATA_DECLARATION	MODELED	DEPENDENCY_UNKNOWN	DEPENDING ON is a structured data reference; runtime cardinality remains unknown.
+COBOL	dataOccursSort	DATA_DECLARATION	MODELED	DEPENDENCY_UNKNOWN	OCCURS keys are structured data references; ordering and storage effects remain unknown.
+COBOL	dataOccursIndexed	DATA_DECLARATION	MODELED	DEPENDENCY_UNKNOWN	OCCURS index names are typed; runtime index and storage semantics remain unknown.
+COBOL	dataPictureClause	DATA_DECLARATION	MODELED	NOT_DEPENDENCY_BEARING	PICTURE lexeme is typed and adds no nominal dependency; storage layout is outside the current readiness claim.
 COBOL	pictureString	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
 COBOL	pictureChars	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
 COBOL	pictureCardinality	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
 COBOL	dataReceivedByClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
 COBOL	dataRecordAreaClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
-COBOL	dataRedefinesClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
-COBOL	dataRenamesClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	dataRedefinesClause	DATA_DECLARATION	MODELED	DEPENDENCY_UNKNOWN	REDEFINES has a typed target reference; storage overlap and aliases remain unknown.
+COBOL	dataRenamesClause	DATA_DECLARATION	MODELED	DEPENDENCY_UNKNOWN	RENAMES has typed range endpoints; storage range and aliases remain unknown.
 COBOL	dataSignClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
 COBOL	dataSynchronizedClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
 COBOL	dataThreadLocalClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
 COBOL	dataTypeClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
 COBOL	dataTypeDefClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
-COBOL	dataUsageClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	dataUsageClause	DATA_DECLARATION	MODELED	NOT_DEPENDENCY_BEARING	USAGE lexeme is typed and adds no nominal dependency; storage representation is outside the current readiness claim.
 COBOL	dataUsingClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
-COBOL	dataValueClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	dataValueClause	DATA_DECLARATION	MODELED	DEPENDENCY_UNKNOWN	VALUE intervals and lexemes are structurally materialized; runtime and program-point values remain unknown.
 COBOL	dataValueInterval	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
 COBOL	dataValueIntervalFrom	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
 COBOL	dataValueIntervalTo	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
@@ -540,18 +540,18 @@ COBOL	relationCombinedCondition	EXPRESSION_REFERENCE	PRESERVED_UNINTERPRETED	DEP
 COBOL	relationalOperator	EXPRESSION_REFERENCE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Expression or reference structure is currently flattened or only partially interpreted.
 COBOL	abbreviation	EXPRESSION_REFERENCE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Expression or reference structure is currently flattened or only partially interpreted.
 COBOL	identifier	EXPRESSION_REFERENCE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Expression or reference structure is currently flattened or only partially interpreted.
-COBOL	tableCall	EXPRESSION_REFERENCE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Expression or reference structure is currently flattened or only partially interpreted.
+COBOL	tableCall	EXPRESSION_REFERENCE	MODELED	REFERENCE_READY	Base name, qualifiers, subscript groups and reference modification are structurally materialized.
 COBOL	functionCall	EXPRESSION_REFERENCE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Expression or reference structure is currently flattened or only partially interpreted.
-COBOL	referenceModifier	EXPRESSION_REFERENCE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Expression or reference structure is currently flattened or only partially interpreted.
+COBOL	referenceModifier	EXPRESSION_REFERENCE	MODELED	REFERENCE_READY	Offset and optional length are structured expressions; runtime values are not inferred.
 COBOL	characterPosition	EXPRESSION_REFERENCE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Expression or reference structure is currently flattened or only partially interpreted.
 COBOL	length	EXPRESSION_REFERENCE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Expression or reference structure is currently flattened or only partially interpreted.
 COBOL	subscript	EXPRESSION_REFERENCE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Expression or reference structure is currently flattened or only partially interpreted.
 COBOL	argument	EXPRESSION_REFERENCE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Expression or reference structure is currently flattened or only partially interpreted.
-COBOL	qualifiedDataName	EXPRESSION_REFERENCE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Expression or reference structure is currently flattened or only partially interpreted.
-COBOL	qualifiedDataNameFormat1	EXPRESSION_REFERENCE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Expression or reference structure is currently flattened or only partially interpreted.
-COBOL	qualifiedDataNameFormat2	EXPRESSION_REFERENCE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Expression or reference structure is currently flattened or only partially interpreted.
-COBOL	qualifiedDataNameFormat3	EXPRESSION_REFERENCE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Expression or reference structure is currently flattened or only partially interpreted.
-COBOL	qualifiedDataNameFormat4	EXPRESSION_REFERENCE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Expression or reference structure is currently flattened or only partially interpreted.
+COBOL	qualifiedDataName	EXPRESSION_REFERENCE	MODELED	REFERENCE_READY	Base name and ordered qualifiers are materialized as a structured nominal reference.
+COBOL	qualifiedDataNameFormat1	EXPRESSION_REFERENCE	MODELED	REFERENCE_READY	DATA or condition-name qualification is materialized with connector and target kind.
+COBOL	qualifiedDataNameFormat2	EXPRESSION_REFERENCE	MODELED	REFERENCE_READY	Paragraph and section qualification are preserved structurally for nominal reference collection.
+COBOL	qualifiedDataNameFormat3	EXPRESSION_REFERENCE	MODELED	REFERENCE_READY	Text and library qualification are preserved structurally for nominal reference collection.
+COBOL	qualifiedDataNameFormat4	EXPRESSION_REFERENCE	MODELED	REFERENCE_READY	LINAGE-COUNTER file qualification is preserved structurally for nominal reference collection.
 COBOL	qualifiedInData	EXPRESSION_REFERENCE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Expression or reference structure is currently flattened or only partially interpreted.
 COBOL	inData	EXPRESSION_REFERENCE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Expression or reference structure is currently flattened or only partially interpreted.
 COBOL	inFile	EXPRESSION_REFERENCE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Expression or reference structure is currently flattened or only partially interpreted.

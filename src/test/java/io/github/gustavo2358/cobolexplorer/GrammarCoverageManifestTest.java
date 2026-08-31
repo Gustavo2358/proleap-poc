@@ -85,11 +85,26 @@ class GrammarCoverageManifestTest {
     }
 
     @Test
-    void exposesConservativePoliciesForReferencesDeclarationsAndPreprocessing() {
+    void distinguishesTypedStructureFromUnknownDependencySemantics() {
         assertEntry(GrammarCoverageManifest.Grammar.COBOL, "qualifiedDataName",
-                SemanticCoverage.ConstructionCoverage.PRESERVED_UNINTERPRETED,
-                SemanticCoverage.DependencyKnowledge.DEPENDENCY_UNKNOWN);
+                SemanticCoverage.ConstructionCoverage.MODELED,
+                SemanticCoverage.DependencyKnowledge.REFERENCE_READY);
+        assertEntry(GrammarCoverageManifest.Grammar.COBOL, "tableCall",
+                SemanticCoverage.ConstructionCoverage.MODELED,
+                SemanticCoverage.DependencyKnowledge.REFERENCE_READY);
+        assertEntry(GrammarCoverageManifest.Grammar.COBOL, "referenceModifier",
+                SemanticCoverage.ConstructionCoverage.MODELED,
+                SemanticCoverage.DependencyKnowledge.REFERENCE_READY);
         assertEntry(GrammarCoverageManifest.Grammar.COBOL, "dataRedefinesClause",
+                SemanticCoverage.ConstructionCoverage.MODELED,
+                SemanticCoverage.DependencyKnowledge.DEPENDENCY_UNKNOWN);
+        assertEntry(GrammarCoverageManifest.Grammar.COBOL, "dataValueClause",
+                SemanticCoverage.ConstructionCoverage.MODELED,
+                SemanticCoverage.DependencyKnowledge.DEPENDENCY_UNKNOWN);
+        assertEntry(GrammarCoverageManifest.Grammar.COBOL, "dataDescriptionEntryFormat1",
+                SemanticCoverage.ConstructionCoverage.MODELED,
+                SemanticCoverage.DependencyKnowledge.NOT_DEPENDENCY_BEARING);
+        assertEntry(GrammarCoverageManifest.Grammar.COBOL, "dataDescriptionEntryExecSql",
                 SemanticCoverage.ConstructionCoverage.PRESERVED_UNINTERPRETED,
                 SemanticCoverage.DependencyKnowledge.DEPENDENCY_UNKNOWN);
         assertEntry(GrammarCoverageManifest.Grammar.PREPROCESSOR, "copyStatement",

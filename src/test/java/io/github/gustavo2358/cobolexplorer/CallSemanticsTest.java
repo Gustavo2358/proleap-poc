@@ -169,9 +169,13 @@ class CallSemanticsTest {
         ResolutionAnalysisReport report = ResolutionAnalysisReport.compose(
                 analysis.build(), ResolutionAnalysisReport.FrontendState.complete(),
                 analysis.occurrences(), analysis.resolution());
-        assertAll("the data variable is bound but its runtime program value is not",
-                () -> assertTrue(report.completeness().referenceBindingComplete()),
+        assertAll("the data variable is bound while VALUE and runtime call target remain unknown",
+                () -> assertTrue(analysis.resolution().entries().stream().allMatch(entry ->
+                        entry.status() == ResolutionContracts.ResolutionStatus.RESOLVED)),
+                () -> assertFalse(report.completeness().referenceBindingComplete()),
                 () -> assertFalse(report.completeness().dependencyAnalysisReady()),
+                () -> assertTrue(report.gaps().stream().anyMatch(gap ->
+                        gap.grammarRule().equals("dataValueClause"))),
                 () -> assertTrue(report.gaps().stream().anyMatch(gap ->
                         gap.code().equals("DYNAMIC_CALL_TARGET_VALUE_UNKNOWN"))));
     }

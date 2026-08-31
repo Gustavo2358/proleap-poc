@@ -156,14 +156,8 @@ final class CoverageSnapshot {
         return result;
     }
     private static Gap structuralGap(Ast.Node node) {
-        if (node instanceof Ast.PreservedDataClause n)
-            return new Gap(n.meta(), n.grammarRule(), n.writtenText(), "Data clause preserved but not interpreted");
-        if (node instanceof Ast.PreservedExpression n)
-            return new Gap(n.meta(), n.grammarRule(), n.writtenText(), "Expression preserved but not interpreted");
         if (node instanceof Ast.RawExpression n)
             return new Gap(n.meta(), n.role(), n.rawText(), "Expression input is structurally unavailable");
-        if (node instanceof Ast.UnsupportedStatement n)
-            return new Gap(n.meta(), n.grammarRule(), n.rawText(), "Legacy unsupported statement");
         return null;
     }
     private static void enumCounts(Writer out, Map<? extends Enum<?>, Long> counts) throws IOException {

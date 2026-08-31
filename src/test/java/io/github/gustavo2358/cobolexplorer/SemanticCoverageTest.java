@@ -54,6 +54,20 @@ class SemanticCoverageTest {
         assertThrows(UnsupportedOperationException.class, () -> result.diagnostics().clear());
     }
 
+    @Test
+    void rejectsDuplicateConcreteFindingsForTheSameAstNode() {
+        SemanticCoverage.Finding first = new SemanticCoverage.Finding(0, "statement", meta(0),
+                "SAMPLE", SemanticCoverage.ConstructionCoverage.MODELED,
+                SemanticCoverage.DependencyKnowledge.REFERENCE_READY, "concrete", 0);
+        SemanticCoverage.Finding duplicate = new SemanticCoverage.Finding(1, "wrapper", first.meta(),
+                "SAMPLE", SemanticCoverage.ConstructionCoverage.MODELED,
+                SemanticCoverage.DependencyKnowledge.REFERENCE_READY, "duplicate wrapper", 0);
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> new SemanticCoverage.Report(List.of(first, duplicate)));
+        assertTrue(exception.getMessage().contains("exactly one coverage finding"));
+    }
+
     private static SemanticCoverage.Finding finding(
             int id, SemanticCoverage.ConstructionCoverage coverage,
             SemanticCoverage.DependencyKnowledge knowledge) {
