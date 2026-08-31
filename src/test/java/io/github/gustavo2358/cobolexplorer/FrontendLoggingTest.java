@@ -54,7 +54,7 @@ class FrontendLoggingTest {
 
         assertEquals(100, captured.result().unresolved());
         assertEquals(100, captured.result().diagnostics().stream()
-                .filter(diagnostic -> diagnostic.message().startsWith("unresolved_copy")).count());
+                .filter(diagnostic -> diagnostic.code() == Diagnostic.Code.UNRESOLVED_COPY).count());
         assertEquals(1, captured.events().size());
         String warning = captured.events().get(0).getFormattedMessage();
         assertAll(

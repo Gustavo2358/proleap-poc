@@ -15,12 +15,12 @@ public final class ExternalClassification {
 
     public enum Reason { COBOL_REFERENCE_UNRESOLVED_WITH_KNOWN_CICS_SHAPE }
 
-    public enum InputCompleteness { COMPLETE, INCOMPLETE_UNRESOLVED_COPY }
+    public enum CopyInputCompleteness { COMPLETE, INCOMPLETE_UNRESOLVED_COPY }
 
     public record Entry(int id, ResolutionContracts.ProgramUnitId programUnitId,
                         int rootAstNodeId, int rootOccurrenceId, String constructWrittenText,
                         Technology technology, Kind kind, Certainty certainty, Reason reason,
-                        InputCompleteness inputCompleteness, Ast.Meta meta,
+                        CopyInputCompleteness copyInputCompleteness, Ast.Meta meta,
                         List<Integer> coveredOccurrenceIds) {
         public Entry {
             if (id < 0) throw new IllegalArgumentException("classification id must be non-negative");
@@ -34,7 +34,8 @@ public final class ExternalClassification {
             kind = Objects.requireNonNull(kind, "kind");
             certainty = Objects.requireNonNull(certainty, "certainty");
             reason = Objects.requireNonNull(reason, "reason");
-            inputCompleteness = Objects.requireNonNull(inputCompleteness, "inputCompleteness");
+            copyInputCompleteness = Objects.requireNonNull(
+                    copyInputCompleteness, "copyInputCompleteness");
             meta = Objects.requireNonNull(meta, "meta");
             if (meta.id() != rootAstNodeId)
                 throw new IllegalArgumentException("classification meta must belong to the root AST node");
@@ -56,7 +57,7 @@ public final class ExternalClassification {
                      Technology technology, Kind kind, Certainty certainty, Reason reason,
                      Ast.Meta meta, List<Integer> coveredOccurrenceIds) {
             this(id, programUnitId, rootAstNodeId, rootOccurrenceId, constructWrittenText,
-                    technology, kind, certainty, reason, InputCompleteness.COMPLETE,
+                    technology, kind, certainty, reason, CopyInputCompleteness.COMPLETE,
                     meta, coveredOccurrenceIds);
         }
     }

@@ -7,7 +7,7 @@
 ## Entradas e saídas
 
 - **Entrada:** fonte normalizada e mapeada, binding das gramáticas e `CopybookLibrary`.
-- **Saída:** `Outcome` imutável com texto, mapa composto, diagnostics, contagens, compiler options e modos `PGMNAME`, `DYNAM` e `DLL`.
+- **Saída:** `Outcome` imutável com texto, mapa composto, diagnostics tipados, contagens derivadas, compiler options e modos `PGMNAME`, `DYNAM` e `DLL`.
 
 ## Políticas atuais
 
@@ -20,7 +20,7 @@ Cada alternativa top-level de `CobolPreprocessor.startRule` possui classificaç�
 - texto COBOL comum é mantido;
 - `REPLACE` top-level e `REPLACE OFF` permanecem `UNSUPPORTED` e falham antes do parser COBOL.
 
-COPY ausente, cíclico ou com erro de I/O produz placeholder mapeado e diagnostic. Para membro não encontrado, `Outcome.unresolved` corresponde exatamente aos diagnostics `unresolved_copy`, que preservam nome solicitado e localização em ordem determinística. Ausência de copybook mantém a execução observável como incompleta; não equivale a COPY vazio nem exige interromper fases posteriores quando o placeholder ainda permite construir seus produtos coerentemente.
+COPY ausente, cíclico ou com erro de I/O produz placeholder mapeado e diagnostic. Para membro não encontrado, `Diagnostic.Code.UNRESOLVED_COPY` é a identidade semântica estruturada; `Outcome.unresolved()` é derivado desses fatos, que preservam nome solicitado e localização em ordem determinística. A mensagem humana continua útil, mas seu wording não participa de contagem, composição ou geração de gaps. Ausência de copybook mantém a execução observável como incompleta; não equivale a COPY vazio nem exige interromper fases posteriores quando o placeholder ainda permite construir seus produtos coerentemente. COPY cíclico e falha de I/O conservam a política anterior e não pertencem a esse fallback.
 
 ## Provenance e determinismo
 

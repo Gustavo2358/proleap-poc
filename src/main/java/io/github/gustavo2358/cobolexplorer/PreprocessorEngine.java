@@ -43,7 +43,7 @@ final class PreprocessorEngine {
             writtenText = Objects.requireNonNull(writtenText, "writtenText");
         }
     }
-    record Outcome(String text, int errors, int unresolved, List<Diagnostic> diagnostics,
+    record Outcome(String text, int errors, List<Diagnostic> diagnostics,
                    List<CompilerOption> compilerOptions,
                    ResolutionContracts.PgmnameMode pgmnameMode,
                    ResolutionContracts.DynamMode dynamMode,
@@ -54,6 +54,12 @@ final class PreprocessorEngine {
             pgmnameMode = Objects.requireNonNull(pgmnameMode, "pgmnameMode");
             dynamMode = Objects.requireNonNull(dynamMode, "dynamMode");
             dllMode = Objects.requireNonNull(dllMode, "dllMode");
+        }
+
+        int unresolved() {
+            return Math.toIntExact(diagnostics.stream()
+                    .filter(diagnostic -> diagnostic.code() == Diagnostic.Code.UNRESOLVED_COPY)
+                    .count());
         }
     }
     private record Edit(int start, int end, SourceMap replacement) {}
@@ -73,11 +79,10 @@ final class PreprocessorEngine {
     Outcome process(SourceMap normalized, String file) {
         List<Diagnostic> diagnostics = new ArrayList<>();
         List<CompilerOption> compilerOptions = new ArrayList<>();
-        int[] unresolved = {0};
         int[] toleratedPreprocessorDiagnostics = {0};
         LogSummary logSummary = new LogSummary();
         SourceMap document = processRecursive(normalized, file,
-                diagnostics, compilerOptions, unresolved, toleratedPreprocessorDiagnostics,
+                diagnostics, compilerOptions, toleratedPreprocessorDiagnostics,
                 new HashSet<>(), logSummary);
         long errors = diagnostics.stream().filter(d -> d.phase() == Diagnostic.Phase.PREPROCESSOR)
                 .count() - toleratedPreprocessorDiagnostics[0];
@@ -95,9 +100,12 @@ final class PreprocessorEngine {
                         option.name(), option.value()))
                 .filter(mode -> mode != ResolutionContracts.DllMode.UNSPECIFIED)
                 .reduce((first, second) -> second).orElse(ResolutionContracts.DllMode.UNSPECIFIED);
-        if (unresolved[0] > 0) {
+        int unresolvedCopies = Math.toIntExact(diagnostics.stream()
+                .filter(diagnostic -> diagnostic.code() == Diagnostic.Code.UNRESOLVED_COPY)
+                .count());
+        if (unresolvedCopies > 0) {
             LOG.warn("event=copy_unresolved source={} phase=PREPROCESSING count={} reason=NOT_FOUND fallback=KEEP_UNRESOLVED_PLACEHOLDER impact=ANALYSIS_INCOMPLETE",
-                    file, unresolved[0]);
+                    file, unresolvedCopies);
         }
         if (logSummary.cycles > 0) {
             LOG.warn("event=copy_cycle source={} phase=PREPROCESSING count={} reason=EXPANSION_CYCLE fallback=KEEP_CYCLIC_PLACEHOLDER impact=ANALYSIS_INCOMPLETE",
@@ -107,13 +115,13 @@ final class PreprocessorEngine {
             LOG.warn("event=copy_io_failure source={} phase=PREPROCESSING count={} reason=IO_EXCEPTION fallback=KEEP_IO_ERROR_PLACEHOLDER impact=ANALYSIS_INCOMPLETE",
                     file, logSummary.ioFailures);
         }
-        return new Outcome(document.text(), Math.toIntExact(errors), unresolved[0],
+        return new Outcome(document.text(), Math.toIntExact(errors),
                 diagnostics, compilerOptions, pgmnameMode, dynamMode, dllMode, document);
     }
 
     private SourceMap processRecursive(SourceMap document, String file, List<Diagnostic> diagnostics,
                                        List<CompilerOption> compilerOptions,
-                                       int[] unresolved, int[] toleratedPreprocessorDiagnostics,
+                                       int[] toleratedPreprocessorDiagnostics,
                                        Set<Path> expansionStack, LogSummary logSummary) {
         String source = document.text();
         UnicodeText indexedSource = new UnicodeText(source);
@@ -171,12 +179,14 @@ final class PreprocessorEngine {
                 String requested = copySourceName(context, parser.getRuleNames(), indexedSource);
                 Optional<Path> path = library.resolve(requested);
                 if (path.isEmpty()) {
-                    unresolved[0]++;
                     LOG.trace("event=copy_resolution source={} phase=PREPROCESSING requested={} line={} status=UNRESOLVED reason=NOT_FOUND fallback=KEEP_UNRESOLVED_PLACEHOLDER",
                             file, requested, startToken.getLine());
                     toleratedPreprocessorDiagnostics[0]++;
                     diagnostics.add(sourceDiagnostic(document, Diagnostic.Phase.PREPROCESSOR,
-                            start, end, "unresolved_copy: " + requested, requested, ""));
+                            Diagnostic.Code.UNRESOLVED_COPY,
+                            start, end, "COPY '" + requested
+                                    + "' could not be found in configured libraries",
+                            requested, ""));
                     edits.add(new Edit(start, end, document.transformedSlice(start, end,
                             "*> UNRESOLVED COPY " + requested + "\n")));
                 } else if (!expansionStack.add(path.get().toAbsolutePath().normalize())) {
@@ -195,7 +205,7 @@ final class PreprocessorEngine {
                                 file, requested, startToken.getLine(), includedFile);
                         SourceMap copySource = library.readNormalized(path.get());
                         SourceMap copyText = processRecursive(copySource, includedFile,
-                                diagnostics, compilerOptions, unresolved,
+                                diagnostics, compilerOptions,
                                 toleratedPreprocessorDiagnostics, expansionStack, logSummary);
                         List<CopyReplacement> replacements = copyReplacements(
                                 context, parser.getRuleNames(), indexedSource);
@@ -263,8 +273,15 @@ final class PreprocessorEngine {
     private Diagnostic sourceDiagnostic(SourceMap document, Diagnostic.Phase phase,
                                         int start, int end, String message,
                                         String offendingToken, String exceptionClass) {
+        return sourceDiagnostic(document, phase, Diagnostic.Code.GENERAL,
+                start, end, message, offendingToken, exceptionClass);
+    }
+
+    private Diagnostic sourceDiagnostic(SourceMap document, Diagnostic.Phase phase,
+                                        Diagnostic.Code code, int start, int end, String message,
+                                        String offendingToken, String exceptionClass) {
         Ast.SourceLocation original = document.provenance(start, end).original();
-        return new Diagnostic(binding.name(), phase, original.file(), original.startLine(),
+        return new Diagnostic(binding.name(), phase, code, original.file(), original.startLine(),
                 original.startColumn(), message, offendingToken, exceptionClass);
     }
 

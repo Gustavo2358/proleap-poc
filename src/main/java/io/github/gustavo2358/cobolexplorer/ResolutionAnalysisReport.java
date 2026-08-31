@@ -17,29 +17,27 @@ public final class ResolutionAnalysisReport {
 
     public enum AnalysisClaim { COMPLETE, INCOMPLETE }
 
-    public record FrontendState(int unresolvedCopies, int preprocessorErrors,
-                                int lexerErrors, int parserErrors,
+    public record FrontendState(int preprocessorErrors, int lexerErrors, int parserErrors,
                                 List<Diagnostic> diagnostics) {
         public FrontendState {
-            if (unresolvedCopies < 0 || preprocessorErrors < 0 || lexerErrors < 0 || parserErrors < 0)
+            if (preprocessorErrors < 0 || lexerErrors < 0 || parserErrors < 0)
                 throw new IllegalArgumentException("frontend counts must be non-negative");
             diagnostics = List.copyOf(diagnostics);
-            long unresolvedDiagnostics = diagnostics.stream().filter(
-                    FrontendState::isUnresolvedCopyDiagnostic).count();
-            if (unresolvedDiagnostics != unresolvedCopies)
-                throw new IllegalArgumentException(
-                        "unresolved COPY count must match its detailed diagnostics");
         }
-        public static FrontendState complete() { return new FrontendState(0, 0, 0, 0, List.of()); }
+        public static FrontendState complete() { return new FrontendState(0, 0, 0, List.of()); }
 
         public boolean supportsExternalClassification() {
             return preprocessorErrors == 0 && lexerErrors == 0 && parserErrors == 0;
         }
 
-        public ExternalClassification.InputCompleteness externalClassificationInputCompleteness() {
-            return unresolvedCopies == 0
-                    ? ExternalClassification.InputCompleteness.COMPLETE
-                    : ExternalClassification.InputCompleteness.INCOMPLETE_UNRESOLVED_COPY;
+        public ExternalClassification.CopyInputCompleteness copyInputCompleteness() {
+            return unresolvedCopies() == 0
+                    ? ExternalClassification.CopyInputCompleteness.COMPLETE
+                    : ExternalClassification.CopyInputCompleteness.INCOMPLETE_UNRESOLVED_COPY;
+        }
+
+        public int unresolvedCopies() {
+            return unresolvedCopyDiagnostics().size();
         }
 
         public List<Diagnostic> unresolvedCopyDiagnostics() {
@@ -47,8 +45,7 @@ public final class ResolutionAnalysisReport {
         }
 
         private static boolean isUnresolvedCopyDiagnostic(Diagnostic diagnostic) {
-            return diagnostic.phase() == Diagnostic.Phase.PREPROCESSOR
-                    && diagnostic.message().startsWith("unresolved_copy:");
+            return diagnostic.code() == Diagnostic.Code.UNRESOLVED_COPY;
         }
     }
 
@@ -215,7 +212,7 @@ public final class ResolutionAnalysisReport {
             addGap(gaps, GapCategory.INPUT, "PARSER_ERROR",
                     state.parserErrors() + " parser error(s)", null, "", 0, -1);
         for (Diagnostic diagnostic : state.diagnostics()) {
-            if (diagnostic.message().startsWith("unresolved_copy")) continue;
+            if (diagnostic.code() == Diagnostic.Code.UNRESOLVED_COPY) continue;
             if (diagnostic.phase() == Diagnostic.Phase.LEXER
                     || diagnostic.phase() == Diagnostic.Phase.PARSER
                     || diagnostic.phase() == Diagnostic.Phase.PREPROCESSOR
@@ -319,6 +316,8 @@ public final class ResolutionAnalysisReport {
         }
         Set<OccurrenceKey> claimedCovered = new HashSet<>();
         Set<OccurrenceKey> suppressibleCovered = new HashSet<>();
+        ExternalClassification.CopyInputCompleteness expectedCopyInputCompleteness =
+                frontendState.copyInputCompleteness();
         for (ExternalClassification.Entry classification : classifications.entries()) {
             OccurrenceKey rootKey = new OccurrenceKey(
                     classification.programUnitId(), classification.rootOccurrenceId());
@@ -328,13 +327,13 @@ public final class ResolutionAnalysisReport {
                     && root.occurrence().meta().equals(classification.meta())
                     && root.occurrence().writtenText().equals(classification.constructWrittenText())
                     && root.status() == ResolutionContracts.ResolutionStatus.UNRESOLVED
-                    && classification.inputCompleteness()
-                    == frontendState.externalClassificationInputCompleteness();
+                    && classification.copyInputCompleteness()
+                    == expectedCopyInputCompleteness;
             for (int occurrenceId : classification.coveredOccurrenceIds()) {
                 OccurrenceKey key = new OccurrenceKey(classification.programUnitId(), occurrenceId);
                 coherent &= entries.containsKey(key) && claimedCovered.add(key);
-                if (classification.inputCompleteness()
-                        == ExternalClassification.InputCompleteness.COMPLETE) {
+                if (classification.copyInputCompleteness()
+                        == ExternalClassification.CopyInputCompleteness.COMPLETE) {
                     suppressibleCovered.add(key);
                 }
             }

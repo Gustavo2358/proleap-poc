@@ -39,8 +39,8 @@ class CicsIntrinsicClassifierTest {
                     () -> assertEquals(
                             ExternalClassification.Reason.COBOL_REFERENCE_UNRESOLVED_WITH_KNOWN_CICS_SHAPE,
                             classification.reason()),
-                    () -> assertEquals(ExternalClassification.InputCompleteness.COMPLETE,
-                            classification.inputCompleteness()),
+                    () -> assertEquals(ExternalClassification.CopyInputCompleteness.COMPLETE,
+                            classification.copyInputCompleteness()),
                     () -> assertEquals(2, classification.coveredOccurrenceIds().size()),
                     () -> assertEquals(classification.coveredOccurrenceIds().stream().sorted().toList(),
                             classification.coveredOccurrenceIds()),
@@ -70,12 +70,12 @@ class CicsIntrinsicClassifierTest {
 
         ExternalClassification classifications = new CicsIntrinsicClassifier().classify(
                 analysis.model(), analysis.occurrences(), analysis.resolution(),
-                ExternalClassification.InputCompleteness.INCOMPLETE_UNRESOLVED_COPY);
+                ExternalClassification.CopyInputCompleteness.INCOMPLETE_UNRESOLVED_COPY);
 
         assertEquals(2, classifications.entries().size());
         assertTrue(classifications.entries().stream().allMatch(entry ->
-                entry.inputCompleteness()
-                        == ExternalClassification.InputCompleteness.INCOMPLETE_UNRESOLVED_COPY));
+                entry.copyInputCompleteness()
+                        == ExternalClassification.CopyInputCompleteness.INCOMPLETE_UNRESOLVED_COPY));
         assertEquals(4, analysis.resolution().entries().stream().filter(entry ->
                 entry.status() == ResolutionContracts.ResolutionStatus.UNRESOLVED).count(),
                 "the classifier must not mutate or promote nominal binding");

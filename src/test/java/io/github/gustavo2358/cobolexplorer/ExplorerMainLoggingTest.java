@@ -77,12 +77,15 @@ class ExplorerMainLoggingTest {
         assertAll("classifier lifecycle explains partial execution and fail-closed skip",
                 () -> assertEvent(partialEvents, Level.DEBUG,
                         "event=external_classification_completed", "executed=true",
-                        "unresolvedCopies=1", "inputCompleteness=INCOMPLETE_UNRESOLVED_COPY",
+                        "unresolvedCopies=1", "copyInputCompleteness=INCOMPLETE_UNRESOLVED_COPY",
                         "fallback=CONTINUE_WITH_PARTIAL_ANALYSIS", "impact=ANALYSIS_INCOMPLETE"),
                 () -> assertEvent(recoveredEvents, Level.DEBUG,
                         "event=external_classification_completed", "executed=false",
+                        "unresolvedCopies=0", "copyInputCompleteness=COMPLETE",
                         "reason=STRUCTURAL_FRONTEND_ERRORS",
-                        "fallback=SKIP_CLASSIFIER_FAIL_CLOSED"));
+                        "fallback=SKIP_CLASSIFIER_FAIL_CLOSED"),
+                () -> assertFalse(recoveredEvents.stream().anyMatch(event ->
+                        event.getFormattedMessage().contains(" inputCompleteness="))));
     }
 
     @Test

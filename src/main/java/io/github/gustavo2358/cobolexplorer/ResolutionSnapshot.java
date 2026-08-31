@@ -41,8 +41,8 @@ final class ResolutionSnapshot {
             field(out, "dynamMode", resolution.policy().dynamMode().name()); out.write(',');
             field(out, "dllMode", resolution.policy().dllMode().name()); out.write(',');
             field(out, "claim", report.analysisClaim().name()); out.write(',');
-            field(out, "inputCompleteness", report.frontendState()
-                    .externalClassificationInputCompleteness().name()); out.write(',');
+            field(out, "copyInputCompleteness", report.frontendState()
+                    .copyInputCompleteness().name()); out.write(',');
             out.write("\"referenceBindingComplete\":" + report.completeness().referenceBindingComplete() + ',');
             out.write("\"dependencyAnalysisReady\":" + report.completeness().dependencyAnalysisReady() + ',');
             out.write("\"programUnits\":" + model.programUnits().size() + ',');
@@ -266,7 +266,8 @@ final class ResolutionSnapshot {
             field(out, "kind", classification.kind().name()); out.write(',');
             field(out, "certainty", classification.certainty().name()); out.write(',');
             field(out, "reason", classification.reason().name()); out.write(',');
-            field(out, "inputCompleteness", classification.inputCompleteness().name()); out.write(',');
+            field(out, "copyInputCompleteness",
+                    classification.copyInputCompleteness().name()); out.write(',');
             writeSpan(out, classification.meta().span()); out.write(',');
             writeProvenance(out, classification.meta().provenance()); out.write(',');
             out.write("\"coveredOccurrenceIds\":[");

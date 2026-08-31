@@ -73,7 +73,7 @@ class SourceNormalizationPreprocessingIntegrationTest {
         assertEquals(0, missing.errors());
         assertTrue(missing.text().contains("UNRESOLVED COPY MISSING"));
         Diagnostic missingDiagnostic = missing.diagnostics().stream()
-                .filter(diagnostic -> diagnostic.message().startsWith("unresolved_copy"))
+                .filter(diagnostic -> diagnostic.code() == Diagnostic.Code.UNRESOLVED_COPY)
                 .findFirst().orElseThrow();
         assertEquals("missing.cbl", missingDiagnostic.file());
         assertEquals(1, missingDiagnostic.line());

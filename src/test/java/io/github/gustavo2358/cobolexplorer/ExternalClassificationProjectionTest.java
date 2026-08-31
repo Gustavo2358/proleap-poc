@@ -69,7 +69,7 @@ class ExternalClassificationProjectionTest {
                 ExternalClassificationTestSupport.analyze(POSSIBLE);
         ExternalClassification classifications = new CicsIntrinsicClassifier().classify(
                 analysis.model(), analysis.occurrences(), analysis.resolution(),
-                ExternalClassification.InputCompleteness.INCOMPLETE_UNRESOLVED_COPY);
+                ExternalClassification.CopyInputCompleteness.INCOMPLETE_UNRESOLVED_COPY);
         ResolutionAnalysisReport.FrontendState incomplete = missingCopyState("MISSINGCP");
 
         ResolutionAnalysisReport report = ResolutionAnalysisReport.compose(
@@ -210,7 +210,7 @@ class ExternalClassificationProjectionTest {
                 () -> assertTrue(text.contains("\"kind\":\"POSSIBLE_INTRINSIC\"")),
                 () -> assertTrue(text.contains("\"certainty\":\"INFERRED\"")),
                 () -> assertTrue(text.contains("\"reason\":\"COBOL_REFERENCE_UNRESOLVED_WITH_KNOWN_CICS_SHAPE\"")),
-                () -> assertTrue(text.contains("\"inputCompleteness\":\"COMPLETE\"")),
+                () -> assertTrue(text.contains("\"copyInputCompleteness\":\"COMPLETE\"")),
                 () -> assertTrue(text.contains("\"coveredOccurrenceIds\":[")),
                 () -> assertTrue(text.contains("\"includeChain\":[]")),
                 () -> assertTrue(text.contains("\"status\":\"UNRESOLVED\"")),
@@ -223,7 +223,9 @@ class ExternalClassificationProjectionTest {
         String script = Files.readString(Path.of("src/main/resources/web/resolution-app.js"));
 
         for (String field : List.of("classifications", "technology", "kind", "certainty", "reason",
-                "inputCompleteness", "coveredOccurrenceIds")) assertTrue(script.contains(field), field);
+                "copyInputCompleteness", "coveredOccurrenceIds")) assertTrue(script.contains(field), field);
+        assertTrue(script.contains("Input de COPY"));
+        assertFalse(script.contains("Input COBOL"));
         assertFalse(script.contains("startsWith(\"DFH\")"));
         assertFalse(script.contains("DFHRESP"));
         assertFalse(script.contains("DFHVALUE"));
@@ -268,6 +270,8 @@ class ExternalClassificationProjectionTest {
 
         assertAll("parser recovery cannot be promoted into an external hypothesis",
                 () -> assertTrue(text.contains("\"externalClassifications\":0")),
+                () -> assertTrue(text.contains("\"copyInputCompleteness\":\"COMPLETE\"")),
+                () -> assertFalse(text.contains("\"inputCompleteness\"")),
                 () -> assertTrue(text.contains("\"code\":\"PARSER_ERROR\"")),
                 () -> assertFalse(text.contains("\"category\":\"EXTERNAL_CLASSIFICATION\"")));
     }
@@ -278,8 +282,9 @@ class ExternalClassificationProjectionTest {
     }
 
     private static ResolutionAnalysisReport.FrontendState missingCopyState(String name) {
-        return new ResolutionAnalysisReport.FrontendState(1, 0, 0, 0, List.of(
-                new Diagnostic("COBOL", Diagnostic.Phase.PREPROCESSOR, "fixture.cbl", 1, 7,
+        return new ResolutionAnalysisReport.FrontendState(0, 0, 0, List.of(
+                new Diagnostic("COBOL", Diagnostic.Phase.PREPROCESSOR,
+                        Diagnostic.Code.UNRESOLVED_COPY, "fixture.cbl", 1, 7,
                         "unresolved_copy: " + name, name, "")));
     }
 

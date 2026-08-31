@@ -68,9 +68,10 @@ public final class ExplorerMain {
                 new PreprocessorEngine(binding, new CopybookLibrary(copybooks))
                         .process(sourceNormalization.sourceMap(), source.getFileName().toString());
         String normalized = preprocessed.text();
+        int unresolvedCopies = preprocessed.unresolved();
         diagnostics.addAll(preprocessed.diagnostics());
         LOG.debug("event=preprocessing_completed phase=PREPROCESSING elapsedMs={} unresolvedCopies={} errors={} compilerOptions={}",
-                elapsedMs(phaseStarted), preprocessed.unresolved(), preprocessed.errors(),
+                elapsedMs(phaseStarted), unresolvedCopies, preprocessed.errors(),
                 preprocessed.compilerOptions().size());
 
         progress.phase = "LEXING";
@@ -114,7 +115,7 @@ public final class ExplorerMain {
         copyWebResources(output);
         Files.writeString(output.resolve("preprocessed.cbl"), normalized, StandardCharsets.UTF_8);
         writeData(output.resolve("tree-data.js"), source.getFileName().toString(), raw.lines().count(),
-                normalized, preprocessed.unresolved(), tokenCount, maxDepth, lexerErrors, parserErrors,
+                normalized, unresolvedCopies, tokenCount, maxDepth, lexerErrors, parserErrors,
                 nodes, ruleCounts, diagnostics);
 
         progress.phase = "AST_BUILD";
@@ -132,7 +133,7 @@ public final class ExplorerMain {
         astSnapshot.write(output.resolve("ast-data.js"), source.getFileName().toString(), nodes.size(),
                 Arrays.asList(normalized.split("\\R", -1)));
         CoverageSnapshot coverageSnapshot = CoverageSnapshot.from(source.getFileName().toString(), ast,
-                compilationBuild.coverageByProgramUnit().get(primaryUnit.id()), preprocessed.unresolved(),
+                compilationBuild.coverageByProgramUnit().get(primaryUnit.id()), unresolvedCopies,
                 (int) lexerErrors, (int) parserErrors);
         coverageSnapshot.write(output.resolve("coverage-data.js"));
         if (LOG.isDebugEnabled()) {
@@ -181,23 +182,22 @@ public final class ExplorerMain {
         progress.phase = "EXTERNAL_CLASSIFICATION";
         ResolutionAnalysisReport.FrontendState frontendState =
                 new ResolutionAnalysisReport.FrontendState(
-                        preprocessed.unresolved(), preprocessed.errors(),
-                        (int) lexerErrors, (int) parserErrors, diagnostics);
+                        preprocessed.errors(), (int) lexerErrors, (int) parserErrors, diagnostics);
         boolean classifierExecuted = frontendState.supportsExternalClassification();
         ExternalClassification externalClassifications = classifierExecuted
                 ? new CicsIntrinsicClassifier().classify(compilationUnit, occurrences, resolution,
-                        frontendState.externalClassificationInputCompleteness())
+                        frontendState.copyInputCompleteness())
                 : ExternalClassification.empty();
         String classifierReason = classifierExecuted
                 ? "STRUCTURAL_PREREQUISITES_AVAILABLE" : "STRUCTURAL_FRONTEND_ERRORS";
         String classifierFallback = !classifierExecuted ? "SKIP_CLASSIFIER_FAIL_CLOSED"
-                : preprocessed.unresolved() > 0
+                : unresolvedCopies > 0
                 ? "CONTINUE_WITH_PARTIAL_ANALYSIS" : "NONE";
-        LOG.debug("event=external_classification_completed phase=EXTERNAL_CLASSIFICATION elapsedMs={} executed={} reason={} unresolvedCopies={} inputCompleteness={} classifications={} fallback={} impact={}",
-                elapsedMs(phaseStarted), classifierExecuted, classifierReason, preprocessed.unresolved(),
-                frontendState.externalClassificationInputCompleteness(),
+        LOG.debug("event=external_classification_completed phase=EXTERNAL_CLASSIFICATION elapsedMs={} executed={} reason={} unresolvedCopies={} copyInputCompleteness={} classifications={} fallback={} impact={}",
+                elapsedMs(phaseStarted), classifierExecuted, classifierReason, unresolvedCopies,
+                frontendState.copyInputCompleteness(),
                 externalClassifications.entries().size(), classifierFallback,
-                preprocessed.unresolved() > 0 ? "ANALYSIS_INCOMPLETE" : "NO_ADDITIONAL_IMPACT");
+                unresolvedCopies > 0 ? "ANALYSIS_INCOMPLETE" : "NO_ADDITIONAL_IMPACT");
         ResolutionAnalysisReport resolutionReport = ResolutionAnalysisReport.compose(compilationBuild,
                 frontendState, occurrences, resolution, externalClassifications);
         ResolutionSnapshot.from(source.getFileName().toString(),

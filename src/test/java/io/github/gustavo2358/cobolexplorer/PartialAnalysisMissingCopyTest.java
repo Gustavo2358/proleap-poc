@@ -20,7 +20,7 @@ class PartialAnalysisMissingCopyTest {
         assertAll("partial analysis remains useful and explicitly incomplete",
                 () -> assertTrue(snapshot.contains("\"externalClassifications\":1")),
                 () -> assertEquals(2, occurrences(snapshot,
-                        "\"inputCompleteness\":\"INCOMPLETE_UNRESOLVED_COPY\"")),
+                        "\"copyInputCompleteness\":\"INCOMPLETE_UNRESOLVED_COPY\"")),
                 () -> assertTrue(snapshot.contains("\"claim\":\"INCOMPLETE\"")),
                 () -> assertTrue(snapshot.contains("\"dependencyAnalysisReady\":false")),
                 () -> assertTrue(snapshot.contains("\"unresolvedCopies\":2")),
@@ -46,7 +46,7 @@ class PartialAnalysisMissingCopyTest {
 
         assertAll("MR2 missing to resolved declaration refines the nominal universe",
                 () -> assertTrue(missing.contains("\"externalClassifications\":1")),
-                () -> assertTrue(missing.contains("\"inputCompleteness\":\"INCOMPLETE_UNRESOLVED_COPY\"")),
+                () -> assertTrue(missing.contains("\"copyInputCompleteness\":\"INCOMPLETE_UNRESOLVED_COPY\"")),
                 () -> assertTrue(resolved.contains("\"externalClassifications\":0")),
                 () -> assertTrue(resolved.contains("\"unresolvedCopies\":0")),
                 () -> assertFalse(resolved.contains("\"code\":\"UNRESOLVED_COPY\"")),
@@ -71,8 +71,8 @@ class PartialAnalysisMissingCopyTest {
                 () -> assertTrue(resolved.contains("\"externalClassifications\":1")),
                 () -> assertTrue(missing.contains("\"technology\":\"CICS\"")),
                 () -> assertTrue(resolved.contains("\"technology\":\"CICS\"")),
-                () -> assertTrue(missing.contains("\"inputCompleteness\":\"INCOMPLETE_UNRESOLVED_COPY\"")),
-                () -> assertTrue(resolved.contains("\"inputCompleteness\":\"COMPLETE\"")),
+                () -> assertTrue(missing.contains("\"copyInputCompleteness\":\"INCOMPLETE_UNRESOLVED_COPY\"")),
+                () -> assertTrue(resolved.contains("\"copyInputCompleteness\":\"COMPLETE\"")),
                 () -> assertTrue(missing.contains("\"code\":\"UNRESOLVED_COPY\"")),
                 () -> assertFalse(resolved.contains("\"code\":\"UNRESOLVED_COPY\"")));
     }
@@ -110,7 +110,7 @@ class PartialAnalysisMissingCopyTest {
                 () -> assertTrue(snapshot.contains("\"unresolvedCopies\":1")),
                 () -> assertTrue(snapshot.contains("OUTSIDE")),
                 () -> assertTrue(snapshot.contains("\"externalClassifications\":1")),
-                () -> assertTrue(snapshot.contains("\"inputCompleteness\":\"INCOMPLETE_UNRESOLVED_COPY\"")));
+                () -> assertTrue(snapshot.contains("\"copyInputCompleteness\":\"INCOMPLETE_UNRESOLVED_COPY\"")));
     }
 
     @Test
