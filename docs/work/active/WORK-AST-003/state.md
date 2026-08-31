@@ -15,8 +15,8 @@ Discovery concluído e validado sobre a base `c6d9b6e1b597f34db06b41f4e8e04cdcf1
 
 ## Restante
 
-- Criar commit, publicar branch e abrir PR exclusivo de Discovery.
-- Parar para review independente. Fase 2 e WORK-AST-002 Slice 2 permanecem sem autorização.
+- O checkpoint foi publicado no PR #11 a partir do commit `f6bd0d2`.
+- Aguardar review independente. Fase 2 e WORK-AST-002 Slice 2 permanecem sem autorização.
 
 ## Descobertas que afetam o plano
 
