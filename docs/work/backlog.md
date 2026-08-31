@@ -58,7 +58,7 @@ O work item futuro deve comparar composição explícita, registry pequeno, inje
 
 #### Capacidades, fronteiras e rejeições
 
-O desenho precisa admitir momentos distintos da pipeline sem criar uma interface `PlatformPlugin` gigante com métodos opcionais. Não criar `CicsPlugin` monolítico, service locator global, API antecipada de CFG/dataflow, framework externo de DI ou packages definitivos sem evidência. Providers/extractors não podem mutar AST, symbols, occurrences ou resolution; novos produtos usam identidades compostas, provenance e certeza explícita.
+O desenho precisa admitir momentos distintos da pipeline sem criar uma interface `PlatformPlugin` gigante com métodos opcionais. Não criar `CicsPlugin` monolítico, service locator global, API antecipada de CFG/dataflow, framework externo de DI ou packages definitivos sem evidência. Providers/extractors não mutam produtos canônicos já produzidos. Um External Symbol Provider emite contribuições externas explícitas, compostas em uma visão/inventário consumido pela resolução sem alterar silenciosamente a symbol table COBOL original. Novos produtos usam identidades compostas, provenance e certeza explícita.
 
 Uma configuração incompatível, contribuição duplicada ou dependência ausente deve falhar fechada ou produzir incompletude tipada conforme o contrato da capability. Ordem de registro não pode selecionar silenciosamente um fato sem regra de precedência.
 
@@ -421,7 +421,7 @@ O resultado conserva simultaneamente o conjunto finito de valores estaticamente 
 
 - Depende de BACKLOG-CFG-001 e BACKLOG-DF-001 para program points, regiões, statement effects e reaching definitions; não reimplementa binding nominal nem layout.
 - Transfer functions entram incrementalmente por classe semântica comprovada. Efeito desconhecido acrescenta remainder incerto em vez de produzir conjunto vazio.
-- Joins unem valores conhecidos e propagam o unknown remainder. Loops exigem terminação/widening explícitos; qualquer limite de cardinalidade deve tornar a perda observável, nunca apresentar conjunto truncado como completo.
+- Joins unem valores conhecidos e propagam o unknown remainder. Loops exigem argumento explícito de fixpoint e terminação. Widening ou limites de cardinalidade só entram se o domínio abstrato escolhido os exigir; qualquer perda de precisão permanece observável e um conjunto truncado nunca é apresentado como completo.
 - Resultado, ordem, provenance das evidências e diagnostics são determinísticos. A claim deve distinguir conjunto completo, parcial e desconhecido.
 - Complexidade e memória precisam ser caracterizadas pelas cardinalidades de CFG, regions, definitions e valores; threshold dependente de hardware não é oracle.
 
