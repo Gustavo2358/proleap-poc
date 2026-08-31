@@ -1,0 +1,81 @@
+id: WORK-AST-002
+title: Discovery do hardening da fronteira AST para CFG e dataflow
+status: active
+risk: high
+goal: Caracterizar com oráculos quais garantias de BACKLOG-AST-001 já existem e quais lacunas devem ser fechadas antes de BACKLOG-CFG-001.
+must_read:
+  - docs/work/backlog.md#backlog-ast-001--hardening-da-fronteira-ast-para-cfg-e-dataflow
+  - docs/architecture/pipeline.md
+  - docs/architecture/invariants.md
+  - docs/domain/semantic-ast.md
+  - docs/domain/compilation-units.md
+  - docs/domain/symbol-model.md
+  - docs/domain/reference-resolution.md
+  - docs/domain/provenance.md
+  - docs/engineering/semantic-analysis-policy.md
+  - docs/engineering/semantic-testing.md
+related_domain_rules:
+  - docs/domain/semantic-ast.md
+  - docs/domain/compilation-units.md
+  - docs/domain/symbol-model.md
+  - docs/domain/reference-resolution.md
+  - docs/domain/provenance.md
+related_decisions:
+  - ADR-0002
+  - ADR-0003
+  - ADR-0004
+  - ADR-0005
+  - ADR-0007
+  - ADR-0008
+  - ADR-0009
+  - ADR-0010
+related_invariants:
+  - INV-AST-001
+  - INV-AST-002
+  - INV-SYM-001
+  - INV-PROV-002
+  - INV-COV-001
+  - INV-COV-002
+  - INV-RES-001
+  - INV-RES-002
+  - INV-DET-001
+  - INV-PERF-001
+evals:
+  - EVAL-AST-001
+  - EVAL-AST-002
+  - EVAL-AST-003
+  - EVAL-AST-004
+  - EVAL-COV-001
+  - EVAL-COV-002
+  - EVAL-SYM-001
+  - EVAL-SYM-002
+  - EVAL-RES-REL-001
+  - EVAL-RES-COV-001
+  - EVAL-RES-REPORT-001
+  - EVAL-RES-DET-001
+  - EVAL-RES-PERF-001
+source_scope:
+  - src/main/java/io/github/gustavo2358/cobolexplorer/AstBuilder.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/Ast.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/AstScopeIndex.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/SemanticCoverage.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/GrammarCoverageManifest.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/SymbolTable.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/ReferenceOccurrences.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/ReferenceResolution.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/ResolutionAnalysisReport.java
+test_scope:
+  - src/test/java/io/github/gustavo2358/cobolexplorer/AstSemanticBoundaryCharacterizationTest.java
+  - src/test/java/io/github/gustavo2358/cobolexplorer/AstSemanticBoundaryRequiredOracleTest.java
+  - src/test/java/io/github/gustavo2358/cobolexplorer/AstBoundaryTestSupport.java
+  - src/test/resources/cobol/semantic/ast-cfg-boundary.cbl
+must_not_change:
+  - Qualquer arquivo de produção durante a fase de discovery
+  - Gramática ou comportamento do parser
+  - AST symbol model resolver ou coverage readiness de produção
+  - Baselines para acomodar novos testes
+  - CFG dataflow storage layout aliases effects reaching definitions possible values runtime values kills ou targets dinâmicos
+  - Semântica opaca de SQL CICS e SQLIMS
+gates:
+  - fast
+  - semantic

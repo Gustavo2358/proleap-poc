@@ -52,7 +52,7 @@ Comece no [índice de conhecimento](docs/index.md). Carregue somente o contexto 
 
 ## Trabalho ativo
 
-O índice de trabalho está em [docs/work/index.md](docs/work/index.md). Não há work item ativo neste corte. As conclusões de WORK-EXT-001 e WORK-COV-001 são baselines válidas, mas não autorizam iniciar taint localizado, itens `BACKLOG-EXT`, CFG, dataflow ou outras tecnologias.
+O índice de trabalho está em [docs/work/index.md](docs/work/index.md). `WORK-AST-002` está ativo exclusivamente para promoção e discovery/characterization de `BACKLOG-AST-001`; seu `source_scope` de produção é superfície de investigação, não autorização de modificação. As conclusões de WORK-EXT-001 e WORK-COV-001 são baselines válidas, mas não autorizam iniciar taint localizado, itens `BACKLOG-EXT`, CFG, dataflow ou outras tecnologias.
 
 Ao trabalhar em um item:
 
