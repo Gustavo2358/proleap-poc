@@ -47,8 +47,8 @@ Nenhuma migração de produção ou baseline nesta fase. A promoção atualiza s
 ### Slice 2 — Integridade linear cross-product
 
 - **Problema:** F-02; produtos normais são coerentes, mas combinações corrompidas podem atravessar a composição sem fail-closed.
-- **Oracle atualmente falho:** `reportFailsClosedWhenResolutionContainsOccurrenceMissingFromCollectorProduct` e `symbolTableRejectsDeclarationAstNodeOutsideItsProgramUnitAst`.
-- **Provável superfície:** validador interno novo mais um ponto de composição explícito; possivelmente checks locais em `SymbolTable`/`ReferenceOccurrences` e inputs adicionais na orquestração. A escolha final permanece aberta para review.
+- **Oracle atualmente falho:** `reportFailsClosedWhenResolutionContainsOccurrenceMissingFromCollectorProduct` e `crossProductValidationRejectsSymbolWhoseDeclarationAstNodeDoesNotExist`.
+- **Provável superfície:** validador interno novo mais um ponto de composição explícito; possivelmente checks locais somente onde o produto já disponha do contexto necessário e inputs adicionais na orquestração. A escolha final permanece aberta para review.
 - **Invariants/evals:** ADR-0003/0005; INV-SYM-001, INV-PROV-002, INV-DET-001, INV-PERF-001; EVAL-SYM-001/002, EVAL-RES-REL-001, EVAL-RES-DET-001 e EVAL-RES-PERF-001.
 - **must_not_change:** status/candidates válidos, ambiguidade, IDs locais, resolução nominal, snapshots como fonte de verdade, complexidade maior que linear.
 - **Dependências:** contrato aprovado para inputs e ownership do validator; independente do Slice 1, mas deve usar as mesmas identidades compostas.

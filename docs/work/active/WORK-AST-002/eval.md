@@ -59,7 +59,7 @@ Duas lacunas de produção foram comprovadas: (1) coverage concreto existe apena
 | 3. Cada referência DATA coletada junta AST, scope, resolução e declaração candidate sem texto | **SATISFIED** para produtos normais | `everyReachableDataOrIndexReferenceHasOneOccurrenceInTheSameUnit` prova bijeção por unit; `assertActualProductsJoin` valida meta/provenance, scope, entry e candidate/declaration por índices compostos. Nenhum lookup usa written text no oracle. |
 | 4. Grupos, FILLERs e endpoints REDEFINES/RENAMES permanecem disponíveis | **SATISFIED**, com uma decisão de contrato aberta | Grupo conserva nove filhos diretos; FILLERs antes/entre/depois têm `DataEntry`+scope e nenhum símbolo nominal; target de `FILLER REDEFINES` possui occurrence/resolution `RESOLVED`; RENAMES conserva from/through e relation resolution estrutural; OCCURS conserva bounds, DEPENDING ON e index-name. A ausência de `DeclarationRelation` com owner FILLER não perde o endpoint, mas o contrato do consumidor futuro deve escolher AST+occurrence ou relação sem owner-symbol. |
 | 5. CALL literal e identifier/expression permanecem separados | **SATISFIED** | Dois CALLs exatos: literal → `ProgramReference` + `EXTERNAL_OBSERVED` sem candidate; identifier → `DataReference` + candidate `DATA_SYMBOL` e gap `DYNAMIC_CALL_TARGET_VALUE_UNKNOWN`. |
-| 6. Joins usam identidade composta, com provenance/exatidão preservadas | **PARTIAL** | IDs AST/symbol/occurrence reiniciam em parent e child; `ProgramUnitId`/`SemanticEntityId` evitam colisão e o pipeline normal reconcilia. Occurrence meta é idêntica ao AST node; CICS transformado mantém origem e `exact=false`. Porém `ResolutionAnalysisReport` aceita entry ausente do occurrence product e `SymbolTable` aceita `declarationAstNodeId` fora da AST porque não recebe esse produto. |
+| 6. Joins usam identidade composta, com provenance/exatidão preservadas | **PARTIAL** | IDs AST/symbol/occurrence reiniciam em parent e child; `ProgramUnitId`/`SemanticEntityId` evitam colisão e o pipeline normal reconcilia. Occurrence meta é idêntica ao AST node; CICS transformado mantém origem e `exact=false`. Porém a composição aceita entry ausente do occurrence product e uma symbol table controlada cujo `declarationAstNodeId` não existe na AST da mesma unit. |
 
 ### Matriz de fronteiras v1
 
@@ -91,12 +91,12 @@ Duas lacunas de produção foram comprovadas: (1) coverage concreto existe apena
 #### F-02 — Integridade cross-product não falha fechada
 
 - **Classificação:** 2. lacuna comprovada de implementação.
-- **Evidência:** relatório aceita resolution entries ausentes do occurrence product; `SymbolTable` aceita `declarationAstNodeId=Integer.MAX_VALUE`. Os dois oráculos ativáveis falham porque nenhuma exception ocorre.
+- **Evidência:** a composição aceita resolution entries ausentes do occurrence product; uma symbol table controlada com `declarationAstNodeId=Integer.MAX_VALUE` também atravessa resolução e report sem rejeição. Os dois oráculos ativáveis falham porque nenhuma exception ocorre.
 - **Contrato/invariant/eval:** ADR-0003/0005; INV-SYM-001, INV-PROV-002, INV-DET-001, INV-PERF-001; EVAL-SYM-001/002, EVAL-RES-REL-001, EVAL-RES-DET-001/PERF-001.
 - **Impacto:** consumidor futuro pode juntar fatos de units/produtos incompatíveis e obter readiness aparentemente válida.
 - **Menor superfície provável:** validator linear cross-product em ponto de composição, complementado por checks locais onde o produto possui contexto suficiente.
 - **Riscos:** espalhar validação parcial, exigir scans quadráticos ou transformar `UNRESOLVED`/`AMBIGUOUS` válidos em erro interno.
-- **Alternativas:** validator separado antes do report; ampliar `compose` com AST/tables; combinação de constructors locais + integrador. A escolha permanece aberta.
+- **Alternativas:** validator separado antes do report; ampliar `compose` com AST/tables; combinação de checks locais onde houver contexto suficiente + integrador. A escolha permanece aberta.
 
 #### F-03 — Manifesto e AST discordam sobre estrutura já tipada
 

@@ -193,6 +193,19 @@ final class AstBoundaryTestSupport {
                 "declaration relations and their resolution entries must be a bijection");
     }
 
+    /**
+     * Exercises the current post-AST product composition without assigning validation ownership
+     * to a constructor, resolver, report or future dedicated validator.
+     */
+    static ResolutionAnalysisReport composePostAstProducts(
+            Analysis analysis, CompilationUnitSymbolTables tables) {
+        ReferenceResolution resolution = new CobolReferenceResolver(
+                ResolutionContracts.CobolResolutionPolicy.initial())
+                .resolve(analysis.model(), tables, analysis.occurrences());
+        return ResolutionAnalysisReport.compose(analysis.build(),
+                ResolutionAnalysisReport.FrontendState.complete(), analysis.occurrences(), resolution);
+    }
+
     private static void assertCandidateExists(Analysis analysis, ReferenceResolution.Candidate candidate) {
         ResolutionContracts.SemanticEntityId id = candidate.entityId();
         CompilationUnitModel.ProgramUnit unit = analysis.model().find(id.programUnitId()).orElseThrow();
@@ -203,9 +216,11 @@ final class AstBoundaryTestSupport {
         }
         SymbolTable table = analysis.tables().forProgramUnit(id.programUnitId()).orElseThrow().symbolTable();
         if (id.domain() == ResolutionContracts.SemanticEntityDomain.FILE_ENTITY) {
-            assertTrue(id.localId() < table.entities().size(), "candidate must reference an existing FILE entity");
+            assertTrue(id.localId() >= 0 && id.localId() < table.entities().size(),
+                    "candidate must reference an existing FILE entity");
         } else {
-            assertTrue(id.localId() < table.symbols().size(), "candidate must reference an existing symbol");
+            assertTrue(id.localId() >= 0 && id.localId() < table.symbols().size(),
+                    "candidate must reference an existing symbol");
         }
         for (int symbolId : candidate.declarationSymbolIds())
             assertTrue(symbolId >= 0 && symbolId < table.symbols().size(),

@@ -90,7 +90,7 @@ class AstSemanticBoundaryRequiredOracleTest {
     }
 
     @Test
-    void symbolTableRejectsDeclarationAstNodeOutsideItsProgramUnitAst() {
+    void crossProductValidationRejectsSymbolWhoseDeclarationAstNodeDoesNotExist() {
         AstBoundaryTestSupport.Analysis analysis = AstBoundaryTestSupport.analyze("""
                 IDENTIFICATION DIVISION.
                 PROGRAM-ID. ORPHAN-SYMBOL.
@@ -108,8 +108,15 @@ class AstSemanticBoundaryRequiredOracleTest {
                 first.writtenName(), first.canonicalName(), first.scopeId(), Integer.MAX_VALUE,
                 first.span(), first.attributes()));
 
-        assertThrows(IllegalArgumentException.class, () -> new SymbolTable(original.scopes(), symbols,
-                original.diagnostics(), original.entities(), original.declarationRelations()),
-                "symbol declarationAstNodeId must be validated against the same unit AST");
+        SymbolTable corruptedTable = new SymbolTable(original.scopes(), symbols,
+                original.diagnostics(), original.entities(), original.declarationRelations());
+        CompilationUnitSymbolTables.UnitSymbols originalUnit = analysis.tables().units().get(0);
+        CompilationUnitSymbolTables corruptedTables = new CompilationUnitSymbolTables(List.of(
+                new CompilationUnitSymbolTables.UnitSymbols(originalUnit.id(), originalUnit.parentId(),
+                        corruptedTable)));
+
+        assertThrows(RuntimeException.class,
+                () -> AstBoundaryTestSupport.composePostAstProducts(analysis, corruptedTables),
+                "post-AST product composition must reject a symbol whose declaration node is absent");
     }
 }
