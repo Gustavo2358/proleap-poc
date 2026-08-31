@@ -2,7 +2,7 @@
 
 ## Onde estamos
 
-Slice 1 implementado, validado, commitado e publicado na branch `work/work-ast-002-slice-1-coverage`, aguardando PR independente e revisão externa. Nenhuma implementação do Slice 2 foi iniciada.
+Slice 1 mergeado em `main` pelo PR #10 (`c6d9b6e`). Nenhuma implementação do Slice 2 foi iniciada; WORK-AST-003 investiga antes uma inconsistência bloqueante de IDs/traversal da AST.
 
 ## Verde conhecido
 
@@ -14,8 +14,8 @@ Slice 1 implementado, validado, commitado e publicado na branch `work/work-ast-0
 
 ## Restante
 
-- Abrir o PR do Slice 1 e parar para revisão externa.
-- Slice 2/F-02 continua dependente de revisão externa e nova instrução explícita.
+- Concluir o Discovery e review independente de WORK-AST-003.
+- Slice 2/F-02 continua dependente de nova instrução explícita após essa revisão.
 
 ## Descobertas que afetam o plano
 

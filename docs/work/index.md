@@ -4,7 +4,8 @@ Work items delimitam a mudança em execução; o [backlog](backlog.md) registra 
 
 ## Ativo
 
-- [WORK-AST-002 — Hardening da fronteira AST para CFG e dataflow](active/WORK-AST-002/spec.md) — Slice 1 em implementação/revisão independente.
+- [WORK-AST-002 — Hardening da fronteira AST para CFG e dataflow](active/WORK-AST-002/spec.md) — Slice 1 mergeado no PR #10; Slice 2 aguarda nova autorização.
+- [WORK-AST-003 — Discovery da consistência global entre IDs e traversal da AST](active/WORK-AST-003/spec.md) — investigação separada que bloqueia o próximo slice até review independente.
 
 ## Histórico
 

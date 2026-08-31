@@ -1,0 +1,18 @@
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID. PREORDER-CONTROLS.
+       DATA DIVISION.
+       WORKING-STORAGE SECTION.
+       01 LOOP-STOP PIC X VALUE 'N'.
+       01 LOOP-COUNT PIC 9 VALUE 0.
+       PROCEDURE DIVISION.
+           PERFORM TARGET-PARA.
+           PERFORM UNTIL LOOP-STOP = 'Y'
+               ADD 1 TO LOOP-COUNT
+               IF LOOP-COUNT > 3
+                   MOVE 'Y' TO LOOP-STOP
+               END-IF
+           END-PERFORM.
+           GOBACK.
+       TARGET-PARA.
+           CONTINUE.
+       END PROGRAM PREORDER-CONTROLS.
