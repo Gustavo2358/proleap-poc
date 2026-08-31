@@ -4,7 +4,7 @@ Work items delimitam a mudança em execução; o [backlog](backlog.md) registra 
 
 ## Ativo
 
-Não há item ativo neste corte.
+- [WORK-EXT-001 — Classificar `DFHRESP` e `DFHVALUE` unresolved como possíveis intrínsecos CICS](active/WORK-EXT-001/spec.md). O slice está em estado oracle-first e não autoriza os itens futuros de extensibilidade.
 
 ## Histórico
 
