@@ -63,7 +63,9 @@ test("names occurrences by unit and local id", () => {
   ];
   assert.doesNotThrow(() => assertOccurrenceIdentity("resolution-data.js", entries,
       [{ unitId: "INNER", occurrenceId: 0 }],
-      [{ unitId: "OUTER", occurrenceId: 0 }, { unitId: null, occurrenceId: -1 }], unitIds));
+      [{ unitId: "OUTER", occurrenceId: 0 },
+        { unitId: "OUTER", occurrenceId: -1, category: "FRONTEND_COVERAGE" },
+        { unitId: null, occurrenceId: -1 }], unitIds));
   assert.throws(() => assertOccurrenceIdentity("resolution-data.js", [
     { unitId: "OUTER", occurrenceId: 0 }, { unitId: "OUTER", occurrenceId: 0 },
   ], [], [], unitIds), /duplicate occurrence 0 in unit OUTER/);
@@ -71,4 +73,6 @@ test("names occurrences by unit and local id", () => {
       [{ unitId: "OUTER", occurrenceId: 1 }], [], unitIds), /unknown occurrence 1 in unit OUTER/);
   assert.throws(() => assertOccurrenceIdentity("resolution-data.js", entries, [],
       [{ unitId: "INNER", occurrenceId: 1 }], unitIds), /unknown occurrence 1 in unit INNER/);
+  assert.throws(() => assertOccurrenceIdentity("resolution-data.js", entries, [],
+      [{ unitId: "OUTER", occurrenceId: -2 }], unitIds), /expected -1 or a non-negative integer/);
 });

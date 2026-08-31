@@ -138,6 +138,8 @@ export function assertOccurrenceIdentity(location, entries, diagnostics, gaps, u
         `unknown occurrence ${diagnostic.occurrenceId} in unit ${diagnostic.unitId}`);
   });
   gaps.forEach((gap, index) => {
+    invariant(Number.isInteger(gap.occurrenceId) && gap.occurrenceId >= -1,
+        `${location}.gaps[${index}].occurrenceId`, "expected -1 or a non-negative integer");
     if (gap.unitId === null) {
       invariant(gap.occurrenceId === -1, `${location}.gaps[${index}].occurrenceId`,
           "global gap must use occurrenceId -1");
@@ -145,8 +147,7 @@ export function assertOccurrenceIdentity(location, entries, diagnostics, gaps, u
     }
     invariant(unitIds.has(gap.unitId), `${location}.gaps[${index}].unitId`,
         `unknown unit ${String(gap.unitId)}`);
-    invariant(Number.isInteger(gap.occurrenceId) && gap.occurrenceId >= 0,
-        `${location}.gaps[${index}].occurrenceId`, "unit gap must use a non-negative local occurrence id");
+    if (gap.occurrenceId === -1) return;
     invariant(occurrences.has(occurrenceKey(gap.unitId, gap.occurrenceId)),
         `${location}.gaps[${index}].occurrenceId`,
         `unknown occurrence ${gap.occurrenceId} in unit ${gap.unitId}`);
