@@ -2,7 +2,7 @@
 
 ## Onde estamos
 
-Slice 1 implementado e validado na branch `work/work-ast-002-slice-1-coverage`, aguardando commit, push e PR independente. Nenhuma implementação do Slice 2 foi iniciada.
+Slice 1 implementado, validado, commitado e publicado na branch `work/work-ast-002-slice-1-coverage`, aguardando PR independente e revisão externa. Nenhuma implementação do Slice 2 foi iniciada.
 
 ## Verde conhecido
 
@@ -14,7 +14,7 @@ Slice 1 implementado e validado na branch `work/work-ast-002-slice-1-coverage`, 
 
 ## Restante
 
-- Revisar o diff completo, commitar, fazer push e abrir o PR do Slice 1; então parar.
+- Abrir o PR do Slice 1 e parar para revisão externa.
 - Slice 2/F-02 continua dependente de revisão externa e nova instrução explícita.
 
 ## Descobertas que afetam o plano
