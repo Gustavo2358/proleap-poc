@@ -82,14 +82,14 @@ IDs neste documento são estáveis. `AUTOMATED` indica proteção executável at
 
 ## Extensões de plataforma
 
-### INV-EXT-001 — Core COBOL permanece independente de plataformas
+### INV-EXT-001 — Semântica COBOL não incorpora interpretação de plataforma
 
-- **Statement:** gramática, AST, symbol table, collector e resolver COBOL não contêm branches por nomes, shapes ou classes concretas de CICS, IMS, DB2, GRBE ou outra plataforma; extensões complementam produtos canônicos por contratos separados.
-- **Rationale:** conhecimento externo não redefine silenciosamente a linguagem COBOL nem força mudanças transversais para cada tecnologia.
-- **Scope:** frontend canônico, produtos semânticos e futuras extensões.
-- **Related ADRs:** ADR-0003 e ADR-0011.
-- **Enforcement:** `PARTIALLY_AUTOMATED` — `ArchitectureBoundaryTest`, oráculos do primeiro classifier e review de dependências.
-- **Known exceptions:** tokens e regras de linguagens embarcadas já vendorizados preservam sintaxe/payload conforme ADR-0007; isso não autoriza interpretação de plataforma no core.
+- **Statement:** o frontend pode reconhecer tokens/productions de plataforma e a AST pode preservar payload e language tag em `EmbeddedLanguageStatement`; essa representação sintática não autoriza interpretar semântica de plataforma nos nós COBOL canônicos, symbol table, collector ou resolver nominal, nem fazê-los depender de extensões concretas.
+- **Rationale:** preservar sintaxe reconhecida mantém fidelidade e provenance; interpretá-la nas fases COBOL redefiniria silenciosamente a linguagem e forçaria mudanças transversais para cada tecnologia.
+- **Scope:** frontend/AST como fronteira de preservação, produtos semânticos COBOL e futuras extensões.
+- **Related ADRs:** ADR-0003, ADR-0007 e ADR-0011.
+- **Enforcement:** `PARTIALLY_AUTOMATED` — `ArchitectureBoundaryTest`, oráculos do primeiro classifier e review de dependências/interpretação.
+- **Known exceptions:** nenhuma; identificação opaca de SQL/CICS/SQLIMS é parte permitida do statement, não interpretação semântica externa.
 
 ### INV-EXT-002 — Evidência COBOL precede classificação externa inferida
 

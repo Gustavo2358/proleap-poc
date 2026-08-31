@@ -12,7 +12,6 @@ must_read:
   - docs/domain/provenance.md
   - docs/engineering/semantic-analysis-policy.md
   - docs/engineering/semantic-testing.md
-  - docs/history/evidence/platform-extension-boundary-report.md
 related_domain_rules:
   - docs/domain/semantic-ast.md
   - docs/domain/reference-resolution.md

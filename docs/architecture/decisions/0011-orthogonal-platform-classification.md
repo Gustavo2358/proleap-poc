@@ -20,7 +20,7 @@ Sem contexto confiável de compilação, o pipeline aplica esta precedência:
 4. mantém classificação externa em produto ortogonal ao `ReferenceResolution`, ligada ao construct inteiro, às occurrences cobertas e à provenance;
 5. mantém qualquer incompletude incompatível com uma alegação de análise completa.
 
-Conhecimento de nomes e shapes de plataforma fica fora da gramática, AST, symbol table, collector e resolver COBOL. O composition root pode combinar produtos para relatório e apresentação, sem mutar resultados anteriores.
+A gramática pode reconhecer tokens/productions de plataforma e a AST pode preservar sintaxe externa de forma opaca conforme ADR-0007. Esse reconhecimento não autoriza interpretar semântica de plataforma nos nós COBOL canônicos, symbol table, collector ou resolver nominal. O composition root pode combinar produtos COBOL e classificações externas para relatório e apresentação, sem mutar resultados anteriores.
 
 Extensões posteriores devem consumir AST, binding, futuros CFG/dataflow e outros produtos canônicos. A introdução de infraestrutura genérica de composição, providers, extractors ou semântica de CFG continua trabalho de backlog; esta decisão não escolhe registry, discovery mechanism, framework de DI, packages ou interfaces definitivas.
 

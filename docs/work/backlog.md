@@ -20,8 +20,14 @@ BACKLOG-EXT-001 infraestrutura de composição
   │     └── BACKLOG-EXT-005 protocolo GRBE
   └── BACKLOG-EXT-006 control-flow semantics ── depende de BACKLOG-CFG-001
 
-extractors com operandos dinâmicos ── dependem de BACKLOG-CFG-001/BACKLOG-DF-001
-                                 e de possible-values posterior
+BACKLOG-CFG-001
+  ↓
+BACKLOG-DF-001 statement effects + reaching definitions
+  ↓
+BACKLOG-DF-003 constant/possible-values
+  ├── BACKLOG-DF-002 targets de CALL dinâmico
+  ├── BACKLOG-EXT-004 extractors com operands dinâmicos
+  └── BACKLOG-EXT-005 GRBE
 ```
 
 ### BACKLOG-EXT-001 — Infraestrutura mínima de extensibilidade do pipeline
@@ -112,7 +118,7 @@ Extractors são capacidades independentes compostas por BACKLOG-EXT-001. Adicion
 #### Dependências e fronteiras
 
 - Depende de BACKLOG-EXT-001 e BACKLOG-EMB-001 para payloads `EXEC` com parser dedicado; regex no raw payload é rejeitada.
-- Facts com operandos dinâmicos dependem de BACKLOG-CFG-001, BACKLOG-DF-001 e análise canônica posterior de constant/possible-values. O extractor consulta esses serviços; não percorre texto para trás nem implementa mini-CFG, reaching definitions ou propagation própria.
+- Facts com operandos dinâmicos dependem explicitamente de BACKLOG-DF-003, que por sua vez consome CFG, statement effects e reaching definitions canônicos. O extractor consulta `possibleValues` no program point; não percorre texto para trás nem implementa mini-CFG, reaching definitions ou propagation própria.
 - Fatos finais de dependência devem respeitar BACKLOG-DEPS-001: targets conhecidos e remainder dinâmico/incerto permanecem separados.
 - `XCTL` pode emitir dependência aqui, mas sua ausência de fallthrough pertence a BACKLOG-EXT-006; extractor e control-flow provider não se fundem.
 - Comando preservado, parser dedicado ausente ou operand dinâmico sem dataflow continua `UNKNOWN/INCOMPLETE`, nunca coleção vazia.
@@ -121,7 +127,7 @@ Extractors são capacidades independentes compostas por BACKLOG-EXT-001. Adicion
 
 Promover por tecnologia e comando concreto, com fonte oficial e oracle independente. Começar por literal estático, depois host variable nominal, e somente depois possible-values. Testes devem cobrir comando conhecido/desconhecido, literal/variável, payload inválido, COPY provenance, múltiplos targets, remainder dinâmico, execução sem extractor e ordem determinística entre extractors. Rejeitar um extractor universal por regex ou um `CicsPlugin` que também constrói CFG.
 
-Relações: ADR-0007, ADR-0008, ADR-0011, INV-EMB-001, INV-EXT-001, INV-COV-001, BACKLOG-EXT-001, BACKLOG-EMB-001, BACKLOG-CFG-001, BACKLOG-DF-001 e BACKLOG-DEPS-001.
+Relações: ADR-0007, ADR-0008, ADR-0011, INV-EMB-001, INV-EXT-001, INV-COV-001, BACKLOG-EXT-001, BACKLOG-EMB-001, BACKLOG-DF-003 e BACKLOG-DEPS-001.
 
 ### BACKLOG-EXT-005 — Semantic Extractor organizacional GRBE
 
@@ -131,12 +137,12 @@ Modelar o protocolo organizacional exemplificado por `CALL MONITOR USING PARM1` 
 
 #### Dependências e fronteiras
 
-- Depende de BACKLOG-EXT-001, do modelo de regiões/efeitos de BACKLOG-DF-001, de CFG/possible-values canônicos e de BACKLOG-DEPS-001; não deve ser promovido antes de esses contratos cobrirem o parâmetro necessário.
+- Depende de BACKLOG-EXT-001, do modelo de regiões/efeitos de BACKLOG-DF-001, de possible-values canônico em BACKLOG-DF-003 e de BACKLOG-DEPS-001; não deve ser promovido antes de esses contratos cobrirem o parâmetro necessário.
 - Deve declarar versão do protocolo, layouts suportados, precondições, targets conhecidos, remainder desconhecido, provenance e confiança.
 - Não fazer busca textual, backtracking pelo source, inferência por posição observada no corpus, parser COBOL paralelo nem reaching definitions próprio.
 - OCP/DIP exigem implementação organizacional injetável, sem referência GRBE no resolver, AST, CFG builder ou `ExplorerMain`.
 
-Promover com especificação organizacional autorizada, fixture mínima e um caso real anonimizado/reprodutível. Oráculos devem cobrir protocolo válido, target literal/variável, múltiplas reaching definitions, alias/partial write, layout incompatível e ausência da extensão. Relações: ADR-0004, ADR-0011, INV-RES-002, INV-EXT-001, BACKLOG-EXT-001, BACKLOG-DF-001, BACKLOG-DF-002 e BACKLOG-DEPS-001.
+Promover com especificação organizacional autorizada, fixture mínima e um caso real anonimizado/reprodutível. Oráculos devem cobrir protocolo válido, target literal/variável, múltiplas reaching definitions, alias/partial write, layout incompatível e ausência da extensão. Relações: ADR-0004, ADR-0011, INV-RES-002, INV-EXT-001, BACKLOG-EXT-001, BACKLOG-DF-001, BACKLOG-DF-003 e BACKLOG-DEPS-001.
 
 ### BACKLOG-EXT-006 — Control-Flow Semantics Providers para statements externos
 
@@ -395,9 +401,42 @@ Modelar incrementalmente `ALTER`, `SEARCH`, `SORT`, `MERGE` e `ENTRY`, mantendo 
 
 Criar produto separado com reads, writes, partial writes, kills e unknown memory effect. Cobrir `MOVE`, group/CORRESPONDING, reference modification, `SET`, `STRING`, `UNSTRING`, `INITIALIZE`, `ACCEPT`, aritmética, operações de arquivo e parâmetros de `CALL`. Modelar aliases de `REDEFINES`/`RENAMES` como regiões, não apenas nomes.
 
+### BACKLOG-DF-003 — Propagação conservadora de valores possíveis
+
+#### Problema e resultado esperado
+
+Reaching definitions informa quais definições podem alcançar um ponto, mas consumidores como CALL dinâmico, CICS e GRBE precisam dos valores literais que essas definições podem carregar. Essa capacidade pertence ao core semântico e não pode nascer dentro de cada consumidor.
+
+Produzir um artefato imutável e consultável conceitualmente como:
+
+```text
+possibleValues(variableOrRegion, programPoint)
+    → knownValues { "PROGA", "PROGB" }
+      + unknownRemainder
+```
+
+O resultado conserva simultaneamente o conjunto finito de valores estaticamente demonstráveis e um remainder explícito quando writes, aliases, inputs, chamadas ou construções não suportadas impedirem completude. Incerteza não colapsa cedo para `NOT_CONST` nem apaga valores conhecidos.
+
+#### Dependências e propriedades
+
+- Depende de BACKLOG-CFG-001 e BACKLOG-DF-001 para program points, regiões, statement effects e reaching definitions; não reimplementa binding nominal nem layout.
+- Transfer functions entram incrementalmente por classe semântica comprovada. Efeito desconhecido acrescenta remainder incerto em vez de produzir conjunto vazio.
+- Joins unem valores conhecidos e propagam o unknown remainder. Loops exigem terminação/widening explícitos; qualquer limite de cardinalidade deve tornar a perda observável, nunca apresentar conjunto truncado como completo.
+- Resultado, ordem, provenance das evidências e diagnostics são determinísticos. A claim deve distinguir conjunto completo, parcial e desconhecido.
+- Complexidade e memória precisam ser caracterizadas pelas cardinalidades de CFG, regions, definitions e valores; threshold dependente de hardware não é oracle.
+
+#### Consumidores, fora de escopo e promoção
+
+- BACKLOG-DF-002 consulta este produto para targets de CALL dinâmico.
+- BACKLOG-EXT-004 e BACKLOG-EXT-005 consultam o mesmo serviço para operands CICS/DB2/IMS e campos do protocolo GRBE; nenhum extractor implementa dataflow próprio.
+- Fora de escopo: resolver CALL, emitir facts finais de dependência, interpretar protocolos externos ou afirmar valores exatos de runtime.
+- Implementação ingênua rejeitada: procurar `MOVE` anterior por texto, escolher uma reaching definition, descartar valores conhecidos ao encontrar um caminho incerto ou confundir binding DATA com valor.
+
+Promover depois que CFG e o slice pertinente de StatementEffects/reaching definitions estiverem verdes. O work item deve começar por literals e `MOVE` simples, depois joins/loops e unknown effects, com oráculos para múltiplos valores, known-plus-unknown, aliases/partial writes, determinismo e terminação. Relações: ADR-0003, ADR-0004, ADR-0008, INV-RES-002, INV-COV-001, INV-DET-001, BACKLOG-CFG-001 e BACKLOG-DF-001.
+
 ### BACKLOG-DF-002 — Targets de CALL dinâmico
 
-Usar CFG e dataflow para calcular conjuntos de programas possíveis sem confundir binding da variável com seu valor. Preservar targets conhecidos e remainder dinâmico. `CBSTM03D` é cenário didático, não especificação completa.
+Consumir BACKLOG-DF-003 para calcular conjuntos de programas possíveis sem confundir binding da variável com seu valor. Preservar targets conhecidos e remainder dinâmico. `CBSTM03D` é cenário didático, não especificação completa; este item resolve CALL, não fornece possible-values genérico aos demais consumidores.
 
 ## Linguagens embarcadas e built-ins
 

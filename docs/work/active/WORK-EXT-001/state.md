@@ -6,7 +6,7 @@ Work item preparado em estado oracle-first. Nenhum código de produção foi alt
 
 ## Verde conhecido
 
-A gramática atual mantém `DFHRESP`/`DFHVALUE` em `cobolWord`; AST table calls, occurrences por subtree, binding nominal separado e provenance já fornecem os insumos estruturais. ADR-0011 e INV-EXT-001 a INV-EXT-004 governam o slice. O relatório integral está arquivado como evidência histórica. BACKLOG-EXT-001 a BACKLOG-EXT-006 preservam, em ordem de dependência, infraestrutura, contexto de compilação, external symbols, extractors CICS/DB2/IMS, GRBE e efeitos externos de CFG. O gate `fast` passou nesta preparação documental.
+A gramática atual mantém `DFHRESP`/`DFHVALUE` em `cobolWord`; AST table calls, occurrences por subtree, binding nominal separado e provenance já fornecem os insumos estruturais. ADR-0011 e INV-EXT-001 a INV-EXT-004 governam o slice. O relatório integral está arquivado como evidência histórica e permanece fora de `must_read`. BACKLOG-EXT-001 a BACKLOG-EXT-006 preservam, em ordem de dependência, infraestrutura, contexto de compilação, external symbols, extractors CICS/DB2/IMS, GRBE e efeitos externos de CFG. BACKLOG-DF-003 registra possible-values como capacidade canônica futura e continua fora deste slice. O gate `fast` passou nesta preparação documental.
 
 ## Restante
 
