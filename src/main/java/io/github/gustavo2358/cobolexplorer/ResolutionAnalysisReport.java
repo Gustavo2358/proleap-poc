@@ -292,6 +292,8 @@ public final class ResolutionAnalysisReport {
             ReferenceResolution.Entry root = entries.get(rootKey);
             boolean coherent = root != null
                     && root.occurrence().referenceAstNodeId() == classification.rootAstNodeId()
+                    && root.occurrence().meta().equals(classification.meta())
+                    && root.occurrence().writtenText().equals(classification.constructWrittenText())
                     && root.status() == ResolutionContracts.ResolutionStatus.UNRESOLVED;
             for (int occurrenceId : classification.coveredOccurrenceIds()) {
                 OccurrenceKey key = new OccurrenceKey(classification.programUnitId(), occurrenceId);

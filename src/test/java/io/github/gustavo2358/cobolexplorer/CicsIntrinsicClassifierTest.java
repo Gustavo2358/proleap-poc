@@ -3,7 +3,9 @@ package io.github.gustavo2358.cobolexplorer;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -255,6 +257,56 @@ class CicsIntrinsicClassifierTest {
                         entry(ambiguous, "ARGUMENT-NAME").occurrence().id())));
     }
 
+    @Test
+    void dataReferenceArgumentWithoutItsNominalOccurrenceFailsClosed() throws Exception {
+        ExternalClassificationTestSupport.Analysis analysis =
+                ExternalClassificationTestSupport.analyze(POSSIBLE);
+        ReferenceResolution.Entry originalRoot = entry(analysis, "DFHRESP(NORMAL)");
+        ReferenceOccurrences.Occurrence rootOccurrence = copyOccurrence(
+                originalRoot.occurrence(), 0, originalRoot.occurrence().programUnitId());
+        ReferenceOccurrences occurrences = new ReferenceOccurrences(List.of(rootOccurrence));
+        ReferenceResolution.Entry rootEntry = new ReferenceResolution.Entry(
+                0, rootOccurrence, originalRoot.status(), originalRoot.reason(),
+                originalRoot.candidates(), List.of(), originalRoot.callSemantics());
+        ReferenceResolution resolution = new ReferenceResolution(
+                analysis.resolution().policy(), List.of(rootEntry), List.of(),
+                analysis.resolution().metrics(), analysis.resolution().declarationRelations());
+
+        ExternalClassification classifications = new CicsIntrinsicClassifier().classify(
+                analysis.model(), Map.of(rootOccurrence.programUnitId(), occurrences), resolution);
+
+        assertTrue(classifications.entries().isEmpty(),
+                "a nominal argument in the AST must have a coherent occurrence and resolution entry");
+    }
+
+    @Test
+    void occurrenceStoredUnderAnIncompatibleProgramUnitInvalidatesTheClassifierInput() throws Exception {
+        ExternalClassificationTestSupport.Analysis analysis =
+                ExternalClassificationTestSupport.analyze(POSSIBLE);
+        ResolutionContracts.ProgramUnitId unitId = analysis.model().programUnits().get(0).id();
+        ResolutionContracts.ProgramUnitId incompatibleUnit = new ResolutionContracts.ProgramUnitId(
+                unitId.compilationUnitId(), List.of(999), "PROGRAM");
+        ReferenceOccurrences original = analysis.occurrences().get(unitId);
+        List<ReferenceOccurrences.Occurrence> inconsistent = new ArrayList<>();
+        boolean changed = false;
+        for (ReferenceOccurrences.Occurrence occurrence : original.occurrences()) {
+            if (!changed && occurrence.writtenText().equals("WS-RESP")) {
+                inconsistent.add(copyOccurrence(occurrence, occurrence.id(), incompatibleUnit));
+                changed = true;
+            } else {
+                inconsistent.add(occurrence);
+            }
+        }
+        assertTrue(changed, "fixture must expose an unrelated occurrence to corrupt");
+
+        ExternalClassification classifications = new CicsIntrinsicClassifier().classify(
+                analysis.model(), Map.of(unitId, new ReferenceOccurrences(inconsistent)),
+                analysis.resolution());
+
+        assertTrue(classifications.entries().isEmpty(),
+                "an incoherent occurrence product must not be partially classified");
+    }
+
     private static ExternalClassificationTestSupport.Analysis analyzeMetamorphic(
             String base, String argument, String baseDeclaration, String unrelatedDeclaration) throws Exception {
         return ExternalClassificationTestSupport.analyze(fixed("""
@@ -314,5 +366,14 @@ class CicsIntrinsicClassifierTest {
         return resolution.entries().stream().map(entry -> entry.id() + "|"
                 + entry.occurrence().programUnitId() + "|" + entry.occurrence().id() + "|"
                 + entry.status() + "|" + entry.reason() + "|" + entry.candidates()).toList();
+    }
+
+    private static ReferenceOccurrences.Occurrence copyOccurrence(
+            ReferenceOccurrences.Occurrence occurrence, int id,
+            ResolutionContracts.ProgramUnitId programUnitId) {
+        return new ReferenceOccurrences.Occurrence(id, programUnitId,
+                occurrence.referenceAstNodeId(), occurrence.scopeId(), occurrence.kind(),
+                occurrence.admissibleKinds(), occurrence.role(), occurrence.grammarRule(),
+                occurrence.writtenText(), occurrence.meta(), occurrence.preservation());
     }
 }

@@ -123,6 +123,25 @@ class ExternalClassificationProjectionTest {
     }
 
     @Test
+    void classificationWithWrongProvenanceOrWrittenTextFailsClosed() throws Exception {
+        ExternalClassificationTestSupport.Analysis analysis =
+                ExternalClassificationTestSupport.analyze(POSSIBLE);
+        ExternalClassification.Entry valid = classify(analysis).entries().get(0);
+        Ast.SourceProvenance provenance = valid.meta().provenance();
+        Ast.Meta wrongMeta = new Ast.Meta(valid.rootAstNodeId(), valid.meta().span(),
+                valid.meta().origin(), new Ast.SourceProvenance(
+                provenance.expanded(), provenance.original(), provenance.includeChain(),
+                !provenance.exact()));
+        ExternalClassification.Entry wrongProvenance = copyClassification(
+                valid, valid.constructWrittenText(), wrongMeta);
+        ExternalClassification.Entry wrongWrittenText = copyClassification(
+                valid, valid.constructWrittenText() + "-WRONG", valid.meta());
+
+        assertInconsistentClassificationFailsClosed(analysis, wrongProvenance);
+        assertInconsistentClassificationFailsClosed(analysis, wrongWrittenText);
+    }
+
+    @Test
     void snapshotKeepsNominalEntriesAndPublishesTraceableExternalClassifications() throws Exception {
         ExternalClassificationTestSupport.Analysis analysis =
                 ExternalClassificationTestSupport.analyze(POSSIBLE);
@@ -209,6 +228,30 @@ class ExternalClassificationProjectionTest {
     private static ExternalClassification classify(ExternalClassificationTestSupport.Analysis analysis) {
         return new CicsIntrinsicClassifier().classify(
                 analysis.model(), analysis.occurrences(), analysis.resolution());
+    }
+
+    private static ExternalClassification.Entry copyClassification(
+            ExternalClassification.Entry source, String writtenText, Ast.Meta meta) {
+        return new ExternalClassification.Entry(0, source.programUnitId(), source.rootAstNodeId(),
+                source.rootOccurrenceId(), writtenText, source.technology(), source.kind(),
+                source.certainty(), source.reason(), meta, source.coveredOccurrenceIds());
+    }
+
+    private static void assertInconsistentClassificationFailsClosed(
+            ExternalClassificationTestSupport.Analysis analysis,
+            ExternalClassification.Entry inconsistent) {
+        ResolutionAnalysisReport report = ResolutionAnalysisReport.compose(
+                analysis.build(), ResolutionAnalysisReport.FrontendState.complete(),
+                analysis.occurrences(), analysis.resolution(),
+                new ExternalClassification(List.of(inconsistent)));
+
+        assertAll("inconsistent classification integrity",
+                () -> assertTrue(report.externalClassifications().entries().isEmpty()),
+                () -> assertEquals(5, report.gaps().size()),
+                () -> assertTrue(report.gaps().stream().anyMatch(gap ->
+                        gap.code().equals("INCONSISTENT_EXTERNAL_CLASSIFICATION"))),
+                () -> assertEquals(4, report.gaps().stream().filter(gap ->
+                        gap.category() == ResolutionAnalysisReport.GapCategory.REFERENCE_BINDING).count()));
     }
 
     private static int occurrences(String value, String needle) {

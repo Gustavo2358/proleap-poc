@@ -84,7 +84,7 @@ final class CicsIntrinsicClassifier {
                 : occurrencesByUnit.entrySet()) {
             Map<Integer, ReferenceOccurrences.Occurrence> byAstNode = new HashMap<>();
             for (ReferenceOccurrences.Occurrence occurrence : unitEntry.getValue().occurrences()) {
-                if (!occurrence.programUnitId().equals(unitEntry.getKey())) continue;
+                if (!occurrence.programUnitId().equals(unitEntry.getKey())) return Map.of();
                 ReferenceOccurrences.Occurrence previous =
                         byAstNode.put(occurrence.referenceAstNodeId(), occurrence);
                 if (previous != null) return Map.of();
@@ -111,9 +111,11 @@ final class CicsIntrinsicClassifier {
             Map<OccurrenceKey, ReferenceResolution.Entry> entriesByOccurrence) {
         List<Integer> result = new ArrayList<>();
         Ast.Expression argument = root.subscriptGroups().get(0).subscripts().get(0);
-        for (Ast.Node node : List.of(root, argument)) {
+        List<? extends Ast.Node> nominalNodes = argument instanceof Ast.DataReference
+                ? List.of(root, argument) : List.of(root);
+        for (Ast.Node node : nominalNodes) {
             ReferenceOccurrences.Occurrence occurrence = occurrencesByAstNode.get(node.meta().id());
-            if (occurrence == null) continue;
+            if (occurrence == null) return List.of();
             ReferenceResolution.Entry entry = entriesByOccurrence.get(
                     new OccurrenceKey(unitId, occurrence.id()));
             if (!coherent(entry, occurrence)) return List.of();
@@ -124,10 +126,7 @@ final class CicsIntrinsicClassifier {
 
     private static boolean coherent(ReferenceResolution.Entry entry,
                                     ReferenceOccurrences.Occurrence occurrence) {
-        return entry != null
-                && entry.occurrence().programUnitId().equals(occurrence.programUnitId())
-                && entry.occurrence().id() == occurrence.id()
-                && entry.occurrence().referenceAstNodeId() == occurrence.referenceAstNodeId();
+        return entry != null && entry.occurrence().equals(occurrence);
     }
 
     private static List<Ast.Node> nodes(Ast.Node root) {
