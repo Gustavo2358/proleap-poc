@@ -22,4 +22,8 @@ Exemplos:
 
 `scripts/source-normalizer-regression.sh` e `scripts/verify-naming.sh` permanecem entrypoints válidos e são encapsulados pelo full gate, sem reimplementação. O script E2E ainda executa a suíte Maven por conta própria; essa repetição é preservada nesta primeira unificação para não mudar silenciosamente o contrato do script legado.
 
+O E2E executa o runner estruturado dos artefatos gerados com o módulo nativo
+`node:test`; portanto `check-full.sh` requer Node.js 18 ou superior, além de JDK
+17+ e Maven 3.9+.
+
 Em falha, começar pelo nome do gate emitido e usar o [catálogo de evals](../evals/semantic-eval-catalog.md) para localizar capability, fixture, regra e invariant relacionados.

@@ -7,7 +7,8 @@ Esta página é uma porta de entrada de uso. Os contratos semânticos, as polít
 ## Requisitos
 
 - JDK 17 ou superior;
-- Maven 3.9 ou superior.
+- Maven 3.9 ou superior;
+- Node.js 18 ou superior para a regressão E2E e o gate `full`.
 
 ## Gerar e abrir
 

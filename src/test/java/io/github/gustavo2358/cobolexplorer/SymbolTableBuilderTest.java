@@ -45,8 +45,6 @@ class SymbolTableBuilderTest {
         SymbolTable table = new SymbolTableBuilder().build(ast);
 
         assertEquals(SymbolTable.ScopeKind.ROOT, table.rootScope().kind());
-        assertTrue(table.scopes().size() > 500);
-        assertTrue(table.symbols().size() > 500);
 
         SymbolTable.Symbol program = table.lookupLocal(0, SymbolTable.Namespace.PROGRAM, "coactupc")
                 .stream().findFirst().orElseThrow();

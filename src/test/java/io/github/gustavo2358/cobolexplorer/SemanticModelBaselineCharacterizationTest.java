@@ -12,15 +12,15 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.IdentityHashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** Freezes the semantic facts that exist before semantic-model hardening starts. */
+/** Characterizes semantic facts without freezing incidental corpus-wide cardinalities. */
 class SemanticModelBaselineCharacterizationTest {
 
     @Test
@@ -38,42 +38,40 @@ class SemanticModelBaselineCharacterizationTest {
                 () -> assertEquals(0, cbstm03a.unresolvedCopies()),
                 () -> assertEquals(0, cbstm03d.unresolvedCopies()));
 
-        assertMetrics(coactupc, "COACTUPC", 9_127, 11, 1, 0, 14, 0, 651, 851, 2);
-        assertMetrics(cbstm03a, "CBSTM03A", 2_740, 11, 14, 0, 0, 0, 219, 209, 0);
-        assertMetrics(cbstm03d, "CBSTM03D", 2_752, 11, 0, 14, 0, 0, 221, 211, 0);
+        assertEquals("COACTUPC", coactupc.ast().name());
+        assertEquals("CBSTM03A", cbstm03a.ast().name());
+        assertEquals("CBSTM03D", cbstm03d.ast().name());
+
+        List<Ast.CallStatement> coactupcCalls = nodes(coactupc.ast(), Ast.CallStatement.class);
+        assertEquals(1, coactupcCalls.size(), "the source has one known literal CALL from CSUTLDPY");
+        Ast.CallStatement coactupcCall = coactupcCalls.get(0);
+        assertEquals(Ast.CallTargetSyntax.LITERAL_PROGRAM_NAME, coactupcCall.targetSyntax());
+        Ast.ProgramReference programTarget = assertInstanceOf(Ast.ProgramReference.class, coactupcCall.target());
+        assertEquals("CSUTLDTC", programTarget.programName());
+
+        List<Ast.CallStatement> literalCalls = nodes(cbstm03a.ast(), Ast.CallStatement.class);
+        assertFalse(literalCalls.isEmpty());
+        assertTrue(literalCalls.stream().allMatch(call ->
+                call.targetSyntax() == Ast.CallTargetSyntax.LITERAL_PROGRAM_NAME
+                        && call.target() instanceof Ast.ProgramReference));
 
         List<Ast.CallStatement> dynamicCalls = nodes(cbstm03d.ast(), Ast.CallStatement.class);
-        assertEquals(14, dynamicCalls.size());
+        assertFalse(dynamicCalls.isEmpty());
         assertTrue(dynamicCalls.stream().allMatch(call ->
                 call.targetSyntax() == Ast.CallTargetSyntax.IDENTIFIER_OR_EXPRESSION
                         && call.target() instanceof Ast.DataReference reference
                         && reference.writtenName().equals("WS-CALL-TARGET")));
-        assertEquals(1, cbstm03d.symbolTable().lookupAll(
-                SymbolTable.Namespace.DATA, "WS-CALL-TARGET").size());
 
-        assertEquals(Map.of(
-                "computeStatement", 9,
-                "continueStatement", 57,
-                "divideStatement", 1,
-                "exitStatement", 49,
-                "initializeStatement", 10,
-                "inspectStatement", 4,
-                "setStatement", 225,
-                "stringStatement", 53), structuredByRule(coactupc.ast()));
-        assertEquals(Map.ofEntries(
-                Map.entry("addStatement", 3),
-                Map.entry("alterStatement", 4),
-                Map.entry("closeStatement", 1),
-                Map.entry("computeStatement", 4),
-                Map.entry("continueStatement", 12),
-                Map.entry("displayStatement", 33),
-                Map.entry("exitStatement", 17),
-                Map.entry("gobackStatement", 1),
-                Map.entry("initializeStatement", 2),
-                Map.entry("openStatement", 1),
-                Map.entry("setStatement", 83),
-                Map.entry("stringStatement", 12),
-                Map.entry("writeStatement", 95)), structuredByRule(cbstm03d.ast()));
+        List<Ast.EmbeddedLanguageStatement> embedded = nodes(
+                coactupc.ast(), Ast.EmbeddedLanguageStatement.class);
+        assertFalse(embedded.isEmpty());
+        assertTrue(embedded.stream().allMatch(statement ->
+                statement.language() == Ast.EmbeddedLanguage.CICS
+                        && statement.rawText().contains("EXEC CICS")));
+
+        assertModeledRules(coactupc.ast(), "computeStatement", "setStatement", "stringStatement");
+        assertModeledRules(cbstm03d.ast(), "writeStatement");
+        assertPreservedRules(cbstm03d.ast(), "alterStatement", "displayStatement");
     }
 
     @Test
@@ -84,38 +82,32 @@ class SemanticModelBaselineCharacterizationTest {
                 .map(Ast.DataReference::writtenName)
                 .toList();
 
-        assertEquals(2_853, names.size());
         assertTrue(names.contains("ACCTSIDI OF CACTUPAI"),
                 "OF qualification keeps the source spelling and separators");
         assertTrue(names.contains("DFHCOMMAREA (1:LENGTH OF CARDDEMO-COMMAREA)"),
                 "reference modification text remains faithfully preserved until structural modeling");
     }
 
-    private static void assertMetrics(Analysis analysis, String programName, int astNodes, int maxDepth,
-                                      int literalTargetCalls, int identifierTargetCalls,
-                                      int embedded, int unsupported,
-                                      int scopes, int symbols, int symbolDiagnostics) {
-        AstSnapshot.Metrics metrics = analysis.snapshot().metrics();
-        assertAll(programName,
-                () -> assertEquals(programName, analysis.ast().name()),
-                () -> assertEquals(astNodes, metrics.nodes()),
-                () -> assertEquals(maxDepth, metrics.maxDepth()),
-                () -> assertEquals(literalTargetCalls, metrics.literalTargetCalls()),
-                () -> assertEquals(identifierTargetCalls, metrics.identifierTargetCalls()),
-                () -> assertEquals(embedded, metrics.embeddedLanguages()),
-                () -> assertEquals(unsupported, metrics.unsupportedStatements()),
-                () -> assertEquals(scopes, analysis.symbolTable().scopes().size()),
-                () -> assertEquals(symbols, analysis.symbolTable().symbols().size()),
-                () -> assertEquals(symbolDiagnostics, analysis.symbolTable().diagnostics().size()));
+    private static void assertModeledRules(Ast.Program program, String... expectedRules) {
+        List<Ast.ModeledStatement> modeled = nodes(program, Ast.ModeledStatement.class);
+        List<Ast.PreservedStatement> preserved = nodes(program, Ast.PreservedStatement.class);
+        for (String expectedRule : expectedRules) {
+            assertTrue(modeled.stream().anyMatch(statement -> statement.grammarRule().equals(expectedRule)),
+                    () -> expectedRule + " must remain structurally modeled");
+            assertTrue(preserved.stream().noneMatch(statement -> statement.grammarRule().equals(expectedRule)),
+                    () -> expectedRule + " must not fall back to preserved text");
+        }
     }
 
-    private static Map<String, Integer> structuredByRule(Ast.Program program) {
-        Map<String, Integer> counts = new LinkedHashMap<>();
-        for (Ast.ModeledStatement statement : nodes(program, Ast.ModeledStatement.class))
-            counts.merge(statement.grammarRule(), 1, Integer::sum);
-        for (Ast.PreservedStatement statement : nodes(program, Ast.PreservedStatement.class))
-            counts.merge(statement.grammarRule(), 1, Integer::sum);
-        return Map.copyOf(counts);
+    private static void assertPreservedRules(Ast.Program program, String... expectedRules) {
+        List<Ast.ModeledStatement> modeled = nodes(program, Ast.ModeledStatement.class);
+        List<Ast.PreservedStatement> preserved = nodes(program, Ast.PreservedStatement.class);
+        for (String expectedRule : expectedRules) {
+            assertTrue(preserved.stream().anyMatch(statement -> statement.grammarRule().equals(expectedRule)),
+                    () -> expectedRule + " must remain explicitly preserved");
+            assertTrue(modeled.stream().noneMatch(statement -> statement.grammarRule().equals(expectedRule)),
+                    () -> expectedRule + " must not be reported as semantically modeled");
+        }
     }
 
     private static Analysis analyze(Path sourceFile, Path copybooks) throws Exception {
@@ -136,8 +128,7 @@ class SemanticModelBaselineCharacterizationTest {
         index(tree, ids, sizes, new int[]{0});
         Ast.Program ast = new AstBuilder(parser, preprocessing.text(), preprocessing.sourceMap(),
                 ids, sizes).build(tree).program();
-        return new Analysis(ast, AstSnapshot.from(ast), new SymbolTableBuilder().build(ast),
-                parser.getNumberOfSyntaxErrors(), preprocessing.unresolved());
+        return new Analysis(ast, parser.getNumberOfSyntaxErrors(), preprocessing.unresolved());
     }
 
     private static int index(ParseTree tree, IdentityHashMap<ParseTree, Integer> ids,
@@ -156,6 +147,5 @@ class SemanticModelBaselineCharacterizationTest {
         return result;
     }
 
-    private record Analysis(Ast.Program ast, AstSnapshot snapshot, SymbolTable symbolTable,
-                            int parserErrors, int unresolvedCopies) { }
+    private record Analysis(Ast.Program ast, int parserErrors, int unresolvedCopies) { }
 }

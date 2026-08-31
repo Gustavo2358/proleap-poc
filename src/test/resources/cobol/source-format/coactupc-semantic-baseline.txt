@@ -1,6 +1,0 @@
-tree-data.js|"source":"COACTUPC.cbl","originalLines":4236,"preprocessedLines":7408,"nodes":57227,"tokens":37682,"maxDepth":39,"unresolvedCopies":3,"lexerErrors":0,"parserErrors":0
-ast-data.js|"nodes":9127,"parseTreeNodes":57227,"maxDepth":11,"literalTargetCalls":1,"identifierTargetCalls":0,"embeddedLanguages":14,"unsupportedStatements":0,"preservedStatements":0
-symbol-data.js|"scopes":651,"symbols":851,"dataSymbols":749,"procedureSymbols":101,"fileSymbols":0,"diagnostics":2
-resolution-data.js|"claim":"INCOMPLETE","referenceBindingComplete":false,"dependencyAnalysisReady":false,"programUnits":1,"references":3042,"gaps":1137
-resolution-data.js|"status":{"RESOLVED":1921,"EXTERNAL_OBSERVED":1,"AMBIGUOUS":2,"UNRESOLVED":1118,"UNSUPPORTED":0}
-resolution-data.js|"metrics":{"indexedDeclarations":953,"nominalLookups":3482,"candidateInspections":1873,"maximumCandidates":2,"collectedReferences":3042}

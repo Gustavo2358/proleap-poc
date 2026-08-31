@@ -9,6 +9,16 @@ fi
 
 project_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 maven_bin="${MAVEN_BIN:-mvn}"
+
+if ! command -v node >/dev/null 2>&1; then
+  echo "Node.js 18 or newer is required for semantic artifact assertions" >&2
+  exit 1
+fi
+node_major="$(node -p 'process.versions.node.split(".")[0]')"
+if [[ ! "$node_major" =~ ^[0-9]+$ ]] || (( node_major < 18 )); then
+  echo "Node.js 18 or newer is required for semantic artifact assertions; found $(node --version)" >&2
+  exit 1
+fi
 run_root="$(mktemp -d "/tmp/cobol-source-normalizer-${phase}.XXXXXX")"
 canonical_output="$run_root/coactupc"
 fixture_output="$run_root/comment-entry"
@@ -41,42 +51,19 @@ for output in "$canonical_output" "$fixture_output" "$integration_output"; do
       exit 1
     fi
   done
-  grep -Fq '"lexerErrors":0' "$output/tree-data.js"
-  grep -Fq '"parserErrors":0' "$output/tree-data.js"
 done
 
-while IFS= read -r expected; do
-  [[ -z "$expected" ]] && continue
-  grep -Fqx "$expected" "$run_root/coactupc.log"
-done <"src/test/resources/cobol/source-format/coactupc-regression-baseline.txt"
+node --test scripts/assert-semantic-artifacts.test.mjs
+node scripts/assert-semantic-artifacts.mjs \
+  "$canonical_output" "$fixture_output" "$integration_output"
 
-while IFS='|' read -r artifact expected; do
-  [[ -z "$artifact" ]] && continue
-  grep -Fq "$expected" "$canonical_output/$artifact"
-done <"src/test/resources/cobol/source-format/coactupc-semantic-baseline.txt"
-
-grep -Fq '"n":"COMMENTBUG"' "$fixture_output/ast-data.js"
-for division in IDENTIFICATION ENVIRONMENT DATA PROCEDURE; do
-  grep -Fq "\"divisionKind\":\"$division\"" "$fixture_output/ast-data.js"
-done
-grep -Fq '"n":"environmentDivision"' "$fixture_output/tree-data.js"
-grep -Fq 'ENVIRONMENT DIVISION.' "$fixture_output/preprocessed.cbl"
+grep -Fqx 'ENVIRONMENT DIVISION.' "$fixture_output/preprocessed.cbl"
 if grep -Fq '*>CE ENVIRONMENT DIVISION.' "$fixture_output/preprocessed.cbl"; then
   echo "ENVIRONMENT DIVISION leaked into a comment entry" >&2
   exit 1
 fi
-grep -Fq '"sf":"comment-before-environment.cbl","sl":5' "$fixture_output/ast-data.js"
-
-grep -Fq '"n":"COPY-NORMALIZED"' "$integration_output/ast-data.js"
-grep -Fq '"n":"01 LONG-NAME"' "$integration_output/ast-data.js"
-grep -Fq '"sf":"FIELDS.cpy","sl":1' "$integration_output/ast-data.js"
-grep -Fq '"sf":"UNIT.cpy","sl":10' "$integration_output/ast-data.js"
-grep -Fq 'AUTHOR. *>CE ENTRY INSIDE COPY. WITH PERIODS.' \
+grep -Fqx 'AUTHOR. *>CE ENTRY INSIDE COPY. WITH PERIODS.' \
   "$integration_output/preprocessed.cbl"
-if grep -Fq '"g":"commentEntry"' "$integration_output/ast-data.js"; then
-  echo "Comment entry leaked into the semantic AST" >&2
-  exit 1
-fi
 
 echo "Source-normalizer regression passed: $run_root"
 sed -n '1,8p' "$run_root/coactupc.log"
