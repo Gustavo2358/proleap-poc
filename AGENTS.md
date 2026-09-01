@@ -52,7 +52,7 @@ Comece no [índice de conhecimento](docs/index.md). Carregue somente o contexto 
 
 ## Trabalho ativo
 
-O índice de trabalho está em [docs/work/index.md](docs/work/index.md). `WORK-AST-002` está ativo para implementar, em slices independentes, o hardening revisado de `BACKLOG-AST-001`; o Slice 1 foi mergeado no PR #10 e cada slice posterior exige nova instrução após revisão externa. `WORK-AST-003` é um Discovery separado e bloqueante sobre a consistência de IDs e traversal da AST; ele não autoriza corrigir produção antes do PR e review independentes. As conclusões de WORK-EXT-001 e WORK-COV-001 são baselines válidas, mas não autorizam iniciar taint localizado, itens `BACKLOG-EXT`, CFG, dataflow ou outras tecnologias.
+O índice de trabalho está em [docs/work/index.md](docs/work/index.md). `WORK-AST-002` permanece ativo para executar, em slices independentes, o hardening revisado de `BACKLOG-AST-001`: o Slice 1 foi mergeado no PR #10 e o Slice 2 está no checkpoint de Discovery do PR #13. A implementação de F-02 exige merge/review desse Discovery e autorização explícita posterior. `WORK-AST-003` foi concluído: o PR #11 fechou o Discovery de IDs/traversal e o PR #12 implementou a correção, removendo aquele bloqueio de `WORK-AST-002`. As conclusões de WORK-EXT-001 e WORK-COV-001 são baselines válidas, mas não autorizam iniciar taint localizado, itens `BACKLOG-EXT`, CFG, dataflow ou outras tecnologias.
 
 Ao trabalhar em um item:
 

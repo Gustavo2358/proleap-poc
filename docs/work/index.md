@@ -4,8 +4,7 @@ Work items delimitam a mudança em execução; o [backlog](backlog.md) registra 
 
 ## Ativo
 
-- [WORK-AST-002 — Hardening da fronteira AST para CFG e dataflow](active/WORK-AST-002/spec.md) — Slice 1 mergeado no PR #10; Slice 2 aguarda nova autorização.
-- [WORK-AST-003 — Discovery da consistência global entre IDs e traversal da AST](active/WORK-AST-003/spec.md) — investigação separada que bloqueia o próximo slice até review independente.
+- [WORK-AST-002 — Hardening da fronteira AST para CFG e dataflow](active/WORK-AST-002/spec.md) — Slice 1 mergeado no PR #10; Slice 2 no checkpoint de Discovery do PR #13. Implementar F-02 depende de merge/review e autorização explícita posterior.
 
 ## Histórico
 
@@ -13,6 +12,7 @@ Work items delimitam a mudança em execução; o [backlog](backlog.md) registra 
 
 - [WORK-HARNESS-001 — Concluir Harness Engineering v1](history/WORK-HARNESS-001.md)
 - [WORK-AST-001 — Construção da AST dirigida por contextos tipados](history/WORK-AST-001.md)
+- [WORK-AST-003 — Corrigir a consistência global entre IDs e traversal da AST](history/WORK-AST-003.md) — Discovery no PR #11 e implementação no PR #12; não bloqueia mais WORK-AST-002.
 - [WORK-RES-001 — Observar CALLs literais externos por artefato](history/WORK-RES-001.md)
 - [WORK-RES-002 — Veredito sobre W3D-AUX e categorias de resolução](history/WORK-RES-002.md)
 - [WORK-RES-003 — Resolver SET de condition-name sem namespace DATA espúrio](history/WORK-RES-003.md)
