@@ -30,7 +30,7 @@ Testes, corpus e artefatos gerados são evidência executável; não definem a s
 | trabalho ativo, histórico curto ou backlog | [work/](work/index.md) |
 | decisão antiga, relatório, baseline ou matriz de migração | [history/](history/index.md), somente quando necessário |
 
-O work item ativo é [WORK-AST-002](work/active/WORK-AST-002/spec.md), que implementa em slices independentes o hardening AST já caracterizado; a autorização atual termina no Slice 1 de coverage e taxonomia. O [índice de trabalho](work/index.md) preserva resumos úteis dos itens concluídos e mantém backlog separado de autorização.
+Os work items ativos são [WORK-AST-002](work/active/WORK-AST-002/spec.md), cujo Slice 1 foi mergeado e cujo Slice 2 continua sem autorização, e [WORK-AST-003](work/active/WORK-AST-003/spec.md), Discovery separado sobre IDs e traversal da AST. O [índice de trabalho](work/index.md) preserva resumos úteis dos itens concluídos e mantém backlog separado de autorização.
 
 ## Fronteira entre famílias documentais
 
