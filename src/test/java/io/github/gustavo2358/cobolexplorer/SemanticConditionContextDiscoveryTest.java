@@ -1,0 +1,498 @@
+package io.github.gustavo2358.cobolexplorer;
+
+import io.github.gustavo2358.cobolexplorer.antlr.CobolParser;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.EnumSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+/** Discovery-only characterization; this class deliberately does not change production behavior. */
+class SemanticConditionContextDiscoveryTest {
+    private static final Path MINIMAL = Path.of(
+            "src/test/resources/cobol/resolution/abbreviated-condition-context.cbl");
+
+    @Test
+    void characterizesMinimalChainFromParseTreeThroughResolution() throws IOException {
+        AstBoundaryTestSupport.Analysis analysis = AstBoundaryTestSupport.analyze(
+                Files.readString(MINIMAL, StandardCharsets.UTF_8), MINIMAL.getFileName().toString());
+
+        List<CobolParser.ConditionNameReferenceContext> parsedTails = AstBoundaryTestSupport.contexts(
+                analysis.tree(), CobolParser.ConditionNameReferenceContext.class);
+        assertEquals(List.of("C", "D"), parsedTails.stream().map(context -> context.getText()).toList());
+        assertEquals(0, AstBoundaryTestSupport.contexts(
+                analysis.tree(), CobolParser.AbbreviationContext.class).size());
+
+        Ast.IfStatement statement = AstBoundaryTestSupport.nodes(analysis, Ast.IfStatement.class).get(0);
+        Ast.OperationExpression logical = assertInstanceOf(Ast.OperationExpression.class, statement.condition());
+        Ast.OperationExpression relation = assertInstanceOf(Ast.OperationExpression.class, logical.operands().get(0));
+        assertAll("AST lowering",
+                () -> assertEquals("OR", logical.operator()),
+                () -> assertEquals(Ast.OperationCategory.OTHER, logical.category()),
+                () -> assertEquals(3, logical.operands().size()),
+                () -> assertEquals(Ast.OperationCategory.RELATIONAL, relation.category()),
+                () -> assertEquals("=", relation.operator()),
+                () -> assertEquals(List.of("conditionNameReference", "conditionNameReference"),
+                        logical.operands().subList(1, 3).stream()
+                                .map(operand -> operand.meta().origin().grammarRule()).toList()));
+
+        List<ReferenceResolution.Entry> entries = valueReads(analysis);
+        assertEquals(List.of("A", "B", "C", "D"), entries.stream()
+                .map(entry -> entry.occurrence().writtenText()).toList());
+        for (ReferenceResolution.Entry entry : entries.subList(0, 2)) {
+            assertAll(entry.toString(),
+                    () -> assertEquals(ResolutionContracts.ReferenceKind.INDEX, entry.occurrence().kind()),
+                    () -> assertEquals(EnumSet.of(ResolutionContracts.ReferenceKind.DATA,
+                            ResolutionContracts.ReferenceKind.INDEX), entry.occurrence().admissibleKinds()),
+                    () -> assertEquals(ResolutionContracts.ReferenceRole.VALUE_READ, entry.occurrence().role()),
+                    () -> assertEquals(ResolutionContracts.ResolutionStatus.RESOLVED, entry.status()),
+                    () -> assertEquals(ResolutionContracts.ReferenceKind.DATA,
+                            entry.selectedCandidate().orElseThrow().kind()));
+        }
+        for (ReferenceResolution.Entry entry : entries.subList(2, 4)) {
+            assertAll(entry.toString(),
+                    () -> assertEquals("conditionNameReference", entry.occurrence().grammarRule()),
+                    () -> assertEquals(ResolutionContracts.ReferenceKind.CONDITION, entry.occurrence().kind()),
+                    () -> assertEquals(Set.of(ResolutionContracts.ReferenceKind.CONDITION),
+                            entry.occurrence().admissibleKinds()),
+                    () -> assertEquals(ResolutionContracts.ReferenceRole.VALUE_READ, entry.occurrence().role()),
+                    () -> assertEquals(ResolutionContracts.ResolutionStatus.UNRESOLVED, entry.status()),
+                    () -> assertEquals(ResolutionContracts.ResolutionReason.INVALID_NAMESPACE_FOR_CONTEXT,
+                            entry.reason()),
+                    () -> assertTrue(entry.candidates().isEmpty()),
+                    () -> assertEquals(SymbolTable.SymbolKind.DATA_ITEM,
+                            sameNameSymbols(analysis, entry.occurrence().writtenText()).get(0).kind()));
+        }
+    }
+
+    @Test
+    void characterizesNearbyFormsAndInformationLoss() {
+        Map<String, String> conditions = adversarialConditions();
+        Map<String, AstBoundaryTestSupport.Analysis> analyses = new LinkedHashMap<>();
+        conditions.forEach((name, condition) -> analyses.put(name,
+                AstBoundaryTestSupport.analyze(sourceWithCondition(name, condition), name + ".cbl")));
+        assertEquals(19, analyses.size(), "every matrix form must remain accepted by the configured grammar");
+
+        ReferenceResolution.Entry explicitC = entry(analyses.get("explicit-relation"), "C");
+        ReferenceResolution.Entry abbreviatedC = entry(analyses.get("one-abbreviation"), "C");
+        assertAll("explicit versus abbreviated",
+                () -> assertEquals(EnumSet.of(ResolutionContracts.ReferenceKind.DATA,
+                        ResolutionContracts.ReferenceKind.INDEX), explicitC.occurrence().admissibleKinds()),
+                () -> assertEquals(ResolutionContracts.ResolutionStatus.RESOLVED, explicitC.status()),
+                () -> assertEquals(Set.of(ResolutionContracts.ReferenceKind.CONDITION),
+                        abbreviatedC.occurrence().admissibleKinds()),
+                () -> assertEquals(ResolutionContracts.ResolutionReason.INVALID_NAMESPACE_FOR_CONTEXT,
+                        abbreviatedC.reason()));
+
+        List<String> bareTailCases = List.of("one-abbreviation", "two-abbreviations", "and-abbreviation",
+                "greater-abbreviation", "not-equal-abbreviation", "logical-not-abbreviation",
+                "mixed-and-or", "mixed-or-and", "grouped-whole", "grouped-left",
+                "restart-then-abbreviate");
+        long rigidConditionOccurrences = bareTailCases.stream().flatMap(name -> valueReads(analyses.get(name)).stream())
+                .filter(entry -> entry.occurrence().grammarRule().equals("conditionNameReference"))
+                .peek(entry -> assertEquals(ResolutionContracts.ResolutionReason.INVALID_NAMESPACE_FOR_CONTEXT,
+                        entry.reason(), entry.toString()))
+                .count();
+        assertEquals(15, rigidConditionOccurrences);
+
+        for (String name : List.of("distributed-or", "distributed-and")) {
+            Ast.Expression expression = AstBoundaryTestSupport.nodes(analyses.get(name), Ast.IfStatement.class)
+                    .get(0).condition();
+            Ast.PreservedExpression preserved = assertInstanceOf(Ast.PreservedExpression.class, expression);
+            assertEquals("relationCombinedComparison", preserved.grammarRule());
+            assertTrue(valueReads(analyses.get(name)).stream().allMatch(entry ->
+                    entry.occurrence().admissibleKinds().equals(Set.of(ResolutionContracts.ReferenceKind.DATA))));
+        }
+
+        Ast.PreservedExpression statedOperator = AstBoundaryTestSupport.nodes(
+                analyses.get("stated-new-operator"), Ast.PreservedExpression.class).get(0);
+        assertAll("explicit operator abbreviation",
+                () -> assertEquals("abbreviation", statedOperator.grammarRule()),
+                () -> assertEquals(Set.of(ResolutionContracts.ReferenceKind.DATA),
+                        entry(analyses.get("stated-new-operator"), "C").occurrence().admissibleKinds()));
+
+        AstBoundaryTestSupport.Analysis multiple = analyses.get("multiple-abbreviations-one-tail");
+        assertAll("the grammar accepts two abbreviation children but lowering selects only the first",
+                () -> assertEquals(2, AstBoundaryTestSupport.contexts(
+                        multiple.tree(), CobolParser.AbbreviationContext.class).size()),
+                () -> assertTrue(valueReads(multiple).stream().anyMatch(entry ->
+                        entry.occurrence().writtenText().equals("C"))),
+                () -> assertFalse(valueReads(multiple).stream().anyMatch(entry ->
+                        entry.occurrence().writtenText().equals("D"))));
+
+        for (String name : List.of("mixed-and-or", "mixed-or-and")) {
+            Ast.OperationExpression mixed = assertInstanceOf(Ast.OperationExpression.class,
+                    AstBoundaryTestSupport.nodes(analyses.get(name), Ast.IfStatement.class).get(0).condition());
+            assertAll(name,
+                    () -> assertEquals("MIXED_LOGICAL", mixed.operator()),
+                    () -> assertEquals(3, mixed.operands().size()),
+                    () -> assertEquals(Ast.OperationCategory.OTHER, mixed.category()));
+        }
+    }
+
+    @Test
+    void characterizesDeclarationKindQualificationAndHomonymMatrix() {
+        record Variant(String declarations, String condition, ResolutionContracts.ResolutionStatus status,
+                       ResolutionContracts.ResolutionReason reason, ResolutionContracts.ReferenceKind candidateKind,
+                       List<SymbolTable.SymbolKind> declaredKinds) { }
+        Map<String, Variant> variants = new LinkedHashMap<>();
+        variants.put("data", new Variant("01 C PIC X.", "A = B OR C",
+                ResolutionContracts.ResolutionStatus.UNRESOLVED,
+                ResolutionContracts.ResolutionReason.INVALID_NAMESPACE_FOR_CONTEXT, null,
+                List.of(SymbolTable.SymbolKind.DATA_ITEM)));
+        variants.put("condition-name", new Variant("01 FLAG PIC X.\n   88 C VALUE 'Y'.", "A = B OR C",
+                ResolutionContracts.ResolutionStatus.RESOLVED,
+                ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION,
+                ResolutionContracts.ReferenceKind.CONDITION, List.of(SymbolTable.SymbolKind.CONDITION_NAME)));
+        variants.put("index-name", new Variant("01 T OCCURS 2 TIMES INDEXED BY C.\n   05 V PIC X.", "A = B OR C",
+                ResolutionContracts.ResolutionStatus.UNRESOLVED,
+                ResolutionContracts.ResolutionReason.INVALID_NAMESPACE_FOR_CONTEXT, null,
+                List.of(SymbolTable.SymbolKind.INDEX_NAME)));
+        variants.put("renames-66", new Variant(
+                "01 G.\n   05 C PIC X.\n   05 D PIC X.\n   66 R RENAMES C THRU D.", "A = B OR R",
+                ResolutionContracts.ResolutionStatus.UNRESOLVED,
+                ResolutionContracts.ResolutionReason.INVALID_NAMESPACE_FOR_CONTEXT, null,
+                List.of(SymbolTable.SymbolKind.RENAMES)));
+        variants.put("missing", new Variant("01 PRESENT PIC X.", "A = B OR MISSING",
+                ResolutionContracts.ResolutionStatus.UNRESOLVED,
+                ResolutionContracts.ResolutionReason.DECLARATION_NOT_FOUND, null, List.of()));
+        variants.put("homonym-data-condition", new Variant(
+                "01 C PIC X.\n01 FLAG PIC X.\n   88 C VALUE 'Y'.", "A = B OR C",
+                ResolutionContracts.ResolutionStatus.RESOLVED,
+                ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION,
+                ResolutionContracts.ReferenceKind.CONDITION,
+                List.of(SymbolTable.SymbolKind.DATA_ITEM, SymbolTable.SymbolKind.CONDITION_NAME)));
+        variants.put("qualified-data", new Variant("01 G.\n   05 C PIC X.", "A = B OR C OF G",
+                ResolutionContracts.ResolutionStatus.UNRESOLVED,
+                ResolutionContracts.ResolutionReason.INVALID_NAMESPACE_FOR_CONTEXT, null,
+                List.of(SymbolTable.SymbolKind.DATA_ITEM)));
+        variants.put("qualified-condition", new Variant(
+                "01 G.\n   05 FLAG PIC X.\n      88 C VALUE 'Y'.", "A = B OR C OF G",
+                ResolutionContracts.ResolutionStatus.RESOLVED,
+                ResolutionContracts.ResolutionReason.QUALIFIED_HIERARCHY_MATCH,
+                ResolutionContracts.ReferenceKind.CONDITION, List.of(SymbolTable.SymbolKind.CONDITION_NAME)));
+
+        for (Map.Entry<String, Variant> item : variants.entrySet()) {
+            Variant expected = item.getValue();
+            AstBoundaryTestSupport.Analysis analysis = AstBoundaryTestSupport.analyze(
+                    sourceWithDeclarations(item.getKey(), expected.declarations(), expected.condition()),
+                    item.getKey() + ".cbl");
+            ReferenceResolution.Entry tail = tailEntry(analysis);
+            List<SymbolTable.SymbolKind> declaredKinds = sameNameSymbols(analysis,
+                    tail.occurrence().writtenText().split("\\s+")[0]).stream()
+                    .map(SymbolTable.Symbol::kind).toList();
+            assertAll(item.getKey(),
+                    () -> assertEquals("conditionNameReference", tail.occurrence().grammarRule()),
+                    () -> assertEquals(ResolutionContracts.ReferenceKind.CONDITION, tail.occurrence().kind()),
+                    () -> assertEquals(Set.of(ResolutionContracts.ReferenceKind.CONDITION),
+                            tail.occurrence().admissibleKinds()),
+                    () -> assertEquals(expected.status(), tail.status()),
+                    () -> assertEquals(expected.reason(), tail.reason()),
+                    () -> assertEquals(expected.declaredKinds(), declaredKinds),
+                    () -> assertEquals(expected.candidateKind(), tail.selectedCandidate()
+                            .map(ReferenceResolution.Candidate::kind).orElse(null)));
+        }
+    }
+
+    @Test
+    void characterizesSharedConditionLoweringAcrossIfEvaluateAndPerform() {
+        AstBoundaryTestSupport.Analysis analysis = AstBoundaryTestSupport.analyze("""
+                IDENTIFICATION DIVISION.
+                PROGRAM-ID. SHARED-CONDITION-CONTEXT.
+                DATA DIVISION.
+                WORKING-STORAGE SECTION.
+                01 A PIC X.
+                01 B PIC X.
+                01 C PIC X.
+                PROCEDURE DIVISION.
+                    IF A = B OR C CONTINUE END-IF.
+                    EVALUATE A = B OR C
+                       WHEN TRUE CONTINUE
+                    END-EVALUATE.
+                    PERFORM UNTIL A = B OR C
+                       CONTINUE
+                    END-PERFORM.
+                END PROGRAM SHARED-CONDITION-CONTEXT.
+                """, "shared-condition-context.cbl");
+
+        List<ReferenceResolution.Entry> tails = valueReads(analysis).stream()
+                .filter(entry -> entry.occurrence().writtenText().equals("C")).toList();
+        assertAll("IF, EVALUATE subject, and PERFORM UNTIL share the same lowering defect",
+                () -> assertEquals(1, AstBoundaryTestSupport.nodes(analysis, Ast.IfStatement.class).size()),
+                () -> assertEquals(1, AstBoundaryTestSupport.nodes(analysis, Ast.EvaluateStatement.class).size()),
+                () -> assertEquals(1, AstBoundaryTestSupport.nodes(analysis, Ast.PerformStatement.class).size()),
+                () -> assertEquals(3, tails.size()),
+                () -> assertTrue(tails.stream().allMatch(entry ->
+                        entry.occurrence().admissibleKinds().equals(Set.of(ResolutionContracts.ReferenceKind.CONDITION)))),
+                () -> assertTrue(tails.stream().allMatch(entry ->
+                        entry.reason() == ResolutionContracts.ResolutionReason.INVALID_NAMESPACE_FOR_CONTEXT)));
+    }
+
+    @Test
+    void characterizesSearchConditionReferencesThatDisappearAtThePreservedBoundary() {
+        AstBoundaryTestSupport.Analysis analysis = AstBoundaryTestSupport.analyze("""
+                IDENTIFICATION DIVISION.
+                PROGRAM-ID. SEARCH-CONTEXT.
+                DATA DIVISION.
+                WORKING-STORAGE SECTION.
+                01 A PIC X.
+                01 B PIC X.
+                01 C PIC X.
+                01 T OCCURS 2 TIMES INDEXED BY IDX.
+                   05 FLAG PIC X.
+                      88 FLAG-ON VALUE 'Y'.
+                PROCEDURE DIVISION.
+                    SEARCH T
+                       WHEN A = B OR C CONTINUE
+                       WHEN FLAG-ON CONTINUE
+                    END-SEARCH.
+                END PROGRAM SEARCH-CONTEXT.
+                """, "search-context.cbl");
+
+        Ast.PreservedStatement search = AstBoundaryTestSupport.nodes(analysis, Ast.PreservedStatement.class).stream()
+                .filter(statement -> statement.grammarRule().equals("searchStatement"))
+                .findFirst().orElseThrow();
+        List<String> collected = analysis.resolution().entries().stream()
+                .map(entry -> entry.occurrence().writtenText()).toList();
+        assertAll("SEARCH condition preservation",
+                () -> assertEquals(List.of("T", "A", "B"), search.operands().stream()
+                        .map(operand -> ((Ast.DataReference) operand.value()).baseName()).toList()),
+                () -> assertEquals(List.of("searchWhen", "searchWhen"), search.clauses().stream()
+                        .map(Ast.StatementClause::grammarRule).toList()),
+                () -> assertTrue(collected.containsAll(List.of("IDX", "T", "A", "B"))),
+                () -> assertFalse(collected.contains("C")),
+                () -> assertFalse(collected.contains("FLAG-ON")));
+    }
+
+    @Test
+    void characterizesConditionNameSubscriptCorruption() {
+        AstBoundaryTestSupport.Analysis analysis = AstBoundaryTestSupport.analyze("""
+                IDENTIFICATION DIVISION.
+                PROGRAM-ID. CONDITION-SUBSCRIPT.
+                DATA DIVISION.
+                WORKING-STORAGE SECTION.
+                01 T OCCURS 2 TIMES INDEXED BY IDX.
+                   05 FLAG PIC X.
+                      88 FLAG-ON VALUE 'Y'.
+                PROCEDURE DIVISION.
+                    IF FLAG-ON(IDX) CONTINUE END-IF.
+                END PROGRAM CONDITION-SUBSCRIPT.
+                """, "condition-subscript.cbl");
+
+        assertEquals(1, AstBoundaryTestSupport.contexts(analysis.tree(),
+                CobolParser.ConditionNameSubscriptReferenceContext.class).size());
+        ReferenceResolution.Entry condition = analysis.resolution().entries().stream()
+                .filter(entry -> entry.occurrence().writtenText().equals("FLAG-ON(IDX)"))
+                .findFirst().orElseThrow();
+        Ast.DataReference ast = (Ast.DataReference) AstBoundaryTestSupport.nodes(analysis).stream()
+                .filter(node -> node.meta().id() == condition.occurrence().referenceAstNodeId())
+                .findFirst().orElseThrow();
+        assertAll("condition-name subscript",
+                () -> assertEquals("IDX", ast.baseName()),
+                () -> assertEquals("FLAG-ON(IDX)", ast.writtenText()),
+                () -> assertTrue(ast.subscriptGroups().isEmpty()),
+                () -> assertEquals(ResolutionContracts.ReferenceKind.CONDITION, condition.occurrence().kind()),
+                () -> assertEquals(ResolutionContracts.ResolutionReason.INVALID_NAMESPACE_FOR_CONTEXT,
+                        condition.reason()),
+                () -> assertFalse(analysis.resolution().entries().stream().anyMatch(entry ->
+                        entry.occurrence().writtenText().equals("IDX")
+                                && entry.occurrence().role() == ResolutionContracts.ReferenceRole.SUBSCRIPT)));
+    }
+
+    @Test
+    void characterizesCopyAndNestedScopeWithoutTreatingThemAsRootCause() {
+        AstBoundaryTestSupport.Analysis copy = AstBoundaryTestSupport.analyze("""
+                IDENTIFICATION DIVISION.
+                PROGRAM-ID. COPY-CONTEXT.
+                DATA DIVISION.
+                WORKING-STORAGE SECTION.
+                01 A PIC X.
+                01 B PIC X.
+                COPY SEMCOND.
+                PROCEDURE DIVISION.
+                    IF A = B OR COPY-C CONTINUE END-IF.
+                END PROGRAM COPY-CONTEXT.
+                """, "copy-context.cbl");
+        ReferenceResolution.Entry copyTail = entry(copy, "COPY-C");
+        Ast.DataEntry copiedDeclaration = AstBoundaryTestSupport.nodes(copy, Ast.DataEntry.class).stream()
+                .filter(dataEntry -> dataEntry.name().equals("COPY-C")).findFirst().orElseThrow();
+
+        AstBoundaryTestSupport.Analysis nested = AstBoundaryTestSupport.analyze("""
+                IDENTIFICATION DIVISION.
+                PROGRAM-ID. OUTER-CONTEXT.
+                DATA DIVISION.
+                WORKING-STORAGE SECTION.
+                01 OUTER-FLAG IS GLOBAL PIC X.
+                   88 C VALUE 'Y'.
+                PROCEDURE DIVISION.
+                    GOBACK.
+                IDENTIFICATION DIVISION.
+                PROGRAM-ID. INNER-CONTEXT.
+                DATA DIVISION.
+                WORKING-STORAGE SECTION.
+                01 A PIC X.
+                01 B PIC X.
+                01 C PIC X.
+                PROCEDURE DIVISION.
+                    IF A = B OR C CONTINUE END-IF.
+                END PROGRAM INNER-CONTEXT.
+                END PROGRAM OUTER-CONTEXT.
+                """, "nested-context.cbl");
+        ReferenceResolution.Entry nestedTail = nested.resolution().entries().stream()
+                .filter(entry -> entry.occurrence().programUnitId().canonicalProgramName().equals("INNER-CONTEXT"))
+                .filter(entry -> entry.occurrence().writtenText().equals("C"))
+                .findFirst().orElseThrow();
+
+        assertAll("COPY provenance and nested lookup remain orthogonal to the classification defect",
+                () -> assertEquals("SEMCOND.cpy", copiedDeclaration.meta().provenance().original().file()),
+                () -> assertFalse(copiedDeclaration.meta().provenance().includeChain().isEmpty()),
+                () -> assertEquals(ResolutionContracts.ResolutionReason.INVALID_NAMESPACE_FOR_CONTEXT,
+                        copyTail.reason()),
+                () -> assertEquals(ResolutionContracts.ResolutionReason.INVALID_NAMESPACE_FOR_CONTEXT,
+                        nestedTail.reason()),
+                () -> assertTrue(nestedTail.candidates().isEmpty()));
+    }
+
+    @Test
+    @EnabledIfSystemProperty(named = "semantic.condition.required", matches = "true")
+    void requiredSemanticOraclesForFutureImplementation() {
+        List<org.junit.jupiter.api.function.Executable> oracles = new ArrayList<>();
+        oracles.add(() -> assertTailResolvesAs("data abbreviation", "01 C PIC X.",
+                "A = B OR C", "C", ResolutionContracts.ReferenceKind.DATA));
+        oracles.add(() -> assertTailResolvesAs("real condition-name", "01 FLAG PIC X.\n   88 C VALUE 'Y'.",
+                "C", "C", ResolutionContracts.ReferenceKind.CONDITION));
+        oracles.add(() -> assertTailResolvesAs("index abbreviation",
+                "01 T OCCURS 2 TIMES INDEXED BY C.\n   05 V PIC X.",
+                "A = B OR C", "C", ResolutionContracts.ReferenceKind.INDEX));
+        oracles.add(() -> assertTailResolvesAs("RENAMES abbreviation",
+                "01 G.\n   05 C PIC X.\n   05 D PIC X.\n   66 R RENAMES C THRU D.",
+                "A = B OR R", "R", ResolutionContracts.ReferenceKind.DATA));
+        oracles.add(() -> assertTailResolvesAs("explicit operator abbreviation",
+                "01 C PIC X.", "A = B OR < C", "C", ResolutionContracts.ReferenceKind.DATA));
+        oracles.add(() -> assertTailResolvesAs("mixed AND/OR", "01 C PIC X.\n01 D PIC X.",
+                "A = B OR C AND D", "D", ResolutionContracts.ReferenceKind.DATA));
+        oracles.add(() -> assertTailResolvesAs("parenthesized abbreviation", "01 C PIC X.\n01 D PIC X.",
+                "(A = B OR C) AND D", "D", ResolutionContracts.ReferenceKind.DATA));
+        oracles.add(() -> assertTailResolvesAs("qualified abbreviation", "01 G.\n   05 C PIC X.",
+                "A = B OR C OF G", "C OF G", ResolutionContracts.ReferenceKind.DATA));
+        oracles.add(() -> {
+            AstBoundaryTestSupport.Analysis missing = AstBoundaryTestSupport.analyze(
+                    sourceWithDeclarations("required-missing", "01 PRESENT PIC X.", "A = B OR MISSING"),
+                    "required-missing.cbl");
+            assertEquals(ResolutionContracts.ResolutionReason.DECLARATION_NOT_FOUND,
+                    entry(missing, "MISSING").reason());
+        });
+        oracles.add(() -> {
+            AstBoundaryTestSupport.Analysis multiple = AstBoundaryTestSupport.analyze(
+                    sourceWithDeclarations("required-multiple", "01 C PIC X.\n01 D PIC X.",
+                            "A = B OR C OR D"), "required-multiple.cbl");
+            assertAll("multiple consecutive abbreviations",
+                    () -> assertEquals(ResolutionContracts.ReferenceKind.DATA,
+                            entry(multiple, "C").selectedCandidate()
+                                    .map(ReferenceResolution.Candidate::kind).orElse(null)),
+                    () -> assertEquals(ResolutionContracts.ReferenceKind.DATA,
+                            entry(multiple, "D").selectedCandidate()
+                                    .map(ReferenceResolution.Candidate::kind).orElse(null)));
+        });
+        assertAll("future semantic requirements", oracles.stream());
+    }
+
+    private static void assertTailResolvesAs(String label, String declarations, String condition,
+                                             String writtenName, ResolutionContracts.ReferenceKind expectedKind) {
+        String slug = label.replaceAll("[^A-Za-z0-9-]", "-");
+        AstBoundaryTestSupport.Analysis analysis = AstBoundaryTestSupport.analyze(
+                sourceWithDeclarations("required-" + slug, declarations, condition),
+                "required-" + slug + ".cbl");
+        ReferenceResolution.Entry entry = entry(analysis, writtenName);
+        assertAll(label,
+                () -> assertTrue(entry.occurrence().admissibleKinds().contains(expectedKind)),
+                () -> assertEquals(ResolutionContracts.ResolutionStatus.RESOLVED, entry.status()),
+                () -> assertEquals(expectedKind, entry.selectedCandidate()
+                        .map(ReferenceResolution.Candidate::kind).orElse(null)));
+    }
+
+    private static Map<String, String> adversarialConditions() {
+        Map<String, String> result = new LinkedHashMap<>();
+        result.put("simple", "A = B");
+        result.put("one-abbreviation", "A = B OR C");
+        result.put("two-abbreviations", "A = B OR C OR D");
+        result.put("and-abbreviation", "A = B AND C");
+        result.put("explicit-relation", "A = B OR A = C");
+        result.put("new-explicit-subject", "A = B OR C = D");
+        result.put("greater-abbreviation", "A > B OR C");
+        result.put("not-equal-abbreviation", "A NOT = B OR C");
+        result.put("logical-not-abbreviation", "A = B OR NOT C");
+        result.put("mixed-and-or", "A = B AND C OR D");
+        result.put("mixed-or-and", "A = B OR C AND D");
+        result.put("grouped-whole", "(A = B OR C) AND D");
+        result.put("grouped-left", "(A = B) OR C");
+        result.put("distributed-or", "A = (B OR C)");
+        result.put("distributed-and", "A = (B AND C)");
+        result.put("stated-new-operator", "A = B OR < C");
+        result.put("not-relational-operator", "A = B OR NOT = C");
+        result.put("multiple-abbreviations-one-tail", "A = B OR < C > D");
+        result.put("restart-then-abbreviate", "A = B OR C = D OR E");
+        return result;
+    }
+
+    private static List<ReferenceResolution.Entry> valueReads(AstBoundaryTestSupport.Analysis analysis) {
+        return analysis.resolution().entries().stream()
+                .filter(entry -> entry.occurrence().role() == ResolutionContracts.ReferenceRole.VALUE_READ)
+                .sorted(Comparator.comparingInt(entry -> entry.occurrence().meta().span().startToken()))
+                .toList();
+    }
+
+    private static ReferenceResolution.Entry tailEntry(AstBoundaryTestSupport.Analysis analysis) {
+        return valueReads(analysis).stream()
+                .filter(entry -> !entry.occurrence().writtenText().equals("A")
+                        && !entry.occurrence().writtenText().equals("B"))
+                .findFirst().orElseThrow();
+    }
+
+    private static ReferenceResolution.Entry entry(AstBoundaryTestSupport.Analysis analysis, String writtenName) {
+        return valueReads(analysis).stream()
+                .filter(candidate -> candidate.occurrence().writtenText().equals(writtenName))
+                .reduce((first, second) -> second).orElseThrow();
+    }
+
+    private static List<SymbolTable.Symbol> sameNameSymbols(AstBoundaryTestSupport.Analysis analysis, String name) {
+        String canonical = SymbolTable.canonical(name);
+        return analysis.tables().units().stream().flatMap(unit -> unit.symbolTable().symbols().stream())
+                .filter(symbol -> symbol.canonicalName().equals(canonical)).toList();
+    }
+
+    private static String sourceWithCondition(String programSuffix, String condition) {
+        return sourceWithDeclarations(programSuffix, "01 C PIC X.\n01 D PIC X.\n01 E PIC X.", condition);
+    }
+
+    private static String sourceWithDeclarations(String programSuffix, String declarations, String condition) {
+        String program = ("D-" + programSuffix).toUpperCase().replace('_', '-');
+        return """
+                IDENTIFICATION DIVISION.
+                PROGRAM-ID. %s.
+                DATA DIVISION.
+                WORKING-STORAGE SECTION.
+                01 A PIC X.
+                01 B PIC X.
+                %s
+                PROCEDURE DIVISION.
+                    IF %s CONTINUE END-IF.
+                END PROGRAM %s.
+                """.formatted(program, declarations, condition, program);
+    }
+}
