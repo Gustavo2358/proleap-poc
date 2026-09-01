@@ -2,27 +2,23 @@
 
 ## Onde estamos
 
-Discovery concluído e validado sobre a base `c6d9b6e1b597f34db06b41f4e8e04cdcf1d68a3a` em `discovery/work-ast-003-preorder-invariant`. O refinamento para review corrigiu a descrição do Caso B, explicitou a função apenas observacional dos IDs quebrados e ampliou a auditoria de `declarationVisibility`; nenhuma correção de produção foi iniciada.
+Fase 2 implementada em `fix/work-ast-003-preorder-invariant` sobre `47484979b666a61758539630dcf4425249c68340`, merge do PR #11. A correção, regressões e promoção canônica do invariant foram publicadas no PR #12; merge permanece proibido até review.
 
 ## Verde conhecido
 
-- Baseline anterior às fixtures: gate `full` verde.
-- Teste focal normal: 6 testes, 5 verdes e 1 required oracle skipped por opt-in.
-- Gates finais `fast`, `semantic` e `full` verdes; `git diff --check` verde.
-- Oracle required vermelho esperado em `ProcedureReference: expected 14 but got 21`.
-- Dois casos mínimos chegam a AST e falham em `AstSnapshot` em `ProcedureReference`: `expected 14 got 21` e `expected 14 got 17`.
-- Reachability exercitada não mostrou ciclo, instância duplicada nem filho nulo.
+- Teste focal normal: 5 testes verdes, incluindo os três triggers, os controles negativos e o oracle estrutural/determinístico sobre a superfície representativa.
+- `PERFORM` procedure com `UNTIL` e com `THRU + UNTIL` atravessam `AstSnapshot` com referências e controles preservados.
+- Os call sites `FileDescription` e `DataEntry` mantêm `CONFLICTING_DECLARATION_VISIBILITY` ancorado à declaração sem gap estrutural.
+- Gates `fast`, `semantic` e `full` verdes; nenhum snapshot ou baseline foi atualizado.
+- Parsing, AST shape, provenance, coverage, símbolos/scopes, occurrences, resolução, classificação externa e relatórios existentes permaneceram verdes.
 
 ## Restante
 
-- O checkpoint foi publicado no PR #11 a partir do commit `f6bd0d2`.
-- Aguardar review independente. Fase 2 e WORK-AST-002 Slice 2 permanecem sem autorização.
+- Aguardar review independente do PR #12, sem merge automático.
+- WORK-AST-002 Slice 2 permanece sem autorização e não foi iniciado.
 
 ## Descobertas que afetam o plano
 
-- `buildPerform` é violação confirmada somente no ramo procedure quando há expressão de controle materializada; procedure sem controle e inline com controle são consistentes.
-- Há segunda violação confirmada: `declarationVisibility` aloca `Meta` diagnóstico pelo contador AST e cria gap sem nó (`expected 8 got 9`).
-- Os dois call sites atuais, `FileDescription` e `DataEntry`, podem produzir o conflito; a fixture `01 ... EXTERNAL GLOBAL` exercita apenas o segundo e não delimita o defeito.
-- Pre-order é contrato atual intencional de representação/snapshot e histórico, mas está subdocumentado no domínio/invariants.
-- A recomendação é preservar a política atual, corrigir as duas fontes na Fase 2 e promover um oracle estrutural genérico; reindexação pós-build e remoção do requisito têm custo e risco maiores.
-- Os IDs quebrados exatos continuam documentados somente como evidência; a regressão futura deverá exigir `id == posição` no pre-order de `Ast.children`, sem substituir hardcodes por novos números.
+- Nenhuma nova violação da classe foi encontrada; os dois call sites auditados usam agora a mesma anchor estrutural.
+- O oracle é `O(nodes)` e a produção não ganhou passe ou índice novo; `performance` não é gate aplicável a esta correção.
+- Churn de IDs ficou restrito aos triggers antes rejeitados pelo snapshot; entradas previamente válidas e seus produtos não exigiram atualização de baseline.

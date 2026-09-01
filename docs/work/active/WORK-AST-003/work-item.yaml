@@ -1,8 +1,8 @@
 id: WORK-AST-003
-title: Discovery da consistência global entre IDs e traversal da AST
+title: Corrigir a consistência global entre IDs e traversal da AST
 status: active
 risk: high
-goal: Confirmar o contrato de Ast.Meta.id auditar builders consumidores e reachability e propor uma correção sem alterar produção.
+goal: Garantir que IDs locais de Ast.Node correspondam ao canonical pre-order sem consumo por metadata não-AST.
 must_read:
   - docs/architecture/pipeline.md
   - docs/architecture/invariants.md
@@ -29,6 +29,7 @@ related_decisions:
 related_invariants:
   - INV-AST-001
   - INV-AST-002
+  - INV-AST-003
   - INV-PROV-002
   - INV-COV-001
   - INV-DET-001
@@ -36,6 +37,7 @@ evals:
   - EVAL-AST-001
   - EVAL-AST-002
   - EVAL-AST-003
+  - EVAL-AST-005
   - EVAL-RES-DET-001
   - EVAL-UI-001
 source_scope:
@@ -51,16 +53,16 @@ source_scope:
   - src/main/java/io/github/gustavo2358/cobolexplorer/CoverageSnapshot.java
   - src/main/java/io/github/gustavo2358/cobolexplorer/ResolutionAnalysisReport.java
 test_scope:
-  - src/test/java/io/github/gustavo2358/cobolexplorer/AstPreorderInvariantCharacterizationTest.java
+  - src/test/java/io/github/gustavo2358/cobolexplorer/AstPreorderInvariantTest.java
   - src/test/resources/cobol/semantic/ast-preorder-conflicting-visibility.cbl
   - src/test/resources/cobol/semantic/ast-preorder-consistent-controls.cbl
   - src/test/resources/cobol/semantic/ast-preorder-perform-thru.cbl
   - src/test/resources/cobol/semantic/ast-preorder-perform-until.cbl
 must_not_change:
-  - Qualquer código de produção durante o Discovery
   - WORK-AST-002 Slice 2
   - Gramática parser ou semântica COBOL
-  - Política de IDs snapshots ou traversal antes de review independente
+  - Ast.children AstSnapshot ou política global de IDs
+  - Reindexação pós-build ou contador estrutural alternativo
   - Baselines para acomodar falhas novas
   - CFG dataflow storage layout effects runtime values ou targets dinâmicos
 gates:
