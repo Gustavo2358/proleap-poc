@@ -26,6 +26,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class SemanticConditionContextDiscoveryTest {
     private static final Path MINIMAL = Path.of(
             "src/test/resources/cobol/resolution/abbreviated-condition-context.cbl");
+    private static final String ALPHANUMERIC_RELATION_OPERANDS = "01 A PIC X.\n01 B PIC X.";
+    private static final String NUMERIC_INTEGER_RELATION_OPERANDS = "01 A PIC 9(4).\n01 B PIC 9(4).";
 
     @Test
     void characterizesMinimalChainFromParseTreeThroughResolution() throws IOException {
@@ -209,8 +211,12 @@ class SemanticConditionContextDiscoveryTest {
 
         for (Map.Entry<String, Variant> item : variants.entrySet()) {
             Variant expected = item.getValue();
+            String relationOperands = expected.declaredKinds().contains(SymbolTable.SymbolKind.INDEX_NAME)
+                    ? NUMERIC_INTEGER_RELATION_OPERANDS
+                    : ALPHANUMERIC_RELATION_OPERANDS;
             AstBoundaryTestSupport.Analysis analysis = AstBoundaryTestSupport.analyze(
-                    sourceWithDeclarations(item.getKey(), expected.declarations(), expected.condition()),
+                    sourceWithDeclarations(item.getKey(), relationOperands,
+                            expected.declarations(), expected.condition()),
                     item.getKey() + ".cbl");
             ReferenceResolution.Entry tail = tailEntry(analysis);
             List<SymbolTable.SymbolKind> declaredKinds = sameNameSymbols(analysis,
@@ -274,8 +280,9 @@ class SemanticConditionContextDiscoveryTest {
                 01 B PIC X.
                 01 C PIC X.
                 01 T OCCURS 2 TIMES INDEXED BY IDX.
-                   05 FLAG PIC X.
-                      88 FLAG-ON VALUE 'Y'.
+                   05 TABLE-VALUE PIC X.
+                01 FLAG PIC X.
+                   88 FLAG-ON VALUE 'Y'.
                 PROCEDURE DIVISION.
                     SEARCH T
                        WHEN A = B OR C CONTINUE
@@ -396,7 +403,7 @@ class SemanticConditionContextDiscoveryTest {
                 "A = B OR C", "C", ResolutionContracts.ReferenceKind.DATA));
         oracles.add(() -> assertTailResolvesAs("real condition-name", "01 FLAG PIC X.\n   88 C VALUE 'Y'.",
                 "A = B OR C", "C", ResolutionContracts.ReferenceKind.CONDITION));
-        oracles.add(() -> assertTailResolvesAs("index abbreviation",
+        oracles.add(() -> assertTailResolvesAs("index abbreviation", NUMERIC_INTEGER_RELATION_OPERANDS,
                 "01 T OCCURS 2 TIMES INDEXED BY C.\n   05 V PIC X.",
                 "A = B OR C", "C", ResolutionContracts.ReferenceKind.INDEX));
         oracles.add(() -> assertTailResolvesAs("RENAMES abbreviation",
@@ -446,9 +453,16 @@ class SemanticConditionContextDiscoveryTest {
 
     private static void assertTailResolvesAs(String label, String declarations, String condition,
                                              String writtenName, ResolutionContracts.ReferenceKind expectedKind) {
+        assertTailResolvesAs(label, ALPHANUMERIC_RELATION_OPERANDS,
+                declarations, condition, writtenName, expectedKind);
+    }
+
+    private static void assertTailResolvesAs(String label, String relationOperands, String declarations,
+                                             String condition, String writtenName,
+                                             ResolutionContracts.ReferenceKind expectedKind) {
         String slug = label.replaceAll("[^A-Za-z0-9-]", "-");
         AstBoundaryTestSupport.Analysis analysis = AstBoundaryTestSupport.analyze(
-                sourceWithDeclarations("required-" + slug, declarations, condition),
+                sourceWithDeclarations("required-" + slug, relationOperands, declarations, condition),
                 "required-" + slug + ".cbl");
         ReferenceResolution.Entry entry = entry(analysis, writtenName);
         assertAll(label,
@@ -513,18 +527,22 @@ class SemanticConditionContextDiscoveryTest {
     }
 
     private static String sourceWithDeclarations(String programSuffix, String declarations, String condition) {
+        return sourceWithDeclarations(programSuffix, ALPHANUMERIC_RELATION_OPERANDS, declarations, condition);
+    }
+
+    private static String sourceWithDeclarations(String programSuffix, String relationOperands,
+                                                 String declarations, String condition) {
         String program = ("D-" + programSuffix).toUpperCase().replace('_', '-');
         return """
                 IDENTIFICATION DIVISION.
                 PROGRAM-ID. %s.
                 DATA DIVISION.
                 WORKING-STORAGE SECTION.
-                01 A PIC X.
-                01 B PIC X.
+                %s
                 %s
                 PROCEDURE DIVISION.
                     IF %s CONTINUE END-IF.
                 END PROGRAM %s.
-                """.formatted(program, declarations, condition, program);
+                """.formatted(program, relationOperands, declarations, condition, program);
     }
 }

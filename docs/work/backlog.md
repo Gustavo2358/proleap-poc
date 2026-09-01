@@ -397,13 +397,13 @@ O [Discovery de contextualização semântica de condições](../history/evidenc
 
 A escolha só pode ser especializada com a regra COBOL e o binding nominal:
 
-- se C nomeia DATA, INDEX ou RENAMES admissível como objeto relacional, a condição abrevia sujeito e operador e equivale semanticamente a `A = C`;
+- se C nomeia DATA, INDEX ou RENAMES admissível como objeto relacional, a condição abrevia sujeito e operador e equivale semanticamente a `A = C`; quando C é index-name e A é data-name comum, A precisa ser numérico inteiro;
 - se C nomeia um condition-name nível 88, C inicia uma simple condition e encerra a inserção herdada;
 - em `(A = B OR C) AND D`, C ainda pode herdar `A =`, mas o `)` correspondente a um `(` à esquerda do sujeito encerra a herança antes de D; D precisa iniciar uma simple condition válida;
 - em `(A = B) OR C`, C também está fora da sequência herdada;
 - quando `(` aparece imediatamente após o relational operator, o operador é distribuído e sujeito/operador permanecem correntes depois do `)` que encerra a distribuição. A futura regra não pode generalizar todo parêntese como término idêntico.
 
-O Discovery encontrou ainda lacunas relacionadas e reproduzíveis: `abbreviation`/`relationCombinedComparison` sem sujeito e operador herdados materializados, AND/OR mistos achatados como `MIXED_LOGICAL`, seleção exclusiva de `abbreviation(0)`, perda de condition references em `SEARCH WHEN` e corrupção estrutural de condition-name subscriptado. Não há finding de defeito no candidate filtering do resolver para a occurrence que ele recebe.
+O Discovery encontrou ainda lacunas relacionadas e reproduzíveis: `abbreviation`/`relationCombinedComparison` sem sujeito e operador herdados materializados, AND/OR mistos achatados como `MIXED_LOGICAL`, seleção exclusiva de `abbreviation(0)`, perda de condition references em `SEARCH WHEN` e corrupção estrutural de condition-name subscriptado. O oracle SEARCH usa um nível 88 cuja conditional variable está fora da tabela, para não depender de subscript; o caso subscriptado permanece isolado em fixture própria. Não há finding de defeito no candidate filtering do resolver para a occurrence que ele recebe.
 
 #### Resultado esperado
 

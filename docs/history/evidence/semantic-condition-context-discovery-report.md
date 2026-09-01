@@ -50,7 +50,7 @@ O dialeto de referência do projeto é IBM Enterprise COBOL. A documentação IB
 - `NOT` imediatamente associado a um relational operator integra o operador; nas demais posições é negação lógica somente da relação imediatamente seguinte;
 - `AND` possui precedência sobre `OR`, salvo alteração por parênteses ([IBM — Complex conditions](https://www.ibm.com/docs/en/cobol-zos/6.5.0?topic=expressions-complex-conditions));
 - operandos de general relation podem incluir identifier, literal, arithmetic expression e index-name ([IBM — General relation conditions](https://www.ibm.com/docs/en/cobol-zos/6.3?topic=expressions-general-relation-conditions));
-- comparações com index-name são definidas inclusive contra data item numérico, literal inteiro e arithmetic expression ([IBM — Comparison of index-names and index data items](https://www.ibm.com/docs/en/cobol-zos/6.4?topic=conditions-comparison-index-names-index-data-items));
+- comparações com index-name são definidas contra data-name somente quando ele é numérico inteiro, além de literal numérico inteiro, outro index-name ou arithmetic expression ([IBM — Comparison of index-names and index data items](https://www.ibm.com/docs/en/cobol-zos/6.4?topic=conditions-comparison-index-names-index-data-items));
 - condition-name precisa ser único/qualificado e requer os mesmos subscripts da conditional variable quando aplicável ([IBM — Condition-name](https://www.ibm.com/docs/en/cobol-zos/6.5.0?topic=reference-condition-name));
 - em nested programs, a busca de declaração para no primeiro nível nominal com qualquer match, mesmo se o tipo for incompatível ([IBM — Scope of names](https://www.ibm.com/docs/en/cobol-zos/6.3.0?topic=programs-scope-names)).
 
@@ -164,7 +164,7 @@ Com o mesmo bare tail após `A = B OR`, o resultado atual é:
 | --- | --- | --- | --- |
 | DATA_ITEM | `conditionNameReference` | CONDITION / `{CONDITION}` | INVALID_NAMESPACE |
 | CONDITION_NAME (88) | `conditionNameReference` | CONDITION / `{CONDITION}` | RESOLVED → CONDITION |
-| INDEX_NAME | `conditionNameReference` | CONDITION / `{CONDITION}` | INVALID_NAMESPACE |
+| INDEX_NAME, com A/B `PIC 9(4)` | `conditionNameReference` | CONDITION / `{CONDITION}` | INVALID_NAMESPACE apesar de `A = C` ser comparação válida de data-name numérico inteiro com index-name |
 | RENAMES (66) | `conditionNameReference` | CONDITION / `{CONDITION}` | INVALID_NAMESPACE |
 | inexistente | `conditionNameReference` | CONDITION / `{CONDITION}` | DECLARATION_NOT_FOUND |
 | homônimo DATA + CONDITION | `conditionNameReference` | CONDITION / `{CONDITION}` | RESOLVED → CONDITION; DATA nem entra nos candidates |
@@ -197,7 +197,7 @@ Esses casos mostram que contexto semanticamente relevante já pode ser carregado
 2. `RelationCombinedComparisonContext` e `AbbreviationContext` caem no fallback `preservedExpression`; a grammar contém sujeito, operador, conectores e operands, mas a AST não materializa a relação herdada.
 3. o builder reduz conectores diferentes a um único operador `MIXED_LOGICAL`, sem preservar a sequência AND/OR em estrutura. Apenas `writtenText` mantém a informação, e consumidores não podem reparseá-lo segundo INV-AST-002.
 4. `dataReference(conditionNameReference)` procura primeiro qualquer descendant `QualifiedDataName`. Em `FLAG-ON(IDX)`, encontra o `qualifiedDataName` do subscript e cria `DataReference(baseName=IDX, writtenText=FLAG-ON(IDX), subscriptGroups=[])`.
-5. `SEARCH` é `PreservedStatement`; o coletor genérico de statement operands reconhece `identifier`/`qualifiedDataName`, mas não materializa a `condition` de `searchWhen`. Em `WHEN A = B OR C` coleta A/B e perde C; em `WHEN FLAG-ON` perde FLAG-ON inteiro.
+5. `SEARCH` é `PreservedStatement`; o coletor genérico de statement operands reconhece `identifier`/`qualifiedDataName`, mas não materializa a `condition` de `searchWhen`. Em `WHEN A = B OR C` coleta A/B e perde C; em `WHEN FLAG-ON` perde FLAG-ON inteiro. Na fixture, FLAG/88 FLAG-ON é independente da tabela pesquisada e não exige subscript, isolando o finding de SEARCH do bug de condition-name subscriptado.
 
 ### Outros pontos auditados sem bug novo comprovado
 
@@ -407,7 +407,7 @@ Nenhuma direção foi implementada.
 1. DATA em abbreviated relation;
 2. CONDITION real no mesmo bare tail `A = B OR C` e depois de boundary parentético;
 3. homônimo DATA/CONDITION;
-4. INDEX em relation e abbreviated tail;
+4. INDEX em relation e abbreviated tail com sujeito/objeto DATA numérico inteiro compatível;
 5. relation explícita versus abreviada;
 6. múltiplas abbreviations consecutivas;
 7. AND/OR mistos;
