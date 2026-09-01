@@ -1,0 +1,46 @@
+id: WORK-COND-001
+title: Contrato normativo de condições combinadas e abreviadas
+status: active
+risk: high
+goal: Fechar o contrato IBM Enterprise COBOL do Slice 1 de BACKLOG-COND-001 sem escolher representação arquitetural nem alterar produção.
+must_read:
+  - docs/engineering/semantic-analysis-policy.md
+  - docs/engineering/semantic-testing.md
+  - docs/domain/reference-resolution.md
+  - docs/architecture/invariants.md
+  - docs/history/evidence/semantic-condition-context-discovery-report.md
+  - docs/work/backlog.md#backlog-cond-001--contextualizar-condições-combinadas-e-referências-nominais
+related_domain_rules:
+  - docs/domain/reference-resolution.md
+related_decisions:
+  - ADR-0003
+related_invariants:
+  - INV-AST-001
+  - INV-AST-002
+  - INV-SYM-001
+  - INV-RES-001
+  - INV-DET-001
+evals:
+  - EVAL-AST-001
+  - EVAL-AST-002
+  - EVAL-AST-004
+  - EVAL-SYM-001
+  - EVAL-SYM-002
+  - EVAL-RES-DATA-001
+  - EVAL-RES-DATA-002
+  - EVAL-RES-DATA-003
+  - EVAL-RES-REL-001
+source_scope:
+  - src/main/java/io/github/gustavo2358/cobolexplorer/AstBuilder.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/ReferenceOccurrenceCollector.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/CobolReferenceResolver.java
+test_scope:
+  - src/test/java/io/github/gustavo2358/cobolexplorer/SemanticConditionContextDiscoveryTest.java
+  - src/test/resources/cobol/resolution/abbreviated-condition-context.cbl
+must_not_change:
+  - src/main
+  - docs/architecture
+gates:
+  - fast
+  - semantic
+  - full

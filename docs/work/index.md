@@ -5,6 +5,7 @@ Work items delimitam a mudança em execução; o [backlog](backlog.md) registra 
 ## Ativo
 
 - [WORK-AST-002 — Hardening da fronteira AST para CFG e dataflow](active/WORK-AST-002/spec.md) — Slice 1 mergeado no PR #10; Slice 2 no checkpoint de Discovery do PR #13. Implementar F-02 depende de merge/review e autorização explícita posterior.
+- [WORK-COND-001 — Contrato normativo de condições combinadas e abreviadas](active/WORK-COND-001/spec.md) — Slice 1 de BACKLOG-COND-001 no checkpoint de Discovery; cobre somente o contrato IBM e os oracles normativos. Decisão arquitetural e implementação pertencem ao Slice 2+ e exigem review/autorização posterior.
 
 ## Histórico
 
