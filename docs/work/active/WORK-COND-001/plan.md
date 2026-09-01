@@ -24,6 +24,8 @@ Não há dependência de uma escolha arquitetural do Slice 2.
 
 O Discovery do PR #14 indica que uma futura implementação poderá tocar a fronteira parse tree → AST → occurrences → resolution. Este Slice 1 não escolhe onde o contexto deve morar e não autoriza modificação nessa superfície.
 
+As entradas de `source_scope` em `work-item.yaml` são pontos de observação da produção atual, em modo somente leitura. `must_not_change: src/main` prevalece durante todo o Slice 1.
+
 As três famílias candidatas continuam abertas e devem ser comparadas no Slice 2 contra os mesmos oracles normativos:
 
 - AST contextual;

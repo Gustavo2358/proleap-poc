@@ -2,9 +2,9 @@
 
 ## O que prova corretude
 
-Corretude neste Discovery significa que cada expectativa abaixo deriva de regra IBM Enterprise COBOL identificável e diferencia a semântica da linguagem do comportamento atualmente observado no frontend/pipeline. Nenhum oracle pode depender de cardinalidade de corpus, `grammarRule`, ordem de candidates ou resultado atual do resolver.
+Corretude neste Discovery significa que cada expectativa abaixo deriva de regra IBM Enterprise COBOL identificável e diferencia a semântica da linguagem do comportamento atualmente observado no frontend/pipeline. Nenhum oracle pode depender de cardinalidade de corpus, `grammarRule`, ordem de candidates ou resultado atual do resolver. Os IDs `COND-*` são oracles normativos documentais deste Slice 1; os testes opt-in do PR #14 continuam sendo caracterização/futuros requisitos e não são rebatizados como prova verde.
 
-O oracle independente primário é a IBM Enterprise COBOL Language Reference. O compilador IBM é um oracle adversarial desejável quando disponível, especialmente para inputs negativos; o wording exato de diagnostics não é contrato.
+O oracle independente primário é [IBM Enterprise COBOL for z/OS 6.4 Language Reference, SC27-8713-03, atualização de 28 de junho de 2024](https://publibfp.dhe.ibm.com/epubs/pdf/igy6lr40.pdf). Âncoras: **User-defined words** pp. 12–13; **Scope of names** e **Referencing data names...** pp. 63–72; **RENAMES clause** pp. 228–230; **Conditional expressions** pp. 268–289. O compilador IBM é um oracle adversarial desejável quando disponível, especialmente para inputs negativos; o wording exato de diagnostics não é contrato.
 
 ## Classes positivas
 
@@ -18,6 +18,8 @@ O oracle independente primário é a IBM Enterprise COBOL Language Reference. O 
 | COND-P06 | `IF N = IDX OR IDX2` | `IDX`/`IDX2` podem ser index-names quando a comparação satisfaz as regras IBM para index-name. |
 | COND-P07 | `66 R RENAMES X THRU Y.` e uso relacional válido de `R` | `R` é data-name; RENAMES não cria um namespace nominal separado. |
 | COND-P08 | condition-name qualificado/subscriptado conforme sua conditional variable | A referência CONDITION preserva qualification e a mesma combinação de subscripts exigida pela conditional variable. |
+| COND-P09 | `IF A = B OR NOT C OR D` | Com objects compatíveis, equivale a `(A = B) OR NOT (A = C) OR (A = D)`; logical `NOT` não vira parte do operador nem se propaga a D. |
+| COND-P10 | inner program com DATA local `C` e containing program com CONDITION `C` global, em `A = B OR C` | O conjunto de scope inclui ambos; a regra de nested programs seleciona o recurso local aplicável, portanto `C` é object abreviado DATA, não CONDITION externo escolhido por pré-filtro sintático. |
 
 ## Classes negativas
 
@@ -28,13 +30,15 @@ O oracle independente primário é a IBM Enterprise COBOL Language Reference. O 
 | COND-N03 | mesma user-defined word declarada como data-name e condition-name no mesmo programa | Input IBM inválido: a palavra não pode pertencer simultaneamente a dois sets de user-defined words. Não existe oracle de “qual candidato vence”. |
 | COND-N04 | index-name comparado a data-name não numérico/incompatível | A presença nominal de INDEX não torna a relation válida; aplicar a matriz IBM de comparações. |
 | COND-N05 | forma aceita pela grammar que viola a sequência normativa de abbreviated condition, como uma segunda relational operator sem conector admissível | Aceitação sintática local não é prova de COBOL IBM válido; deve permanecer negativa/unsupported até fonte normativa demonstrar o contrário. |
+| COND-N06 | `A = (B OR C = D)` | Outro relational operator dentro do scope distribuído viola a restrição IBM de distribuição. |
+| COND-N07 | `A = (B OR CONDITION-88)` | Uma simple condition/condition-name dentro do scope distribuído não é object distribuível e torna essa forma inválida. |
+| COND-N08 | `A = (NOT B OR C)` | Logical `NOT` imediatamente após o `(` que abre a distribuição é proibido; não confundir com `A = (B OR NOT C)`, cuja validade segue a sequência permitida. |
 
 ## Classes ambíguas
 
-1. **Dois condition-names válidos com o mesmo nome que permanecem elegíveis após qualification/scope**: a resolução deve preservar ambiguidade conforme INV-RES-001; o Slice 1 não escolhe candidate.
-2. **Dois data-names qualificáveis com mesmo nome**: qualification insuficiente é ambígua; qualification suficiente deve desambiguar conforme IBM e policy configurada.
-3. **Homônimo em nested programs de sets diferentes**: é permitido que programas distintos definam a mesma grafia. A elegibilidade depende de local/global scope e não autoriza filtrar primeiro pelo namespace que a grammar sugeriu. Oracle adversarial central: inner program possui DATA `C`; containing program expõe CONDITION `C` quando aplicável. A declaração local não deve ser ignorada por conveniência sintática.
-4. **Compiler option de qualification não conhecida**: quando o resultado depender de policy como STANDARD/EXTEND, o oracle deve carregar a configuração; sem ela, estado `UNCERTAIN`, não sucesso presumido.
+1. **Condition-names duplicados e referência insuficientemente qualificada/subscriptada**: as declarações podem ser individualmente admissíveis, mas a referência que não fica única é source inválido. O produto de análise deve preservar todos os candidates e `AMBIGUOUS` para diagnóstico conforme INV-RES-001; não escolher por ordem.
+2. **Data-names duplicados e qualification insuficiente**: a referência não única é inválida; qualification suficiente deve desambiguar conforme IBM e a option configurada. Antes disso, preservar candidates/ambiguidade é postura conservadora do projeto, não alegação de execução COBOL válida.
+3. **Compiler option de qualification não conhecida**: quando o resultado depender de policy como STANDARD/EXTEND, o oracle deve carregar a configuração; sem ela, estado `UNCERTAIN`, não sucesso presumido.
 
 O caso DATA+CONDITION no mesmo programa não pertence a esta seção: é negativo de validade, não ambiguidade.
 
@@ -43,13 +47,14 @@ O caso DATA+CONDITION no mesmo programa não pertence a esta seção: é negativ
 - **A1 — branch ANTLR enganoso**: `A = B OR C` com `C` DATA; matar implementação que interpreta `conditionNameReference` como prova de CONDITION.
 - **A2 — condition-name real termina herança**: mesma shape textual, mas `C` é condition-name válido; matar implementação que transforma todo bare tail em DATA/INDEX abreviado.
 - **A3 — boundary vs distribuição**: comparar `(A = B OR C) AND D` com `A = (B OR C) AND D`; matar implementação que trata todo `)` como terminador ou todo grupo como distribuição.
-- **A4 — NOT relacional vs lógico**: comparar `A NOT = B OR C` com `A = B OR NOT C`; matar implementação que herda logical NOT ou que trata todo NOT como boolean negation.
+- **A4 — NOT relacional vs lógico**: comparar `A NOT = B OR C`, `A = B OR NOT C OR D` e `NOT A = B OR C`; matar implementação que propaga logical NOT, exige condition-name autônomo após ele ou trata todo NOT como parte do operador.
 - **A5 — precedence**: comparar `A = B OR C AND D` com `(A = B OR C) AND D` e `A = B OR (C AND D)` usando conditions que tornam as árvores semanticamente distinguíveis; matar flattening `MIXED_LOGICAL` sem precedência.
 - **A6 — INDEX admissível mas type-sensitive**: um index-name em relation válida e uma variante incompatível; matar `{DATA}` rígido e também aceitação irrestrita de INDEX.
 - **A7 — RENAMES é DATA**: trocar um data-name ordinário por level-66 RENAMES semanticamente válido; matar namespace RENAMES inventado ou exclusão por grammar origin.
 - **A8 — qualification**: condition-name repetido sob conditional variables distintas, depois tornar uma referência única com `OF` e subscripts; matar lookup só pelo terminal name.
-- **A9 — shadowing cross-set em nested programs**: DATA local `C` versus CONDITION global/visível `C` externo; matar lookup que pula o nível local porque pré-filtrou CONDITION.
+- **A9 — shadowing cross-set em nested programs**: DATA local `C` versus CONDITION global/visível `C` externo na posição contextual de bare tail; matar lookup que pula o recurso local aplicável porque pré-filtrou CONDITION pela grammar.
 - **A10 — same-program cross-set invalid**: fixture com DATA `C` e 88 `C` no mesmo programa; matar qualquer oracle que aceite e selecione um deles como regra IBM.
+- **A11 — restrições da distribuição**: inserir, separadamente, simple condition, outro relational operator e logical `NOT` imediatamente após o `(` distribuído; matar implementação que trata qualquer grupo após operador como lista livre de objects.
 
 ## Casos de regressão
 

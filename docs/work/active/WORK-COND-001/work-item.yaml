@@ -31,16 +31,14 @@ evals:
   - EVAL-RES-DATA-003
   - EVAL-RES-REL-001
 source_scope:
-  - src/main/java/io/github/gustavo2358/cobolexplorer
+  - src/main/java/io/github/gustavo2358/cobolexplorer/AstBuilder.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/ReferenceOccurrenceCollector.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/CobolReferenceResolver.java
 test_scope:
   - src/test/java/io/github/gustavo2358/cobolexplorer/SemanticConditionContextDiscoveryTest.java
   - src/test/resources/cobol/resolution/abbreviated-condition-context.cbl
 must_not_change:
-  - src/main/antlr4
-  - src/main/java/io/github/gustavo2358/cobolexplorer/Ast.java
-  - src/main/java/io/github/gustavo2358/cobolexplorer/AstBuilder.java
-  - src/main/java/io/github/gustavo2358/cobolexplorer/ReferenceOccurrenceCollector.java
-  - src/main/java/io/github/gustavo2358/cobolexplorer/CobolReferenceResolver.java
+  - src/main
   - docs/architecture
 gates:
   - fast
