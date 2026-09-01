@@ -30,7 +30,7 @@ Testes, corpus e artefatos gerados são evidência executável; não definem a s
 | trabalho ativo, histórico curto ou backlog | [work/](work/index.md) |
 | decisão antiga, relatório, baseline ou matriz de migração | [history/](history/index.md), somente quando necessário |
 
-Os work items ativos são [WORK-AST-002](work/active/WORK-AST-002/spec.md), cujo Slice 1 foi mergeado e cujo Slice 2 continua sem autorização, e [WORK-AST-003](work/active/WORK-AST-003/spec.md), Discovery separado sobre IDs e traversal da AST. O [índice de trabalho](work/index.md) preserva resumos úteis dos itens concluídos e mantém backlog separado de autorização.
+O único work item ativo é [WORK-AST-002](work/active/WORK-AST-002/spec.md): o Slice 1 foi mergeado no PR #10 e o Slice 2 está no checkpoint de Discovery do PR #13; implementar F-02 continua dependendo de merge/review e autorização explícita posterior. `WORK-AST-003` foi concluído pelo Discovery do PR #11 e pela implementação do PR #12, deixou de bloquear `WORK-AST-002` e possui apenas um [resumo histórico](work/history/WORK-AST-003.md). O [índice de trabalho](work/index.md) mantém backlog separado de autorização.
 
 ## Fronteira entre famílias documentais
 

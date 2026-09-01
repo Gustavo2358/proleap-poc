@@ -3,32 +3,32 @@
 ## Fatiamento
 
 1. Fase 0 concluída e revisada no PR #9: lowering, cardinalidades, joins, provenance e quatro oráculos foram caracterizados sem alteração de produção.
-2. Slice 1 autorizado: registrar coverage concreto para statements, entries, clauses e preserved expressions; alinhar manifesto rule-by-rule e promover somente os dois oráculos de F-01.
-3. Abrir PR independente do Slice 1 e parar para revisão externa.
-4. Slice 2 permanece futuro e sem autorização nesta execução: integridade linear cross-product e dois oráculos de F-02.
-5. Regressão documental final permanece posterior aos slices de produção revisados.
+2. Slice 1 concluído no PR #10: coverage concreto, manifesto coerente e promoção somente dos dois oráculos de F-01.
+3. WORK-AST-003 e `BUG-AST-PREORDER-001` concluídos nos PRs #11 e #12; `main` de origem deste Discovery é `9aba9a897cc7f45ba7da3a25079d66aee838ba55`.
+4. Discovery do Slice 2, nesta sessão: reproduzir F-02, auditar invariants e consumidores, comparar ownerships e versionar o contrato recomendado sem alterar produção.
+5. Futura Fase 2 de implementação, somente após review e autorização: validator linear dedicado, integração antes da classificação externa e promoção/refino dos dois oráculos F-02.
+6. Regressão documental final permanece posterior aos slices de produção revisados.
 
 ## Dependências
 
-- Autoridades e evals listados em `work-item.yaml`, mais a revisão independente do discovery no PR #9.
+- Autoridades e evals listados em `work-item.yaml`, revisão independente do discovery no PR #9, Slice 1 mergeado no PR #10 e correção de pre-order mergeada no PR #12.
 - Fonte oficial IBM Enterprise COBOL quando a semântica COBOL não estiver suficientemente fechada pelo contrato canônico.
 - `BACKLOG-CFG-001` e `BACKLOG-DF-001` permanecem consumidores futuros bloqueados por lacunas comprovadas relevantes.
 
 ## Superfície arquitetural provável
 
-No Slice 1, a incisão aprovada fica em `AstBuilder`, no invariant local de `SemanticCoverage` e em `grammar-rule-manifest.tsv`, além dos testes/evals e contratos documentais correspondentes. `Ast`, `AstScopeIndex`, symbol model, occurrences, resolução e `ResolutionAnalysisReport` permanecem inalterados. A superfície cross-product continua reservada ao Slice 2.
+Para a futura implementação do Slice 2, a incisão recomendada é um novo `SemanticProductIntegrityValidator`, seu teste focal e a retenção dos `AstScopeIndex` já construídos na orquestração para uma única chamada em `ExplorerMain` após `CobolReferenceResolver.resolve(...)`. `ResolutionAnalysisReport`, classifier, snapshots e modelos semânticos permanecem consumidores ou produtos separados, sem absorver ownership do validator. Os arquivos prováveis já constam do contrato de escopo do harness, mas este PR de Discovery não autoriza alterá-los; a implementação exige nova branch/PR após merge e instrução explícita.
 
 ## Migrações requeridas
 
-Não há migração de AST, símbolos, occurrences, resolução ou baseline de corpus. O Slice 1 migra somente a taxonomia do manifesto e a cardinalidade esperada dos findings de coverage; snapshots gerados podem ganhar exclusivamente esses findings explicáveis.
+Não há migração de AST, símbolos, occurrences, resolução, report, classifier, snapshot ou baseline de corpus no Discovery. A futura implementação deve preservar as shapes e apenas rejeitar combinações internamente impossíveis antes do primeiro consumo pós-resolution.
 
 ## Artefatos esperados
 
-- Registro comum de coverage nas quatro fronteiras materializadas, sem finding de wrapper.
-- Manifesto coerente com entries/clauses e referências já tipadas, preservando dependency unknown.
-- Matriz versionada com cardinalidade exata, provenance e determinismo.
-- Dois oráculos de F-01 verdes no gate normal e dois oráculos de F-02 ainda opt-in/vermelhos.
-- Commit e PR exclusivos do Slice 1.
+- Relatório versionado de F-02 em `eval.md`, com reprodução, inventário, matriz de joins, call sites, alternativas, API, erro, complexidade, riscos e aceite futuro.
+- `spec.md`, `plan.md`, `eval.md` e `state.md` atualizados somente com conhecimento do Discovery.
+- Dois oráculos F-02 ainda opt-in/vermelhos e nenhum teste de produção promovido.
+- Commit e PR exclusivos do Discovery, sem merge.
 
 ## Slices de produção recomendados após revisão independente
 
@@ -46,11 +46,15 @@ Não há migração de AST, símbolos, occurrences, resolução ou baseline de c
 
 - **Problema:** F-02; produtos normais são coerentes, mas combinações corrompidas podem atravessar a composição sem fail-closed.
 - **Oracle atualmente falho:** `reportFailsClosedWhenResolutionContainsOccurrenceMissingFromCollectorProduct` e `crossProductValidationRejectsSymbolWhoseDeclarationAstNodeDoesNotExist`.
-- **Provável superfície:** validador interno novo mais um ponto de composição explícito; possivelmente checks locais somente onde o produto já disponha do contexto necessário e inputs adicionais na orquestração. A escolha final permanece aberta para review.
+- **Ownership recomendado:** estratégia híbrida. Invariants autocontidos permanecem nos construtores atuais; joins que exigem dois ou mais produtos ficam em um validator dedicado, testável isoladamente e chamado pela orquestração.
+- **API proposta:** `SemanticProductIntegrityValidator.validate(model, symbolTables, scopeIndexesByUnit, occurrencesByUnit, resolution)`; `ReferenceResolution` já contém candidates e `DeclarationRelationResolution`.
+- **Ponto exato:** depois de `CobolReferenceResolver.resolve(...)` e antes de `CicsIntrinsicClassifier.classify(...)`. Essa ordem protege classificação externa, report, snapshot e futuras análises com uma única validação.
+- **Provável superfície:** novo `src/main/.../SemanticProductIntegrityValidator.java`, novo teste focal, `ExplorerMain` somente para reter o map de scopes e chamar o validator, além do refino/promoção dos oráculos atuais. Não alterar `ResolutionAnalysisReport`.
 - **Invariants/evals:** ADR-0003/0005; INV-SYM-001, INV-PROV-002, INV-DET-001, INV-PERF-001; EVAL-SYM-001/002, EVAL-RES-REL-001, EVAL-RES-DET-001 e EVAL-RES-PERF-001.
-- **must_not_change:** status/candidates válidos, ambiguidade, IDs locais, resolução nominal, snapshots como fonte de verdade, complexidade maior que linear.
+- **must_not_change:** status/candidates semanticamente válidos, ambiguidade, IDs locais, resolução nominal, snapshots como fonte de verdade, complexidade maior que linear. Payload de candidate incoerente com seu `SemanticEntityId` e identidade repetida na mesma lista não são candidates válidos.
 - **Dependências:** contrato aprovado para inputs e ownership do validator; independente do Slice 1, mas deve usar as mesmas identidades compostas.
-- **Risco:** médio — validação incompleta distribuída entre construtores ou assinatura transversal desnecessária; custo deve permanecer `O(nodes + scopes + symbols + relations + occurrences + entries + candidates)`.
+- **Risco:** médio — chamada de orquestração esquecida por um consumidor alternativo, validação duplicada com classifier/report, rejeição indevida de candidate cross-unit válido ou join por ID local sem unit. Mitigar com teste do ponto de integração, identidade composta e validator sem lookup textual.
+- **Complexidade:** `O(units + nodes + scopes + symbols + entities + relations + occurrences + resolutionEntries + candidates + candidateDeclarationSymbolIds)` em tempo e espaço auxiliar linear, usando maps por unit/node/occurrence/relation e acesso direto às listas contíguas de scopes/symbols/entities.
 
 ### Slice 3 — Regressão e migração documental
 

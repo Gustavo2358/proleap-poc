@@ -40,6 +40,8 @@ gates:
 
 `status` pode ser `active`, `blocked` ou `completed`; diretórios em `active/` usam somente `active` ou `blocked`. `risk` define a profundidade de contexto, não uma autorização para alterar escopo. `must_read` aponta para a menor rota canônica suficiente. Decisões, invariantes e evals devem usar IDs existentes. Os gates aceitos são `docs`, `fast`, `architecture`, `semantic`, `performance` e `full`.
 
+Durante um Discovery, `source_scope` e `test_scope` podem reservar um arquivo novo ainda inexistente com `planned:<caminho>`. O harness aceita essa forma somente sob `src/main` ou `src/test`, exige que o diretório pai já exista e falha se o arquivo estiver presente; ao iniciar a implementação autorizada, remova o prefixo no mesmo checkpoint que cria o arquivo. Os demais campos continuam aceitando apenas caminhos existentes.
+
 ## Documentos de trabalho
 
 `spec.md` deve conter, nesta ordem, as seções: Problema, Objetivo, Domínio de entrada suportado, Classes semânticas, Premissas, Comportamento esperado, Comportamento diante de incerteza, Fora de escopo, Regras de domínio relacionadas e ADRs/invariantes relacionados.
