@@ -46,6 +46,7 @@ O dialeto de referência do projeto é IBM Enterprise COBOL. A documentação IB
 
 - após a primeira relation-condition, o sujeito ou o sujeito e o operador podem ser omitidos; o último sujeito e o último operador declarados são inseridos semanticamente ([IBM — Abbreviated combined relation conditions](https://www.ibm.com/docs/en/cobol-zos/6.3.0?topic=expressions-abbreviated-combined-relation-conditions));
 - a herança termina, entre outros casos, quando uma simple condition ou condition-name é encontrada; portanto `C` em `A = B OR C` não pode ser decidido apenas pela grafia ou pelo ramo ANTLR;
+- a herança também termina no `)` que corresponde a um `(` situado à esquerda do sujeito; assim, em `(A = B OR C) AND D`, C pode herdar `A =`, mas D já está fora dessa sequência abreviada;
 - `NOT` imediatamente associado a um relational operator integra o operador; nas demais posições é negação lógica somente da relação imediatamente seguinte;
 - `AND` possui precedência sobre `OR`, salvo alteração por parênteses ([IBM — Complex conditions](https://www.ibm.com/docs/en/cobol-zos/6.5.0?topic=expressions-complex-conditions));
 - operandos de general relation podem incluir identifier, literal, arithmetic expression e index-name ([IBM — General relation conditions](https://www.ibm.com/docs/en/cobol-zos/6.3?topic=expressions-general-relation-conditions));
@@ -59,6 +60,7 @@ Premissas usadas:
 | --- | --- |
 | sujeito e operador omitidos são herdados | `LANGUAGE_GUARANTEED` |
 | condition-name encerra a inserção herdada | `LANGUAGE_GUARANTEED` |
+| `)` correspondente a `(` à esquerda do sujeito encerra a inserção; distribuição após operador é caso distinto | `LANGUAGE_GUARANTEED` |
 | index-name é operando relacional possível | `LANGUAGE_GUARANTEED` |
 | parse tree não é verdade semântica | `ARCHITECTURE_GUARANTEED` |
 | AST, occurrence e resolution são produtos separados | `ARCHITECTURE_GUARANTEED` |
@@ -141,8 +143,8 @@ Foram executadas 19 formas aceitas sem syntax error pela gramática configurada.
 | `A = B OR NOT C` | `NOT(DataReference(C/conditionNameReference))` | C `{CONDITION}`, INVALID_NAMESPACE para DATA |
 | `A = B AND C OR D` | `MIXED_LOGICAL` plano | C/D `{CONDITION}`, ambos inválidos para DATA |
 | `A = B OR C AND D` | `MIXED_LOGICAL` plano | C/D `{CONDITION}`, ambos inválidos para DATA |
-| `(A = B OR C) AND D` | GROUP + logical nodes | C/D `{CONDITION}`, ambos inválidos para DATA |
-| `(A = B) OR C` | GROUP + OR | C `{CONDITION}`, inválido para DATA |
+| `(A = B OR C) AND D` | GROUP + logical nodes | C `{CONDITION}` é falso gap para DATA; D `{CONDITION}` está fora da herança e DATA é semanticamente inválido nessa posição |
+| `(A = B) OR C` | GROUP + OR | o `)` encerra a herança; C precisa iniciar simple condition válida, como condition-name, e DATA não é abreviação |
 | `A = (B OR C)` | `PreservedExpression(relationCombinedComparison)` | A/B/C `{DATA}`; INDEX não é admissível |
 | `A = (B AND C)` | igual ao anterior | A/B/C `{DATA}`; INDEX não é admissível |
 | `A = B OR < C` | `PreservedExpression(abbreviation)` | C `{DATA}`, resolve DATA; INDEX seria rejeitado |
@@ -150,7 +152,7 @@ Foram executadas 19 formas aceitas sem syntax error pela gramática configurada.
 | `A = B OR < C > D` | parse tem dois `abbreviation`; AST conserva só o primeiro | C coletado; D desaparece |
 | `A = B OR C = D OR E` | full relation redefine sujeito corrente; E vira `conditionNameReference` | E `{CONDITION}`, inválido para DATA |
 
-Nas formas com bare tail e declarações DATA, foram observadas 15 occurrences rigidamente classificadas como CONDITION e 15 `INVALID_NAMESPACE_FOR_CONTEXT`.
+Foram observadas 15 occurrences rigidamente classificadas como CONDITION e com `INVALID_NAMESPACE_FOR_CONTEXT` para declarações DATA nessa matriz. Após aplicar a regra IBM de término no parêntese correspondente, **13 são falsos gaps de abbreviated relation**. As outras duas — D em `(A = B OR C) AND D` e C em `(A = B) OR C` — estão depois do boundary de herança e rejeitam DATA corretamente; nessas posições um condition-name real continua válido.
 
 O caso `A = B OR < C > D` é evidência de perda para input aceito pela gramática, não afirma que a sequência seja válida segundo IBM. A validade normativa dessa forma permanece aberta; como o frontend atual a aceita sem diagnostic, o lowering não deveria descartar silenciosamente o segundo filho.
 
@@ -403,13 +405,13 @@ Nenhuma direção foi implementada.
 ### Classes cobertas
 
 1. DATA em abbreviated relation;
-2. CONDITION real em boolean condition;
+2. CONDITION real no mesmo bare tail `A = B OR C` e depois de boundary parentético;
 3. homônimo DATA/CONDITION;
 4. INDEX em relation e abbreviated tail;
 5. relation explícita versus abreviada;
 6. múltiplas abbreviations consecutivas;
 7. AND/OR mistos;
-8. parênteses/distribuição;
+8. parênteses/distribuição, incluindo término da herança no `)` correspondente;
 9. operador herdado, operador declarado e NOT;
 10. nome ausente;
 11. qualificação OF;
@@ -431,7 +433,7 @@ Nenhuma direção foi implementada.
 ## Validação executada
 
 - `mvn -q -Dtest=SemanticConditionContextDiscoveryTest test`: passou; sete testes de caracterização da produção atual;
-- `mvn -q -Dtest=SemanticConditionContextDiscoveryTest -Dsemantic.condition.required=true test`: falhou como oracle futuro, em sete grupos sem erro de infraestrutura — DATA, INDEX, RENAMES, AND/OR misto, parênteses, qualificação e múltiplas abbreviations;
+- `mvn -q -Dtest=SemanticConditionContextDiscoveryTest -Dsemantic.condition.required=true test`: falhou como oracle futuro, em sete grupos sem erro de infraestrutura — DATA, INDEX, RENAMES, AND/OR misto, DATA herdado dentro de parênteses, qualificação e múltiplas abbreviations; condition-names reais no bare tail e após o boundary passam como controles negativos;
 - `node --check scripts/discovery/semantic-context-mining.mjs`: passou;
 - execução do minerador sobre COACTUPC, CBSTM03A e CBSTM03D: passou e reproduziu as 4.259 entries e os clusters registrados acima;
 - `./scripts/harness/check-fast.sh`: passou;
@@ -441,28 +443,11 @@ Nenhuma direção foi implementada.
 
 O teste opt-in permanece desabilitado por padrão para não tornar os gates normais vermelhos antes da implementação autorizada.
 
-## Recommended work items
+## Roteamento para trabalho futuro
 
-Ordem recomendada, mantendo PRs pequenos:
+As direções candidatas foram consolidadas em [BACKLOG-COND-001](../../work/backlog.md#backlog-cond-001--contextualizar-condições-combinadas-e-referências-nominais). O backlog preserva a ordem dos slices — contrato normativo, decisão arquitetural, lowering lossless, condition-name/subscripts, occurrences, SEARCH e regressão — sem criar work items ativos ou autorizar implementação.
 
-1. **DISC-COND-001 — contrato normativo de disambiguation**
-   Fechar homônimos, qualification, scope e condition-name termination com documentação/compilador IBM. Somente docs/evals.
-2. **ARCH-COND-001 — ownership da especialização contextual**
-   Decidir entre AST contextual, normalização no lowering ou produto pós-binding; registrar impacto em INV-AST-001/002/003, IDs e provenance. Sem implementação sem review.
-3. **AST-COND-001 — lossless condition sequence**
-   Preservar todos os connectors/children, NOT, parênteses, relationCombined e precedence sem reparse de texto. Não mudar resolver no mesmo slice.
-4. **AST-COND-002 — condition-name reference structure**
-   Corrigir base, qualification e subscripts de condition-name com oracles próprios.
-5. **OCC-COND-001 — contextual admissible kinds**
-   Remover grammarRule como semantic truth e derivar occurrences da representação aprovada. Cobrir DATA/CONDITION/INDEX/RENAMES/homônimos.
-6. **AST-SEARCH-001 — SEARCH WHEN condition preservation**
-   Materializar a condition sob SEARCH ou um boundary tipado equivalente; provar que nenhuma occurrence some.
-7. **RES-COND-001 — binding contextual**
-   Somente se o novo contrato exigir: suportar conjunto contextual, first nominal level, qualification e ambiguidade sem inferir predicate no resolver.
-8. **CORPUS-COND-001 — regressão e mineração**
-   Reexecutar os três dists, adicionar o programa WAUX se autorizado, comparar clusters estruturados e promover oracles. Não alterar baselines para esconder novos fatos.
-
-Hardening arquitetural (itens 1–2) deve preceder semantic lowering/occurrence (3–6). Resolver é posterior e possivelmente pequeno. Regressão de corpus encerra, não define, a regra.
+Quando houver autorização, a promoção deve seguir `docs/engineering/work-item-protocol.md`, escolher apenas o primeiro slice revisável e declarar seus próprios `source_scope`, `must_not_change`, evals e gates. Este relatório permanece evidência histórica, não especificação normativa nem estado corrente da implementação.
 
 ## Critério de parada
 

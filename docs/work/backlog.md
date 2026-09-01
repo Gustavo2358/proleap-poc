@@ -387,6 +387,53 @@ Selectors de `EVALUATE` cujo subject correspondente não for booleano, ou cuja f
 - Fora de escopo: avaliação de valores de runtime, CFG/dataflow, CALL dinâmico e resolução de statements sem uma regra gramatical/semântica específica.
 - Promover para work item de risco médio antes de produção; gates mínimos: `fast`, `semantic` e `full`.
 
+## Condições e predicados
+
+### BACKLOG-COND-001 — Contextualizar condições combinadas e referências nominais
+
+#### Evidência e problema
+
+O [Discovery de contextualização semântica de condições](../history/evidence/semantic-condition-context-discovery-report.md) reproduziu uma classe em que a categoria sintática escolhida pela grammar é fechada como categoria nominal antes de haver contexto suficiente. Em `A = B OR C`, a parse tree atual pode representar C como `conditionNameReference`; o lowering preserva essa `grammarRule`, o collector emite `CONDITION/{CONDITION}` e o resolver rejeita uma declaração DATA, INDEX ou RENAMES homônima com `INVALID_NAMESPACE_FOR_CONTEXT`.
+
+A escolha só pode ser especializada com a regra COBOL e o binding nominal:
+
+- se C nomeia DATA, INDEX ou RENAMES admissível como objeto relacional, a condição abrevia sujeito e operador e equivale semanticamente a `A = C`;
+- se C nomeia um condition-name nível 88, C inicia uma simple condition e encerra a inserção herdada;
+- em `(A = B OR C) AND D`, C ainda pode herdar `A =`, mas o `)` correspondente a um `(` à esquerda do sujeito encerra a herança antes de D; D precisa iniciar uma simple condition válida;
+- em `(A = B) OR C`, C também está fora da sequência herdada;
+- quando `(` aparece imediatamente após o relational operator, o operador é distribuído e sujeito/operador permanecem correntes depois do `)` que encerra a distribuição. A futura regra não pode generalizar todo parêntese como término idêntico.
+
+O Discovery encontrou ainda lacunas relacionadas e reproduzíveis: `abbreviation`/`relationCombinedComparison` sem sujeito e operador herdados materializados, AND/OR mistos achatados como `MIXED_LOGICAL`, seleção exclusiva de `abbreviation(0)`, perda de condition references em `SEARCH WHEN` e corrupção estrutural de condition-name subscriptado. Não há finding de defeito no candidate filtering do resolver para a occurrence que ele recebe.
+
+#### Resultado esperado
+
+Representar condições combinadas de forma lossless e semanticamente contextual, preservando conectores, precedência, parênteses, NOT, sujeito/operador escritos ou herdados e o boundary de inserção. A incerteza entre condition-name e objeto abreviado deve permanecer explícita até que declaration kind e visibility permitam especialização, sem reparse de texto, spelling heuristics ou exceção por parent textual.
+
+Occurrences devem derivar `kind` e `admissibleKinds` do contexto semântico aprovado, não tratar `Meta.origin.grammarRule()` como verdade nominal. Condition-name real no mesmo bare tail deve continuar CONDITION; DATA, INDEX e RENAMES usados como objetos de relação abreviada devem permanecer admissíveis. O resolver pode selecionar entre kinds semanticamente admissíveis, mas não deve reconstruir sujeito, operador, NOT ou precedência.
+
+#### Fatiamento e dependências para promoção
+
+Promover somente um slice revisável por vez, nesta ordem:
+
+1. fechar o contrato IBM de inserção/término, operador distribuído, qualification, scope e homônimos DATA/CONDITION com oracles adversariais;
+2. decidir em ADR/invariant se a representação será contextual na AST, normalizada no lowering ou projetada em produto pós-binding, incluindo IDs, provenance e occurrences sintéticas;
+3. tornar a condition sequence lossless, preservando todos os connectors/children, NOT, parênteses, `relationCombinedComparison` e precedência sem alterar o resolver no mesmo slice;
+4. corrigir a estrutura de condition-name, qualification e subscripts com oracles próprios;
+5. projetar occurrences contextuais e remover o acoplamento semântico ao nome da grammar rule;
+6. materializar `SEARCH WHEN` ou boundary tipado equivalente, provando que nenhuma referência desaparece;
+7. executar regressão de corpus e promover somente diferenças justificadas, incluindo o fonte WAUX quando ele estiver disponível.
+
+O slice arquitetural precede mudanças transversais de lowering/occurrence. Mudança no resolver só entra em escopo se o contrato aprovado demonstrar necessidade depois que a occurrence estiver semanticamente correta. SEARCH e condition-name subscriptado podem virar work items separados se seus `source_scope` e riscos não couberem no mesmo slice.
+
+#### Restrições, evals e promoção
+
+- Autoridade: IBM Enterprise COBOL para abbreviated combined relation conditions, complex conditions, condition-name e index-name.
+- Regras canônicas a revisar quando autorizado: `docs/domain/semantic-ast.md`, `docs/domain/reference-resolution.md` e `docs/domain/symbol-model.md`.
+- Invariantes relacionados: INV-AST-001, INV-AST-002, INV-AST-003, INV-SYM-001, INV-RES-001, INV-RES-002, INV-PROV-002, INV-COV-001 e INV-DET-001.
+- Evals a ampliar ou criar na promoção: conditions positivas/negativas/ambíguas, DATA/CONDITION/INDEX/RENAMES, qualification, COPY, nested scope, AND/OR/NOT/parênteses, SEARCH e subscript.
+- Fora de escopo: inferir valores de runtime, CFG, dataflow, constant propagation ou targets dinâmicos; esses consumidores apenas motivam uma representação correta.
+- Proibido iniciar implementação a partir deste backlog. Criar work item de risco alto conforme `docs/engineering/work-item-protocol.md`; gates mínimos previstos: `fast`, `semantic`, `performance` quando houver nova propriedade algorítmica, e `full`.
+
 ## CFG e efeitos semânticos
 
 ### BACKLOG-CFG-001 — CFG estrutural incremental

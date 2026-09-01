@@ -99,16 +99,36 @@ class SemanticConditionContextDiscoveryTest {
                 () -> assertEquals(ResolutionContracts.ResolutionReason.INVALID_NAMESPACE_FOR_CONTEXT,
                         abbreviatedC.reason()));
 
-        List<String> bareTailCases = List.of("one-abbreviation", "two-abbreviations", "and-abbreviation",
-                "greater-abbreviation", "not-equal-abbreviation", "logical-not-abbreviation",
-                "mixed-and-or", "mixed-or-and", "grouped-whole", "grouped-left",
-                "restart-then-abbreviate");
-        long rigidConditionOccurrences = bareTailCases.stream().flatMap(name -> valueReads(analyses.get(name)).stream())
-                .filter(entry -> entry.occurrence().grammarRule().equals("conditionNameReference"))
+        Map<String, List<String>> inheritedDataTails = new LinkedHashMap<>();
+        inheritedDataTails.put("one-abbreviation", List.of("C"));
+        inheritedDataTails.put("two-abbreviations", List.of("C", "D"));
+        inheritedDataTails.put("and-abbreviation", List.of("C"));
+        inheritedDataTails.put("greater-abbreviation", List.of("C"));
+        inheritedDataTails.put("not-equal-abbreviation", List.of("C"));
+        inheritedDataTails.put("logical-not-abbreviation", List.of("C"));
+        inheritedDataTails.put("mixed-and-or", List.of("C", "D"));
+        inheritedDataTails.put("mixed-or-and", List.of("C", "D"));
+        inheritedDataTails.put("grouped-whole", List.of("C"));
+        inheritedDataTails.put("restart-then-abbreviate", List.of("E"));
+        long rigidConditionOccurrences = inheritedDataTails.entrySet().stream()
+                .flatMap(item -> item.getValue().stream().map(name -> entry(analyses.get(item.getKey()), name)))
+                .peek(entry -> assertEquals("conditionNameReference", entry.occurrence().grammarRule()))
                 .peek(entry -> assertEquals(ResolutionContracts.ResolutionReason.INVALID_NAMESPACE_FOR_CONTEXT,
                         entry.reason(), entry.toString()))
                 .count();
-        assertEquals(15, rigidConditionOccurrences);
+        assertEquals(13, rigidConditionOccurrences);
+
+        for (Map.Entry<String, String> boundary : Map.of(
+                "grouped-whole", "D",
+                "grouped-left", "C").entrySet()) {
+            ReferenceResolution.Entry standalone = entry(analyses.get(boundary.getKey()), boundary.getValue());
+            assertAll(boundary.getKey() + " closes inherited relation context before " + boundary.getValue(),
+                    () -> assertEquals("conditionNameReference", standalone.occurrence().grammarRule()),
+                    () -> assertEquals(Set.of(ResolutionContracts.ReferenceKind.CONDITION),
+                            standalone.occurrence().admissibleKinds()),
+                    () -> assertEquals(ResolutionContracts.ResolutionReason.INVALID_NAMESPACE_FOR_CONTEXT,
+                            standalone.reason()));
+        }
 
         for (String name : List.of("distributed-or", "distributed-and")) {
             Ast.Expression expression = AstBoundaryTestSupport.nodes(analyses.get(name), Ast.IfStatement.class)
@@ -375,7 +395,7 @@ class SemanticConditionContextDiscoveryTest {
         oracles.add(() -> assertTailResolvesAs("data abbreviation", "01 C PIC X.",
                 "A = B OR C", "C", ResolutionContracts.ReferenceKind.DATA));
         oracles.add(() -> assertTailResolvesAs("real condition-name", "01 FLAG PIC X.\n   88 C VALUE 'Y'.",
-                "C", "C", ResolutionContracts.ReferenceKind.CONDITION));
+                "A = B OR C", "C", ResolutionContracts.ReferenceKind.CONDITION));
         oracles.add(() -> assertTailResolvesAs("index abbreviation",
                 "01 T OCCURS 2 TIMES INDEXED BY C.\n   05 V PIC X.",
                 "A = B OR C", "C", ResolutionContracts.ReferenceKind.INDEX));
@@ -386,8 +406,20 @@ class SemanticConditionContextDiscoveryTest {
                 "01 C PIC X.", "A = B OR < C", "C", ResolutionContracts.ReferenceKind.DATA));
         oracles.add(() -> assertTailResolvesAs("mixed AND/OR", "01 C PIC X.\n01 D PIC X.",
                 "A = B OR C AND D", "D", ResolutionContracts.ReferenceKind.DATA));
-        oracles.add(() -> assertTailResolvesAs("parenthesized abbreviation", "01 C PIC X.\n01 D PIC X.",
-                "(A = B OR C) AND D", "D", ResolutionContracts.ReferenceKind.DATA));
+        oracles.add(() -> assertAll("parenthesized inheritance boundary",
+                () -> assertTailResolvesAs("parenthesized inherited DATA", """
+                                01 C PIC X.
+                                01 FLAG PIC X.
+                                   88 D VALUE 'Y'.
+                                """, "(A = B OR C) AND D", "C", ResolutionContracts.ReferenceKind.DATA),
+                () -> assertTailResolvesAs("condition-name after closing parenthesis", """
+                                01 C PIC X.
+                                01 FLAG PIC X.
+                                   88 D VALUE 'Y'.
+                                """, "(A = B OR C) AND D", "D", ResolutionContracts.ReferenceKind.CONDITION)));
+        oracles.add(() -> assertTailResolvesAs("condition-name after closed group",
+                "01 FLAG PIC X.\n   88 C VALUE 'Y'.",
+                "(A = B) OR C", "C", ResolutionContracts.ReferenceKind.CONDITION));
         oracles.add(() -> assertTailResolvesAs("qualified abbreviation", "01 G.\n   05 C PIC X.",
                 "A = B OR C OF G", "C OF G", ResolutionContracts.ReferenceKind.DATA));
         oracles.add(() -> {
