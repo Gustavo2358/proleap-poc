@@ -2,7 +2,7 @@
 
 ## Onde estamos
 
-Fase 2 implementada em `fix/work-ast-003-preorder-invariant` sobre `47484979b666a61758539630dcf4425249c68340`, merge do PR #11. A correção, regressões e promoção canônica do invariant estão prontas para o PR de implementação; merge permanece proibido até review.
+Fase 2 implementada em `fix/work-ast-003-preorder-invariant` sobre `47484979b666a61758539630dcf4425249c68340`, merge do PR #11. A correção, regressões e promoção canônica do invariant foram publicadas no PR #12; merge permanece proibido até review.
 
 ## Verde conhecido
 
@@ -14,7 +14,7 @@ Fase 2 implementada em `fix/work-ast-003-preorder-invariant` sobre `47484979b666
 
 ## Restante
 
-- Publicar commit e PR de implementação separados contra `main`, sem merge automático, e aguardar review.
+- Aguardar review independente do PR #12, sem merge automático.
 - WORK-AST-002 Slice 2 permanece sem autorização e não foi iniciado.
 
 ## Descobertas que afetam o plano
