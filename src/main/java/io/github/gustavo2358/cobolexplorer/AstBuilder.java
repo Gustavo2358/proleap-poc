@@ -205,7 +205,7 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
                     dataEntries.addAll(buildDataHierarchy(fd.dataDescriptionEntry()));
                     entries.add(new Ast.FileDescription(fdMeta,
                             fileName == null ? "<unknown>" : clean(sourceText(fileName)),
-                            declarationVisibility(fd,
+                            declarationVisibility(fdMeta,
                                     firstDescendant(fd, CobolParser.ExternalClauseContext.class) != null,
                                     firstDescendant(fd, CobolParser.GlobalClauseContext.class) != null), dataEntries));
                 }
@@ -263,7 +263,7 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
                 .map(this::buildDataClause).toList();
         Ast.DataEntry entry = new Ast.DataEntry(meta, level, levelKind(level),
                 filler ? "FILLER" : clean(sourceText(name)), filler,
-                declarationVisibility(format, external, global), raw, clauses, List.of());
+                declarationVisibility(meta, external, global), raw, clauses, List.of());
         recordCoverage(entry, sourceText(format));
         return entry;
     }
@@ -321,12 +321,12 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
                 draft.children.stream().map(this::freezeDataDraft).toList());
     }
 
-    private Ast.DeclarationVisibility declarationVisibility(ParserRuleContext context,
+    private Ast.DeclarationVisibility declarationVisibility(Ast.Meta declarationMeta,
                                                              boolean external, boolean global) {
         if (external && global) {
             semanticDiagnostics.add(new SemanticCoverage.Diagnostic(
                     "CONFLICTING_DECLARATION_VISIBILITY",
-                    "Declaration contains both GLOBAL and EXTERNAL visibility", meta(context)));
+                    "Declaration contains both GLOBAL and EXTERNAL visibility", declarationMeta));
             return Ast.DeclarationVisibility.CONFLICTING;
         }
         if (external) return Ast.DeclarationVisibility.EXTERNAL;
@@ -845,14 +845,18 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
         CobolParser.PerformInlineStatementContext inline = context.performInlineStatement();
         CobolParser.PerformProcedureStatementContext procedure = context.performProcedureStatement();
         CobolParser.PerformTypeContext type = inline != null ? inline.performType() : procedure.performType();
-        List<Ast.Expression> controls = type == null ? List.of() : controlExpressions(type);
-        if (inline != null) return new Ast.PerformStatement(meta, Ast.PerformKind.INLINE, null, null,
-                type == null ? "once" : compact(sourceText(type)), controls, statementsInside(inline));
+        if (inline != null) {
+            List<Ast.Expression> controls = type == null ? List.of() : controlExpressions(type);
+            return new Ast.PerformStatement(meta, Ast.PerformKind.INLINE, null, null,
+                    type == null ? "once" : compact(sourceText(type)), controls, statementsInside(inline));
+        }
         List<CobolParser.ProcedureNameContext> names = procedure == null ? List.of()
                 : nearestDescendants(procedure, CobolParser.ProcedureNameContext.class);
+        Ast.ProcedureReference fromReference = names.isEmpty() ? null : procedureReference(names.get(0));
+        Ast.ProcedureReference throughReference = names.size() < 2 ? null : procedureReference(names.get(1));
+        List<Ast.Expression> controls = type == null ? List.of() : controlExpressions(type);
         return new Ast.PerformStatement(meta, Ast.PerformKind.PROCEDURE,
-                names.isEmpty() ? null : procedureReference(names.get(0)),
-                names.size() < 2 ? null : procedureReference(names.get(1)),
+                fromReference, throughReference,
                 type == null ? "once" : compact(sourceText(type)), controls, List.of());
     }
 

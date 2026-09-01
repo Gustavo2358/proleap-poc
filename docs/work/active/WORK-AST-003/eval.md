@@ -2,7 +2,7 @@
 
 ## O que prova corretude
 
-O Discovery é correto se reproduz a falha depois da construção da AST, discrimina as ordens relevantes, encontra todas as fontes comprovadas de divergência, classifica todos os tipos/consumidores com evidência e mantém gates normais verdes sem corrigir produção. O oracle opt-in deve falhar no primeiro nó divergente usando exclusivamente `Ast.children`.
+A implementação é correta se os triggers atravessam `AstSnapshot`, o oracle normal percorre exclusivamente `Ast.children` e prova `id == posição` sem ciclos, filhos nulos ou instâncias duplicadas, e diagnostics conflitantes continuam ancorados às declarações sem consumir o contador estrutural.
 
 ## Classes positivas
 
@@ -20,7 +20,7 @@ O Discovery é correto se reproduz a falha depois da construção da AST, discri
 ## Classes ambíguas
 
 - `UnsupportedStatement` possui traversal declarada, mas não tem builder de produção atual; classificação `NÃO APLICÁVEL`.
-- Pre-order é intencional no snapshot/história e necessário à compatibilidade atual, mas ainda não possui statement canônico próprio; promoção normativa depende de review.
+- Estabilidade de IDs entre edições do fonte não faz parte do contrato e não deve ser inferida do pre-order.
 - Futuras análises precisam de identidade única/determinística/reachable, não inerentemente de pre-order.
 
 ## Casos adversariais
@@ -32,7 +32,7 @@ O Discovery é correto se reproduz a falha depois da construção da AST, discri
 
 ## Casos de regressão
 
-- Baseline `full` na base do PR #10.
+- Baseline `full` do Discovery na base do PR #10 e gates finais sobre a base do PR #11.
 - Fixtures semânticas representativas já existentes.
 - WORK-RES-004, consultado somente como evidência histórica de preservação deliberada do pre-order.
 

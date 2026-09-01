@@ -22,6 +22,15 @@ IDs neste documento são estáveis. `AUTOMATED` indica proteção executável at
 - **Enforcement:** `PARTIALLY_AUTOMATED` — manifestos/testes de cobertura e review.
 - **Known exceptions:** operações genuinamente lexicais com domínio fechado.
 
+### INV-AST-003 — IDs seguem o pre-order canônico
+
+- **Statement:** dentro de cada `ProgramUnit`, cada instância de `Ast.Node` é alcançada exatamente uma vez pelo pre-order de `Ast.children` e possui `Meta.id` igual à sua posição nessa traversal; os IDs são determinísticos e formam o intervalo contíguo `0..N-1`. Metadata não-AST não consome esse namespace estrutural.
+- **Rationale:** snapshots e joins entre produtos separados precisam de identidade local reproduzível sem gaps, ciclos, filhos nulos ou instâncias compartilhadas; a posição canônica é contrato de representação, não regra COBOL.
+- **Scope:** `Ast`, `AstBuilder`, metadata diagnóstica ancorada em nodes e consumidores de identidade AST.
+- **Related ADRs:** ADR-0003 e ADR-0005.
+- **Enforcement:** `AUTOMATED` — `AstPreorderInvariantTest` percorre `Ast.children` em `O(nodes)` nos casos adversariais e na superfície representativa; `AstSnapshot` mantém o fail-closed posicional.
+- **Known exceptions:** nenhuma; metadata de produto que não é `Ast.Node` fica fora do namespace, ainda que reutilize a `Meta` de um node como anchor.
+
 ### INV-SYM-001 — Símbolos não executam binding
 
 - **Statement:** symbol tables modelam declarações, escopos, namespaces, entidades e relações declarativas; usos continuam `NOT_PERFORMED` até a resolução.

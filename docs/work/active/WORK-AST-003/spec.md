@@ -1,12 +1,12 @@
-# WORK-AST-003 — Discovery da consistência global entre IDs e traversal da AST
+# WORK-AST-003 — Correção da consistência global entre IDs e traversal da AST
 
 ## Problema
 
-`AstSnapshot.from` rejeita ASTs construídas sem erro para `PERFORM` procedure com condição, porque a sequência de `Ast.Meta.id` diverge do pre-order definido por `Ast.children`. A hipótese inicial aponta para `buildPerform`, mas o shared counter de metadata pode permitir outras violações e precisa ser auditado antes de qualquer correção.
+`AstSnapshot.from` rejeita ASTs construídas sem erro para `PERFORM` procedure com condição, porque a sequência de `Ast.Meta.id` diverge do pre-order definido por `Ast.children`. O Discovery aprovado no PR #11 confirmou duas causas: ordem de alocação invertida em `buildPerform` e consumo do contador estrutural por diagnostics de `declarationVisibility`.
 
 ## Objetivo
 
-Reproduzir o sintoma no pipeline real, descobrir o contrato atual de identidade/order/reachability, classificar todos os consumidores, auditar todos os tipos de `Ast.Node` e todas as fontes de alocação, desenhar um oracle genérico e recomendar a menor correção arquitetural. Esta execução termina em relatório, testes de Discovery, commit e PR; produção permanece inalterada.
+Preservar a política atual e corrigir as duas fontes confirmadas de violação, promover o oracle estrutural para o gate normal e documentar que IDs locais de `Ast.Node` correspondem ao canonical pre-order. A Fase 2 foi autorizada somente após o merge e review independente do PR #11.
 
 ## Domínio de entrada suportado
 
@@ -24,28 +24,28 @@ Program units aceitos pelo frontend COBOL configurado após normalização e pre
 
 - `ARCHITECTURE_GUARANTEED`: IDs são locais ao program unit, determinísticos e usados para joins entre produtos separados.
 - `SPECIFICATION_GUARANTEED`: `Ast.children` é a traversal estrutural canônica atual e `AstSnapshot` exige igualdade entre posição pre-order e `Meta.id`.
-- `UNCERTAIN`: a documentação canônica diz apenas “ordem determinística de construção”; o status normativo de contiguidade/pre-order precisa de review e promoção explícita.
+- `SPECIFICATION_GUARANTEED`: o review do Discovery aprovou contiguidade/pre-order como contrato representacional e autorizou sua promoção canônica.
 - `OBSERVED_IN_CURRENT_CORPUS_ONLY`: o corpus principal passar no baseline não prova a propriedade para caminhos não exercitados.
 
 ## Comportamento esperado
 
-1. O Discovery distingue sucesso de preprocessing, lexer, parser e AST da falha posterior de apresentação.
-2. Cada discrepância registra trigger, nó, ID esperado, ID real e cadeia causal.
-3. Todos os 48 tipos de `Ast.Node` são classificados contra seu builder e `Ast.children`, e todos os call sites de helpers que podem consumir o contador são auditados.
-4. Consumidores são classificados por unicidade, determinismo, contiguidade, pre-order ou uso não ordinal.
-5. Reachability, duplicação e ciclos são auditados sem confundir objetos intermediários do builder com a árvore final.
-6. Oráculos intencionalmente vermelhos ficam opt-in; gates normais continuam verdes.
-7. Nenhuma hipótese vira correção de produção nesta fase.
-8. IDs quebrados específicos permanecem evidência observacional; o aceite futuro é derivado do pre-order de `Ast.children`, com `id == posição esperada`, e não de hardcodes substitutos.
+1. `buildPerform` materializa referências de procedure antes dos controles, na ordem publicada por `Ast.children`.
+2. `declarationVisibility` reutiliza a metadata estrutural de `FileDescription` e `DataEntry` sem avançar `nextId`.
+3. O diagnostic conflitante preserva code, presença, span, provenance e vínculo com a declaração.
+4. O oracle normal verifica reachability única, ausência de ciclos/nulos e `meta.id == posição` em `O(nodes)`.
+5. Os três triggers passam por `AstSnapshot`; os controles negativos permanecem verdes.
+6. IDs quebrados específicos permanecem apenas na evidência histórica, sem hardcodes substitutos.
+7. Produtos posteriores preservam shape, coverage, provenance e joins coerentes.
+8. Gates `fast`, `semantic` e `full` permanecem verdes sem relaxar baselines.
 
 ## Comportamento diante de incerteza
 
-Ausência de contrato explícito é finding, não licença para escolher uma política. Tipos sem caminho atual de materialização ficam `NÃO APLICÁVEL`; condicionais não reproduzidas ficam `SUSPEITO`. A recomendação deve declarar quais garantias são necessárias aos produtos atuais e quais são apenas conveniência de representação.
+Nova violação que se enquadre diretamente no invariant aprovado recebe teste mínimo e correção localizada. Caso exija política de identidade, traversal ou arquitetura adicional, a implementação para e reporta antes de ampliar escopo.
 
 ## Fora de escopo
 
-- Alterar `AstBuilder`, `Ast.children`, `Ast.Meta`, `AstSnapshot` ou qualquer consumidor de produção.
-- Corrigir `PERFORM`, gaps diagnósticos ou outros findings.
+- Alterar `Ast.children`, `Ast.Meta`, `AstSnapshot` ou a política global de IDs.
+- Introduzir reindexação pós-build, ID sentinela ou segundo contador.
 - Iniciar WORK-AST-002 Slice 2.
 - Alterar grammar, parser, coverage taxonomy, símbolos, occurrences, binding, CFG ou dataflow.
 - Tornar IDs persistentes entre edições do fonte.
@@ -56,4 +56,4 @@ Ausência de contrato explícito é finding, não licença para escolher uma pol
 
 ## ADRs/invariantes relacionados
 
-ADRs 0002, 0003, 0005 e 0008. INV-AST-001, INV-AST-002, INV-PROV-002, INV-COV-001 e INV-DET-001. O Discovery avalia a necessidade de um invariant AST adicional, mas não o cria antes do review.
+ADRs 0002, 0003, 0005 e 0008. INV-AST-001, INV-AST-002, INV-AST-003, INV-PROV-002, INV-COV-001 e INV-DET-001.

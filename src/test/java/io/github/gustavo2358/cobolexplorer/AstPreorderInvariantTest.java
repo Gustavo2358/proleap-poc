@@ -6,7 +6,6 @@ import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -19,23 +18,18 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Characterizes BUG-AST-PREORDER-001 without changing production behavior.
- *
- * <p>The exact broken IDs asserted by the focused tests are Discovery evidence only. They must not
- * become Phase 2 acceptance values or be updated to whatever numbers a future implementation emits.
- * The future regression contract is structural: traverse with {@link Ast#children(Ast.Node)} and
- * require each node ID to equal its canonical pre-order position, as encoded by
- * {@link #assertCanonicalPreOrder(Ast.Program)}.</p>
+ * Regression oracle for the canonical AST pre-order contract confirmed by BUG-AST-PREORDER-001.
+ * The acceptance rule is structural: traversal through {@link Ast#children(Ast.Node)} must reach
+ * every node instance exactly once and each node ID must equal its canonical pre-order position.
  */
-class AstPreorderInvariantCharacterizationTest {
+class AstPreorderInvariantTest {
     private static final Path FIXTURES = Path.of("src/test/resources/cobol/semantic");
 
     @Test
-    void procedurePerformUntilBuildsSuccessfullyButSnapshotRejectsItsChildOrder() throws Exception {
+    void procedurePerformUntilPreservesReferencesControlsAndCanonicalSnapshot() throws Exception {
         Analysis analysis = analyze("ast-preorder-perform-until.cbl");
         Ast.PerformStatement perform = onlyPerform(analysis.program());
 
@@ -44,20 +38,12 @@ class AstPreorderInvariantCharacterizationTest {
         assertNotNull(perform.fromReference());
         assertEquals("TARGET-PARA", perform.fromReference().baseName());
         assertEquals(1, perform.controlExpressions().size());
-        // Discovery-only snapshot of the current defect; not a future implementation contract.
-        assertEquals(List.of(21, 14), List.of(
-                perform.fromReference().meta().id(), perform.controlExpressions().get(0).meta().id()),
-                "observed broken IDs: the control subtree is allocated before the structurally "
-                        + "preceding procedure reference");
-
-        IllegalStateException failure = assertThrows(IllegalStateException.class,
-                () -> AstSnapshot.from(analysis.program()));
-        assertEquals("AST ids are not pre-order at ProcedureReference: expected 14 but got 21",
-                failure.getMessage());
+        assertCanonicalPreOrder(analysis.program());
+        assertDoesNotThrow(() -> AstSnapshot.from(analysis.program()));
     }
 
     @Test
-    void procedurePerformThruUntilShowsTheSameDefectWithAConditionDependentOffset() throws Exception {
+    void procedurePerformThruUntilPreservesBothReferencesControlsAndCanonicalSnapshot() throws Exception {
         Analysis analysis = analyze("ast-preorder-perform-thru.cbl");
         Ast.PerformStatement perform = onlyPerform(analysis.program());
 
@@ -68,40 +54,42 @@ class AstPreorderInvariantCharacterizationTest {
         assertEquals(List.of("FIRST-PARA", "LAST-PARA"), List.of(
                 perform.fromReference().baseName(), perform.throughReference().baseName()));
         assertEquals(1, perform.controlExpressions().size());
-        // Discovery-only snapshot of the current THRU + UNTIL defect; not a future acceptance value.
-        assertEquals(List.of(17, 18, 14), List.of(
-                perform.fromReference().meta().id(), perform.throughReference().meta().id(),
-                perform.controlExpressions().get(0).meta().id()),
-                "observed broken IDs: both procedure references are allocated after the "
-                        + "structurally later UNTIL control subtree");
-
-        IllegalStateException failure = assertThrows(IllegalStateException.class,
-                () -> AstSnapshot.from(analysis.program()));
-        assertEquals("AST ids are not pre-order at ProcedureReference: expected 14 but got 17",
-                failure.getMessage());
+        assertCanonicalPreOrder(analysis.program());
+        assertDoesNotThrow(() -> AstSnapshot.from(analysis.program()));
     }
 
     @Test
-    void diagnosticMetadataAllocatedFromTheNodeCounterCreatesAnIndependentGap() throws Exception {
+    void conflictingVisibilityDiagnosticsReuseTheirDeclarationMetadataWithoutIdGaps() throws Exception {
         Analysis analysis = analyze("ast-preorder-conflicting-visibility.cbl");
 
         assertEquals(0, analysis.preprocessingErrors());
         assertEquals(0, analysis.unresolvedCopies());
         assertEquals(0, analysis.lexerErrors());
         assertEquals(0, analysis.parserErrors());
-        assertEquals(1, analysis.semanticDiagnostics().size());
-        SemanticCoverage.Diagnostic diagnostic = analysis.semanticDiagnostics().get(0);
-        assertEquals("CONFLICTING_DECLARATION_VISIBILITY", diagnostic.code());
-        assertEquals(8, diagnostic.meta().id(),
-                "diagnostic metadata currently consumes the same counter as AST nodes");
-        assertEquals(List.of(0, 1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12),
-                canonicalNodes(analysis.program()).stream().map(node -> node.meta().id()).toList(),
-                "the diagnostic-only allocation leaves an AST id gap");
+        Ast.FileDescription fileDescription = canonicalNodes(analysis.program()).stream()
+                .filter(Ast.FileDescription.class::isInstance)
+                .map(Ast.FileDescription.class::cast)
+                .filter(file -> file.fileName().equals("CONFLICTING-FILE"))
+                .findFirst().orElseThrow();
+        Ast.DataEntry dataEntry = canonicalNodes(analysis.program()).stream()
+                .filter(Ast.DataEntry.class::isInstance)
+                .map(Ast.DataEntry.class::cast)
+                .filter(entry -> entry.name().equals("CONFLICTING-ITEM"))
+                .findFirst().orElseThrow();
 
-        IllegalStateException failure = assertThrows(IllegalStateException.class,
-                () -> AstSnapshot.from(analysis.program()));
-        assertEquals("AST ids are not pre-order at Division: expected 8 but got 9",
-                failure.getMessage());
+        assertEquals(2, analysis.semanticDiagnostics().size());
+        assertTrue(analysis.semanticDiagnostics().stream()
+                .allMatch(diagnostic -> diagnostic.code().equals("CONFLICTING_DECLARATION_VISIBILITY")));
+        assertEquals(Ast.DeclarationVisibility.CONFLICTING, fileDescription.visibility());
+        assertEquals(Ast.DeclarationVisibility.CONFLICTING, dataEntry.visibility());
+        assertTrue(analysis.semanticDiagnostics().stream().anyMatch(diagnostic ->
+                        diagnostic.meta() == fileDescription.meta()),
+                "the FileDescription diagnostic must be anchored to its AST declaration");
+        assertTrue(analysis.semanticDiagnostics().stream().anyMatch(diagnostic ->
+                        diagnostic.meta() == dataEntry.meta()),
+                "the DataEntry diagnostic must be anchored to its AST declaration");
+        assertCanonicalPreOrder(analysis.program());
+        assertDoesNotThrow(() -> AstSnapshot.from(analysis.program()));
     }
 
     @Test
@@ -123,8 +111,12 @@ class AstPreorderInvariantCharacterizationTest {
     }
 
     @Test
-    void representativeExistingAstSurfaceHasCanonicalReachabilityAndPreOrder() throws Exception {
+    void everyAstNodeIdMatchesCanonicalPreOrder() throws Exception {
         for (String fixture : List.of(
+                "ast-preorder-perform-until.cbl",
+                "ast-preorder-perform-thru.cbl",
+                "ast-preorder-conflicting-visibility.cbl",
+                "ast-preorder-consistent-controls.cbl",
                 "ast-cfg-boundary.cbl",
                 "statements.cbl",
                 "declarations.cbl",
@@ -135,20 +127,12 @@ class AstPreorderInvariantCharacterizationTest {
             assertEquals(0, analysis.lexerErrors(), fixture);
             assertEquals(0, analysis.parserErrors(), fixture);
             assertCanonicalPreOrder(analysis.program());
-            assertDoesNotThrow(() -> AstSnapshot.from(analysis.program()), fixture);
-        }
-    }
+            AstSnapshot snapshot = assertDoesNotThrow(() -> AstSnapshot.from(analysis.program()), fixture);
 
-    @Test
-    @EnabledIfSystemProperty(named = "ast.preorder.required", matches = "true")
-    void everyAstNodeIdMatchesCanonicalPreOrder() throws Exception {
-        // This property—not replacement hardcodes in the focused tests—is the future regression oracle.
-        for (String fixture : List.of(
-                "ast-preorder-perform-until.cbl",
-                "ast-preorder-perform-thru.cbl",
-                "ast-preorder-conflicting-visibility.cbl")) {
-            Analysis analysis = analyze(fixture);
-            assertCanonicalPreOrder(analysis.program());
+            Analysis repeated = analyze(fixture);
+            assertCanonicalPreOrder(repeated.program());
+            assertEquals(snapshot.nodes(), AstSnapshot.from(repeated.program()).nodes(),
+                    fixture + " must produce deterministic AST ids and structure");
         }
     }
 

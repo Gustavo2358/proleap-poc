@@ -9,7 +9,21 @@
 - **Entrada:** parser/parse tree, texto preprocessado, `SourceMap` e índices de origem da parse tree.
 - **Saída:** programs por compilation unit, coverage, diagnostics e metadados de origem em cada nó.
 
-Cada `Meta` contém ID, span, origem gramatical e provenance. IDs seguem ordem determinística de construção.
+Cada `Meta` contém ID, span, origem gramatical e provenance. Dentro de cada `ProgramUnit`,
+o ID de um `Ast.Node` é sua posição no pre-order canônico definido por `Ast.children`,
+começando em zero.
+
+Esse namespace estrutural é local à unit, determinístico e contíguo: a traversal
+canônica de uma árvore com `N` nodes produz exatamente os IDs `0..N-1`, sem ciclos,
+filhos nulos ou compartilhamento da mesma instância por mais de um caminho. Metadata
+de diagnostics e de outros produtos que não implementam `Ast.Node` não recebe uma
+nova identidade nesse namespace; quando precisa apontar para uma declaração, reutiliza
+a `Meta` do node estrutural correspondente.
+
+Pre-order e contiguidade são contrato representacional, não semântica COBOL nem
+igualdade com ordem textual ou parse-tree order. Os IDs não prometem estabilidade
+entre edições do fonte. Consumidores futuros não podem inferir deles source order,
+ordem de execução ou qualquer propriedade adicional sem nova decisão arquitetural.
 
 ## Superfície modelada
 
@@ -38,4 +52,4 @@ A construção cria o inventário semântico em ordem determinística. Metadados
 
 ## Relações
 
-Evals: EVAL-AST-001 a EVAL-AST-004, EVAL-COV-001, EVAL-COV-002 e EVAL-ARCH-001. Invariantes: INV-AST-001, INV-AST-002, INV-PROV-002, INV-COV-001, INV-COV-002 e INV-EMB-001. ADRs: ADR-0002, ADR-0003, ADR-0007, ADR-0008 e ADR-0009.
+Evals: EVAL-AST-001 a EVAL-AST-005, EVAL-COV-001, EVAL-COV-002 e EVAL-ARCH-001. Invariantes: INV-AST-001 a INV-AST-003, INV-PROV-002, INV-COV-001, INV-COV-002 e INV-EMB-001. ADRs: ADR-0002, ADR-0003, ADR-0005, ADR-0007, ADR-0008 e ADR-0009.
