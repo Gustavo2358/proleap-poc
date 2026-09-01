@@ -2,7 +2,7 @@
 
 ## Onde estamos
 
-Slice 1 mergeado pelo PR #10. WORK-AST-003 e `BUG-AST-PREORDER-001` foram resolvidos nos PRs #11/#12. O Discovery arquitetural do Slice 2 partiu da `main` `9aba9a897cc7f45ba7da3a25079d66aee838ba55`; nenhuma implementação de F-02 foi iniciada.
+Slice 1 mergeado pelo PR #10. WORK-AST-003 e `BUG-AST-PREORDER-001` foram resolvidos nos PRs #11/#12. O Discovery arquitetural do Slice 2 partiu da `main` `9aba9a897cc7f45ba7da3a25079d66aee838ba55` e está no PR #13; nenhuma implementação de F-02 foi iniciada.
 
 ## Verde conhecido
 
@@ -16,7 +16,7 @@ Slice 1 mergeado pelo PR #10. WORK-AST-003 e `BUG-AST-PREORDER-001` foram resolv
 
 ## Restante
 
-- Abrir e revisar o PR exclusivo deste Discovery.
+- Revisar o PR #13, exclusivo deste Discovery.
 - Implementação do Slice 2/F-02 continua dependente de autorização explícita posterior; os oráculos não foram promovidos.
 
 ## Descobertas que afetam o plano
