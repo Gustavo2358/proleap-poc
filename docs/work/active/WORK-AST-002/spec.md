@@ -30,6 +30,8 @@ Parser errors, COPYs ausentes e falhas de preprocessing permanecem input incompl
 - `SPECIFICATION_GUARANTEED`: findings representam fronteiras semânticas materializadas, não cada wrapper gramatical.
 - `ARCHITECTURE_GUARANTEED`: o ponto de reconciliação deve preceder o primeiro consumidor pós-resolution. No pipeline atual, todos os produtos necessários coexistem imediatamente após `CobolReferenceResolver.resolve(...)` e antes de `CicsIntrinsicClassifier`; report e snapshots consomem somente produtos já validados.
 - `SPECIFICATION_GUARANTEED`: checks autocontidos continuam nos próprios produtos; joins entre AST, tables, scopes, occurrences, resolution, relation resolution e candidates pertencem a um integrador dedicado no ponto de orquestração.
+- `SPECIFICATION_GUARANTEED`: a identidade estrutural de um candidate determina seu payload de declaração: domínio e `localId` selecionam o symbol, entity ou program unit representado, e `declarationSymbolIds` deve ser exatamente o conjunto/lista desse alvo. Nomes escritos e canônicos não são chaves de integridade.
+- `SPECIFICATION_GUARANTEED`: uma lista de candidates contém identidades semânticas distintas; repetir o mesmo `SemanticEntityId` na mesma lista é corrupção, não ambiguidade legítima.
 - `UNCERTAIN`: entries tipadas são containers não dependency-bearing; `PICTURE`/`USAGE` não adicionam dependência nominal e não alegam layout, enquanto `VALUE`, `OCCURS`, `REDEFINES` e `RENAMES` preservam `DEPENDENCY_UNKNOWN` para valores, cardinalidade e aliases ainda desconhecidos. Essas decisões do Slice 1 não são reabertas por F-02.
 - `OBSERVED_IN_CURRENT_CORPUS_ONLY`: nenhuma cardinalidade ou forma encontrada apenas no corpus será promovida a regra.
 
@@ -43,8 +45,9 @@ Parser errors, COPYs ausentes e falhas de preprocessing permanecem input incompl
 6. CALL literal produz `ProgramReference`; CALL por identifier/expression produz referência DATA ou expressão preservada e nunca target PROGRAM inferido.
 7. Joins usam `(ProgramUnitId, astNodeId)` ou `(ProgramUnitId, domain, localId)`; IDs locais podem repetir entre units.
 8. Provenance da occurrence é a do AST node correspondente e preserva exatidão.
-9. Produtos estruturalmente incoerentes falham fechados; sintaxe válida ainda não interpretada produz incompletude observável.
-10. `dependencyAnalysisReady` significa apenas readiness das capacidades implementadas/versionadas e não prova CFG, dataflow ou CALL dinâmico final.
+9. Cada candidate reconcilia domínio, `localId`, categoria semântica e `declarationSymbolIds` com o alvo estrutural representado; uma mesma lista não repete `SemanticEntityId`.
+10. Produtos estruturalmente incoerentes falham fechados; sintaxe válida ainda não interpretada produz incompletude observável.
+11. `dependencyAnalysisReady` significa apenas readiness das capacidades implementadas/versionadas e não prova CFG, dataflow ou CALL dinâmico final.
 
 ## Comportamento diante de incerteza
 

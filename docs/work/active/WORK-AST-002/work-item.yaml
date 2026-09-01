@@ -65,6 +65,8 @@ source_scope:
   - src/main/java/io/github/gustavo2358/cobolexplorer/ReferenceOccurrences.java
   - src/main/java/io/github/gustavo2358/cobolexplorer/ReferenceResolution.java
   - src/main/java/io/github/gustavo2358/cobolexplorer/ResolutionAnalysisReport.java
+  - planned:src/main/java/io/github/gustavo2358/cobolexplorer/SemanticProductIntegrityValidator.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/ExplorerMain.java
 test_scope:
   - src/test/java/io/github/gustavo2358/cobolexplorer/AstBuildCoverageTest.java
   - src/test/java/io/github/gustavo2358/cobolexplorer/AstSemanticBoundaryCharacterizationTest.java
@@ -74,15 +76,17 @@ test_scope:
   - src/test/java/io/github/gustavo2358/cobolexplorer/CoverageSnapshotTest.java
   - src/test/java/io/github/gustavo2358/cobolexplorer/GrammarCoverageManifestTest.java
   - src/test/java/io/github/gustavo2358/cobolexplorer/SemanticCoverageTest.java
+  - planned:src/test/java/io/github/gustavo2358/cobolexplorer/SemanticProductIntegrityValidatorTest.java
   - src/test/resources/cobol/semantic/ast-cfg-boundary.cbl
 must_not_change:
   - Gramática ou comportamento do parser
   - Shape e cardinalidade da AST símbolos occurrences binding nominal ou candidates
-  - Validator cross-product e integridade entre produtos reservados ao Slice 2
+  - Implementação de F-02 neste PR de Discovery; somente uma nova branch e PR após merge e instrução explícita poderão implementá-la
   - Baselines para acomodar novos testes
   - CFG dataflow storage layout aliases effects reaching definitions possible values runtime values kills ou targets dinâmicos
   - Semântica opaca de SQL CICS e SQLIMS
 gates:
   - fast
   - semantic
+  - performance
   - full

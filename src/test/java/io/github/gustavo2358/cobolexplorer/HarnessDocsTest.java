@@ -24,6 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class HarnessDocsTest {
     private static final Path ROOT = Path.of("").toAbsolutePath().normalize();
     private static final Path DOCS = ROOT.resolve("docs");
+    private static final String PLANNED_PATH_PREFIX = "planned:";
     private static final Pattern MARKDOWN_LINK = Pattern.compile("(?<!!)\\[[^]]+]\\(([^)]+)\\)");
     private static final Pattern ADR_HEADING = Pattern.compile("(?m)^# (ADR-\\d{4}) — ");
     private static final Pattern ADR_INDEX_ROW = Pattern.compile("(?m)^\\| (ADR-\\d{4}) \\|");
@@ -299,6 +300,20 @@ class HarnessDocsTest {
 
     private static void assertPathsExist(List<String> paths, String field) {
         for (String value : paths) {
+            if (value.startsWith(PLANNED_PATH_PREFIX)) {
+                assertTrue(field.equals("source_scope") || field.equals("test_scope"),
+                        "caminho planejado permitido somente em source_scope/test_scope: " + value);
+                String path = value.substring(PLANNED_PATH_PREFIX.length());
+                assertFalse(path.isBlank() || path.contains("#"), "caminho planejado inválido: " + value);
+                Path resolved = ROOT.resolve(path).normalize();
+                Path expectedRoot = ROOT.resolve(field.equals("source_scope") ? "src/main" : "src/test");
+                assertTrue(resolved.startsWith(expectedRoot),
+                        field + " planejado fora da árvore esperada: " + value);
+                assertTrue(Files.isDirectory(resolved.getParent()),
+                        field + " planejado sem diretório pai existente: " + value);
+                assertFalse(Files.exists(resolved), field + " planejado já existe: " + value);
+                continue;
+            }
             String path = value.split("#", 2)[0];
             assertTrue(Files.exists(ROOT.resolve(path)), field + " inexistente: " + value);
         }

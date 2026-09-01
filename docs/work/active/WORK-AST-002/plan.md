@@ -17,7 +17,7 @@
 
 ## Superfície arquitetural provável
 
-Para a futura implementação do Slice 2, a incisão recomendada é um novo `SemanticProductIntegrityValidator`, seu teste focal e a retenção dos `AstScopeIndex` já construídos na orquestração para uma única chamada em `ExplorerMain` após `CobolReferenceResolver.resolve(...)`. `ResolutionAnalysisReport`, classifier, snapshots e modelos semânticos permanecem consumidores ou produtos separados, sem absorver ownership do validator. A inclusão desses arquivos no `source_scope` depende da autorização da Fase 2.
+Para a futura implementação do Slice 2, a incisão recomendada é um novo `SemanticProductIntegrityValidator`, seu teste focal e a retenção dos `AstScopeIndex` já construídos na orquestração para uma única chamada em `ExplorerMain` após `CobolReferenceResolver.resolve(...)`. `ResolutionAnalysisReport`, classifier, snapshots e modelos semânticos permanecem consumidores ou produtos separados, sem absorver ownership do validator. Os arquivos prováveis já constam do contrato de escopo do harness, mas este PR de Discovery não autoriza alterá-los; a implementação exige nova branch/PR após merge e instrução explícita.
 
 ## Migrações requeridas
 
@@ -51,7 +51,7 @@ Não há migração de AST, símbolos, occurrences, resolução, report, classif
 - **Ponto exato:** depois de `CobolReferenceResolver.resolve(...)` e antes de `CicsIntrinsicClassifier.classify(...)`. Essa ordem protege classificação externa, report, snapshot e futuras análises com uma única validação.
 - **Provável superfície:** novo `src/main/.../SemanticProductIntegrityValidator.java`, novo teste focal, `ExplorerMain` somente para reter o map de scopes e chamar o validator, além do refino/promoção dos oráculos atuais. Não alterar `ResolutionAnalysisReport`.
 - **Invariants/evals:** ADR-0003/0005; INV-SYM-001, INV-PROV-002, INV-DET-001, INV-PERF-001; EVAL-SYM-001/002, EVAL-RES-REL-001, EVAL-RES-DET-001 e EVAL-RES-PERF-001.
-- **must_not_change:** status/candidates válidos, ambiguidade, IDs locais, resolução nominal, snapshots como fonte de verdade, complexidade maior que linear.
+- **must_not_change:** status/candidates semanticamente válidos, ambiguidade, IDs locais, resolução nominal, snapshots como fonte de verdade, complexidade maior que linear. Payload de candidate incoerente com seu `SemanticEntityId` e identidade repetida na mesma lista não são candidates válidos.
 - **Dependências:** contrato aprovado para inputs e ownership do validator; independente do Slice 1, mas deve usar as mesmas identidades compostas.
 - **Risco:** médio — chamada de orquestração esquecida por um consumidor alternativo, validação duplicada com classifier/report, rejeição indevida de candidate cross-unit válido ou join por ID local sem unit. Mitigar com teste do ponto de integração, identidade composta e validator sem lookup textual.
 - **Complexidade:** `O(units + nodes + scopes + symbols + entities + relations + occurrences + resolutionEntries + candidates + candidateDeclarationSymbolIds)` em tempo e espaço auxiliar linear, usando maps por unit/node/occurrence/relation e acesso direto às listas contíguas de scopes/symbols/entities.

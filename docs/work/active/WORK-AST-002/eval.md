@@ -40,7 +40,7 @@ EVAL-AST-001 a 004, EVAL-COV-001/002, EVAL-SYM-001/002, EVAL-RES-REL-001, EVAL-R
 
 ## Expectativas de escala
 
-O reconciliador de joins do teste percorre nodes, scopes, symbols, relations, occurrences, entries e candidates em `O(n)` no tamanho agregado dos produtos, usando índices auxiliares lineares. Nenhum oracle varre todas as declarações para cada referência. `check-performance.sh` não é gate desta fase porque produção não será alterada.
+O reconciliador de joins do teste percorre nodes, scopes, symbols, relations, occurrences, entries e candidates em `O(n)` no tamanho agregado dos produtos, usando índices auxiliares lineares. Nenhum oracle varre todas as declarações para cada referência. `performance` passa a ser gate obrigatório da futura implementação; este Discovery apenas fecha o contrato que o gate deverá proteger.
 
 ## Resultado do discovery
 
@@ -211,7 +211,7 @@ INTERNAL PRODUCT INTEGRITY FAILURE
 | `SymbolTable` | `SymbolTableBuilder` | scope/symbol/entity/relation IDs contíguos; parent scope precedente; symbol scope válido; entity declaration IDs válidos; relation owner válido e binding `NOT_PERFORMED` | declaration/scope/relation AST IDs não são comparados à AST da mesma unit |
 | `AstScopeIndex` | `AstScopeIndex.build` | percorre a AST, rejeita node ID duplicado e mapeia nodes alcançáveis | o resultado não é reconciliado como produto por unit; scopes ancorados em AST inexistente podem ser ignorados |
 | `ReferenceOccurrences` | `ReferenceOccurrenceCollector` | occurrence IDs contíguos e um occurrence por reference AST node dentro do container; campos tipados não nulos | container/unit, AST, scope e `Meta` não são verificados em conjunto |
-| `ReferenceResolution` / candidates | `CobolReferenceResolver` | entry IDs contíguos; cardinalidade de `RESOLVED`, `AMBIGUOUS` e `EXTERNAL_OBSERVED` | não há bijeção com o collector nem verificação referencial dos candidates |
+| `ReferenceResolution` / candidates | `CobolReferenceResolver` | entry IDs contíguos; cardinalidade de `RESOLVED`, `AMBIGUOUS` e `EXTERNAL_OBSERVED` | não há bijeção com o collector nem verificação de existência, coerência de payload ou identidade duplicada dos candidates |
 | `DeclarationRelationResolution` | `DataAndIndexReferenceResolver` | entry IDs contíguos | não há bijeção nem comparação de unit/kind/reference node com `DeclarationRelation` |
 | `ExternalClassification` | `CicsIntrinsicClassifier` | IDs/root/covered occurrences locais, únicos e ordenados | faz coerência parcial AST/occurrence/resolution, mas retorna vazio em inconsistência; não substitui fail-closed global |
 | `ResolutionAnalysisReport` | `ResolutionAnalysisReport.compose` | compõe input/coverage/binding/external gaps e readiness | trata occurrence sem resolution como gap, não detecta resolution extra e não recebe tables/scopes |
@@ -239,7 +239,8 @@ Esses checks devem permanecer com seus produtos. F-02 não justifica movê-los p
 - scope da occurrence existente e igual ao `AstScopeIndex` produzido para seu node;
 - `Occurrence.meta` igual ao `Meta` do reference AST node;
 - bijeção entre occurrences coletadas e resolution entries por `(ProgramUnitId, occurrenceId)`, comparando o payload completo da occurrence;
-- existência e domínio correto de cada `SemanticEntityId` candidate e de cada `declarationSymbolId` na unit do candidate;
+- coerência completa de cada candidate: seu `SemanticEntityId` seleciona o alvo representado e seu domínio, categoria e `declarationSymbolIds` correspondem exatamente a esse alvo na unit do candidate;
+- unicidade de `SemanticEntityId` dentro de cada lista de candidates;
 - bijeção entre declaration relations e relation resolutions por `(ProgramUnitId, relationId)`, com `kind` e `referenceAstNodeId` idênticos;
 - interpretação de todo ID local somente junto da unit e, para entities, do domínio.
 
@@ -267,15 +268,18 @@ O validator reutiliza o conhecimento estrutural de `assertActualProductsJoin(...
 | occurrence → container/AST/scope | `(unit, occurrenceId)` e `(unit, referenceAstNodeId)` | payload unit igual ao container; node existe na mesma unit; scope existe e é o mapping do node; `Meta`/provenance é igual ao node | validator |
 | resolution entry → occurrence | `(ProgramUnitId, occurrenceId)` | corresponde exatamente à occurrence coletada; composite ID não duplica; não há entry extra | validator |
 | occurrence → resolution entry | mesma chave composta | toda occurrence coletada possui exatamente uma entry | validator |
-| candidate `DATA_SYMBOL` | `SemanticEntityId(unit, DATA_SYMBOL, localId)` | unit existe; localId referencia symbol DATA/CONDITION compatível; declaration IDs referenciam a table alvo | validator, sem considerar status |
-| candidate `INDEX_SYMBOL` | `SemanticEntityId(unit, INDEX_SYMBOL, localId)` | localId referencia `INDEX_NAME`; declaration IDs existem na unit alvo | validator |
-| candidate `PROCEDURE_SYMBOL` | `SemanticEntityId(unit, PROCEDURE_SYMBOL, localId)` | localId referencia section/paragraph; declaration IDs existem na unit alvo | validator |
-| candidate `FILE_ENTITY` | `SemanticEntityId(unit, FILE_ENTITY, localId)` | localId referencia entity FILE; declaration IDs existem na unit alvo | validator |
-| candidate `PROGRAM_UNIT` | `SemanticEntityId(targetUnit, PROGRAM_UNIT, localId)` | target unit existe; localId corresponde ao ordinal determinístico dessa unit no model; declaration IDs permanecem vazios | validator |
+| candidate `DATA_SYMBOL` | `SemanticEntityId(unit, DATA_SYMBOL, localId)` | unit existe; localId seleciona o symbol representado; `DATA_ITEM`/`RENAMES` exige candidate kind `DATA`, `CONDITION_NAME` exige `CONDITION`; `declarationSymbolIds` é exatamente `[symbol.id()]` | validator, sem considerar status |
+| candidate `INDEX_SYMBOL` | `SemanticEntityId(unit, INDEX_SYMBOL, localId)` | localId seleciona um `INDEX_NAME`, candidate kind é `INDEX` e `declarationSymbolIds` é exatamente `[symbol.id()]` | validator |
+| candidate `PROCEDURE_SYMBOL` | `SemanticEntityId(unit, PROCEDURE_SYMBOL, localId)` | localId seleciona `PROCEDURE_SECTION` ou `PARAGRAPH`, candidate kind é `PROCEDURE` e `declarationSymbolIds` é exatamente `[symbol.id()]` | validator |
+| candidate `FILE_ENTITY` | `SemanticEntityId(unit, FILE_ENTITY, localId)` | localId seleciona uma `SymbolTable.Entity` de kind `FILE`, candidate kind é `FILE` e `declarationSymbolIds` é exatamente a lista da entity, não apenas IDs existentes | validator |
+| candidate `PROGRAM_UNIT` | `SemanticEntityId(targetUnit, PROGRAM_UNIT, localId)` | target unit existe; localId corresponde ao ordinal determinístico dessa unit no model; candidate kind é `PROGRAM` e declaration IDs permanecem vazios | validator |
+| lista de candidates → identidades | `SemanticEntityId` dentro de uma entry/relation resolution | não há identidade repetida; a mesma entidade duas vezes não cria dois candidates semanticamente distintos | validator |
 | relation resolution → declaration relation | `(ProgramUnitId, relationId)` | relation existe; `kind` e `referenceAstNodeId` são idênticos; composite ID não duplica; candidates são válidos | validator |
 | declaration relation → relation resolution | mesma chave composta | toda relation materializada possui exatamente uma resolution entry | validator |
 
-Candidates podem legitimamente apontar para uma unit ancestral visível diferente da unit da occurrence. A validação usa a unit do `SemanticEntityId`, não exige igualdade com a use unit e não reexecuta regras COBOL de visibilidade. `UNRESOLVED`, `AMBIGUOUS` e `UNSUPPORTED` não alteram essas regras referenciais: candidate presente sob qualquer status válido precisa existir, e status sem candidate pode continuar semanticamente normal.
+Candidates podem legitimamente apontar para uma unit ancestral visível diferente da unit da occurrence. A validação usa a unit do `SemanticEntityId`, não exige igualdade com a use unit e não reexecuta regras COBOL de visibilidade. `UNRESOLVED`, `AMBIGUOUS` e `UNSUPPORTED` não alteram essas regras referenciais: candidate presente sob qualquer status válido precisa existir e ser coerente com o alvo representado, enquanto status sem candidate pode continuar semanticamente normal. `writtenName`, `canonicalName` e attributes permanecem payload/diagnóstico; nenhum deles é chave do join.
+
+O audit dos producers confirmou a unicidade por lista como invariant atual. DATA/CONDITION/INDEX, PROCEDURE e FILE mapeiam uma única vez coleções de symbols/entities com IDs contíguos; DATA+FILE não colide porque usa domínios distintos; PROGRAM parte de `ProgramUnitId` únicos e o caminho que combina `PGMNAME` folded/mixed usa `LinkedHashMap<ProgramUnitId, ProgramUnit>` antes de materializar candidates. Assim, duplicar um `SemanticEntityId` só infla artificialmente a cardinalidade de `AMBIGUOUS`/`UNSUPPORTED` ou duplica o mesmo alvo e deve falhar fechado.
 
 ### 5. Coverage e frontend
 
@@ -390,7 +394,7 @@ O(units + nodes + scopes + symbols + entities + relations
   + candidateDeclarationSymbolIds)
 ```
 
-Espaço auxiliar: `O(units + nodes + occurrences + relations)`, ou linear no tamanho agregado. `AstScopeIndex` já existe e é reutilizado. Cada candidate usa lookup direto pela unit/domain/localId; cada resolution entry usa lookup hash da occurrence. Não há scan de nodes por symbol, symbols por candidate, occurrences por entry nem join por texto.
+Espaço auxiliar: `O(units + nodes + occurrences + relations + candidates)`, ou linear no tamanho agregado. `AstScopeIndex` já existe e é reutilizado. Cada candidate usa lookup direto pela unit/domain/localId; cada lista usa um set temporário de `SemanticEntityId` para detectar duplicata; cada resolution entry usa lookup hash da occurrence. Não há scan de nodes por symbol, symbols por candidate, occurrences por entry nem join por texto.
 
 ### 12. Superfície provável da futura implementação
 
@@ -411,7 +415,7 @@ Evitar um teste por campo quando uma classe parametrizada discrimina o mesmo own
 2. **Namespace de unit:** table/scope/occurrence product de unit inexistente ou ausente e occurrence cuja unit difere do container.
 3. **AST/scope/declaration:** symbol declaration AST órfã, occurrence reference AST órfã, occurrence scope inválido/mismatch e relation reference AST órfã. `relation owner` inválido deve continuar sendo rejeitado pelo construtor de `SymbolTable`, demonstrando ownership local.
 4. **Bijeção occurrence/resolution:** occurrence órfã, resolution extra, duplicate composite identity e payload de occurrence incompatível sob a mesma chave.
-5. **Referência de candidate:** entity/localId inexistente em cada família discriminante e `declarationSymbolId` inexistente; candidate válido em `UNSUPPORTED`/`AMBIGUOUS` não é rejeitado.
+5. **Identidade e payload de candidate:** entity/localId inexistente em cada família discriminante e `declarationSymbolId` inexistente; `DATA_SYMBOL` com entity ID válido e `declarationSymbolIds` de outro symbol; `FILE_ENTITY` com entity ID válido e declaration IDs diferentes dos da entity; `PROGRAM_UNIT` com declaration IDs não vazios; `SemanticEntityId` duplicado na mesma lista. Um candidate coerente em `UNSUPPORTED`/`AMBIGUOUS` não é rejeitado.
 6. **Bijeção de declaration relation:** relation resolution órfã, relation desaparecida e mismatch de kind/reference AST.
 7. **Identidade composta:** parent/nested units com IDs locais repetidos; nenhum join cruza units e candidate ancestral válido continua aceito.
 8. **Integração de ordem:** primeiro consumidor pós-resolution só executa após validação; corrupção falha antes do classifier/report/snapshot.
@@ -424,6 +428,7 @@ Os dois oráculos atuais permanecem opt-in neste Discovery. Na Fase 2, seus cen�
 - **Duplicação defensiva:** classifier e report já fazem checks parciais. Eles podem permanecer para validar seus próprios inputs/outputs, mas não devem ser ampliados nem tratados como autoridade global.
 - **Candidates cross-unit:** DATA/FILE/PROGRAM visíveis podem pertencer a unit ancestral/alvo. O validator valida a target unit do entity ID e não exige candidate na use unit.
 - **Programa candidate:** o contrato atual usa o ordinal determinístico no model como `PROGRAM_UNIT.localId`. A Fase 2 deve proteger esse contrato sem redesenhar identidade.
+- **Coerência versus nomes:** `writtenName`/`canonicalName` podem divergir como payload diagnóstico sem autorizar lookup textual. O validator comprova identidade e declarations por IDs; ampliar o contrato textual exigiria evidência separada.
 - **Scope anchors:** root usa `astNodeId=-1`; somente scopes com anchor concreto participam do join AST.
 - **Diagnostics de resolution:** IDs e backlinks de diagnostics são invariants internos do próprio produto, não joins solicitados por F-02. Não ampliar o Slice 2 sem um caso de corrupção/consumo que demonstre necessidade.
 - **SQL/FILLER, FILLER REDEFINES, CFG/dataflow:** permanecem decisões ou produtos separados e não são desbloqueados por este Discovery.
@@ -435,6 +440,7 @@ Não resta dúvida arquitetural bloqueante para iniciar a futura implementação
 - os dois oráculos F-02, refinados para o owner correto, ficam verdes no gate normal;
 - produtos normais, `UNRESOLVED`, `AMBIGUOUS`, `UNSUPPORTED`, missing COPY e coverage unknown continuam resultados/gaps normais;
 - toda corrupção da matriz falha com `SemanticProductIntegrityException` antes da classificação externa;
+- cada candidate reconcilia domínio/localId/categoria/declaration IDs com o alvo representado, e nenhuma lista contém `SemanticEntityId` duplicado;
 - mensagem identifica produto, unit, domínio e ID local aplicável com prefixo `INTERNAL PRODUCT INTEGRITY FAILURE`;
 - joins usam somente identities compostas/estruturais, nunca written text;
 - implementação é determinística e linear nas cardinalidades agregadas;
