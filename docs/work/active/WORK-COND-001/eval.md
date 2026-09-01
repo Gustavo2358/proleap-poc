@@ -20,6 +20,7 @@ O oracle independente primário é [IBM Enterprise COBOL for z/OS 6.4 Language R
 | COND-P08 | condition-name qualificado/subscriptado conforme sua conditional variable | A referência CONDITION preserva qualification e a mesma combinação de subscripts exigida pela conditional variable. |
 | COND-P09 | `IF A = B OR NOT C OR D` | Com objects compatíveis, equivale a `(A = B) OR NOT (A = C) OR (A = D)`; logical `NOT` não vira parte do operador nem se propaga a D. |
 | COND-P10 | inner program com DATA local `C` e containing program com CONDITION `C` global, em `A = B OR C` | O conjunto de scope inclui ambos; a regra de nested programs seleciona o recurso local aplicável, portanto `C` é object abreviado DATA, não CONDITION externo escolhido por pré-filtro sintático. |
+| COND-P11 | `IF A = B OR C = D OR E` | `C = D` é relation completa nova e redefine o estado corrente (IBM: o missing subject é o *last stated subject* e o missing relational operator é o *last stated relational operator*). Equivale a `(A = B) OR (C = D) OR (C = E)`; `E` herda `C` e `=`, não o estado inicial `A =`. |
 
 ## Classes negativas
 
@@ -33,6 +34,7 @@ O oracle independente primário é [IBM Enterprise COBOL for z/OS 6.4 Language R
 | COND-N06 | `A = (B OR C = D)` | Outro relational operator dentro do scope distribuído viola a restrição IBM de distribuição. |
 | COND-N07 | `A = (B OR CONDITION-88)` | Uma simple condition/condition-name dentro do scope distribuído não é object distribuível e torna essa forma inválida. |
 | COND-N08 | `A = (NOT B OR C)` | Logical `NOT` imediatamente após o `(` que abre a distribuição é proibido; não confundir com `A = (B OR NOT C)`, cuja validade segue a sequência permitida. |
+| COND-N09 | `A = B OR C IS NUMERIC OR D`, com `D` apenas data-name | `C IS NUMERIC` é class condition, portanto **simple condition nova**: encerra a inserção herdada (IBM: a inserção do subject/operator omitidos termina quando *another simple condition is encountered*; condition-name é apenas um dos casos). `D` não herda `A =`; se `D` não formar condition válida por si, o source é inválido nessa posição. |
 
 ## Classes ambíguas
 
@@ -55,6 +57,8 @@ O caso DATA+CONDITION no mesmo programa não pertence a esta seção: é negativ
 - **A9 — shadowing cross-set em nested programs**: DATA local `C` versus CONDITION global/visível `C` externo na posição contextual de bare tail; matar lookup que pula o recurso local aplicável porque pré-filtrou CONDITION pela grammar.
 - **A10 — same-program cross-set invalid**: fixture com DATA `C` e 88 `C` no mesmo programa; matar qualquer oracle que aceite e selecione um deles como regra IBM.
 - **A11 — restrições da distribuição**: inserir, separadamente, simple condition, outro relational operator e logical `NOT` imediatamente após o `(` distribuído; matar implementação que trata qualquer grupo após operador como lista livre de objects.
+- **A12 — estado do subject/operator é atualizado por relation completa**: comparar `A = B OR C OR D` (`C`/`D` herdam `A =`) com `A = B OR C = D OR E` (`E` herda `C =`); matar implementação que congela o primeiro subject/operator declarados como estado permanente e interpretaria `E` como `A = E`.
+- **A13 — término por simple condition além de condition-name**: comparar `A = B OR COND-88 OR D` com `A = B OR C IS NUMERIC OR D`; matar implementação que só encerra a herança em condition-name e, atravessando uma class condition, trataria `D` como object abreviado `A = D` em vez de declarar o source inválido nessa posição.
 
 ## Casos de regressão
 

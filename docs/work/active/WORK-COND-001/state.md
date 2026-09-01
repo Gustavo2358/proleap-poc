@@ -21,13 +21,14 @@ Base: `main` no merge do PR #14 (`b44bfa40862a8c930c3b012f1dff9fc8676ffabb`). Br
 - Scope IBM inclui nomes locais e globais elegíveis de programas contendo e aplica preferência ao programa interno/containing mais próximo quando mais de um recurso permanece identificado.
 - O caso histórico DATA + CONDITION com a mesma user-defined word no mesmo programa foi fechado: é source IBM inválido, pois uma user-defined word pertence a somente um set de nomes. Não há precedência de binding a descobrir para esse caso.
 - A distinção entre regra normativa e comportamento observado no PR #14 está explicitada em `spec.md` e `eval.md`.
-- `eval.md` define 10 classes positivas, 8 negativas, 3 ambíguas/incertas e 11 adversariais. Os testes/fixtures do PR #14 permanecem caracterização; nenhum resultado atual foi promovido a regra IBM.
-- `./scripts/harness/check-fast.sh`, `./scripts/harness/check-semantic.sh` e `./scripts/harness/check-full.sh` passaram em 2026-09-01; o `full` incluiu regressão E2E, invariantes estruturados e naming.
+- Review humano pediu dois oracles adicionais, já incorporados: `A = B OR C = D OR E` prova que cada relation completa redefine o subject/operator correntes (equivale a `(A = B) OR (C = D) OR (C = E)`); e `A = B OR C IS NUMERIC OR D` prova que uma simple condition nova que não é condition-name (class condition) encerra a inserção herdada, portanto `D` não pode virar `A = D`.
+- `eval.md` define 11 classes positivas, 9 negativas, 3 ambíguas/incertas e 13 adversariais. Os testes/fixtures do PR #14 permanecem caracterização; nenhum resultado atual foi promovido a regra IBM.
+- `./scripts/harness/check-fast.sh`, `./scripts/harness/check-semantic.sh` e `./scripts/harness/check-full.sh` passaram em 2026-09-01 e foram reexecutados após os dois novos oracles de review, continuando verdes; o `full` incluiu regressão E2E, invariantes estruturados e naming.
 - Nenhum arquivo de produção, grammar, arquitetura, fixture/teste ou histórico foi alterado por este Slice 1.
 
 ## Restante
 
-- Review humano do contrato e dos oracles.
+- Review humano do contrato e dos oracles: os dois findings desta rodada (atualização do subject/operator corrente e término por simple condition não condition-name) foram incorporados em `eval.md` e `spec.md`; o PR #15 permanece sob revisão.
 - Oracle de compilador IBM não foi executado porque `cob2` não está disponível no ambiente. Isso não reabre as regras documentadas, mas mantém `UNCERTAIN` o wording/código exato dos diagnostics negativos.
 - Somente após merge/review e nova autorização, promover o Slice 2 para comparar alternativas arquiteturais.
 

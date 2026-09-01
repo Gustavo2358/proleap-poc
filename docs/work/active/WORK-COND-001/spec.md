@@ -32,7 +32,7 @@ A evidência histórica local permanece `docs/history/evidence/semantic-conditio
 1. **Relation completa**: sujeito e relational operator escritos explicitamente.
 2. **Abbreviated relation por sujeito omitido**: operador explícito reutiliza o último sujeito.
 3. **Abbreviated relation por sujeito e operador omitidos**: um object após `AND`/`OR` reutiliza o último sujeito e o último relational operator enquanto a sequência de inserção permanecer aberta.
-4. **Simple condition nova**: encerra a inserção herdada; um condition-name é uma simple condition e não um object abreviado.
+4. **Simple condition nova**: encerra a inserção herdada; um condition-name é uma simple condition e não um object abreviado. Uma class condition como `C IS NUMERIC` também é simple condition nova e encerra a herança; condition-name não é o único caso de término por simple condition.
 5. **Parêntese de boundary**: o `)` que corresponde a um `(` situado à esquerda do sujeito corrente encerra a sequência herdada.
 6. **Parêntese de distribuição**: `(` imediatamente após um relational operator distribui esse operador pelos objects internos; ao fechar `)`, sujeito e operador continuam correntes.
 7. **`NOT` relacional**: quando integra um relational operator, pertence ao operador e pode ser o último operador herdável.
@@ -48,8 +48,8 @@ A evidência histórica local permanece `docs/history/evidence/semantic-conditio
 
 | Premissa | Classificação | Consequência neste slice |
 | --- | --- | --- |
-| Após a primeira relation-condition, subject ou subject+operator podem ser omitidos e são semanticamente inseridos a partir dos últimos explicitados | `LANGUAGE_GUARANTEED` | Oracle de expansão semântica não depende do ramo ANTLR escolhido. |
-| Uma simple condition e um condition-name encerram a sequência de inserção herdada | `LANGUAGE_GUARANTEED` | Bare word não pode ser congelada como CONDITION antes de decidir se ocupa a posição de object abreviado ou inicia simple condition. |
+| Após a primeira relation-condition, subject ou subject+operator podem ser omitidos e são semanticamente inseridos a partir dos últimos explicitados; cada relation completa nova redefine esse estado corrente | `LANGUAGE_GUARANTEED` | Oracle de expansão semântica não depende do ramo ANTLR escolhido; `A = B OR C = D OR E` equivale a `(A = B) OR (C = D) OR (C = E)`. |
+| Uma simple condition nova — condition-name ou outra simple condition como class condition — encerra a sequência de inserção herdada | `LANGUAGE_GUARANTEED` | Bare word não pode ser congelada como CONDITION antes de decidir se ocupa a posição de object abreviado ou inicia simple condition. |
 | O `)` correspondente a `(` à esquerda do sujeito encerra a inserção | `LANGUAGE_GUARANTEED` | `(A = B OR C) AND D` não herda `A =` em `D`. |
 | `(` imediatamente após relational operator cria distribuição e, após o `)`, subject/operator continuam correntes | `LANGUAGE_GUARANTEED` | `A = (B OR C) AND D` pertence a classe diferente do boundary anterior. |
 | Distribuição proíbe simple condition, outro relational operator e logical `NOT` imediatamente após o `(` dentro de seu scope | `LANGUAGE_GUARANTEED` | Oracles negativos não podem aceitar qualquer expressão parentética como lista de objects distribuídos. |
@@ -71,6 +71,8 @@ A evidência histórica local permanece `docs/history/evidence/semantic-conditio
 O contrato normativo de equivalência usado pelos oracles é:
 
 - `A = B OR C OR D` é interpretado, enquanto não houver terminador, como `A = B OR A = C OR A = D`.
+- `A = B OR C = D OR E` atualiza o estado corrente a cada relation completa: a última relation declarada é `C = D`, portanto `E` herda o último subject `C` e o último relational operator `=`; equivale a `(A = B) OR (C = D) OR (C = E)`.
+- `A = B OR C IS NUMERIC OR D` contém uma simple condition nova (`C IS NUMERIC`, class condition) que encerra a inserção herdada; `D` não herda `A =`. Se `D` não formar condition válida por si, o source é inválido nessa posição.
 - `A = B OR < C` mantém `A` como subject e passa a usar o relational operator explicitado para a relation abreviada; a sequência posterior usa o último operator válido conforme a regra IBM.
 - `(A = B OR C) AND D` encerra a inserção no `)`; `D` precisa formar uma condição válida por si, não `A = D` por herança.
 - `A = (B OR C) AND D` distribui `=` sobre `B` e `C`; ao fechar o grupo, `A` e `=` continuam correntes, permitindo a continuação abreviada `A = D`.
