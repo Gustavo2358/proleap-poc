@@ -2,11 +2,11 @@
 
 ## Problema
 
-O discovery revisado no PR #9 provou que `BACKLOG-AST-001` exige duas mudanças de produção localizadas: coverage concreto/taxonomia nas fronteiras AST (F-01/F-03) e integridade cross-product fail-closed (F-02). Os produtos normais de AST, símbolos, occurrences e resolução já preservam as demais garantias caracterizadas.
+O discovery revisado no PR #9 provou que `BACKLOG-AST-001` exige duas mudanças de produção localizadas: coverage concreto/taxonomia nas fronteiras AST (F-01/F-03) e integridade cross-product fail-closed (F-02). O Slice 1 fechou F-01/F-03 no PR #10. O PR #12 corrigiu separadamente `BUG-AST-PREORDER-001`, removendo o bloqueio de identidade/traversal levantado por WORK-AST-003. Resta decidir e implementar F-02 sem misturar produtos, report ou análises futuras.
 
 ## Objetivo
 
-Implementar as lacunas comprovadas em PRs independentes. A autorização vigente cobre exclusivamente o Slice 1: exatamente um finding por fronteira semântica materializada aprovada, unknown observável sem referência nominal e manifesto coerente com a estrutura AST existente.
+Implementar as lacunas comprovadas em PRs independentes. A autorização vigente cobre exclusivamente o Discovery arquitetural do Slice 2: fechar contrato, ownership, ponto de integração, modelo de erro e matriz de regressão da integridade cross-product. Nenhuma alteração de produção ou promoção dos oráculos F-02 está autorizada nesta sessão.
 
 ## Domínio de entrada suportado
 
@@ -28,7 +28,9 @@ Parser errors, COPYs ausentes e falhas de preprocessing permanecem input incompl
 - `LANGUAGE_GUARANTEED`: FILLER não declara um nome utilizável; REDEFINES e RENAMES preservam relações declarativas cujas restrições COBOL serão verificadas contra fonte oficial do dialeto quando necessárias.
 - `ARCHITECTURE_GUARANTEED`: produtos permanecem separados; binding nominal não infere valores; identidade entre units inclui `ProgramUnitId`; incompletude bloqueia claims incompatíveis.
 - `SPECIFICATION_GUARANTEED`: findings representam fronteiras semânticas materializadas, não cada wrapper gramatical.
-- `UNCERTAIN`: a menor localização de validação de integridade entre produtos permanece decisão do Slice 2. No Slice 1, entries tipadas são containers não dependency-bearing; `PICTURE`/`USAGE` não adicionam dependência nominal e não alegam layout, enquanto `VALUE`, `OCCURS`, `REDEFINES` e `RENAMES` preservam `DEPENDENCY_UNKNOWN` para valores, cardinalidade e aliases ainda desconhecidos.
+- `ARCHITECTURE_GUARANTEED`: o ponto de reconciliação deve preceder o primeiro consumidor pós-resolution. No pipeline atual, todos os produtos necessários coexistem imediatamente após `CobolReferenceResolver.resolve(...)` e antes de `CicsIntrinsicClassifier`; report e snapshots consomem somente produtos já validados.
+- `SPECIFICATION_GUARANTEED`: checks autocontidos continuam nos próprios produtos; joins entre AST, tables, scopes, occurrences, resolution, relation resolution e candidates pertencem a um integrador dedicado no ponto de orquestração.
+- `UNCERTAIN`: entries tipadas são containers não dependency-bearing; `PICTURE`/`USAGE` não adicionam dependência nominal e não alegam layout, enquanto `VALUE`, `OCCURS`, `REDEFINES` e `RENAMES` preservam `DEPENDENCY_UNKNOWN` para valores, cardinalidade e aliases ainda desconhecidos. Essas decisões do Slice 1 não são reabertas por F-02.
 - `OBSERVED_IN_CURRENT_CORPUS_ONLY`: nenhuma cardinalidade ou forma encontrada apenas no corpus será promovida a regra.
 
 ## Comportamento esperado
@@ -50,7 +52,7 @@ Uma construção válida porém não interpretada deve permanecer como node pres
 
 ## Fora de escopo
 
-- Integridade cross-product, mudanças em `ResolutionAnalysisReport.compose` e os dois oráculos de F-02, reservados ao Slice 2.
+- Implementação do validator, alteração de `ResolutionAnalysisReport.compose`, alteração de `ExplorerMain` e promoção dos dois oráculos de F-02; todos permanecem fora desta sessão de Discovery.
 - Gramática, parser behavior, shape/cardinalidade da AST, symbols, occurrences, binding nominal ou baselines não explicados.
 - CFG, statement effects, reaching definitions, possible/runtime values, storage regions/layout/aliases, kills e targets dinâmicos finais.
 - Parsers ou interpretação semântica de SQL, CICS e SQLIMS.
@@ -75,7 +77,9 @@ ADRs 0002, 0003, 0004, 0005, 0007, 0008, 0009 e 0010. INV-AST-001, INV-AST-002, 
 | Identidade | FECHADA | Usar `(ProgramUnitId, astNodeId)`, `(ProgramUnitId, occurrenceId)` e `SemanticEntityId(ProgramUnitId, domain, localId)`. Containers por unit podem manter IDs locais, desde que a unit seja obrigatória em toda reconciliação. |
 | Escopo da claim | FECHADA conceitualmente | `dependencyAnalysisReady` é apenas a claim versionada das capacidades implementadas; não prova CFG, storage, possible values ou call graph dinâmico. A apresentação final deve nomear esse escopo sem usar `COMPLETE` como alegação irrestrita. |
 
-Decisões ainda abertas, sem escolha silenciosa: (a) onde executar o validador cross-product — composição/orquestração, `ResolutionAnalysisReport` com inputs ampliados ou combinação de checks locais e integrador; (b) se `DataEntry(level=SQL, levelKind=OPAQUE, filler=true)` é contrato intencional ou conflation a remover; (c) se a relação de `FILLER REDEFINES` deve continuar ligada pelo par AST containment + occurrence/resolution ou ganhar uma relação declarativa cujo owner não seja símbolo.
+O Discovery do Slice 2 fechou a decisão (a): usar estratégia híbrida, preservando invariants locais existentes e adicionando um `SemanticProductIntegrityValidator` dedicado no ponto de orquestração. O validator deve ser chamado imediatamente após a resolução nominal e antes da classificação externa, report, snapshots ou futuras análises. `ResolutionAnalysisReport` não recebe symbol tables nem scope indexes, já é responsável por composição de coverage/readiness e ocorre depois do primeiro consumidor pós-resolution; portanto não deve adquirir ownership de integridade cross-product.
+
+Continuam abertas e fora de F-02: (b) se `DataEntry(level=SQL, levelKind=OPAQUE, filler=true)` é contrato intencional ou conflation a remover; (c) se a relação de `FILLER REDEFINES` deve continuar ligada pelo par AST containment + occurrence/resolution ou ganhar uma relação declarativa cujo owner não seja símbolo.
 
 ## Fonte COBOL consultada
 

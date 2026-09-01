@@ -2,7 +2,7 @@
 
 ## Onde estamos
 
-Slice 1 mergeado em `main` pelo PR #10 (`c6d9b6e`). Nenhuma implementação do Slice 2 foi iniciada; WORK-AST-003 investiga antes uma inconsistência bloqueante de IDs/traversal da AST.
+Slice 1 mergeado pelo PR #10. WORK-AST-003 e `BUG-AST-PREORDER-001` foram resolvidos nos PRs #11/#12. O Discovery arquitetural do Slice 2 partiu da `main` `9aba9a897cc7f45ba7da3a25079d66aee838ba55`; nenhuma implementação de F-02 foi iniciada.
 
 ## Verde conhecido
 
@@ -11,11 +11,13 @@ Slice 1 mergeado em `main` pelo PR #10 (`c6d9b6e`). Nenhuma implementação do S
 - Manifesto separa estrutura de dependency knowledge; `MODELED + DEPENDENCY_UNKNOWN` permanece para VALUE/OCCURS/REDEFINES/RENAMES.
 - Os dois oráculos de F-01 integram o gate normal; 23 testes focais verdes e gates `fast`, `semantic` e `full` verdes.
 - AST→scope→symbols→occurrences→resolution, CALL literal/identifier e ausência de símbolo FILLER permanecem reconciliados e determinísticos.
+- A reprodução opt-in executa quatro required oracles: os dois F-01 passam e somente os dois F-02 falham por ausência de exception. A suíte focal sem opt-in fica verde com 14 testes e 2 F-02 skipped.
+- Neste checkpoint documental, os gates `fast`, `semantic` e `full` passaram; o `full` incluiu regressão E2E estruturada e naming.
 
 ## Restante
 
-- Concluir o Discovery e review independente de WORK-AST-003.
-- Slice 2/F-02 continua dependente de nova instrução explícita após essa revisão.
+- Abrir e revisar o PR exclusivo deste Discovery.
+- Implementação do Slice 2/F-02 continua dependente de autorização explícita posterior; os oráculos não foram promovidos.
 
 ## Descobertas que afetam o plano
 
@@ -23,3 +25,7 @@ Slice 1 mergeado em `main` pelo PR #10 (`c6d9b6e`). Nenhuma implementação do S
 - A taxonomia final do slice trata PICTURE/USAGE como não dependency-bearing para a capability nominal atual sem alegar layout; VALUE/OCCURS/REDEFINES/RENAMES preservam unknown.
 - F-02 permanece reproduzível: com opt-in, somente os dois oráculos cross-product falham. Isso é o limite esperado deste PR.
 - F-04 permanece decisão aberta e a shape SQL/FILLER não foi alterada.
+- O owner recomendado para F-02 é uma estratégia híbrida: invariants autocontidos permanecem nos produtos e um `SemanticProductIntegrityValidator` reconcilia model/AST, tables, scopes, occurrences, resolution, relation resolution e candidates.
+- O ponto exato de integração é imediatamente após `CobolReferenceResolver.resolve(...)` e antes de `CicsIntrinsicClassifier`; report e snapshots não recebem ownership de integridade.
+- A API proposta reutiliza os `AstScopeIndex` por unit e falha com uma única `SemanticProductIntegrityException` cujo diagnóstico começa por `INTERNAL PRODUCT INTEGRITY FAILURE`.
+- O custo previsto é linear no tamanho agregado dos produtos, com índices por unit/node/occurrence/relation e sem lookup textual.
