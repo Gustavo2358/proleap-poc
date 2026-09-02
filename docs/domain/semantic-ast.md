@@ -31,6 +31,8 @@ O modelo inclui program attributes, divisions, sections, arquivos, hierarquia de
 
 Statements ou clauses parcialmente compreendidos usam `Modeled*`, `Preserved*` ou `Unsupported*` com regra, texto, filhos/referências alcançáveis e coverage correspondente. `EXEC SQL`, `EXEC CICS` e `EXEC SQLIMS` permanecem `EmbeddedLanguageStatement` opacos.
 
+Condições combinadas/abreviadas ainda são uma fronteira incompleta: `abbreviation`, `relationCombinedComparison`, conectores mistos e bare nominal tails não preservam hoje todo o contrato de [expressões condicionais](conditional-expressions.md). ADR-0012 (`Accepted`) define que a AST evolua como superfície contextual lossless, sem binding, enquanto a normalização especializada pertence a produto separado pós-binding. O `AstBuilder` não recebe type checking (`PIC`/`USAGE`) nem fecha admissibilidade type-sensitive: isso permanece na validação futura (`ConditionValidation` conceitual). Até o slice executável correspondente, essa direção arquitetural não deve ser confundida com capacidade já implementada.
+
 ## Fronteiras e incerteza
 
 - AST não executa lookup nem guarda candidate IDs.
@@ -52,4 +54,4 @@ A construção cria o inventário semântico em ordem determinística. Metadados
 
 ## Relações
 
-Evals: EVAL-AST-001 a EVAL-AST-005, EVAL-COV-001, EVAL-COV-002 e EVAL-ARCH-001. Invariantes: INV-AST-001 a INV-AST-003, INV-PROV-002, INV-COV-001, INV-COV-002 e INV-EMB-001. ADRs: ADR-0002, ADR-0003, ADR-0005, ADR-0007, ADR-0008 e ADR-0009.
+Evals: EVAL-AST-001 a EVAL-AST-005, EVAL-COV-001, EVAL-COV-002 e EVAL-ARCH-001. Invariantes: INV-AST-001 a INV-AST-003, INV-COND-001, INV-COND-002, INV-PROV-002, INV-COV-001, INV-COV-002 e INV-EMB-001. ADRs: ADR-0002, ADR-0003, ADR-0005, ADR-0007, ADR-0008, ADR-0009 e ADR-0012.

@@ -11,7 +11,7 @@ Symbol tables materializam declarations, structural scopes, namespaces, semantic
 
 ## Modelo atual
 
-Namespaces são `PROGRAM`, `DATA`, `PROCEDURE` e `FILE`. Symbols distinguem programas, `SELECT`, `FD`/`SD`, data items, condition names 88, RENAMES 66, index names, procedure sections e paragraphs. Scopes representam root, program, divisions, sections, file descriptions, data items e paragraphs.
+Namespaces são `PROGRAM`, `DATA`, `PROCEDURE` e `FILE`. Symbols distinguem programas, `SELECT`, `FD`/`SD`, data items, condition names 88, RENAMES 66, index names, procedure sections e paragraphs. RENAMES 66 continua data-name; não constitui namespace contextual próprio. Scopes representam root, program, divisions, sections, file descriptions, data items e paragraphs.
 
 Uma entidade FILE agrupa declarações compatíveis como `SELECT` e `FD`/`SD`, preservando aliases e attributes sem criar ambiguidade artificial. Declaration relations registram `REDEFINES`, `RENAMES`, `OCCURS DEPENDING ON`, keys e indexes com owner e referência ainda `NOT_PERFORMED`.
 
@@ -21,7 +21,7 @@ Nomes mantêm grafia e forma canônica case-insensitive. Índices locais/globais
 
 ## Fronteiras e diagnostics
 
-Symbol table não infere runtime values, não escolhe candidato para ocorrência e não depende de classes ANTLR. Duplicatas no mesmo scope/namespace geram diagnostics determinísticos em vez de seleção prematura.
+Symbol table não infere runtime values, não escolhe candidato para ocorrência e não depende de classes ANTLR. Em [condições contextuais](conditional-expressions.md), ela publica as declarations e scopes necessários ao binding, mas não decide se um bare tail é condition-name ou object abreviado. Duplicatas no mesmo scope/namespace geram diagnostics determinísticos em vez de seleção prematura.
 
 ## Complexidade
 
@@ -33,4 +33,4 @@ Symbol table não infere runtime values, não escolhe candidato para ocorrência
 
 ## Relações
 
-Evals: EVAL-SYM-001, EVAL-SYM-002, EVAL-RES-REL-001, EVAL-RES-PERF-001 e EVAL-ARCH-001. Invariantes: INV-SYM-001, INV-RES-001, INV-DET-001 e INV-PERF-001. ADRs: ADR-0003 e ADR-0005.
+Evals: EVAL-SYM-001, EVAL-SYM-002, EVAL-RES-REL-001, EVAL-RES-PERF-001 e EVAL-ARCH-001. Invariantes: INV-SYM-001, INV-COND-001, INV-RES-001, INV-DET-001 e INV-PERF-001. ADRs: ADR-0003, ADR-0005 e ADR-0012.
