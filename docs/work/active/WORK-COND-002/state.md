@@ -16,7 +16,7 @@ O review humano do PR #16 aceitou a decisão arquitetural central e pediu dois a
 - Aceitar o ADR não autoriza implementação: Slice 3 continua proibido sem autorização explícita posterior.
 - Nenhum arquivo em `src/`, grammar, fixture, teste, script ou `pom.xml` foi alterado; somente documentação mudou.
 - `./scripts/harness/check-fast.sh`, `./scripts/harness/check-semantic.sh` e `./scripts/harness/check-full.sh` passaram em 2026-09-02; o `full` incluiu fast, semantic, regressão E2E estruturada e naming.
-- O commit deste ajuste foi publicado na branch do PR #16; nenhum PR novo foi aberto.
+- Commit `b06704c` foi publicado na branch do PR #16; nenhum PR novo foi aberto.
 
 ## Restante
 
