@@ -6,6 +6,8 @@ Os IDs `COND-*` são sentinelas normativos derivados do [contrato de expressões
 
 O oracle independente primário é [IBM Enterprise COBOL for z/OS 6.4 Language Reference, SC27-8713-03, atualização de 28 de junho de 2024](https://publibfp.dhe.ibm.com/epubs/pdf/igy6lr40.pdf), nas seções e páginas registradas pelo contrato de domínio. O compilador IBM é oracle adversarial desejável para inputs negativos quando estiver disponível; wording e código exatos de diagnostics não são contrato atual.
 
+Atribuição por fase dos casos INDEX (`COND-P06`, `COND-N04`, `COND-A06`): o binding nominal identifica INDEX; `ConditionSemantics` materializa a relation abreviada; a admissibilidade type-sensitive pertence a `ConditionValidation` conceitual (futura), que consome `ConditionSemantics`, declaração/tipo e os contratos IBM. Binding nominal correto não declara a relation válida: uma implementação equivalente a `candidate.kind() == INDEX ⇒ relation válida` é proibida.
+
 ## Classes positivas
 
 | ID | Fonte COBOL mínima | Expectativa normativa |

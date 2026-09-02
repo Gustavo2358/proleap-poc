@@ -31,7 +31,7 @@ O modelo inclui program attributes, divisions, sections, arquivos, hierarquia de
 
 Statements ou clauses parcialmente compreendidos usam `Modeled*`, `Preserved*` ou `Unsupported*` com regra, texto, filhos/referências alcançáveis e coverage correspondente. `EXEC SQL`, `EXEC CICS` e `EXEC SQLIMS` permanecem `EmbeddedLanguageStatement` opacos.
 
-Condições combinadas/abreviadas ainda são uma fronteira incompleta: `abbreviation`, `relationCombinedComparison`, conectores mistos e bare nominal tails não preservam hoje todo o contrato de [expressões condicionais](conditional-expressions.md). ADR-0012 propõe que a AST evolua como superfície contextual lossless, sem binding, enquanto a normalização especializada pertence a produto separado pós-binding. Até o slice executável correspondente, essa direção arquitetural não deve ser confundida com capacidade já implementada.
+Condições combinadas/abreviadas ainda são uma fronteira incompleta: `abbreviation`, `relationCombinedComparison`, conectores mistos e bare nominal tails não preservam hoje todo o contrato de [expressões condicionais](conditional-expressions.md). ADR-0012 (`Accepted`) define que a AST evolua como superfície contextual lossless, sem binding, enquanto a normalização especializada pertence a produto separado pós-binding. O `AstBuilder` não recebe type checking (`PIC`/`USAGE`) nem fecha admissibilidade type-sensitive: isso permanece na validação futura (`ConditionValidation` conceitual). Até o slice executável correspondente, essa direção arquitetural não deve ser confundida com capacidade já implementada.
 
 ## Fronteiras e incerteza
 

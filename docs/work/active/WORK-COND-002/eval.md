@@ -20,12 +20,12 @@ Corretude neste Discovery significa que a escolha arquitetural respeita simultan
 | CFG/predicate/dataflow | lógica IBM duplicada em cada consumer | predicate fácil apenas nos casos decididos cedo | produto único pronto para consumidores futuros |
 | Incisão/Open-Closed | pequena agora, custo recorrente depois | grande na AST e acoplada | novo produto custa mais agora, fecha extensão dos consumidores |
 | Texto/heurística | dispensável se todos os consumers forem rigorosos | tentação de reparse para resolver o caso central | explicitamente proibido; joins estruturais por ID |
-| Veredito | insuficiente como arquitetura completa | rejeitada | escolhida, proposta em ADR-0012 |
+| Veredito | insuficiente como arquitetura completa | rejeitada | escolhida, aceita em ADR-0012 |
 
 ## Classes positivas
 
 - DATA/RENAMES resolvido em bare tail produz object abreviado somente no produto pós-binding.
-- INDEX resolvido produz object abreviado quando a relation satisfaz as restrições de comparação; binding nominal não substitui type/predicate validation.
+- INDEX resolvido (`COND-P06`) tem ownership por fase: binding identifica INDEX; `ConditionSemantics` materializa a relation abreviada; a admissibilidade type-sensitive é verificada depois, na `ConditionValidation` conceitual. Binding nominal não declara a relation válida.
 - CONDITION resolvido produz simple condition e encerra o estado herdado.
 - relation completa posterior atualiza subject/operator antes da próxima abbreviation.
 - boundary/distribuição, precedência e `NOT` permanecem distinguíveis na superfície e na projeção.
@@ -41,6 +41,8 @@ Corretude neste Discovery significa que a escolha arquitetural respeita simultan
 - AST node não aparece como child por mais de um caminho e não é clonado para cada expansion.
 - ambiguity/unresolved não é normalizado como primeira alternativa ou candidate ordenado.
 - `writtenText` não é reparsed e corpus frequency não controla a decisão.
+- `candidate.kind() == INDEX` não autoriza declarar a relation type-valid; a admissibilidade IBM pertence à validação posterior (`ConditionValidation`).
+- resolver não recebe `PIC`/`USAGE` checking e o `AstBuilder` não recebe type checking.
 - DATA+CONDITION homônimo no mesmo programa não vira caso de precedência entre candidates.
 - nenhum artefato deste PR altera produção ou antecipa Slice 3.
 
@@ -69,9 +71,20 @@ Usar DATA local `C` e CONDITION global `C` no containing program. A grammar bran
 - **Occurrence multiplicity:** permitir que múltiplos semantic operand refs apontem ao mesmo binding escrito sem duplicar source occurrence.
 - **Consumer coupling:** CFG/dataflow dependem da interface do novo produto, não de records concretos da AST ou de grammar names.
 
+### Challenge arquitetural — normalização versus validação type-sensitive
+
+Considere `N = IDX` com binding nominal idêntico nos dois casos:
+
+| Caso | Declarações | Binding nominal | Relation normalizada | Validação type-sensitive |
+| --- | --- | --- | --- | --- |
+| INDEX válido (`COND-P06`) | `N` data-name numérico; `IDX` index-name em combinação admitida pela IBM | `N → DATA`, `IDX → INDEX` | `N = IDX` com object INDEX | semanticamente válida |
+| INDEX incompatível (`COND-N04`) | `N` data-name não numérico/incompatível com index-name | `N → DATA`, `IDX → INDEX` | `N = IDX` com object INDEX | semanticamente inválida |
+
+Os dois casos produzem o mesmo binding nominal e a mesma relation normalizada em `ConditionSemantics`; somente a etapa posterior `ConditionValidation` (conceitual, futura) pode distingui-los, usando declaração/tipo e os contratos IBM. Uma implementação futura equivalente a `candidate.kind() == INDEX ⇒ relation válida` está proibida: ela confundiria normalização com validação e violaria `COND-N04`/`COND-A06`. O mesmo desafio vale para dados com `USAGE INDEX` (que continuam DATA) e para qualquer combinação em que o binding nominal seja correto mas a regra IBM restrinja os operands.
+
 ### Challenge transversal dos oracles
 
-COND-A01 a COND-A13 devem ser aplicáveis à representação proposta: branch enganoso, condition-name real, boundary/distribuição, `NOT`, precedência, INDEX, RENAMES, qualification, shadowing, source cross-set inválido, distribuição restrita, atualização do estado e término por qualquer simple condition. Uma alternativa que falha qualquer uma dessas classes não está pronta para implementação.
+COND-A01 a COND-A13 devem ser aplicáveis à representação proposta: branch enganoso, condition-name real, boundary/distribuição, `NOT`, precedência, INDEX, RENAMES, qualification, shadowing, source cross-set inválido, distribuição restrita, atualização do estado e término por qualquer simple condition. Uma alternativa que falha qualquer uma dessas classes não está pronta para implementação. Para `COND-P06`/`COND-N04`/`COND-A06`, o ownership é fixo: binding identifica INDEX; `ConditionSemantics` materializa a relation; `ConditionValidation` verifica a admissibilidade type-sensitive — nenhuma das três camadas fica sem owner.
 
 ## Casos de regressão
 
@@ -89,6 +102,7 @@ COND-A01 a COND-A13 devem ser aplicáveis à representação proposta: branch en
 4. Reordenar declarations não relacionadas não muda o branch pós-binding.
 5. Reexecutar projeção com mesmos produtos/policy produz IDs e tree idênticos.
 6. Trocar um binding conclusivo por ambiguous/unresolved só degrada a specialization afetada; não apaga estrutura/provenance independente.
+7. Trocar o tipo de um operand por outro compatível/incompatível não altera binding nem relation normalizada; só o veredito de `ConditionValidation` muda.
 
 ## Expectativas de escala
 

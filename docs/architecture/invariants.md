@@ -53,12 +53,12 @@ IDs neste documento são estáveis. `AUTOMATED` indica proteção executável at
 
 ### INV-COND-002 — Predicate normalizado é produto pós-binding separado
 
-- **Statement:** quando a especialização/expansão de condição contextual for materializada, ela ocorre em produto imutável pós-binding com identidade própria por `ProgramUnit`; ela não muta AST, occurrences ou resolution, não cria occurrences para subject/operator omitidos e distingue provenance `WRITTEN` de `INHERITED` sem inventar source span.
-- **Rationale:** consumidores futuros precisam de um predicate único sem duplicar o state machine IBM nem falsificar identidade, uso escrito ou provenance.
-- **Scope:** futuro `ConditionSemantics`, joins entre produtos, snapshots e consumidores CFG/predicate/dataflow.
+- **Statement:** quando a especialização/expansão de condição contextual for materializada, ela ocorre em produto imutável pós-binding com identidade própria por `ProgramUnit`; ela não muta AST, occurrences ou resolution, não cria occurrences para subject/operator omitidos e distingue provenance `WRITTEN` de `INHERITED` sem inventar source span. A projeção materializa a relation normalizada sem afirmar admissibilidade type-sensitive: type compatibility não é name binding e pertence a etapa posterior conceitual (`ConditionValidation`), ainda inexistente.
+- **Rationale:** consumidores futuros precisam de um predicate único sem duplicar o state machine IBM nem falsificar identidade, uso escrito ou provenance; validade type-sensitive exige declaração/tipo e contratos IBM que o projector não possui.
+- **Scope:** futuros `ConditionSemantics` e `ConditionValidation`, joins entre produtos, snapshots e consumidores CFG/predicate/dataflow.
 - **Related ADRs:** ADR-0002, ADR-0003, ADR-0005 e ADR-0012.
-- **Enforcement:** `REVIEW` — nenhum projector de produção existe neste checkpoint; a futura implementação deve adicionar oracles de identidade, ambiguity, provenance e escala.
-- **Known exceptions:** `ConditionSemantics` ainda não existe; a ausência continua boundary/incompletude e não autoriza normalização em outra fase.
+- **Enforcement:** `REVIEW` — nenhum projector ou validador de produção existe neste checkpoint; a futura implementação deve adicionar oracles de identidade, ambiguity, provenance e escala.
+- **Known exceptions:** `ConditionSemantics` e `ConditionValidation` ainda não existem; a ausência continua boundary/incompletude e não autoriza normalização em outra fase nem declaração de validade type-sensitive pelo binding.
 
 ## Provenance
 

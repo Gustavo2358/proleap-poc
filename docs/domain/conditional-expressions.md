@@ -22,7 +22,7 @@ A inserção herdada termina quando outra simple condition é encontrada. Condit
 
 Um bare nominal tail como `C` em `A = B OR C` não possui classe semântica final apenas pela grafia ou pelo ramo escolhido pela grammar:
 
-- se o binding identifica DATA, INDEX admissível ou um level-66 RENAMES usado como data-name, `C` pode ser o object abreviado;
+- se o binding identifica DATA, INDEX ou um level-66 RENAMES usado como data-name, `C` pode ser o object abreviado; a admissibilidade type-sensitive da comparação é verificada em etapa posterior, não no binding;
 - se o binding identifica um condition-name nível 88, `C` inicia nova simple condition e encerra a inserção;
 - se binding, qualification, scope ou opção de dialeto não permitem decisão única, a incerteza permanece explícita.
 
@@ -43,7 +43,7 @@ Nos demais pontos, `NOT` é lógico e nega somente a relation-condition imediata
 ## Classes nominais, qualification e scope
 
 - Data-name pertence à classe DATA. Um level-66 `RENAMES` declara data-name e não cria namespace nominal adicional.
-- Index-name declarado por `INDEXED BY` pertence à classe INDEX e pode participar de relation-condition somente nas combinações admitidas pela IBM. Um data item com `USAGE INDEX` continua DATA.
+- Index-name declarado por `INDEXED BY` pertence à classe INDEX e pode participar de relation-condition somente nas combinações admitidas pela IBM; essa admissibilidade é verificada em validação type-sensitive posterior, nunca pelo binding nominal. Um data item com `USAGE INDEX` continua DATA.
 - Condition-name nível 88 pertence à classe CONDITION e referencia sua conditional variable.
 - Condition-name precisa ser único ou tornado único por qualification e, quando aplicável, usa os mesmos subscripts da conditional variable. `IN` e `OF` são equivalentes.
 - DATA, CONDITION e INDEX são locais por padrão nas declarações pertinentes. `GLOBAL` torna as declarações elegíveis nos programas contidos segundo as regras IBM; nomes locais e de programas contendo são considerados por nível e scope, sem lookup global irrestrito.
@@ -55,15 +55,19 @@ Quando qualification ou scope não tornam uma referência única, o source não 
 
 A parse tree registra a estrutura reconhecida pela grammar, mas não prova declaration kind. A AST atual ainda perde parte da sequência, precedência e herança em `abbreviation`/`relationCombinedComparison`; essa é limitação conhecida, não regra COBOL.
 
-A arquitetura proposta em ADR-0012, guardada por INV-COND-001 e INV-COND-002, exige que a evolução que venha a ser autorizada:
+A arquitetura aceita em ADR-0012 (status `Accepted`), guardada por INV-COND-001 e INV-COND-002, exige que a evolução que venha a ser autorizada:
 
 - preservar na AST de superfície somente estrutura derivada dos contexts/tokens, incluindo todos os conectores, parênteses, `NOT`, operands e a alternativa contextual ainda não especializada;
 - manter nomes escritos como occurrences únicas e tipadas, sem criar occurrence sintética para subject/operator herdados;
-- usar binding nominal para especializar a alternativa CONDITION versus DATA/INDEX;
-- projetar depois do binding um produto semântico separado, com árvore de predicates normalizada, identidade própria e provenance que diferencia elemento escrito de herdado;
+- tratar a especialização DATA/INDEX/CONDITION como binding-dependent e exclusiva do pós-binding: o binding nominal decide a classe, `ConditionSemantics` materializa a relation e nenhuma fase anterior fecha o meaning;
+- usar binding nominal para especializar a alternativa CONDITION versus DATA/INDEX, sem confundir type compatibility com name binding: resolver `N → DATA` e `IDX → INDEX` não prova que `N = IDX` é admitido pela regra IBM para index-name;
+- projetar depois do binding um produto semântico separado, com árvore de predicates normalizada, identidade própria e provenance que diferencia elemento escrito de herdado; `ConditionSemantics` produz a relation normalizada sem afirmar validade de tipos ainda não verificada;
+- delegar a admissibilidade type-sensitive a etapa posterior conceitual, `ConditionValidation`, que consome `ConditionSemantics`, informação de declaração/tipo e os contratos IBM aplicáveis e distingue pelo menos relation semanticamente válida, semanticamente inválida e validade ainda não verificável/incompleta, sem alterar AST, occurrences, resolution ou `ConditionSemantics`;
+- manter o ownership de `COND-P06`, `COND-N04` e `COND-A06`: binding identifica INDEX; `ConditionSemantics` materializa a relation; `ConditionValidation` verifica a admissibilidade type-sensitive;
+- não acrescentar `PIC`/`USAGE` checking ao resolver nem type checking ao `AstBuilder`; sem reparse textual ou heurística, e sem inventar `VALID` quando a informação de tipo ainda não estiver materializada;
 - preservar `AMBIGUOUS`, `UNRESOLVED`, `UNSUPPORTED` e input inválido sem reparse textual, spelling heuristic ou escolha do primeiro candidate.
 
-Essa decisão não implementa o produto nem autoriza CFG, predicate analysis ou dataflow. Ela define a fronteira que esses consumidores deverão usar quando os slices correspondentes forem aprovados.
+Essa decisão não implementa `ConditionSemantics`, `ConditionValidation` nem autoriza CFG, predicate analysis ou dataflow. Ela define a fronteira que esses consumidores deverão usar quando os slices correspondentes forem aprovados. O pipeline conceitual é `Surface AST → ReferenceOccurrences → ReferenceResolution → ConditionSemantics → ConditionValidation → CFG/predicate/dataflow`; `ConditionSemantics` e `ConditionValidation` ainda não existem em produção e terão API/schema decididos em slice futuro autorizado.
 
 ## Relações
 
