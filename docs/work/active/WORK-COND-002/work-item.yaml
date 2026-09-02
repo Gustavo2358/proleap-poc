@@ -1,45 +1,73 @@
-id: WORK-COND-001
-title: Contrato normativo de condições combinadas e abreviadas
+id: WORK-COND-002
+title: Decisão arquitetural para condições contextuais
 status: active
 risk: high
-goal: Fechar o contrato IBM Enterprise COBOL do Slice 1 de BACKLOG-COND-001 sem escolher representação arquitetural nem alterar produção.
+goal: Decidir a representação de condições contextuais/abreviadas e registrar o checkpoint arquitetural sem alterar produção.
 must_read:
   - docs/engineering/semantic-analysis-policy.md
   - docs/engineering/semantic-testing.md
+  - docs/engineering/performance-policy.md
+  - docs/domain/conditional-expressions.md
+  - docs/evals/conditional-expression-oracles.md
+  - docs/domain/semantic-ast.md
+  - docs/domain/symbol-model.md
   - docs/domain/reference-resolution.md
   - docs/architecture/invariants.md
+  - docs/architecture/decisions/0012-contextual-conditions-use-post-binding-projection.md
   - docs/history/evidence/semantic-condition-context-discovery-report.md
   - docs/work/backlog.md#backlog-cond-001--contextualizar-condições-combinadas-e-referências-nominais
 related_domain_rules:
+  - docs/domain/conditional-expressions.md
+  - docs/domain/semantic-ast.md
+  - docs/domain/symbol-model.md
   - docs/domain/reference-resolution.md
+  - docs/domain/provenance.md
 related_decisions:
+  - ADR-0002
   - ADR-0003
+  - ADR-0005
+  - ADR-0008
+  - ADR-0009
+  - ADR-0012
 related_invariants:
   - INV-AST-001
   - INV-AST-002
+  - INV-AST-003
   - INV-SYM-001
+  - INV-PROV-002
   - INV-RES-001
+  - INV-COND-001
+  - INV-COND-002
+  - INV-COV-001
   - INV-DET-001
+  - INV-PERF-001
 evals:
   - EVAL-AST-001
   - EVAL-AST-002
   - EVAL-AST-004
+  - EVAL-AST-005
   - EVAL-SYM-001
   - EVAL-SYM-002
   - EVAL-RES-DATA-001
   - EVAL-RES-DATA-002
   - EVAL-RES-DATA-003
   - EVAL-RES-REL-001
+  - EVAL-ARCH-001
 source_scope:
+  - src/main/java/io/github/gustavo2358/cobolexplorer/Ast.java
   - src/main/java/io/github/gustavo2358/cobolexplorer/AstBuilder.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/ReferenceOccurrences.java
   - src/main/java/io/github/gustavo2358/cobolexplorer/ReferenceOccurrenceCollector.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/ReferenceResolution.java
   - src/main/java/io/github/gustavo2358/cobolexplorer/CobolReferenceResolver.java
 test_scope:
   - src/test/java/io/github/gustavo2358/cobolexplorer/SemanticConditionContextDiscoveryTest.java
   - src/test/resources/cobol/resolution/abbreviated-condition-context.cbl
 must_not_change:
   - src/main
-  - docs/architecture
+  - src/test
+  - scripts
+  - pom.xml
 gates:
   - fast
   - semantic

@@ -40,6 +40,26 @@ IDs neste documento são estáveis. `AUTOMATED` indica proteção executável at
 - **Enforcement:** `AUTOMATED` — `ArchitectureBoundaryTest` bloqueia dependência direta de construção de símbolos para ANTLR/resolução; testes de symbol table, occurrences e compilation units completam o contrato comportamental.
 - **Known exceptions:** nenhuma.
 
+## Condições contextuais
+
+### INV-COND-001 — Significado dependente de binding permanece aberto até a resolução
+
+- **Statement:** a AST de superfície preserva losslessly a condition sequence, o contexto de abbreviation e todas as alternativas semanticamente admissíveis; branch da grammar, `grammarRule`, grafia ou ordem não podem fechar um bare nominal tail como CONDITION ou object abreviado antes do binding.
+- **Rationale:** declaration kind, qualification e scope são necessários para distinguir condition-name de DATA/INDEX em abbreviated combined relation conditions.
+- **Scope:** lowering de condições, AST, coleta de occurrences e manifestos relacionados.
+- **Related ADRs:** ADR-0003 e ADR-0012.
+- **Enforcement:** `REVIEW` — os oracles `COND-*` e o checkpoint arquitetural definem o contrato; automação pertence aos slices executáveis posteriores.
+- **Known exceptions:** o lowering/collector atual ainda fecha bare tails por `conditionNameReference`; é a violação preexistente caracterizada pelo PR #14 e mantida explícita em `BACKLOG-COND-001`, não uma exceção autorizada para novas mudanças.
+
+### INV-COND-002 — Predicate normalizado é produto pós-binding separado
+
+- **Statement:** quando a especialização/expansão de condição contextual for materializada, ela ocorre em produto imutável pós-binding com identidade própria por `ProgramUnit`; ela não muta AST, occurrences ou resolution, não cria occurrences para subject/operator omitidos e distingue provenance `WRITTEN` de `INHERITED` sem inventar source span.
+- **Rationale:** consumidores futuros precisam de um predicate único sem duplicar o state machine IBM nem falsificar identidade, uso escrito ou provenance.
+- **Scope:** futuro `ConditionSemantics`, joins entre produtos, snapshots e consumidores CFG/predicate/dataflow.
+- **Related ADRs:** ADR-0002, ADR-0003, ADR-0005 e ADR-0012.
+- **Enforcement:** `REVIEW` — nenhum projector de produção existe neste checkpoint; a futura implementação deve adicionar oracles de identidade, ambiguity, provenance e escala.
+- **Known exceptions:** `ConditionSemantics` ainda não existe; a ausência continua boundary/incompletude e não autoriza normalização em outra fase.
+
 ## Provenance
 
 ### INV-PROV-001 — Sem falsa identidade

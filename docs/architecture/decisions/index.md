@@ -18,6 +18,14 @@ ADRs são a fonte canônica para decisões arquiteturais aceitas. Eles não deve
 | ADR-0010 | [Dependências literais externas são observadas por artefato](0010-observe-external-literal-dependencies-per-artifact.md) | Contemporary |
 | ADR-0011 | [Classificação de plataforma permanece ortogonal à semântica COBOL](0011-orthogonal-platform-classification.md) | Contemporary |
 
+## Decisões propostas
+
+| ID | Decisão | Tipo |
+| --- | --- | --- |
+| ADR-0012 | [Condições contextuais usam projeção pós-binding](0012-contextual-conditions-use-post-binding-projection.md) | Contemporary |
+
+Uma decisão `Proposed` é checkpoint para review e não prevalece como autoridade aceita até mudar para `Accepted` pelo lifecycle aprovado.
+
 ADRs retrospectivos só são criados quando código, testes e fontes documentais sustentam a decisão; não se inventa narrativa histórica.
 
 Formato esperado:
