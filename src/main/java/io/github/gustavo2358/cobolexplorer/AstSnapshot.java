@@ -137,6 +137,15 @@ final class AstSnapshot {
         if (node instanceof Ast.SpecialRegisterExpression n) return n.registerName();
         if (node instanceof Ast.PreservedExpression n) return n.writtenText();
         if (node instanceof Ast.RawExpression n) return n.rawText();
+        if (node instanceof Ast.LogicalCondition n) return n.connector().name();
+        if (node instanceof Ast.GroupedCondition n) return "(...)";
+        if (node instanceof Ast.RelationCondition n)
+            return n.relationalOperator() == null ? "relation" : n.relationalOperator();
+        if (node instanceof Ast.NegatedCondition n) return "NOT";
+        if (node instanceof Ast.ContextualConditionTail n) return n.nominalReference().writtenName();
+        if (node instanceof Ast.DistributedOperandGroup n) return n.connectors().stream()
+                .map(Ast.LogicalConnector::name).reduce((a, b) -> a + "/" + b).orElse("");
+        if (node instanceof Ast.ClassCondition n) return (n.negated() ? "NOT " : "") + n.className();
         return node.getClass().getSimpleName();
     }
 
@@ -242,6 +251,27 @@ final class AstSnapshot {
         } else if (node instanceof Ast.PreservedExpression n) {
             result.put("grammarRule", n.grammarRule()); result.put("writtenText", n.writtenText());
             result.put("understanding", n.understanding().name());
+        } else if (node instanceof Ast.LogicalCondition n) {
+            result.put("connector", n.connector().name()); result.put("writtenText", n.writtenText());
+        } else if (node instanceof Ast.GroupedCondition n) {
+            result.put("openParenLine", String.valueOf(n.openParenSpan().startLine()));
+            result.put("closeParenLine", String.valueOf(n.closeParenSpan().startLine()));
+            result.put("writtenText", n.writtenText());
+        } else if (node instanceof Ast.RelationCondition n) {
+            result.put("subjectOmitted", String.valueOf(n.subject() == null));
+            result.put("operator", n.relationalOperator() == null ? "" : n.relationalOperator());
+            result.put("writtenText", n.writtenText());
+        } else if (node instanceof Ast.NegatedCondition n) {
+            result.put("writtenText", n.writtenText());
+        } else if (node instanceof Ast.ContextualConditionTail n) {
+            result.put("writtenText", n.writtenText());
+        } else if (node instanceof Ast.DistributedOperandGroup n) {
+            result.put("connectors", n.connectors().stream().map(Ast.LogicalConnector::name)
+                    .reduce((a, b) -> a + "/" + b).orElse(""));
+            result.put("writtenText", n.writtenText());
+        } else if (node instanceof Ast.ClassCondition n) {
+            result.put("className", n.className()); result.put("negated", String.valueOf(n.negated()));
+            result.put("writtenText", n.writtenText());
         } else if (node instanceof Ast.RawExpression n) {
             result.put("role", n.role()); result.put("rawText", n.rawText());
         }

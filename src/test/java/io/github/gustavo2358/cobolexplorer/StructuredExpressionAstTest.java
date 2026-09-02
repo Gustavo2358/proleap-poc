@@ -94,9 +94,9 @@ class StructuredExpressionAstTest {
     void structuresArithmeticConditionsFunctionsRegistersAndPerformControl() throws Exception {
         Ast.Program ast = parseFixture("expressions.cbl");
         Ast.IfStatement ifStatement = nodes(ast, Ast.IfStatement.class).get(0);
-        Ast.OperationExpression condition = assertInstanceOf(Ast.OperationExpression.class,
+        Ast.LogicalCondition condition = assertInstanceOf(Ast.LogicalCondition.class,
                 ifStatement.condition());
-        assertEquals("AND", condition.operator());
+        assertEquals(Ast.LogicalConnector.AND, condition.connector());
         assertTrue(nodes(condition, Ast.DataReference.class).stream()
                 .map(Ast.DataReference::baseName).toList().containsAll(List.of("A", "B")));
 
@@ -108,12 +108,14 @@ class StructuredExpressionAstTest {
         Ast.SpecialRegisterExpression register = nodes(ifStatement, Ast.SpecialRegisterExpression.class).get(0);
         assertEquals("RETURN-CODE", register.registerName());
 
-        Ast.PreservedExpression fallback = nodes(ast, Ast.PreservedExpression.class).stream()
-                .filter(expression -> expression.grammarRule().equals("abbreviation"))
+        Ast.RelationCondition abbreviated = nodes(ast, Ast.RelationCondition.class).stream()
+                .filter(relation -> relation.subject() == null)
                 .findFirst().orElseThrow();
-        assertEquals(Ast.ReferenceUnderstanding.PRESERVED, fallback.understanding());
-        assertFalse(fallback.recognizedOperands().isEmpty(),
-                "opaque fallback must retain every operand recognized by the grammar");
+        assertEquals("abbreviation", abbreviated.meta().origin().grammarRule());
+        assertNull(abbreviated.relationalOperator(),
+                "subject and operator omitted must stay omitted on the surface");
+        assertInstanceOf(Ast.LiteralExpression.class, abbreviated.object(),
+                "the written abbreviated object remains reachable");
 
         Ast.EvaluateStatement evaluate = nodes(ast, Ast.EvaluateStatement.class).get(0);
         assertInstanceOf(Ast.OperationExpression.class, evaluate.subjects().get(0));
@@ -132,6 +134,7 @@ class StructuredExpressionAstTest {
         assertTrue(snapshot.nodes().stream().anyMatch(node -> node.type().equals("FunctionExpression")));
         assertTrue(snapshot.nodes().stream().anyMatch(node -> node.type().equals("SpecialRegisterExpression")));
         assertTrue(snapshot.nodes().stream().anyMatch(node -> node.type().equals("OperationExpression")));
+        assertTrue(snapshot.nodes().stream().anyMatch(node -> node.type().equals("LogicalCondition")));
     }
 
     private static List<Ast.QualifierConnector> connectors(Ast.DataReference reference) {
