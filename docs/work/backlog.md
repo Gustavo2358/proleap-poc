@@ -391,7 +391,7 @@ Selectors de `EVALUATE` cujo subject correspondente não for booleano, ou cuja f
 
 ### BACKLOG-COND-001 — Contextualizar condições combinadas e referências nominais
 
-Progresso: o Slice 1 foi concluído pelo PR #15 e arquivado como `WORK-COND-001`. O Slice 2 foi concluído pelo PR #16 e arquivado como `WORK-COND-002` (ADR-0012 `Accepted`). O Slice 3 está ativo em `WORK-COND-003`. Slices 4–7 continuam backlog e não estão autorizados.
+Progresso: o Slice 1 foi concluído pelo PR #15 e arquivado como `WORK-COND-001`. O Slice 2 foi concluído pelo PR #16 e arquivado como `WORK-COND-002` (ADR-0012 `Accepted`). O Slice 3 foi concluído pelo PR #17 e arquivado como `WORK-COND-003`. O Slice 4 está ativo em `WORK-COND-004`, no checkpoint de Discovery (Commit 1 do PR), aguardando review humano antes da implementação na mesma branch/PR. Slices 5–7 continuam backlog e não estão autorizados.
 
 #### Evidência e problema
 
