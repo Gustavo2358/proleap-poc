@@ -3,6 +3,7 @@ package io.github.gustavo2358.cobolexplorer;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -381,26 +382,32 @@ class ConditionSurfaceAstTest {
     // ---------------------------------------------------------------------
 
     @Test
-    void multipleAbbreviationsInsideOneTailAreNotTruncatedToTheFirst() {
+    void multipleAbbreviationsUnderOneConnectorStayFailClosedAndLossless() {
         AstBoundaryTestSupport.Analysis analysis = analyze("MULTI-ABBREV", "IF A = B OR < C > D");
         Ast.LogicalCondition or = conditionOf(analysis);
         assertEquals(2, or.operands().size(), or.toString());
         assertInstanceOf(Ast.RelationCondition.class, or.operands().get(0));
-        // The grammar groups both abbreviations under the single written OR connector.
-        Ast.LogicalCondition tailGroup = assertInstanceOf(Ast.LogicalCondition.class, or.operands().get(1));
-        assertEquals(Ast.LogicalConnector.OR, tailGroup.connector());
-        assertEquals(2, tailGroup.operands().size(), "both abbreviations must survive");
-        Ast.RelationCondition second = assertInstanceOf(Ast.RelationCondition.class,
-                tailGroup.operands().get(0));
-        Ast.RelationCondition third = assertInstanceOf(Ast.RelationCondition.class,
-                tailGroup.operands().get(1));
-        assertAll("no abbreviation(0) truncation",
-                () -> assertNull(second.subject()),
-                () -> assertEquals("<", second.relationalOperator()),
-                () -> assertEquals("C", ((Ast.DataReference) second.object()).baseName()),
-                () -> assertNull(third.subject()),
-                () -> assertEquals(">", third.relationalOperator()),
-                () -> assertEquals("D", ((Ast.DataReference) third.object()).baseName()));
+
+        Ast.PreservedExpression preserved = assertInstanceOf(Ast.PreservedExpression.class,
+                or.operands().get(1));
+        assertAll("grammar-only abbreviation+ stays preserved without invented connectors",
+                () -> assertEquals("andOrCondition", preserved.grammarRule()),
+                () -> assertEquals(Ast.ReferenceUnderstanding.PRESERVED, preserved.understanding()),
+                () -> assertEquals("< C > D", preserved.writtenText()),
+                () -> assertEquals(List.of("C", "D"), preserved.recognizedOperands().stream()
+                        .map(operand -> ((Ast.DataReference) operand).baseName()).toList()),
+                () -> assertEquals(1, nodes(analysis, Ast.LogicalCondition.class).size(),
+                        "no synthetic AND/OR between < C and > D"),
+                () -> assertEquals(1, nodes(analysis, Ast.RelationCondition.class).size()));
+
+        List<Ast.Node> reachable = nodes(analysis);
+        assertAll("no abbreviation is lost; both operands remain reachable",
+                () -> assertEquals(1, referencesNamed(analysis, "C")),
+                () -> assertEquals(1, referencesNamed(analysis, "D")),
+                () -> assertTrue(reachable.stream().anyMatch(node ->
+                        node instanceof Ast.DataReference reference && reference.baseName().equals("C"))),
+                () -> assertTrue(reachable.stream().anyMatch(node ->
+                        node instanceof Ast.DataReference reference && reference.baseName().equals("D"))));
     }
 
     @Test
@@ -421,6 +428,208 @@ class ConditionSurfaceAstTest {
         assertAll("NOT = written in the abbreviation is the relational operator",
                 () -> assertEquals("NOT =", abbreviated.relationalOperator()),
                 () -> assertEquals(0, nodes(analysis, Ast.NegatedCondition.class).size()));
+    }
+
+    // ---------------------------------------------------------------------
+    // PAREN — the boundary of a group is relative to the current subject
+    // ---------------------------------------------------------------------
+
+    @Test
+    void paren_01_groupEnclosingTheCurrentSubjectClosesTheState() {
+        AstBoundaryTestSupport.Analysis analysis = analyze("PAREN-01", "IF (A = B OR C) AND D");
+        Ast.LogicalCondition and = conditionOf(analysis);
+        assertEquals(Ast.LogicalConnector.AND, and.connector());
+        Ast.GroupedCondition group = assertInstanceOf(Ast.GroupedCondition.class, and.operands().get(0));
+        Ast.LogicalCondition inner = assertInstanceOf(Ast.LogicalCondition.class, group.inner());
+        assertAll("C stays contextual inside the group",
+                () -> assertEquals(Ast.LogicalConnector.OR, inner.connector()),
+                () -> assertInstanceOf(Ast.RelationCondition.class, inner.operands().get(0)),
+                () -> assertEquals("C", ((Ast.ContextualConditionTail) inner.operands().get(1))
+                        .nominalReference().baseName()));
+        assertAll("D is outside the closed group, not a contextual tail",
+                () -> assertInstanceOf(Ast.DataReference.class, and.operands().get(1)),
+                () -> assertEquals("D", ((Ast.DataReference) and.operands().get(1)).baseName()));
+    }
+
+    @Test
+    void paren_02_groupAfterTheCurrentSubjectKeepsTheState() {
+        AstBoundaryTestSupport.Analysis analysis = analyze("PAREN-02", "IF A = B OR (C AND D) OR E");
+        Ast.LogicalCondition or = conditionOf(analysis);
+        assertEquals(Ast.LogicalConnector.OR, or.connector());
+        assertEquals(3, or.operands().size());
+        assertInstanceOf(Ast.RelationCondition.class, or.operands().get(0));
+
+        Ast.GroupedCondition group = assertInstanceOf(Ast.GroupedCondition.class, or.operands().get(1));
+        Ast.LogicalCondition inner = assertInstanceOf(Ast.LogicalCondition.class, group.inner());
+        assertAll("C and D stay contextual inside the group",
+                () -> assertEquals(Ast.LogicalConnector.AND, inner.connector()),
+                () -> assertEquals("C", ((Ast.ContextualConditionTail) inner.operands().get(0))
+                        .nominalReference().baseName()),
+                () -> assertEquals("D", ((Ast.ContextualConditionTail) inner.operands().get(1))
+                        .nominalReference().baseName()));
+
+        Ast.ContextualConditionTail e = assertInstanceOf(Ast.ContextualConditionTail.class,
+                or.operands().get(2));
+        assertEquals("E", e.nominalReference().baseName(),
+                "the group after the current subject must not kill the inherited state");
+    }
+
+    @Test
+    void paren_03_closedGroupLeavesTheFollowingNominalOutsideTheInheritedSequence() {
+        AstBoundaryTestSupport.Analysis analysis = analyze("PAREN-03", "IF (A = B) OR C");
+        Ast.LogicalCondition or = conditionOf(analysis);
+        assertEquals(Ast.LogicalConnector.OR, or.connector());
+        assertInstanceOf(Ast.GroupedCondition.class, or.operands().get(0));
+        assertAll("C is outside the inheritable sequence",
+                () -> assertInstanceOf(Ast.DataReference.class, or.operands().get(1)),
+                () -> assertEquals("C", ((Ast.DataReference) or.operands().get(1)).baseName()),
+                () -> assertEquals(0, nodes(analysis, Ast.ContextualConditionTail.class).size()));
+    }
+
+    // ---------------------------------------------------------------------
+    // NOT-DOUBLE — leading NOT is logical only over an already-NOT operator
+    // ---------------------------------------------------------------------
+
+    @Test
+    void notDouble_01_doubleNotSplitsIntoLogicalAndRelationalRoles() {
+        AstBoundaryTestSupport.Analysis analysis = analyze("NOT-DOUBLE-01", "IF A = B AND NOT NOT = C");
+        Ast.LogicalCondition and = conditionOf(analysis);
+        assertEquals(Ast.LogicalConnector.AND, and.connector());
+        assertInstanceOf(Ast.RelationCondition.class, and.operands().get(0));
+
+        Ast.NegatedCondition negated = assertInstanceOf(Ast.NegatedCondition.class, and.operands().get(1));
+        Ast.RelationCondition relation = assertInstanceOf(Ast.RelationCondition.class, negated.operand());
+        assertAll("logical NOT wraps the abbreviated relation with relational NOT =",
+                () -> assertNull(relation.subject()),
+                () -> assertEquals("NOT =", relation.relationalOperator()),
+                () -> assertEquals("C", ((Ast.DataReference) relation.object()).baseName()),
+                () -> assertEquals(1, nodes(analysis, Ast.NegatedCondition.class).size()),
+                () -> assertTrue(nodes(analysis, Ast.RelationCondition.class).stream()
+                        .noneMatch(r -> r.relationalOperator() != null
+                                && r.relationalOperator().contains("NOT NOT")),
+                        "the operator must never collapse into NOT NOT ="));
+    }
+
+    @Test
+    void notDouble_02_singleNotIsRelationalAndDoubleNotIsLogical() {
+        AstBoundaryTestSupport.Analysis single = analyze("NOT-DOUBLE-02A", "IF A = B OR NOT = C");
+        AstBoundaryTestSupport.Analysis doubleNot = analyze("NOT-DOUBLE-02B", "IF A = B OR NOT NOT = C");
+
+        Ast.RelationCondition singleRelation = nodes(single, Ast.RelationCondition.class).stream()
+                .filter(r -> r.subject() == null).findFirst().orElseThrow();
+        assertAll("single NOT = stays the relational operator",
+                () -> assertEquals("NOT =", singleRelation.relationalOperator()),
+                () -> assertEquals(0, nodes(single, Ast.NegatedCondition.class).size()));
+
+        Ast.NegatedCondition doubleNegation = nodes(doubleNot, Ast.NegatedCondition.class).stream()
+                .findFirst().orElseThrow();
+        Ast.RelationCondition doubleRelation = assertInstanceOf(Ast.RelationCondition.class,
+                doubleNegation.operand());
+        assertAll("double NOT splits logical NOT from relational NOT =",
+                () -> assertEquals(1, nodes(doubleNot, Ast.NegatedCondition.class).size()),
+                () -> assertNull(doubleRelation.subject()),
+                () -> assertEquals("NOT =", doubleRelation.relationalOperator()));
+    }
+
+    // ---------------------------------------------------------------------
+    // SPAN — synthetic AND nodes cover only their own semantic subtree
+    // ---------------------------------------------------------------------
+
+    @Test
+    void span_01_innerAndStartsAtItsFirstOperandNotTheParentConnector() {
+        AstBoundaryTestSupport.Analysis analysis = analyze("SPAN-01", "IF A = B OR C AND D");
+        Ast.LogicalCondition or = conditionOf(analysis);
+        Ast.LogicalCondition and = assertInstanceOf(Ast.LogicalCondition.class, or.operands().get(1));
+        Ast.ContextualConditionTail c = assertInstanceOf(Ast.ContextualConditionTail.class,
+                and.operands().get(0));
+        assertAll("AND provenance covers only C AND D",
+                () -> assertEquals("C AND D", and.writtenText()),
+                () -> assertEquals(c.nominalReference().meta().span().startToken(),
+                        and.meta().span().startToken()),
+                () -> assertEquals("A = B OR C AND D", or.writtenText()));
+    }
+
+    @Test
+    void span_02_longerAndChainKeepsTheFullOwnSubtree() {
+        AstBoundaryTestSupport.Analysis analysis = analyze("SPAN-02", "IF A = B OR C AND D AND E");
+        Ast.LogicalCondition or = conditionOf(analysis);
+        Ast.LogicalCondition and = assertInstanceOf(Ast.LogicalCondition.class, or.operands().get(1));
+        assertEquals(Ast.LogicalConnector.AND, and.connector());
+        assertEquals("C AND D AND E", and.writtenText());
+        assertEquals(3, and.operands().size());
+    }
+
+    @Test
+    void span_03_firstChainMayStartAtTheOriginalRelation() {
+        AstBoundaryTestSupport.Analysis analysis = analyze("SPAN-03", "IF A = B AND C OR D");
+        Ast.LogicalCondition or = conditionOf(analysis);
+        Ast.LogicalCondition and = assertInstanceOf(Ast.LogicalCondition.class, or.operands().get(0));
+        Ast.RelationCondition relation = assertInstanceOf(Ast.RelationCondition.class,
+                and.operands().get(0));
+        assertAll("the first AND chain starts at its written relation",
+                () -> assertEquals("A = B AND C", and.writtenText()),
+                () -> assertEquals(relation.meta().span().startToken(), and.meta().span().startToken()));
+    }
+
+    // ---------------------------------------------------------------------
+    // Distributed operands reuse the existing relation-operand policy
+    // ---------------------------------------------------------------------
+
+    @Test
+    void distributedOperandsReuseTheRelationOperandPolicy() {
+        for (String condition : List.of("IF A = (B OR C)", "IF A = (B AND C)")) {
+            AstBoundaryTestSupport.Analysis analysis = analyze("DIST-KINDS", condition);
+            for (String name : List.of("A", "B", "C")) {
+                List<Set<ResolutionContracts.ReferenceKind>> kinds = admissibleKinds(analysis, name);
+                assertAll(condition + " -> " + name,
+                        () -> assertEquals(1, kinds.size(),
+                                "each written reference keeps exactly one occurrence"),
+                        () -> assertEquals(EnumSet.of(ResolutionContracts.ReferenceKind.DATA,
+                                        ResolutionContracts.ReferenceKind.INDEX), kinds.get(0)));
+            }
+        }
+    }
+
+    // ---------------------------------------------------------------------
+    // Adversarial surface state machine regression suite
+    // ---------------------------------------------------------------------
+
+    @Test
+    void surfaceStateMachineRegressionSuite() {
+        record Case(String condition, List<String> reachableNames) { }
+        List<Case> cases = List.of(
+                new Case("A = B OR C", List.of("A", "B", "C")),
+                new Case("A = B OR C OR D", List.of("A", "B", "C", "D")),
+                new Case("A = B OR < C", List.of("A", "B", "C")),
+                new Case("A NOT = B OR C", List.of("A", "B", "C")),
+                new Case("A = B OR NOT C OR D", List.of("A", "B", "C", "D")),
+                new Case("A = B AND NOT NOT = C", List.of("A", "B", "C")),
+                new Case("A = B OR C AND D", List.of("A", "B", "C", "D")),
+                new Case("A = B AND C OR D", List.of("A", "B", "C", "D")),
+                new Case("(A = B OR C) AND D", List.of("A", "B", "C", "D")),
+                new Case("(A = B) OR C", List.of("A", "B", "C")),
+                new Case("A = B OR (C AND D) OR E", List.of("A", "B", "C", "D", "E")),
+                new Case("A = (B OR C) AND D", List.of("A", "B", "C", "D")),
+                new Case("A = B OR C = D OR E", List.of("A", "B", "C", "D", "E")),
+                new Case("A = B OR C IS NUMERIC OR D", List.of("A", "B", "C", "D")),
+                new Case("A = B OR < C > D", List.of("A", "B", "C", "D")));
+        for (Case surfaceCase : cases) {
+            AstBoundaryTestSupport.Analysis analysis = analyze("MACHINE", "IF " + surfaceCase.condition());
+            List<Ast.Node> preorder = new ArrayList<>();
+            collectPreorder(analysis.model().programUnits().get(0).program(), preorder);
+            List<String> reachable = new ArrayList<>();
+            for (Ast.Node node : preorder) {
+                if (node instanceof Ast.DataReference reference) reachable.add(reference.baseName());
+            }
+            assertAll(surfaceCase.condition(),
+                    () -> assertNotNull(AstBoundaryTestSupport.nodes(analysis, Ast.IfStatement.class)
+                            .get(0).condition()),
+                    () -> assertEquals(surfaceCase.reachableNames(), reachable,
+                            "every written reference must survive the surface"),
+                    () -> assertEquals(preorder.size() - 1,
+                            preorder.get(preorder.size() - 1).meta().id(),
+                            "ids remain contiguous 0..N-1"));
+        }
     }
 
     // ---------------------------------------------------------------------
@@ -465,6 +674,15 @@ class ConditionSurfaceAstTest {
     private static int referencesNamed(AstBoundaryTestSupport.Analysis analysis, String name) {
         return (int) AstBoundaryTestSupport.nodes(analysis, Ast.DataReference.class).stream()
                 .filter(reference -> reference.baseName().equals(name)).count();
+    }
+
+    private static List<Set<ResolutionContracts.ReferenceKind>> admissibleKinds(
+            AstBoundaryTestSupport.Analysis analysis, String name) {
+        return analysis.occurrences().values().stream()
+                .flatMap(product -> product.occurrences().stream())
+                .filter(occurrence -> occurrence.writtenText().equals(name))
+                .map(ReferenceOccurrences.Occurrence::admissibleKinds)
+                .toList();
     }
 
     private static void collectPreorder(Ast.Node root, List<Ast.Node> output) {

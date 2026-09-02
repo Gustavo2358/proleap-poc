@@ -1101,27 +1101,34 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
     }
 
     private Ast.Expression conditionExpression(ParserRuleContext context) {
-        return buildConditionSurface(context, false).node();
+        return buildConditionSurface(context, ConditionState.CLOSED).node();
     }
 
     /**
-     * Surface result of one condition fragment. {@code abbreviationOpen} records only
-     * whether a structurally open abbreviation state exists at the end of the fragment;
-     * it is used exclusively to choose the surface shape of bare nominals and is never
-     * materialized as inherited subject/operator (that belongs to the future
-     * post-binding projector).
+     * Structural abbreviation state used only to choose the surface shape of bare
+     * nominals and the boundary effect of explicit groups. It is never materialized
+     * as inherited subject/operator (that belongs to the future post-binding
+     * projector), never stored in {@link Ast}, and never represents a binding.
+     * {@code currentSubjectStartToken} anchors the most recently written relation
+     * subject; {@code -1} means no subject is known yet.
      */
-    private record ConditionBuild(Ast.Expression node, boolean abbreviationOpen) { }
+    private record ConditionState(boolean abbreviationOpen, int currentSubjectStartToken) {
+        static final ConditionState CLOSED = new ConditionState(false, -1);
+        ConditionState opened(int subjectStartToken) { return new ConditionState(true, subjectStartToken); }
+        ConditionState inherited() { return new ConditionState(true, currentSubjectStartToken); }
+    }
 
-    private ConditionBuild buildConditionSurface(ParserRuleContext context, boolean abbreviationOpen) {
+    private record ConditionBuild(Ast.Expression node, ConditionState state) { }
+
+    private ConditionBuild buildConditionSurface(ParserRuleContext context, ConditionState state) {
         if (context instanceof CobolParser.ConditionContext condition)
-            return buildCondition(condition, abbreviationOpen);
+            return buildCondition(condition, state);
         if (context instanceof CobolParser.CombinableConditionContext combinable)
-            return buildCombinable(combinable, abbreviationOpen);
+            return buildCombinable(combinable, state);
         if (context instanceof CobolParser.SimpleConditionContext simple)
-            return buildSimple(simple, abbreviationOpen);
+            return buildSimple(simple, state);
         if (context instanceof CobolParser.RelationConditionContext relation)
-            return buildRelationCondition(relation);
+            return buildRelationCondition(relation, state);
         if (context instanceof CobolParser.RelationArithmeticComparisonContext comparison)
             return buildArithmeticComparison(comparison);
         if (context instanceof CobolParser.RelationCombinedComparisonContext combined)
@@ -1131,15 +1138,15 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
         if (context instanceof CobolParser.ClassConditionContext classCondition)
             return buildClassCondition(classCondition);
         if (context instanceof CobolParser.ConditionNameReferenceContext name)
-            return buildBareNominal(name, abbreviationOpen);
+            return buildBareNominal(name, state);
         if (context instanceof CobolParser.AbbreviationContext abbreviation)
-            return buildAbbreviation(abbreviation);
-        return new ConditionBuild(preservedExpression(context, "condition"), false);
+            return buildAbbreviation(abbreviation, state);
+        return new ConditionBuild(preservedExpression(context, "condition"), state);
     }
 
-    private ConditionBuild buildCondition(CobolParser.ConditionContext condition, boolean abbreviationOpen) {
+    private ConditionBuild buildCondition(CobolParser.ConditionContext condition, ConditionState stateIn) {
         List<CobolParser.AndOrConditionContext> tails = condition.andOrCondition();
-        if (tails.isEmpty()) return buildCombinable(condition.combinableCondition(), abbreviationOpen);
+        if (tails.isEmpty()) return buildCombinable(condition.combinableCondition(), stateIn);
         List<Ast.LogicalConnector> connectors = tails.stream()
                 .map(tail -> tail.AND() != null ? Ast.LogicalConnector.AND : Ast.LogicalConnector.OR)
                 .toList();
@@ -1156,17 +1163,17 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
         chains.add(new ChainPlan(chainStart, tails.size()));
 
         Ast.Meta rootMeta = meta(condition);
-        boolean state = abbreviationOpen;
+        ConditionState state = stateIn;
         if (chains.size() == 1) {
             // Only AND connectors: the AND node is the root and covers the whole condition.
             List<Ast.Expression> operands = new ArrayList<>();
             ConditionBuild first = buildCombinable(condition.combinableCondition(), state);
             operands.add(first.node());
-            state = first.abbreviationOpen();
+            state = first.state();
             for (CobolParser.AndOrConditionContext tail : tails) {
                 ConditionBuild built = buildTail(tail, state);
                 operands.add(built.node());
-                state = built.abbreviationOpen();
+                state = built.state();
             }
             return new ConditionBuild(new Ast.LogicalCondition(rootMeta, Ast.LogicalConnector.AND,
                     operands, sourceText(condition).strip()), state);
@@ -1179,10 +1186,12 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
                         ? buildCombinable(condition.combinableCondition(), state)
                         : buildTail(tails.get(chain.firstElement() - 1), state);
                 orOperands.add(single.node());
-                state = single.abbreviationOpen();
+                state = single.state();
             } else {
+                // The synthetic AND node covers only its semantic subtree: start at the
+                // effective operand context, excluding the parent connector token.
                 ParserRuleContext start = chain.firstElement() == 0
-                        ? condition.combinableCondition() : tails.get(chain.firstElement() - 1);
+                        ? condition.combinableCondition() : tailOperandStart(tails.get(chain.firstElement() - 1));
                 ParserRuleContext end = tails.get(chain.lastElement() - 1);
                 Ast.Meta chainMeta = metaForRange(start, end, "condition");
                 List<Ast.Expression> operands = new ArrayList<>();
@@ -1191,7 +1200,7 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
                             ? buildCombinable(condition.combinableCondition(), state)
                             : buildTail(tails.get(element - 1), state);
                     operands.add(built.node());
-                    state = built.abbreviationOpen();
+                    state = built.state();
                 }
                 orOperands.add(new Ast.LogicalCondition(chainMeta, Ast.LogicalConnector.AND,
                         operands, sourceBetween(start, end)));
@@ -1201,54 +1210,68 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
                 orOperands, sourceText(condition).strip()), state);
     }
 
-    private ConditionBuild buildTail(CobolParser.AndOrConditionContext tail, boolean abbreviationOpen) {
+    /** First context semantically belonging to the tail operand, excluding the connector token. */
+    private static ParserRuleContext tailOperandStart(CobolParser.AndOrConditionContext tail) {
+        if (tail.combinableCondition() != null) return tail.combinableCondition();
+        if (!tail.abbreviation().isEmpty()) return tail.abbreviation(0);
+        return tail;
+    }
+
+    private ConditionBuild buildTail(CobolParser.AndOrConditionContext tail, ConditionState stateIn) {
         if (tail.combinableCondition() != null)
-            return buildCombinable(tail.combinableCondition(), abbreviationOpen);
+            return buildCombinable(tail.combinableCondition(), stateIn);
         List<CobolParser.AbbreviationContext> abbreviations = tail.abbreviation();
-        boolean state = abbreviationOpen;
-        if (abbreviations.size() == 1) return buildAbbreviation(abbreviations.get(0));
-        // The grammar groups all abbreviations under a single written connector.
-        Ast.Meta meta = metaForRange(abbreviations.get(0),
-                abbreviations.get(abbreviations.size() - 1), rule(tail));
-        List<Ast.Expression> parts = new ArrayList<>();
-        for (CobolParser.AbbreviationContext abbreviation : abbreviations) {
-            ConditionBuild built = buildAbbreviation(abbreviation);
-            parts.add(built.node());
-            state = built.abbreviationOpen();
-        }
-        Ast.LogicalConnector connector = tail.AND() != null
-                ? Ast.LogicalConnector.AND : Ast.LogicalConnector.OR;
-        return new ConditionBuild(new Ast.LogicalCondition(meta, connector, parts,
-                sourceText(tail).strip()), state);
+        if (abbreviations.size() == 1) return buildAbbreviation(abbreviations.get(0), stateIn);
+        // Multiple abbreviations under one written connector: grammar acceptance is not
+        // proof of COBOL validity and no connector was written between them, so the
+        // fragment stays fail-closed and lossless without inventing AND/OR structure.
+        ParserRuleContext start = abbreviations.get(0);
+        ParserRuleContext end = abbreviations.get(abbreviations.size() - 1);
+        Ast.Meta meta = metaForRange(start, end, rule(tail));
+        List<Ast.Expression> recognized = nearestDescendants(tail, AstBuilder::isRecognizedExpressionContext)
+                .stream().map(operand -> expression(operand, "abbreviated operand")).toList();
+        Ast.PreservedExpression preserved = new Ast.PreservedExpression(meta, rule(tail),
+                sourceBetween(start, end), recognized, Ast.ReferenceUnderstanding.PRESERVED);
+        recordCoverage(preserved, sourceBetween(start, end));
+        return new ConditionBuild(preserved, stateIn);
     }
 
     private ConditionBuild buildCombinable(CobolParser.CombinableConditionContext combinable,
-                                           boolean abbreviationOpen) {
+                                           ConditionState stateIn) {
         if (combinable.NOT() == null)
-            return buildSimple(combinable.simpleCondition(), abbreviationOpen);
+            return buildSimple(combinable.simpleCondition(), stateIn);
         Ast.Meta meta = meta(combinable);
-        ConditionBuild inner = buildSimple(combinable.simpleCondition(), abbreviationOpen);
+        ConditionBuild inner = buildSimple(combinable.simpleCondition(), stateIn);
         return new ConditionBuild(new Ast.NegatedCondition(meta, inner.node(),
-                sourceText(combinable).strip()), inner.abbreviationOpen());
+                sourceText(combinable).strip()), inner.state());
     }
 
     private ConditionBuild buildSimple(CobolParser.SimpleConditionContext simple,
-                                       boolean abbreviationOpen) {
+                                       ConditionState stateIn) {
         if (simple.condition() != null) {
             Ast.Meta meta = meta(simple);
-            ConditionBuild inner = buildCondition(simple.condition(), abbreviationOpen);
+            ConditionBuild inner = buildCondition(simple.condition(), stateIn);
             Ast.SourceSpan open = simple.LPARENCHAR() == null ? meta.span() : spanOf(simple.LPARENCHAR());
             Ast.SourceSpan close = simple.RPARENCHAR() == null ? meta.span() : spanOf(simple.RPARENCHAR());
-            // A parenthesized group is a written boundary: it closes the abbreviation state.
+            // The group closes the abbreviated insertion only when its opening
+            // parenthesis sits to the left of the current subject; otherwise the
+            // abbreviation state survives the closing parenthesis.
+            ConditionState after = inner.state().abbreviationOpen()
+                    && inner.state().currentSubjectStartToken() >= 0
+                    && open.startToken() >= 0
+                    && open.startToken() < inner.state().currentSubjectStartToken()
+                    ? ConditionState.CLOSED : inner.state();
             return new ConditionBuild(new Ast.GroupedCondition(meta, inner.node(), open, close,
-                    sourceText(simple).strip()), false);
+                    sourceText(simple).strip()), after);
         }
-        if (simple.relationCondition() != null) return buildRelationCondition(simple.relationCondition());
+        if (simple.relationCondition() != null)
+            return buildRelationCondition(simple.relationCondition(), stateIn);
         if (simple.classCondition() != null) return buildClassCondition(simple.classCondition());
-        return buildBareNominal(simple.conditionNameReference(), abbreviationOpen);
+        return buildBareNominal(simple.conditionNameReference(), stateIn);
     }
 
-    private ConditionBuild buildRelationCondition(CobolParser.RelationConditionContext relation) {
+    private ConditionBuild buildRelationCondition(CobolParser.RelationConditionContext relation,
+                                                  ConditionState stateIn) {
         if (relation.relationArithmeticComparison() != null)
             return buildArithmeticComparison(relation.relationArithmeticComparison());
         if (relation.relationCombinedComparison() != null)
@@ -1263,7 +1286,8 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
         Ast.Expression subject = expression(values.get(0), "comparison subject");
         Ast.Expression object = expression(values.get(1), "comparison object");
         return new ConditionBuild(new Ast.RelationCondition(meta, subject, operator, object,
-                sourceText(comparison).strip()), true);
+                sourceText(comparison).strip()),
+                new ConditionState(true, subject.meta().span().startToken()));
     }
 
     private ConditionBuild buildCombinedComparison(CobolParser.RelationCombinedComparisonContext combined) {
@@ -1285,7 +1309,8 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
                 operands, connectors, sourceText(group).strip());
         String operator = compact(sourceText(combined.relationalOperator())).toUpperCase(Locale.ROOT);
         return new ConditionBuild(new Ast.RelationCondition(meta, subject, operator, distributed,
-                sourceText(combined).strip()), true);
+                sourceText(combined).strip()),
+                new ConditionState(true, subject.meta().span().startToken()));
     }
 
     private ConditionBuild buildSignCondition(CobolParser.RelationSignConditionContext sign) {
@@ -1293,7 +1318,7 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
         List<Ast.Expression> operands = nearestDescendants(sign, AstBuilder::isPredicateOperandContext).stream()
                 .map(value -> expression(value, "predicate operand")).toList();
         return new ConditionBuild(new Ast.OperationExpression(meta, rule(sign), operands,
-                sourceText(sign).strip()), false);
+                sourceText(sign).strip()), ConditionState.CLOSED);
     }
 
     private ConditionBuild buildClassCondition(CobolParser.ClassConditionContext classCondition) {
@@ -1308,30 +1333,44 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
                 : classCondition.DBCS() != null ? "DBCS"
                 : classCondition.KANJI() != null ? "KANJI" : "<unknown>";
         return new ConditionBuild(new Ast.ClassCondition(meta, subject, className,
-                classCondition.NOT() != null, sourceText(classCondition).strip()), false);
+                classCondition.NOT() != null, sourceText(classCondition).strip()), ConditionState.CLOSED);
     }
 
     private ConditionBuild buildBareNominal(CobolParser.ConditionNameReferenceContext name,
-                                            boolean abbreviationOpen) {
+                                            ConditionState state) {
         // Standalone simple condition (no open abbreviation state): the structural
         // condition-name shape is kept; complete condition-name structure is Slice 4 work.
-        if (!abbreviationOpen) return new ConditionBuild(dataReference(name), false);
+        if (!state.abbreviationOpen())
+            return new ConditionBuild(dataReference(name), ConditionState.CLOSED);
         // Binding-dependent bare tail: the surface keeps the alternative open.
         Ast.Meta meta = meta(name);
         Ast.DataReference reference = dataReference(name);
         return new ConditionBuild(new Ast.ContextualConditionTail(meta, reference,
-                sourceText(name).strip()), true);
+                sourceText(name).strip()), state);
     }
 
-    private ConditionBuild buildAbbreviation(CobolParser.AbbreviationContext abbreviation) {
+    private ConditionBuild buildAbbreviation(CobolParser.AbbreviationContext abbreviation,
+                                             ConditionState stateIn) {
         CobolParser.RelationalOperatorContext relationalOperator = abbreviation.relationalOperator();
         if (relationalOperator != null) {
+            String canonical = compact(sourceText(relationalOperator)).toUpperCase(Locale.ROOT);
+            // A single written NOT immediately preceding the relational operator belongs
+            // to that relational operator ("NOT =" / "NOT >"), which is inheritable.
+            // Only when the relational operator itself already carries NOT is the leading
+            // NOT a logical NOT over the abbreviated relation (double NOT).
+            boolean logicalNot = abbreviation.NOT() != null && canonical.startsWith("NOT");
+            boolean relationalNot = abbreviation.NOT() != null && !canonical.startsWith("NOT");
+            Ast.Meta notMeta = logicalNot ? meta(abbreviation) : null;
             Ast.Meta meta = meta(abbreviation);
-            String operator = compact(sourceText(relationalOperator)).toUpperCase(Locale.ROOT);
-            if (abbreviation.NOT() != null) operator = "NOT " + operator;
             Ast.Expression object = expression(abbreviation.arithmeticExpression(), "abbreviated object");
-            return new ConditionBuild(new Ast.RelationCondition(meta, null, operator, object,
-                    sourceText(abbreviation).strip()), true);
+            Ast.RelationCondition relation = new Ast.RelationCondition(meta, null,
+                    relationalNot ? "NOT " + canonical : canonical, object,
+                    sourceText(abbreviation).strip());
+            if (logicalNot) {
+                return new ConditionBuild(new Ast.NegatedCondition(notMeta, relation,
+                        sourceText(abbreviation).strip()), stateIn.inherited());
+            }
+            return new ConditionBuild(relation, stateIn.inherited());
         }
         if (abbreviation.LPARENCHAR() == null) {
             // Subject and operator both omitted; a written NOT is a logical NOT
@@ -1341,12 +1380,12 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
             Ast.Expression object = expression(abbreviation.arithmeticExpression(), "abbreviated object");
             Ast.RelationCondition omitted = new Ast.RelationCondition(meta, null, null, object,
                     sourceText(abbreviation).strip());
-            if (notMeta == null) return new ConditionBuild(omitted, true);
+            if (notMeta == null) return new ConditionBuild(omitted, stateIn.inherited());
             return new ConditionBuild(new Ast.NegatedCondition(notMeta, omitted,
-                    sourceText(abbreviation).strip()), true);
+                    sourceText(abbreviation).strip()), stateIn.inherited());
         }
         // Recursive parenthesized abbreviation form: fail-closed preservation.
-        return new ConditionBuild(preservedExpression(abbreviation, "condition"), false);
+        return new ConditionBuild(preservedExpression(abbreviation, "condition"), stateIn);
     }
 
     /** Span covering the written range between two parse contexts, for folded structure. */

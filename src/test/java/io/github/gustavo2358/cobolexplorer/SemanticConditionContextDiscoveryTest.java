@@ -141,11 +141,15 @@ class SemanticConditionContextDiscoveryTest {
                     () -> assertEquals(EnumSet.of(ResolutionContracts.ReferenceKind.DATA,
                                     ResolutionContracts.ReferenceKind.INDEX),
                             entry(analyses.get(name), "A").occurrence().admissibleKinds(),
-                            "the distributed subject is now a modeled relation operand"),
-                    () -> assertEquals(Set.of(ResolutionContracts.ReferenceKind.DATA),
-                            entry(analyses.get(name), "B").occurrence().admissibleKinds()),
-                    () -> assertEquals(Set.of(ResolutionContracts.ReferenceKind.DATA),
-                            entry(analyses.get(name), "C").occurrence().admissibleKinds()));
+                            "the distributed subject is a relation operand"),
+                    () -> assertEquals(EnumSet.of(ResolutionContracts.ReferenceKind.DATA,
+                                    ResolutionContracts.ReferenceKind.INDEX),
+                            entry(analyses.get(name), "B").occurrence().admissibleKinds(),
+                            "distributed operands reuse the relation-operand policy"),
+                    () -> assertEquals(EnumSet.of(ResolutionContracts.ReferenceKind.DATA,
+                                    ResolutionContracts.ReferenceKind.INDEX),
+                            entry(analyses.get(name), "C").occurrence().admissibleKinds(),
+                            "distributed operands reuse the relation-operand policy"));
         }
 
         Ast.RelationCondition statedOperator = AstBoundaryTestSupport.nodes(

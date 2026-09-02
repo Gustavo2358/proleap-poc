@@ -275,6 +275,13 @@ final class ReferenceOccurrenceCollector {
                     EnumSet.of(ResolutionContracts.ReferenceKind.DATA, ResolutionContracts.ReferenceKind.INDEX));
             return;
         }
+        if (expression instanceof Ast.DistributedOperandGroup group) {
+            // Operands of a distributed operator are relation operands under the same
+            // existing policy; the group itself adds no new classification rule.
+            for (Ast.Expression operand : group.operands())
+                visitRelationalOperand(operand, preservation);
+            return;
+        }
         if (expression instanceof Ast.OperationExpression operation) {
             for (Ast.Expression operand : operation.operands()) visitRelationalOperand(operand, preservation);
             return;

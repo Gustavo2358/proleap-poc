@@ -16,6 +16,12 @@ A AST de superfície preserva, com nodes tipados, exatamente a estrutura escrita
 - `A = (B OR C) AND D`: `DistributedOperandGroup` distinguível de grouping; sem `A = B OR A = C` (S3-08).
 - `A = B OR C = D OR E`: duas relations completas + tail `E`; nenhuma expansão (S3-09).
 - `A = B OR C IS NUMERIC OR D`: `ClassCondition` distinta; `D` preservado (S3-10).
+- `A = B OR (C AND D) OR E`: o grupo posterior ao subject corrente **não** fecha o estado herdável; C, D e E permanecem contextuais (PAREN-02).
+- `(A = B OR C) AND D` e `(A = B) OR C`: o grupo cujo `(` está à esquerda do subject corrente fecha a inserção; D/C ficam fora da sequência herdável (PAREN-01/PAREN-03).
+- `A = B AND NOT NOT = C`: o primeiro `NOT` é logical e o segundo integra o relational operator `NOT =`; nunca `NOT NOT =` (NOT-DOUBLE-01/02).
+- `A = B OR < C > D`: `abbreviation+` grammar-only com múltiplas children permanece **fail-closed e lossless** em `PreservedExpression`, sem connector inventado entre as abbreviations.
+- `A = (B OR C)` e `A = (B AND C)`: cada operand distribuído reutiliza a política de relation operand (`{DATA, INDEX}`), com uma única occurrence por referência escrita.
+- `A = B OR C AND D`: o AND sintético cobre somente o próprio subtree (`C AND D`), com span iniciando no primeiro operand e nunca no connector do pai (SPAN-01/02/03).
 - `a = b or c` → `A = B OR C` preserva shape (M1); alpha-rename preserva topology (M2); grouping explícito neutro só adiciona o node de grupo, sem apagar connectors/operands (M3).
 
 ## Classes negativas
@@ -25,7 +31,10 @@ A AST de superfície preserva, com nodes tipados, exatamente a estrutura escrita
 - nenhum node escrito é clonado ou compartilhado entre pais; IDs continuam `0..N-1` em pre-order.
 - bare tail não vira DATA, INDEX ou CONDITION definitivo.
 - logical NOT não é incorporado ao relational operator nem propagado a elementos posteriores.
-- todo parêntese não é tratado igual: grupo explícito (boundary) e distribuição (operands sob operator) têm shapes distintas.
+- todo parêntese não é tratado igual: o boundary de um grupo é **relativo ao subject corrente** (fecha somente quando o `(` está à esquerda do subject escrito), e grupo explícito versus distribuição têm shapes distintas.
+- `abbreviation+` com múltiplas children não recebe AND/OR sintético: lossless não significa atribuir semântica não comprovada.
+- `abbreviation.NOT()` não é prefixado ao relational operator quando este já contém `NOT`; nesse caso o NOT externo vira `NegatedCondition`.
+- o span/writtenText de node sintético de precedência não inclui tokens do connector do pai.
 - `writtenText` não é reparsed; o builder opera sobre contexts/tokens.
 - nenhum lookup nominal ou declaração é consultado no `AstBuilder`.
 - resolver/collector não ganham nova responsabilidade; o falso gap CONDITION pode permanecer neste slice.
@@ -36,6 +45,7 @@ A AST de superfície preserva, com nodes tipados, exatamente a estrutura escrita
 2. Bare nominal após boundary de grupo/class condition: permanece referência nominal de simple condition (shape atual); a estrutura completa de condition-name pertence ao Slice 4.
 3. `abbreviation` recursiva parentética sem modelagem neste slice: `PreservedExpression` fail-closed com referências reconhecidas.
 4. `relationSignCondition`: permanece no formato atual (OperationExpression por rule); nenhum oracle novo exige categoria própria neste slice.
+5. `abbreviation+` grammar-only com múltiplas children: permanece fail-closed; lossless não significa atribuir semântica não comprovada.
 
 ## Casos adversariais
 
@@ -46,6 +56,12 @@ A AST de superfície preserva, com nodes tipados, exatamente a estrutura escrita
 - **COND-A11 — restrições da distribuição:** `A = (B OR C = D)`, `A = (B OR CONDITION-88)` e `A = (NOT B OR C)` continuam rejeitáveis pela surface (group modelado apenas como operands; decisão de validade permanece futura).
 - **COND-A12 — atualização do estado:** `A = B OR C OR D` versus `A = B OR C = D OR E` provam que a relation completa posterior é relation própria e `E` permanece tail.
 - **COND-A13 — término por qualquer simple condition:** `C IS NUMERIC` preservado como simple condition distinta e `D` não rebaixado.
+- **Erro A — todo `)` fecha abbreviation:** deve falhar em `A = B OR (C AND D) OR E` (PAREN-02 exige `E` contextual).
+- **Erro B — nenhum `)` fecha abbreviation:** deve falhar em `(A = B) OR C` (PAREN-03 exige `C` fora da sequência herdável).
+- **Erro C — `abbreviation.NOT + relationalOperator ⇒ "NOT " + operator`:** deve falhar no double NOT (NOT-DOUBLE-01/02 exigem `NegatedCondition` sobre `NOT =`, nunca `NOT NOT =`).
+- **Erro D — `abbreviation+` usando o connector do parent entre todas:** deve falhar em `A = B OR < C > D` (o oracle exige `PreservedExpression` sem connector sintético).
+- **Erro E — `DistributedOperandGroup` por traversal genérico:** deve falhar nos admissible kinds `{DATA, INDEX}` de B/C em `A = (B OR C)`/`A = (B AND C)`.
+- **Erro F — AND span começando no `AndOrConditionContext`:** deve falhar nos asserts de `writtenText`/`startToken` (SPAN-01/02/03).
 - **Oracle anti-atalho:** teste que falharia sob implementação `if (ctx.conditionNameReference() != null) return CONDITION;` — observa a shape da AST, não o `grammarRule`.
 
 ## Casos de regressão
