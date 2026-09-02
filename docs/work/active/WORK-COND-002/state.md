@@ -2,7 +2,7 @@
 
 ## Onde estamos
 
-Slice 2 de `BACKLOG-COND-001` promovido para work item ativo de risco `high`, limitado ao checkpoint arquitetural. Base: `main` em `e30f2d0` (merge do PR #15). Branch: `discovery/work-cond-002-architectural-decision`.
+Slice 2 de `BACKLOG-COND-001` promovido para work item ativo de risco `high`, limitado ao checkpoint arquitetural do PR #16. Base: `main` em `e30f2d0` (merge do PR #15). Branch: `discovery/work-cond-002-architectural-decision`.
 
 A evidência sustenta a alternativa 3: AST contextual/lossless de superfície e `ConditionSemantics` separado pós-binding. ADR-0012 permanece `Proposed` para review humano; nenhuma implementação foi iniciada.
 
@@ -16,10 +16,10 @@ A evidência sustenta a alternativa 3: AST contextual/lossless de superfície e 
 - ADR-0012, INV-COND-001 e INV-COND-002 registram a decisão proposta e a fronteira de uncertainty.
 - Nenhum arquivo em `src/`, grammar, fixture, teste, script ou `pom.xml` foi alterado.
 - `./scripts/harness/check-fast.sh`, `./scripts/harness/check-semantic.sh` e `./scripts/harness/check-full.sh` passaram em 2026-09-01; o `full` incluiu fast, semantic, regressão E2E estruturada e naming.
+- Commit `fcb0496` foi publicado e o PR #16 foi aberto contra `main`.
 
 ## Restante
 
-- revisar diff/naming, fazer commit/push e abrir o PR do checkpoint;
 - obter review/merge humano para aceitar ou revisar ADR-0012;
 - somente depois de merge e nova autorização, promover Slice 3 em escopo próprio.
 

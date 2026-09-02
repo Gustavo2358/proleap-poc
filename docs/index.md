@@ -30,7 +30,7 @@ Testes, corpus e artefatos gerados são evidência executável; não definem a s
 | trabalho ativo, histórico curto ou backlog | [work/](work/index.md) |
 | decisão antiga, relatório, baseline ou matriz de migração | [history/](history/index.md), somente quando necessário |
 
-Os work items ativos estão no [índice de trabalho](work/index.md). `WORK-AST-002` mantém seu Slice 2 no checkpoint de Discovery do PR #13; implementar F-02 continua dependendo de merge/review e autorização explícita posterior. `WORK-COND-002` promove somente o Slice 2 arquitetural de `BACKLOG-COND-001`: compara representações e registra o checkpoint pós-binding, sem implementação. `WORK-COND-001` foi concluído pelo PR #15 e possui apenas um [resumo histórico](work/history/WORK-COND-001.md). `WORK-AST-003` foi concluído pelos PRs #11/#12 e possui apenas um [resumo histórico](work/history/WORK-AST-003.md).
+Os work items ativos estão no [índice de trabalho](work/index.md). `WORK-AST-002` mantém seu Slice 2 no checkpoint de Discovery do PR #13; implementar F-02 continua dependendo de merge/review e autorização explícita posterior. `WORK-COND-002` promove no PR #16 somente o Slice 2 arquitetural de `BACKLOG-COND-001`: compara representações e registra o checkpoint pós-binding, sem implementação. `WORK-COND-001` foi concluído pelo PR #15 e possui apenas um [resumo histórico](work/history/WORK-COND-001.md). `WORK-AST-003` foi concluído pelos PRs #11/#12 e possui apenas um [resumo histórico](work/history/WORK-AST-003.md).
 
 ## Fronteira entre famílias documentais
 
