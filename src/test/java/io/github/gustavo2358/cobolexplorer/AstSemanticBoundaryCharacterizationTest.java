@@ -16,6 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** Executable boundary matrix and regression evidence for WORK-AST-002. */
@@ -38,9 +39,9 @@ class AstSemanticBoundaryCharacterizationTest {
                         new BoundaryRow("data-clause", "direct data clause", "Ast.DataClause", 20, 20,
                                 "typed or PRESERVED_UNINTERPRETED", "clause-specific",
                                 "only nominal endpoints", "(ProgramUnitId, astNodeId)", 20),
-                        new BoundaryRow("preserved-expression", "abbreviation", "Ast.PreservedExpression", 1, 1,
-                                "PRESERVED_UNINTERPRETED", "DEPENDENCY_UNKNOWN",
-                                "recognized operands only", "(ProgramUnitId, astNodeId)", 1)),
+                        new BoundaryRow("condition-surface", "abbreviation", "Ast.RelationCondition", 1, 1,
+                                "MODELED structural surface (WORK-COND-003)", "no dependency knowledge claim",
+                                "relation operands only", "(ProgramUnitId, astNodeId)", 0)),
                 matrix);
     }
 
@@ -257,9 +258,13 @@ class AstSemanticBoundaryCharacterizationTest {
         SemanticCoverage.Finding value = finding(findings, "dataValueClause");
         SemanticCoverage.Finding redefines = finding(findings, "dataRedefinesClause");
         SemanticCoverage.Finding preservedClause = finding(findings, "dataBlankWhenZeroClause");
-        SemanticCoverage.Finding preservedExpression = finding(findings, "abbreviation");
-        Ast.PreservedExpression expressionNode = AstBoundaryTestSupport.nodes(
-                analysis, Ast.PreservedExpression.class).get(0);
+        Ast.RelationCondition relationNode = AstBoundaryTestSupport.nodes(
+                analysis, Ast.RelationCondition.class).stream()
+                .filter(relation -> "abbreviation".equals(relation.meta().origin().grammarRule()))
+                .findFirst().orElseThrow();
+        Ast.RelationCondition fullRelation = AstBoundaryTestSupport.nodes(
+                analysis, Ast.RelationCondition.class).stream()
+                .filter(relation -> relation.subject() != null).findFirst().orElseThrow();
         Ast.PreservedDataClause clauseNode = AstBoundaryTestSupport.nodes(
                         analysis, Ast.PreservedDataClause.class).stream()
                 .filter(clause -> clause.grammarRule().equals("dataBlankWhenZeroClause"))
@@ -277,19 +282,28 @@ class AstSemanticBoundaryCharacterizationTest {
                         preservedClause.coverage()),
                 () -> assertEquals(SemanticCoverage.DependencyKnowledge.DEPENDENCY_UNKNOWN,
                         preservedClause.dependencyKnowledge()),
-                () -> assertEquals(SemanticCoverage.ConstructionCoverage.PRESERVED_UNINTERPRETED,
-                        preservedExpression.coverage()),
-                () -> assertEquals(SemanticCoverage.DependencyKnowledge.DEPENDENCY_UNKNOWN,
-                        preservedExpression.dependencyKnowledge()),
+                () -> assertTrue(findings.stream().noneMatch(f ->
+                                f.grammarRule().equals("abbreviation")),
+                        "the modeled condition surface is not a preserved coverage boundary"),
+                () -> assertEquals(0, findings.stream()
+                                .filter(f -> f.astNodeId() == relationNode.meta().id()).count(),
+                        "modeled expression nodes carry no coverage finding"),
                 () -> assertTrue(preservedClause.writtenText().contains("BLANK WHEN ZERO")),
                 () -> assertTrue(clauseNode.recognizedReferences().isEmpty()),
-                () -> assertEquals(expressionNode.meta().id(), preservedExpression.astNodeId()),
-                () -> assertTrue(AstBoundaryTestSupport.nodes(expressionNode).stream()
-                        .noneMatch(Ast.DataReference.class::isInstance)),
+                () -> assertNull(relationNode.subject(),
+                        "the abbreviation surface keeps the omitted subject unwritten"),
+                () -> assertTrue(AstBoundaryTestSupport.nodes(relationNode).stream()
+                        .anyMatch(Ast.LiteralExpression.class::isInstance)),
+                () -> assertTrue(analysis.occurrences().values().stream()
+                        .flatMap(product -> product.occurrences().stream())
+                        .anyMatch(occurrence -> occurrence.referenceAstNodeId()
+                                == fullRelation.subject().meta().id()),
+                        "the written relation subject keeps its nominal occurrence"),
                 () -> assertTrue(analysis.occurrences().values().stream()
                         .flatMap(product -> product.occurrences().stream())
                         .noneMatch(occurrence -> occurrence.referenceAstNodeId()
-                                == expressionNode.meta().id())));
+                                == relationNode.object().meta().id()),
+                        "the literal abbreviated object is not a nominal occurrence"));
     }
 
     @Test
@@ -312,8 +326,9 @@ class AstSemanticBoundaryCharacterizationTest {
         int statements = AstBoundaryTestSupport.nodes(analysis, Ast.Statement.class).size();
         int entries = AstBoundaryTestSupport.nodes(analysis, Ast.DataEntry.class).size();
         int clauses = AstBoundaryTestSupport.nodes(analysis, Ast.DataClause.class).size();
-        int preservedExpressions = AstBoundaryTestSupport.nodes(analysis, Ast.PreservedExpression.class)
-                .size();
+        int relationSurfaces = (int) AstBoundaryTestSupport.nodes(analysis, Ast.RelationCondition.class)
+                .stream().filter(relation -> "abbreviation".equals(
+                        relation.meta().origin().grammarRule())).count();
         return List.of(
                 new BoundaryRow("statement", "statement", "Ast.Statement",
                         AstBoundaryTestSupport.contexts(analysis.tree(), CobolParser.StatementContext.class).size(),
@@ -331,12 +346,13 @@ class AstSemanticBoundaryCharacterizationTest {
                         clauses, "typed or PRESERVED_UNINTERPRETED", "clause-specific",
                         "only nominal endpoints", "(ProgramUnitId, astNodeId)",
                         countFindings(analysis, Ast.DataClause.class)),
-                new BoundaryRow("preserved-expression", "abbreviation", "Ast.PreservedExpression",
+                new BoundaryRow("condition-surface", "abbreviation", "Ast.RelationCondition",
                         AstBoundaryTestSupport.contexts(analysis.tree(), CobolParser.AbbreviationContext.class)
                                 .size(),
-                        preservedExpressions, "PRESERVED_UNINTERPRETED", "DEPENDENCY_UNKNOWN",
-                        "recognized operands only", "(ProgramUnitId, astNodeId)",
-                        countFindings(analysis, Ast.PreservedExpression.class)));
+                        relationSurfaces, "MODELED structural surface (WORK-COND-003)",
+                        "no dependency knowledge claim", "relation operands only",
+                        "(ProgramUnitId, astNodeId)",
+                        countFindings(analysis, Ast.RelationCondition.class)));
     }
 
     private static int countFindings(AstBoundaryTestSupport.Analysis analysis, Class<?> type) {

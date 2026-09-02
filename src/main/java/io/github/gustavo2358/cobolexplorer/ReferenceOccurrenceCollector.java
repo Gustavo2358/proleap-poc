@@ -199,6 +199,13 @@ final class ReferenceOccurrenceCollector {
                 visitRelationalOperand(operand, preservation);
             return;
         }
+        // Structural support for the relation surface node: same classification rule
+        // as a RELATIONAL operation, without adding new DATA/INDEX/CONDITION policy.
+        if (node instanceof Ast.RelationCondition relation) {
+            if (relation.subject() != null) visitRelationalOperand(relation.subject(), preservation);
+            visitRelationalOperand(relation.object(), preservation);
+            return;
+        }
         if (node instanceof Ast.UnsupportedStatement statement) {
             for (Ast.Node reference : statement.recognizedReferences())
                 visit(reference, ResolutionContracts.ReferenceRole.CONTEXT_DEPENDENT,
@@ -266,6 +273,13 @@ final class ReferenceOccurrenceCollector {
             addDataReference(reference, ResolutionContracts.ReferenceRole.VALUE_READ, preservation,
                     ResolutionContracts.ReferenceKind.INDEX,
                     EnumSet.of(ResolutionContracts.ReferenceKind.DATA, ResolutionContracts.ReferenceKind.INDEX));
+            return;
+        }
+        if (expression instanceof Ast.DistributedOperandGroup group) {
+            // Operands of a distributed operator are relation operands under the same
+            // existing policy; the group itself adds no new classification rule.
+            for (Ast.Expression operand : group.operands())
+                visitRelationalOperand(operand, preservation);
             return;
         }
         if (expression instanceof Ast.OperationExpression operation) {

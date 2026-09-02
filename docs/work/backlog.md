@@ -391,7 +391,7 @@ Selectors de `EVALUATE` cujo subject correspondente não for booleano, ou cuja f
 
 ### BACKLOG-COND-001 — Contextualizar condições combinadas e referências nominais
 
-Progresso: o Slice 1 foi concluído pelo PR #15 e arquivado como `WORK-COND-001`. O Slice 2 está promovido em `WORK-COND-002`/PR #16 somente para decisão arquitetural. Slices 3–7 continuam backlog e não estão autorizados.
+Progresso: o Slice 1 foi concluído pelo PR #15 e arquivado como `WORK-COND-001`. O Slice 2 foi concluído pelo PR #16 e arquivado como `WORK-COND-002` (ADR-0012 `Accepted`). O Slice 3 está ativo em `WORK-COND-003`. Slices 4–7 continuam backlog e não estão autorizados.
 
 #### Evidência e problema
 
@@ -418,8 +418,8 @@ Occurrences devem derivar `kind` e `admissibleKinds` do contexto semântico apro
 Promover somente um slice revisável por vez, nesta ordem:
 
 1. **concluído no PR #15:** fechar o contrato IBM de inserção/término, operador distribuído, qualification, scope e homônimos DATA/CONDITION com oracles adversariais;
-2. **ativo em WORK-COND-002:** decidir em ADR/invariant se a representação será contextual na AST, normalizada no lowering ou projetada em produto pós-binding, incluindo IDs, provenance e occurrences sintéticas;
-3. tornar a condition sequence lossless, preservando todos os connectors/children, NOT, parênteses, `relationCombinedComparison` e precedência sem alterar o resolver no mesmo slice;
+2. **concluído no PR #16:** decidir em ADR/invariant se a representação será contextual na AST, normalizada no lowering ou projetada em produto pós-binding, incluindo IDs, provenance e occurrences sintéticas;
+3. **ativo em WORK-COND-003:** tornar a condition sequence lossless, preservando todos os connectors/children, NOT, parênteses, `relationCombinedComparison` e precedência sem alterar o resolver no mesmo slice;
 4. corrigir a estrutura de condition-name, qualification e subscripts com oracles próprios;
 5. projetar occurrences contextuais e remover o acoplamento semântico ao nome da grammar rule;
 6. materializar `SEARCH WHEN` ou boundary tipado equivalente, provando que nenhuma referência desaparece;

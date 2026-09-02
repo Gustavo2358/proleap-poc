@@ -53,7 +53,7 @@ Quando qualification ou scope não tornam uma referência única, o source não 
 
 ## Fronteira de representação
 
-A parse tree registra a estrutura reconhecida pela grammar, mas não prova declaration kind. A AST atual ainda perde parte da sequência, precedência e herança em `abbreviation`/`relationCombinedComparison`; essa é limitação conhecida, não regra COBOL.
+A parse tree registra a estrutura reconhecida pela grammar, mas não prova declaration kind. Desde `WORK-COND-003`, a AST de superfície preserva a sequência, precedência, parênteses, distribuição e abbreviations escritas sem fechar o significado binding-dependent; subject/operator omitidos permanecem omitidos e bare tails ficam contextuais. A especialização e a validação continuam pós-binding, conforme a fronteira abaixo.
 
 A arquitetura aceita em ADR-0012 (status `Accepted`), guardada por INV-COND-001 e INV-COND-002, exige que a evolução que venha a ser autorizada:
 

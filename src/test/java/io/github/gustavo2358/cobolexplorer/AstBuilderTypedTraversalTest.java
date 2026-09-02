@@ -200,13 +200,15 @@ class AstBuilderTypedTraversalTest {
                 GOBACK.
                 """);
 
-        List<Ast.OperationExpression> relations = nodes(program, Ast.OperationExpression.class).stream()
-                .filter(operation -> "relationArithmeticComparison".equals(
-                        operation.meta().origin().grammarRule()))
+        List<Ast.RelationCondition> relations = nodes(program, Ast.RelationCondition.class).stream()
+                .filter(relation -> "relationArithmeticComparison".equals(
+                        relation.meta().origin().grammarRule()))
                 .toList();
         assertEquals(3, relations.size());
-        assertTrue(relations.stream().allMatch(operation ->
-                operation.category() == Ast.OperationCategory.RELATIONAL));
+        assertTrue(relations.stream().allMatch(relation ->
+                relation.subject() != null
+                        && !relation.relationalOperator().isBlank()
+                        && relation.object() != null));
     }
 
     @Test

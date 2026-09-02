@@ -157,7 +157,9 @@ public final class Ast {
     public sealed interface Expression extends Node permits LiteralExpression, DataReference,
             OperationExpression, FunctionExpression, SpecialRegisterExpression,
             FileReference, ProgramReference, IndexReference, NamedReference,
-            PreservedExpression, RawExpression {}
+            PreservedExpression, RawExpression, LogicalCondition, GroupedCondition,
+            RelationCondition, NegatedCondition, ContextualConditionTail,
+            DistributedOperandGroup, ClassCondition {}
 
     public record CallStatement(Meta meta, CallTargetSyntax targetSyntax, Expression target,
                                 List<CallArgument> arguments, Expression returning,
@@ -334,6 +336,101 @@ public final class Ast {
     }
     public record RawExpression(Meta meta, String role, String rawText) implements Expression {}
 
+    /**
+     * Surface connector of a combined condition. Precedence is structural: an AND
+     * {@link LogicalCondition} nests under an OR {@link LogicalCondition}; conditions
+     * are never flattened into a mixed-connector list.
+     */
+    public enum LogicalConnector { AND, OR }
+
+    /**
+     * Explicit AND/OR condition with a single connector and n-ary operands.
+     * Operands are source-ordered condition fragments; a nested
+     * {@code LogicalCondition} carries the higher-precedence connector.
+     */
+    public record LogicalCondition(Meta meta, LogicalConnector connector,
+                                   List<Expression> operands, String writtenText) implements Expression {
+        public LogicalCondition {
+            connector = Objects.requireNonNull(connector, "connector");
+            operands = List.copyOf(operands);
+        }
+    }
+
+    /**
+     * Parentheses written as an explicit condition group. The opening and closing
+     * parenthesis spans come from the written tokens; the group is a boundary that
+     * the future post-binding projector uses to close the abbreviation state.
+     */
+    public record GroupedCondition(Meta meta, Expression inner, SourceSpan openParenSpan,
+                                   SourceSpan closeParenSpan, String writtenText) implements Expression {
+        public GroupedCondition {
+            inner = Objects.requireNonNull(inner, "inner");
+            openParenSpan = Objects.requireNonNull(openParenSpan, "openParenSpan");
+            closeParenSpan = Objects.requireNonNull(closeParenSpan, "closeParenSpan");
+        }
+    }
+
+    /**
+     * Surface relation condition preserving exactly what was written. {@code null}
+     * {@code subject} means the subject is OMITTED (abbreviated relation); {@code null}
+     * {@code relationalOperator} means the operator is OMITTED. No synthetic node is
+     * created for omitted parts. A relational NOT is part of {@code relationalOperator}
+     * canonical text; a logical NOT is a separate {@link NegatedCondition}.
+     */
+    public record RelationCondition(Meta meta, Expression subject, String relationalOperator,
+                                    Expression object, String writtenText) implements Expression {
+        public RelationCondition {
+            object = Objects.requireNonNull(object, "object");
+        }
+    }
+
+    /** Logical NOT applied only to the immediately following condition fragment. */
+    public record NegatedCondition(Meta meta, Expression operand, String writtenText) implements Expression {
+        public NegatedCondition { operand = Objects.requireNonNull(operand, "operand"); }
+    }
+
+    /**
+     * A written bare nominal in a condition position whose final interpretation
+     * (DATA/INDEX as abbreviated relation object, or CONDITION as a new simple
+     * condition) depends on name binding. The surface AST keeps the alternative
+     * open: this node is neither a condition-name claim nor an abbreviated
+     * relation claim. The inner {@link DataReference} is the written nominal use.
+     */
+    public record ContextualConditionTail(Meta meta, DataReference nominalReference,
+                                          String writtenText) implements Expression {
+        public ContextualConditionTail {
+            nominalReference = Objects.requireNonNull(nominalReference, "nominalReference");
+        }
+    }
+
+    /**
+     * Operand group under a distributed relational operator, as in {@code A = (B OR C)}.
+     * Structurally distinct from {@link GroupedCondition}: the operator is distributed
+     * over the operands and subject/operator remain current after the group closes.
+     * {@code connectors} has {@code operands.size() - 1} entries in source order.
+     */
+    public record DistributedOperandGroup(Meta meta, List<Expression> operands,
+                                          List<LogicalConnector> connectors,
+                                          String writtenText) implements Expression {
+        public DistributedOperandGroup {
+            operands = List.copyOf(operands);
+            connectors = List.copyOf(connectors);
+        }
+    }
+
+    /**
+     * Class condition such as {@code C IS NUMERIC}: a structural simple condition
+     * that terminates the abbreviated relation sequence. Never downgraded to a
+     * contextual tail.
+     */
+    public record ClassCondition(Meta meta, Expression subject, String className, boolean negated,
+                                 String writtenText) implements Expression {
+        public ClassCondition {
+            subject = Objects.requireNonNull(subject, "subject");
+            className = Objects.requireNonNullElse(className, "");
+        }
+    }
+
     public static List<? extends Node> children(Node node) {
         if (node instanceof Program n) return n.divisions();
         if (node instanceof Division n) return n.children();
@@ -431,6 +528,16 @@ public final class Ast {
         }
         if (node instanceof SpecialRegisterExpression n) return n.operands();
         if (node instanceof PreservedExpression n) return n.recognizedOperands();
+        if (node instanceof LogicalCondition n) return n.operands();
+        if (node instanceof GroupedCondition n) return List.of(n.inner());
+        if (node instanceof RelationCondition n) {
+            if (n.subject() == null) return List.of(n.object());
+            return List.of(n.subject(), n.object());
+        }
+        if (node instanceof NegatedCondition n) return List.of(n.operand());
+        if (node instanceof ContextualConditionTail n) return List.of(n.nominalReference());
+        if (node instanceof DistributedOperandGroup n) return n.operands();
+        if (node instanceof ClassCondition n) return List.of(n.subject());
         return List.of();
     }
 }

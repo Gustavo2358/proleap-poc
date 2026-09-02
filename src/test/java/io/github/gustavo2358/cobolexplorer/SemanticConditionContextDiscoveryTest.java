@@ -20,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** Discovery-only characterization; this class deliberately does not change production behavior. */
@@ -41,17 +42,16 @@ class SemanticConditionContextDiscoveryTest {
                 analysis.tree(), CobolParser.AbbreviationContext.class).size());
 
         Ast.IfStatement statement = AstBoundaryTestSupport.nodes(analysis, Ast.IfStatement.class).get(0);
-        Ast.OperationExpression logical = assertInstanceOf(Ast.OperationExpression.class, statement.condition());
-        Ast.OperationExpression relation = assertInstanceOf(Ast.OperationExpression.class, logical.operands().get(0));
-        assertAll("AST lowering",
-                () -> assertEquals("OR", logical.operator()),
-                () -> assertEquals(Ast.OperationCategory.OTHER, logical.category()),
+        Ast.LogicalCondition logical = assertInstanceOf(Ast.LogicalCondition.class, statement.condition());
+        Ast.RelationCondition relation = assertInstanceOf(Ast.RelationCondition.class, logical.operands().get(0));
+        assertAll("AST lowering preserves the written condition surface",
+                () -> assertEquals(Ast.LogicalConnector.OR, logical.connector()),
                 () -> assertEquals(3, logical.operands().size()),
-                () -> assertEquals(Ast.OperationCategory.RELATIONAL, relation.category()),
-                () -> assertEquals("=", relation.operator()),
-                () -> assertEquals(List.of("conditionNameReference", "conditionNameReference"),
+                () -> assertEquals("=", relation.relationalOperator()),
+                () -> assertEquals(List.of("C", "D"),
                         logical.operands().subList(1, 3).stream()
-                                .map(operand -> operand.meta().origin().grammarRule()).toList()));
+                                .map(operand -> assertInstanceOf(Ast.ContextualConditionTail.class, operand)
+                                        .nominalReference().baseName()).toList()));
 
         List<ReferenceResolution.Entry> entries = valueReads(analysis);
         assertEquals(List.of("A", "B", "C", "D"), entries.stream()
@@ -135,35 +135,56 @@ class SemanticConditionContextDiscoveryTest {
         for (String name : List.of("distributed-or", "distributed-and")) {
             Ast.Expression expression = AstBoundaryTestSupport.nodes(analyses.get(name), Ast.IfStatement.class)
                     .get(0).condition();
-            Ast.PreservedExpression preserved = assertInstanceOf(Ast.PreservedExpression.class, expression);
-            assertEquals("relationCombinedComparison", preserved.grammarRule());
-            assertTrue(valueReads(analyses.get(name)).stream().allMatch(entry ->
-                    entry.occurrence().admissibleKinds().equals(Set.of(ResolutionContracts.ReferenceKind.DATA))));
+            Ast.RelationCondition relation = assertInstanceOf(Ast.RelationCondition.class, expression);
+            assertInstanceOf(Ast.DistributedOperandGroup.class, relation.object());
+            assertAll(name + " distribution surface and relation-operand classification",
+                    () -> assertEquals(EnumSet.of(ResolutionContracts.ReferenceKind.DATA,
+                                    ResolutionContracts.ReferenceKind.INDEX),
+                            entry(analyses.get(name), "A").occurrence().admissibleKinds(),
+                            "the distributed subject is a relation operand"),
+                    () -> assertEquals(EnumSet.of(ResolutionContracts.ReferenceKind.DATA,
+                                    ResolutionContracts.ReferenceKind.INDEX),
+                            entry(analyses.get(name), "B").occurrence().admissibleKinds(),
+                            "distributed operands reuse the relation-operand policy"),
+                    () -> assertEquals(EnumSet.of(ResolutionContracts.ReferenceKind.DATA,
+                                    ResolutionContracts.ReferenceKind.INDEX),
+                            entry(analyses.get(name), "C").occurrence().admissibleKinds(),
+                            "distributed operands reuse the relation-operand policy"));
         }
 
-        Ast.PreservedExpression statedOperator = AstBoundaryTestSupport.nodes(
-                analyses.get("stated-new-operator"), Ast.PreservedExpression.class).get(0);
+        Ast.RelationCondition statedOperator = AstBoundaryTestSupport.nodes(
+                analyses.get("stated-new-operator"), Ast.RelationCondition.class).stream()
+                .filter(relation -> relation.subject() == null).findFirst().orElseThrow();
         assertAll("explicit operator abbreviation",
-                () -> assertEquals("abbreviation", statedOperator.grammarRule()),
-                () -> assertEquals(Set.of(ResolutionContracts.ReferenceKind.DATA),
-                        entry(analyses.get("stated-new-operator"), "C").occurrence().admissibleKinds()));
+                () -> assertEquals("abbreviation", statedOperator.meta().origin().grammarRule()),
+                () -> assertNull(statedOperator.subject(), "subject stays omitted on the surface"),
+                () -> assertEquals("<", statedOperator.relationalOperator()),
+                () -> assertEquals(EnumSet.of(ResolutionContracts.ReferenceKind.DATA,
+                                ResolutionContracts.ReferenceKind.INDEX),
+                        entry(analyses.get("stated-new-operator"), "C").occurrence().admissibleKinds(),
+                        "the abbreviated object is a modeled relation operand"));
 
         AstBoundaryTestSupport.Analysis multiple = analyses.get("multiple-abbreviations-one-tail");
-        assertAll("the grammar accepts two abbreviation children but lowering selects only the first",
+        assertAll("the grammar accepts two abbreviation children and the surface keeps both",
                 () -> assertEquals(2, AstBoundaryTestSupport.contexts(
                         multiple.tree(), CobolParser.AbbreviationContext.class).size()),
                 () -> assertTrue(valueReads(multiple).stream().anyMatch(entry ->
                         entry.occurrence().writtenText().equals("C"))),
-                () -> assertFalse(valueReads(multiple).stream().anyMatch(entry ->
+                () -> assertTrue(valueReads(multiple).stream().anyMatch(entry ->
                         entry.occurrence().writtenText().equals("D"))));
 
         for (String name : List.of("mixed-and-or", "mixed-or-and")) {
-            Ast.OperationExpression mixed = assertInstanceOf(Ast.OperationExpression.class,
-                    AstBoundaryTestSupport.nodes(analyses.get(name), Ast.IfStatement.class).get(0).condition());
+            Ast.LogicalCondition mixed = assertInstanceOf(Ast.LogicalCondition.class,
+                    AstBoundaryTestSupport.nodes(analyses.get(name), Ast.IfStatement.class)
+                            .get(0).condition());
             assertAll(name,
-                    () -> assertEquals("MIXED_LOGICAL", mixed.operator()),
-                    () -> assertEquals(3, mixed.operands().size()),
-                    () -> assertEquals(Ast.OperationCategory.OTHER, mixed.category()));
+                    () -> assertEquals(Ast.LogicalConnector.OR, mixed.connector(),
+                            "OR stays the outer connector; precedence is structural"),
+                    () -> assertEquals(2, mixed.operands().size()),
+                    () -> assertEquals(1, AstBoundaryTestSupport.nodes(analyses.get(name),
+                                    Ast.LogicalCondition.class).stream()
+                            .filter(node -> node.connector() == Ast.LogicalConnector.AND).count(),
+                            "the AND chain nests under OR instead of flattening"));
         }
     }
 

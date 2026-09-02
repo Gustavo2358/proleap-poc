@@ -46,7 +46,8 @@ class CoverageSnapshotTest {
         String text = Files.readString(output, StandardCharsets.UTF_8);
 
         assertEquals(1, occurrences(text, "\"rule\":\"dataBlankWhenZeroClause\""));
-        assertEquals(1, occurrences(text, "\"rule\":\"abbreviation\""));
+        assertEquals(0, occurrences(text, "\"rule\":\"abbreviation\""),
+                "the modeled condition surface is no longer a preserved coverage boundary");
     }
 
     private static int occurrences(String text, String expected) {

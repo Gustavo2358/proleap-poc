@@ -49,7 +49,7 @@ IDs neste documento são estáveis. `AUTOMATED` indica proteção executável at
 - **Scope:** lowering de condições, AST, coleta de occurrences e manifestos relacionados.
 - **Related ADRs:** ADR-0003 e ADR-0012.
 - **Enforcement:** `REVIEW` — os oracles `COND-*` e o checkpoint arquitetural definem o contrato; automação pertence aos slices executáveis posteriores.
-- **Known exceptions:** o lowering/collector atual ainda fecha bare tails por `conditionNameReference`; é a violação preexistente caracterizada pelo PR #14 e mantida explícita em `BACKLOG-COND-001`, não uma exceção autorizada para novas mudanças.
+- **Known exceptions:** o lowering já preserva a surface lossless (`WORK-COND-003`); o collector atual ainda fecha a occurrence de bare tails por `conditionNameReference`, emitindo `CONDITION/{CONDITION}` — violação preexistente caracterizada pelo PR #14, reduzida neste slice ao coletor/resolver e mantida explícita em `BACKLOG-COND-001` até o slice de occurrences contextuais; não é exceção autorizada para novas mudanças.
 
 ### INV-COND-002 — Predicate normalizado é produto pós-binding separado
 
