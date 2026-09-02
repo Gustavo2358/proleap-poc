@@ -1352,6 +1352,7 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
     private ConditionBuild buildAbbreviation(CobolParser.AbbreviationContext abbreviation,
                                              ConditionState stateIn) {
         CobolParser.RelationalOperatorContext relationalOperator = abbreviation.relationalOperator();
+        CobolParser.ArithmeticExpressionContext objectContext = abbreviation.arithmeticExpression();
         if (relationalOperator != null) {
             String canonical = compact(sourceText(relationalOperator)).toUpperCase(Locale.ROOT);
             // A single written NOT immediately preceding the relational operator belongs
@@ -1361,11 +1362,18 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
             boolean logicalNot = abbreviation.NOT() != null && canonical.startsWith("NOT");
             boolean relationalNot = abbreviation.NOT() != null && !canonical.startsWith("NOT");
             Ast.Meta notMeta = logicalNot ? meta(abbreviation) : null;
-            Ast.Meta meta = meta(abbreviation);
-            Ast.Expression object = expression(abbreviation.arithmeticExpression(), "abbreviated object");
-            Ast.RelationCondition relation = new Ast.RelationCondition(meta, null,
-                    relationalNot ? "NOT " + canonical : canonical, object,
-                    sourceText(abbreviation).strip());
+            // When the leading NOT is logical, the inner relation spans only the written
+            // fragment after that NOT (operator + object); the parent spans the whole
+            // abbreviation. Source-fidelity must not assign the parent span to the child.
+            Ast.Meta relationMeta = logicalNot
+                    ? metaForRange(relationalOperator, objectContext, rule(abbreviation))
+                    : meta(abbreviation);
+            Ast.Expression object = expression(objectContext, "abbreviated object");
+            String relationText = logicalNot
+                    ? sourceBetween(relationalOperator, objectContext)
+                    : sourceText(abbreviation).strip();
+            Ast.RelationCondition relation = new Ast.RelationCondition(relationMeta, null,
+                    relationalNot ? "NOT " + canonical : canonical, object, relationText);
             if (logicalNot) {
                 return new ConditionBuild(new Ast.NegatedCondition(notMeta, relation,
                         sourceText(abbreviation).strip()), stateIn.inherited());
@@ -1375,11 +1383,17 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
         if (abbreviation.LPARENCHAR() == null) {
             // Subject and operator both omitted; a written NOT is a logical NOT
             // over the immediately following abbreviated relation fragment.
-            Ast.Meta notMeta = abbreviation.NOT() == null ? null : meta(abbreviation);
-            Ast.Meta meta = meta(abbreviation);
-            Ast.Expression object = expression(abbreviation.arithmeticExpression(), "abbreviated object");
-            Ast.RelationCondition omitted = new Ast.RelationCondition(meta, null, null, object,
-                    sourceText(abbreviation).strip());
+            boolean logicalNot = abbreviation.NOT() != null;
+            Ast.Meta notMeta = logicalNot ? meta(abbreviation) : null;
+            Ast.Meta relationMeta = logicalNot
+                    ? metaForRange(objectContext, objectContext, rule(abbreviation))
+                    : meta(abbreviation);
+            Ast.Expression object = expression(objectContext, "abbreviated object");
+            String relationText = logicalNot
+                    ? sourceText(objectContext).strip()
+                    : sourceText(abbreviation).strip();
+            Ast.RelationCondition omitted = new Ast.RelationCondition(relationMeta, null, null, object,
+                    relationText);
             if (notMeta == null) return new ConditionBuild(omitted, stateIn.inherited());
             return new ConditionBuild(new Ast.NegatedCondition(notMeta, omitted,
                     sourceText(abbreviation).strip()), stateIn.inherited());

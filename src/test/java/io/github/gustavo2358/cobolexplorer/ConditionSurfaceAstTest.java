@@ -507,7 +507,12 @@ class ConditionSurfaceAstTest {
                 () -> assertTrue(nodes(analysis, Ast.RelationCondition.class).stream()
                         .noneMatch(r -> r.relationalOperator() != null
                                 && r.relationalOperator().contains("NOT NOT")),
-                        "the operator must never collapse into NOT NOT ="));
+                        "the operator must never collapse into NOT NOT ="),
+                () -> assertEquals("NOT NOT = C", negated.writtenText()),
+                () -> assertEquals("NOT = C", relation.writtenText(),
+                        "the inner relation excludes the logical NOT from its span"),
+                () -> assertTrue(relation.meta().span().startToken() > negated.meta().span().startToken(),
+                        "the inner relation starts after the logical NOT"));
     }
 
     @Test
@@ -529,6 +534,25 @@ class ConditionSurfaceAstTest {
                 () -> assertEquals(1, nodes(doubleNot, Ast.NegatedCondition.class).size()),
                 () -> assertNull(doubleRelation.subject()),
                 () -> assertEquals("NOT =", doubleRelation.relationalOperator()));
+    }
+
+    @Test
+    void notWithoutOperatorLogicalNotSpansOnlyTheInnerFragment() {
+        // In this grammar a leading NOT without a relational operator reaches the
+        // abbreviation branch only for non-condition-name fragments; a bare name would
+        // parse as combinableCondition + conditionNameReference.
+        AstBoundaryTestSupport.Analysis analysis = analyze("NOT-NO-OP", "IF A = B OR NOT 5");
+        Ast.LogicalCondition or = conditionOf(analysis);
+        Ast.NegatedCondition negated = assertInstanceOf(Ast.NegatedCondition.class, or.operands().get(1));
+        Ast.RelationCondition relation = assertInstanceOf(Ast.RelationCondition.class, negated.operand());
+        assertAll("logical NOT spans the whole fragment; the relation spans only the object",
+                () -> assertNull(relation.subject()),
+                () -> assertNull(relation.relationalOperator()),
+                () -> assertInstanceOf(Ast.LiteralExpression.class, relation.object()),
+                () -> assertEquals("NOT 5", negated.writtenText()),
+                () -> assertEquals("5", relation.writtenText()),
+                () -> assertTrue(relation.meta().span().startToken() > negated.meta().span().startToken(),
+                        "the inner relation starts after the logical NOT"));
     }
 
     // ---------------------------------------------------------------------
