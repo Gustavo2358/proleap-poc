@@ -121,6 +121,63 @@ class ContextualConditionOccurrenceDiscoveryTest {
     }
 
     @Test
+    void existingResolverBindsEverySupportedDeclarationKindWhenOneOccurrenceCarriesContextualAdmissibility() {
+        record Variant(String declarations, ResolutionContracts.ResolutionStatus status,
+                       ResolutionContracts.ResolutionReason reason,
+                       ResolutionContracts.ReferenceKind selectedKind) { }
+        Map<String, Variant> variants = new LinkedHashMap<>();
+        variants.put("DATA", new Variant("01 C PIC 9(4).",
+                ResolutionContracts.ResolutionStatus.RESOLVED,
+                ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION,
+                ResolutionContracts.ReferenceKind.DATA));
+        variants.put("INDEX", new Variant("01 T OCCURS 2 TIMES INDEXED BY C.\n   05 V PIC X.",
+                ResolutionContracts.ResolutionStatus.RESOLVED,
+                ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION,
+                ResolutionContracts.ReferenceKind.INDEX));
+        variants.put("CONDITION", new Variant("01 FLAG PIC X.\n   88 C VALUE 'Y'.",
+                ResolutionContracts.ResolutionStatus.RESOLVED,
+                ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION,
+                ResolutionContracts.ReferenceKind.CONDITION));
+        variants.put("RENAMES", new Variant("01 G.\n   05 X PIC X.\n   05 Y PIC X.\n   66 C RENAMES X THRU Y.",
+                ResolutionContracts.ResolutionStatus.RESOLVED,
+                ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION,
+                ResolutionContracts.ReferenceKind.DATA));
+        variants.put("MISSING", new Variant("01 PRESENT PIC X.",
+                ResolutionContracts.ResolutionStatus.UNRESOLVED,
+                ResolutionContracts.ResolutionReason.DECLARATION_NOT_FOUND, null));
+
+        Set<ResolutionContracts.ReferenceKind> contextualKinds = EnumSet.of(
+                ResolutionContracts.ReferenceKind.DATA,
+                ResolutionContracts.ReferenceKind.INDEX,
+                ResolutionContracts.ReferenceKind.CONDITION);
+        for (Map.Entry<String, Variant> item : variants.entrySet()) {
+            Variant variant = item.getValue();
+            AstBoundaryTestSupport.Analysis analysis = AstBoundaryTestSupport.analyze(
+                    source("RESOLVER-" + item.getKey(), variant.declarations(),
+                            "IF A = B OR C CONTINUE END-IF."),
+                    "contextual-resolver-" + item.getKey().toLowerCase() + ".cbl");
+            Ast.ContextualConditionTail tail = AstBoundaryTestSupport.nodes(
+                    analysis, Ast.ContextualConditionTail.class).get(0);
+            Map<ResolutionContracts.ProgramUnitId, ReferenceOccurrences> projected =
+                    withContextualOccurrence(analysis, tail.nominalReference().meta().id(), contextualKinds);
+            ReferenceResolution resolution = new CobolReferenceResolver(
+                    ResolutionContracts.CobolResolutionPolicy.initial())
+                    .resolve(analysis.model(), analysis.tables(), projected);
+            ReferenceResolution.Entry entry = resolution.entries().stream()
+                    .filter(candidate -> candidate.occurrence().referenceAstNodeId()
+                            == tail.nominalReference().meta().id()).findFirst().orElseThrow();
+            assertAll(item.getKey(),
+                    () -> assertEquals(ResolutionContracts.ReferenceKind.CONDITION,
+                            entry.occurrence().kind(), "primary kind remains a surface hint"),
+                    () -> assertEquals(contextualKinds, entry.occurrence().admissibleKinds()),
+                    () -> assertEquals(variant.status(), entry.status()),
+                    () -> assertEquals(variant.reason(), entry.reason()),
+                    () -> assertEquals(variant.selectedKind(), entry.selectedCandidate()
+                            .map(ReferenceResolution.Candidate::kind).orElse(null)));
+        }
+    }
+
+    @Test
     void contextualRootDoesNotChangeQualifierOrSubscriptPoliciesToday() {
         AstBoundaryTestSupport.Analysis analysis = AstBoundaryTestSupport.analyze(source(
                 "CHILD-POLICIES", """
@@ -187,6 +244,22 @@ class ContextualConditionOccurrenceDiscoveryTest {
         return occurrences.occurrences().stream()
                 .filter(occurrence -> occurrence.referenceAstNodeId() == astNodeId)
                 .findFirst().orElseThrow();
+    }
+
+    private static Map<ResolutionContracts.ProgramUnitId, ReferenceOccurrences> withContextualOccurrence(
+            AstBoundaryTestSupport.Analysis analysis, int astNodeId,
+            Set<ResolutionContracts.ReferenceKind> admissibleKinds) {
+        Map<ResolutionContracts.ProgramUnitId, ReferenceOccurrences> result = new LinkedHashMap<>();
+        analysis.occurrences().forEach((unitId, product) -> result.put(unitId,
+                new ReferenceOccurrences(product.occurrences().stream().map(occurrence -> {
+                    if (occurrence.referenceAstNodeId() != astNodeId) return occurrence;
+                    return new ReferenceOccurrences.Occurrence(occurrence.id(), occurrence.programUnitId(),
+                            occurrence.referenceAstNodeId(), occurrence.scopeId(),
+                            ResolutionContracts.ReferenceKind.CONDITION, admissibleKinds,
+                            occurrence.role(), occurrence.grammarRule(), occurrence.writtenText(),
+                            occurrence.meta(), occurrence.preservation());
+                }).toList())));
+        return Map.copyOf(result);
     }
 
     private static String source(String suffix, String statements) {
