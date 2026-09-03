@@ -14,6 +14,7 @@ must_read:
   - docs/domain/provenance.md
   - docs/engineering/semantic-analysis-policy.md
   - docs/engineering/semantic-testing.md
+  - docs/engineering/work-item-protocol.md
 related_domain_rules:
   - docs/domain/conditional-expressions.md
   - docs/domain/semantic-ast.md
