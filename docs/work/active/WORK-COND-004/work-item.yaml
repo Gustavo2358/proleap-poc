@@ -2,7 +2,7 @@ id: WORK-COND-004
 title: Preservar estrutura nominal completa de condition-name references
 status: active
 risk: high
-goal: Representar na surface AST, com node tipado próprio, a estrutura nominal completa escrita de uma condition-name reference — nome, qualification IN/OF, subscripts e provenance — sem lookup, binding, expansão ou decisão DATA/INDEX/CONDITION, mantendo ContextualConditionTail contextual e sem redesign semântico do collector/resolver.
+goal: Representar na surface AST, de forma estrutural completa e lossless, a estrutura nominal escrita de uma condition-name reference — nome, qualification IN/OF, subscripts e provenance — corrigindo o lowering do payload nominal existente (DataReference) a partir dos children diretos do context, sem lookup, binding, expansão ou decisão DATA/INDEX/CONDITION, mantendo a distinção posicional pelos containers tipados existentes (ContextualConditionTail) e classificando o namespace do qualifier como UNSPECIFIED, mapeado conservadoramente pelo resolver até BACKLOG-RES-004.
 must_read:
   - AGENTS.md
   - docs/index.md
@@ -14,6 +14,7 @@ must_read:
   - docs/domain/conditional-expressions.md
   - docs/domain/semantic-ast.md
   - docs/domain/provenance.md
+  - docs/domain/reference-resolution.md
   - docs/evals/conditional-expression-oracles.md
   - docs/work/backlog.md#backlog-cond-001--contextualizar-condições-combinadas-e-referências-nominais
   - docs/work/history/WORK-COND-003.md
@@ -44,8 +45,6 @@ evals:
 source_scope:
   - src/main/java/io/github/gustavo2358/cobolexplorer/Ast.java
   - src/main/java/io/github/gustavo2358/cobolexplorer/AstBuilder.java
-  - src/main/java/io/github/gustavo2358/cobolexplorer/AstSnapshot.java
-  - src/main/java/io/github/gustavo2358/cobolexplorer/ReferenceOccurrenceCollector.java
   - src/main/java/io/github/gustavo2358/cobolexplorer/DataAndIndexReferenceResolver.java
 test_scope:
   - src/test/java/io/github/gustavo2358/cobolexplorer/ConditionNameSurfaceDiscoveryTest.java
@@ -53,14 +52,17 @@ test_scope:
   - src/test/java/io/github/gustavo2358/cobolexplorer/ConditionSurfaceAstTest.java
   - src/test/java/io/github/gustavo2358/cobolexplorer/SemanticConditionContextDiscoveryTest.java
   - src/test/java/io/github/gustavo2358/cobolexplorer/AstPreorderInvariantTest.java
-# DataAndIndexReferenceResolver deixou must_not_change na rodada de revisão do Discovery:
-# STRUCTURAL ADAPTATION ONLY — NO RESOLUTION POLICY CHANGE. O resolver passará a
-# consumir o contrato nominal estrutural compartilhado (baseName/qualifiers/writtenText)
-# em vez de depender do tipo concreto Ast.DataReference; candidate selection, namespace
-# policy, scope, ambiguity, qualification algorithm e admissibleKinds permanecem iguais
-# (prova em spec.md "Consumer impact analysis" e eval.md "Erro I").
+# DataAndIndexReferenceResolver permanece FORA de must_not_change com adaptação mínima
+# policy-preserving: apenas o case novo de QualifierTarget.UNSPECIFIED em qualifierConstraints,
+# mapeado conservadoramente a {DATA} (conjunto de constraints idêntico ao atual; seleção de
+# candidates provadamente inalterada). A ampliação para {DATA, FILE} está bloqueada por
+# BACKLOG-RES-004 (IBM resolution-of-names step 3) e NÃO pertence a este slice.
+# AstSnapshot e ReferenceOccurrenceCollector voltaram a must_not_change: com a decisão D
+# (DataReference corrigido, sem node novo) ambos permanecem byte-identical.
 must_not_change:
   - src/main/antlr4/Cobol.g4
+  - src/main/java/io/github/gustavo2358/cobolexplorer/AstSnapshot.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/ReferenceOccurrenceCollector.java
   - src/main/java/io/github/gustavo2358/cobolexplorer/CobolReferenceResolver.java
   - src/main/java/io/github/gustavo2358/cobolexplorer/ReferenceOccurrences.java
   - src/main/java/io/github/gustavo2358/cobolexplorer/ReferenceResolution.java

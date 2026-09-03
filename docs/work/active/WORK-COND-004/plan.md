@@ -2,56 +2,46 @@
 
 ## Fatiamento
 
-Dois checkpoints no MESMO work item, branch e PR:
+Checkpoints LÓGICOS no MESMO work item, branch e PR — sem cardinalidade física de commits:
 
-1. **Discovery (Commit 1 — este commit):** investigação da grammar e da fonte IBM, matriz de shapes, caracterização da AST atual, consumer impact analysis, decisão de modelagem (contrato nominal compartilhado) e oracles. Zero produção. Entregáveis: lifecycle documental, teste de caracterização `ConditionNameSurfaceDiscoveryTest` (13 testes, somente FATOS), arquivamento de `WORK-COND-003`, atualização de índices/AGENTS/backlog. STOP para review humano.
-2. **Implementação (Commit 2 — após aprovação humana):** contrato abaixo, delta revisável `Commit 1 → Commit 2`, na mesma branch/PR.
+1. **Checkpoint 1 — Discovery (em curso):** investigação da grammar e da fonte IBM, contracasos de resolver, consumer impact analysis, decisão de modelagem (round 2: **D** — `DataReference` corrigido) e oracles. Zero produção. Entregáveis: lifecycle documental, teste de caracterização `ConditionNameSurfaceDiscoveryTest` (14 testes, somente FATOS), arquivamento de `WORK-COND-003`, atualização de índices/AGENTS/backlog (incluindo `BACKLOG-RES-004`). STOP para review humano. Commits do checkpoint: `5ed7e14` (discovery inicial), `43fdeab` (semantic challenge round 1), e os commits novos desta rodada (facts do contracaso + docs do round 2).
+2. **Checkpoint 2 — Implementação (após aprovação humana):** contrato abaixo, commits revisáveis do checkpoint, na mesma branch/PR.
 
 ## Dependências
 
 - Merge do PR #17 (Slice 3, `WORK-COND-003`) — já em `main` (`4cd95d6`).
-- ADR-0012 `Accepted` e INV-COND-001/002 vigentes — nenhuma decisão arquitetural nova é necessária; o node tipado + contrato nominal compartilhado são evolução estrutural prevista pelo contrato de surface lossless, sem ADR novo.
-- Aprovação humana explícita do Discovery antes do Commit 2 (obrigatória).
+- ADR-0012 `Accepted` e INV-COND-001/002 vigentes — sem ADR novo: a decisão D é o menor contrato surface-lossless.
+- **`BACKLOG-RES-004` (IBM resolution-of-names step 3)** — dependência registrada NESTA rodada; bloqueia APENAS a ampliação `UNSPECIFIED → {DATA, FILE}` no resolver (resolução de condition-names qualificadas por file-name). Não bloqueia o Slice 4 estrutural.
+- Aprovação humana explícita do Discovery antes do Checkpoint 2 (obrigatória).
 
 ## Superfície arquitetural provável
 
-Plano arquivo por arquivo do Commit 2 (decisão revisada: **Alternativa C — contrato nominal estrutural compartilhado**; ver `spec.md` "Decisão de modelagem" e `state.md` "Semantic challenge pass"):
+Plano consolidado do Checkpoint 2 (decisão revisada do round 2: **Alternativa D — `DataReference` corrigido, sem node novo, sem contrato novo**; a comparação C vs D e os challenges estão em `spec.md` "Decisão de modelagem — C vs D revisitado" e `state.md` "Semantic challenge pass — round 2"):
 
 1. `src/main/java/.../Ast.java`
-   - Novo `sealed interface NominalReference extends Node permits DataReference, ConditionNameReference` com `String baseName()`, `String writtenText()`, `List<DataQualifier> qualifiers()`, `List<SubscriptGroup> subscriptGroups()`. `Node` ganha `NominalReference` no `permits`; `DataReference` passa a `implements Expression, NominalReference` (nenhum campo muda; os accessors já existem).
-   - Novo record `ConditionNameReference(Meta meta, String baseName, String writtenText, List<DataQualifier> qualifiers, List<SubscriptGroup> subscriptGroups) implements Expression, NominalReference`, com listas `List.copyOf` e baseName não-nulo. Javadoc: o node preserva a shape escrita `conditionNameReference`; NÃO afirma a classe semântica (DATA/INDEX/CONDITION é binding-dependent); `IF TBL(I)`/`IF DATA-X OF GROUP-A` produzem o mesmo node sem alegação de validade (COND-N05). Sem campo de kind/lookup/declaration; sem `understanding` (a surface é sempre STRUCTURED — o fallback preservado continua `PreservedExpression`).
-   - `Ast.children(ConditionNameReference)` = qualifiers + subscriptGroups (ordem escrita; idêntica à ordem de `DataReference` sem o modifier).
-   - `ContextualConditionTail.nominalReference` passa de `DataReference` para `NominalReference` (javadoc: a interpretação final permanece aberta; o tipo do campo é o contrato estrutural neutro).
-   - Nenhum outro node/field muda; nenhum campo de binding entra.
+   - Único delta: novo valor `QualifierTarget.UNSPECIFIED` no enum (javadoc: a parse tree não classifica o namespace do qualifier — DATA/FILE/MNEMONIC possíveis).
+   - Nenhum record novo, nenhuma interface nova, nenhum `permits` novo, `ContextualConditionTail` intocado.
 2. `src/main/java/.../AstBuilder.java`
-   - Novo helper `conditionNameReference(ConditionNameReferenceContext ctx)` que constrói o node a partir dos **children diretos** do context: `conditionName()` para `baseName`; `inData()` na ordem para qualifiers, com target por posição — `i < inData.size()-1 ? DATA : DATA_OR_FILE` (grammar-faithful; NUNCA "DATA porque o branch é inData"); cada `conditionNameSubscriptReference()` vira um `SubscriptGroup` com meta do group context, subscripts via `expression(subscript, "condition-name subscript")` (o `qualifiedDataName` do subscript preserva os próprios qualifiers) e writtenText do grupo.
-   - **Proibido:** `nearestDescendants(ctx, qualifier)` ou `firstDescendant(qualifiedDataName)` a partir da referência (rouba qualifiers do subscript interno — Erro H); nenhum reparse de `writtenText`.
-   - `buildBareNominal` passa a usar o helper nos dois ramos (standalone e tail interno).
-   - `visitConditionNameReference` passa a retornar o novo node (uniformidade do visitor; hoje só é alcançável como fallback, sem mudança observável).
-   - `dataReference`, `tableReference`, `buildQualifiers` (paths de identifier) e os paths de SET/EVALUATE permanecem intocados.
-3. `src/main/java/.../DataAndIndexReferenceResolver.java` — **STRUCTURAL ADAPTATION ONLY — NO RESOLUTION POLICY CHANGE**
-   - `baseName(Ast.Node, Occurrence)`: `instanceof NominalReference → baseName()` (substitui o branch `DataReference`).
-   - `qualifiedReference`: `node instanceof NominalReference ref && !ref.qualifiers().isEmpty()`.
-   - `applyQualification`/`qualifyExtend`/`qualifierConstraints`: o gate de tipo e a extração passam a usar `NominalReference` (mesmos campos, mesmos algoritmos `orderedSubsequence`/`exactQualification`, mesmo mapeamento `DATA_OR_FILE → {DATA, FILE}` pré-existente).
-   - Nenhuma mudança em candidate selection, namespace policy, scope walk, ambiguity, reason codes ou `admissibleKinds`. Delta de input documentado: último qualifier `DATA_OR_FILE` → root reference de condition-name qualificada por file-name passa a resolver (antes `DECLARATION_NOT_FOUND`); nenhum caso que já resolvia muda.
-4. `src/main/java/.../ReferenceOccurrenceCollector.java`
-   - Apenas traversal estrutural: branch para `ConditionNameReference` que emite a occurrence do node com a MESMA política atual (incluindo a regra `grammarRule == "conditionNameReference"` — o falso gap permanece observável) e percorre qualifiers (`QUALIFIER_COMPONENT`, mesma classificação de target de sempre) e subscripts (`SUBSCRIPT`, kind INDEX / {DATA, INDEX}), reusando a lógica extraída de `addDataReference` sem alterar comportamento. Resultado esperado e aceito: subscripts de condition-name, hoje descartados, passam a produzir occurrence `SUBSCRIPT` — recuperação de perda estrutural, não política semântica nova.
-   - `ContextualConditionTail` continua percorrido por `Ast.children`; nenhuma mudança de `admissibleKinds`.
-5. `src/main/java/.../AstSnapshot.java`
-   - `label` e `attributes` para o novo node (baseName, writtenText); `ContextualConditionTail` label passa a usar `nominalReference().writtenText()` do contrato.
-6. `src/main/java/.../CoverageSnapshot.java` — sem mudança de código obrigatória: a métrica `dataReferences` deixa de contar condition surfaces (elas não são data references). Baselines/diffs documentados no Commit 2 (nenhum finding novo de coverage; `grammar-rule-manifest.tsv` intocado).
-7. Testes (ver `eval.md`): novo `ConditionNameSurfaceAstTest` (oracles CN-01..CN-12 e erros A..I); migrações mecânicas em `ConditionSurfaceAstTest` (filters `instanceof DataReference` sobre tail interno e `referenceName`), `SemanticConditionContextDiscoveryTest` (accessors continuam compilando via contrato; o assert `characterizesConditionNameSubscriptCorruption` migra porque o subscript `IDX` passa a gerar occurrence `SUBSCRIPT`) e `ConditionNameSurfaceDiscoveryTest` (os asserts que caracterizam a corrupção atual passam a caracterizar a nova surface). `AstPreorderInvariantTest`, `AstBoundaryTestSupport.assertActualProductsJoin` e snapshots continuam verdes com o node novo.
-8. `docs/domain/semantic-ast.md` e `docs/domain/conditional-expressions.md`: parágrafo curto registrando o node, o contrato `NominalReference` e a fronteira de superfície (atualização documental canônica no Commit 2, junto com a produção correspondente).
+   - Novo helper `conditionNameReference(ConditionNameReferenceContext ctx)` que constrói `Ast.DataReference` a partir dos **children diretos** do context: `conditionName()` → `baseName`; `inData()` na ordem → qualifiers com target por posição (`i < inData.size()-1 ? DATA : UNSPECIFIED`); `conditionNameSubscriptReference()` → `SubscriptGroup` por grupo (meta do group context, subscripts via `expression(subscript, "condition-name subscript")`, writtenText do grupo).
+   - **Proibido:** `nearestDescendants`/`firstDescendant` a partir da referência (Erro H); nenhum reparse de `writtenText`.
+   - `buildBareNominal` usa o helper nos dois ramos (standalone e tail interno); `visitConditionNameReference` retorna o helper (uniformidade do visitor).
+   - `dataReference`, `tableReference`, `buildQualifiers` (identifier paths) e SET/EVALUATE permanecem intocados.
+3. `src/main/java/.../DataAndIndexReferenceResolver.java` — **mínimo e policy-preserving**
+   - Único delta: case `UNSPECIFIED → Set.of(ReferenceKind.DATA)` em `qualifierConstraints` (a constraint efetiva é idêntica à atual; nenhuma seleção de candidates muda). Javadoc: ampliação `{DATA, FILE}` bloqueada por `BACKLOG-RES-004`.
+   - Nenhuma outra linha muda: sem re-tipo, sem passo novo, sem `admissibleKind` novo.
+4. **Byte-identical (voltaram a `must_not_change`):** `ReferenceOccurrenceCollector` (o `addDataReference` existente já emite a occurrence raiz com o falso gap preservado e percorre qualifiers/subscripts do `DataReference` corrigido — subscripts de condition-name passam a gerar occurrence `SUBSCRIPT` pela política pré-existente, sem mudança de código), `AstSnapshot`, `CobolReferenceResolver`, `ReferenceOccurrences`, `ReferenceResolution`, grammar, manifesto de coverage.
+5. Testes (ver `eval.md`): novo `ConditionNameSurfaceAstTest` (oracles CN-01..CN-12 e erros A..M); migração dos asserts de caracterização do `ConditionNameSurfaceDiscoveryTest` (a corrupção atual deixa de existir); `ConditionSurfaceAstTest` e `SemanticConditionContextDiscoveryTest` permanecem verdes sem migração de tipo (o tail interno continua `DataReference`); `AstPreorderInvariantTest` e `assertActualProductsJoin` inalterados.
+6. `docs/domain/semantic-ast.md` e `docs/domain/conditional-expressions.md`: parágrafo curto registrando o lowering corrigido, o alvo `UNSPECIFIED` e a dependência `BACKLOG-RES-004` (atualização documental canônica no Checkpoint 2).
 
 ## Migrações requeridas
 
-- Nenhuma migração de dados; produtos são gerados por execução. Snapshot HTML passa a mostrar o type novo; cardinalidades mudam apenas onde a estrutura legítima foi materializada (qualifiers/subscripts que hoje não existiam como children).
+- Nenhuma migração de dados; produtos são gerados por execução. Baselines de corpus mudam apenas onde a estrutura legítima foi materializada (qualifiers/subscripts que hoje não existiam como children); métricas `dataReferences` do coverage permanecem as mesmas.
 - `planned:` do `work-item.yaml` para `ConditionNameSurfaceAstTest.java` é removido no mesmo checkpoint que cria o arquivo.
-- Migração de asserts de caracterização: os discovery tests do estado pré-fix não são oracles permanentes; eles migram no Commit 2 e os oracles permanentes são CN-01..CN-12 + erros A..I.
+- Os discovery tests do estado pré-fix não são oracles permanentes; migram no Checkpoint 2.
 
 ## Artefatos esperados
 
-- Commit 1 (docs+testes de caracterização) e Commit 2 (produção+oracles) na branch `implementation/work-cond-004-condition-name-surface`; PR único com os dois SHAs.
-- `ConditionNameSurfaceDiscoveryTest` (FACT, 13 testes; migra no Commit 2) e `ConditionNameSurfaceAstTest` (oracles CN-01..CN-12, implementado no Commit 2).
-- Gates verdes: `fast`, `semantic`, `performance`, `full` em ambos os checkpoints (o Commit 1 prova que produção não mudou).
-- `state.md` e `eval.md` atualizados no Commit 2; `WORK-COND-004` permanece `active/` até review humano final (merge não é automático).
+- Checkpoint 1 (Discovery, múltiplos commits revisáveis) e Checkpoint 2 (produção+oracles) na branch `implementation/work-cond-004-condition-name-surface`; PR único com os SHAs por checkpoint.
+- `ConditionNameSurfaceDiscoveryTest` (FACT, 14 testes; migra no Checkpoint 2) e `ConditionNameSurfaceAstTest` (oracles CN-01..CN-12, implementado no Checkpoint 2).
+- Gates verdes: `fast`, `semantic`, `performance`, `full` em ambos os checkpoints.
+- `state.md` e `eval.md` atualizados no Checkpoint 2; `WORK-COND-004` permanece `active/` até review humano final (merge não é automático).

@@ -5,7 +5,7 @@ Work items delimitam a mudança em execução; o [backlog](backlog.md) registra 
 ## Ativo
 
 - [WORK-AST-002 — Hardening da fronteira AST para CFG e dataflow](active/WORK-AST-002/spec.md) — Slice 1 mergeado no PR #10; Slice 2 no checkpoint de Discovery do PR #13. Implementar F-02 depende de merge/review e autorização explícita posterior.
-- [WORK-COND-004 — Preservar estrutura nominal completa de condition-name references](active/WORK-COND-004/spec.md) — Slice 4 de BACKLOG-COND-001; no checkpoint de Discovery (Commit 1 do PR), aguardando review humano antes da implementação na mesma branch/PR.
+- [WORK-COND-004 — Preservar estrutura nominal completa de condition-name references](active/WORK-COND-004/spec.md) — Slice 4 de BACKLOG-COND-001; no checkpoint de Discovery do PR (rounds 1 e 2), aguardando review humano antes da implementação na mesma branch/PR.
 
 ## Histórico
 

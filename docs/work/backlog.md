@@ -387,11 +387,40 @@ Selectors de `EVALUATE` cujo subject correspondente não for booleano, ou cuja f
 - Fora de escopo: avaliação de valores de runtime, CFG/dataflow, CALL dinâmico e resolução de statements sem uma regra gramatical/semântica específica.
 - Promover para work item de risco médio antes de produção; gates mínimos: `fast`, `semantic` e `full`.
 
+### BACKLOG-RES-004 — IBM resolution-of-names: precedência de programa local após qualification
+
+#### Evidência e defeito
+
+O contracaso do round 2 do Discovery de `WORK-COND-004` (fato `qualifiedLocalDataNameCollidesWithOuterGlobalFileNameAcrossPrograms`) reproduz a colisão: OUTER declara `FD Q IS GLOBAL` com record `OUTER-REC` e `88 C`; INNER (contido) declara `01 Q` com `88 C` e escreve `IF C OF Q`. Hoje a condition surface fecha o qualifier como `DATA` e o resolver devolve `RESOLVED` (candidate local) — mas por exclusão acidental de namespace, não pela regra da linguagem. A referência DATA equivalente (`MOVE CUST-STATUS OF Q TO X`) já devolve `UNSUPPORTED_DIALECT_OPTION` com 2 candidates: o mesmo defeito vive hoje nos paths de data, independentemente de condition-name.
+
+A regra IBM (Enterprise COBOL for z/OS 6.4 LR, cap. 7 "Resolution of names — Names within programs", pp. 63–66) determina: (1) o recurso referenciado é identificado aplicando qualification e demais regras de unicidade ao conjunto {nomes definidos no programa B} ∪ {nomes GLOBAL definidos em A e nos programas que contêm A}; (2) se mais de um recurso for identificado, no máximo um pode ter nome local a B; se zero ou um é local a B, o recurso declarado em B vence e, na ausência de declaração local, vence o do programa contendo mais próximo. A precedência por programa é aplicada DEPOIS da qualification, vale igualmente para condition-name, data-name, file-name e record-name e independe de `QUALIFY(STANDARD/EXTEND)`.
+
+O resolver atual não possui esse passo: trata a divergência pós-qualification como divergência de qualify mode (`UNSUPPORTED_DIALECT_OPTION` ou `AMBIGUOUS`) em vez de aplicar a precedência de programa local. Por isso a surface NÃO pode ampliar `DATA → DATA_OR_FILE` para condition-names antes desta regra existir: a ampliação adicionaria o candidate GLOBAL externo e converteria `RESOLVED` em `UNSUPPORTED_DIALECT_OPTION`/`AMBIGUOUS` (regressão caracterizada no round 2 do Discovery).
+
+#### Resultado esperado
+
+Após a qualification identificar mais de um recurso, quando zero ou um deles é local ao programa da referência, selecionar o local (ou o do contendo mais próximo, na ausência de local); ambiguidade entre dois ou mais recursos locais ao MESMO programa permanece `AMBIGUOUS` (INV-RES-001). O passo aplica-se a DATA/CONDITION (e futuramente FILE/record) sem alterar candidate filtering por namespace, scope walk ou admissibleKinds das occurrences. O mapeamento do alvo de qualifier não classificado (`QualifierTarget.UNSPECIFIED`, introduzido pelo Slice 4 de `BACKLOG-COND-001`) poderá então ser ampliado de `{DATA}` para `{DATA, FILE}` sem regressão, destravando a resolução de condition-names qualificadas por file-name (hoje `DECLARATION_NOT_FOUND`).
+
+#### Proposta de implementação
+
+1. Discovery com os oracles do contracaso: local DATA vs outer GLOBAL FILE; local DATA vs outer GLOBAL DATA; file-only sem colisão; dupla localidade ambígua no mesmo programa; nesting de 3 níveis.
+2. Modelar o passo 3 como etapa do resolver entre `applyQualification` e a decisão de qualify mode — ou como pré-filtro de candidates por programa de declaração — com invariante próprio a definir na promoção e registro em `docs/domain/reference-resolution.md`.
+3. Somente depois, ampliar o mapeamento conservador `UNSPECIFIED → {DATA}` para `{DATA, FILE}` no resolver.
+4. Regressão: nenhum caso `RESOLVED` atual muda, exceto os que a nova regra torna `RESOLVED` (local) a partir de `UNSUPPORTED_DIALECT_OPTION`/`AMBIGUOUS`/`DECLARATION_NOT_FOUND`.
+
+#### Autoridade, restrições e gates
+
+- Autoridade: IBM Enterprise COBOL for z/OS 6.4 LR, cap. 7 "Resolution of names" e cap. 8 "Scope of names"/"Qualification".
+- Invariantes: INV-RES-001, INV-DET-001, INV-PERF-001; a promoção deverá definir invariante próprio para a precedência de programa local após qualification.
+- Evals a ampliar: EVAL-RES-DATA-001 (colisão local/GLOBAL), EVAL-RES-DET-001; os oracles FACT de `WORK-COND-004` (`ConditionNameSurfaceDiscoveryTest.qualifiedLocalDataNameCollidesWithOuterGlobalFileNameAcrossPrograms`) permanecem como caracterização.
+- Fora de escopo: SPECIAL-NAMES/mnemonic, resolução de qualifier occurrences de file-names, CFG/dataflow.
+- Promover para work item de risco alto quando autorizado; gates mínimos: `fast`, `semantic`, `full`. Bloqueia apenas a ampliação do mapeamento de `QualifierTarget.UNSPECIFIED` no resolver — não bloqueia o Slice 4 estrutural de `BACKLOG-COND-001`.
+
 ## Condições e predicados
 
 ### BACKLOG-COND-001 — Contextualizar condições combinadas e referências nominais
 
-Progresso: o Slice 1 foi concluído pelo PR #15 e arquivado como `WORK-COND-001`. O Slice 2 foi concluído pelo PR #16 e arquivado como `WORK-COND-002` (ADR-0012 `Accepted`). O Slice 3 foi concluído pelo PR #17 e arquivado como `WORK-COND-003`. O Slice 4 está ativo em `WORK-COND-004`, no checkpoint de Discovery (Commit 1 do PR), aguardando review humano antes da implementação na mesma branch/PR. Slices 5–7 continuam backlog e não estão autorizados.
+Progresso: o Slice 1 foi concluído pelo PR #15 e arquivado como `WORK-COND-001`. O Slice 2 foi concluído pelo PR #16 e arquivado como `WORK-COND-002` (ADR-0012 `Accepted`). O Slice 3 foi concluído pelo PR #17 e arquivado como `WORK-COND-003`. O Slice 4 está ativo em `WORK-COND-004`, no checkpoint de Discovery do PR (rounds 1 e 2 concluídos; decisão D — `DataReference` corrigido com alvo de qualifier `UNSPECIFIED`), aguardando review humano antes da implementação na mesma branch/PR. O round 2 registrou a dependência `BACKLOG-RES-004` (IBM resolution-of-names step 3), que destravará `{DATA, FILE}` no resolver. Slices 5–7 continuam backlog e não estão autorizados.
 
 #### Evidência e problema
 
