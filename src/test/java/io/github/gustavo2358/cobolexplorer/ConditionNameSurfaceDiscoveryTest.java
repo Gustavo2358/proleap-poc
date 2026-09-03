@@ -122,7 +122,7 @@ class ConditionNameSurfaceDiscoveryTest {
     }
 
     @Test
-    void currentAstPreservesQualifiersOnlyWhileSubscriptsAreAbsent() {
+    void qualificationOrderAndConnectorsSurviveStructurally() {
         AstBoundaryTestSupport.Analysis nested = AstBoundaryTestSupport.analyze(
                 program("AST-NESTED-QUAL", "FLAG-OK OF SUB-GRP OF GROUP-A"), "ast-nested-qual.cbl");
         Ast.IfStatement statement = AstBoundaryTestSupport.nodes(nested, Ast.IfStatement.class).get(0);
@@ -136,32 +136,32 @@ class ConditionNameSurfaceDiscoveryTest {
     }
 
     @Test
-    void currentAstLosesNameQualifiersAndSubscriptsWhenSubscriptsAreWritten() {
+    void subscriptedConditionNameReferencesKeepBaseQualifiersAndSubscripts() {
         AstBoundaryTestSupport.Analysis simple = AstBoundaryTestSupport.analyze(
                 program("AST-SUBSCRIPT", "FLAG-OK(I)"), "ast-subscript.cbl");
         Ast.DataReference simpleReference = assertInstanceOf(Ast.DataReference.class,
                 AstBoundaryTestSupport.nodes(simple, Ast.IfStatement.class).get(0).condition());
-        assertAll("FLAG-OK(I) is structurally corrupted today",
-                () -> assertEquals("I", simpleReference.baseName(),
-                        "the reference base is hijacked by the subscript's name"),
-                () -> assertTrue(simpleReference.subscriptGroups().isEmpty(),
-                        "the written subscript does not survive structurally"),
-                () -> assertEquals("FLAG-OK(I)", simpleReference.writtenText(),
-                        "only writtenText retains the written surface"));
+        assertAll("FLAG-OK(I) keeps the condition name as the base and the subscript as a child",
+                () -> assertEquals("FLAG-OK", simpleReference.baseName(),
+                        "the subscript must never hijack the base name"),
+                () -> assertEquals(1, simpleReference.subscriptGroups().size(),
+                        "the written subscript survives structurally as a SubscriptGroup"),
+                () -> assertEquals("FLAG-OK(I)", simpleReference.writtenText()));
 
         AstBoundaryTestSupport.Analysis qualified = AstBoundaryTestSupport.analyze(
                 program("AST-QUALIFIED-SUBSCRIPT", "FLAG-OK OF CUSTOMER(I, J)"), "ast-qualified-subscript.cbl");
         Ast.DataReference qualifiedReference = assertInstanceOf(Ast.DataReference.class,
                 AstBoundaryTestSupport.nodes(qualified, Ast.IfStatement.class).get(0).condition());
-        assertAll("FLAG-OK OF CUSTOMER(I, J) loses name, qualification and subscripts",
-                () -> assertEquals("I", qualifiedReference.baseName()),
-                () -> assertTrue(qualifiedReference.qualifiers().isEmpty()),
-                () -> assertTrue(qualifiedReference.subscriptGroups().isEmpty()),
+        assertAll("FLAG-88 OF CUSTOMER(I, J) keeps name, qualification and subscripts together",
+                () -> assertEquals("FLAG-OK", qualifiedReference.baseName()),
+                () -> assertEquals(List.of("CUSTOMER"), qualifiedReference.qualifiers().stream()
+                        .map(Ast.DataQualifier::name).toList()),
+                () -> assertEquals(1, qualifiedReference.subscriptGroups().size()),
                 () -> assertEquals("FLAG-OK OF CUSTOMER(I, J)", qualifiedReference.writtenText()));
     }
 
     @Test
-    void contextualTailCarriesTheSameStructuralCorruption() {
+    void contextualTailInnerReferenceCarriesTheCompleteWrittenStructure() {
         AstBoundaryTestSupport.Analysis qualifiedTail = AstBoundaryTestSupport.analyze(
                 program("TAIL-QUALIFIED", "A = B OR C OF GROUP-A"), "tail-qualified.cbl");
         Ast.ContextualConditionTail tail = (Ast.ContextualConditionTail)
@@ -172,12 +172,12 @@ class ConditionNameSurfaceDiscoveryTest {
 
         AstBoundaryTestSupport.Analysis subscriptTail = AstBoundaryTestSupport.analyze(
                 program("TAIL-SUBSCRIPT", "A = B OR FLAG-ON(IDX)"), "tail-subscript.cbl");
-        Ast.ContextualConditionTail corrupt = (Ast.ContextualConditionTail)
+        Ast.ContextualConditionTail complete = (Ast.ContextualConditionTail)
                 AstBoundaryTestSupport.nodes(subscriptTail, Ast.ContextualConditionTail.class).get(0);
-        assertAll("tail inner reference shares the subscript corruption",
-                () -> assertEquals("IDX", corrupt.nominalReference().baseName()),
-                () -> assertTrue(corrupt.nominalReference().subscriptGroups().isEmpty()),
-                () -> assertEquals("FLAG-ON(IDX)", corrupt.writtenText()));
+        assertAll("the tail inner reference carries the same recovered structure as any condition-name",
+                () -> assertEquals("FLAG-ON", complete.nominalReference().baseName()),
+                () -> assertEquals(1, complete.nominalReference().subscriptGroups().size()),
+                () -> assertEquals("FLAG-ON(IDX)", complete.writtenText()));
     }
 
     @Test
@@ -272,13 +272,17 @@ class ConditionNameSurfaceDiscoveryTest {
                 "ast-subscript-qualified.cbl");
         Ast.DataReference reference = assertInstanceOf(Ast.DataReference.class,
                 AstBoundaryTestSupport.nodes(analysis, Ast.IfStatement.class).get(0).condition());
-        assertAll("today the nested qualifier is stolen into the root reference",
-                () -> assertEquals("SUB", reference.baseName(),
-                        "the root base is hijacked by the subscript's name"),
-                () -> assertEquals(List.of("SUB-GROUP"), reference.qualifiers().stream()
+        Ast.DataReference subscript = assertInstanceOf(Ast.DataReference.class,
+                reference.subscriptGroups().get(0).subscripts().get(0));
+        assertAll("the nested qualifier stays inside the subscript reference, never promoted to the root",
+                () -> assertEquals("FLAG-OK", reference.baseName()),
+                () -> assertEquals(List.of("CUSTOMER"), reference.qualifiers().stream()
                         .map(Ast.DataQualifier::name).toList(),
-                        "the subscript's own qualifier is stolen and the root qualifier CUSTOMER is lost"),
-                () -> assertTrue(reference.subscriptGroups().isEmpty()),
+                        "the root keeps exactly its own written qualifier"),
+                () -> assertEquals("SUB", subscript.baseName()),
+                () -> assertEquals(List.of("SUB-GROUP"), subscript.qualifiers().stream()
+                        .map(Ast.DataQualifier::name).toList()),
+                () -> assertTrue(subscript.subscriptGroups().isEmpty()),
                 () -> assertEquals("FLAG-OK OF CUSTOMER(SUB OF SUB-GROUP)", reference.writtenText()));
     }
 
@@ -316,16 +320,16 @@ class ConditionNameSurfaceDiscoveryTest {
 
         Ast.DataReference reference = assertInstanceOf(Ast.DataReference.class,
                 AstBoundaryTestSupport.nodes(analysis, Ast.IfStatement.class).get(0).condition());
-        assertAll("today the surface closes DATA where the parse tree cannot classify",
+        assertAll("the surface preserves the written qualifier as UNSPECIFIED where the parse tree cannot classify",
                 () -> assertEquals("FLAG-OK", reference.baseName()),
-                () -> assertEquals(List.of(Ast.QualifierTarget.DATA),
+                () -> assertEquals(List.of(Ast.QualifierTarget.UNSPECIFIED),
                         reference.qualifiers().stream().map(Ast.DataQualifier::target).toList(),
-                        "inData is closed as DATA even though the declaration is a file-name"),
+                        "the inData branch cannot be closed as DATA: the declaration behind it is a file-name"),
                 () -> assertEquals("CUSTOMER-FILE", reference.qualifiers().get(0).name()));
         ReferenceResolution.Entry condition = analysis.resolution().entries().stream()
                 .filter(entry -> entry.occurrence().writtenText().equals("FLAG-OK OF CUSTOMER-FILE"))
                 .findFirst().orElseThrow();
-        assertAll("today's resolver cannot qualify through a file-name because the surface invented DATA",
+        assertAll("the resolver consumes UNSPECIFIED as {DATA}, so file-qualified resolution stays bounded until BACKLOG-RES-004",
                 () -> assertEquals(ResolutionContracts.ReferenceKind.CONDITION, condition.occurrence().kind()),
                 () -> assertEquals(ResolutionContracts.ResolutionStatus.UNRESOLVED, condition.status()),
                 () -> assertEquals(ResolutionContracts.ResolutionReason.DECLARATION_NOT_FOUND, condition.reason()));
@@ -416,11 +420,12 @@ class ConditionNameSurfaceDiscoveryTest {
 
         Ast.DataReference reference = assertInstanceOf(Ast.DataReference.class,
                 AstBoundaryTestSupport.nodes(analysis, Ast.IfStatement.class).get(0).condition());
-        assertAll("the condition surface still closes DATA today",
+        assertAll("the condition surface keeps the final qualifier UNSPECIFIED",
                 () -> assertEquals("C", reference.baseName()),
-                () -> assertEquals(List.of(Ast.QualifierTarget.DATA),
+                () -> assertEquals(List.of(Ast.QualifierTarget.UNSPECIFIED),
                         reference.qualifiers().stream().map(Ast.DataQualifier::target).toList(),
-                        "today the qualifier target invents DATA; DATA_OR_FILE would widen the constraint"));
+                        "UNSPECIFIED must never widen to DATA_OR_FILE inside this slice; the widening "
+                                + "would admit the outer GLOBAL FILE candidate and regress the resolution below"));
 
         // FACT-R2-04: current resolver behavior for the qualified condition-name reference.
         // After-widening model (documental, no production change): with DATA_OR_FILE the constraint

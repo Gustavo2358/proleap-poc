@@ -48,7 +48,7 @@ source_scope:
   - src/main/java/io/github/gustavo2358/cobolexplorer/DataAndIndexReferenceResolver.java
 test_scope:
   - src/test/java/io/github/gustavo2358/cobolexplorer/ConditionNameSurfaceDiscoveryTest.java
-  - planned:src/test/java/io/github/gustavo2358/cobolexplorer/ConditionNameSurfaceAstTest.java
+  - src/test/java/io/github/gustavo2358/cobolexplorer/ConditionNameSurfaceAstTest.java
   - src/test/java/io/github/gustavo2358/cobolexplorer/ConditionSurfaceAstTest.java
   - src/test/java/io/github/gustavo2358/cobolexplorer/SemanticConditionContextDiscoveryTest.java
   - src/test/java/io/github/gustavo2358/cobolexplorer/AstPreorderInvariantTest.java
