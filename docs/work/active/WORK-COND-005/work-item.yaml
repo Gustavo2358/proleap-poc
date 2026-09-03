@@ -1,0 +1,79 @@
+id: WORK-COND-005
+title: Contextualizar occurrences de condições
+status: active
+risk: high
+goal: Derivar kind e admissibleKinds da posição semântica na condition surface tipada, sem usar grammarRule como autoridade nominal.
+must_read:
+  - docs/work/backlog.md#backlog-cond-001--contextualizar-condições-combinadas-e-referências-nominais
+  - docs/architecture/decisions/0012-contextual-conditions-use-post-binding-projection.md
+  - docs/architecture/invariants.md
+  - docs/domain/conditional-expressions.md
+  - docs/domain/semantic-ast.md
+  - docs/domain/reference-resolution.md
+  - docs/domain/symbol-model.md
+  - docs/domain/provenance.md
+  - docs/engineering/semantic-analysis-policy.md
+  - docs/engineering/semantic-testing.md
+related_domain_rules:
+  - docs/domain/conditional-expressions.md
+  - docs/domain/semantic-ast.md
+  - docs/domain/reference-resolution.md
+  - docs/domain/symbol-model.md
+  - docs/domain/provenance.md
+related_decisions:
+  - ADR-0012
+related_invariants:
+  - INV-AST-001
+  - INV-AST-002
+  - INV-AST-003
+  - INV-SYM-001
+  - INV-COND-001
+  - INV-COND-002
+  - INV-PROV-002
+  - INV-RES-001
+  - INV-DET-001
+  - INV-PERF-001
+evals:
+  - EVAL-AST-001
+  - EVAL-AST-004
+  - EVAL-AST-005
+  - EVAL-SYM-002
+  - EVAL-RES-DATA-001
+  - EVAL-RES-DATA-002
+  - EVAL-RES-DATA-003
+  - EVAL-RES-REL-001
+  - EVAL-RES-COV-001
+  - EVAL-RES-REPORT-001
+  - EVAL-RES-DET-001
+  - EVAL-EXT-001
+source_scope:
+  - src/main/java/io/github/gustavo2358/cobolexplorer/ReferenceOccurrenceCollector.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/ReferenceOccurrences.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/ReferenceResolutionManifest.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/Ast.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/AstBuilder.java
+test_scope:
+  - src/test/java/io/github/gustavo2358/cobolexplorer/ContextualConditionOccurrenceDiscoveryTest.java
+  - src/test/java/io/github/gustavo2358/cobolexplorer/SemanticConditionContextDiscoveryTest.java
+  - src/test/java/io/github/gustavo2358/cobolexplorer/ConditionNameSurfaceDiscoveryTest.java
+  - src/test/java/io/github/gustavo2358/cobolexplorer/ConditionSurfaceAstTest.java
+  - src/test/java/io/github/gustavo2358/cobolexplorer/DataAndIndexReferenceResolverTest.java
+  - src/test/java/io/github/gustavo2358/cobolexplorer/ReferenceResolutionManifestTest.java
+  - src/test/java/io/github/gustavo2358/cobolexplorer/AstPreorderInvariantTest.java
+  - planned:src/test/java/io/github/gustavo2358/cobolexplorer/ContextualConditionOccurrenceTest.java
+must_not_change:
+  - src/main/antlr4/Cobol.g4
+  - src/main/java/io/github/gustavo2358/cobolexplorer/ResolutionContracts.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/DataAndIndexReferenceResolver.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/CobolReferenceResolver.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/SymbolTable.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/CompilationUnitSymbolTables.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/ReferenceResolution.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/CicsIntrinsicClassifier.java
+  - ConditionSemantics ConditionValidation CFG dataflow e materialização de sujeito ou operador herdado
+  - SEARCH WHEN reservado ao Slice 6 e BACKLOG-RES-004
+  - Baselines ou fixtures enfraquecidos para acomodar a mudança
+gates:
+  - fast
+  - semantic
+  - full
