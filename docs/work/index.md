@@ -5,7 +5,6 @@ Work items delimitam a mudança em execução; o [backlog](backlog.md) registra 
 ## Ativo
 
 - [WORK-AST-002 — Hardening da fronteira AST para CFG e dataflow](active/WORK-AST-002/spec.md) — Slice 1 mergeado no PR #10; Slice 2 no checkpoint de Discovery do PR #13. Implementar F-02 depende de merge/review e autorização explícita posterior.
-- [WORK-COND-003 — Tornar a surface AST de condições lossless](active/WORK-COND-003/spec.md) — Slice 3 de BACKLOG-COND-001; materializa na AST a estrutura escrita de condições combinadas/abreviadas conforme ADR-0012, sem binding, sem `ConditionSemantics` e sem validação type-sensitive.
 
 ## Histórico
 
@@ -16,6 +15,8 @@ Work items delimitam a mudança em execução; o [backlog](backlog.md) registra 
 - [WORK-AST-003 — Corrigir a consistência global entre IDs e traversal da AST](history/WORK-AST-003.md) — Discovery no PR #11 e implementação no PR #12; não bloqueia mais WORK-AST-002.
 - [WORK-COND-001 — Contrato normativo de condições combinadas e abreviadas](history/WORK-COND-001.md) — Slice 1 concluído pelo PR #15; regra durável e oracles foram promovidos para domínio/evals.
 - [WORK-COND-002 — Decisão arquitetural para condições contextuais](history/WORK-COND-002.md) — Slice 2 concluído pelo PR #16; ADR-0012 `Accepted` e INV-COND-001/002 promovidos; diff exclusivamente documental.
+- [WORK-COND-003 — Surface AST lossless para condições combinadas e abreviadas](history/WORK-COND-003.md) — Slice 3 concluído pelo PR #17; nodes tipados da condition surface sem binding; collector/resolver intocados.
+- [WORK-COND-004 — Preservar estrutura nominal completa de condition-name references](history/WORK-COND-004.md) — Slice 4 de `BACKLOG-COND-001` concluído pelo PR #18; `DataReference` lossless para condition-name surface, `UNSPECIFIED` preserva a incerteza do qualifier, `BACKLOG-RES-004` mantém a resolução DATA/FILE futura.
 - [WORK-RES-001 — Observar CALLs literais externos por artefato](history/WORK-RES-001.md)
 - [WORK-RES-002 — Veredito sobre W3D-AUX e categorias de resolução](history/WORK-RES-002.md)
 - [WORK-RES-003 — Resolver SET de condition-name sem namespace DATA espúrio](history/WORK-RES-003.md)

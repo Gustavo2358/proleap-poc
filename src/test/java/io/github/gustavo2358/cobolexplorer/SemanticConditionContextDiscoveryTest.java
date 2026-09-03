@@ -350,16 +350,23 @@ class SemanticConditionContextDiscoveryTest {
         Ast.DataReference ast = (Ast.DataReference) AstBoundaryTestSupport.nodes(analysis).stream()
                 .filter(node -> node.meta().id() == condition.occurrence().referenceAstNodeId())
                 .findFirst().orElseThrow();
-        assertAll("condition-name subscript",
-                () -> assertEquals("IDX", ast.baseName()),
+        assertAll("condition-name subscript structure is recovered by the existing machinery",
+                () -> assertEquals("FLAG-ON", ast.baseName(),
+                        "the condition name stays the base; the subscript no longer hijacks it"),
                 () -> assertEquals("FLAG-ON(IDX)", ast.writtenText()),
-                () -> assertTrue(ast.subscriptGroups().isEmpty()),
-                () -> assertEquals(ResolutionContracts.ReferenceKind.CONDITION, condition.occurrence().kind()),
-                () -> assertEquals(ResolutionContracts.ResolutionReason.INVALID_NAMESPACE_FOR_CONTEXT,
-                        condition.reason()),
-                () -> assertFalse(analysis.resolution().entries().stream().anyMatch(entry ->
+                () -> assertEquals(1, ast.subscriptGroups().size(),
+                        "the written subscript materializes as a typed group"),
+                () -> assertEquals(ResolutionContracts.ReferenceKind.CONDITION, condition.occurrence().kind(),
+                        "the collector false gap stays reserved for Slice 5"),
+                () -> assertEquals(ResolutionContracts.ResolutionStatus.RESOLVED, condition.status()),
+                () -> assertEquals(ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION,
+                        condition.reason(),
+                        "with the recovered base name the pre-existing resolution machinery finds the "
+                                + "declared 88 level; no resolver policy changed"),
+                () -> assertTrue(analysis.resolution().entries().stream().anyMatch(entry ->
                         entry.occurrence().writtenText().equals("IDX")
-                                && entry.occurrence().role() == ResolutionContracts.ReferenceRole.SUBSCRIPT)));
+                                && entry.occurrence().role() == ResolutionContracts.ReferenceRole.SUBSCRIPT),
+                        "the subscript participates through the pre-existing SUBSCRIPT policy"));
     }
 
     @Test

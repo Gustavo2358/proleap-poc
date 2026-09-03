@@ -53,7 +53,7 @@ Quando qualification ou scope não tornam uma referência única, o source não 
 
 ## Fronteira de representação
 
-A parse tree registra a estrutura reconhecida pela grammar, mas não prova declaration kind. Desde `WORK-COND-003`, a AST de superfície preserva a sequência, precedência, parênteses, distribuição e abbreviations escritas sem fechar o significado binding-dependent; subject/operator omitidos permanecem omitidos e bare tails ficam contextuais. A especialização e a validação continuam pós-binding, conforme a fronteira abaixo.
+A parse tree registra a estrutura reconhecida pela grammar, mas não prova declaration kind. Desde `WORK-COND-003`, a AST de superfície preserva a sequência, precedência, parênteses, distribuição e abbreviations escritas sem fechar o significado binding-dependent; subject/operator omitidos permanecem omitidos e bare tails ficam contextuais. Desde `WORK-COND-004` (Slice 4), a condition-name reference escrita é um `DataReference` nominal estruturalmente lossless: nome base, qualification `IN`/`OF` em ordem escrita e subscripts como `SubscriptGroup` tipado, construídos dos children diretos do context, sem lookup e sem reparse textual. O último qualifier é `UNSPECIFIED` na surface (a parse tree não distingue DATA/FILE/MNEMONIC atrás de `inData`); o resolver o consome por mapeamento compatibility-preserving `{DATA}`, com candidate universe inalterado — a ampliação `{DATA, FILE}` pertence a `BACKLOG-RES-004` (IBM resolution-of-names step 3). A especialização e a validação continuam pós-binding, conforme a fronteira abaixo.
 
 A arquitetura aceita em ADR-0012 (status `Accepted`), guardada por INV-COND-001 e INV-COND-002, exige que a evolução que venha a ser autorizada:
 
