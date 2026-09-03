@@ -7,6 +7,7 @@ import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
@@ -18,8 +19,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * Discovery-only characterization for WORK-COND-004 (Slice 4): these tests prove FACTS about
  * the current grammar shape, the qualifier-namespace ambiguity of the inData branch, the
- * current information loss in the surface AST and the current provenance granularity. They
- * deliberately do not codify the proposed implementation as if it already existed.
+ * current information loss in the surface AST, the current provenance granularity and the
+ * local/GLOBAL qualified-reference collision across program units (IBM resolution-of-names
+ * step 3 gap, BACKLOG-RES-004). They deliberately do not codify the proposed implementation
+ * as if it already existed.
  */
 class ConditionNameSurfaceDiscoveryTest {
 
@@ -352,6 +355,147 @@ class ConditionNameSurfaceDiscoveryTest {
                                 .noneMatch(node -> node.meta().span().startToken() == nameStart
                                         && node.meta().span().endToken() == nameStop),
                         "no AST node owns exactly the base-name token range: the name has no Meta of its own"));
+    }
+
+    @Test
+    void qualifiedLocalDataNameCollidesWithOuterGlobalFileNameAcrossPrograms() {
+        // FACT-R2-01..05: local condition-name qualified by DATA in the contained program; outer
+        // GLOBAL condition-name qualified by FILE; the same qualifier spelling across units; the
+        // current resolver behavior; and the structural facts that decide whether widening
+        // DATA -> DATA_OR_FILE would add a candidate.
+        AstBoundaryTestSupport.Analysis analysis = AstBoundaryTestSupport.analyze("""
+                IDENTIFICATION DIVISION.
+                PROGRAM-ID. D-OUTER-COLLISION.
+                ENVIRONMENT DIVISION.
+                INPUT-OUTPUT SECTION.
+                FILE-CONTROL.
+                    SELECT Q ASSIGN TO 'QDD'.
+                DATA DIVISION.
+                FILE SECTION.
+                FD Q IS GLOBAL.
+                01 OUTER-REC.
+                   05 CUST-STATUS PIC X.
+                      88 C VALUE 'Y'.
+                PROCEDURE DIVISION.
+                    GOBACK.
+                IDENTIFICATION DIVISION.
+                PROGRAM-ID. D-INNER-COLLISION.
+                DATA DIVISION.
+                WORKING-STORAGE SECTION.
+                01 Q.
+                   05 CUST-STATUS PIC X.
+                      88 C VALUE 'Y'.
+                01 X PIC X.
+                PROCEDURE DIVISION.
+                    IF C OF Q CONTINUE END-IF.
+                    MOVE CUST-STATUS OF Q TO X.
+                END PROGRAM D-INNER-COLLISION.
+                END PROGRAM D-OUTER-COLLISION.
+                """, "qualified-collision.cbl");
+        CompilationUnitSymbolTables.UnitSymbols outer = unit(analysis, "D-OUTER-COLLISION");
+        CompilationUnitSymbolTables.UnitSymbols inner = unit(analysis, "D-INNER-COLLISION");
+        SymbolTable.Symbol outerQ = symbolOfKind(outer, "Q", SymbolTable.SymbolKind.FILE_DESCRIPTION);
+        SymbolTable.Symbol outerC = symbolOfKind(outer, "C", SymbolTable.SymbolKind.CONDITION_NAME);
+        SymbolTable.Symbol innerQ = symbolOfKind(inner, "Q", SymbolTable.SymbolKind.DATA_ITEM);
+        SymbolTable.Symbol innerC = symbolOfKind(inner, "C", SymbolTable.SymbolKind.CONDITION_NAME);
+        assertAll("FACT-R2-01/02/03: declarations, namespaces and visibility across program units",
+                () -> assertEquals(SymbolTable.Namespace.FILE, outerQ.namespace()),
+                () -> assertEquals("GLOBAL", outerQ.attributes().get("visibility")),
+                () -> assertEquals("GLOBAL", outerC.attributes().get("visibility"),
+                        "a condition-name subordinate to a GLOBAL file description is global"),
+                () -> assertEquals(SymbolTable.Namespace.DATA, innerQ.namespace()),
+                () -> assertEquals("LOCAL", innerQ.attributes().getOrDefault("visibility", "LOCAL")),
+                () -> assertEquals("LOCAL", innerC.attributes().getOrDefault("visibility", "LOCAL")));
+
+        // FACT-R2-05: the ancestry namespaces prove that widening the qualifier constraint from
+        // {DATA} to {DATA, FILE} would admit the outer candidate too (both ancestries contain Q).
+        assertTrue(ancestryNames(outer, outerC).contains(new AncestryName("Q", SymbolTable.Namespace.FILE)),
+                "the outer C is qualified, in its ancestry, by the FILE named Q");
+        assertTrue(ancestryNames(inner, innerC).contains(new AncestryName("Q", SymbolTable.Namespace.DATA)),
+                "the inner C is qualified, in its ancestry, by the DATA named Q");
+
+        Ast.DataReference reference = assertInstanceOf(Ast.DataReference.class,
+                AstBoundaryTestSupport.nodes(analysis, Ast.IfStatement.class).get(0).condition());
+        assertAll("the condition surface still closes DATA today",
+                () -> assertEquals("C", reference.baseName()),
+                () -> assertEquals(List.of(Ast.QualifierTarget.DATA),
+                        reference.qualifiers().stream().map(Ast.DataQualifier::target).toList(),
+                        "today the qualifier target invents DATA; DATA_OR_FILE would widen the constraint"));
+
+        // FACT-R2-04: current resolver behavior for the qualified condition-name reference.
+        // After-widening model (documental, no production change): with DATA_OR_FILE the constraint
+        // becomes {DATA, FILE}, both C candidates survive applyQualification (both ancestries contain Q),
+        // qualifyExtend keeps only the fully-qualified local C and the UNSPECIFIED policy would return
+        // UNSUPPORTED_DIALECT_OPTION — a regression from today's RESOLVED. IBM resolution-of-names
+        // step 3 would instead select the local C in every qualify mode.
+        ReferenceResolution.Entry condition = resolutionEntry(analysis, "C OF Q");
+        assertAll("qualified condition-name across units",
+                () -> assertEquals(ResolutionContracts.ReferenceKind.CONDITION, condition.occurrence().kind()),
+                () -> assertEquals(ResolutionContracts.ResolutionStatus.RESOLVED, condition.status()),
+                () -> assertEquals(ResolutionContracts.ResolutionReason.QUALIFIED_HIERARCHY_MATCH,
+                        condition.reason()),
+                () -> assertEquals(innerC.id(), condition.selectedCandidate().orElseThrow()
+                                .entityId().localId(),
+                        "the local C wins today only because the DATA constraint excludes the FILE ancestry"));
+
+        ReferenceResolution.Entry qualifier = analysis.resolution().entries().stream()
+                .filter(entry -> entry.occurrence().writtenText().equals("Q")
+                        && entry.occurrence().role() == ResolutionContracts.ReferenceRole.QUALIFIER_COMPONENT)
+                .filter(entry -> entry.occurrence().programUnitId().equals(inner.id()))
+                .reduce((first, second) -> second).orElseThrow();
+        assertAll("the qualifier occurrence itself resolves to the local DATA Q",
+                () -> assertEquals(ResolutionContracts.ResolutionStatus.RESOLVED, qualifier.status()),
+                () -> assertEquals(innerQ.id(),
+                        qualifier.selectedCandidate().orElseThrow().entityId().localId()));
+
+        ReferenceResolution.Entry dataReference = resolutionEntry(analysis, "CUST-STATUS OF Q");
+        assertAll("pre-existing gap: the same collision on a qualified DATA reference",
+                () -> assertEquals(2, dataReference.candidates().size(),
+                        "both the local DATA and the outer GLOBAL DATA survive qualification"),
+                () -> assertEquals(ResolutionContracts.ResolutionStatus.UNSUPPORTED, dataReference.status()),
+                () -> assertEquals(ResolutionContracts.ResolutionReason.UNSUPPORTED_DIALECT_OPTION,
+                        dataReference.reason(),
+                        "qualifyExtend finds only the fully-qualified local candidate and the UNSPECIFIED policy "
+                                + "treats the STANDARD/EXTEND divergence as unsupported; IBM resolution-of-names "
+                                + "step 3 would select the local CUST-STATUS in every qualify mode"));
+    }
+
+    private static CompilationUnitSymbolTables.UnitSymbols unit(
+            AstBoundaryTestSupport.Analysis analysis, String canonicalProgramName) {
+        return analysis.tables().units().stream()
+                .filter(unit -> unit.id().canonicalProgramName().equals(canonicalProgramName))
+                .findFirst().orElseThrow();
+    }
+
+    private static SymbolTable.Symbol symbolOfKind(CompilationUnitSymbolTables.UnitSymbols unit,
+                                                   String canonicalName, SymbolTable.SymbolKind kind) {
+        return unit.symbolTable().symbols().stream()
+                .filter(symbol -> symbol.kind() == kind && symbol.canonicalName().equals(canonicalName))
+                .findFirst().orElseThrow();
+    }
+
+    private static List<AncestryName> ancestryNames(CompilationUnitSymbolTables.UnitSymbols unit,
+                                                    SymbolTable.Symbol symbol) {
+        List<AncestryName> result = new ArrayList<>();
+        int scopeId = symbol.scopeId();
+        while (scopeId >= 0) {
+            SymbolTable.Scope scope = unit.symbolTable().scopes().get(scopeId);
+            if (scope.ownerSymbolId() >= 0) {
+                SymbolTable.Symbol owner = unit.symbolTable().symbols().get(scope.ownerSymbolId());
+                result.add(new AncestryName(owner.canonicalName(), owner.namespace()));
+            }
+            scopeId = scope.parentId();
+        }
+        return result;
+    }
+
+    private record AncestryName(String canonicalName, SymbolTable.Namespace namespace) { }
+
+    private static ReferenceResolution.Entry resolutionEntry(AstBoundaryTestSupport.Analysis analysis,
+                                                             String writtenText) {
+        return analysis.resolution().entries().stream()
+                .filter(entry -> entry.occurrence().writtenText().equals(writtenText))
+                .reduce((first, second) -> second).orElseThrow();
     }
 
     private static boolean hasAncestor(ParseTree node, Class<?> type) {
