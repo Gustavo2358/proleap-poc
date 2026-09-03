@@ -49,7 +49,15 @@ public final class Ast {
     public enum PerformKind { INLINE, PROCEDURE }
     public enum GoToKind { SIMPLE, DEPENDING_ON }
     public enum QualifierConnector { OF, IN }
-    public enum QualifierTarget { DATA, FILE, DATA_OR_FILE }
+    /**
+     * Namespace knowledge the surface AST is able to hold about one written qualifier.
+     * <p>{@link #UNSPECIFIED} is a surface fact, not a binding result: the written qualifier
+     * was preserved, but the parse tree provides no evidence to classify it as DATA, FILE or
+     * MNEMONIC (all three parse through the same word-shaped branch in the current grammar).
+     * Downstream consumers apply a compatibility-preserving mapping until the namespace
+     * question is answerable (see BACKLOG-RES-004 for the DATA/FILE widening).</p>
+     */
+    public enum QualifierTarget { DATA, FILE, DATA_OR_FILE, UNSPECIFIED }
     public enum ReferenceUnderstanding { STRUCTURED, PRESERVED }
     public enum OperationCategory { RELATIONAL, OTHER }
     /** Semantic context supplied by the typed statement production; this is not a binding result. */

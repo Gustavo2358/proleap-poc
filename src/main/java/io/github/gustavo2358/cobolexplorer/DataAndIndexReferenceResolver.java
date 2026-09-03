@@ -219,6 +219,17 @@ final class DataAndIndexReferenceResolver {
         return List.copyOf(result);
     }
 
+    /**
+     * Namespace constraints a written qualifier contributes to candidate filtering.
+     * <p>{@code UNSPECIFIED} (the surface target of the final condition-name qualifier)
+     * is consumed through a compatibility-preserving mapping to {@code {DATA}}: the
+     * effective constraint set is identical to the one the previous surface produced,
+     * so the candidate universe is provably unchanged by Slice 4. The widening to
+     * {@code {DATA, FILE}} would unlock file-qualified condition-names but is blocked by
+     * BACKLOG-RES-004 (IBM resolution-of-names step 3, local-program precedence after
+     * qualification); widening without that rule regresses resolved cases into
+     * AMBIGUOUS/UNSUPPORTED_DIALECT_OPTION.</p>
+     */
     private static List<QualifierConstraint> qualifierConstraints(Ast.DataReference reference) {
         return reference.qualifiers().stream().map(qualifier -> new QualifierConstraint(
                 SymbolTable.canonical(qualifier.name()), switch (qualifier.target()) {
@@ -226,6 +237,7 @@ final class DataAndIndexReferenceResolver {
                     case FILE -> Set.of(ResolutionContracts.ReferenceKind.FILE);
                     case DATA_OR_FILE -> EnumSet.of(ResolutionContracts.ReferenceKind.DATA,
                             ResolutionContracts.ReferenceKind.FILE);
+                    case UNSPECIFIED -> Set.of(ResolutionContracts.ReferenceKind.DATA);
                 })).toList();
     }
 

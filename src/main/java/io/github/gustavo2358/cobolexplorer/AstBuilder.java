@@ -605,7 +605,7 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
     @Override public Ast.Node visitFileName(CobolParser.FileNameContext ctx) { return new Ast.FileReference(meta(ctx), clean(sourceText(ctx)), sourceText(ctx).strip()); }
     @Override public Ast.Node visitIndexName(CobolParser.IndexNameContext ctx) { return new Ast.IndexReference(meta(ctx), clean(sourceText(ctx)), sourceText(ctx).strip()); }
     @Override public Ast.Node visitQualifiedDataName(CobolParser.QualifiedDataNameContext ctx) { return dataReference(ctx); }
-    @Override public Ast.Node visitConditionNameReference(CobolParser.ConditionNameReferenceContext ctx) { return dataReference(ctx); }
+    @Override public Ast.Node visitConditionNameReference(CobolParser.ConditionNameReferenceContext ctx) { return conditionNameReference(ctx); }
     @Override public Ast.Node visitTableCall(CobolParser.TableCallContext ctx) { return tableReference(ctx); }
     @Override public Ast.Node visitFunctionCall(CobolParser.FunctionCallContext ctx) { return functionExpression(ctx); }
     @Override public Ast.Node visitSpecialRegister(CobolParser.SpecialRegisterContext ctx) { return specialRegisterExpression(ctx); }
@@ -951,6 +951,56 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
                 Ast.ReferenceUnderstanding.STRUCTURED);
     }
 
+    /**
+     * Lowering of a true condition-name reference (WORK-COND-004, Slice 4): builds the
+     * nominal DataReference exclusively from the DIRECT children of the context:
+     * conditionName() is the written base name, inData() qualifiers are preserved in
+     * written order and each conditionNameSubscriptReference() becomes a typed
+     * SubscriptGroup. Descendant scans are forbidden here: the first qualifiedDataName
+     * descendant of a subscripted reference is the subscript itself, and reusing it would
+     * hijack the base name and steal nested qualifiers into the root (the pre-fix corruption).
+     *
+     * Qualifier targets derive from the static rule shape, never from the ANTLR branch:
+     * only non-final slots are grammar inData*; the final slot is the inFile? position
+     * whose namespace the parse tree cannot classify (DATA, FILE and MNEMONIC all parse
+     * as the same word shape). The final qualifier therefore stays UNSPECIFIED on the surface.
+     *
+     * No lookup, no candidate selection and no DATA/INDEX/CONDITION decision happens here:
+     * this is the same pre-binding nominal payload used by SET/EVALUATE surfaces.
+     */
+    private Ast.DataReference conditionNameReference(CobolParser.ConditionNameReferenceContext context) {
+        Ast.Meta meta = meta(context);
+        String baseName = clean(sourceText(context.conditionName()));
+        List<CobolParser.InDataContext> writtenQualifiers = context.inData();
+        List<Ast.DataQualifier> qualifiers = new ArrayList<>();
+        for (int i = 0; i < writtenQualifiers.size(); i++) {
+            // Positional grammar fact: positions before the last are inData* (data-name by
+            // rule); the last written qualifier sits where inFile? could be, and the parse
+            // tree does not classify it. No instanceof-based DATA inference is made.
+            Ast.QualifierTarget target = i < writtenQualifiers.size() - 1
+                    ? Ast.QualifierTarget.DATA : Ast.QualifierTarget.UNSPECIFIED;
+            qualifiers.add(buildQualifier(writtenQualifiers.get(i), target));
+        }
+        List<Ast.SubscriptGroup> groups = new ArrayList<>();
+        for (CobolParser.ConditionNameSubscriptReferenceContext group : context.conditionNameSubscriptReference())
+            groups.add(conditionNameSubscriptGroup(group));
+        return new Ast.DataReference(meta, baseName, sourceText(context).strip(), qualifiers, groups, null,
+                Ast.ReferenceUnderstanding.STRUCTURED);
+    }
+
+    /**
+     * Materializes one written conditionNameSubscriptReference as a typed SubscriptGroup:
+     * the group owns the written parenthesis span and each subscript becomes an expression
+     * child built by the existing structured machinery (a qualified subscript keeps its own
+     * qualifiers, never promoted to the reference root).
+     */
+    private Ast.SubscriptGroup conditionNameSubscriptGroup(CobolParser.ConditionNameSubscriptReferenceContext group) {
+        Ast.Meta groupMeta = meta(group);
+        List<Ast.Expression> subscripts = group.subscript().stream()
+                .map(subscript -> expression(subscript, "condition-name subscript")).toList();
+        return new Ast.SubscriptGroup(groupMeta, subscripts, sourceText(group).strip());
+    }
+
     private Ast.DataReference tableReference(CobolParser.TableCallContext context) {
         Ast.Meta meta = meta(context);
         ParserRuleContext qualified = context.qualifiedDataName();
@@ -989,25 +1039,30 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
                 && name.qualifiedDataNameFormat1() != null;
         for (int i = 0; i < contexts.size(); i++) {
             ParserRuleContext qualifier = contexts.get(i);
-            String written = sourceText(qualifier).strip();
-            Ast.QualifierConnector connector = qualifier.getToken(CobolParser.IN, 0) != null
-                    ? Ast.QualifierConnector.IN : Ast.QualifierConnector.OF;
             Ast.QualifierTarget target = qualifier instanceof CobolParser.InFileContext ? Ast.QualifierTarget.FILE
                     : qualifier instanceof CobolParser.InDataContext && generalFormat && i == contexts.size() - 1
                     ? Ast.QualifierTarget.DATA_OR_FILE : Ast.QualifierTarget.DATA;
-            Ast.Meta qualifierMeta = meta(qualifier);
-            ParserRuleContext value = directRuleChildren(qualifier).stream().reduce((first, second) -> second).orElse(null);
-            Ast.DataReference reference;
-            if (value instanceof CobolParser.TableCallContext tableCall) reference = tableReference(tableCall);
-            else {
-                String name = value == null ? written.replaceFirst("(?i)^(IN|OF)\\s+", "") : clean(sourceText(value));
-                reference = new Ast.DataReference(value == null ? qualifierMeta : meta(value), name,
-                        value == null ? name : sourceText(value).strip(), List.of(), List.of(), null,
-                        Ast.ReferenceUnderstanding.STRUCTURED);
-            }
-            result.add(new Ast.DataQualifier(qualifierMeta, connector, target, reference, written));
+            result.add(buildQualifier(qualifier, target));
         }
         return result;
+    }
+
+    /** Shared per-qualifier construction for identifier and condition-name paths. */
+    private Ast.DataQualifier buildQualifier(ParserRuleContext qualifier, Ast.QualifierTarget target) {
+        String written = sourceText(qualifier).strip();
+        Ast.QualifierConnector connector = qualifier.getToken(CobolParser.IN, 0) != null
+                ? Ast.QualifierConnector.IN : Ast.QualifierConnector.OF;
+        Ast.Meta qualifierMeta = meta(qualifier);
+        ParserRuleContext value = directRuleChildren(qualifier).stream().reduce((first, second) -> second).orElse(null);
+        Ast.DataReference reference;
+        if (value instanceof CobolParser.TableCallContext tableCall) reference = tableReference(tableCall);
+        else {
+            String name = value == null ? written.replaceFirst("(?i)^(IN|OF)\\s+", "") : clean(sourceText(value));
+            reference = new Ast.DataReference(value == null ? qualifierMeta : meta(value), name,
+                    value == null ? name : sourceText(value).strip(), List.of(), List.of(), null,
+                    Ast.ReferenceUnderstanding.STRUCTURED);
+        }
+        return new Ast.DataQualifier(qualifierMeta, connector, target, reference, written);
     }
 
     private Ast.ReferenceModification referenceModification(ParserRuleContext modifier) {
@@ -1339,12 +1394,13 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
     private ConditionBuild buildBareNominal(CobolParser.ConditionNameReferenceContext name,
                                             ConditionState state) {
         // Standalone simple condition (no open abbreviation state): the structural
-        // condition-name shape is kept; complete condition-name structure is Slice 4 work.
+        // condition-name shape is kept with the complete written nominal structure.
         if (!state.abbreviationOpen())
-            return new ConditionBuild(dataReference(name), ConditionState.CLOSED);
-        // Binding-dependent bare tail: the surface keeps the alternative open.
+            return new ConditionBuild(conditionNameReference(name), ConditionState.CLOSED);
+        // Binding-dependent bare tail: the surface keeps the alternative open; the inner
+        // nominal reference carries the same complete written structure.
         Ast.Meta meta = meta(name);
-        Ast.DataReference reference = dataReference(name);
+        Ast.DataReference reference = conditionNameReference(name);
         return new ConditionBuild(new Ast.ContextualConditionTail(meta, reference,
                 sourceText(name).strip()), state);
     }
