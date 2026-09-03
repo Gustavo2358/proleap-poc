@@ -420,7 +420,7 @@ Após a qualification identificar mais de um recurso, quando zero ou um deles é
 
 ### BACKLOG-COND-001 — Contextualizar condições combinadas e referências nominais
 
-Progresso: o Slice 1 foi concluído pelo PR #15 e arquivado como `WORK-COND-001`. O Slice 2 foi concluído pelo PR #16 e arquivado como `WORK-COND-002` (ADR-0012 `Accepted`). O Slice 3 foi concluído pelo PR #17 e arquivado como `WORK-COND-003`. O Slice 4 está ativo em `WORK-COND-004`, com o checkpoint de Implementation concluído no PR #18 (decisão D — `DataReference` corrigido com alvo de qualifier `UNSPECIFIED` e mapeamento compatibility-preserving `{DATA}`), aguardando review humano final antes do merge. A dependência `BACKLOG-RES-004` (IBM resolution-of-names step 3) permanece registrada e destravará `{DATA, FILE}` no resolver. Slices 5–7 continuam backlog e não estão autorizados.
+Progresso: o Slice 1 foi concluído pelo PR #15 e arquivado como `WORK-COND-001`. O Slice 2 foi concluído pelo PR #16 e arquivado como `WORK-COND-002` (ADR-0012 `Accepted`). O Slice 3 foi concluído pelo PR #17 e arquivado como `WORK-COND-003`. O Slice 4 — `WORK-COND-004` — foi concluído e aprovado no review humano do PR #18 (decisão D — `DataReference` corrigido com alvo de qualifier `UNSPECIFIED` e mapeamento compatibility-preserving `{DATA}`) e arquivado em `docs/work/history/WORK-COND-004.md`; o resumo durável registra o contrato implementado e as decisões. A dependência `BACKLOG-RES-004` (IBM resolution-of-names step 3) permanece registrada e destravará `{DATA, FILE}` no resolver. Slices 5–7 continuam backlog e não estão autorizados; o Slice 5 (occurrences contextuais / remoção do acoplamento do collector ao `grammarRule` `conditionNameReference`) permanece pendente.
 
 #### Evidência e problema
 
