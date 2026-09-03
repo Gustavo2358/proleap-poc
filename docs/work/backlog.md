@@ -420,7 +420,7 @@ Após a qualification identificar mais de um recurso, quando zero ou um deles é
 
 ### BACKLOG-COND-001 — Contextualizar condições combinadas e referências nominais
 
-Progresso: o Slice 1 foi concluído pelo PR #15 e arquivado como `WORK-COND-001`. O Slice 2 foi concluído pelo PR #16 e arquivado como `WORK-COND-002` (ADR-0012 `Accepted`). O Slice 3 foi concluído pelo PR #17 e arquivado como `WORK-COND-003`. O Slice 4 está ativo em `WORK-COND-004`, no checkpoint de Discovery do PR (rounds 1 e 2 concluídos; decisão D — `DataReference` corrigido com alvo de qualifier `UNSPECIFIED`), aguardando review humano antes da implementação na mesma branch/PR. O round 2 registrou a dependência `BACKLOG-RES-004` (IBM resolution-of-names step 3), que destravará `{DATA, FILE}` no resolver. Slices 5–7 continuam backlog e não estão autorizados.
+Progresso: o Slice 1 foi concluído pelo PR #15 e arquivado como `WORK-COND-001`. O Slice 2 foi concluído pelo PR #16 e arquivado como `WORK-COND-002` (ADR-0012 `Accepted`). O Slice 3 foi concluído pelo PR #17 e arquivado como `WORK-COND-003`. O Slice 4 está ativo em `WORK-COND-004`, com o checkpoint de Implementation concluído no PR #18 (decisão D — `DataReference` corrigido com alvo de qualifier `UNSPECIFIED` e mapeamento compatibility-preserving `{DATA}`), aguardando review humano final antes do merge. A dependência `BACKLOG-RES-004` (IBM resolution-of-names step 3) permanece registrada e destravará `{DATA, FILE}` no resolver. Slices 5–7 continuam backlog e não estão autorizados.
 
 #### Evidência e problema
 

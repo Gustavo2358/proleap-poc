@@ -4,8 +4,8 @@
 
 Checkpoints LÓGICOS no MESMO work item, branch e PR — sem cardinalidade física de commits:
 
-1. **Checkpoint 1 — Discovery (em curso):** investigação da grammar e da fonte IBM, contracasos de resolver, consumer impact analysis, decisão de modelagem (round 2: **D** — `DataReference` corrigido) e oracles. Zero produção. Entregáveis: lifecycle documental, teste de caracterização `ConditionNameSurfaceDiscoveryTest` (14 testes, somente FATOS), arquivamento de `WORK-COND-003`, atualização de índices/AGENTS/backlog (incluindo `BACKLOG-RES-004`). STOP para review humano. Commits do checkpoint: `5ed7e14` (discovery inicial), `43fdeab` (semantic challenge round 1), e os commits novos desta rodada (facts do contracaso + docs do round 2).
-2. **Checkpoint 2 — Implementação (após aprovação humana):** contrato abaixo, commits revisáveis do checkpoint, na mesma branch/PR.
+1. **Checkpoint 1 — Discovery (concluído e aprovado no head `69e715e`):** investigação da grammar e da fonte IBM, contracasos de resolver, consumer impact analysis, decisão de modelagem (round 2: **D** — `DataReference` corrigido) e oracles. Zero produção. Entregáveis: lifecycle documental, teste de caracterização `ConditionNameSurfaceDiscoveryTest` (14 testes, somente FATOS), arquivamento de `WORK-COND-003`, atualização de índices/AGENTS/backlog (incluindo `BACKLOG-RES-004`). Commits do checkpoint: `5ed7e14` (discovery inicial), `43fdeab` (semantic challenge round 1), `0d4851d` (facts do contracaso) e `69e715e` (docs do round 2).
+2. **Checkpoint 2 — Implementação (concluído, aguardando review humano final):** contrato abaixo implementado com commits revisáveis na mesma branch/PR (SHAs em `state.md` e no corpo do PR).
 
 ## Dependências
 

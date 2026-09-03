@@ -2,95 +2,108 @@
 
 ## Onde estamos
 
-Checkpoint 1 (Discovery) **aprofundado no round 2** na branch `implementation/work-cond-004-condition-name-surface`, sem nenhuma alteração de produção. O round 2 falsificou a afirmação de invariância do round 1 (ampliar `DATA → DATA_OR_FILE` PODE regredir: `RESOLVED → UNSUPPORTED_DIALECT_OPTION`/`AMBIGUOUS` no contracaso local-DATA × outer-GLOBAL-FILE, fato `qualifiedLocalDataNameCollidesWithOuterGlobalFileNameAcrossPrograms`) e reabriu C vs D. Decisões finais: (a) **modelagem D** — `DataReference` corrigido, sem node novo, sem contrato novo; (b) **alvo de qualifier `UNSPECIFIED`** com mapeamento conservador `{DATA}` no resolver (policy-preserving, zero mudança de candidates); (c) a regra IBM faltante (resolution-of-names step 3 — precedência de programa local APÓS qualification) é **dependência separada, `BACKLOG-RES-004`**, que destravará `{DATA, FILE}` no futuro. `reference-resolution.md` foi relido integralmente e voltou ao `must_read`. Conclusão: **READY_FOR_IMPLEMENTATION** — checklist do round 2 10/10 fechado.
+**Checkpoint 2 — Implementation concluído** na branch `implementation/work-cond-004-condition-name-surface`, sobre o Discovery aprovado (`69e715e`), seguindo o contrato da decisão **D — `DataReference` corrigido** sem node novo, sem contrato novo e sem ampliação de resolver. Status: **IMPLEMENTATION_COMPLETE — aguardando review humano final do PR #18** (merge é decisão humana; não executado).
+
+O Checkpoint 1 (Discovery, rounds 1–2) permanece resumido abaixo: a decisão D venceu C; o alvo de qualifier `UNSPECIFIED` com mapeamento compatibility-preserving `{DATA}` foi escolhido porque a ampliação `{DATA, FILE}` regride `RESOLVED → UNSUPPORTED_DIALECT_OPTION/AMBIGUOUS` no contracaso local-DATA × outer-GLOBAL-FILE; a regra IBM faltante (resolution-of-names step 3) é a dependência separada `BACKLOG-RES-004`.
 
 ## Verde conhecido
 
-- `ConditionNameSurfaceDiscoveryTest`: **14 testes verdes** (10 originais + 3 fatos do round 1 + 1 contracaso do round 2: declarações/namespaces/visibilidade across units, comportamento atual do resolver para a condição e para a referência DATA equivalente, e as ancestries que provam que a ampliação adicionaria candidate).
-- Gates completos verdes com diff exclusivamente documental/testes (registro abaixo).
-- Diff entre `main` e a branch não contém `src/main/`.
+- `ConditionNameSurfaceAstTest`: **15 testes verdes** — oracles CN-01..CN-12, S4-BOUNDARY-01, pre-order/identity com `assertActualProductsJoin` e o consumer-impact check CICS.
+- `ConditionNameSurfaceDiscoveryTest`: **14 testes verdes** (facts de grammar preservados; caracterizações do bug pré-fix migradas para oracles positivos; contracaso local/GLOBAL mantido como regressão).
+- `SemanticConditionContextDiscoveryTest` (8, 1 skip pré-existente), `ConditionSurfaceAstTest` (30), `AstPreorderInvariantTest` (5), `DataAndIndexReferenceResolverTest` (23): todos verdes.
+- Suíte Maven completa: **295 testes, 0 falhas, 0 erros, 3 skips pré-existentes**.
 
 ## Restante
 
-- Review humano do Discovery (Checkpoint 1) — STOP obrigatório.
-- Após aprovação explícita, na MESMA branch/PR: Checkpoint 2 (implementação do contrato da spec, oracles CN-01..CN-12 e erros A..M em `ConditionNameSurfaceAstTest`, remoção do prefixo `planned:` no `work-item.yaml`).
-- Futuro, em work item próprio: `BACKLOG-RES-004` (step 3 de resolution-of-names + ampliação `UNSPECIFIED → {DATA, FILE}`).
+- **Review humano final do PR #18** — STOP obrigatório; sem merge automático.
+- Futuro, em work item próprio: `BACKLOG-RES-004` (IBM resolution-of-names step 3 + ampliação `UNSPECIFIED → {DATA, FILE}`).
+- Slice 5 (ocorrências contextuais / remoção do falso gap `grammarRule == conditionNameReference ⇒ CONDITION`) — intocado e não antecipado.
 
 ## Descobertas que afetam o plano
 
 1. **Grammar:** `conditionNameReference: conditionName (inData* inFile? conditionNameSubscriptReference* | inMnemonic*)` — subscripts DEPOIS de toda qualification; `FLAG-88(I) OF CUSTOMER` grammar-rejeitado.
-2. **Corrupção atual:** `firstDescendant(qualifiedDataName)` captura o subscript — `FLAG-88(I)` vira `baseName="I"`; qualification perdida; com subscript qualificado o qualifier interno é roubado para a raiz.
-3. **Assimetria de branches:** `ELEM OF GRP-TBL(I)` em simple-condition (subscripts da referência) vs relation-operand (subscripts do qualifier via `inTable`) — diferença de surface que sobrevive estruturalmente no `DataReference` corrigido.
-4. **Fronteiras do collector:** `grammarRule == "conditionNameReference" ⇒ CONDITION` permanece o falso gap (Slice 5); com a decisão D os subscripts recuperados entram pela política `SUBSCRIPT`/INDEX/{DATA, INDEX} pré-existente **sem nenhuma mudança de collector**.
-5. **Namespace de qualifier (round 1+2):** `dataName`/`fileName`/`mnemonicName` são `cobolWord`; `inFile`/`inMnemonic` sombreados. Target por posição (não-final `DATA`; final `UNSPECIFIED`); MNEMONIC bounded. **Round 2:** ampliar para `{DATA, FILE}` sem o step 3 do IBM LR regride (COND-A08c) → mapeamento conservador até `BACKLOG-RES-004`.
-6. **Decisão de modelagem (round 2):** **D** (`DataReference` corrigido) vence C (node novo + contrato) — o node novo só codificaria a posição, já estrutural nos containers tipados e no contexto do collector; C dividiria o mesmo nominal escrito entre dois tipos por posição (inconsistência nova frente ao precedente SET/EVALUATE) e exigiria uma sealed interface nascida de refactor (Finding 3). Sem ADR novo.
+2. **Corrupção pré-fix (eliminada):** `firstDescendant(qualifiedDataName)` capturava o subscript — `FLAG-88(I)` virava `baseName="I"`; qualification perdida; qualifier do subscript qualificado era roubado para a raiz.
+3. **Assimetria de branches:** `ELEM OF GRP-TBL(I)` em simple-condition (subscripts da referência) vs relation-operand (subscripts do qualifier via `inTable`) — sobrevive estruturalmente no `DataReference` corrigido.
+4. **Fronteiras do collector:** `grammarRule == "conditionNameReference" ⇒ CONDITION` permanece o falso gap (Slice 5); os subscripts/qualifiers recuperados entram pelas políticas `SUBSCRIPT`/`QUALIFIER_COMPONENT` pré-existentes **sem nenhuma mudança de collector**.
+5. **Namespace de qualifier:** `dataName`/`fileName`/`mnemonicName` são `cobolWord`; `inFile`/`inMnemonic` sombreados. Target por posição (não-final `DATA`; final `UNSPECIFIED`); MNEMONIC bounded.
+6. **Decisão de modelagem:** **D** (`DataReference` corrigido) — o node novo de C só codificaria a posição, já estrutural; C dividiria o mesmo nominal escrito entre tipos por posição. Sem ADR novo.
 
-## Semantic challenge pass — round 2
+## Checkpoint 2 — Implementation
 
-### 1. Hipótese
+### Production changes
 
-"Ampliar `QualifierTarget.DATA → DATA_OR_FILE` é invariável para casos existentes porque `DATA ⊂ {DATA, FILE}`."
+| Arquivo | Mudança | Classificação (audit §37) |
+| --- | --- | --- |
+| `Ast.java` | `QualifierTarget.UNSPECIFIED` + javadoc (fato de surface; a parse tree não classifica o namespace do qualifier final) | A |
+| `AstBuilder.java` | `conditionNameReference(ctx)` construído SOMENTE de children diretos (`conditionName()`, `inData()`, `conditionNameSubscriptReference()`); `conditionNameSubscriptGroup` via `expression(subscript, ...)` existente; extração `buildQualifier` compartilhada (paths de identifier com comportamento byte-for-byte idêntico); `visitConditionNameReference` e `buildBareNominal` roteados ao novo lowering | A |
+| `DataAndIndexReferenceResolver.java` | 1 case `UNSPECIFIED → {DATA}` + javadoc do boundary `BACKLOG-RES-004` | B |
 
-### 2. Contracaso
+Nenhuma linha classificada como D (inesperada). Proibido e não utilizado: `firstDescendant`/`nearestDescendants` a partir da referência, reparse textual, `instanceof InDataContext ⇒ DATA`, `DATA_OR_FILE` na surface de condition-name.
 
-OUTER: `FD Q IS GLOBAL` + `01 OUTER-REC` + `88 C` (condition-name GLOBAL — IBM: "A condition-name ... is global if that entry is subordinate to another entry that specifies the GLOBAL clause"). INNER (contido): `01 Q` (DATA local) + `88 C`; escreve `IF C OF Q` e `MOVE CUST-STATUS OF Q TO X`. Fixture IBM-válida e grammar-aceita (fato executável; `STATUS` é palavra reservada do lexer — renomeada para `CUST-STATUS`).
+### Testes
 
-### 3. Resultado normativo
+- **Novo** `ConditionNameSurfaceAstTest` (oracles CN-01..CN-12 + S4-BOUNDARY-01 + pre-order/identity + CICS).
+- **Migrados** (`ConditionNameSurfaceDiscoveryTest`): `subscriptedConditionNameReferencesKeepBaseQualifiersAndSubscripts`, `contextualTailInnerReferenceCarriesTheCompleteWrittenStructure`, `nestedQualifierInsideSubscriptBelongsToTheSubscriptNotTheReference` (AST corrigido), `dataQualifierBranchCanCarryAFileDeclaration` (alvo `UNSPECIFIED`; resolução continua `DECLARATION_NOT_FOUND`), `qualifiedLocalDataNameCollidesWithOuterGlobalFileNameAcrossPrograms` (alvo `UNSPECIFIED`; regressão `RESOLVED/QUALIFIED_HIERARCHY_MATCH` local preservada), renome de `currentAstPreservesQualifiersOnlyWhileSubscriptsAreAbsent` → `qualificationOrderAndConnectorsSurviveStructurally`.
+- **Migrado** `SemanticConditionContextDiscoveryTest.characterizesConditionNameSubscriptCorruption`: baseName `FLAG-ON`, 1 `SubscriptGroup`, occurrence `IDX` com role `SUBSCRIPT`, resolução do root `RESOLVED/UNIQUE_VISIBLE_DECLARATION` (recuperação legítima: a occurrence agora carrega o nome correto; nenhuma política de resolver mudou).
+- `work-item.yaml`: prefixo `planned:` removido no mesmo checkpoint que criou o arquivo.
 
-IBM Enterprise COBOL for z/OS 6.4 LR, cap. 7 "Resolution of names — Names within programs" (pp. 63–66): programas contidos e contendo podem definir condition-name/data-name/file-name/record-name com a mesma user-defined word; o conjunto de resolução é {nomes de B} ∪ {nomes GLOBAL de A e contendo}; a qualification e as regras de unicidade são aplicadas a esse conjunto; **se mais de um recurso for identificado, no máximo um é local a B — o local vence e, sem local, o contendo mais próximo (step 3)**. Precedência DEPOIS da qualification; uniforme para DATA e FILE; independe de `QUALIFY(STANDARD/EXTEND)`. File-name é global se o FD tem GLOBAL; condition-name participa da visibilidade GLOBAL por subordinação.
+### Semantic challenge pass — implementation
 
-### 4. Comportamento do repo (fato executável)
+| Challenge | Ataque | Veredito |
+| --- | --- | --- |
+| A — first descendant shortcut | `firstDescendant(qualifiedDataName)` | **Morto** — CN-04/CN-12 falham sob o lowering antigo (evidência: as caracterizações pré-fix falhavam exatamente nesses asserts) |
+| B — flattening | qualifiers como string | **Morto** — CN-03 exige dois `DataQualifier` na ordem escrita |
+| C — drop subscripts | descartar `(I, J)` | **Morto** — CN-04/CN-05 exigem `SubscriptGroup` com children |
+| D — root qualifier stealing | traversal recursivo promove `SUB-GROUP` | **Morto** — CN-12 exige root qualifiers = `[CUSTOMER]` somente |
+| E — DATA_OR_FILE shortcut | `UNSPECIFIED → {DATA, FILE}` | **Morto empiricamente por mutação**: a mutação fez falhar `cn11`, `dataQualifierBranchCanCarryAFileDeclaration` e o contracaso local/GLOBAL (3 oracles) |
+| F — condition specialization | `conditionNameReference ⇒ CONDITION` no builder/resolver | **Ausente** — nenhuma linha nova faz isso; o falso gap do collector permanece byte-identical (Slice 5) |
+| G — Slice 5 leakage | diff em `ReferenceOccurrenceCollector`/`admissibleKinds`/`ReferenceKind.CONDITION`/`grammarRule` | **Ausente** — grep no diff de produção: zero ocorrências |
+| H — reparse textual | `split`/`substring`/`Pattern`/`Matcher`/`regex` no lowering novo | **Ausente** — grep no diff do builder: zero; estrutura vem da parse tree |
+| I — identity/pre-order | IDs contíguos, sem clone, ordem determinística | **Verde** — `conditionNameSurfacesPreserveCanonicalPreOrderAndProductJoins` + `AstPreorderInvariantTest` + `assertActualProductsJoin` |
+| J — consumer blast radius | ver seção abaixo | **Explicável pela estrutura recuperada**; sem regressão silenciosa |
 
-- `IF C OF Q` hoje: occurrence CONDITION; `compatibleCandidates(C)` = [INNER C local, OUTER C GLOBAL]; `applyQualification(Q@{DATA})` exclui OUTER C por namespace → `RESOLVED/QUALIFIED_HIERARCHY_MATCH` com o candidate local (exclusão ACIDENTAL, não a regra).
-- Com ampliação hipotética `{DATA, FILE}`: ambos sobrevivem → `qualifyExtend` mantém só o local → policy UNSPECIFIED → `UNSUPPORTED_DIALECT_OPTION` (`AMBIGUOUS` sob `QUALIFY(STANDARD)`) — **regressão `RESOLVED → UNSUPPORTED_DIALECT_OPTION/AMBIGUOUS`**, e ainda errado frente ao step 3 (local em qualquer modo).
-- `MOVE CUST-STATUS OF Q TO X` (referência DATA com `DATA_OR_FILE` pré-existente de `qualifiedDataNameFormat1`) já devolve hoje `UNSUPPORTED_DIALECT_OPTION` com 2 candidates — **o defeito é preexistente e geral**, não introduzido pelo slice.
-- A occurrence `QUALIFIER_COMPONENT` de `Q` resolve para o data item local — evidência estrutural de que a correção futura passa por resolver os nomes dos qualifiers antes do filtering.
+### Consumer impact
 
-### 5. Consequência arquitetural
+- `ReferenceOccurrenceCollector` — **byte-identical**: o `addDataReference` existente passa a enxergar os qualifiers/subscripts recuperados; o ternary pré-existente `target == FILE ? FILE : DATA` mapeia `UNSPECIFIED` para `DATA` (compatibility-preserving). Subscripts de condition-name geram occurrence `SUBSCRIPT` pela política pré-existente (oracles CN-04/05/06/07).
+- `DataAndIndexReferenceResolver` — 1 case novo; candidate universe provadamente inalterado (contracaso + mutação E).
+- `CoverageSnapshot`/`AstSnapshot` — sem mudança de código; métricas mudam apenas onde a estrutura legítima foi materializada; nenhuma baseline congelada quebrou (suíte completa verde).
+- `CicsIntrinsicClassifier` — sem mudança de código. **Delta bounded executável** (`cicsClassifierConsumerImpactIsBoundedToTheRecoveredSurfaceShape`): `IF DFHRESP(X)` em posição de simple condition, antes com `baseName=X` (shape nunca casava), agora recupera `DataReference(DFHRESP, [(X)])` e passa a receber a MESMA classificação `POSSIBLE_INTRINSIC/INFERRED` já emitida para o path de relation-operand (`IF DFHRESP(X) = DFHVALUE(NORMAL)`). Julgamento: **comportamento legítimo decorrente de AST anteriormente corrompida**, consistente com o contrato do classifier (hipótese INFERRED para referência COBOL não resolvida com shape conhecida); nenhum workaround heurístico aplicado.
 
-A ampliação não pode entrar no Slice 4. A regra faltante é geral (DATA e CONDITION; namespaces DATA e FILE; todos os programas) e preexistente → **Opção 2: dependência separada `BACKLOG-RES-004`** (registrada no backlog; a promoção deverá definir invariante próprio para a precedência de programa local após qualification). O Slice 4 escolhe a representação que NÃO expõe a regressão: `QualifierTarget.UNSPECIFIED` na surface + mapeamento `{DATA}` no resolver (policy-preserving; constraint efetiva idêntica à atual). Nenhum caso que já resolvia muda; a resolução de condition-names qualificadas por file-name permanece `DECLARATION_NOT_FOUND` até a dependência.
+### Regressões verificadas
 
-### 6. C vs D revisitado
+- Contracaso local/GLOBAL (`IF C OF Q`): continua `RESOLVED/QUALIFIED_HIERARCHY_MATCH` com o candidate local — `{DATA, FILE}` NÃO foi introduzido.
+- `IF FLAG-88 OF CUSTOMER-FILE` continua `UNRESOLVED/DECLARATION_NOT_FOUND` (boundary `BACKLOG-RES-004`, não regressão).
+- `ConditionSurfaceAstTest` (Slice 3) verde sem migração de tipo; tail interno continua `DataReference`.
+- SET/EVALUATE paths de identifier com shapes e targets pré-existentes (S4-BOUNDARY-01).
 
-A tabela completa está em `spec.md` "Decisão de modelagem — C vs D revisitado". Resumo concreto: com D, o collector precisa de ZERO mudanças (o `addDataReference` existente percorre qualifiers/subscripts do `DataReference` corrigido), snapshots/coverage/Ast.children/`ContextualConditionTail` ficam byte-identical, o resolver muda apenas 1 case, e os precedentes do repositório (SET/EVALUATE: payload neutro + contexto estrutural) são mantidos. O node de C carregaria somente a posição — informação que a árvore já possui — e criaria inconsistência (mesmo nominal como `DataReference` no SET e `ConditionNameReference` no IF) além de uma sealed interface nascida de refactor.
+### Must-not-change audit
 
-### 7. Decisão final
+`git diff --exit-code 69e715e -- Cobol.g4 AstSnapshot.java ReferenceOccurrenceCollector.java CobolReferenceResolver.java ReferenceOccurrences.java ReferenceResolution.java grammar-rule-manifest.tsv` → **zero** (byte-identical).
 
-**D — `DataReference` corrigido** + `QualifierTarget.UNSPECIFIED` (última posição) + mapeamento conservador no resolver. Sem node novo, sem contrato novo, sem `NominalReference` (Finding 3 resolvido por eliminação: "nominal" no repositório é o adjetivo do domínio de binding como um todo — uma interface `NominalReference` com dois implementadores data-shaped redefiniria o vocabulário). O goal do work item foi ajustado para refletir D.
-
-### 8. Decisão de lifecycle para resolver
-
-**Work item próprio futuro (`BACKLOG-RES-004`)** — a regra afeta resolution de forma geral (dados já falham hoje), envolve precedência local/GLOBAL, atinge vários namespaces e exige etapa nova no resolver (entre `applyQualification` e a decisão de qualify mode). O Slice 4 não a implementa, não a esconde sob "structural adaptation" e não é bloqueado por ela (o alvo conservador evita a exposição).
-
-### Challenges 1–10 (round 2, vereditos)
-
-1. **Candidate-set monotonicity:** a falácia `old ⊆ new ⇒ resultado preservado` foi atacada diretamente — refutada pelo contracaso (1 candidate → 2 candidates → `UNSUPPORTED_DIALECT_OPTION`/`AMBIGUOUS`). ✓
-2. **Local vs inherited GLOBAL:** regra IBM localizada (step 3): qualification ANTES, precedência de programa local DEPOIS, na decisão. ✓
-3. **Namespace collision across program units:** mesma spelling local DATA × outer GLOBAL FILE executada e caracterizada (fato). ✓
-4. **Representation necessity (provar C desnecessário):** o `ConditionNameReference` carrega apenas a posição, já derivável de containers tipados + contexto do collector — nenhum consumer atual precisa da distinção em node próprio. ✓
-5. **Representation insufficiency (provar D insuficiente):** nenhuma shape encontrada em que dois usos com o mesmo `DataReference` estrutural exijam significados de surface diferentes não deriváveis do parent/container tipado (standalone = `IfStatement.condition`; tail = wrapper; relation = `RelationCondition`/`DistributedOperandGroup`; class = `ClassCondition.subject`; EVALUATE = `EvaluateSelectorContext`). Registrado: D não perde informação para os consumidores existentes. ✓
-6. **Accidental architecture:** a sealed interface `NominalReference` existiria para reduzir `instanceof`, não por domínio compartilhado real (Finding 3) — rejeitada. ✓
-7. **Downstream blast radius:** C toca Ast/AstBuilder/collector/resolver/snapshot/coverage/testes/classifiers; D toca AstBuilder + 1 valor de enum + 1 case do resolver + testes. Menos arquivos não decide sozinho, mas o benefício semântico de C não compensa o raio (tabela na spec). ✓
-8. **Slice 5 hand-off real (pseudocódigo):** com D, o collector do Slice 5 carrega o contexto estrutural na própria recursão — `visitConditionSurface(expr, ...)` ramificando por `ContextualConditionTail` (admissível aberto), `DataReference` direto sob a surface (política de simple condition), `RelationCondition`/`LogicalCondition`/`NegatedCondition`/`GroupedCondition`/`ClassCondition` — sem `grammarRule`, sem parent inspection, sem reparse; precedente `EvaluateSelectorContext`/`StatementOperandContext`. Com C, o Slice 5 trocaria a string por `instanceof ConditionNameReference` — 1:1 o mesmo fato (o node só nasce daquela rule), apenas tipado. ✓
-9. **Ambiguity preservation:** nenhuma opção transforma `A = B OR C` em CONDITION antes do binding (tail permanece wrapper; M5 metamórfico). ✓
-10. **Lifecycle correctness:** correção semântica do resolver = work item próprio (`BACKLOG-RES-004`), não deste slice, conforme work-item protocol e os critérios de Opção 2. ✓
-
-### Checklist de prontidão (round 2)
-
-- [x] A ampliação DATA → DATA_OR_FILE não introduz regressão — demonstrado que introduziria; a regra necessária (IBM step 3) está explicitamente modelada e corretamente escopada em `BACKLOG-RES-004`.
-- [x] Local vs inherited GLOBAL testado (fato executável) e normativamente resolvido (cap. 7 do IBM LR).
-- [x] A escolha C vs D foi refeita usando pseudocódigo real do Slice 5 (challenge 8).
-- [x] A nova abstraction possui necessidade semântica comprovada — NÃO possui; por isso foi removida (D).
-- [x] O naming do contrato não conflita com o vocabulário nominal do repo — contrato eliminado (Finding 3).
-- [x] `reference-resolution.md` foi relido integralmente e incorporado à decisão (voltou ao `must_read`).
-- [x] Nenhuma mudança de política do resolver está escondida sob "structural adaptation" — o único delta é o case `UNSPECIFIED → {DATA}`, policy-preserving, com a ampliação explicitamente bloqueada por `BACKLOG-RES-004`.
-- [x] O lifecycle da eventual correção de resolver está explícito (`BACKLOG-RES-004`).
-- [x] O Slice 5 continua possível sem reparse/string heuristics (hand-off por contexto estrutural).
-- [x] Zero production code alterado nesta rodada.
-
-## Gates (checkpoint Discovery round 2, head da branch)
+### Gates (Checkpoint 2, working tree pós-implementação)
 
 - `./scripts/harness/check-fast.sh` — **passed**
 - `./scripts/harness/check-performance.sh` — **passed**
 - `./scripts/harness/check-semantic.sh` — **passed**
 - `./scripts/harness/check-full.sh` — **passed**
+
+### Commits do checkpoint
+
+- `3c4e0a4` — `feat: preserve condition-name reference structure`
+- `dd45bff` — `test: cover condition-name surface semantics`
+- commit de docs deste checkpoint (registra o contrato implementado; SHAs completos no corpo do PR #18)
+
+### Remaining limitations
+
+- Resolução de condition-names qualificadas por file-name: `DECLARATION_NOT_FOUND` (hoje e antes do slice).
+- MNEMONIC (IBM Format 2): qualifier preservado como `UNSPECIFIED`; namespace MNEMONIC não modelado (bounded).
+- Falso gap do collector (`grammarRule ⇒ CONDITION`) preservado; occurrence contextuais pertencem ao Slice 5.
+- `FLAG-88(I)(J)`/`FLAG-88(ALL)` permanecem shapes grammar-only preservadas sem alegação de validade.
+
+### BACKLOG-RES-004
+
+Não implementado: sem step 3 de resolution-of-names, sem precedência de programa local, sem ampliação `UNSPECIFIED → {DATA, FILE}`. O mapeamento atual é compatibility-preserving `{DATA}` e a dependência permanece registrada no backlog.
+
+### Slice 5 não antecipado
+
+Nenhuma política contextual nova: collector, `admissibleKinds`, `ReferenceKind.CONDITION` e `grammarRule` seguem exatamente como antes; `ContextualConditionTail` continua a alternativa contextual com `DataReference` interno; o hand-off do Slice 5 permanece por contexto estrutural.
