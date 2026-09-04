@@ -92,12 +92,42 @@ O futuro lowering deve percorrer os contexts de SEARCH e sua condition surface u
 ### F3-SEARCH-VARYING
 
 - **Current fact:** IBM 6.4 distingue `VARYING` do searched table e da condition: o varying pode ser index-name ou identificador que seja item índice/item elementar inteiro. A grammar local representa ambos por `searchVarying : VARYING qualifiedDataName`. Hoje o operand cai na policy default DATA/{DATA}: `SEARCH-IDX` (de `INDEXED BY`) fica UNRESOLVED/INVALID_NAMESPACE_FOR_CONTEXT, enquanto `SEARCH-COUNTER PIC 9(4)` resolve DATA.
-- **Future contract:** posição independente `SEARCH_VARYING`, sem novo `ReferenceKind`, com `role = CONTEXT_DEPENDENT`, `primary kind = DATA` e `admissibleKinds = {DATA, INDEX}`. Assim a seleção final pode ser INDEX para `SEARCH-IDX` e DATA para `SEARCH-COUNTER`; `searchedReference`, varying, condition e subscripts nunca compartilham uma policy global.
+- **Future contract:** posição independente `SEARCH_VARYING`, sem novo `ReferenceKind`, com `role = CONTEXT_DEPENDENT` e helper puro `searchVaryingKinds(ref)`: bare → primary DATA/admissible `{DATA, INDEX}`; qualified → primary DATA/admissible `{DATA}`. O binding seleciona INDEX ou DATA conforme a declaração somente quando a shape permitir.
 - **Negative implementation killed:** `VARYING → DATA` sempre falha no oracle INDEX; `VARYING → INDEX` sempre falha no oracle DATA; aplicar CONDITION ao varying/table/subscript também falha.
-- **Evidence/test:** `F3_varyingIndexIsCurrentlyDefaultDataButFuturePolicyMustAdmitIndex`, `F3_varyingElementaryIntegerIsDataAndMustRemainAdmissibleAsData` e `F3_varyingAndConditionUseIndependentSemanticPositions` registram kind, admissibleKinds, status, selectedCandidate e separação de posições.
+- **Evidence/test:** `F3_varyingIndexIsCurrentlyDefaultDataButFuturePolicyMustAdmitIndex`, `F3_varyingElementaryIntegerIsDataAndMustRemainAdmissibleAsData` e `F3_varyingAndConditionUseIndependentSemanticPositions` registram o estado atual. `R1_bareVaryingIndexReResolvesWithTheHypotheticalSharedPolicy` e `R2_bareVaryingDataReResolvesWithTheHypotheticalSharedPolicy` exercitam o resolver atual com a policy hipotética.
+
+#### F3-R1-BARE-INDEX
+
+- **Hypothesis:** uma occurrence bare com primary DATA e admissible `{DATA, INDEX}` deve permitir a seleção do index-name `SEARCH-IDX`.
+- **Attempted refutation:** foi construída uma occurrence hipotética substituindo somente a policy do VARYING atual; todos os demais produtos permaneceram inalterados e o `CobolReferenceResolver` atual foi executado.
+- **Evidence/result:** R1 passou com `RESOLVED` e `selectedCandidate.kind = INDEX`; portanto não exige alteração algorítmica do resolver.
+- **Final contract:** bare `SEARCH_VARYING` usa DATA/{DATA, INDEX}.
+
+#### F3-R2-BARE-DATA
+
+- **Hypothesis:** a mesma policy bare também deve aceitar item elementar inteiro DATA.
+- **Attempted refutation:** a declaração foi substituída por `SEARCH-COUNTER PIC 9(4)` sem alterar a surface nem a occurrence hipotética.
+- **Evidence/result:** R2 passou com `RESOLVED` e `selectedCandidate.kind = DATA`; a hipótese “VARYING sempre INDEX” foi eliminada.
+- **Final contract:** a admissibility bare é independente da declaração; binding decide DATA versus INDEX.
+
+#### F3-R3-QUALIFIED-EXCLUDES-INDEX
+
+- **Hypothesis:** a inclusão de INDEX deveria continuar válida mesmo quando o nominal VARYING é qualified.
+- **Attempted refutation:** o teste usou `SEARCH-IDX OF SOME-GROUP`, com uma relação hierárquica de índice compatível no modelo, e comparou `{DATA}` contra a policy errada `{DATA, INDEX}`.
+- **Evidence/result:** com `{DATA}`, a entry não seleciona candidato; com `{DATA, INDEX}`, o resolver seleciona INDEX. O caso é explicitamente **IBM-invalid controlled model-level what-if** em Enterprise COBOL 6.4, usado para demonstrar que a admissibilidade qualified deve excluir INDEX.
+- **Final contract:** qualified → primary DATA/admissible `{DATA}`.
+
+#### F3-R4-GRAMMAR-SHAPE-AUDIT
+
+- **Hypothesis:** poderia existir uma forma não-qualified que exclui INDEX, ou uma forma qualified que permita INDEX em Enterprise COBOL 6.4.
+- **Attempted refutation:** foi auditada a cadeia `searchVarying → qualifiedDataName → qualifiedDataNameFormat1 → qualifiedInData/inData`; R4 caracteriza qualification aceita e verifica ausência de `TableCall`/subscript no root. O grammar source não oferece subscript direto em `searchVarying`.
+- **Evidence/result:** nenhum contraexemplo foi encontrado. IBM 6.4 descreve o varying como index-name ou item índice/integer e documenta qualification de index-name somente como novidade de 6.5; a aceitação local do what-if não prova validade IBM.
+- **Final contract:** somente a distinção bare versus qualified desta surface entra no slice; não se inventa subscripted VARYING root.
+
+Authority: [serial SEARCH / VARYING](https://www.ibm.com/docs/en/cobol-zos/6.3.0?topic=statement-serial-search), [Enterprise COBOL 6.4 Language Reference](https://publibfp.dhe.ibm.com/epubs/pdf/igy6lr40.pdf) e [novidade de qualification de index-name no 6.5](https://www.ibm.com/docs/en/cobol-zos/6.5.0?topic=changes-in-enterprise-cobol-zos-65).
 
 IBM authority: [SEARCH statement, Enterprise COBOL 6.4](https://www.ibm.com/docs/en/cobol-zos/6.4.0?topic=statements-search-statement), [binary SEARCH/SEARCH ALL, Enterprise COBOL 6.4](https://www.ibm.com/docs/en/cobol-zos/6.4?topic=statement-binary-search) e [comparisons of index-names and index data items](https://www.ibm.com/docs/en/cobol-zos/6.4?topic=conditions-comparison-index-names-index-data-items).
 
 ## Status do Discovery
 
-`READY_FOR_IMPLEMENTATION` quanto ao contrato de Discovery Round 2. A implementação continua proibida neste PR e requer novo review humano.
+`READY_FOR_IMPLEMENTATION` quanto ao contrato de Discovery Round 3. A implementação continua proibida neste PR e requer novo review humano.

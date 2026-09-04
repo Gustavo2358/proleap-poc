@@ -18,7 +18,7 @@
 
 ## Superfície arquitetural provável
 
-Confirmada como mínima: `Ast.java`, `AstBuilder.java` e `ReferenceOccurrenceCollector.java`. O collector só precisará de typed boundary routing para chamar `visitConditionSurface` na condition de cada `SearchWhen`; não deve receber nova policy de SEARCH, duplicação de `relationOperandKinds`/`contextualKinds` ou lógica de resolver. O manifest de coverage precisa reclassificar `searchStatement`/`searchWhen` quando a implementação for autorizada. Testes focalizados e fixtures podem crescer em `src/test`; grammar não entra no escopo porque `searchStatement` já reconhece ambas as formas e `searchWhen.condition` já é o nó correto da parse tree.
+Confirmada como mínima: `Ast.java`, `AstBuilder.java` e `ReferenceOccurrenceCollector.java`. O collector terá duas responsabilidades localizadas: (1) typed boundary routing para chamar `visitConditionSurface` na condition de cada `SearchWhen`; (2) routing de `SearchStatement.varying` para uma posição `SEARCH_VARYING` com helper puro shape-sensitive `searchVaryingKinds(ref)`. Não deve receber nova condition policy de SEARCH, duplicação de `relationOperandKinds`/`contextualKinds` ou lógica de resolver. O manifest de coverage precisa reclassificar `searchStatement`/`searchWhen` quando a implementação for autorizada. Testes focalizados e fixtures podem crescer em `src/test`; grammar não entra no escopo porque `searchStatement` já reconhece ambas as formas e `searchWhen.condition` já é o nó correto da parse tree.
 
 `AstScopeIndex`, `ReferenceResolution`, `ResolutionContracts`, symbol tables e snapshots não precisam de alteração estrutural demonstrada neste Discovery; só entram em implementação se um oracle futuro revelar uma incompatibilidade concreta.
 
@@ -28,7 +28,7 @@ Confirmada como mínima: `Ast.java`, `AstBuilder.java` e `ReferenceOccurrenceCol
 - Preservar operands reconhecidos hoje e acrescentar apenas condition/branch nodes alcançáveis.
 - Rotear a condition pelo boundary semântico tipado; `Ast.children` permanece responsável por reachability, IDs, scope, provenance e pre-order, não por escolher `CONDITION`.
 - Preservar `NEXT SENTENCE` fora de `statement()` como `Ast.NextSentenceStatement` na action da branch.
-- Usar `SEARCH_VARYING` com `primary kind DATA` e `admissibleKinds {DATA, INDEX}`, permitindo seleção nominal de INDEX ou DATA conforme a declaração.
+- Centralizar `searchVaryingKinds(ref)`: bare → primary DATA/admissible `{DATA, INDEX}`; qualified → primary DATA/admissible `{DATA}`. A shape vem da surface AST, não da declaração.
 - Atualizar coverage de `PRESERVED_UNINTERPRETED` para a classificação da boundary tipada, sem afirmar que validation/ConditionSemantics existem.
 - Rebaselinar IDs/snapshots somente com evidência aprovada e sem esconder diferenças de cardinalidade.
 

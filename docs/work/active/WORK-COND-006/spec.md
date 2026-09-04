@@ -19,7 +19,7 @@ Parser errors, preprocessing incompleto e formas que a grammar aceita mas IBM re
 ## Classes semânticas
 
 - `searched table`: referência do `qualifiedDataName` após `SEARCH`; é um operand de tabela, não uma condition.
-- `VARYING/index`: referência do `searchVarying`; mantém policy própria de DATA/INDEX.
+- `VARYING/index`: referência do `searchVarying`; mantém policy própria shape-sensitive de DATA/INDEX.
 - `relation operands`: subjects/objects de uma relation completa, com policy relacional do Slice 5.
 - `condition-name`: standalone `level 88`, qualification e subscript preservados como nominal shape; em branch contextual, a classe final depende do binding.
 - `condition surface`: relations, `LogicalCondition`, `NegatedCondition`, `ContextualConditionTail`, `GroupedCondition` e `DistributedOperandGroup` quando produzidos pela lowering existente.
@@ -32,6 +32,7 @@ Parser errors, preprocessing incompleto e formas que a grammar aceita mas IBM re
 3. `SEARCH ALL` usa a mesma regra `searchWhen` na grammar local, mas não é semanticamente equivalente a SEARCH serial.
 4. `grammarRule` é provenance/coverage, não autoridade de namespace ou `ReferenceKind`.
 5. Uma ocorrência futura por condition deve apontar para o mesmo AST node nominal escrito; não se coletará novamente a parse tree.
+6. `searchVarying` recebe `qualifiedDataName`: pode ter qualification, mas não tem subscript ou reference modification no root nessa surface gramatical.
 
 ## Comportamento esperado
 
@@ -71,16 +72,23 @@ Assim, a mesma condition surface reutiliza `RelationCondition`, `ContextualCondi
 
 ### SEARCH VARYING
 
-IBM permite que o `VARYING` seja um `index-name` ou um identificador que seja item índice ou item elementar inteiro. Na grammar local ambos chegam como `searchVarying : VARYING qualifiedDataName`, portanto o contrato nominal futuro é uma posição distinta, sem criar `ReferenceKind` novo:
+IBM permite que o `VARYING` seja um `index-name` ou um identificador que seja item índice ou item elementar inteiro. Na grammar local ambos chegam como `searchVarying : VARYING qualifiedDataName`; `qualifiedDataName` permite qualification, mas não um subscript do root. Portanto o contrato nominal futuro é uma posição distinta, sem criar `ReferenceKind` novo:
 
 ```text
-SEARCH_VARYING
-  role            = CONTEXT_DEPENDENT
-  primary kind    = DATA
-  admissibleKinds = {DATA, INDEX}
+searchVaryingKinds(ref):
+  if ref.qualifiers().isEmpty():
+    primary kind    = DATA
+    admissibleKinds = {DATA, INDEX}
+  otherwise:
+    primary kind    = DATA
+    admissibleKinds = {DATA}
 ```
 
-Esta é a policy de namespace, não uma policy de condition. O binding seleciona `INDEX` para `SEARCH-IDX` declarado por `INDEXED BY` e `DATA` para um item elementar inteiro válido, mantendo `searchedReference`, `varying`, condition, qualifiers e subscripts em posições semânticas separadas. A forma qualificada/subscriptada deve aplicar a shape admissibility já existente; não se deve transformar qualquer identifier dentro de SEARCH em `CONDITION`.
+O role continua `CONTEXT_DEPENDENT`; `SEARCH_VARYING` nomeia uma posição semântica, não uma nova namespace ou `ReferenceKind`. A policy depende da shape nominal escrita, não da declaração que o resolver encontrará. Os testes de re-resolution demonstram que, para a shape bare, a mesma ocorrência hipotética resolve `DATA` para um item inteiro, `INDEX` para um `INDEXED BY` e permanece `UNRESOLVED` quando não há declaração.
+
+Enterprise COBOL 6.4 não oferece qualification de index-name; essa capacidade aparece como novidade documentada no Enterprise COBOL 6.5. Assim, `SEARCH-IDX OF SOME-GROUP` é mantido neste Discovery somente como **IBM-invalid controlled model-level what-if**. Ele é útil para provar a fronteira do modelo: admitir `{DATA, INDEX}` para uma nominal qualified permitiria ao resolver selecionar INDEX; a policy 6.4 proposta exclui INDEX e usa `{DATA}`. A aceitação sintática local não é claim de validade IBM.
+
+Esta é a policy de namespace, não uma policy de condition. O binding seleciona `INDEX` para `SEARCH-IDX` bare declarado por `INDEXED BY` e `DATA` para um item elementar inteiro válido, mantendo `searchedReference`, `varying`, condition e qualifiers em posições semânticas separadas. Não se deve transformar qualquer identifier dentro de SEARCH em `CONDITION` nem inventar uma policy de subscript para o root de `VARYING`.
 
 ### NEXT SENTENCE
 
@@ -151,4 +159,4 @@ Hoje `searchStatement` e `searchWhen` aparecem no manifest como `PRESERVED_UNINT
 
 ## Decisão de saída
 
-`READY_FOR_IMPLEMENTATION`. Os testes S1–S6, o controle negativo e a inspeção de código fecharam sem alterar produção. A autorização de implementação continua dependente de review humano posterior.
+`READY_FOR_IMPLEMENTATION`. Os testes S1–S6, R1–R4, substituições de declaration/shape, o controle negativo e a inspeção de código fecharam sem alterar produção. A autorização de implementação continua dependente de review humano posterior.
