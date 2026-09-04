@@ -46,6 +46,14 @@ O algoritmo não pode escolher primeiro candidato, ordem de corpus ou candidato 
 
 Resolvers usam índices por nome canônico, unit, scope e domínio semântico. Métricas expõem declarations indexadas, lookups nominais, candidates inspecionados e cardinalidade máxima. IDs e candidate order são determinísticos; não há scan global por referência como algoritmo deliberado.
 
+## SEARCH VARYING e SEARCH WHEN
+
+`SearchStatement` fornece ao collector três posições nominais independentes: searched reference, `VARYING` e referências na condition de cada `SearchWhen`. A condition usa o mesmo routing de condition surface das demais condições e não altera o algoritmo nominal do resolver.
+
+Para `VARYING`, a occurrence mantém role `CONTEXT_DEPENDENT` e primary `DATA`. A admissibilidade depende somente da shape AST: root bare → `{DATA, INDEX}`; root qualified → `{DATA}`. Assim, uma declaração bare pode resolver DATA ou INDEX, enquanto uma forma qualified restringe a seleção a DATA. Não existe `ReferenceKind.SEARCH_VARYING`.
+
+`SEARCH ALL` preserva seu bit estrutural `all=true`, mas o resolver não valida keys, ordem, igualdade, conectores ou compatibilidade type-sensitive. Essas validações continuam fora do binding nominal e não são inferidas de grammar coverage. O manifesto classifica as boundaries `searchStatement` e `searchWhen` como materializadas/reference-ready; `grammarRule` continua provenance/coverage, não namespace.
+
 ## Fontes semânticas
 
 - IBM Enterprise COBOL — [Qualification](https://www.ibm.com/docs/en/cobol-zos/6.3?topic=reference-qualification)

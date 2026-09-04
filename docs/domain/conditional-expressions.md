@@ -77,6 +77,14 @@ A arquitetura aceita em ADR-0012 (status `Accepted`), guardada por INV-COND-001 
 
 Essa decisão não implementa `ConditionSemantics`, `ConditionValidation` nem autoriza CFG, predicate analysis ou dataflow. Ela define a fronteira que esses consumidores deverão usar quando os slices correspondentes forem aprovados. O pipeline conceitual é `Surface AST → ReferenceOccurrences → ReferenceResolution → ConditionSemantics → ConditionValidation → CFG/predicate/dataflow`; `ConditionSemantics` e `ConditionValidation` ainda não existem em produção e terão API/schema decididos em slice futuro autorizado.
 
+## SEARCH WHEN
+
+`SearchWhen.condition` é uma condition surface tipada dentro de `SearchStatement`; portanto reutiliza exatamente o lowering e a policy de occurrences desta seção. Uma condition standalone produz `CONDITION/{CONDITION}`; uma relation abreviada como `A = B OR C` preserva A/B como relation operands e C como `ContextualConditionTail`, com `CONDITION/{DATA, INDEX, CONDITION}` quando C é bare. O collector chega a essa policy por routing explícito do boundary tipado, não por `grammarRule` nem por traversal genérico.
+
+O `searchedReference` da tabela, o `varying` e as referências das conditions são posições independentes. Para `SEARCH VARYING`, a surface determina a admissibilidade: referência bare usa primary `DATA` e `{DATA, INDEX}`; referência qualified usa primary `DATA` e `{DATA}`. O resolver nominal permanece inalterado e apenas seleciona entre os candidates admissíveis; qualifiers continuam com occurrence própria.
+
+`NEXT SENTENCE` é uma ação estrutural da branch e é representado como `Ast.NextSentenceStatement`. `SEARCH ALL` compartilha a materialização da condition surface e preserva `all=true`, mas as restrições normativas de keys, ordem, igualdade, conectores e compatibilidade permanecem responsabilidade futura de `ConditionValidation`; grammar acceptance não é validade semântica.
+
 ## Relações
 
 Domínios: [AST semântica](semantic-ast.md), [modelo de símbolos](symbol-model.md), [resolução de referências](reference-resolution.md) e [provenance](provenance.md). ADRs: ADR-0002, ADR-0003, ADR-0005, ADR-0008, ADR-0009 e ADR-0012. Invariantes: INV-AST-001 a INV-AST-003, INV-SYM-001, INV-PROV-002, INV-RES-001, INV-COND-001, INV-COND-002 e INV-DET-001.

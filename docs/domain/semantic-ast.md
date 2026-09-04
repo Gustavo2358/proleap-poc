@@ -37,6 +37,14 @@ Desde `WORK-COND-004` (Slice 4), uma condition-name reference verdadeira produz 
 
 Occurrences de condition surface seguem a shape tipada: standalone `CONDITION/{CONDITION}`; relation/distributed bare `INDEX/{DATA, INDEX}`; relation/distributed qualified, subscripted ou reference-modified `DATA/{DATA}`; contextual tail `CONDITION/{DATA, INDEX, CONDITION}` somente para a shape index-admissible e `CONDITION/{DATA, CONDITION}` nos demais casos. A policy não é propagada aos children e cada nominal escrito gera uma única occurrence. `PerformControl(expression, VALUE|CONDITION)` é metadata não-node, sem ID e sem efeito no pre-order ou em `Ast.children`; `UNTIL` é CONDITION e `TIMES`, `VARYING`, `FROM` e `BY` são VALUE.
 
+### SEARCH WHEN
+
+`SearchStatement` é uma fronteira AST tipada com `all`, `searchedReference`, `varying` opcional, `atEnd` opcional e uma lista ordenada de `SearchWhen`. Cada `SearchWhen` é um `Ast.Node` que possui exatamente uma `condition` e suas `statements`, preservando a identidade e o ownership da branch. `SearchWhen.condition` reutiliza a mesma condition surface de `IF`/`EVALUATE`; sua interpretação nominal continua dependente do binding e não cria `ConditionSemantics` antecipadamente.
+
+Para `SearchStatement`, `Ast.children` segue `searchedReference`, `varying`, `atEnd` e `whens`; para `SearchWhen`, segue `condition` e depois `statements`. Assim, IDs, provenance, scope e pre-order permanecem determinísticos, sem children compartilhados ou clones. `NEXT SENTENCE` é preservado como `Ast.NextSentenceStatement` na lista de statements da branch. `SEARCH ALL` usa o mesmo shape e preserva `all=true`, mas esse bit não afirma validade normativa.
+
+O materialization de SEARCH é estrutural e não implica análise de controle, dataflow, runtime ou validação completa de `SEARCH ALL`.
+
 ## Fronteiras e incerteza
 
 - AST não executa lookup nem guarda candidate IDs.

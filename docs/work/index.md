@@ -5,7 +5,6 @@ Work items delimitam a mudança em execução; o [backlog](backlog.md) registra 
 ## Ativo
 
 - [WORK-AST-002 — Hardening da fronteira AST para CFG e dataflow](active/WORK-AST-002/spec.md) — Slice 1 mergeado no PR #10; Slice 2 no checkpoint de Discovery do PR #13. Implementar F-02 depende de merge/review e autorização explícita posterior.
-- [WORK-COND-006 — Materializar conditions de SEARCH WHEN](active/WORK-COND-006/spec.md) — Checkpoint 1 — Discovery; implementação não autorizada.
 
 ## Histórico
 
@@ -19,6 +18,7 @@ Work items delimitam a mudança em execução; o [backlog](backlog.md) registra 
 - [WORK-COND-003 — Surface AST lossless para condições combinadas e abreviadas](history/WORK-COND-003.md) — Slice 3 concluído pelo PR #17; nodes tipados da condition surface sem binding; collector/resolver intocados.
 - [WORK-COND-004 — Preservar estrutura nominal completa de condition-name references](history/WORK-COND-004.md) — Slice 4 de `BACKLOG-COND-001` concluído pelo PR #18; `DataReference` lossless para condition-name surface, `UNSPECIFIED` preserva a incerteza do qualifier, `BACKLOG-RES-004` mantém a resolução DATA/FILE futura.
 - [WORK-COND-005 — Contextualizar occurrences de condições](history/WORK-COND-005.md) — Slice 5 de `BACKLOG-COND-001` concluído pelo PR #19; occurrences contextuais shape-sensitive, `PerformControl` tipado e manifesto `1.1.0`.
+- [WORK-COND-006 — Materializar conditions de SEARCH WHEN](history/WORK-COND-006.md) — Slice 6 de `BACKLOG-COND-001` concluído pelo PR #20; boundary `SearchStatement`/`SearchWhen`, routing contextual, VARYING shape-sensitive e `NEXT SENTENCE` preservados; validação normativa de SEARCH ALL permanece futura.
 - [WORK-RES-001 — Observar CALLs literais externos por artefato](history/WORK-RES-001.md)
 - [WORK-RES-002 — Veredito sobre W3D-AUX e categorias de resolução](history/WORK-RES-002.md)
 - [WORK-RES-003 — Resolver SET de condition-name sem namespace DATA espúrio](history/WORK-RES-003.md)
