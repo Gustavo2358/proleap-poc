@@ -561,6 +561,136 @@ class ContextualConditionOccurrenceDiscoveryTest {
     }
 
     // -------------------------------------------------------------------------
+    // FACT-R3-01/R3-02/R3-03 — reference modification is a distinct typed
+    // dimension of the relation root. It is not a subscript, even though both
+    // spellings use parentheses, and it invalidates the old "bare" predicate
+    // that inspected only qualifiers and subscript groups.
+    // -------------------------------------------------------------------------
+    @Test
+    void referenceModifiedRelationOperandIsNotIndexAdmissibleByNominalShape() {
+        AstBoundaryTestSupport.Analysis analysis = AstBoundaryTestSupport.analyze(
+                source("R3-REFMOD-DATA", "01 C PIC X(10).",
+                        "IF A = C(1:2) CONTINUE END-IF."),
+                "r3-reference-modified-relation.cbl");
+        Ast.RelationCondition relation = AstBoundaryTestSupport.nodes(
+                analysis, Ast.RelationCondition.class).get(0);
+        Ast.DataReference root = assertInstanceOf(Ast.DataReference.class, relation.object());
+
+        assertAll("FACT-R3-01 typed root shape",
+                () -> assertEquals("C", root.baseName()),
+                () -> assertTrue(root.qualifiers().isEmpty()),
+                () -> assertTrue(root.subscriptGroups().isEmpty(),
+                        "C(I) would be a table element/subscript shape"),
+                () -> assertTrue(root.referenceModification() != null,
+                        "C(1:2) is a reference modification shape"));
+
+        ReferenceOccurrences occurrences = analysis.occurrences().values().iterator().next();
+        ReferenceOccurrences.Occurrence current = occurrence(occurrences, root.meta().id());
+        assertAll("FACT-R3-02 PREEXISTING_RELATION_REFERENCE_MODIFICATION_OVERADMISSIBILITY",
+                () -> assertEquals(ResolutionContracts.ReferenceKind.INDEX, current.kind()),
+                () -> assertEquals(EnumSet.of(ResolutionContracts.ReferenceKind.DATA,
+                                ResolutionContracts.ReferenceKind.INDEX),
+                        current.admissibleKinds(),
+                        "current relation policy treats the reference-modified root as bare"));
+
+        Set<ResolutionContracts.ReferenceKind> futureKinds = Set.of(
+                ResolutionContracts.ReferenceKind.DATA);
+        ReferenceResolution.Entry future = resolutionEntry(reResolve(analysis,
+                withOccurrencePolicy(analysis, root.meta().id(),
+                        ResolutionContracts.ReferenceKind.DATA, futureKinds)), root.meta().id());
+        assertAll("FACT-R3-03 future policy and unchanged resolver",
+                () -> assertEquals(ResolutionContracts.ResolutionStatus.RESOLVED, future.status()),
+                () -> assertEquals(ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION,
+                        future.reason()),
+                () -> assertEquals(ResolutionContracts.ReferenceKind.DATA,
+                        future.selectedCandidate().map(ReferenceResolution.Candidate::kind).orElse(null)),
+                () -> assertEquals(futureKinds, future.occurrence().admissibleKinds()));
+    }
+
+    @Test
+    void referenceModifiedIndexNameIsExcludedByFuturePolicyInControlledWhatIf() {
+        // IBM does not make a reference-modified index-name a valid source
+        // construct. This is therefore a nominal candidate-model what-if only:
+        // it demonstrates the exact false acceptance caused by retaining INDEX
+        // in the old shape-blind policy, without treating invalid source as an
+        // IBM language oracle.
+        AstBoundaryTestSupport.Analysis analysis = AstBoundaryTestSupport.analyze(
+                source("R3-REFMOD-INDEX-WHAT-IF", """
+                    01 T OCCURS 2 TIMES INDEXED BY C.
+                       05 V PIC X.
+                    """, "IF A = C(1:2) CONTINUE END-IF."),
+                "r3-reference-modified-index-what-if.cbl");
+        Ast.DataReference root = assertInstanceOf(Ast.DataReference.class,
+                AstBoundaryTestSupport.nodes(analysis, Ast.RelationCondition.class)
+                        .get(0).object());
+        assertTrue(root.referenceModification() != null);
+        assertTrue(root.qualifiers().isEmpty());
+        assertTrue(root.subscriptGroups().isEmpty());
+
+        Set<ResolutionContracts.ReferenceKind> oldKinds = EnumSet.of(
+                ResolutionContracts.ReferenceKind.DATA,
+                ResolutionContracts.ReferenceKind.INDEX);
+        ReferenceResolution.Entry oldPolicy = resolutionEntry(reResolve(analysis,
+                withOccurrencePolicy(analysis, root.meta().id(),
+                        ResolutionContracts.ReferenceKind.INDEX, oldKinds)), root.meta().id());
+        assertEquals(ResolutionContracts.ReferenceKind.INDEX,
+                oldPolicy.selectedCandidate().map(ReferenceResolution.Candidate::kind).orElse(null),
+                "negative control: old policy could accept INDEX as the root");
+
+        Set<ResolutionContracts.ReferenceKind> futureKinds = Set.of(
+                ResolutionContracts.ReferenceKind.DATA);
+        ReferenceResolution.Entry futurePolicy = resolutionEntry(reResolve(analysis,
+                withOccurrencePolicy(analysis, root.meta().id(),
+                        ResolutionContracts.ReferenceKind.DATA, futureKinds)), root.meta().id());
+        assertAll("NEG-INDEX-REFMOD-01",
+                () -> assertEquals(ResolutionContracts.ResolutionStatus.UNRESOLVED,
+                        futurePolicy.status()),
+                () -> assertEquals(ResolutionContracts.ResolutionReason.INVALID_NAMESPACE_FOR_CONTEXT,
+                        futurePolicy.reason()),
+                () -> assertEquals(java.util.Optional.empty(), futurePolicy.selectedCandidate()),
+                () -> assertTrue(futurePolicy.candidates().stream().noneMatch(candidate ->
+                        candidate.kind() == ResolutionContracts.ReferenceKind.INDEX)));
+    }
+
+    @Test
+    void distributedReferenceModifiedRelationOperandUsesTheSameFutureShapePolicy() {
+        AstBoundaryTestSupport.Analysis analysis = AstBoundaryTestSupport.analyze(
+                source("R3-DISTRIBUTED-REFMOD", "01 C PIC X(10).",
+                        "IF A = (C(1:2) OR D) CONTINUE END-IF."),
+                "r3-distributed-reference-modified-relation.cbl");
+        Ast.RelationCondition relation = AstBoundaryTestSupport.nodes(
+                analysis, Ast.RelationCondition.class).get(0);
+        Ast.DistributedOperandGroup distributed = assertInstanceOf(
+                Ast.DistributedOperandGroup.class, relation.object());
+        Ast.DataReference modified = assertInstanceOf(Ast.DataReference.class,
+                distributed.operands().get(0));
+        assertAll("distributed operand is structurally supported",
+                () -> assertEquals("C", modified.baseName()),
+                () -> assertTrue(modified.qualifiers().isEmpty()),
+                () -> assertTrue(modified.subscriptGroups().isEmpty()),
+                () -> assertTrue(modified.referenceModification() != null));
+
+        ReferenceOccurrences occurrences = analysis.occurrences().values().iterator().next();
+        ReferenceOccurrences.Occurrence current = occurrence(occurrences, modified.meta().id());
+        assertAll("distributed current overadmissibility",
+                () -> assertEquals(ResolutionContracts.ReferenceKind.INDEX, current.kind()),
+                () -> assertEquals(EnumSet.of(ResolutionContracts.ReferenceKind.DATA,
+                                ResolutionContracts.ReferenceKind.INDEX),
+                        current.admissibleKinds()));
+
+        Set<ResolutionContracts.ReferenceKind> futureKinds = Set.of(
+                ResolutionContracts.ReferenceKind.DATA);
+        ReferenceResolution.Entry future = resolutionEntry(reResolve(analysis,
+                withOccurrencePolicy(analysis, modified.meta().id(),
+                        ResolutionContracts.ReferenceKind.DATA, futureKinds)), modified.meta().id());
+        assertAll("distributed future policy reuses one helper contract",
+                () -> assertEquals(ResolutionContracts.ResolutionStatus.RESOLVED, future.status()),
+                () -> assertEquals(ResolutionContracts.ReferenceKind.DATA,
+                        future.selectedCandidate().map(ReferenceResolution.Candidate::kind).orElse(null)),
+                () -> assertEquals(futureKinds, future.occurrence().admissibleKinds()));
+    }
+
+    // -------------------------------------------------------------------------
     // FACT-R2-QS — C OF G(I): root C shape-sensitive; G e I independentes; o root
     // nunca recebe reference modification (grammar conditionNameReference não tem
     // referenceModifier).
