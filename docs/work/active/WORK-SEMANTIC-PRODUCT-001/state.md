@@ -7,7 +7,7 @@ Work item permanece `active`, risco `high`. O Checkpoint 1 está concluído apó
 ## Verde conhecido
 
 - `main` está limpo e alinhado ao `origin/main` no merge do PR #22.
-- O relatório do Checkpoint 1, a remediation de review, a self-validation e o handoff documental estão concluídos; os gates desta remediation são registrados no relatório.
+- O relatório do Checkpoint 1 foi atualizado na segunda remediation adversarial, incluindo F-SP-006/F-SP-007, a matriz refinada e a self-validation; os gates docs/fast/architecture/semantic/full passaram e estão registrados no relatório.
 - Não houve alteração em `src/main/**`, gramática, AST, símbolos, occurrences, resolução ou fixtures.
 
 ## Restante

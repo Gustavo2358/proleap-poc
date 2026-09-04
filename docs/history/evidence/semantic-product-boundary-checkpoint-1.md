@@ -18,6 +18,7 @@ Este relatório responde à pergunta: **qual conhecimento semântico o frontend 
 - Incompletude é primeira classe: fatos conhecidos coexistem com `UNRESOLVED_COPY`, coverage parcial, statuses `UNRESOLVED`/`AMBIGUOUS`/`UNSUPPORTED`, dependência desconhecida, diagnostics e claim `INCOMPLETE`.
 - Provenance localizada já está materializada em `Ast.Meta` e nos produtos posteriores. A necessidade de atravessar o objeto `SourceMap` inteiro ainda é `UNKNOWN`; não foi encontrada dependência downstream atual que leia esse objeto diretamente.
 - A representação atual tem slices estruturalmente suficientes somente onde o audit de consumer reconstruction o prova (por exemplo, targets procedurais e CALL nominal); outros constructs tipados permanecem parcial ou somente preservados. Ela não prova suficiência para papéis de `PERFORM` dependentes de ordem, efeitos de controle, terminalidade, `ALTER`, validações de `SEARCH`, valores de runtime ou qualquer contrato de CFG/dataflow.
+- A segunda passagem separou essa última lacuna em `F-SP-007`: `PERFORM` controls são uma lista plana de expressões `VALUE`/`CONDITION`; `PERFORM TIMES`, modos de teste, papéis de `VARYING` e níveis `AFTER` não são reconstruíveis como papéis tipados.
 
 ### Hipóteses avaliadas
 
@@ -80,9 +81,66 @@ arquivo físico / String de entrada
 
 Há composição posterior explícita, mas ela ocorre no composition root e nos adapters: `ExplorerMain` produz produtos separados, chama as análises, depois passa subconjuntos diferentes aos snapshots. Nenhuma etapa encontrada calcula uma regra semântica essencial exclusivamente no HTML. O parse tree é internamente necessário para construir a AST e para a página de parse, mas não deve atravessar a futura boundary como dependência de consumer.
 
+### Analysis/compiler context audit
+
+O contexto de análise observado nesta pipeline não é uma configuração externa completa.
+O único caminho implementado para options é a extração de diretivas encontradas no source;
+`ExplorerMain` não recebe hoje um objeto externo de compiler/build options. A restrição
+operacional abaixo é, portanto, uma entrada do review humano, não uma conclusão do corpus.
+
+| Camada | Evidência e valores observados | O que permanece disponível depois da camada |
+| --- | --- | --- |
+| evidence bruta do preprocessor | `PreprocessorEngine.Outcome.compilerOptions`: lista de `CompilerOption(name, value, writtenText)` extraída de `PROCESS`/`CBL`, inclusive de COPYs processados | disponível somente no `Outcome` durante a composição atual; não é retida por `CompilationUnitBuildResult`, `ReferenceResolution` ou `ResolutionAnalysisReport` |
+| normalização | `PGMNAME`/`PGMN` → `PgmnameMode`; `DYNAM`/`DYN`/`NODYNAM`/`NODYN` → `DynamMode`; `DLL`/`NODLL` → `DllMode`; ausência/valor não reconhecido → `UNSPECIFIED` | três modos são copiados para a policy; a forma bruta, origem e precedência entre diretivas não seguem |
+| policy | `CobolResolutionPolicy.initial()` fixa `policyId=cobol-explorer/explicit-options`, `policyVersion` exposta como `version=3.0.0`, `QualifyMode=UNSPECIFIED`, e os modos de options inicialmente `UNSPECIFIED`; o composition root substitui `PgmnameMode`, `DynamMode` e `DllMode` pelos valores do `Outcome` | `ReferenceResolution.policy()` e `ResolutionAnalysisReport.policy()` retêm a policy normalizada; `ResolutionSnapshot` publica `policyId`, `policyVersion`, `qualifyMode`, `pgmnameMode`, `dynamMode` e `dllMode` |
+| facts derivados | resolução nominal, statuses/reasons, candidates e `CallSemantics` são calculados sob a policy | o fato derivado permanece, mas sua dependência da policy precisa ser auditável na futura boundary |
+
+### Compiler-options-absent adversarial case
+
+| Cenário | Input/evidência | Estado normalizado e fato observado |
+| --- | --- | --- |
+| C1 — option explicitamente conhecida: `DYNAM,NODLL` | `CallSemanticsTest.transportsDynamModeAndAssignsLinkageWithoutChangingTargetSyntax`, `call-linkage-dynam.cbl` | `DynamMode=DYNAM`, `DllMode=NODLL`, `PgmnameMode=UNSPECIFIED`; `CALL 'TARGET-A'` permanece `EXTERNAL_OBSERVED` e tem `linkage=DYNAMIC`; target syntax não muda |
+| C1 — option explicitamente conhecida: `NODYNAM,NODLL` | o mesmo teste, `call-linkage-nodynam.cbl` | `DynamMode=NODYNAM`, `DllMode=NODLL`, `PgmnameMode=UNSPECIFIED`; `CALL 'TARGET-A'` permanece `EXTERNAL_OBSERVED` e tem `linkage=STATIC` |
+| C1 — option explicitamente conhecida: `NODYNAM,DLL` | `CallSemanticsTest.doesNotClassifyNodynamDllCallsAsStatic`, `call-linkage-dll.cbl` | `DynamMode=NODYNAM`, `DllMode=DLL`; `CALL 'TARGET-A'` permanece `EXTERNAL_OBSERVED` e tem `linkage=DLL` |
+| C1 — `PGMNAME(LONGMIXED)` | `SourceNormalizationPreprocessingIntegrationTest.normalizationPreservesEverySupportedPreprocessorPolicy` | `PgmnameMode=LONGMIXED`; `DYNAM`/`DLL` também são normalizados quando presentes |
+| C1 — combinação não suportada: `DYNAM,DLL` | `CallSemanticsTest.rejectsTheInvalidDynamDllCompilerOptionCombination`, `invalid-dynam-dll-call.cbl` | modos são preservados como `DYNAM`/`DLL`, mas o CALL fica `UNSUPPORTED` por `UNSUPPORTED_DIALECT_OPTION` e `linkage=UNKNOWN` |
+| C2 — nenhuma option disponível no source | `call-linkage-unspecified.cbl` e `CallSemanticsTest.transportsDynamModeAndAssignsLinkageWithoutChangingTargetSyntax` | `PgmnameMode=UNSPECIFIED`, `DynamMode=UNSPECIFIED`, `DllMode=UNSPECIFIED`; a policy também mantém `QualifyMode=UNSPECIFIED`; `CALL 'TARGET-A'` continua `EXTERNAL_OBSERVED` sem candidate, com target nominal observado e `linkage=UNKNOWN`; `CALL CALL-NAME` mantém binding nominal DATA e linkage dinâmica, mas seu valor de runtime é desconhecido |
+| C3 — option potencialmente externa, mas indisponível | restrição operacional fornecida pelo review humano; não há metadata simulada | não é cenário empiricamente inventado no corpus: `analysis context unavailable`; conhecidos = source/AST, target literal, occurrences e fatos nominais independentes; desconhecidos = linkage/canonicalização/seleções que dependem de option; não afetados = provenance, coverage e observação do target literal |
+
+O resultado C2 é “análise com contexto de options ausente”, não “análise inválida”. A
+incerteza fica no fato dependente (`linkage`, ou outra seleção realmente policy-dependent),
+sem apagar o target nominal observado nem fatos independentes.
+
+As opções conhecidas no source alteram fatos diferentes: `PgmnameMode` pode alterar
+canonicalização/visibilidade nominal de program units; `DynamMode`/`DllMode` podem alterar
+somente a classificação de linkage de CALL literal e podem produzir `UNSUPPORTED` na
+combinação inválida; `QualifyMode` pode alterar a seleção nominal de referências DATA.
+Forma sintática, target literal escrito, occurrence, provenance, coverage e facts não
+dependentes da policy continuam independentes. `CALL WS-PGM` mantém binding nominal DATA,
+mas seu valor e target de runtime permanecem desconhecidos.
+
+As opções brutas deixam de estar disponíveis depois da normalização: um consumer posterior
+vê o estado normalizado e os facts, não o texto/origem de cada diretiva. A ausência da policy
+de origem externa também não é representada por um segundo canal: quando um option não é
+encontrado, o modo correspondente fica `UNSPECIFIED`; isso não significa que o frontend seja
+inválido.
+
+**Restrição operacional fornecida pelo review humano:** no corpus real pretendido, é provável
+que compiler/build options não estejam presentes no COBOL nem estejam disponíveis externamente
+ao analyzer. Isso não foi “provado” pelo corpus atual. O estado conceitual é
+`analysis context unavailable`: facts independentes permanecem conhecidos; facts que realmente
+dependem de options permanecem localmente incertos. Para `CALL 'XPTO'`, o target nominal
+observado continua conhecido e classificável como `EXTERNAL_OBSERVED`; somente `linkage` pode
+ser `UNKNOWN`.
+
+O futuro Checkpoint 2 deverá decidir qual responsabilidade atravessa a boundary: evidence
+bruta, policy normalizada, facts com uncertainty, ou combinação auditável. Também deverá decidir
+se o lowerer precisa da policy que gerou os facts ou somente dos facts normalizados e sua
+uncertainty. Nenhuma dessas decisões foi tomada aqui.
+
 ## 3. Final Semantic Products Inventory
 
-| Product | Unique semantic knowledge | Required downstream? | Why | Stable enough for boundary? | Concern |
+| Product | Unique semantic knowledge | Required downstream? | Why | Stability observed / boundary decision | Concern |
 | --- | --- | --- | --- | --- | --- |
 | `Ast.Program` / `Ast` | surface COBOL tipada, ordem, nesting, operands, expressões, provenance localizada e formas preservadas | Sim, para estrutura e operandos | lowering precisa saber o construct escrito e sua ordem | Parcialmente: contrato de domínio vigente e imutável | IDs são locais à unidade; certas construções são preserved/generic; `ParseTreeOrigin` é metadata de uma geração |
 | `CompilationUnitModel` | inventário top-level/nested, parent, structural path e `ProgramUnitId` | Sim | sem ele não há namespace, visibilidade ou unidade de análise | Forte dentro de uma execução determinística | canonicalização/nome de arquivo e estabilidade entre versões ainda exigem decisão |
@@ -98,6 +156,11 @@ Há composição posterior explícita, mas ela ocorre no composition root e nos 
 | `SourceMap` | mapa completo de transformações, segmentos e include chain | Necessidade do lowerer: `UNKNOWN` | pode responder rastreabilidade além da metadata localizada | Interno hoje | classe package-private, sem accessor público, e não é retida em `CompilationUnitBuildResult` |
 | `AstSnapshot` / `SymbolTableSnapshot` / `CoverageSnapshot` | views achatadas de uma unidade, métricas e links para browser | Não como domínio | servem navegação e inspeção humana | Não | `AstSnapshot`, symbol e coverage são primary-unit only |
 | `ResolutionSnapshot` | projeção full-unit de resolution, candidates, classifications, gaps, relations e provenance | Não como domínio | serve à página de resolução | Não | schema JavaScript e `window.RESOLUTION_DATA` são adapter de presentation |
+
+Na coluna “Required downstream?”, `Sim` significa requisito observado nos slices R1–R7 e
+nos consumidores atuais de cada produto, não uma decisão sobre campos obrigatórios da futura
+boundary. A inclusão final e a forma de acesso continuam `UNKNOWN` até o contrato do lowerer
+ser definido.
 
 Os produtos não são reconstruíveis todos a partir de um único outro produto. Em particular, `ReferenceResolution` carrega occurrences e candidates, mas não reconstitui toda a AST nem os symbol tables; `ResolutionAnalysisReport` carrega status e gaps, mas não é fonte para reconstruir declarations ou a surface; snapshots descartam ou achatam detalhes. Portanto, “required downstream” não implica ainda “campo direto” de uma futura boundary.
 
@@ -306,53 +369,61 @@ O frontend preserva várias formas estruturais, mas não produz CFG. A matriz co
 
 ## 11. Control-Flow Readiness Matrix
 
-| Construct | Parse | Typed AST | References | Binding | Structural info for lowering | Gap |
-| --- | --- | --- | --- | --- | --- | --- |
-| `IF` | Sim | `Ast.IfStatement`, condition, then/else, terminator | Sim para condition e statements internos reconhecidos | Sim conforme contexto; ambiguidade/unresolved preservados | ordem, nesting e ramos escritos | sem CFG/fallthrough/efeitos |
-| `EVALUATE` | Sim | `EvaluateStatement`, subjects, branches, selectors, `OTHER`, terminator | Sim para subjects/selectors reconhecidos | Sim para formas cobertas; F-01 é exceção | ordem de branches e `subjectIndex`/contexto | sem predicate semantics geral; F-01 |
-| `PERFORM` | Sim | inline/procedure, `from`, `through`, controls | Sim para targets e operands reconhecidos | Sim para procedures/data refs cobertos | forma, range escrito, controles e ordem | sem expansão de range/CFG |
-| `PERFORM THRU` | Sim | dois targets estruturados | Sim para `from`/`through` | Sim conforme declarations | range nominal preservado | sem resolução de sequência/CFG |
-| `GO TO` | Sim | `GoToStatement` `SIMPLE` | Sim para targets | Sim para procedures cobertos | lista e ordem dos targets | sem edges |
-| `GO TO DEPENDING ON` | Sim | kind `DEPENDING_ON`, targets e selector | Sim para targets/selector | Sim conforme declarations | selector e lista preservados | sem possible-values/edges |
-| `ALTER` | Sim | `PreservedStatement` com texto/operands genéricos | não há shape dedicada comprovada; reconhecimento genérico depende do caminho | não há binding especializado comprovado | texto e preservation, não efeito de redirecionamento | sem modelo do efeito; `BACKLOG-CFG-002` |
-| `SEARCH` | Sim | `SearchStatement`/`SearchWhen`, `ALL`, searched, varying, at-end | Sim para referências/conditions reconhecidas | Sim conforme contexto | forma, ordem de WHENs, `ALL`, clauses e body | validação de SEARCH/CFG futura |
-| `NEXT SENTENCE` | Sim | `NextSentenceStatement`; sentence preserva terminator | Não há target nominal | N/A | statement e fronteiras de sentence preservados | sem regra de salto/CFG formal |
-| `GOBACK` | Sim | `ModeledStatement` genérico | Não aplicável | N/A | grammar rule/text e posição | não há terminalidade tipada/dedicated |
-| `EXIT PROGRAM` | Sim | `ModeledStatement` genérico | Não aplicável | N/A | grammar rule/text e posição | não há terminalidade tipada/dedicated |
-| `STOP RUN` | Sim | `ModeledStatement` genérico | Não aplicável | N/A | grammar rule/text e posição | não há terminalidade tipada/dedicated |
+“Parse: Sim” não equivale a modelagem suficiente. A escala abaixo é vocabulário deste
+Discovery: `STRUCTURALLY_SUFFICIENT` exige que um lowerer independente reconheça os papéis
+sem ANTLR, parse tree, grammar context, parsing de `grammarRule`, reparse de `writtenText` ou
+ordem implícita dos descendentes; `PARTIALLY_STRUCTURED` tem alguns papéis tipados;
+`PRESERVED_ONLY` conserva superfície/regra, mas exige interpretação adicional; `UNKNOWN`
+significa que a representação não foi obtida/provada. “Suficiente” é sempre limitado aos
+papéis indicados, não a CFG, fallthrough, efeitos, possible-values ou runtime.
 
-“Parse: Sim” não equivale a modelagem suficiente. Em particular, `ALTER`, terminais genéricos e `NEXT SENTENCE` preservam superfície, mas ainda não oferecem contrato tipado de efeitos/terminalidade para um consumidor de controle. Esses gaps não são classificados como bloqueio de CFG neste checkpoint, porque o contrato do Semantic Product e do consumer CFG ainda não existe.
+| Forma | Parse | Representação tipada observada | Papéis reconstruíveis sem frontend | Resultado | Lacuna/evidência |
+| --- | --- | --- | --- | --- | --- |
+| `IF` | Sim | `Ast.IfStatement`, condition, then/else, terminador | condition surface, ordem, nesting e ramos | `STRUCTURALLY_SUFFICIENT` para shape | sem predicate semantics geral, CFG/fallthrough/efeitos |
+| `EVALUATE` | Sim | `EvaluateStatement`, subjects, branches, selectors, `OTHER` | subjects/branches/selectors e ordem | `PARTIALLY_STRUCTURED` | sem semântica geral de predicate |
+| `EVALUATE TRUE` | Sim | subject booleano e `EvaluateSelectorContext` quando reconhecido | associação posicional subject/selector em formas cobertas | `PARTIALLY_STRUCTURED` | F-01 para condição combinada; sem `ConditionSemantics` atual |
+| `EVALUATE ALSO` | Sim | subjects múltiplos, `subjectIndex`, selectors | índice do subject e ordem das branches | `PARTIALLY_STRUCTURED` | sem validação/predicate semantics geral |
+| `PERFORM paragraph` | Sim | `performKind=PROCEDURE`, `fromReference` | target nominal de entrada | `STRUCTURALLY_SUFFICIENT` para target | sem efeito de execução/CFG |
+| `PERFORM THRU` | Sim | `fromReference` e `throughReference` | anchors nominais do range | `STRUCTURALLY_SUFFICIENT` para range escrito | sem expansão de paragraphs/CFG |
+| inline `PERFORM` | Sim | `performKind=INLINE`, `inlineBody` | existência, ordem e nesting do body, quando sem control | `STRUCTURALLY_SUFFICIENT` para body | controls introduzem os gaps abaixo |
+| `PERFORM TIMES` | Sim | `PerformControl(VALUE)` em `controls` | expressão preservada, mas não o papel “count” sem contexto | `PARTIALLY_STRUCTURED` | `TIMES` e papel do count ficam em `writtenControl`/grammar |
+| `PERFORM UNTIL` | Sim | `PerformControl(CONDITION)` | predicate expression e ordem local | `PARTIALLY_STRUCTURED` | modo default/teste não é campo tipado |
+| `PERFORM WITH TEST BEFORE` | Sim | condição em `PerformControl(CONDITION)` | predicate expression | `PARTIALLY_STRUCTURED` | BEFORE só é recuperável por `writtenControl`/grammar |
+| `PERFORM WITH TEST AFTER` | Sim | condição em `PerformControl(CONDITION)` | predicate expression | `PARTIALLY_STRUCTURED` | AFTER só é recuperável por `writtenControl`/grammar |
+| `PERFORM VARYING` | Sim | lista de `PerformControl(VALUE, VALUE, VALUE, CONDITION)` | expressions e ordem de visita | `PARTIALLY_STRUCTURED` | variável, FROM, BY e UNTIL não têm papéis tipados; ordem não basta |
+| `PERFORM AFTER` | N/A | não existe `performType` standalone para AFTER | nenhum papel standalone a reconstruir | `N/A —` `AFTER` só aparece em `performVaryingClause` | avaliado na linha de nested `AFTER` |
+| nested `AFTER` / cadeia VARYING | Sim | mesma lista plana `VALUE`/`CONDITION` | expressions em ordem global | `PARTIALLY_STRUCTURED` | fronteiras, níveis e papéis de cada cadeia `AFTER` não são explícitos |
+| `GO TO` | Sim | `GoToStatement(SIMPLE)`, targets | forma, lista e ordem de targets nominais | `STRUCTURALLY_SUFFICIENT` para operands | sem edges de execução |
+| `GO TO DEPENDING ON` | Sim | kind `DEPENDING_ON`, targets e selector | forma, selector e lista de targets | `STRUCTURALLY_SUFFICIENT` para operands | sem possible-values/edges |
+| `ALTER` | Sim | `PreservedStatement` genérico | somente texto/operands preservados | `PRESERVED_ONLY` | efeito de redirecionamento não tem modelo; F-SP-004 |
+| `SEARCH` | Sim | `SearchStatement`/`SearchWhen`, clauses/body | searched/varying, WHEN order e branches reconhecidas | `PARTIALLY_STRUCTURED` | validação e efeitos futuros |
+| `SEARCH ALL` | Sim | `SearchStatement(all=true)`/`SearchWhen` | forma ALL, searched/varying, WHEN order e branches | `PARTIALLY_STRUCTURED` | keys, igualdade, ordem e compatibilidade não validadas |
+| `NEXT SENTENCE` | Sim | `NextSentenceStatement`, sentence terminator | statement e fronteiras de sentence | `PARTIALLY_STRUCTURED` | regra/alvo do salto não é produto tipado |
+| `CONTINUE` | Sim | `ModeledStatement` genérico | somente presença/posição via metadata | `PRESERVED_ONLY` | não há kind/efeito dedicado |
+| `EXIT` | Sim | `ModeledStatement`, grammar `EXIT PROGRAM?` | nenhum papel dedicated; distinção exige texto/regra | `PRESERVED_ONLY` | não há kind de EXIT |
+| `EXIT PARAGRAPH` | Não | rejeitado pela regra `exitStatement` | nenhum | `UNKNOWN` | parser/coverage não produz node observável |
+| `EXIT SECTION` | Não | rejeitado pela regra `exitStatement` | nenhum | `UNKNOWN` | parser/coverage não produz node observável |
+| `EXIT PERFORM` | Não | rejeitado pela regra `exitStatement` | nenhum | `UNKNOWN` | parser/coverage não produz target de enclosing PERFORM |
+| `EXIT PROGRAM` | Sim | `ModeledStatement`, mesma regra opcional de `EXIT` | nenhum target/kind terminal dedicated | `PRESERVED_ONLY` | só grammar/texto distingue PROGRAM de EXIT |
+| `GOBACK` | Sim | `ModeledStatement` genérico | somente presença/posição via metadata | `PRESERVED_ONLY` | não há terminalidade tipada |
+| `STOP RUN` | Sim | `ModeledStatement` genérico | somente presença/posição via metadata | `PRESERVED_ONLY` | não há terminalidade tipada |
+| `CALL` | Sim | `CallStatement`, syntax/target, occurrences, resolution, `CallSemantics` | target literal/nominal e linkage `KNOWN`/`UNKNOWN`; binding DATA de target variável | `STRUCTURALLY_SUFFICIENT` para target nominal e distinção de linkage | runtime target/possible-values continuam desconhecidos |
 
-### Review remediation — consumer reconstruction audit
-
-Nesta rodada, `Typed AST` não foi aceito como prova de suficiência. A escala abaixo é
-somente vocabulário do Discovery: `STRUCTURALLY_SUFFICIENT` exige que um lowerer
-independente reconheça os papéis sem ANTLR, parse tree, `grammarRule`, reparse de
-`writtenText` ou ordem implícita de descendentes; `PARTIALLY_STRUCTURED` tem alguns
-papéis tipados; `PRESERVED_ONLY` depende de texto/regra; `UNKNOWN` não foi provado.
-
-| Forma | Representação observada | Resultado do consumer reconstruction test |
-| --- | --- | --- |
-| `IF` | condition, then/else e terminador tipados | `STRUCTURALLY_SUFFICIENT` para shape, não para CFG/efeitos |
-| `EVALUATE`, `EVALUATE TRUE`, `EVALUATE ALSO` | subjects, branches, selectors e `subjectIndex` tipados | `PARTIALLY_STRUCTURED`: shape é explícito; semântica geral/F-01 não é provada |
-| `PERFORM paragraph`, `PERFORM THRU` | kind PROCEDURE, `fromReference`, `throughReference` | `STRUCTURALLY_SUFFICIENT` para targets/range nominal |
-| inline `PERFORM` | kind INLINE e body | `STRUCTURALLY_SUFFICIENT` para corpo/nesting quando sem control |
-| `PERFORM UNTIL`; `WITH TEST BEFORE`/`TEST AFTER` | `PerformControl(expression, CONDITION)` e `writtenControl` | `PARTIALLY_STRUCTURED`: condição é marcada, mas BEFORE/AFTER só é recuperável da grammar/texto |
-| `PERFORM VARYING`; `PERFORM ... AFTER ...` aninhado | lista de VALUE/CONDITION em ordem | `PARTIALLY_STRUCTURED`: variável, FROM, BY, UNTIL e cadeias AFTER não têm papéis/kind tipados; a ordem não basta |
-| `GO TO`; `GO TO DEPENDING ON` | targets e selector tipados | `STRUCTURALLY_SUFFICIENT` para forma e operands, não para edges/possible-values |
-| `ALTER` | `PreservedStatement` | `PRESERVED_ONLY` |
-| `SEARCH`, `SEARCH ALL` | `SearchStatement`/`SearchWhen`, `all`, clauses/bodies | `PARTIALLY_STRUCTURED`: shape, WHEN order e ALL são explicitados; validação/efeitos permanecem futuros |
-| `NEXT SENTENCE` | `NextSentenceStatement` e sentence terminator | `PARTIALLY_STRUCTURED`: statement/fronteira existem; alvo/regra de salto não |
-| `CONTINUE` | `ModeledStatement` | `PRESERVED_ONLY` para lowering independente |
-| `EXIT`, `EXIT PROGRAM` | `ModeledStatement` e grammar `EXIT PROGRAM?` | `PRESERVED_ONLY`: a variante exige `grammarRule`/texto; sem kind dedicado |
-| `EXIT PARAGRAPH`, `EXIT SECTION`, `EXIT PERFORM` | não aceitos pela regra `exitStatement` atual | `UNKNOWN`: não há node tipado; é limite de grammar/coverage, não evidência de suficiência |
-| `GOBACK`, `STOP RUN` | `ModeledStatement` | `PRESERVED_ONLY` |
-| `CALL` | `CallStatement`, syntax/target, occurrences, resolution e `CallSemantics` | `STRUCTURALLY_SUFFICIENT` para target nominal e linkage conhecido/UNKNOWN; não para runtime target de CALL variável |
-
-O probe de código confirmou também que `performControls` recolhe expression wrappers por
-descendência e marca apenas se o wrapper estiver sob `performUntil`. O teste existente
+O probe descartável confirmou que `performControls` recolhe wrappers por descendência e
+publica, para `PERFORM VARYING I FROM 1 BY 1 UNTIL I > 10`, exatamente quatro itens
+`VALUE, VALUE, VALUE, CONDITION`; para duas cláusulas `AFTER`, publica oito itens numa lista
+plana. `WITH TEST BEFORE` e `WITH TEST AFTER` diferem em `writtenControl`, não em campo
+tipado. O teste existente
 `ContextualConditionOccurrenceDiscoveryTest.performControlListErasesTheTypedDifferenceBetweenValueAndUntilCondition`
-é evidência adversarial direta da limitação. Não foi alterada AST.
+confirma a perda de papel na view `controlExpressions`. Nenhuma AST foi alterada.
+
+### Registro do probe temporário
+
+- **Probe:** `ControlFlowProbe` descartável, fora do repositório, em `/tmp/semantic-product-discovery-control-flow/`.
+- **Comando:** compilação direta com `javac` contra `target/classes`, `target/test-classes` e as dependências já disponíveis; execução com `java` da classe `io.github.gustavo2358.cobolexplorer.ControlFlowProbe`.
+- **Input:** programa COBOL sintético com `PERFORM paragraph`, `PERFORM THRU`, `PERFORM TIMES`, `UNTIL`, `WITH TEST BEFORE`, `WITH TEST AFTER`, `VARYING`, `VARYING ... AFTER ...` e cinco variantes de `EXIT`.
+- **Resultado observado:** targets/range foram separados; controles foram publicados como `VALUE`/`CONDITION` em lista plana; `TEST BEFORE`/`AFTER` só mudou `writtenControl`; `EXIT` e `EXIT PROGRAM` produziram `ModeledStatement`; `EXIT PARAGRAPH`, `EXIT SECTION` e `EXIT PERFORM` produziram erros de sintaxe.
+- **Conclusão:** a evidência confirma `STRUCTURALLY_SUFFICIENT` somente para os papéis limitados de target/range/body; controls e variantes de EXIT permanecem parciais, preservados ou desconhecidos conforme a matriz. O probe foi apagado antes do handoff.
 
 ## 12. Embedded/Platform Surface
 
@@ -462,6 +533,44 @@ downstream_impact:
 **Rationale:** nenhum construct foi corrigido; a matriz registra o que existe e o que não foi provado.
 **Reassess when:** Checkpoint 2 definir a suficiência e os limites do consumer.
 
+### F-SP-007 — papéis de controle do PERFORM são achatados
+
+**Finding:** a segunda passagem isolou uma lacuna que não deve ficar escondida sob o rótulo
+amplo de `PERFORM` estruturado. `Ast.PerformStatement` distingue `INLINE`/`PROCEDURE` e
+anchors `from`/`through`, mas `controls` contém somente `PerformControl(expression, context)`
+com `context=VALUE` ou `CONDITION`. `PERFORM TIMES` não nomeia o count; `PERFORM UNTIL`
+não materializa o modo de teste default; `WITH TEST BEFORE`/`AFTER` não tem campo de modo;
+`VARYING` não nomeia variável, FROM, BY ou UNTIL; e `AFTER` aninhado não preserva níveis ou
+fronteiras de cada `performVaryingPhrase`. A ordem da lista e `writtenControl` não constituem
+papéis semânticos tipados.
+**Evidence status:** `PROVEN` como limitação da representação atual.
+**Evidence:** `Ast.PerformStatement`, `Ast.PerformControl`, `AstBuilder.performControls`,
+`ContextualConditionOccurrenceDiscoveryTest.performControlListErasesTheTypedDifferenceBetweenValueAndUntilCondition`
+e probe descartável de Checkpoint 1 (`PERFORM VARYING`, `TEST AFTER`, cadeia `AFTER`).
+**Downstream impact:**
+
+```yaml
+downstream_impact:
+  class: UNASSESSED
+  rationale: >
+    A lacuna é semântica e afeta a reconstrução de papéis para lowering, mas o contrato do
+    Semantic Product e a primeira boundary downstream ainda não estão definidos. Não é
+    possível escolher entre BLOCKS_SEMANTIC_PRODUCT, BLOCKS_IR, BLOCKS_CFG ou REDUCES_PRECISION;
+    essas classes são rejeitadas por falta de contrato e oracle, não por defesa da representação.
+  evidence:
+    - src/main/java/io/github/gustavo2358/cobolexplorer/Ast.java:220-248
+    - src/main/java/io/github/gustavo2358/cobolexplorer/AstBuilder.java:955-972
+    - src/test/java/io/github/gustavo2358/cobolexplorer/ContextualConditionOccurrenceDiscoveryTest.java:221-244
+  reassess_when:
+    - semantic-product-sufficiency-matrix-defined
+    - lowerer-control-role-contract-defined
+```
+
+**Rationale:** `PERFORM` não é tratado como uma unidade homogênea; targets/range nominais
+passam no teste limitado, enquanto controls dependentes de papel ficam explicitamente parciais.
+Nenhuma correção de AST ou parser foi feita.
+**Reassess when:** Checkpoint 2 definir a matriz e a responsabilidade entre produto/lowerer/CFG.
+
 ### F-SP-006 — contexto de análise é parcialmente retido e pode estar indisponível
 
 **Finding:** o preprocessing extrai evidência bruta `compilerOptions` (`name`, `value`,
@@ -569,6 +678,7 @@ downstream_impact:
 | F-SP-004 | sim; papéis de controle insuficientes têm consumer semântico ainda não delimitado | `UNASSESSED` permanece correto |
 | F-SP-005 | sim; composição/evolução pós-binding é questão real sem primeira boundary | `UNASSESSED` permanece correto |
 | F-SP-006 | sim; policy/evidence versus facts derivados precisa de responsabilidade de boundary | `UNASSESSED` permanece correto |
+| F-SP-007 | sim; papéis de `PERFORM` estão parcialmente achatados e a primeira boundary não foi definida | `UNASSESSED` permanece correto |
 | F-01 | sim; routing/binding combinado é lacuna atual, mas a primeira camada downstream continua indefinida | `UNASSESSED` permanece correto |
 
 `UNASSESSED` não foi usado por mera possibilidade futura: em cada caso preservado há uma
@@ -598,6 +708,7 @@ questão semântica atual e a primeira boundary downstream ainda não pode ser d
 20. O lowerer precisa da policy que gerou os fatos, ou somente de facts normalizados e sua uncertainty?
 21. Como a boundary declara que ausência de compiler/build options é normal, localizando somente os facts policy-dependent?
 22. Quais papéis de cada control construct são estruturais o bastante para lowering independente, em especial `PERFORM VARYING`, `TEST AFTER`, `AFTER` aninhado e variantes de `EXIT`?
+23. O count de `PERFORM TIMES` e o modo default de `PERFORM UNTIL` precisam de papéis tipados próprios, e onde essa responsabilidade deve ficar?
 
 ## 15. Checkpoint 2 Decision Inputs
 
@@ -630,12 +741,39 @@ O Checkpoint 2 deverá terminar em novo review humano. Nenhuma dessas decisões 
 10. **Incompletude:** diagnostics, coverage/dependency knowledge, resolution statuses/reasons, COPY completeness, report gaps, claim e readiness explícitos; facts conhecidos não são apagados.
 11. **Acréscimo de `ExternalClassification`:** classificação CICS pós-binding, inferida e rastreável para `DFHRESP`/`DFHVALUE`, sem mutar binding e sem representar runtime target.
 12. **Pressão futura de `ConditionSemantics`/`ConditionValidation`:** exigem composição pós-binding separada, anchors/identidade e evolução; hoje só surface/contexto/nominal binding existem.
-13. **Control-flow preservado:** a matriz de remediation distingue `STRUCTURALLY_SUFFICIENT`, `PARTIALLY_STRUCTURED`, `PRESERVED_ONLY` e `UNKNOWN`; nenhum tipo é tratado como prova automática de papéis semânticos.
-14. **Gaps:** ALTER, efeitos/terminalidade, NEXT SENTENCE jump, SEARCH validation, condition semantics combinada, CFG edges, possible-values e dynamic target values.
+13. **Control-flow preservado:** a matriz refinada distingue `STRUCTURALLY_SUFFICIENT`, `PARTIALLY_STRUCTURED`, `PRESERVED_ONLY` e `UNKNOWN`; targets/ranges/body limitados passam no consumer reconstruction test, mas nenhum tipo é tratado como prova automática de todos os papéis semânticos.
+14. **Gaps:** PERFORM count/test/varying/AFTER roles, ALTER, efeitos/terminalidade, NEXT SENTENCE jump, SEARCH validation, condition semantics combinada, CFG edges, possible-values e dynamic target values.
 15. **Gaps ainda UNASSESSED:** F-01 e findings de identidade/composição/control-flow, pois a boundary e o consumer downstream não foram definidos.
 16. **Informação conhecida necessária ao lowerer:** forma/order/nesting, operands e roles, unit/scope/declaration identity, nominal binding/status/candidates, procedure/program targets, explicit incompleteness, post-binding facts quando relevantes e provenance localizada.
 17. **Perguntas antes de escolher forma:** unidade de composição, invariantes, ownership/lifetime, identity/versioning, cross-unit scope, future post-binding, SourceMap, incomplete model, presentation/transport separation e suficiência por slice.
 18. **Razão comprovada para iniciar IR antes do Checkpoint 2:** nenhuma. O estado atual só permite levantar requisitos de lowering; não prova boundary COBOL suficiente nem contrato de interchange.
+
+### Completeness challenge
+
+| Claim auditado | Evidência | Formulação final |
+| --- | --- | --- |
+| `required downstream` | slices R1–R7, consumidores concretos (`AstBuilder`, collector, resolver, report) e joins testados | requisito observado para os slices; não campo fechado nem decisão de boundary |
+| `deterministic` | `AstPreorderInvariantTest`, determinismo do `ResolutionSnapshotTest` e índices ordenados | limitado à mesma entrada/policy/convenção; estabilidade cross-version continua `UNKNOWN` |
+| `typed` / `modeled` | tipos concretos de `Ast`/`AstBuilder`, `StatementModelAstTest` e coverage manifest | descreve materialização/shape; não implica papéis semânticos suficientes |
+| `structured` / `sufficient` | matriz explícita, tipos de campos, testes de references/CALL e probe de controls | mantido somente para papéis limitados de IF, targets/ranges/body e CALL nominal; controls e terminais não foram promovidos |
+| `preserved` | `PreservedStatement`, `PreservedExpression`, coverage e provenance observadas | superfície/provenance disponíveis, sem semântica especializada alegada |
+| `not required as domain` | writers de snapshot, `ExplorerMain` e testes de projeção/browser | snapshots/HTML não são contrato de domínio; `SourceMap` inteiro é apenas `UNKNOWN`, não descartado |
+| `UNASSESSED` | contrato de impacto downstream e ausência de contrato Semantic Product/lowerer/CFG | usado somente onde a primeira boundary não pode ser determinada; possibilidade futura isolada não basta |
+
+Claims que dependiam de `grammarRule`, `writtenText`, ParserRuleContext, ParseTree ou ordem
+implícita foram reduzidos na matriz para `PARTIALLY_STRUCTURED`, `PRESERVED_ONLY` ou `UNKNOWN`.
+Nenhum claim de lowering foi mantido sem passar pelo consumer reconstruction test.
+
+### Gate results for this remediation
+
+| Gate | Resultado | Observação |
+| --- | --- | --- |
+| `docs` | `PASSED` | HarnessDocsTest |
+| `architecture` | `PASSED` | ArchitectureBoundaryTest |
+| `fast` | `PASSED` | `docs` + `architecture` |
+| `semantic` | `PASSED` | suíte Maven completa, incluindo CALL/options, coverage, provenance e snapshots |
+| `full` | `PASSED` | `fast` + `semantic` + regressão E2E do normalizador + naming |
+| `git diff --check` | `PASSED` | nenhuma whitespace error |
 
 ## 17. Checkpoint 1 self-validation
 
@@ -643,7 +781,7 @@ O Checkpoint 2 deverá terminar em novo review humano. Nenhuma dessas decisões 
 - **Boundary contamination:** JSON, record, facade, envelope, IR e CFG aparecem apenas como alternativas, trabalhos futuros ou perguntas a decidir; nenhum foi implementado ou adotado como contrato.
 - **Current versus future:** `ExternalClassification` está separado dos futuros `ConditionSemantics`/`ConditionValidation`; CFG, dataflow e dependency facts permanecem futuros.
 - **Impact classification:** todos os findings novos/reavaliados usam classes canônicas; F-SP-003 é `NOT_APPLICABLE` por ser presentation-only, enquanto lacunas sem primeira boundary determinável permanecem `UNASSESSED`, inclusive F-01.
-- **Review loops:** DoD reconciliation, hostile review (grammar/parser/runtime/configuration/presentation/future-current) e completeness challenge foram concluídos contra a checklist temporária; searches de termos obrigatórios e de claims foram executadas. Nenhum probe foi necessário: testes existentes e inspeção direta da grammar/builder forneceram evidência adversarial; nenhum arquivo temporário de probe foi retido.
+- **Review loops:** DoD reconciliation, hostile review (grammar/parser/runtime/configuration/presentation/future-current) e completeness challenge foram concluídos contra a checklist temporária; searches de termos obrigatórios e de claims foram executadas. O probe temporário de `PERFORM`/`EXIT` foi executado, registrado na seção 11 e removido; nenhum arquivo temporário de probe foi retido.
 - **Presentation leak:** snapshots/HTML foram tratados como adapters e evidência de joins, não como domain API.
 - **Runtime-value leak:** `CALL WS-PGM` foi tratado como binding nominal DATA + target dinâmico desconhecido; nenhum valor de runtime foi inferido.
 - **Scope:** nenhuma alteração em `src/main/**`, grammar, AST, symbols, occurrences, resolver, lowerer, IR, CFG ou dataflow.
