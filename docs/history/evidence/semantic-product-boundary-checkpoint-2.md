@@ -14,9 +14,11 @@ e não executa o Checkpoint 3.
 
 ### Recomendação
 
-A menor boundary estável é uma **facade/port semântico COBOL-specific, em memória,
-tipado e somente leitura**, composta internamente por produtos separados. O port
-expõe ao futuro `CobolLower` somente cinco capacidades coerentes:
+A menor boundary estável, depois do strongest-opponent test, é uma composição
+**H — estado semântico materializado próprio (A2) exposto por uma facade/port
+fechada e tipada (B)**. O estado A2 é COBOL-specific, imutável, partial-aware e
+namespaced; a facade é a única superfície que o futuro `CobolLower` consome. O
+lowerer recebe somente cinco capacidades coerentes:
 
 1. superfície estrutural tipada, com ordem, nesting, operands, roles, anchors e
    estados explícitos de cobertura;
@@ -29,18 +31,22 @@ expõe ao futuro `CobolLower` somente cinco capacidades coerentes:
    `ExternalClassification` atual e futuros `ConditionSemantics`/
    `ConditionValidation`.
 
-Essa não é uma proposta para expor as classes atuais como API. É uma seam de
-arquitetura: adapters do frontend traduzem produtos internos para um contrato
-semântico próprio da linguagem; o lowerer depende desse contrato e não de
-ANTLR, parse tree, snapshots ou do composition root.
+Essa não é uma proposta para expor as classes atuais como API, nem para criar um
+schema de transporte. A2 é um modelo de domínio próprio materializado em
+memória, não `Ast + SymbolTable + ReferenceResolution` dentro de um record. B é
+uma superfície de leitura sobre um único estado já fechado: suas queries não
+podem disparar nova análise no frontend. Adapters do frontend fazem a tradução
+e o lowerer depende somente do contrato COBOL-specific, não de ANTLR, parse
+tree, snapshots ou do composition root.
 
 ```text
 frontend COBOL internals
   SourceMap / preprocessor / ANTLR / AST builder / indexes / tables / resolver
-          │  adapter de produtos, joins e estados explícitos
+          │  adapter: projeção, joins, estados e uma geração coerente
           ▼
-Semantic Product boundary — port COBOL-specific, typed, immutable, partial-aware
-          │  somente surface + semantic facts + uncertainty + local provenance
+ A2 — materialized COBOL boundary state
+      tipos próprios, imutáveis, partial-aware, identities namespaced
+          │  facade B fechada: queries tipadas sobre estado já materializado
           ▼
 CobolLower
           │  lowering futuro, sem definir sua representação neste checkpoint
@@ -48,19 +54,23 @@ CobolLower
 future IR
 ```
 
-### Por que a facade é menor
+### Por que H é a menor boundary estável
 
-Um aggregate materializado transforma todos os produtos atuais em campos de um
-record público e cria pressão para que cada análise nova altere o record. Um
-envelope dos produtos existentes apenas move os tipos internos para a fronteira;
-o consumer ainda precisa conhecer joins, lifetimes e a composição do frontend.
-Uma facade tipada encapsula os joins que o lowerer precisa, permite que os
-produtos continuem separados e mantém capacidades futuras opcionais sem um
-`Map<String,Object>` nem uma API de parser.
+O aggregate/record A1 transforma os produtos atuais em campos públicos; o
+envelope C apenas move seus tipos e lifetimes para a fronteira. A2 é diferente:
+seus tipos pertencem à boundary, são uma projeção mínima e não expõem
+`Ast`, `SymbolTable` ou `ReferenceResolution`. Portanto A2 resolve closure,
+coerência e intercâmbio futuro sem transformar internals em API, desde que não
+seja implementado como cópia 1:1.
 
-A recomendação é **B com composição interna**, não um novo aggregate canônico. Um
-envelope pode existir como adapter privado ou fixture de teste, mas não é o
-contrato público do lowerer.
+B puro continua atraente por manter o contrato estreito e facilitar ISP, mas uma
+facade que executa lazy semantic computation ou depende do provider vivo não é
+uma boundary independente. Os testes adversariais abaixo mostram que a melhor
+forma plausível de B precisa ser fechada sobre um estado materializado; caso
+contrário closure, lifecycle e futura prova de interchange permanecem
+indeterminados. H preserva a facade como contrato externo e usa A2 como estado
+fechado interno — não é um compromisso estético, mas a combinação mínima que
+passa esses testes. C continua sendo apenas passagem de internals.
 
 ### Limite de suficiência
 
@@ -74,8 +84,10 @@ bloqueado por enriquecimento do frontend, ou deve ser conservadoramente
 incompleto.
 
 **Evidence status da recomendação:** `PLAUSIBLE` como decisão de Discovery,
-`STRONGLY_SUPPORTED` pelos joins e invariantes observados. Não é decisão aceita:
-o review humano pode rejeitar a forma sem desfazer contrato normativo de produção.
+`STRONGLY_SUPPORTED` para os requisitos de joins, partial analysis e
+provenance; a necessidade operacional de um estado fechado foi inferida pelos
+testes adversariais, não implementada. Não é decisão aceita: o review humano
+pode rejeitar a forma sem desfazer contrato normativo de produção.
 
 ## 2. Design Drivers
 
@@ -91,6 +103,7 @@ não de uma preferência por formato de API.
 | Provenance útil | O lowerer e seus diagnostics precisam apontar para fonte física, span, exactness e include chain do fato, sem exigir todos os segmentos do mapa. | `STRONGLY_SUPPORTED` — ADR-0002, INV-PROV-001/002, CP1 §6 |
 | Multi-unit | Nested programs exigem parentage, namespace e visibilidade por `ProgramUnitId`; uma tabela global não é suficiente. | `PROVEN` — ADR-0005, EVAL-UNIT-001, R5 |
 | Produtos separados | AST, symbols, occurrences, resolution e produtos pós-binding têm ownership e lifetimes diferentes e não devem ser mutados pela boundary. | `PROVEN` — ADR-0003, INV-AST-001, INV-SYM-001 |
+| Closure da análise | O lowerer deve consumir facts de um estado publicado; queries não podem manter parser, resolver ou caches mutáveis vivos nem iniciar nova análise. | `STRONGLY_SUPPORTED` — ownership/lifetime do CP1 e challenge de closure/lifecycle desta remediation |
 | Contexto ausente | Compiler/build options podem não existir no corpus real; a ausência deve limitar somente facts dependentes da policy. | `STRONGLY_SUPPORTED` — CP1 §2 e `CallSemanticsTest` |
 | Evolução | `ConditionSemantics`, `ConditionValidation`, classifications e extractors futuros não devem exigir mega-record nem bag sem tipos. | `PLAUSIBLE` — backlog e ADR-0012; contrato futuro ainda não implementado |
 | Linguagem | A semântica antes do lowering é COBOL-specific; a neutralidade começa depois do lowerer. | `STRONGLY_SUPPORTED` — tipos, namespaces e regras IBM atuais |
@@ -98,21 +111,40 @@ não de uma preferência por formato de API.
 
 ## 3. Candidate Boundaries
 
-### A — Aggregate/record materializado
+### A — Aggregate/record materializado de produtos atuais (A1)
 
-Um objeto imutável reúne surface AST, units, symbols, occurrences, resolution,
-coverage, diagnostics, provenance e classificações. É um modelo de composição
-explícito e pode fazer sentido como objeto privado de orquestração, mas se for
-entregue diretamente ao lowerer transforma os produtos atuais e seus tipos em
-API pública.
+Um objeto imutável reúne `Ast`, units, symbols, occurrences, resolution,
+coverage, diagnostics, provenance e classificações, como campos de um record.
+É um modelo de composição explícito e pode fazer sentido como objeto privado de
+orquestração, mas se for entregue diretamente ao lowerer transforma os produtos
+atuais e seus tipos em API pública. Esta é a alternativa A originalmente
+avaliada; ela não deve ser confundida com A2.
+
+### A2 — Materialized Boundary Model
+
+Um adapter constrói um **modelo de domínio próprio da boundary**, materializado
+em memória e publicado como um estado imutável. Seus tipos carregam somente a
+surface e os fatos semânticos que o lowerer precisa: identities namespaced,
+joins coerentes, status de partial/incomplete analysis, provenance localizada e
+capabilities pós-binding tipadas. Nenhum `Ast`, `SymbolTable`,
+`ReferenceResolution`, índice ou objeto do parser atravessa a fronteira; A2
+também não é um schema JSON.
+
+A2 só permanece uma candidata forte se for uma projeção mínima, com um core
+tipado pequeno e módulos/capabilities opcionais tipados. Uma cópia 1:1 da AST,
+dos símbolos e da resolução seria outra forma de A1 e seria evidência contra
+A2. A publicação deve ser atômica por geração de análise, para impedir que
+surface de uma geração seja combinada com resolution de outra.
 
 ### B — Facade/query-oriented boundary
 
 Um port estável oferece operações tipadas sobre capabilities sem devolver os
-objetos internos. Consultas são orientadas a fatos semânticos — por exemplo,
-unit, node, occurrence, declaration e resolution — e escondem índices, joins e
-ordem de construção. A facade pode ser backed por products materializados ou por
-projeções internas, desde que a observação seja determinística e imutável.
+objetos internos. A melhor forma plausível de B é uma **facade fechada**: as
+consultas selecionam e relacionam fatos já publicados no estado A2, escondem
+índices, joins e ordem de construção, e não chamam AST builder, preprocessor,
+resolver ou caches para completar uma resposta. Consultas são orientadas a
+fatos semânticos — por exemplo, unit, node, occurrence, declaration e
+resolution — e a observação é determinística e imutável.
 
 “Query-oriented” aqui não significa uma linguagem de consulta, reflection ou
 bag dinâmica. As consultas possíveis precisam ser contratos tipados, com handles
@@ -124,7 +156,8 @@ Um envelope passa `Ast`, `CompilationUnitModel`, symbol tables, occurrences,
 resolution, coverage, diagnostics, provenance e produtos pós-binding como campos
 separados. O lowerer continua fazendo parte dos joins ou conhece os tipos
 concretos; o envelope é transparente e preserva bem o estado corrente, mas não
-cria uma abstração estável sobre o frontend.
+cria uma abstração estável sobre o frontend. C não deve ser confundido com A2:
+composição de produtos internos não é modelo próprio da boundary.
 
 ## 4. Trade-off Comparison
 
@@ -143,22 +176,89 @@ cria uma abstração estável sobre o frontend.
 | Risco de tornar internals API | Alto se expuser classes atuais; médio se copiar todas sem política de evolução. | Baixo, desde que o port não devolva `Ast`, `ParseTree`, snapshots ou índices internos. | Alto por definição: os tipos internos são a superfície. |
 | HLASM/PL/I com lowerers separados | Produz records paralelos e incentiva um falso supermodelo comum antes do lowering. | Permite ports específicos por linguagem com mesma disciplina; não exige semantic product universal. | Amarra cada lowerer à taxonomia concreta do frontend e não oferece reutilização sem vazamento. |
 
-### Resultado da comparação
+### Strongest-opponent comparison: A2 versus B
 
-**B vence** para o problema definido. A não vence porque materializa composição
-demais para uma boundary ainda em evolução; C não vence porque é uma passagem
-transparente dos internals, não uma boundary. A e C podem ser úteis dentro do
-frontend para organizar ownership, mas o lowerer deve receber B.
+A tabela anterior mantém A1 e C como controles, mas não é suficiente para
+decidir contra a melhor alternativa materializada. A comparação abaixo usa A2
+em sua forma forte (tipos próprios, core pequeno, capabilities opcionais,
+publicação atômica) e B em sua forma forte (facade fechada sobre estado já
+materializado). Onde uma propriedade depende dessa condição, isso é indicado em
+vez de ser atribuído automaticamente à alternativa.
+
+| Propriedade | A2 materialized model | B facade/query port |
+| --- | --- | --- |
+| Acoplamento aos internals | Baixo se o adapter projeta tipos próprios; o custo fica concentrado na tradução. Alto somente se virar cópia 1:1, o que não é A2 forte. | Baixo na superfície; ainda há risco indireto se queries delegarem ao provider frontend ou retornarem views dos internals. |
+| Fechamento do produto semântico | Forte: o estado imutável contém a geração publicada e não precisa de frontend vivo. | Condicional: forte sobre A2 fechado; fraco se a query executar análise lazy após o frontend “terminar”. |
+| Imutabilidade | Natural no estado materializado e em suas capabilities. | Garantível no port, mas não decorre de “query” por si só; provider/caches também precisam ser snapshot-safe. |
+| Preservação de joins | Forte: joins obrigatórios podem ser reconciliados uma vez na construção atômica. | Forte se encapsulados na facade; consumer não reimplementa joins, mas a coerência depende do estado/provider. |
+| Nested compilation units | Forte com parentage, structural path e handles namespaced materializados. | Forte se cada query exige unit namespace; uma facade sobre IDs locais ou provider global falha. |
+| Provenance | Localizada e coerente com cada anchor na geração; o mapa completo não é necessário. | Expõe a mesma provenance por views; não ganha nada ao devolver `SourceMap` inteiro e não deve depender dele em query. |
+| Analysis/compiler context | Policy normalizada, availability e facts derivados congelados junto da geração. | Pode expor os mesmos facts; raw options e recomputação lazy seriam acoplamento e não requisito. |
+| Partial/incomplete analysis | Forte com availability/claim/status tipados em cada capability; ausência não é coleção vazia. | Forte se cada query retornar resultado tipado com status; zero results sem esse contrato falha o teste de completeness. |
+| Determinismo | Forte por publicação única, ordem definida e geração identificada. | Condicional: exige ordem definida e independência da ordem das queries; lazy caches podem violar isso. |
+| Facilidade de consumer independente | Forte: value model pode ser consumido sem composição root ou lifecycle externo. | Forte para dependências e fakes, desde que o port seja fechado; uma facade sobre provider vivo não é independente. |
+| Evolução/versionamento | Forte com core pequeno + capabilities próprias/versionadas; fraco se acumular tudo no record. | Forte com sub-ports/capabilities versionadas; uma interface monolítica de queries vira outro mega-modelo. |
+| Capabilities pós-binding | Anexadas como produtos tipados e coerentes com a mesma geração; consumers optam por elas. | Expostas como sub-ports tipados; a facade não deve recalculá-las nem mutar nominal binding. |
+| Facilidade futura de snapshot/interchange | Forte: A2 é a fonte natural de uma futura representação; não exige replay de queries. | B sozinha tem pressão arquitetural para inventar A2 atrás dela; sobre A2, snapshot/interchange pode usar o estado, não a ordem de consultas. |
+| Risco de mega-model | Real se projetar toda AST/symbol/resolution 1:1; evitável pelo core mínimo e capabilities. | Real se cada fato ganhar um método no port ou se a facade virar “god interface”; ISP precisa ser mantido. |
+| Risco de lifecycle/provider coupling | Baixo após a construção do estado. | Baixo somente na variante fechada; alto se guardar `AstScopeIndex`, resolver, parser, preprocessor ou caches mutáveis. |
+| Facilidade de testar | Estado puro permite invariantes de consistência, geração e partial status; adapter exige testes de projeção. | Fakes de port facilitam consumer reconstruction; ainda exige teste separado de closure, ordem e provider. |
+| Memória/materialização | Custo de materializar tipos/joins próprios; a evidência atual não mede esse custo nem prova que seja impeditivo. | Pode ser mais enxuta se for só view, mas sobre A2 tem custo equivalente; não há evidência para creditar uma vantagem de memória. |
+| OCP/DIP | DIP pelo contrato próprio e adapters; OCP por capabilities aditivas, se o core não crescer. | DIP muito claro no consumer; OCP por sub-ports, desde que novas queries não exijam quebrar uma interface central. |
+| HLASM/PL-I com lowerers separados | Permite estados próprios por linguagem; a disciplina comum fica na seam, não num modelo semântico universal. | Permite ports específicos, mas uma facade universal de queries ainda criaria falsa taxonomia comum. |
+
+### Resultado do strongest-opponent test
+
+A2 vence B puro em closure, lifecycle independente, determinismo publicável e
+pressão de intercâmbio. B vence A2 puro em superfície mínima, ISP e facilidade
+de substituir o consumer por um fake. A2 não perde por expor internals — A2
+forte explicitamente não os expõe — e B não ganha closure/lifecycle de graça:
+essas vantagens só existem na facade fechada.
+
+Assim, a recomendação do relatório muda de **B sobre produtos internos** para
+**H: A2 como estado semântico fechado, acessado por B como port externo**. H
+não evita uma decisão: cada parte resolve um teste diferente e ambas são
+necessárias para a menor boundary que seja simultaneamente independente e
+estreita. O lowerer vê B; A2 não é API de internals e não é IR.
+
+### Adversarial tests
+
+| Teste | Resultado para B | Resultado para A2 | Consequência arquitetural |
+| --- | --- | --- | --- |
+| Closure após o frontend terminar | B sobrevive somente se as queries leem fatos pré-materializados; uma query que chama nova lógica do frontend falha. Não há implementação atual que prove a variante fechada. | Passa por construção se A2 for um snapshot completo da geração e não guardar provider lazy. | H exige A2 como estado de backing e proíbe semantic computation escondida na facade. |
+| Lifecycle do consumer | A facade independente passa; uma implementação que retém `AstScopeIndex`, resolver, preprocessor, parser, composition root ou caches mutáveis falha. | Passa após publicação; o adapter pode morrer sem afetar o lowerer. | O contrato deve transportar estado, não lifecycle de provider. |
+| Determinismo independente da ordem das queries | Possível, mas precisa de ordenação e resultados definidos no contrato; query-order-dependent lazy cache é rejeitado. | Naturalmente verificável por uma geração imutável e ordem publicada. | A2 fornece a base; B apenas seleciona sem alterar estado. |
+| Completeness de zero results | Falha se `[]` for a única resposta; passa apenas com `available/partial/input-missing/unsupported` tipados. | Passa se availability e claim fizerem parte do estado/capability, sem usar vazio como sucesso. | As duas formas precisam do mesmo invariant de partial; H não permite ambiguidade semântica. |
+| Pressão de snapshot/round-trip | B isolada provavelmente exigiria um segundo modelo materializado; isso é custo real e torna “facade sem estado” incompleta para interchange futuro. | É a fonte natural do snapshot, embora serializer/round-trip não pertençam a este checkpoint. | H evita inventar um segundo semantic model no CP3; a prova futura parte de A2. |
+| Evolution pressure | Sub-ports opcionais passam; uma facade com todos os métodos num único contrato vira mega-interface. | Core pequeno + capabilities tipadas passa; cópia 1:1 ou mega-record falha. | A forma vencedora exige ambos os limites, não um bag dinâmico. |
+| Duplication | B evita duplicar tipos na superfície, mas não elimina a necessidade de um estado fechado por trás. | A2 passa somente como projeção mínima; duplicação 1:1 é evidência contra a candidata. | O adapter deve mapear só requisitos da matriz de suficiência. |
+| Consistency entre gerações | B não pode resolver essa questão se consulta providers de gerações diferentes. | Passa com publicação atômica e `analysisGeneration` compartilhada por core/capabilities. | H deve rejeitar mistura de surface e resolution de gerações distintas. |
+| Cost | Não há evidência atual de que a facade ou seu backing seja mais barato. | O custo extra de materialização é uma hipótese, não finding; deve ser medido somente em trabalho autorizado. | Nenhuma decisão de performance é inventada neste Discovery. |
 
 ## 5. Recommended Boundary
 
 ### Forma mínima
 
-A boundary recomendada é uma facade com sub-ports tipados, conceitualmente
-organizados assim:
+A boundary recomendada é H: um estado A2 materializado e imutável, exposto por
+uma facade B fechada com sub-ports tipados. A facade é o contrato consumido por
+`CobolLower`; o estado A2 é a unidade de closure, consistência e futura
+interchange. Conceitualmente:
 
 ```text
-CobolSemanticPort
+A2 — CobolSemanticState (boundary-owned, immutable, one analysis generation)
+  ├─ core semantic state
+  │    ├─ UnitSurfaceState
+  │    ├─ NominalSemanticsState
+  │    ├─ AnalysisState
+  │    └─ LocalProvenanceState
+  └─ typed optional capability states
+       ├─ ExternalClassification (current)
+       ├─ ConditionSemantics (future)
+       ├─ ConditionValidation (future)
+       └─ future classifications/extractors
+          │
+          ▼
+B — CobolSemanticPort (closed, read-only)
   ├─ UnitSurfacePort
   │    ├─ program units, parentage, order
   │    ├─ typed surface nodes, children, operands, roles
@@ -182,14 +282,17 @@ CobolSemanticPort
 ```
 
 Os nomes acima são papéis arquiteturais, não nomes de classes a implementar
-neste checkpoint. O port precisa devolver boundary views/handles próprios, não
-os tipos `Ast.*`, `SymbolTable`, `ReferenceResolution`, `SourceMap` ou snapshots.
+neste checkpoint. O estado A2 precisa usar tipos próprios e o port B precisa
+devolver apenas boundary views/handles próprios, não os tipos `Ast.*`,
+`SymbolTable`, `ReferenceResolution`, `SourceMap` ou snapshots. O adapter pode
+descartar o frontend depois da publicação; nenhuma query do port pode completar
+um fato chamando o resolver ou outra lógica de análise.
 
 ### Requisitos do port
 
-- **Read-only e determinístico:** a consulta não muta nenhum produto anterior;
-  mesma entrada, policy e versão produz a mesma ordem e as mesmas identidades
-  locais, conforme `INV-DET-001`.
+- **Read-only e determinístico:** a consulta não muta o estado A2 nem nenhum
+  produto anterior; mesma entrada, policy e versão produz a mesma ordem e as
+  mesmas identidades locais, conforme `INV-DET-001`.
 - **Namespaced:** nenhum handle de unit, AST, occurrence ou entity é aceito sem
   `ProgramUnitId`/artifact context. IDs locais não são globais.
 - **Join-safe:** uma resolução é encontrada por occurrence/anchor namespaced; um
@@ -204,6 +307,12 @@ os tipos `Ast.*`, `SymbolTable`, `ReferenceResolution`, `SourceMap` ou snapshots
   dinâmicos como desconhecidos quando não há análise autorizada de CFG/dataflow.
 - **Compatível com produtos separados:** o port compõe views; não anota AST com
   binding nem transforma `ReferenceResolution` em um resultado de execução.
+- **Fechado após publicação:** B só seleciona fatos do A2 já publicado; não
+  retém `AstScopeIndex`, resolver, preprocessor, parser, composition root ou
+  caches mutáveis como dependência do consumer.
+- **Geração coerente:** core e capabilities carregam a mesma identidade de
+  análise; uma facade não pode misturar surface, resolution e classification de
+  gerações diferentes.
 
 ### Menor conjunto necessário para `CobolLower`
 
@@ -216,8 +325,10 @@ frontend usou para encontrá-la.
 
 O port não promete que cada construct é suficiente para lowering completo. Ele
 promete que, onde o frontend sabe, o fato atravessa sem perda, e onde não sabe,
-a lacuna atravessa de maneira explícita e tipada. Isso é menor e mais estável
-que fabricar uma shape completa para cada lacuna.
+a lacuna atravessa de maneira explícita e tipada. A materialização A2 não cria
+semântica ausente: ela congela facts conhecidos e estados de incompletude da
+mesma geração. Isso é menor e mais estável que fabricar uma shape completa para
+cada lacuna.
 
 ## 6. Crosses / Does Not Cross
 
@@ -312,8 +423,8 @@ retroativamente os produtos anteriores.
 
 ## 8. Semantic Sufficiency Matrix
 
-Esta é a matriz principal de teste da candidata. “Disponível hoje?” descreve a
-baseline factual; “Boundary candidata carrega?” descreve o que o port pode
+Esta é a matriz principal de teste da candidata H. “Disponível hoje?” descreve a
+baseline factual; “Boundary candidata carrega?” descreve o que o par A2+B pode
 transportar, incluindo ausência e incerteza — não uma promessa de que o frontend
 já conheça o fato.
 
@@ -335,11 +446,11 @@ já conheça o fato.
 
 ### Verdict da matriz
 
-A candidata é **suficiente como transporte semântico** para os fatos que o
-frontend já estabelece e para a expressão explícita dos gaps. Ela não é
-suficiente para **lowering exato de todos os constructs pedidos**. Essa distinção
-é essencial: uma boundary correta não converte uma lacuna de frontend em uma
-semântica falsa.
+A candidata H é **suficiente como transporte semântico** para os fatos que o
+frontend já estabelece e para a expressão explícita dos gaps. A2 fecha o estado
+e B o torna consumível sem provider; nenhuma das duas é suficiente para
+**lowering exato de todos os constructs pedidos**. Essa distinção é essencial:
+uma boundary correta não converte uma lacuna de frontend em uma semântica falsa.
 
 ## 9. Control Construct Sufficiency
 
@@ -413,11 +524,15 @@ seus efeitos, valores, aliases ou regras de plataforma foram interpretados.
 observáveis no capability apropriado. Um `Status` de ausência de capability deve
 ser distinto de uma lista de fatos vazia.
 
-Para COPY ausente, a visão pode conter AST, units, símbolos, occurrences e
-resolução dos trechos construídos, além de `UNRESOLVED_COPY`,
+Para COPY ausente, o estado A2 pode conter surface, units, símbolos, occurrences
+e resolução dos trechos construídos, além de `UNRESOLVED_COPY`,
 `INCOMPLETE_UNRESOLVED_COPY`, gaps nominais e claim global `INCOMPLETE`. A
 boundary não deve bloquear tudo porque um input externo faltou, nem alegar
 completude porque uma fase conseguiu produzir alguma estrutura.
+
+A2 deve capturar esse estado uma única vez; B não pode descobrir, em uma query
+posterior, que o COPY faltante ficou disponível e então alterar o resultado.
+“Zero results” só é observável junto com a availability/claim da capability.
 
 ### Provenance
 
@@ -433,7 +548,9 @@ O requisito mínimo que cruza é provenance localizada:
 O `SourceMap` continua no frontend porque ele é o mecanismo de composição e
 indexação de segmentos, não o fato que o lowerer consome. Se um futuro consumer
 precisar reconstruir uma transformação inteira, isso será uma capability explícita
-de provenance com contrato próprio; não é motivo para expor o mapa hoje.
+de provenance com contrato próprio; não é motivo para expor o mapa hoje. Se
+necessário, essa capability também será materializada na geração A2, nunca
+resolvida lazily por B.
 
 ### Invariantes de partial/provenance para implementação futura
 
@@ -453,11 +570,12 @@ invariantes:
 
 ### Modelo de capabilities, não mega-record
 
-O núcleo do port deve ser pequeno e relativamente fechado: surface, unit
+O núcleo do estado A2 deve ser pequeno e relativamente fechado: surface, unit
 identity, nominal semantics, analysis state e local provenance. Produtos que
 aparecem depois do binding são capabilities separadas, com tipo, version e
-identity próprias. O lowerer ou outro consumer declara dependência somente das
-capabilities que consegue interpretar.
+identity próprias. A facade B expõe somente as capabilities que o consumer
+declara; o lowerer ou outro consumer não mantém um catálogo de campos nem
+consulta um provider para descobrir uma análise nova.
 
 Isso evita duas falhas opostas:
 
@@ -467,9 +585,11 @@ Isso evita duas falhas opostas:
   problema para strings, casts e conflitos de runtime.
 
 A composição futura deve usar sub-ports/interfaces de capability explicitamente
-tipados. Um produto novo pode ser aditivo para consumers antigos e obrigatório
-somente para um novo perfil/version do lowerer. A ausência retorna estado tipado,
-não `null` nem “nenhum fato”.
+tipados, materializados na mesma geração A2 e publicados de forma atômica. Um
+produto novo pode ser aditivo para consumers antigos e obrigatório somente para
+um novo perfil/version do lowerer. A ausência retorna estado tipado, não `null`
+nem “nenhum fato”. Assim, A2 evita um mega-record sem converter a facade em um
+`Map<String,Object>`.
 
 ### Produtos atuais e futuros
 
@@ -483,8 +603,10 @@ não `null` nem “nenhum fato”.
 | CFG/dataflow products | Fases posteriores, fora deste checkpoint. | Não entram no port core; quando autorizados, receberão capabilities/ports próprios e manterão runtime-value boundary. |
 
 `ConditionSemantics` não deve ser simulada por uma query especial que reconstrói
-grammar state no `CobolLower`. Quando existir, será fornecida como produto
-versionado; até lá a boundary torna a ausência explícita.
+grammar state no `CobolLower` ou em B. Quando existir, será materializada como
+capability versionada na mesma geração A2 e projetada pelo port; até lá a
+boundary torna a ausência explícita. A mesma regra vale para
+`ConditionValidation`, classifications e extractors futuros.
 
 ## 12. Identity / Versioning
 
@@ -510,41 +632,56 @@ cross-version fora da geração que o produziu.
 
 ### Versioning
 
-Propõe-se separar três versões:
+Propõe-se separar três versões e uma identidade de publicação:
 
 1. **contract version:** shape e semântica do port core;
 2. **capability/product version:** interpretação e campos de um product pós-binding;
 3. **analysis context/policy version:** regra que produziu facts policy-dependent.
 
+4. **analysis generation:** identidade da publicação imutável que liga core,
+   capabilities, provenance e policy. Não é uma promessa de identidade
+   cross-run; serve para rejeitar mistura dentro do mesmo consumo.
+
 Mudança aditiva em capability opcional não deve invalidar um lowerer que não a
 consome. Mudança que altera o significado de um campo, candidate/status ou
 provenance exige nova versão compatível/incompatível explicitamente declarada;
 não há migração silenciosa. A versão do port não torna IDs resistentes a edição.
+Uma facade B deve capturar uma única geração A2; se uma capability não pertence
+à geração, ela é `NOT_PRODUCED`/incompatível, não uma consulta a outro provider.
 
 ### Persistência e intercâmbio
 
 Cross-run persistence, round-trip e transporte são decisões do Checkpoint 3 ou
-de um work item posterior. A boundary de Discovery é conceitualmente um port em
-memória, não um schema serializado. Se a persistência futura exigir equivalência
-entre versões, deverá existir uma identidade semântica/migration map explícita;
-não se deve usar `Ast.Meta.id`, posição textual ou snapshot HTML como substituto.
+de um work item posterior. A boundary de Discovery é conceitualmente um modelo
+A2 e port B em memória, não um schema serializado. Se a persistência futura
+exigir equivalência entre versões, A2 é a fonte natural da representação e
+deverá existir uma identidade semântica/migration map explícita; não se deve
+inventar um segundo modelo por replay de queries nem usar `Ast.Meta.id`, posição
+textual ou snapshot HTML como substituto.
 
 ## 13. Clean Architecture Seam
 
 ### Dependências propostas
 
 ```text
-COBOL frontend adapters  →  Cobol semantic port/contract  ←  CobolLower
-                                  │
-                                  └→ future product capabilities
+COBOL frontend internals
+        │ adapter/builder
+        ▼
+A2 — CobolSemanticState (boundary-owned, immutable, one generation)
+        │ read-only typed projection
+        ▼
+B — Cobol semantic port/contract  ←  CobolLower
+        │
+        └→ optional future product capabilities
 CobolLower  →  future IR
 ```
 
-Em termos de DIP, o port pertence conceitualmente ao lado da política/use case
-que o `CobolLower` consome. O frontend fornece uma implementação/adaptação desse
-port; o lowerer não importa `AstBuilder`, `ExplorerMain`, ANTLR ou snapshot
-writers. O composition root conhece ambos e faz a montagem, mas não vira parte
-do contrato do lowerer.
+Em termos de DIP, os tipos A2 e o port B pertencem conceitualmente ao lado da
+política/use case que o `CobolLower` consome; o adapter/builder do frontend é
+detalhe externo. O lowerer não importa `AstBuilder`, `ExplorerMain`, ANTLR,
+`AstScopeIndex`, resolver ou snapshot writers. O composition root conhece a
+montagem e descarta os providers após publicar A2, mas não vira parte do
+contrato do lowerer.
 
 ### SOLID/Clean Architecture check
 
@@ -553,12 +690,12 @@ do contrato do lowerer.
 - **OCP:** novos produtos pós-binding entram como capabilities tipadas; o core
   não abre branches por CICS/SQL/IMS para cada análise.
 - **SRP:** AST constrói surface; symbols inventariam declarations; occurrences
-  coletam usos; resolver faz binding; facade compõe views; lowerer baixa; nenhum
-  componente absorve responsabilidades futuras.
+  coletam usos; resolver faz binding; adapter constrói A2; facade projeta views;
+  lowerer baixa; nenhum componente absorve responsabilidades futuras.
 - **ISP:** sub-ports pequenos permitem que um consumer de target nominal não
   dependa de `ConditionValidation` ou de um parser embedded.
-- **Clean boundary:** snapshots/HTML e `SourceMap` são detalhes de adapter;
-  product facts atravessam por handles e views tipadas.
+- **Clean boundary:** snapshots/HTML, `SourceMap` e os providers são detalhes de
+  adapter; product facts atravessam por tipos A2 e views/handles B tipadas.
 
 ### Não criar um Semantic Product universal
 
@@ -579,23 +716,25 @@ lowering porque não há evidência para uma ontologia semântica pré-lowering 
 
 ### Teste contra reutilização prematura
 
-Se o record A fosse universalizado, ele precisaria acomodar AST/declarações/
+Se o record A1 fosse universalizado, ele precisaria acomodar AST/declarações/
 occurrences/resolution específicas de COBOL, labels e macros de HLASM e
 declarações/preprocessamento de PL/I. `PERFORM`, condition-name 88, `CALL` e
 COPY não têm equivalentes obrigatórios nessas linguagens. Campos opcionais
 virariam um mega-record e os lowerers ainda teriam de interpretar estados
 específicos.
 
-Com B, cada frontend fornece uma facade específica. A disciplina comum é apenas:
-views tipadas, identities namespaced, partial analysis, localized provenance,
-versioning e products separados. Não há dependência de que HLASM/PL-I publiquem
-`ProgramUnitId` ou `ReferenceResolution` com a mesma taxonomia de COBOL.
+Com H, cada frontend fornece um estado materializado e uma facade específicos.
+A disciplina comum é apenas: core pequeno, views tipadas, identities
+namespaced, partial analysis, localized provenance, versioning e products
+separados. Não há dependência de que HLASM/PL-I publiquem `ProgramUnitId` ou
+`ReferenceResolution` com a mesma taxonomia de COBOL.
 
 ### Resultado
 
-B passa o pressure test porque compartilha a **seam**, não o **modelo semântico
-pré-lowering**. A falharia por acumulação de campos universais; C falharia por
-expor taxonomias concretas de cada frontend ao consumer errado.
+H passa o pressure test porque compartilha a **seam**, não o **modelo semântico
+pré-lowering**: A2 e B são específicos por linguagem. A1 falharia por
+acumulação de campos universais; C falharia por expor taxonomias concretas de
+cada frontend ao consumer errado.
 
 ## 15. Reassessment of CP1 Findings
 
@@ -607,26 +746,48 @@ As classes novas são comparadas com a boundary recomendada neste relatório,
 explicitamente ainda `Proposed` e sujeita a review. Onde a evidência não prova a
 primeira fronteira, `UNASSESSED` é mantido.
 
+### Revalidação após o strongest-opponent test
+
+A forma da boundary mudou de B sobre produtos internos para H (A2 materializado
+e próprio, exposto por B fechada), mas isso não transforma nenhum gap do CP1 em
+outro tipo de impacto. As oito classes abaixo foram rechecadas contra closure,
+geração coerente, partial analysis e os limites da matriz; nenhuma classificação
+foi alterada nesta remediation.
+
+| Finding | Classe mantida | Efeito da nova comparação |
+| --- | --- | --- |
+| F-SP-001 | `NOT_APPLICABLE` | A2 é um novo modelo de boundary, não evidência de que a ausência de um aggregate de internals seja defeito downstream. |
+| F-SP-002 | `UNASSESSED` | H exige geração coerente, mas o requisito cross-run/cross-version ainda não foi provado. |
+| F-SP-003 | `NOT_APPLICABLE` | A2/B continuam separados de snapshots e projections de presentation. |
+| F-SP-004 | `UNASSESSED` | H transporta gaps explícitos, mas não decide o owner entre Semantic Product e CFG. |
+| F-SP-007 | `BLOCKS_SEMANTIC_PRODUCT` | Materializar A2 não recupera roles de `PERFORM` ausentes; a primeira fronteira quebrada permanece a mesma. |
+| F-SP-006 | `REDUCES_PRECISION` | H preserva policy/availability e facts independentes; options ausentes continuam reduzindo apenas precisão dependente. |
+| F-SP-005 | `UNASSESSED` | Capabilities tipadas reduzem risco de evolução, mas ainda não existe consumer oracle futuro. |
+| F-01 | `BLOCKS_SEMANTIC_PRODUCT` | A2/B não corrigem binding incorreto; carregar o erro como fato continua bloqueando o produto. |
+
 ### F-SP-001 — produtos separados e ausência de aggregate final
 
-**Reassessment:** a ausência de aggregate materializado não quebra a boundary
-recomendada, porque B compõe produtos separados atrás de uma facade. O finding
-continua útil como driver de composição, mas não descreve uma falha semântica
-downstream.
+**Reassessment:** a ausência de aggregate de produtos internos não quebra a
+boundary recomendada. H usa A2 como modelo próprio da boundary, mas isso não
+reclassifica a ausência de um agregado no frontend como falha semântica
+downstream. O finding continua útil como driver de composição e não descreve
+uma falha semântica downstream.
 
 ```yaml
 downstream_impact:
   class: NOT_APPLICABLE
   rationale: >
-    A boundary recomendada é uma facade sobre produtos separados e não exige um
-    aggregate público. Os produtos atuais preservam os fatos e joins necessários
-    para a view proposta; não há evidência de perda semântica causada pela
-    ausência de um record único. BLOCKS_SEMANTIC_PRODUCT é rejeitado porque o
-    contrato proposto não requer aggregate, e REDUCES_PRECISION é rejeitado porque
-    nenhuma informação foi demonstrada como perdida.
+    A boundary recomendada é H: A2 materializa tipos próprios e B expõe o port;
+    nenhum dos dois exige um aggregate público dos produtos internos. Os
+    produtos atuais preservam os fatos e joins necessários para a projeção, e
+    não há evidência de perda semântica causada pela ausência de um record único
+    no frontend. BLOCKS_SEMANTIC_PRODUCT é rejeitado porque A2 é uma construção
+    futura da boundary, não uma lacuna demonstrada no produto atual;
+    REDUCES_PRECISION é rejeitado porque nenhuma informação foi demonstrada como
+    perdida.
   evidence:
     - docs/history/evidence/semantic-product-boundary-checkpoint-1.md §3 e §13 (produtos separados e composição atual)
-    - Este relatório §4–§5 (facade compõe sem aggregate público)
+    - Este relatório §4–§5 (A2 próprio e B fechada, sem envelope de internals)
 ```
 
 ### F-SP-002 — joins, namespaces e lifetimes
@@ -639,15 +800,16 @@ do lowerer. O finding permanece `UNASSESSED` para essa dimensão durável.
 downstream_impact:
   class: UNASSESSED
   rationale: >
-    Os joins da geração corrente são demonstrados e a boundary proposta exige
-    ProgramUnitId e domínios locais, mas ainda não há contrato aceito que prove
-    se persistência cross-run/cross-version é requisito da primeira fronteira ou
-    responsabilidade de um adapter posterior. BLOCKS_SEMANTIC_PRODUCT não é
-    provado porque os joins correntes podem ser expostos; REDUCES_PRECISION não é
-    provado porque não há resultado sound demonstradamente menos preciso.
+    Os joins da geração corrente são demonstrados e H exige ProgramUnitId,
+    domínios locais e uma analysis generation coerente, mas ainda não há
+    contrato aceito que prove se persistência cross-run/cross-version é requisito
+    da primeira fronteira ou responsabilidade de um adapter posterior.
+    BLOCKS_SEMANTIC_PRODUCT não é provado porque os joins correntes podem ser
+    publicados em A2/B; REDUCES_PRECISION não é provado porque não há resultado
+    sound demonstradamente menos preciso.
   evidence:
     - docs/history/evidence/semantic-product-boundary-checkpoint-1.md §5 e §14
-    - Este relatório §6 e §12 (handles namespaced e identidade por geração)
+    - Este relatório §6 e §12 (handles namespaced, A2 e identidade por geração)
   reassess_when:
     - semantic-product-identity-contract-accepted
     - cross-run-consumer-oracle-added
@@ -682,14 +844,14 @@ esses owners de modo demonstrável.
 downstream_impact:
   class: UNASSESSED
   rationale: >
-    A boundary proposta exige roles tipados ou estado explícito de preservação,
+    H exige roles tipados ou estado explícito de preservação,
     mas F-SP-004 agrega ALTER, terminalidade, NEXT SENTENCE, EXIT, SEARCH e
     efeitos de controle. A representação atual é genérica ou não observável;
     ainda assim, a primeira responsabilidade pode ser uma capability semântica
     do produto ou um contrato do futuro CFG, dependendo do construct. BLOCKS_IR,
     BLOCKS_CFG e BLOCKS_DATAFLOW não podem ser escolhidos sem esses contratos;
     REDUCES_PRECISION também não é provado porque alguns gaps podem mudar o
-    significado. A boundary carrega o estado preservado/unknown, mas isso não
+    significado. A2/B carregam o estado preservado/unknown, mas isso não
     decide o owner do enriquecimento para lowering exato.
   evidence:
     - docs/history/evidence/semantic-product-boundary-checkpoint-1.md §11–§12 (matriz de control e embedded)
@@ -712,8 +874,8 @@ downstream_impact:
     O lowerer precisa distinguir count, predicate/test mode, variable/FROM/BY/
     UNTIL e níveis de AFTER. A lista atual de PerformControl com VALUE/CONDITION
     e a ordem dos descendentes não permitem reconstruir esses papéis sem
-    grammarRule ou writtenText; a boundary pode transportar a perda, mas não
-    pode afirmar a semântica ausente. BLOCKS_IR/CFG/DATAFLOW são rejeitados por
+    grammarRule ou writtenText; A2/B podem transportar a perda, mas não
+    podem afirmar a semântica ausente. BLOCKS_IR/CFG/DATAFLOW são rejeitados por
     não haver contratos ou falhas nessas camadas; REDUCES_PRECISION é rejeitado
     porque trocar test mode ou roles pode ser incorreto, não apenas menos preciso.
     Target, range e body continuam consumíveis separadamente.
@@ -738,7 +900,7 @@ downstream_impact:
     UNSPECIFIED. Os oracles de CALL mostram que nenhum fato falso é afirmado e
     que a análise continua sound e conservadora; a perda é somente de precisão
     no subconjunto dependente da policy. BLOCKS_SEMANTIC_PRODUCT é rejeitado
-    porque a boundary transporta policy/availability e facts derivados; classes
+    porque H transporta policy/availability e facts derivados; classes
     posteriores são rejeitadas porque não há produto IR/CFG/dataflow incorreto.
   evidence:
     - docs/history/evidence/semantic-product-boundary-checkpoint-1.md §2 (C1–C3 e CALL literal)
@@ -755,8 +917,8 @@ não têm contrato executável nem consumer oracle; não se força uma classe.
 downstream_impact:
   class: UNASSESSED
   rationale: >
-    A boundary proposta define uma seam para ExternalClassification atual e
-    capabilities futuras, mas ConditionSemantics, ConditionValidation e
+    H define uma seam para ExternalClassification atual e capabilities futuras,
+    mas ConditionSemantics, ConditionValidation e
     extractors adicionais ainda não existem em produção. Não há evidência para
     dizer se uma ausência futura quebrará Semantic Product, lowering ou somente
     um consumer opcional; nem há contrato de IR/CFG/dataflow que permita classes
@@ -784,7 +946,7 @@ downstream_impact:
   rationale: >
     O caso FLAG-ON AND OTHER-ON possui surface preservada, mas a occurrence/
     resolution atual pode classificar a condition-name como DATA/{DATA} e
-    terminar UNRESOLVED/INVALID_NAMESPACE_FOR_CONTEXT. A boundary recomendada
+    terminar UNRESOLVED/INVALID_NAMESPACE_FOR_CONTEXT. H
     exige que facts nominais e futuros predicates sejam semanticamente corretos
     ou explicitamente incertos; carregar a resposta incorreta como fato não
     satisfaz esse contrato. BLOCKS_IR, BLOCKS_CFG, BLOCKS_DATAFLOW,
@@ -803,7 +965,7 @@ downstream_impact:
 
 | Finding | CP1 | CP2 | Motivo da mudança |
 | --- | --- | --- | --- |
-| F-SP-001 | `UNASSESSED` | `NOT_APPLICABLE` | A boundary recomendada não exige aggregate público. |
+| F-SP-001 | `UNASSESSED` | `NOT_APPLICABLE` | H usa A2 próprio, mas não transforma a ausência de aggregate de internals em defeito downstream. |
 | F-SP-002 | `UNASSESSED` | `UNASSESSED` | Joins correntes são provados; persistência durável ainda não. |
 | F-SP-003 | `NOT_APPLICABLE` | `NOT_APPLICABLE` | Continua presentation-only. |
 | F-SP-004 | `UNASSESSED` | `UNASSESSED` | Família heterogênea; a primeira responsabilidade Semantic Product/CFG ainda não é provada. |
@@ -812,7 +974,8 @@ downstream_impact:
 | F-SP-005 | `UNASSESSED` | `UNASSESSED` | Products futuros sem contrato/oracle executável. |
 | F-01 | `UNASSESSED` | `BLOCKS_SEMANTIC_PRODUCT` | A primeira falha demonstrada está no binding necessário ao produto. |
 
-As classificações acima são da boundary **proposta** deste Discovery; não são
+As classificações acima são da boundary **proposta** deste Discovery; a
+remediation não alterou nenhuma classe em relação ao CP2 anterior e não são
 autorização para remediar F-01, F-SP-004 ou F-SP-007.
 
 ## 16. Proposed ADRs / Invariants
@@ -823,10 +986,11 @@ alteradas ou promovidas somente por work item/autorização posterior.
 
 ### ADR proposals — status `Proposed`, sem promoção
 
-**P1 — Boundary semântica COBOL é um port language-specific.** O futuro lowerer
-consome uma facade de views/handles tipados; AST, symbols, occurrences,
-resolution, coverage e provenance continuam produtos separados; snapshots e
-ANTLR ficam fora.
+**P1 — Boundary semântica COBOL é estado próprio + port language-specific.** O
+futuro lowerer consome uma facade de views/handles tipados sobre um A2
+materializado, imutável e boundary-owned; A2 não expõe AST, symbols,
+occurrences, resolution ou índices do frontend. Os produtos internos continuam
+separados; snapshots e ANTLR ficam fora.
 
 **P2 — Analysis context atravessa como policy normalizada + facts derivados.** A
 ausência de compiler/build options é um estado normal de disponibilidade; só
@@ -835,8 +999,9 @@ localizada e nunca requisito do consumer.
 
 **P3 — Produtos pós-binding são capabilities tipadas e versionadas.**
 `ExternalClassification` acompanha somente consumers que a pedem; futuros
-`ConditionSemantics`, `ConditionValidation` e extractors não entram em mega-record
-nem em bag sem tipos, e não mutam produtos anteriores.
+`ConditionSemantics`, `ConditionValidation` e extractors são módulos opcionais
+do estado A2 projetados por sub-ports B. Eles não entram em mega-record nem em
+bag sem tipos, e não mutam produtos anteriores.
 
 **P4 — Identity é namespaced e versionada por produto.** Joins usam unit +
 domain-local identity dentro de uma geração; cross-run/cross-version não é
@@ -845,6 +1010,11 @@ prometido por AST ID, posição ou snapshot, e exige contrato próprio se necess
 **P5 — A boundary não expõe parser/presentation internals.** `ParseTree`,
 grammar contexts, `AstScopeIndex`, `SourceMap` completo, HTML/JS e
 `writtenText` como fonte de semântica permanecem detalhes internos/adapters.
+
+**P6 — Publicação é atômica por analysis generation.** Core A2,
+capabilities, provenance e policy observável pertencem à mesma geração; B não
+consulta providers de gerações diferentes. Uma incompatibilidade é um estado
+explícito, não uma mistura silenciosa.
 
 ### Invariant proposals — não promovidos
 
@@ -862,6 +1032,9 @@ grammar contexts, `AstScopeIndex`, `SourceMap` completo, HTML/JS e
 - **I6 — Typed evolution:** capabilities opcionais têm contrato/version próprio;
   consumidor antigo pode ignorar capability desconhecida sem interpretar
   campos arbitrários.
+- **I7 — Coherent generation:** todo fato observado pelo port pertence a uma
+  analysis generation única; surface, resolution e pós-binding de gerações
+  diferentes não formam um produto válido.
 
 Essas propostas respeitam ADR-0002, ADR-0003, ADR-0004, ADR-0005, ADR-0008,
 ADR-0009, ADR-0010, ADR-0011 e ADR-0012, além de INV-AST-001/002/003,
@@ -872,12 +1045,15 @@ INV-EXT-001/002/003/004, INV-COV-001/002/003, INV-EMB-001 e INV-DET-001.
 
 | Risk/unknown | Por que permanece aberto | Guardrail para o próximo trabalho |
 | --- | --- | --- |
-| Facade grande demais | As consultas exatas e perfis de lowerer ainda não foram implementados. | Começar por um core mínimo ancorado na matriz; rejeitar métodos que apenas repassem internals. |
+| A2 duplicar o frontend | Os tipos próprios ainda são uma decisão de Discovery; sem implementação não há prova do tamanho da projeção. | Começar por um core mínimo ancorado na matriz; rejeitar cópia 1:1 de AST/symbol/resolution e métodos B que apenas repassem internals. |
+| Facade grande demais ou lazy | As consultas exatas e perfis de lowerer ainda não foram implementados; uma facade pode virar god interface ou esconder semantic computation. | Sub-ports pequenos sobre A2 publicado; rejeitar qualquer query que retenha provider ou execute análise após a publicação. |
+| Custo de materialização | A evidência atual não mede memória/tempo nem mostra que o custo seja impeditivo. | Medir apenas em trabalho autorizado; não trocar closure por uma otimização presumida. |
+| Estado incoerente entre produtos | A2 ainda não tem builder/validator implementado; a geração coerente é requisito proposto. | Publicação atômica com `analysisGeneration`; rejeitar surface/resolution/capability de gerações diferentes. |
 | Roles de `PERFORM` | CP1 provou flattening, mas não decidiu o desenho de enriquecimento. | Tratar F-SP-007 como bloqueio do produto para lowering exato; não recuperar por texto. |
 | F-01 | A surface é lossless, porém binding combinado continua incorreto. | Corrigir somente com autorização de BACKLOG-RES-003/work item próprio; não esconder como uncertainty genérica. |
 | `SourceMap` completo | Não há consumer atual que enumere todos os segmentos. | Exigir caso de uso/oracle antes de cruzar o mapa inteiro. |
 | Identity cross-version | IDs atuais são determinísticos por geração, não resistentes a edição. | Checkpoint 3/work item de persistência deve definir migration/identity map separado. |
-| Optional capability discovery | Named ports são preferíveis, mas a forma de composição concreta ainda não foi testada. | Proibir `Map<String,Object>`; exigir tipos, version, availability e conflito determinístico. |
+| Optional capability discovery | Named ports são preferíveis, mas a forma de composição concreta ainda não foi testada. | Proibir `Map<String,Object>`; exigir tipos, version, availability, generation e conflito determinístico. |
 | Analysis options externas | A restrição de ausência veio do review e não de um metadata source real. | Não invalidar facts independentes; futura metadata deve trazer autoridade/provenance/precedence. |
 | Conditions future | `ConditionSemantics`/`Validation` são documentados, não produtos atuais. | Consumer não reparseia surface para compensar capability ausente. |
 | Embedded languages | Payload opaco é suficiente para preservação, não para facts internos. | Analyzer dedicado por linguagem e capability separada; regex permanece proibida. |
@@ -891,7 +1067,8 @@ posterior, estes são os inputs que devem ser levados adiante para falsificar a
 candidata, sem assumir que ela foi aceita:
 
 1. um consumer independente de `CobolSemanticPort` que não importe classes do
-   frontend, ANTLR, snapshots ou `writtenText`;
+   frontend, ANTLR, snapshots ou `writtenText`, consumindo somente a facade B
+   sobre o estado A2 publicado;
 2. prova de consumer reconstruction para DATA, procedure, CALL literal/variável,
    nested units, COPY incompleto, provenance e `ExternalClassification`;
 3. cenários de ambiguity, unresolved, unsupported, `EXTERNAL_OBSERVED`, options
@@ -901,8 +1078,12 @@ candidata, sem assumir que ela foi aceita:
 5. verificação de que nenhum caminho do consumer usa ParseTree, grammar context,
    `grammarRule`, HTML ou reparsing de strings;
 6. identidade/ordem determinística dentro de uma geração e comportamento claro
-   para capability ausente/partial;
-7. eventual decisão, somente com evidência, sobre intercâmbio ou persistência.
+   para capability ausente/partial, incluindo rejeição de mistura de gerações;
+7. eventual decisão, somente com evidência, sobre intercâmbio ou persistência,
+   partindo do A2 materializado e sem criar um segundo modelo por replay de
+   queries;
+8. closure/lifecycle: prova de que B não retém `AstScopeIndex`, resolver,
+   preprocessor, parser, composition root ou caches mutáveis.
 
 Esses são critérios de falsificação, não autorização para criar serializer, JSON,
 IR, CFG, dataflow ou Semantic Product.
@@ -911,13 +1092,19 @@ IR, CFG, dataflow ou Semantic Product.
 
 | Pergunta | Resultado | Evidência no relatório |
 | --- | --- | --- |
-| Escolhi a boundary com trade-off explícito? | SIM | §§3–5, tabela comparativa e recomendação B. |
+| Escolhi a boundary com trade-off explícito? | SIM | §§3–5, strongest-opponent table e recomendação H. |
 | Provei que o lowerer não precisa de ANTLR/grammar/text reparsing? | SIM, como requisito/defesa de contrato | §6 e §13; a matriz de constructs usa reconstruction test. |
 | Expliquei cada informação que cruza e que não cruza? | SIM | §6, tabela completa e consequência de “não cruza”. |
 | Testei incomplete analysis e compiler-options absent? | SIM | §§7–8; COPY ausente e `CALL 'XPTO'`/`CALL WS-PGM`. |
 | Testei F-SP-007/PERFORM e F-01? | SIM | §§8–9 e findings reavaliados. |
 | Reavaliei todos os 8 findings? | SIM | §15, oito blocos `downstream_impact` e summary. |
-| Evitei implementação/JSON/IR/Checkpoint 3? | SIM | escopo desta capa, §§16 e 18. |
+| A2 foi avaliada como boundary própria, não envelope de internals? | SIM | §3, strongest-opponent table e adversarial tests. |
+| B foi submetida a closure/lifecycle/determinism/completeness challenges? | SIM | §4, adversarial tests e §§5/10. |
+| A2 foi submetida a evolution/duplication/consistency/cost challenges? | SIM | §4 e §17. |
+| A alternativa rejeitada foi apresentada em sua forma mais forte plausível? | SIM | A2 própria e B fechada foram comparadas na tabela de strongest opponent. |
+| A recomendação decorre dos trade-offs, não da anterior? | SIM | B puro perdeu closure/interchange; H foi escolhido pelo resultado adversarial. |
+| Findings afetados foram revalidados? | SIM | §15, oito blocos `downstream_impact` e tabela de revalidação. |
+| Evitei implementação/JSON/IR/Checkpoint 3? | SIM | escopo desta remediation, §§16 e 18. |
 | Todo downstream_impact está válido? | SIM, sujeito à validação mecânica do gate | Cada bloco tem `class`, rationale e evidence; `UNASSESSED` tem `reassess_when`. |
 
 ## 20. Evidence and validation inputs
@@ -950,7 +1137,26 @@ autorizada ou necessária.
 | `./scripts/harness/check-semantic.sh` (via full) | `PASSED` |
 | `./scripts/harness/check-performance.sh` | `PASSED` |
 | `./scripts/harness/check-full.sh` | `PASSED` |
-| `git diff --cached --check` | `PASSED` |
+| `git diff --check` | `PASSED` |
+
+### Validation da remediation
+
+Após o challenge A2/B e as correções de lifecycle, os gates declarados no
+`work-item.yaml` foram executados novamente nesta branch:
+
+| Gate/check | Resultado |
+| --- | --- |
+| `./scripts/harness/check-docs.sh` | `PASSED` |
+| `./scripts/harness/check-architecture.sh` | `PASSED` |
+| `./scripts/harness/check-fast.sh` | `PASSED` |
+| `./scripts/harness/check-semantic.sh` | `PASSED` |
+| `./scripts/harness/check-full.sh` | `PASSED` |
+| validator mecânico dos oito `downstream_impact` | `PASSED` — 8 records; todos com `class`, `rationale` e `evidence`; `UNASSESSED` com `reassess_when` |
+| `git diff --check` | `PASSED` |
+
+Nenhum arquivo em `src/main/**`, `src/test/**` ou grammar foi alterado. Nenhum
+serializer, JSON, Semantic Product, `CobolLower`, IR, CFG ou dataflow foi
+executado ou implementado.
 
 **Checkpoint 2 status:** concluído e aguardando review humano.
 **Checkpoint 3 status:** não autorizado e não iniciado.

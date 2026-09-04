@@ -2,9 +2,9 @@
 
 ## Fatiamento
 
-1. **Checkpoint 1 — Current semantic state and boundary requirements.** Reconstruir a pipeline pelo código, inventariar produtos, ownership, lifetime, identities, joins, provenance, incompletude, apresentação, produtos pós-binding e requisitos R1–R7. Esta é a única fase autorizada nesta sessão.
+1. **Checkpoint 1 — Current semantic state and boundary requirements.** Reconstruir a pipeline pelo código, inventariar produtos, ownership, lifetime, identities, joins, provenance, incompletude, apresentação, produtos pós-binding e requisitos R1–R7. Concluído e usado como baseline factual.
 2. **Review humano obrigatório.** O resultado do Checkpoint 1 deve ser revisado antes de qualquer desenho de boundary.
-3. **Checkpoint 2 — Boundary design and sufficiency.** Após review e autorização: definir uma ou mais candidatas de boundary; comparar record, facade e envelope como alternativas, sem assumir nenhuma; definir o que cruza e o que não cruza; responsabilidades de evolução/versionamento; relação com produtos pós-binding; matriz de suficiência semântica; reavaliar impactos downstream; localizar a seam de Clean Architecture; propor ADRs e invariantes.
+3. **Checkpoint 2 — Boundary design and sufficiency.** Após review e autorização: definir e comparar candidatas de boundary, incluindo modelo materializado próprio, facade e envelope; definir o que cruza e o que não cruza; responsabilidades de evolução/versionamento; relação com produtos pós-binding; matriz de suficiência semântica; reavaliar impactos downstream; localizar a seam de Clean Architecture; propor ADRs e invariantes. Concluído e em review humano.
 4. **Review humano obrigatório.** O Checkpoint 2 termina antes de qualquer experimento de interchange ou implementação.
 5. **Checkpoint 3 — Executable falsification / interchange proof.** Após novo review e autorização: tentar falsificar a candidata com snapshot semântico experimental, determinismo, round-trip, consumer independente, ausência de dependência de ANTLR/parse tree/presentation, preservação de joins, provenance e análise parcial, além de sanity check de tamanho/tempo. Comparar arquivo único e bundle somente se a questão de transporte ainda permanecer relevante.
 6. **Review humano obrigatório.** O Checkpoint 3 termina com recomendação revisável; não autoriza implementação automaticamente.
