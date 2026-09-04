@@ -3,6 +3,8 @@ package io.github.gustavo2358.cobolexplorer;
 import io.github.gustavo2358.cobolexplorer.antlr.CobolParser;
 import org.junit.jupiter.api.Test;
 
+import java.util.EnumSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -340,6 +342,187 @@ class SearchWhenConditionDiscoveryTest {
                         .allMatch(occurrence -> occurrence.kind() != ResolutionContracts.ReferenceKind.CONDITION)));
     }
 
+    @Test
+    void R1_bareVaryingIndexReResolvesWithTheHypotheticalSharedPolicy() {
+        AstBoundaryTestSupport.Analysis analysis = analyze("R1-BARE-INDEX", """
+                SEARCH TABLE-ITEM VARYING SEARCH-IDX
+                   WHEN SEARCH-A = SEARCH-B
+                      CONTINUE
+                END-SEARCH.
+                """);
+
+        Ast.DataReference varying = varyingReference(analysis, "SEARCH-IDX");
+        ReferenceResolution resolution = reResolveWithVaryingPolicy(analysis, varying,
+                EnumSet.of(ResolutionContracts.ReferenceKind.DATA,
+                        ResolutionContracts.ReferenceKind.INDEX));
+        ReferenceResolution.Entry entry = resolutionEntry(resolution, varying.meta().id());
+        assertAll("R1 bare INDEX",
+                () -> assertEquals(ResolutionContracts.ReferenceKind.DATA, entry.occurrence().kind()),
+                () -> assertEquals(EnumSet.of(ResolutionContracts.ReferenceKind.DATA,
+                                ResolutionContracts.ReferenceKind.INDEX), entry.occurrence().admissibleKinds()),
+                () -> assertEquals(ResolutionContracts.ResolutionStatus.RESOLVED, entry.status()),
+                () -> assertEquals(ResolutionContracts.ReferenceKind.INDEX,
+                        entry.selectedCandidate().orElseThrow().kind()));
+    }
+
+    @Test
+    void R2_bareVaryingDataReResolvesWithTheHypotheticalSharedPolicy() {
+        AstBoundaryTestSupport.Analysis analysis = analyzeWithDeclarations("R2-BARE-DATA", """
+                01  SEARCH-COUNTER PIC 9(4).
+                """, """
+                SEARCH TABLE-ITEM VARYING SEARCH-COUNTER
+                   WHEN SEARCH-A = SEARCH-B
+                      CONTINUE
+                END-SEARCH.
+                """);
+
+        Ast.DataReference varying = varyingReference(analysis, "SEARCH-COUNTER");
+        ReferenceResolution resolution = reResolveWithVaryingPolicy(analysis, varying,
+                EnumSet.of(ResolutionContracts.ReferenceKind.DATA,
+                        ResolutionContracts.ReferenceKind.INDEX));
+        ReferenceResolution.Entry entry = resolutionEntry(resolution, varying.meta().id());
+        assertAll("R2 bare DATA",
+                () -> assertEquals(ResolutionContracts.ReferenceKind.DATA, entry.occurrence().kind()),
+                () -> assertEquals(EnumSet.of(ResolutionContracts.ReferenceKind.DATA,
+                                ResolutionContracts.ReferenceKind.INDEX), entry.occurrence().admissibleKinds()),
+                () -> assertEquals(ResolutionContracts.ResolutionStatus.RESOLVED, entry.status()),
+                () -> assertEquals(ResolutionContracts.ReferenceKind.DATA,
+                        entry.selectedCandidate().orElseThrow().kind()));
+    }
+
+    @Test
+    void R3_qualifiedVaryingExcludesIndexEvenWhenWrongPolicyWouldAdmitIt() {
+        AstBoundaryTestSupport.Analysis analysis = analyzeQualifiedVarying("R3-QUALIFIED", """
+                SEARCH TABLE-ITEM VARYING SEARCH-IDX OF SOME-GROUP
+                   WHEN SEARCH-A = SEARCH-B
+                      CONTINUE
+                END-SEARCH.
+                """);
+
+        Ast.DataReference varying = varyingReference(analysis, "SEARCH-IDX");
+        assertEquals(1, varying.qualifiers().size(), "R3 must be a qualified nominal what-if");
+        ReferenceResolution.Entry proposed = resolutionEntry(
+                reResolveWithVaryingPolicy(analysis, varying, Set.of(ResolutionContracts.ReferenceKind.DATA)),
+                varying.meta().id());
+        ReferenceResolution.Entry wrong = resolutionEntry(
+                reResolveWithVaryingPolicy(analysis, varying,
+                        EnumSet.of(ResolutionContracts.ReferenceKind.DATA,
+                                ResolutionContracts.ReferenceKind.INDEX)), varying.meta().id());
+        assertAll("R3 qualified INDEX exclusion",
+                () -> assertEquals(ResolutionContracts.ReferenceKind.DATA, proposed.occurrence().kind()),
+                () -> assertEquals(Set.of(ResolutionContracts.ReferenceKind.DATA),
+                        proposed.occurrence().admissibleKinds()),
+                () -> assertTrue(proposed.selectedCandidate().isEmpty()),
+                () -> assertEquals(EnumSet.of(ResolutionContracts.ReferenceKind.DATA,
+                                ResolutionContracts.ReferenceKind.INDEX), wrong.occurrence().admissibleKinds()),
+                () -> assertEquals(ResolutionContracts.ResolutionStatus.RESOLVED, wrong.status()),
+                () -> assertEquals(ResolutionContracts.ReferenceKind.INDEX,
+                        wrong.selectedCandidate().orElseThrow().kind()));
+    }
+
+    @Test
+    void R4_grammarShapeAuditShowsQualifiedDataNameWithoutRootSubscript() {
+        AstBoundaryTestSupport.Analysis analysis = analyzeWithDeclarations("R4-SHAPE", """
+                01  SOME-GROUP.
+                    05  QUALIFIED-ITEM PIC 9(4).
+                """, """
+                SEARCH TABLE-ITEM VARYING SEARCH-IDX OF SOME-GROUP
+                   WHEN SEARCH-A = SEARCH-B
+                      CONTINUE
+                END-SEARCH.
+                """);
+
+        CobolParser.SearchVaryingContext varyingContext =
+                AstBoundaryTestSupport.contexts(analysis.tree(), CobolParser.SearchVaryingContext.class)
+                        .get(0);
+        Ast.DataReference varying = varyingReference(analysis, "SEARCH-IDX");
+        assertAll("R4 searchVarying grammar shape",
+                () -> assertEquals(1, varyingContext.qualifiedDataName().getChildCount()),
+                () -> assertEquals("SEARCH-IDXOFSOME-GROUP", varyingContext.qualifiedDataName().getText()),
+                () -> assertEquals(1, varying.qualifiers().size()),
+                () -> assertTrue(varying.subscriptGroups().isEmpty()),
+                () -> assertTrue(AstBoundaryTestSupport.contexts(varyingContext,
+                        CobolParser.TableCallContext.class).isEmpty()));
+    }
+
+    @Test
+    void declarationSubstitutionChangesOnlyBindingForBareVarying() {
+        AstBoundaryTestSupport.Analysis data = analyzeWithDeclarations("R5-DATA", """
+                01  VARYING-NAME PIC 9(4).
+                """, varyingProgram("VARYING-NAME"));
+        AstBoundaryTestSupport.Analysis index = analyzeWithDeclarations("R5-INDEX", """
+                01  VARYING-TABLE OCCURS 10 TIMES INDEXED BY VARYING-NAME.
+                    05  VARYING-VALUE PIC 9(4).
+                """, varyingProgram("VARYING-NAME"));
+        AstBoundaryTestSupport.Analysis missing = analyze("R5-MISSING", varyingProgram("VARYING-NAME"));
+
+        assertAll("declaration substitution",
+                () -> assertEquals(Set.of(ResolutionContracts.ReferenceKind.DATA,
+                                ResolutionContracts.ReferenceKind.INDEX),
+                        projectedVaryingOccurrence(data, "VARYING-NAME").admissibleKinds()),
+                () -> assertEquals(Set.of(ResolutionContracts.ReferenceKind.DATA,
+                                ResolutionContracts.ReferenceKind.INDEX),
+                        projectedVaryingOccurrence(index, "VARYING-NAME").admissibleKinds()),
+                () -> assertEquals(Set.of(ResolutionContracts.ReferenceKind.DATA,
+                                ResolutionContracts.ReferenceKind.INDEX),
+                        projectedVaryingOccurrence(missing, "VARYING-NAME").admissibleKinds()),
+                () -> assertEquals(ResolutionContracts.ReferenceKind.DATA,
+                        reResolveWithVaryingPolicy(data, varyingReference(data, "VARYING-NAME"),
+                                EnumSet.of(ResolutionContracts.ReferenceKind.DATA,
+                                        ResolutionContracts.ReferenceKind.INDEX))
+                                .entries().stream().filter(entry -> entry.occurrence().writtenText()
+                                        .equals("VARYING-NAME") && entry.occurrence().role()
+                                        == ResolutionContracts.ReferenceRole.CONTEXT_DEPENDENT)
+                                .findFirst().orElseThrow().selectedCandidate().orElseThrow().kind()),
+                () -> assertEquals(ResolutionContracts.ReferenceKind.INDEX,
+                        reResolveWithVaryingPolicy(index, varyingReference(index, "VARYING-NAME"),
+                                EnumSet.of(ResolutionContracts.ReferenceKind.DATA,
+                                        ResolutionContracts.ReferenceKind.INDEX))
+                                .entries().stream().filter(entry -> entry.occurrence().writtenText()
+                                        .equals("VARYING-NAME") && entry.occurrence().role()
+                                        == ResolutionContracts.ReferenceRole.CONTEXT_DEPENDENT)
+                                .findFirst().orElseThrow().selectedCandidate().orElseThrow().kind()),
+                () -> assertEquals(ResolutionContracts.ResolutionStatus.UNRESOLVED,
+                        reResolveWithVaryingPolicy(missing, varyingReference(missing, "VARYING-NAME"),
+                                EnumSet.of(ResolutionContracts.ReferenceKind.DATA,
+                                        ResolutionContracts.ReferenceKind.INDEX))
+                                .entries().stream().filter(entry -> entry.occurrence().writtenText()
+                                        .equals("VARYING-NAME") && entry.occurrence().role()
+                                        == ResolutionContracts.ReferenceRole.CONTEXT_DEPENDENT)
+                                .findFirst().orElseThrow().status()));
+    }
+
+    @Test
+    void shapeSubstitutionChangesOnlyAdmissibilityForVarying() {
+        AstBoundaryTestSupport.Analysis bare = analyzeWithDeclarations("R6-BARE", """
+                01  VARYING-NAME PIC 9(4).
+                """, varyingProgram("VARYING-NAME"));
+        AstBoundaryTestSupport.Analysis qualified = analyzeWithDeclarations("R6-QUALIFIED", """
+                01  SOME-GROUP.
+                    05  QUALIFIED-ITEM PIC 9(4).
+                """, """
+                SEARCH TABLE-ITEM VARYING VARYING-NAME OF SOME-GROUP
+                   WHEN SEARCH-A = SEARCH-B
+                      CONTINUE
+                END-SEARCH.
+                """);
+
+        Ast.DataReference bareReference = varyingReference(bare, "VARYING-NAME");
+        Ast.DataReference qualifiedReference = varyingReference(qualified, "VARYING-NAME");
+        assertAll("shape substitution",
+                () -> assertTrue(bareReference.qualifiers().isEmpty()),
+                () -> assertEquals(1, qualifiedReference.qualifiers().size()),
+                () -> assertEquals(Set.of(ResolutionContracts.ReferenceKind.DATA,
+                                ResolutionContracts.ReferenceKind.INDEX),
+                        projectedVaryingOccurrence(bare, "VARYING-NAME").admissibleKinds()),
+                () -> assertEquals(Set.of(ResolutionContracts.ReferenceKind.DATA),
+                        reResolveWithVaryingPolicy(qualified, qualifiedReference,
+                                Set.of(ResolutionContracts.ReferenceKind.DATA))
+                                .entries().stream().filter(entry -> entry.occurrence().referenceAstNodeId()
+                                        == qualifiedReference.meta().id()).findFirst().orElseThrow()
+                                .occurrence().admissibleKinds()));
+    }
+
     private static AstBoundaryTestSupport.Analysis analyze(String id, String search) {
         return AstBoundaryTestSupport.analyze(program(id, search), "search-when-" + id + ".cbl");
     }
@@ -377,6 +560,36 @@ class SearchWhenConditionDiscoveryTest {
                 %s
                 END PROGRAM %s.
                 """.formatted(program, extraDeclarations, search, program);
+    }
+
+    private static AstBoundaryTestSupport.Analysis analyzeQualifiedVarying(String id, String search) {
+        String program = "SEARCH-WHEN-" + id;
+        String source = """
+                IDENTIFICATION DIVISION.
+                PROGRAM-ID. %s.
+                DATA DIVISION.
+                WORKING-STORAGE SECTION.
+                01  SEARCH-A PIC 9(4).
+                01  SEARCH-B PIC 9(4).
+                01  TABLE-ITEM OCCURS 2 TIMES INDEXED BY TABLE-IDX.
+                    05  TABLE-VALUE PIC 9(4).
+                01  SOME-GROUP.
+                    05  QUALIFIED-TABLE OCCURS 10 TIMES INDEXED BY SEARCH-IDX.
+                        10  QUALIFIED-VALUE PIC 9(4).
+                PROCEDURE DIVISION.
+                %s
+                END PROGRAM %s.
+                """.formatted(program, search, program);
+        return AstBoundaryTestSupport.analyze(source, "search-when-" + id + ".cbl");
+    }
+
+    private static String varyingProgram(String varyingName) {
+        return """
+                SEARCH TABLE-ITEM VARYING %s
+                   WHEN SEARCH-A = SEARCH-B
+                      CONTINUE
+                END-SEARCH.
+                """.formatted(varyingName);
     }
 
     private static Ast.PreservedStatement search(AstBoundaryTestSupport.Analysis analysis) {
@@ -419,5 +632,49 @@ class SearchWhenConditionDiscoveryTest {
                         && candidate.occurrence().role() == role)
                 .findFirst().orElseThrow(() -> new AssertionError(
                         "missing resolution entry: " + writtenText + " / " + role));
+    }
+
+    private static Ast.DataReference varyingReference(AstBoundaryTestSupport.Analysis analysis,
+                                                      String baseName) {
+        return search(analysis).operands().stream()
+                .map(Ast.StatementOperand::value)
+                .filter(Ast.DataReference.class::isInstance)
+                .map(Ast.DataReference.class::cast)
+                .filter(reference -> reference.baseName().equals(baseName))
+                .findFirst().orElseThrow(() -> new AssertionError("missing varying reference: " + baseName));
+    }
+
+    private static ReferenceOccurrences.Occurrence projectedVaryingOccurrence(
+            AstBoundaryTestSupport.Analysis analysis, String baseName) {
+        Ast.DataReference varying = varyingReference(analysis, baseName);
+        return reResolveWithVaryingPolicy(analysis, varying,
+                EnumSet.of(ResolutionContracts.ReferenceKind.DATA,
+                        ResolutionContracts.ReferenceKind.INDEX))
+                .entries().stream()
+                .filter(entry -> entry.occurrence().referenceAstNodeId() == varying.meta().id())
+                .findFirst().orElseThrow().occurrence();
+    }
+
+    private static ReferenceResolution reResolveWithVaryingPolicy(
+            AstBoundaryTestSupport.Analysis analysis, Ast.DataReference varying,
+            Set<ResolutionContracts.ReferenceKind> admissibleKinds) {
+        Map<ResolutionContracts.ProgramUnitId, ReferenceOccurrences> projected = new LinkedHashMap<>();
+        analysis.occurrences().forEach((unitId, product) -> projected.put(unitId,
+                new ReferenceOccurrences(product.occurrences().stream().map(occurrence -> {
+                    if (occurrence.referenceAstNodeId() != varying.meta().id()) return occurrence;
+                    return new ReferenceOccurrences.Occurrence(occurrence.id(), occurrence.programUnitId(),
+                            occurrence.referenceAstNodeId(), occurrence.scopeId(),
+                            ResolutionContracts.ReferenceKind.DATA, admissibleKinds, occurrence.role(),
+                            occurrence.grammarRule(), occurrence.writtenText(), occurrence.meta(),
+                            occurrence.preservation());
+                }).toList())));
+        return new CobolReferenceResolver(ResolutionContracts.CobolResolutionPolicy.initial())
+                .resolve(analysis.model(), analysis.tables(), Map.copyOf(projected));
+    }
+
+    private static ReferenceResolution.Entry resolutionEntry(ReferenceResolution resolution, int astNodeId) {
+        return resolution.entries().stream()
+                .filter(entry -> entry.occurrence().referenceAstNodeId() == astNodeId)
+                .findFirst().orElseThrow(() -> new AssertionError("missing resolution entry: " + astNodeId));
     }
 }
