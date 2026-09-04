@@ -16,14 +16,10 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * Checkpoint 1 characterization for SEARCH WHEN.  This class intentionally
- * records the current preserved boundary; it does not authorize or exercise a
- * production implementation.
- */
+/** Functional implementation expectations for the typed SEARCH WHEN boundary. */
 class SearchWhenConditionDiscoveryTest {
     @Test
-    void S1_standaloneConditionNameIsInParseTreeButLostBeforeOccurrences() {
+    void S1_standaloneConditionNameIsMaterializedAsCondition() {
         AstBoundaryTestSupport.Analysis analysis = analyze("S1", """
                 SEARCH TABLE-ITEM
                    WHEN FLAG-ON
@@ -31,17 +27,24 @@ class SearchWhenConditionDiscoveryTest {
                 END-SEARCH.
                 """);
 
-        Ast.PreservedStatement search = search(analysis);
+        Ast.SearchStatement search = search(analysis);
         CobolParser.SearchWhenContext when = onlyWhen(analysis);
+        Ast.SearchWhen branch = search.whens().get(0);
+        Ast.DataReference flag = assertInstanceOf(Ast.DataReference.class, branch.condition());
         assertAll("S1 standalone condition-name",
                 () -> assertEquals("FLAG-ON", when.condition().getText()),
-                () -> assertEquals(List.of("TABLE-ITEM"), operandNames(search)),
-                () -> assertEquals(List.of("searchWhen"), search.clauses().stream()
-                        .map(Ast.StatementClause::grammarRule).toList()),
-                () -> assertTrue(search.clauses().get(0).recognizedNodes().isEmpty()),
-                () -> assertFalse(writtenNames(analysis).contains("FLAG-ON")),
-                () -> assertFalse(AstBoundaryTestSupport.nodes(analysis).stream()
-                        .anyMatch(node -> node instanceof Ast.ContextualConditionTail)),
+                () -> assertEquals("TABLE-ITEM", search.searchedReference().baseName()),
+                () -> assertEquals("FLAG-ON", flag.baseName()),
+                () -> assertEquals(1, branch.statements().size()),
+                () -> assertEquals(ResolutionContracts.ReferenceKind.CONDITION,
+                        entryForRole(analysis, "FLAG-ON", ResolutionContracts.ReferenceRole.VALUE_READ)
+                                .occurrence().kind()),
+                () -> assertEquals(Set.of(ResolutionContracts.ReferenceKind.CONDITION),
+                        entry(analysis, "FLAG-ON").occurrence().admissibleKinds()),
+                () -> assertEquals(ResolutionContracts.ResolutionStatus.RESOLVED,
+                        entry(analysis, "FLAG-ON").status()),
+                () -> assertEquals(ResolutionContracts.ReferenceKind.CONDITION,
+                        entry(analysis, "FLAG-ON").selectedCandidate().orElseThrow().kind()),
                 () -> assertEquals(ResolutionContracts.ReferenceKind.DATA,
                         entry(analysis, "TABLE-ITEM").selectedCandidate().orElseThrow().kind()),
                 () -> assertEquals(ResolutionContracts.ResolutionStatus.RESOLVED,
@@ -51,7 +54,7 @@ class SearchWhenConditionDiscoveryTest {
     }
 
     @Test
-    void S2_completeRelationPreservesBothOperandsThroughThePreservedPath() {
+    void S2_completeRelationUsesTheExistingRelationSurface() {
         AstBoundaryTestSupport.Analysis analysis = analyze("S2", """
                 SEARCH TABLE-ITEM
                    WHEN SEARCH-A = SEARCH-B
@@ -59,26 +62,24 @@ class SearchWhenConditionDiscoveryTest {
                 END-SEARCH.
                 """);
 
-        Ast.PreservedStatement search = search(analysis);
+        Ast.SearchStatement search = search(analysis);
+        Ast.RelationCondition relation = assertInstanceOf(Ast.RelationCondition.class,
+                search.whens().get(0).condition());
         assertAll("S2 complete relation",
-                () -> assertEquals(List.of("TABLE-ITEM", "SEARCH-A", "SEARCH-B"), operandNames(search)),
-                () -> assertEquals(List.of("SEARCH-IDX", "TABLE-ITEM", "SEARCH-A", "SEARCH-B"),
-                        writtenNames(analysis).stream().filter(name -> name.startsWith("SEARCH-")
-                                || name.equals("TABLE-ITEM")).toList()),
-                () -> assertEquals(List.of("SEARCH-A", "SEARCH-B"),
-                        writtenNames(analysis).stream().filter(name -> name.equals("SEARCH-A")
-                                || name.equals("SEARCH-B")).toList()),
+                () -> assertEquals("TABLE-ITEM", search.searchedReference().baseName()),
+                () -> assertEquals("SEARCH-A", ((Ast.DataReference) relation.subject()).baseName()),
+                () -> assertEquals("SEARCH-B", ((Ast.DataReference) relation.object()).baseName()),
                 () -> assertEquals(List.of(ResolutionContracts.ResolutionStatus.RESOLVED,
                                 ResolutionContracts.ResolutionStatus.RESOLVED),
                         List.of(entry(analysis, "SEARCH-A").status(), entry(analysis, "SEARCH-B").status())),
                 () -> assertTrue(List.of(entry(analysis, "SEARCH-A"), entry(analysis, "SEARCH-B")).stream()
                         .allMatch(entry -> entry.selectedCandidate().orElseThrow().kind()
                                 == ResolutionContracts.ReferenceKind.DATA)),
-                () -> assertTrue(AstBoundaryTestSupport.nodes(analysis, Ast.RelationCondition.class).isEmpty()));
+                () -> assertEquals(1, AstBoundaryTestSupport.nodes(analysis, Ast.RelationCondition.class).size()));
     }
 
     @Test
-    void S3_abbreviatedTailDisappearsWhileCompleteOperandsRemain() {
+    void S3_abbreviatedTailUsesContextualConditionLowering() {
         AstBoundaryTestSupport.Analysis analysis = analyze("S3", """
                 SEARCH TABLE-ITEM
                    WHEN SEARCH-A = SEARCH-B OR SEARCH-C
@@ -86,23 +87,30 @@ class SearchWhenConditionDiscoveryTest {
                 END-SEARCH.
                 """);
 
-        Ast.PreservedStatement search = search(analysis);
+        Ast.SearchStatement search = search(analysis);
+        Ast.LogicalCondition logical = assertInstanceOf(Ast.LogicalCondition.class,
+                search.whens().get(0).condition());
+        Ast.RelationCondition relation = assertInstanceOf(Ast.RelationCondition.class, logical.operands().get(0));
+        Ast.ContextualConditionTail tail = assertInstanceOf(Ast.ContextualConditionTail.class,
+                logical.operands().get(1));
         assertAll("S3 abbreviated relation",
-                () -> assertEquals(List.of("TABLE-ITEM", "SEARCH-A", "SEARCH-B"), operandNames(search)),
-                () -> assertFalse(writtenNames(analysis).contains("SEARCH-C")),
-                () -> assertEquals(0, AstBoundaryTestSupport.nodes(analysis, Ast.ContextualConditionTail.class).size()),
+                () -> assertEquals("TABLE-ITEM", search.searchedReference().baseName()),
+                () -> assertEquals("SEARCH-C", tail.nominalReference().baseName()),
+                () -> assertEquals("SEARCH-A", ((Ast.DataReference) relation.subject()).baseName()),
+                () -> assertEquals("SEARCH-B", ((Ast.DataReference) relation.object()).baseName()),
+                () -> assertTrue(writtenNames(analysis).contains("SEARCH-C")),
+                () -> assertEquals(Set.of(ResolutionContracts.ReferenceKind.DATA,
+                                ResolutionContracts.ReferenceKind.INDEX,
+                                ResolutionContracts.ReferenceKind.CONDITION),
+                        entry(analysis, "SEARCH-C").occurrence().admissibleKinds()),
                 () -> assertEquals(List.of(ResolutionContracts.ResolutionStatus.RESOLVED,
                                 ResolutionContracts.ResolutionStatus.RESOLVED),
                         List.of(entry(analysis, "SEARCH-A").status(), entry(analysis, "SEARCH-B").status())),
-                () -> assertEquals(0, AstBoundaryTestSupport.contexts(
-                        analysis.tree(), CobolParser.AbbreviationContext.class).size()),
-                () -> assertTrue(AstBoundaryTestSupport.contexts(
-                        analysis.tree(), CobolParser.ConditionNameReferenceContext.class).stream()
-                        .anyMatch(context -> context.getText().equals("SEARCH-C"))));
+                () -> assertEquals(1, AstBoundaryTestSupport.nodes(analysis, Ast.ContextualConditionTail.class).size()));
     }
 
     @Test
-    void S4_multipleWhenKeepParseOrderAndBranchStatementsButLoseBothConditions() {
+    void S4_multipleWhenPreserveOrderAndBranchOwnership() {
         AstBoundaryTestSupport.Analysis analysis = analyze("S4", """
                 SEARCH TABLE-ITEM
                    WHEN FLAG-A
@@ -112,29 +120,25 @@ class SearchWhenConditionDiscoveryTest {
                 END-SEARCH.
                 """);
 
-        Ast.PreservedStatement search = search(analysis);
+        Ast.SearchStatement search = search(analysis);
         List<CobolParser.SearchWhenContext> whens = AstBoundaryTestSupport.contexts(
                 analysis.tree(), CobolParser.SearchWhenContext.class);
         assertAll("S4 multiple WHEN",
                 () -> assertEquals(List.of("FLAG-A", "FLAG-B"), whens.stream()
                         .map(context -> context.condition().getText()).toList()),
-                () -> assertEquals(List.of("searchWhen", "searchWhen"), search.clauses().stream()
-                        .map(Ast.StatementClause::grammarRule).toList()),
-                () -> assertEquals(List.of(1, 1), search.clauses().stream()
-                        .map(clause -> clause.nestedStatements().size()).toList()),
-                () -> assertEquals(List.of("DISPLAY 'A'", "DISPLAY 'B'"), search.clauses().stream()
-                        .flatMap(clause -> clause.nestedStatements().stream())
-                        .map(Ast.Statement::toString)
-                        .map(text -> text.substring(text.indexOf("writtenText=") + 12,
-                                text.indexOf(", operands=")))
-                        .toList()),
-                () -> assertFalse(writtenNames(analysis).contains("FLAG-A")),
-                () -> assertFalse(writtenNames(analysis).contains("FLAG-B")),
+                () -> assertEquals(List.of("FLAG-A", "FLAG-B"), search.whens().stream()
+                        .map(branch -> ((Ast.DataReference) branch.condition()).baseName()).toList()),
+                () -> assertEquals(List.of(1, 1), search.whens().stream()
+                        .map(branch -> branch.statements().size()).toList()),
+                () -> assertEquals("DISPLAY 'A'", ((Ast.PreservedStatement) search.whens().get(0).statements().get(0)).writtenText()),
+                () -> assertEquals("DISPLAY 'B'", ((Ast.PreservedStatement) search.whens().get(1).statements().get(0)).writtenText()),
+                () -> assertTrue(writtenNames(analysis).contains("FLAG-A")),
+                () -> assertTrue(writtenNames(analysis).contains("FLAG-B")),
                 () -> { AstBoundaryTestSupport.assertActualProductsJoin(analysis); });
     }
 
     @Test
-    void S5_notConditionNameHasLogicalParseShapeButNoConditionOccurrence() {
+    void S5_notConditionNameReusesNegatedConditionLowering() {
         AstBoundaryTestSupport.Analysis analysis = analyze("S5", """
                 SEARCH TABLE-ITEM
                    WHEN NOT FLAG-ON
@@ -143,16 +147,19 @@ class SearchWhenConditionDiscoveryTest {
                 """);
 
         CobolParser.SearchWhenContext when = onlyWhen(analysis);
+        Ast.NegatedCondition negated = assertInstanceOf(Ast.NegatedCondition.class, search(analysis).whens().get(0).condition());
         assertAll("S5 NOT",
                 () -> assertEquals(1, when.condition().combinableCondition().NOT().getSymbol().getTokenIndex()
                         >= 0 ? 1 : 0),
                 () -> assertEquals("NOTFLAG-ON", when.condition().getText()),
-                () -> assertFalse(writtenNames(analysis).contains("FLAG-ON")),
-                () -> assertTrue(AstBoundaryTestSupport.nodes(analysis, Ast.NegatedCondition.class).isEmpty()));
+                () -> assertEquals("FLAG-ON", ((Ast.DataReference) negated.operand()).baseName()),
+                () -> assertTrue(writtenNames(analysis).contains("FLAG-ON")),
+                () -> assertEquals(ResolutionContracts.ReferenceKind.CONDITION,
+                        entry(analysis, "FLAG-ON").selectedCandidate().orElseThrow().kind()));
     }
 
     @Test
-    void S6_qualifiedConditionNameIsParsedButItsQualificationAndRootAreLost() {
+    void S6_qualifiedConditionNamePreservesRootAndQualifier() {
         AstBoundaryTestSupport.Analysis analysis = analyze("S6", """
                 SEARCH TABLE-ITEM
                    WHEN FLAG-ON OF GROUP-X
@@ -164,15 +171,21 @@ class SearchWhenConditionDiscoveryTest {
                 analysis.tree(), CobolParser.ConditionNameReferenceContext.class).stream()
                 .filter(context -> context.getText().contains("FLAG-ON"))
                 .findFirst().orElseThrow();
+        Ast.DataReference root = assertInstanceOf(Ast.DataReference.class, search(analysis).whens().get(0).condition());
         assertAll("S6 qualified condition-name",
                 () -> assertEquals("FLAG-ONOFGROUP-X", condition.getText()),
                 () -> assertEquals(1, condition.inData().size()),
                 () -> assertEquals("GROUP-X", condition.inData(0).getText().replaceFirst("(?i)^OF", "").trim()),
-                () -> assertFalse(writtenNames(analysis).contains("FLAG-ON")),
+                () -> assertEquals("FLAG-ON", root.baseName()),
+                () -> assertEquals(1, root.qualifiers().size()),
+                () -> assertTrue(writtenNames(analysis).stream().anyMatch(name -> name.startsWith("FLAG-ON"))),
                 () -> assertTrue(writtenNames(analysis).contains("GROUP-X")),
-                () -> assertEquals(List.of("TABLE-ITEM", "GROUP-X"), operandNames(search(analysis))),
-                () -> assertTrue(AstBoundaryTestSupport.nodes(analysis, Ast.DataReference.class).stream()
-                        .noneMatch(reference -> reference.baseName().equals("FLAG-ON"))));
+                () -> assertEquals(ResolutionContracts.ReferenceKind.CONDITION,
+                        resolutionEntry(analysis.resolution(), root.meta().id())
+                                .selectedCandidate().orElseThrow().kind()),
+                () -> assertEquals(ResolutionContracts.ReferenceRole.QUALIFIER_COMPONENT,
+                        entryForRole(analysis, "GROUP-X", ResolutionContracts.ReferenceRole.QUALIFIER_COMPONENT)
+                                .occurrence().role()));
     }
 
     @Test
@@ -193,8 +206,8 @@ class SearchWhenConditionDiscoveryTest {
                         statement.searchWhen(0).condition().getText()),
                 () -> assertEquals(List.of("SEARCH-IDX", "SEARCH-A", "SEARCH-B", "SEARCH-C", "SEARCH-D"),
                         writtenNames(analysis).stream().filter(name -> name.startsWith("SEARCH-")).toList()),
-                () -> assertTrue(AstBoundaryTestSupport.nodes(analysis, Ast.PreservedStatement.class).stream()
-                        .anyMatch(node -> node.grammarRule().equals("searchStatement"))));
+                () -> assertTrue(AstBoundaryTestSupport.nodes(analysis, Ast.SearchStatement.class).stream()
+                        .anyMatch(node -> node.all())));
     }
 
     @Test
@@ -206,13 +219,14 @@ class SearchWhenConditionDiscoveryTest {
                 END-SEARCH.
                 """);
 
-        Ast.PreservedStatement search = search(analysis);
+        Ast.SearchStatement search = search(analysis);
         Map<String, List<ReferenceOccurrences.Occurrence>> occurrences = analysis.occurrences().values().stream()
                 .flatMap(product -> product.occurrences().stream())
                 .collect(Collectors.groupingBy(ReferenceOccurrences.Occurrence::writtenText));
         assertAll("control negative",
-                () -> assertEquals(List.of("TABLE-ITEM", "SEARCH-IDX", "TABLE-VALUE (SEARCH-IDX)", "SEARCH-KEY"),
-                        operandNames(search)),
+                () -> assertEquals("TABLE-ITEM", search.searchedReference().baseName()),
+                () -> assertEquals("SEARCH-IDX", search.varying().baseName()),
+                () -> assertEquals(1, search.whens().size()),
                 () -> assertTrue(occurrences.containsKey("TABLE-ITEM")),
                 () -> assertTrue(occurrences.containsKey("SEARCH-IDX")),
                 () -> assertTrue(occurrences.containsKey("TABLE-VALUE (SEARCH-IDX)")),
@@ -224,7 +238,7 @@ class SearchWhenConditionDiscoveryTest {
     }
 
     @Test
-    void F1_genericAstChildrenTraversalCannotSupplyConditionPositionRouting() {
+    void F1_typedConditionRoutingIsRequiredBeyondGenericTraversal() {
         AstBoundaryTestSupport.Analysis searchAnalysis = analyze("F1-SEARCH", """
                 SEARCH TABLE-ITEM
                    WHEN FLAG-ON
@@ -240,9 +254,10 @@ class SearchWhenConditionDiscoveryTest {
         ReferenceResolution.Entry ifFlag = entryForRole(ifAnalysis, "FLAG-ON",
                 ResolutionContracts.ReferenceRole.VALUE_READ);
         assertAll("F1 typed boundary versus generic fallback",
-                () -> assertTrue(AstBoundaryTestSupport.nodes(searchAnalysis, Ast.ContextualConditionTail.class)
-                        .isEmpty()),
-                () -> assertFalse(writtenNames(searchAnalysis).contains("FLAG-ON")),
+                () -> assertInstanceOf(Ast.DataReference.class, search(searchAnalysis).whens().get(0).condition()),
+                () -> assertTrue(writtenNames(searchAnalysis).contains("FLAG-ON")),
+                () -> assertEquals(ResolutionContracts.ReferenceKind.CONDITION,
+                        entry(searchAnalysis, "FLAG-ON").occurrence().kind()),
                 () -> assertEquals(ResolutionContracts.ReferenceKind.CONDITION, ifFlag.occurrence().kind()),
                 () -> assertEquals(Set.of(ResolutionContracts.ReferenceKind.CONDITION),
                         ifFlag.occurrence().admissibleKinds()),
@@ -252,7 +267,7 @@ class SearchWhenConditionDiscoveryTest {
     }
 
     @Test
-    void F2_nextSentenceIsAnAlternativeTokenPathAndCurrentPreservedClauseRetainsIt() {
+    void F2_nextSentenceIsMaterializedAsTheBranchAction() {
         AstBoundaryTestSupport.Analysis analysis = analyze("F2-NEXT", """
                 SEARCH TABLE-ITEM
                    WHEN FLAG-ON
@@ -261,22 +276,20 @@ class SearchWhenConditionDiscoveryTest {
                 """);
 
         CobolParser.SearchWhenContext when = onlyWhen(analysis);
-        Ast.StatementClause clause = search(analysis).clauses().get(0);
+        Ast.SearchWhen branch = search(analysis).whens().get(0);
         assertAll("F2 NEXT SENTENCE",
                 () -> assertEquals("FLAG-ON", when.condition().getText()),
                 () -> assertEquals(0, when.statement().size()),
                 () -> assertEquals("NEXT", when.NEXT().getText()),
                 () -> assertEquals("SENTENCE", when.SENTENCE().getText()),
-                () -> assertEquals("searchWhen", clause.grammarRule()),
-                () -> assertTrue(clause.recognizedNodes().isEmpty()),
-                () -> assertEquals(1, clause.nestedStatements().size()),
-                () -> assertInstanceOf(Ast.NextSentenceStatement.class, clause.nestedStatements().get(0)),
-                () -> assertFalse(writtenNames(analysis).contains("FLAG-ON")),
+                () -> assertEquals(1, branch.statements().size()),
+                () -> assertInstanceOf(Ast.NextSentenceStatement.class, branch.statements().get(0)),
+                () -> assertTrue(writtenNames(analysis).contains("FLAG-ON")),
                 () -> assertTrue(AstBoundaryTestSupport.nodes(analysis, Ast.NextSentenceStatement.class).size() == 1));
     }
 
     @Test
-    void F3_varyingIndexIsCurrentlyDefaultDataButFuturePolicyMustAdmitIndex() {
+    void F3_varyingIndexUsesTheProductionShapePolicy() {
         AstBoundaryTestSupport.Analysis analysis = analyze("F3-INDEX", """
                 SEARCH TABLE-ITEM VARYING SEARCH-IDX
                    WHEN SEARCH-A = SEARCH-B
@@ -288,11 +301,12 @@ class SearchWhenConditionDiscoveryTest {
                 ResolutionContracts.ReferenceRole.CONTEXT_DEPENDENT);
         assertAll("F3 VARYING index",
                 () -> assertEquals(ResolutionContracts.ReferenceKind.DATA, varying.occurrence().kind()),
-                () -> assertEquals(Set.of(ResolutionContracts.ReferenceKind.DATA),
+                () -> assertEquals(Set.of(ResolutionContracts.ReferenceKind.DATA,
+                                ResolutionContracts.ReferenceKind.INDEX),
                         varying.occurrence().admissibleKinds()),
-                () -> assertEquals(ResolutionContracts.ResolutionStatus.UNRESOLVED, varying.status()),
-                () -> assertEquals(ResolutionContracts.ResolutionReason.INVALID_NAMESPACE_FOR_CONTEXT,
-                        varying.reason()),
+                () -> assertEquals(ResolutionContracts.ResolutionStatus.RESOLVED, varying.status()),
+                () -> assertEquals(ResolutionContracts.ReferenceKind.INDEX,
+                        varying.selectedCandidate().orElseThrow().kind()),
                 () -> assertTrue(analysis.resolution().entries().stream()
                         .filter(entry -> entry.occurrence().writtenText().equals("SEARCH-IDX"))
                         .anyMatch(entry -> entry.occurrence().role() == ResolutionContracts.ReferenceRole.OCCURS_INDEX
@@ -315,7 +329,8 @@ class SearchWhenConditionDiscoveryTest {
                 ResolutionContracts.ReferenceRole.CONTEXT_DEPENDENT);
         assertAll("F3 VARYING data",
                 () -> assertEquals(ResolutionContracts.ReferenceKind.DATA, varying.occurrence().kind()),
-                () -> assertEquals(Set.of(ResolutionContracts.ReferenceKind.DATA),
+                () -> assertEquals(Set.of(ResolutionContracts.ReferenceKind.DATA,
+                                ResolutionContracts.ReferenceKind.INDEX),
                         varying.occurrence().admissibleKinds()),
                 () -> assertEquals(ResolutionContracts.ResolutionStatus.RESOLVED, varying.status()),
                 () -> assertEquals(ResolutionContracts.ReferenceKind.DATA,
@@ -335,7 +350,9 @@ class SearchWhenConditionDiscoveryTest {
                 ResolutionContracts.ReferenceRole.CONTEXT_DEPENDENT);
         assertAll("F3 separate VARYING and condition positions",
                 () -> assertEquals(ResolutionContracts.ReferenceKind.DATA, varying.occurrence().kind()),
-                () -> assertFalse(writtenNames(analysis).contains("FLAG-ON")),
+                () -> assertTrue(writtenNames(analysis).contains("FLAG-ON")),
+                () -> assertEquals(ResolutionContracts.ReferenceKind.CONDITION,
+                        entry(analysis, "FLAG-ON").occurrence().kind()),
                 () -> assertTrue(analysis.occurrences().values().stream()
                         .flatMap(product -> product.occurrences().stream())
                         .filter(occurrence -> occurrence.writtenText().equals("SEARCH-IDX"))
@@ -343,7 +360,7 @@ class SearchWhenConditionDiscoveryTest {
     }
 
     @Test
-    void R1_bareVaryingIndexReResolvesWithTheHypotheticalSharedPolicy() {
+    void R1_bareVaryingIndexResolvesWithTheProductionPolicy() {
         AstBoundaryTestSupport.Analysis analysis = analyze("R1-BARE-INDEX", """
                 SEARCH TABLE-ITEM VARYING SEARCH-IDX
                    WHEN SEARCH-A = SEARCH-B
@@ -352,10 +369,8 @@ class SearchWhenConditionDiscoveryTest {
                 """);
 
         Ast.DataReference varying = varyingReference(analysis, "SEARCH-IDX");
-        ReferenceResolution resolution = reResolveWithVaryingPolicy(analysis, varying,
-                EnumSet.of(ResolutionContracts.ReferenceKind.DATA,
-                        ResolutionContracts.ReferenceKind.INDEX));
-        ReferenceResolution.Entry entry = resolutionEntry(resolution, varying.meta().id());
+        ReferenceResolution.Entry entry = entryForRole(analysis, "SEARCH-IDX",
+                ResolutionContracts.ReferenceRole.CONTEXT_DEPENDENT);
         assertAll("R1 bare INDEX",
                 () -> assertEquals(ResolutionContracts.ReferenceKind.DATA, entry.occurrence().kind()),
                 () -> assertEquals(EnumSet.of(ResolutionContracts.ReferenceKind.DATA,
@@ -366,7 +381,7 @@ class SearchWhenConditionDiscoveryTest {
     }
 
     @Test
-    void R2_bareVaryingDataReResolvesWithTheHypotheticalSharedPolicy() {
+    void R2_bareVaryingDataResolvesWithTheProductionPolicy() {
         AstBoundaryTestSupport.Analysis analysis = analyzeWithDeclarations("R2-BARE-DATA", """
                 01  SEARCH-COUNTER PIC 9(4).
                 """, """
@@ -377,10 +392,8 @@ class SearchWhenConditionDiscoveryTest {
                 """);
 
         Ast.DataReference varying = varyingReference(analysis, "SEARCH-COUNTER");
-        ReferenceResolution resolution = reResolveWithVaryingPolicy(analysis, varying,
-                EnumSet.of(ResolutionContracts.ReferenceKind.DATA,
-                        ResolutionContracts.ReferenceKind.INDEX));
-        ReferenceResolution.Entry entry = resolutionEntry(resolution, varying.meta().id());
+        ReferenceResolution.Entry entry = entryForRole(analysis, "SEARCH-COUNTER",
+                ResolutionContracts.ReferenceRole.CONTEXT_DEPENDENT);
         assertAll("R2 bare DATA",
                 () -> assertEquals(ResolutionContracts.ReferenceKind.DATA, entry.occurrence().kind()),
                 () -> assertEquals(EnumSet.of(ResolutionContracts.ReferenceKind.DATA,
@@ -391,7 +404,7 @@ class SearchWhenConditionDiscoveryTest {
     }
 
     @Test
-    void R3_qualifiedVaryingExcludesIndexEvenWhenWrongPolicyWouldAdmitIt() {
+    void R3_qualifiedVaryingExcludesIndexFromTheProductionPolicy() {
         AstBoundaryTestSupport.Analysis analysis = analyzeQualifiedVarying("R3-QUALIFIED", """
                 SEARCH TABLE-ITEM VARYING SEARCH-IDX OF SOME-GROUP
                    WHEN SEARCH-A = SEARCH-B
@@ -401,23 +414,14 @@ class SearchWhenConditionDiscoveryTest {
 
         Ast.DataReference varying = varyingReference(analysis, "SEARCH-IDX");
         assertEquals(1, varying.qualifiers().size(), "R3 must be a qualified nominal what-if");
-        ReferenceResolution.Entry proposed = resolutionEntry(
-                reResolveWithVaryingPolicy(analysis, varying, Set.of(ResolutionContracts.ReferenceKind.DATA)),
-                varying.meta().id());
-        ReferenceResolution.Entry wrong = resolutionEntry(
-                reResolveWithVaryingPolicy(analysis, varying,
-                        EnumSet.of(ResolutionContracts.ReferenceKind.DATA,
-                                ResolutionContracts.ReferenceKind.INDEX)), varying.meta().id());
+        ReferenceResolution.Entry proposed = resolutionEntry(analysis.resolution(), varying.meta().id());
         assertAll("R3 qualified INDEX exclusion",
                 () -> assertEquals(ResolutionContracts.ReferenceKind.DATA, proposed.occurrence().kind()),
                 () -> assertEquals(Set.of(ResolutionContracts.ReferenceKind.DATA),
                         proposed.occurrence().admissibleKinds()),
                 () -> assertTrue(proposed.selectedCandidate().isEmpty()),
-                () -> assertEquals(EnumSet.of(ResolutionContracts.ReferenceKind.DATA,
-                                ResolutionContracts.ReferenceKind.INDEX), wrong.occurrence().admissibleKinds()),
-                () -> assertEquals(ResolutionContracts.ResolutionStatus.RESOLVED, wrong.status()),
-                () -> assertEquals(ResolutionContracts.ReferenceKind.INDEX,
-                        wrong.selectedCandidate().orElseThrow().kind()));
+                () -> assertEquals(ResolutionContracts.ResolutionStatus.UNRESOLVED, proposed.status()),
+                () -> assertTrue(proposed.selectedCandidate().isEmpty()));
     }
 
     @Test
@@ -433,9 +437,7 @@ class SearchWhenConditionDiscoveryTest {
                 """);
 
         Ast.DataReference varying = varyingReference(analysis, "SEARCH-COUNTER");
-        ReferenceResolution.Entry entry = resolutionEntry(
-                reResolveWithVaryingPolicy(analysis, varying,
-                        Set.of(ResolutionContracts.ReferenceKind.DATA)), varying.meta().id());
+        ReferenceResolution.Entry entry = resolutionEntry(analysis.resolution(), varying.meta().id());
         assertAll("R5 qualified DATA",
                 () -> assertEquals("SEARCH-COUNTER", varying.baseName()),
                 () -> assertEquals(1, varying.qualifiers().size()),
@@ -624,23 +626,14 @@ class SearchWhenConditionDiscoveryTest {
                 """.formatted(varyingName);
     }
 
-    private static Ast.PreservedStatement search(AstBoundaryTestSupport.Analysis analysis) {
-        return AstBoundaryTestSupport.nodes(analysis, Ast.PreservedStatement.class).stream()
-                .filter(statement -> statement.grammarRule().equals("searchStatement"))
+    private static Ast.SearchStatement search(AstBoundaryTestSupport.Analysis analysis) {
+        return AstBoundaryTestSupport.nodes(analysis, Ast.SearchStatement.class).stream()
                 .findFirst().orElseThrow();
     }
 
     private static CobolParser.SearchWhenContext onlyWhen(AstBoundaryTestSupport.Analysis analysis) {
         return AstBoundaryTestSupport.contexts(analysis.tree(), CobolParser.SearchWhenContext.class)
                 .stream().findFirst().orElseThrow();
-    }
-
-    private static List<String> operandNames(Ast.PreservedStatement statement) {
-        return statement.operands().stream().map(operand -> {
-            if (operand.value() instanceof Ast.DataReference reference) return reference.writtenText();
-            if (operand.value() instanceof Ast.NamedReference reference) return reference.writtenText();
-            return operand.value().toString();
-        }).toList();
     }
 
     private static Set<String> writtenNames(AstBoundaryTestSupport.Analysis analysis) {
@@ -668,12 +661,9 @@ class SearchWhenConditionDiscoveryTest {
 
     private static Ast.DataReference varyingReference(AstBoundaryTestSupport.Analysis analysis,
                                                       String baseName) {
-        return search(analysis).operands().stream()
-                .map(Ast.StatementOperand::value)
-                .filter(Ast.DataReference.class::isInstance)
-                .map(Ast.DataReference.class::cast)
-                .filter(reference -> reference.baseName().equals(baseName))
-                .findFirst().orElseThrow(() -> new AssertionError("missing varying reference: " + baseName));
+        Ast.DataReference varying = search(analysis).varying();
+        if (varying != null && varying.baseName().equals(baseName)) return varying;
+        throw new AssertionError("missing varying reference: " + baseName);
     }
 
     private static ReferenceOccurrences.Occurrence projectedVaryingOccurrence(
