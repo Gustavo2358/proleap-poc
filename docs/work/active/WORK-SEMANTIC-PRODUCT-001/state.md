@@ -2,19 +2,19 @@
 
 ## Onde estamos
 
-Work item criado como `active`, risco `high`. O Checkpoint 1 está em execução; os Checkpoints 2 e 3 estão planejados, mas aguardam review humano e autorização explícita.
+Work item permanece `active`, risco `high`. O Checkpoint 1 está concluído após remediation e aguarda novo review humano. Os Checkpoints 2 e 3 não estão autorizados e exigem autorização explícita posterior.
 
 ## Verde conhecido
 
 - `main` está limpo e alinhado ao `origin/main` no merge do PR #22.
-- Lifecycle/documentação baseline passou antes da criação do item; após os artefatos, `docs`, `fast`, `semantic` e `full` passaram.
+- O relatório do Checkpoint 1, a remediation de review, a self-validation e o handoff documental estão concluídos; os gates desta remediation são registrados no relatório.
 - Não houve alteração em `src/main/**`, gramática, AST, símbolos, occurrences, resolução ou fixtures.
 
 ## Restante
 
-- Consolidar o relatório de evidência do Checkpoint 1.
-- Fazer self-validation de escopo, lifecycle, impacto downstream e separação current/future.
-- Handoff para review humano; não iniciar o Checkpoint 2.
+- Review humano do Checkpoint 1.
+- Incorporar findings adicionais caso existam.
+- Obter autorização explícita antes do Checkpoint 2.
 
 ## Descobertas que afetam o plano
 

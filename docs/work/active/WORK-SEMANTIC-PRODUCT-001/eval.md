@@ -38,6 +38,9 @@ O Checkpoint 1 é correto quando o relatório reconstrói o fluxo executável pe
 - Nested programs, scopes, shadowing e program visibility.
 - `EVALUATE TRUE` com condição nominal simples e com `FLAG-ON AND OTHER-ON` (F-01 sem correção).
 - `ALTER`, `SEARCH`, `GO TO DEPENDING ON`, `PERFORM THRU`, `NEXT SENTENCE` e terminais genéricos.
+- `PERFORM VARYING`, incluindo `AFTER` aninhado, e `PERFORM WITH TEST AFTER`: lista ordenada de expressions não prova papéis de variável, inicialização, passo, predicado ou modo de teste.
+- `EXIT PERFORM`, `EXIT PARAGRAPH` e `EXIT SECTION`, separados de `EXIT PROGRAM`: ausência de node/kind dedicado ou de suporte pela grammar não pode ser relatada como estrutura suficiente.
+- compiler options ausentes: `PgmnameMode`, `DynamMode` e `DllMode` ficam explicitamente `UNSPECIFIED`, enquanto `CALL 'XPTO'` continua publicando o target nominal observado e localiza somente linkage como `UNKNOWN`.
 - `EXEC CICS`, `EXEC SQL` e `EXEC SQLIMS` com payload opaco.
 
 ## Casos de regressão
@@ -51,6 +54,7 @@ Os gates existentes devem continuar verdes para AST/pre-order, symbols, occurren
 - Substituir um COPY disponível por um ausente preserva fatos independentes e torna a incompletude explícita.
 - Inserir uma unidade aninhada não pode permitir join por ID local sem `ProgramUnitId`.
 - Projeções de snapshot podem omitir detalhes, mas não devem ser tratadas como fonte para reconstruir o domínio.
+- Um construct só é estruturalmente suficiente para lowering quando seus papéis semânticos podem ser reconstruídos sem parse tree, grammar contexts, conhecimento implícito da ordem da grammar ou reparse de strings.
 
 ## Expectativas de escala
 

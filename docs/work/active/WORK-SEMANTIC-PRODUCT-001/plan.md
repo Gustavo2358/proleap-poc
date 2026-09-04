@@ -25,6 +25,11 @@ O código atual sugere uma composição distribuída no composition root: `Explo
 
 Nenhuma migração ou alteração de produção é autorizada no Checkpoint 1. Migrações documentais, compatibilidade, versionamento de identidades e adapters só poderão ser definidas no Checkpoint 2 após decisão humana.
 
+O Checkpoint 2 também deverá receber como inputs obrigatórios a responsabilidade de boundary
+do analysis context (evidence bruta, policy normalizada e facts derivados/incerteza) e a
+suficiência de papéis semânticos dos constructs de controle, sem depender de ordem implícita
+da grammar ou de `writtenText`.
+
 ## Artefatos esperados
 
 - Este work item com contrato, plano em três checkpoints, eval e estado factual.
