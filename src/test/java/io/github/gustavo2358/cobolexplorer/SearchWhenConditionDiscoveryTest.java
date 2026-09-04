@@ -421,6 +421,38 @@ class SearchWhenConditionDiscoveryTest {
     }
 
     @Test
+    void R5_qualifiedVaryingDataReResolvesWithTheQualifiedDataPolicy() {
+        AstBoundaryTestSupport.Analysis analysis = analyzeWithDeclarations("R5-QUALIFIED-DATA", """
+                01  SOME-GROUP.
+                    05  SEARCH-COUNTER PIC 9(4).
+                """, """
+                SEARCH TABLE-ITEM VARYING SEARCH-COUNTER OF SOME-GROUP
+                   WHEN SEARCH-A = SEARCH-B
+                      CONTINUE
+                END-SEARCH.
+                """);
+
+        Ast.DataReference varying = varyingReference(analysis, "SEARCH-COUNTER");
+        ReferenceResolution.Entry entry = resolutionEntry(
+                reResolveWithVaryingPolicy(analysis, varying,
+                        Set.of(ResolutionContracts.ReferenceKind.DATA)), varying.meta().id());
+        assertAll("R5 qualified DATA",
+                () -> assertEquals("SEARCH-COUNTER", varying.baseName()),
+                () -> assertEquals(1, varying.qualifiers().size()),
+                () -> assertEquals("SOME-GROUP", varying.qualifiers().get(0).name()),
+                () -> assertEquals("OF SOME-GROUP", varying.qualifiers().get(0).writtenText()),
+                () -> assertEquals(ResolutionContracts.ReferenceKind.DATA, entry.occurrence().kind()),
+                () -> assertEquals(Set.of(ResolutionContracts.ReferenceKind.DATA),
+                        entry.occurrence().admissibleKinds()),
+                () -> assertEquals(ResolutionContracts.ReferenceRole.CONTEXT_DEPENDENT,
+                        entry.occurrence().role()),
+                () -> assertEquals(ResolutionContracts.ResolutionStatus.RESOLVED, entry.status()),
+                () -> assertEquals(ResolutionContracts.ReferenceKind.DATA,
+                        entry.selectedCandidate().orElseThrow().kind()),
+                () -> assertTrue(writtenNames(analysis).contains("SOME-GROUP")));
+    }
+
+    @Test
     void R4_grammarShapeAuditShowsQualifiedDataNameWithoutRootSubscript() {
         AstBoundaryTestSupport.Analysis analysis = analyzeWithDeclarations("R4-SHAPE", """
                 01  SOME-GROUP.
