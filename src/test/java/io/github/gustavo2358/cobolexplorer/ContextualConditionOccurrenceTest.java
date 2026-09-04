@@ -39,6 +39,41 @@ class ContextualConditionOccurrenceTest {
     }
 
     @Test
+    void longAbbreviatedRelationChainResolvesEveryContextualDataTail() {
+        AstBoundaryTestSupport.Analysis analysis = analyze("WAUX-LIKE",
+                "01 INPUT-CODE PIC 9(4).\n01 X1 PIC 9(4).\n01 X2 PIC 9(4).\n"
+                        + "01 X3 PIC 9(4).\n01 X4 PIC 9(4).",
+                "IF INPUT-CODE = X1 OR X2 OR X3 OR X4 END-IF.");
+
+        Ast.RelationCondition relation = AstBoundaryTestSupport.nodes(analysis, Ast.RelationCondition.class)
+                .get(0);
+        List<Ast.ContextualConditionTail> tails = AstBoundaryTestSupport.nodes(
+                analysis, Ast.ContextualConditionTail.class);
+        assertEquals(List.of("X2", "X3", "X4"), tails.stream()
+                .map(tail -> tail.nominalReference().baseName()).toList());
+        for (Ast.ContextualConditionTail tail : tails) {
+            ReferenceResolution.Entry entry = entryFor(analysis, tail.nominalReference());
+            assertEquals(ResolutionContracts.ReferenceKind.CONDITION, entry.occurrence().kind());
+            assertEquals(CONTEXTUAL_BARE, entry.occurrence().admissibleKinds());
+            assertEquals(ResolutionContracts.ReferenceKind.DATA,
+                    entry.selectedCandidate().orElseThrow().kind());
+        }
+
+        List<Ast.DataReference> writtenNominals = new java.util.ArrayList<>();
+        writtenNominals.add((Ast.DataReference) relation.object());
+        writtenNominals.addAll(tails.stream().map(Ast.ContextualConditionTail::nominalReference).toList());
+        for (Ast.DataReference reference : writtenNominals) {
+            assertEquals(1, analysis.occurrences().values().stream()
+                    .flatMap(product -> product.occurrences().stream())
+                    .filter(occurrence -> occurrence.referenceAstNodeId() == reference.meta().id()).count());
+            assertEquals(1, analysis.resolution().entries().stream()
+                    .filter(entry -> entry.occurrence().referenceAstNodeId() == reference.meta().id()).count());
+        }
+        assertFalse(analysis.resolution().entries().stream().anyMatch(entry ->
+                entry.reason() == ResolutionContracts.ResolutionReason.INVALID_NAMESPACE_FOR_CONTEXT));
+    }
+
+    @Test
     void connectorSpellingDoesNotChangeContextualPolicy() {
         AstBoundaryTestSupport.Analysis analysis = analyze("CONNECTORS", "01 C PIC 9(4).\n01 D PIC 9(4).",
                 "IF A = B OR C END-IF.\nIF A = B AND D END-IF.");
