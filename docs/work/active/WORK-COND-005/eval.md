@@ -2,7 +2,7 @@
 
 ## O que prova corretude
 
-A implementação correta deriva a policy do caminho tipado da surface AST **e da shape nominal escrita** (`qualifiers()`/`subscriptGroups()`), produz exatamente uma root occurrence por nominal escrito, mantém qualifier/subscript independentes e permite ao resolver atual selecionar DATA, INDEX, CONDITION ou RENAMES-as-DATA sem reconstruir a condição. O conjunto de testes deve matar soluções por grammarRule, permissividade global, shape ignorance, connector spelling, duplicação de occurrences, context leakage, binding no collector, manifesto como policy e diagnostics que apresentam occurrence contextual como CONDITION exclusiva.
+A implementação correta deriva a policy do caminho tipado da surface AST **e da shape nominal escrita** (`qualifiers()`/`subscriptGroups()`/`referenceModification()`), produz exatamente uma root occurrence por nominal escrito, mantém qualifier/subscript independentes e permite ao resolver atual selecionar DATA, INDEX, CONDITION ou RENAMES-as-DATA sem reconstruir a condição. O conjunto de testes deve matar soluções por grammarRule, permissividade global, shape ignorance, connector spelling, duplicação de occurrences, context leakage, binding no collector, manifesto como policy e diagnostics que apresentam occurrence contextual como CONDITION exclusiva.
 
 Oracles independentes: IBM Enterprise COBOL 6.4 nas seções de conditional expressions, abbreviated combined relation conditions, general relations, index-names, condition-name e RENAMES; ADR-0009; ADR-0012; INV-COND-001/002; INV-COV-002; `selectedCandidate.kind()` como resultado nominal final.
 
@@ -11,7 +11,7 @@ Oracles independentes: IBM Enterprise COBOL 6.4 nas seções de conditional expr
 | ID | Caso | Expectativa |
 | --- | --- | --- |
 | CO-01 | `IF C` | root `CONDITION/{CONDITION}`; DATA homônimo não é aceito como simple condition |
-| CO-02 | `A = C`, `A = C OF G`, `A = C(I)` | relation policy shape-sensitive: bare `INDEX/{DATA, INDEX}`; qualified/subscripted `DATA/{DATA}`; nunca CONDITION por origin |
+| CO-02 | `A = C`, `A = C OF G`, `A = C(I)`, `A = C(1:2)` | relation policy: `INDEX/{DATA, INDEX}` somente para shape index-admissible; qualified/subscripted/reference-modified `DATA/{DATA}`; nunca CONDITION por origin |
 | CO-03 | `A = B OR C`, C DATA | uma occurrence contextual bare; resolve DATA sem `INVALID_NAMESPACE_FOR_CONTEXT` |
 | CO-04 | mesma surface, C level 88 | mesma AST/policy pré-binding; resolve CONDITION |
 | CO-05 | mesma surface, C index-name | resolve INDEX; validade PIC/USAGE permanece fora do binding |
@@ -29,9 +29,10 @@ Oracles independentes: IBM Enterprise COBOL 6.4 nas seções de conditional expr
 | CO-17 | `A = B OR MISSING` | occurrence `kind = CONDITION`, `admissibleKinds = {DATA, INDEX, CONDITION}`; diagnóstico human-readable NÃO diz apenas `CONDITION reference`; indica contexto/incerteza |
 | CO-18 | `A = B OR MISSING OF G` | occurrence `kind = CONDITION`, `admissibleKinds = {DATA, CONDITION}`; continua humanamente contextual, não CONDITION exclusiva |
 | CO-19 | `IF MISSING` | occurrence `{CONDITION}`; diagnóstico `CONDITION reference` continua correto |
-| CO-20 | `NOT A = B OR C` | C usa `contextualPolicy(shape(C))`, não `standaloneConditionPolicy`; C bare → `{DATA, INDEX, CONDITION}`; NOT da primeira relation não termina a abbreviation nem é herdado |
+| CO-20 | `NOT A = B OR C` | C usa `contextualPolicy(shape(C))`, não `standaloneConditionPolicy`; C tem shape index-admissible → `{DATA, INDEX, CONDITION}`; NOT da primeira relation não termina a abbreviation nem é herdado |
+| CO-21 | `A = C(1:2)` | reference-modified relation root `DATA/{DATA}`; nunca `INDEX/{DATA, INDEX}`; `C(1:2)` é distinguido de `C(I)` pela AST tipada |
 
-Revisões Round 2: CO-02 e CO-12 agora exigem relation operands shape-sensitive; CO-09 e CO-10 agora excluem INDEX do root qualified/subscripted e mantêm children independentes.
+Revisões Round 2: CO-02 e CO-12 agora exigem relation operands shape-sensitive; CO-09 e CO-10 agora excluem INDEX do root qualified/subscripted e mantêm children independentes. Round 3 acrescenta CO-21: `referenceModification != null` também exclui INDEX, mesmo com qualifiers e subscript groups vazios.
 
 ## Classes positivas
 
@@ -51,6 +52,7 @@ Revisões Round 2: CO-02 e CO-12 agora exigem relation operands shape-sensitive;
 - `A = C OF G` ou `A = C(I)` com C somente INDEX: INDEX não é namespace admissível do root (NEG-INDEX-QUAL-01 / NEG-INDEX-SUB-01);
 - `A = B OR C OF G` ou `A = B OR C(I)` com C somente INDEX: não resolve como INDEX (NEG-CONTEXT-INDEX-QUAL-01 / NEG-CONTEXT-INDEX-SUB-01);
 - `A = C` com C somente CONDITION: relation operand não admite condition-name;
+- `A = C(1:2)` com candidate C somente INDEX: INDEX não é namespace admissível do root reference-modified (NEG-INDEX-REFMOD-01);
 - `(A = B) OR C` com C somente DATA: boundary impede abbreviation;
 - `A = (B OR CONDITION-88)`: simple condition dentro do scope distribuído é IBM inválido;
 - `A = (B OR C = D)`: novo relational operator dentro da distribuição é inválido;
@@ -66,6 +68,7 @@ Revisões Round 2: CO-02 e CO-12 agora exigem relation operands shape-sensitive;
 | NEG-INDEX-SUB-01 | `A = C(I)`, C somente INDEX | INDEX não é namespace admissível do root; policy subscripted `{DATA}` não seleciona INDEX |
 | NEG-CONTEXT-INDEX-QUAL-01 | `A = B OR C OF G`, C somente INDEX | não resolve como INDEX sob `{DATA, CONDITION}` |
 | NEG-CONTEXT-INDEX-SUB-01 | `A = B OR C(I)`, C somente INDEX | não resolve como INDEX sob `{DATA, CONDITION}`; subscript I mantém `{DATA, INDEX}` |
+| NEG-INDEX-REFMOD-01 | `A = C(1:2)`, C somente INDEX | what-if nominal isolado: policy antiga poderia selecionar INDEX; sob `{DATA}`, INDEX é excluído e não há selected candidate |
 
 ## Classes ambíguas
 
@@ -82,7 +85,7 @@ Revisões Round 2: CO-02 e CO-12 agora exigem relation operands shape-sensitive;
 3. Tornar todo `ContextualConditionTail` `{CONDITION}`: CO-03/05/06 reproduzem WAUX.
 4. Tornar todo `ContextualConditionTail` `{DATA, INDEX, CONDITION}` independente da shape: NEG-CONTEXT-INDEX-QUAL-01/SUB-01 e CO-09/10 falham.
 5. Tornar todo relation operand `{DATA, INDEX}` independente da shape: NEG-INDEX-QUAL-01/SUB-01 e CO-02/12 falham.
-6. Ignorar `qualifiers()`/`subscriptGroups()` e usar apenas o container AST: R2-3 e os NEG shape falham.
+6. Ignorar `qualifiers()`/`subscriptGroups()`/`referenceModification()` e usar apenas o container AST: R2-3, CO-21 e os NEG shape falham.
 7. Contaminar relation operand com CONDITION: CO-02/12 falham.
 8. Criar occurrence por kind: CO-08 e bijection occurrence↔resolution falham.
 9. Propagar root context a qualifier: CO-09 falha.
@@ -99,6 +102,9 @@ Revisões Round 2: CO-02 e CO-12 agora exigem relation operands shape-sensitive;
 20. Diagnosticar contextual unresolved como `UNRESOLVED CONDITION reference` sem indicar admissibilidade múltipla: CO-17/18 falham (R2-7).
 21. Tratar C de `NOT A = B OR C` como standalone: CO-20 falha (R2-8).
 22. Aplicar NOT também à relation herdada de C (`NOT(A = C)`): CO-20 rejeita (R2-9).
+23. **Challenge R3-1 — false bare detection:** implementar `qualifiers.empty && subscriptGroups.empty → INDEX admissível`: `C(1:2)` mata a implementação; `referenceModification != null` é a terceira condição necessária.
+24. **Challenge R3-2 — parenthesis textual heuristic:** distinguir `C(I)` de `C(1:2)` por `writtenText`: rejeitado; `subscriptGroups()` e `referenceModification()` são os campos tipados da AST.
+25. **Challenge R3-3 — duplicated shape logic:** relation e distributed visitors implementando regras distintas: rejeitado; ambos devem reutilizar `indexAdmissibleNominalShape(ref)`.
 
 ## Casos de regressão
 
@@ -118,12 +124,13 @@ Revisões Round 2: CO-02 e CO-12 agora exigem relation operands shape-sensitive;
    - Bare `A = B OR C` com C = DATA / INDEX / CONDITION / RENAMES / ausente: AST idêntica; policy contextual `{DATA, INDEX, CONDITION}`; muda apenas o resolution result.
    - Qualified `A = B OR C OF G`: policy root `{DATA, CONDITION}`; INDEX não participa.
    - Subscripted `A = B OR C(I)`: policy root `{DATA, CONDITION}`; policy de I `{DATA, INDEX}`; mudar I entre DATA e INDEX muda `selectedCandidate.kind()` do subscript, não a policy do root.
+   - Reference-modified relation/distributed root `A = C(1:2)`: policy `{DATA}`; contextual tail root reference-modified não é produzido pela grammar atual.
 2. **Cardinality:** cardinalidade de root occurrences depende dos nomes escritos, não da quantidade de admissible kinds ou candidates.
 3. **Expansion:** `A = B OR C` com C DATA e `A = B OR A = C` selecionam as mesmas entidades nominais escritas correspondentes, sem inventar occurrence para o A omitido.
 4. **Connector:** trocar OR por AND não muda a policy do tail contextual.
 5. **Case:** variar caixa não muda admissibility nem selected entity.
-6. **Qualification:** qualification suficiente e redundante não muda a entidade; qualifier occurrence permanece independente; adicionar qualifier a um index-name muda a shape e retira INDEX da admissibility (bare vs qualified).
-7. **Subscript:** trocar I entre DATA e INDEX muda `selectedCandidate.kind()` do subscript, não a policy do root; adicionar subscript ao root retira INDEX da admissibility do root.
+6. **Qualification:** qualification suficiente e redundante não muda a entidade; qualifier occurrence permanece independente; adicionar qualifier a um index-name muda a shape e retira INDEX da admissibility (index-admissible vs qualified).
+7. **Subscript/reference modification:** trocar I entre DATA e INDEX muda `selectedCandidate.kind()` do subscript, não a policy do root; adicionar subscript ou reference modification ao root retira INDEX da admissibility do root.
 8. **Neutral grouping:** parêntese que não cruza boundary preserva policy; `(A = B) OR C` é contracaso deliberado.
 9. **SET/EVALUATE stability:** adicionar as condições do slice ao mesmo programa não altera policies desses constructs.
 10. **Resolver reuse:** projetar em teste as policies shape-sensitive sobre a mesma AST é suficiente para o resolver atual bindar os kinds suportados e excluir INDEX fora da shape.

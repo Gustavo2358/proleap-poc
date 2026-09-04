@@ -8,7 +8,7 @@ O coupling também aparece no `ReferenceResolutionManifest`, que publica `condit
 
 O Review Humano do Discovery Round 1 acrescentou dois problemas que o Round 1 não modelava:
 
-- a policy de uma occurrence não pode ser função apenas da posição AST; ela é função da posição semântica **e** da shape nominal escrita. Um bare nominal e um nominal qualified/subscripted não possuem o mesmo universo de namespaces admissíveis: um index-name só participa de relation condition como operando nu; nunca como root qualified ou subscripted. Por isso a spec genérica `ContextualConditionTail → CONDITION / {DATA, INDEX, CONDITION}` e a policy preexistente `RelationCondition.object → INDEX / {DATA, INDEX}` são amplas demais para `C OF G` e `C(I)`;
+- a policy de uma occurrence não pode ser função apenas da posição AST; ela é função da posição semântica **e** da shape nominal escrita. Um nominal index-admissible e um nominal qualified/subscripted/reference-modified não possuem o mesmo universo de namespaces admissíveis: um index-name só participa de relation condition como operando nu; nunca como root qualified, subscripted ou reference-modified. Por isso a spec genérica `ContextualConditionTail → CONDITION / {DATA, INDEX, CONDITION}` e a policy preexistente `RelationCondition.object → INDEX / {DATA, INDEX}` são amplas demais para `C OF G`, `C(I)` e `C(1:2)`;
 - diagnostics humanos hoje são produzidos a partir de `occurrence.kind()` e podem afirmar `UNRESOLVED CONDITION reference 'C'` para uma occurrence contextual cujo universo é `{DATA, INDEX, CONDITION}`. Isso precisa deixar de mentir sobre a classe semântica.
 
 ## Objetivo
@@ -24,7 +24,7 @@ Projetar a futura implementação para derivar `kind` e `admissibleKinds` da pos
 - resolver nominal-only e futura `ConditionSemantics` pós-binding;
 - manifesto de resolução como classificação de coverage/origin, não como tabela de occurrence policy.
 
-Conceitualmente a policy passa a ser `occurrencePolicy(position, nominalShape)`, onde `nominalShape` é derivada de `DataReference.qualifiers()` e `DataReference.subscriptGroups()` tipados — nunca de `grammarRule`, texto escrito, regex, token spelling ou parent grammar.
+Conceitualmente a policy passa a ser `occurrencePolicy(position, nominalShape)`, onde `nominalShape` é derivada de `DataReference.qualifiers()`, `DataReference.subscriptGroups()` e `DataReference.referenceModification()` tipados — nunca de `grammarRule`, texto escrito, regex, token spelling ou parent grammar. Para o domínio de INDEX, a propriedade normativa não se chama apenas `bare`: usa-se `indexAdmissibleNominalShape(ref)`.
 
 O checkpoint atual produz desenho, evidência e oracles. Nenhuma solução de produção é implementada.
 
@@ -36,13 +36,14 @@ Entram no Slice 5 as condições já materializadas pelo Slice 3 e as referênci
 - condições em IF, subjects condicionais de EVALUATE e controles UNTIL de PERFORM;
 - contexts SET/EVALUATE já tipados apenas como regressões;
 - root nominal simples, qualification `IN`/`OF`, subscripts e reference modification já estruturados;
-- shapes do Round 2: bare, qualified, subscripted e qualified+subscripted para standalone, relation operand e contextual tail.
+- shapes do Round 2: bare, qualified, subscripted e qualified+subscripted para standalone, relation operand e contextual tail;
+- reference modification como dimensão própria da shape nominal, inclusive em relation/distributed operands.
 
 Não entra `SEARCH WHEN`: o statement ainda é preservado e perde parte da condition surface; materializá-lo é o Slice 6. Shapes aceitas pela grammar mas negativas segundo IBM continuam negativas/unsupported e não ampliam a policy.
 
 ## Classes semânticas
 
-### Position × Nominal Shape Policy (matriz Round 2)
+### Position × Nominal Shape Policy (matriz Round 3)
 
 | Position | Shape | Primary | admissibleKinds |
 | --- | --- | --- | --- |
@@ -52,6 +53,7 @@ Não entra `SEARCH WHEN`: o statement ainda é preservado e perde parte da condi
 | relation | `C` | INDEX | `{DATA, INDEX}` |
 | relation | `C OF G` | DATA | `{DATA}` |
 | relation | `C(I)` | DATA | `{DATA}` |
+| relation | `C(1:2)` | DATA | `{DATA}` |
 | contextual | `C` | CONDITION | `{DATA, INDEX, CONDITION}` |
 | contextual | `C OF G` | CONDITION | `{DATA, CONDITION}` |
 | contextual | `C(I)` | CONDITION | `{DATA, CONDITION}` |
@@ -71,22 +73,24 @@ contextualPolicy(shape) = relationOperandPolicy(shape)  UNIÃO  standaloneCondit
 
 Não existe um conjunto `{DATA, INDEX, CONDITION}` fixo para todo tail. A composição aparece explicitamente aqui e nos helpers futuros:
 
-- `relationOperandPolicy(bare) = {DATA, INDEX}`; `standaloneConditionPolicy(bare) = {CONDITION}`; logo `contextualPolicy(bare) = {DATA, INDEX, CONDITION}`;
-- `relationOperandPolicy(qualified) = {DATA}`; `standaloneConditionPolicy(qualified) = {CONDITION}`; logo `contextualPolicy(qualified) = {DATA, CONDITION}`;
-- idem para subscripted e qualified+subscripted: `{DATA}` união `{CONDITION}` = `{DATA, CONDITION}`.
+- `indexAdmissibleNominalShape(ref)` se verifica quando `ref.qualifiers().isEmpty()`, `ref.subscriptGroups().isEmpty()` e `ref.referenceModification() == null`;
+- `relationOperandPolicy(ref)` retorna `{DATA, INDEX}` somente quando `indexAdmissibleNominalShape(ref)` é verdadeiro; caso contrário retorna `{DATA}`;
+- `standaloneConditionPolicy(ref) = {CONDITION}`; logo `contextualPolicy(ref) = relationOperandPolicy(ref) UNIÃO standaloneConditionPolicy(ref)`;
+- portanto, para uma shape com reference modification, mesmo sem qualifier e sem subscript group, `contextualPolicy(ref) = {DATA, CONDITION}` e não inclui INDEX.
 
 O qualifier `G` e o subscript `I` continuam occurrences independentes com policy própria; a composição aplica-se somente ao root nominal escrito.
 
 ### Relation Operand Shape Policy
 
-A policy preexistente aproximada `INDEX / {DATA, INDEX}` para todo `RelationCondition.object` (e operands de `DistributedOperandGroup`) é shape-insensitive e ampla demais para roots qualified/subscripted. A regra fechada neste Round:
+A policy preexistente aproximada `INDEX / {DATA, INDEX}` para todo `RelationCondition.object` (e operands de `DistributedOperandGroup`) é shape-insensitive e ampla demais para roots qualified/subscripted/reference-modified. A regra fechada neste Round:
 
-- `A = C` (bare) → `INDEX / {DATA, INDEX}`;
+- `A = C` (index-admissible nominal shape) → `INDEX / {DATA, INDEX}`;
 - `A = C OF G` (qualified) → `DATA / {DATA}`;
-- `A = C(I)` (subscripted) → `DATA / {DATA}`;
+- `A = C(I)` (subscripted/table element) → `DATA / {DATA}`;
+- `A = C(1:2)` (reference modification) → `DATA / {DATA}`;
 - `A = C OF G(I)` → `DATA / {DATA}`.
 
-RENAMES continua representado por DATA. INDEX nominalmente admissível (bare) não declara a relation válida: a compatibilidade concreta entre os operandos permanece em `ConditionValidation` (etapa posterior). A exclusão de INDEX em roots qualified/subscripted é restrição da forma nominal admissível (namespace/shape), pertence ao Slice 5, e não é type validation.
+RENAMES continua representado por DATA. INDEX nominalmente admissível (index-admissible nominal shape) não declara a relation válida: a compatibilidade concreta entre os operandos permanece em `ConditionValidation` (etapa posterior). A exclusão de INDEX em roots qualified, subscripted ou reference-modified é restrição da forma nominal admissível (namespace/shape), pertence ao Slice 5, e não é type validation.
 
 ### Contextual tail e children
 
@@ -98,9 +102,9 @@ RENAMES continua representado por DATA. INDEX nominalmente admissível (bare) n�
 | --- | --- | --- |
 | `DataReference` visitado como simple condition standalone | a única classe nominal COBOL que forma essa condição é condition-name | `CONDITION/{CONDITION}` |
 | `NegatedCondition` / `GroupedCondition` / `LogicalCondition` | containers que preservam escopo lógico e encaminham o contexto aos fragments | policy do fragmento filho, sem lexical heuristic |
-| `RelationCondition.subject/object` | operand de general relation | shape-sensitive: bare `INDEX/{DATA, INDEX}`; qualified/subscripted `DATA/{DATA}` |
+| `RelationCondition.subject/object` | operand de general relation | shape-sensitive: index-admissible `INDEX/{DATA, INDEX}`; qualified/subscripted/reference-modified `DATA/{DATA}` |
 | `DistributedOperandGroup.operands` | objects do relational operator distribuído | mesma policy shape-sensitive do relation operand |
-| `ContextualConditionTail.nominalReference` | condition-name standalone ou object abreviado, conforme binding | `CONDITION/{DATA, INDEX, CONDITION}` (bare) ou `CONDITION/{DATA, CONDITION}` (qualified/subscripted) |
+| `ContextualConditionTail.nominalReference` | condition-name standalone ou object abreviado, conforme binding | `CONDITION/{DATA, INDEX, CONDITION}` (index-admissible) ou `CONDITION/{DATA, CONDITION}` (qualified/subscripted/reference-modified) |
 | `ClassCondition.subject` | identifier de class test, não condition-name | `DATA/{DATA}` pelo contexto do subject atual |
 | qualifier de `DataReference` | componente de qualification, não value read | policy própria por `QualifierTarget`; `UNSPECIFIED → DATA/{DATA}` enquanto `BACKLOG-RES-004` estiver pendente |
 | subscript de `DataReference` | expressão de subscript | `INDEX/{DATA, INDEX}` |
@@ -112,13 +116,14 @@ RENAMES continua representado por DATA. INDEX nominalmente admissível (bare) n�
 
 ### Context matrix final
 
-| Source shape | Parse path relevante | AST position | Inheritance | Binding possibilities (Round 2) | Expected occurrence policy |
+| Source shape | Parse path relevante | AST position | Inheritance | Binding possibilities (Round 3) | Expected occurrence policy |
 | --- | --- | --- | --- | --- | --- |
 | `IF C` | `condition → combinableCondition → simpleCondition → conditionNameReference` | `IfStatement.condition = DataReference` | fechada | CONDITION | `CONDITION/{CONDITION}` |
 | `IF NOT C` | mesmo path com `combinableCondition.NOT` | `NegatedCondition(DataReference)` | fechada | CONDITION | `CONDITION/{CONDITION}` |
 | `A = C` | `relationArithmeticComparison` | `RelationCondition.object` | abre após a relation, mas C é object escrito | DATA, INDEX; RENAMES como DATA | `INDEX/{DATA, INDEX}` |
 | `A = C OF G` | `relationArithmeticComparison` com object qualified | `RelationCondition.object = DataReference` qualificado | idem | DATA; RENAMES como DATA | `DATA/{DATA}` |
 | `A = C(I)` | `relationArithmeticComparison` com object subscripted | `RelationCondition.object = DataReference` subscripted | idem | DATA; RENAMES como DATA | `DATA/{DATA}` |
+| `A = C(1:2)` | `relationArithmeticComparison` com reference modifier | `RelationCondition.object = DataReference` reference-modified | idem | DATA; RENAMES como DATA | `DATA/{DATA}` |
 | `A = B OR C` | tail reconhecido como `conditionNameReference` | `ContextualConditionTail` | aberta antes de C; binding decide se continua ou termina | DATA, INDEX, CONDITION; RENAMES como DATA | `CONDITION/{DATA, INDEX, CONDITION}` |
 | `A = B AND C` | igual ao anterior, connector AND | `ContextualConditionTail` | aberta | DATA, INDEX, CONDITION | mesma policy; connector não decide namespace |
 | `A = B OR C OF G` | tail qualified | root em `ContextualConditionTail`; G em `DataQualifier` | aberta | DATA, CONDITION; RENAMES como DATA | root `CONDITION/{DATA, CONDITION}`; G `QUALIFIER_COMPONENT` com policy própria |
@@ -144,7 +149,7 @@ Os três níveis permanecem distintos:
 2. A posição tipada decide se a occurrence admite `{CONDITION}`, `{DATA, INDEX}`, `{DATA}` ou `{DATA, INDEX, CONDITION}` / `{DATA, CONDITION}` conforme a shape escrita.
 3. O resolver escolhe uma declaração concreta e publica `Candidate.kind`, ou mantém `UNRESOLVED` / `AMBIGUOUS`.
 
-O collector não consulta `SymbolTable`, não decide compatibilidade PIC/USAGE e não materializa `A = C` para um tail abreviado. A policy nunca usa `grammarRule`, `writtenText`, regex, token spelling ou parent grammar; usa `DataReference.qualifiers()` e `DataReference.subscriptGroups()`.
+O collector não consulta `SymbolTable`, não decide compatibilidade PIC/USAGE e não materializa `A = C` para um tail abreviado. A policy nunca usa `grammarRule`, `writtenText`, regex, token spelling ou parent grammar; usa `DataReference.qualifiers()`, `DataReference.subscriptGroups()` e `DataReference.referenceModification()`.
 
 ### Reference modification no contextual tail
 
@@ -158,6 +163,24 @@ reference modification: not applicable to ContextualConditionTail root in curren
 
 Não há policy a definir para reference modification no root contextual: a forma não é produzível. Subscripts de condition-name podem conter arithmetic expressions com reference-modified identifiers; esses são occurrences independentes com policy própria, não reference modification do root. O escopo não é ampliado.
 
+Isto não elimina reference modification da definição geral de shape: ela é uma dimensão estrutural do `DataReference` e deve ser considerada pelo helper de admissibilidade de INDEX nos relation/distributed operands. No contextual tail atual, `conditionNameReference` não contém `referenceModifier`, portanto `referenceModification == null` por construção e nenhuma shape contextual adicional é inventada.
+
+### Discovery Round 3 — reference modification shape closure
+
+O caso `A = C(1:2)` fecha a definição que o Round 2 chamava vagamente de `bare`. A AST deve expor `baseName = C`, `qualifiers = []`, `subscriptGroups = []` e `referenceModification != null`. Essa shape não é index-admissible: a policy futura é `DATA/{DATA}` para o root de relation. O contextual tail atual não produz essa shape e permanece com `referenceModification == null` por construção.
+
+O collector atual ainda observa `INDEX/{DATA, INDEX}` em `RelationCondition.object` e em operand de `DistributedOperandGroup`, porque sua policy preexistente ignora `referenceModification`; o teste registra isso como `PREEXISTING_RELATION_REFERENCE_MODIFICATION_OVERADMISSIBILITY`. A projeção what-if `DATA/{DATA}` resolve o `C` DATA com o resolver atual, demonstrando que a correção é de admissibility e não de algoritmo de resolução.
+
+O contracaso `C(1:2)` com `C` somente index-name é um what-if nominal controlado, não uma fixture IBM-válida: a norma não admite reference-modified index-name root. Sob a policy antiga o candidate INDEX seria aceito; sob `{DATA}` ele é excluído. `C(I)` permanece distinto: `subscriptGroups()` não nulo e `referenceModification() == null` representam table element/subscript, enquanto `C(1:2)` tem o inverso.
+
+`A = (C(1:2) OR D)` é materializado pela grammar como `DistributedOperandGroup`; o root `C(1:2)` recebe a mesma policy futura `DATA/{DATA}`. Não se cria shape contextual `C(1:2)`: `conditionNameReference` continua sem `referenceModifier` no root.
+
+#### Round 3 challenge pass
+
+- **Challenge R3-1 — false bare detection:** uma implementação de `qualifiers.empty && subscriptGroups.empty → INDEX` é rejeitada por `C(1:2)`, cujo `referenceModification != null` exclui INDEX.
+- **Challenge R3-2 — parenthesis textual heuristic:** distinguir `C(I)` de `C(1:2)` por `writtenText` é rejeitado; `subscriptGroups()` e `referenceModification()` já são a autoridade typed AST.
+- **Challenge R3-3 — duplicated shape logic:** relation e distributed visitors devem reutilizar a definição única `indexAdmissibleNominalShape(ref)`; policies divergentes são incorretas.
+
 ### RENAMES
 
 RENAMES continua representado pelo namespace existente `DATA`; não se cria `ReferenceKind.RENAMES`. Bare contextual `{DATA, INDEX, CONDITION}` inclui RENAMES via DATA; qualified/subscripted contextual `{DATA, CONDITION}` também o inclui via DATA. Para RENAMES subscriptado não se inventa validade: nenhum oracle obrigatório usa essa forma enquanto a validade IBM da combinação específica não estiver fechada.
@@ -170,7 +193,8 @@ RENAMES continua representado pelo namespace existente `DATA`; não se cria `Ref
 - `LANGUAGE_GUARANTEED`: relations consecutivas podem omitir subject ou subject/operator; os últimos escritos são inseridos. Inserção termina diante de outra simple condition, condition-name ou do `)` que corresponde a `(` à esquerda do subject. Fonte: [IBM Abbreviated combined relation conditions](https://www.ibm.com/docs/en/cobol-zos/6.4?topic=expressions-abbreviated-combined-relation-conditions).
 - `LANGUAGE_GUARANTEED`: AND e OR admitem abbreviation; a policy não pode depender do connector. NOT junto do relational operator integra o operator; nos demais pontos é logical NOT local.
 - `LANGUAGE_GUARANTEED`: general relation operands podem ser identifiers, literals, arithmetic expressions ou index-names. Compatibilidade de INDEX é type-sensitive e posterior ao binding. Fontes: [IBM General relation conditions](https://www.ibm.com/docs/en/cobol-zos/6.4.0?topic=expressions-general-relation-conditions) e [IBM Comparison of index-names and index data items](https://www.ibm.com/docs/en/cobol-zos/6.4?topic=conditions-comparison-index-names-index-data-items).
-- `LANGUAGE_GUARANTEED` (fechada no Round 2): um index-name não é um data-name e não ocupa hierarquia de dados: em uma expression/reference, a única shape escrita de um index-name é o identifier nu (operando de relation, subscript de table element, target de SET/SEARCH). Index-name nunca é root qualified (`C OF G`) nem root subscripted (`C(I)`); essas shapes pertencem a data-name/condition-name. Como subscript (`TABLE-ELEMENT(I)`), o index-name participa sem tornar o root INDEX. Logo, para roots qualified/subscripted, INDEX não é namespace admissível em Enterprise COBOL 6.4. Fonte: [IBM General relation conditions](https://www.ibm.com/docs/en/cobol-zos/6.4.0?topic=expressions-general-relation-conditions), [IBM Comparison of index-names and index data items](https://www.ibm.com/docs/en/cobol-zos/6.4?topic=conditions-comparison-index-names-index-data-items) e seções **User-defined words** e **Referencing data names** do Language Reference SC27-8713-03.
+- `LANGUAGE_GUARANTEED` (fechada no Round 2): um index-name não é um data-name e não ocupa hierarquia de dados: em uma expression/reference, a única shape escrita de um index-name como operand de relation é o identifier nu (também pode aparecer como subscript de table element e em controles próprios de índice). Index-name nunca é root qualified (`C OF G`), root subscripted (`C(I)`) ou root reference-modified (`C(1:2)`); essas shapes pertencem a data-name/condition-name ou a function-identifier quando reference modification é permitida. Como subscript (`TABLE-ELEMENT(I)`), o index-name participa sem tornar o root INDEX. Logo, para roots qualified, subscripted ou reference-modified, INDEX não é namespace admissível em Enterprise COBOL 6.4. Fonte: [IBM General relation conditions](https://www.ibm.com/docs/en/cobol-zos/6.4.0?topic=expressions-general-relation-conditions), [IBM Reference modification](https://www.ibm.com/docs/en/cobol-zos/6.4.0?topic=reference-modification), [IBM References to DATA DIVISION names](https://www.ibm.com/docs/en/cobol-zos/6.4.0?topic=reference-references-data-division-names) e [IBM Comparison of index-names and index data items](https://www.ibm.com/docs/en/cobol-zos/6.4?topic=conditions-comparison-index-names-index-data-items).
+- `LANGUAGE_GUARANTEED` (Round 3): reference modification é aplicável a `data-name-1` e, quando permitido, a `function-name-1`; cria um data item derivado da referência original. Isso não transforma um `index-name` em data-name nem cria uma forma válida de index-name root. A distinção `C(I)` versus `C(1:2)` é tipada: `subscriptGroups()` representa table element/subscript; `referenceModification()` representa reference modification. Fonte: [IBM Reference modification](https://www.ibm.com/docs/en/cobol-zos/6.4.0?topic=reference-modification), [IBM General relation conditions](https://www.ibm.com/docs/en/cobol-zos/6.4.0?topic=expressions-general-relation-conditions) e [IBM References to DATA DIVISION names](https://www.ibm.com/docs/en/cobol-zos/6.4.0?topic=reference-references-data-division-names).
 - `LANGUAGE_GUARANTEED`: condition-name usa qualification/subscripts necessários da conditional variable; essas shapes (qualified/subscripted) são formas legítimas de condition-name. Fonte: [IBM Condition-name](https://www.ibm.com/docs/en/cobol-zos/6.4.0?topic=reference-condition-name).
 - `LANGUAGE_GUARANTEED`: level-66 RENAMES declara um data-name, não namespace próprio. Fonte: [IBM RENAMES clause](https://www.ibm.com/docs/en/cobol-zos/6.4.0?topic=entry-renames-clause).
 - `LANGUAGE_GUARANTEED` (fechada no Round 2): `NOT A = B OR C` interpreta-se conceitualmente `(NOT (A = B)) OR (A = C)` quando C é relation object abreviado: o NOT lógico da primeira relation não transforma C em standalone nem é herdado por C. Fonte: seções **NOT** do contrato de domínio e [IBM Abbreviated combined relation conditions](https://www.ibm.com/docs/en/cobol-zos/6.4?topic=expressions-abbreviated-combined-relation-conditions).
@@ -204,7 +228,7 @@ RENAMES continua representado pelo namespace existente `DATA`; não se cria `Ref
 | compatibilidade com future ConditionSemantics | alta | alta | alta | alta |
 | necessidade de abstraction nova | enum traversal transversal | nenhuma, mas falta informação | field/enum em toda referência | wrapper/tag não-node só para controls PERFORM |
 
-Decisão: alternativa D (reconfirmada no Round 2). Reutilizar `visitRelationalOperand` e acrescentar helper específico `visitConditionSurface`/equivalente com policy shape-sensitive. O helper despacha pelos containers AST tipados e usa `qualifiers()` / `subscriptGroups()`; não recebe source text, grammar parent ou symbol table. `ContextualConditionTail` recebe `contextualKinds(ref)`; direct `DataReference` alcançado pelo slot condition recebe standalone; relation/distributed operands recebem `relationOperandKinds(ref)`. Para PERFORM, uma pequena abstraction tipada distingue controles VALUE e CONDITION.
+Decisão: alternativa D (reconfirmada no Round 2 e fechada quanto a reference modification no Round 3). Reutilizar `visitRelationalOperand` e acrescentar helper específico `visitConditionSurface`/equivalente com policy shape-sensitive. O helper despacha pelos containers AST tipados e usa `qualifiers()` / `subscriptGroups()` / `referenceModification()`; não recebe source text, grammar parent ou symbol table. `ContextualConditionTail` recebe `contextualKinds(ref)`; direct `DataReference` alcançado pelo slot condition recebe standalone; relation/distributed operands recebem `relationOperandKinds(ref)`. Para PERFORM, uma pequena abstraction tipada distingue controles VALUE e CONDITION.
 
 Rejeições:
 
@@ -213,6 +237,7 @@ Rejeições:
 - C duplica posição semântica em toda `DataReference`, amplia constructors e permite divergência entre annotation e container.
 - Um novo `ReferenceKind.CONTEXTUAL` não é necessário: o contrato existente representa incerteza em `admissibleKinds`; o enum novo expandiria switches/resolvers/relatórios sem criar informação de binding. Contextualidade é apresentada por label derivado (ver contrato de diagnóstico).
 - (Round 2) Manter `ContextualConditionTail → {DATA, INDEX, CONDITION}` fixo para toda shape: viola a restrição de index-name qualified/subscripted e é morto pelos NEG oracles.
+- (Round 3) Definir `bare` apenas por `qualifiers` e `subscriptGroups`: `C(1:2)` mata essa implementação, pois `referenceModification != null` exclui INDEX.
 
 ## Comportamento esperado
 
@@ -223,16 +248,16 @@ Rejeições:
 Para `ContextualConditionTail`, o primary kind permanece `CONDITION`, agora derivado do container tipado e da shape, e não da grammar rule. Isso preserva o hint de superfície e a compatibilidade dos consumers; todos os resolvers agrupam DATA/CONDITION/INDEX no mesmo caminho. A incerteza real fica em `admissibleKinds`. `kind` continua obrigatoriamente membro de `admissibleKinds`.
 
 - Standalone condition-name: `CONDITION`.
-- Relation/distributed operand: shape-sensitive — bare `INDEX`; qualified/subscripted `DATA`.
-- Contextual tail, qualquer shape suportada: `CONDITION` (porque CONDITION pertence a bare → `{DATA, INDEX, CONDITION}` e a qualified/subscripted → `{DATA, CONDITION}`).
+- Relation/distributed operand: shape-sensitive — `INDEX` somente em `indexAdmissibleNominalShape`; qualified/subscripted/reference-modified `DATA`.
+- Contextual tail, qualquer shape suportada: `CONDITION` (porque CONDITION pertence à policy standalone que compõe com `{DATA, INDEX}` ou `{DATA}` conforme `indexAdmissibleNominalShape`).
 
 Afirmar `kind = CONDITION` não afirma que o nome é um condition-name; `RESOLVED` usa `selectedCandidate().kind()`.
 
 ### Decisão sobre `admissibleKinds`
 
 - standalone simple condition nominal: `{CONDITION}`;
-- relation/distributed operand: bare `{DATA, INDEX}`; qualified/subscripted `{DATA}`;
-- contextual tail com inheritance aberta: bare `{DATA, INDEX, CONDITION}`; qualified/subscripted `{DATA, CONDITION}`;
+- relation/distributed operand: `indexAdmissibleNominalShape` `{DATA, INDEX}`; qualified/subscripted/reference-modified `{DATA}`;
+- contextual tail com inheritance aberta: index-admissible `{DATA, INDEX, CONDITION}`; qualified/subscripted/reference-modified `{DATA, CONDITION}`;
 - RENAMES entra por `DATA`, pois `compatible(symbol, DATA)` já admite `SymbolKind.RENAMES`;
 - qualifier e subscript não herdam o conjunto do root;
 - SET/EVALUATE mantêm suas policies existentes.
@@ -243,13 +268,18 @@ Funções puras sobre `DataReference` tipado:
 
 ```text
 relationOperandKinds(ref):
-    bare (sem qualifiers, sem subscriptGroups)       -> {DATA, INDEX}
-    qualified ou subscripted ou ambos                 -> {DATA}
+    if indexAdmissibleNominalShape(ref)               -> {DATA, INDEX}
+    otherwise                                         -> {DATA}
+
+indexAdmissibleNominalShape(ref):
+    ref.qualifiers().isEmpty()
+    AND ref.subscriptGroups().isEmpty()
+    AND ref.referenceModification() == null
 
 contextualKinds(ref) = relationOperandKinds(ref) UNIÃO {CONDITION}
 ```
 
-Isso reduz duplicação e evita divergência entre `RelationCondition`, `DistributedOperandGroup` e `ContextualConditionTail`.
+Isso reduz duplicação e evita divergência entre `RelationCondition`, `DistributedOperandGroup` e `ContextualConditionTail`. A implementação futura deve introduzir primeiro esse helper estrutural e só então aplicá-lo às policies do collector; não deve espalhar testes separados para qualifier, subscript e reference modification por múltiplos visitors. No contextual tail atual, a terceira condição é sempre verdadeira por construção da grammar (`referenceModification == null`).
 
 ### Cardinalidade e children
 
@@ -367,7 +397,7 @@ Não se separa dependency nem se cria heurística para evitar a decisão. Marcad
 - Nome ausente: uma occurrence contextual, zero candidates, `UNRESOLVED/DECLARATION_NOT_FOUND`; apresentação contextual, não `CONDITION` exclusiva.
 - Mesmo nome com candidates COBOL realmente válidos múltiplos: uma occurrence, todos os candidates, `AMBIGUOUS`, nenhum selected candidate.
 - DATA+CONDITION homônimos no mesmo programa: source IBM inválido; não criar regra de precedência para fazê-lo passar.
-- Compatibilidade PIC/USAGE de INDEX: binding pode selecionar INDEX (bare), mas validade da relation permanece para futura `ConditionValidation`; INDEX fora da shape admissível (qualified/subscripted root) não entra nem como candidate.
+- Compatibilidade PIC/USAGE de INDEX: binding pode selecionar INDEX (index-admissible nominal shape), mas validade da relation permanece para futura `ConditionValidation`; INDEX fora da shape admissível (qualified/subscripted/reference-modified root) não entra nem como candidate.
 - Shape aceita pela grammar sem autoridade IBM: preservar/unsupported; não ampliar admissibility intuitivamente.
 - Contexto PERFORM não tipado: futura implementação deve primeiro preservar a tag; se isso não couber no scope revisável, parar como `ARCHITECTURAL_DECISION_REQUIRED`, nunca retornar ao grammarRule.
 - Reference modification no root contextual: não produzível pela grammar (documentado acima); subscripts com reference-modified identifiers são occurrences independentes.
