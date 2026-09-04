@@ -15,10 +15,16 @@ public final class ExperimentalCobolCallConsumer {
     public enum ObservedCallKind { EXTERNAL_LITERAL }
     public enum Linkage { STATIC, DYNAMIC, DLL, UNKNOWN }
     public enum RuntimeTargetKnowledge { UNKNOWN }
-    public enum Claim { COMPLETE, INCOMPLETE }
+    public enum ReferenceBindingCompleteness { COMPLETE, INCOMPLETE }
+    public enum DependencyReadiness { READY, INCOMPLETE }
+    public enum UncertaintyScope { CALL_LINKAGE }
 
-    public record Uncertainty(String code, String detail) {
+    public record Uncertainty(String unitName, int callSiteLocalId,
+                              UncertaintyScope scope, String code, String detail) {
         public Uncertainty {
+            unitName = requireText(unitName, "unitName");
+            if (callSiteLocalId < 0) throw new IllegalArgumentException("callSiteLocalId must be non-negative");
+            scope = Objects.requireNonNull(scope, "scope");
             code = requireText(code, "code");
             detail = requireText(detail, "detail");
         }
@@ -38,12 +44,15 @@ public final class ExperimentalCobolCallConsumer {
         }
     }
 
-    public record Consumption(String analysisGeneration, Claim claim,
+    public record Consumption(ReferenceBindingCompleteness referenceBindingCompleteness,
+                              DependencyReadiness dependencyReadiness,
                               List<Uncertainty> uncertainties,
                               List<ConsumedCall> calls) {
         public Consumption {
-            analysisGeneration = requireText(analysisGeneration, "analysisGeneration");
-            claim = Objects.requireNonNull(claim, "claim");
+            referenceBindingCompleteness = Objects.requireNonNull(
+                    referenceBindingCompleteness, "referenceBindingCompleteness");
+            dependencyReadiness = Objects.requireNonNull(dependencyReadiness,
+                    "dependencyReadiness");
             uncertainties = List.copyOf(uncertainties);
             calls = List.copyOf(calls);
         }
@@ -54,13 +63,31 @@ public final class ExperimentalCobolCallConsumer {
         List<ConsumedCall> calls = port.literalCalls().stream()
                 .map(ExperimentalCobolCallConsumer::consumeCall)
                 .toList();
-        List<Uncertainty> uncertainties = port.analysis().uncertainties().stream()
-                .map(uncertainty -> new Uncertainty(uncertainty.code(), uncertainty.detail()))
+        List<Uncertainty> uncertainties = port.callAnalysis().uncertainties().stream()
+                .map(ExperimentalCobolCallConsumer::consumeUncertainty)
                 .toList();
-        return new Consumption(port.analysisGeneration(),
-                port.analysis().claim() == ExperimentalCobolCallBoundary.Claim.COMPLETE
-                        ? Claim.COMPLETE : Claim.INCOMPLETE,
+        return new Consumption(
+                port.callAnalysis().referenceBindingCompleteness()
+                        == ExperimentalCobolCallBoundary.ReferenceBindingCompleteness.COMPLETE
+                        ? ReferenceBindingCompleteness.COMPLETE : ReferenceBindingCompleteness.INCOMPLETE,
+                port.callAnalysis().dependencyReadiness()
+                        == ExperimentalCobolCallBoundary.DependencyReadiness.READY
+                        ? DependencyReadiness.READY : DependencyReadiness.INCOMPLETE,
                 uncertainties, calls);
+    }
+
+    private static Uncertainty consumeUncertainty(
+            ExperimentalCobolCallBoundary.Uncertainty uncertainty) {
+        return new Uncertainty(uncertainty.site().unit().canonicalProgramName(),
+                uncertainty.site().localId(), mapScope(uncertainty.scope()),
+                uncertainty.code(), uncertainty.detail());
+    }
+
+    private static UncertaintyScope mapScope(
+            ExperimentalCobolCallBoundary.UncertaintyScope scope) {
+        return switch (scope) {
+            case CALL_LINKAGE -> UncertaintyScope.CALL_LINKAGE;
+        };
     }
 
     private static ConsumedCall consumeCall(ExperimentalCobolCallBoundary.CallFact call) {

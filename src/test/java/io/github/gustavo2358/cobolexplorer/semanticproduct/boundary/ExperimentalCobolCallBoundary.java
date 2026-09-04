@@ -38,10 +38,11 @@ public final class ExperimentalCobolCallBoundary {
     public enum Linkage { STATIC, DYNAMIC, DLL, UNKNOWN }
     public enum DynamMode { DYNAM, NODYNAM, UNSPECIFIED }
     public enum DllMode { DLL, NODLL, UNSPECIFIED }
-    public enum Claim { COMPLETE, INCOMPLETE }
-    public enum Availability { AVAILABLE, INPUT_MISSING, UNSUPPORTED, NOT_PRODUCED }
+    public enum ReferenceBindingCompleteness { COMPLETE, INCOMPLETE }
+    public enum DependencyReadiness { READY, INCOMPLETE }
+    public enum UncertaintyScope { CALL_LINKAGE }
 
-    /** Namespace required to interpret a local identity within one generation. */
+    /** Namespace required to interpret a local identity within this state. */
     public record UnitId(String compilationUnitId, List<Integer> structuralPath,
                          String canonicalProgramName) {
         public UnitId {
@@ -98,24 +99,33 @@ public final class ExperimentalCobolCallBoundary {
         }
     }
 
-    public record Uncertainty(String code, String detail) {
+    public record Uncertainty(CallSiteId site, UncertaintyScope scope,
+                              String code, String detail) {
         public Uncertainty {
+            site = Objects.requireNonNull(site, "site");
+            scope = Objects.requireNonNull(scope, "scope");
             code = requireText(code, "code");
             detail = requireText(detail, "detail");
         }
     }
 
-    /** Completeness is a fact of the publication, not an empty-list convention. */
-    public record AnalysisState(Claim claim, Availability availability,
-                                List<Uncertainty> uncertainties) {
-        public AnalysisState {
-            claim = Objects.requireNonNull(claim, "claim");
-            availability = Objects.requireNonNull(availability, "availability");
+    /**
+     * Call-slice state keeps nominal binding and dependency readiness orthogonal.
+     * It is intentionally not a general completeness framework.
+     */
+    public record CallAnalysisState(ReferenceBindingCompleteness referenceBindingCompleteness,
+                                    DependencyReadiness dependencyReadiness,
+                                    List<Uncertainty> uncertainties) {
+        public CallAnalysisState {
+            referenceBindingCompleteness = Objects.requireNonNull(
+                    referenceBindingCompleteness, "referenceBindingCompleteness");
+            dependencyReadiness = Objects.requireNonNull(dependencyReadiness,
+                    "dependencyReadiness");
             uncertainties = List.copyOf(uncertainties);
-            if (claim == Claim.COMPLETE && !uncertainties.isEmpty())
-                throw new IllegalArgumentException("complete analysis cannot carry uncertainties");
-            if (claim == Claim.INCOMPLETE && uncertainties.isEmpty())
-                throw new IllegalArgumentException("incomplete analysis must explain uncertainty");
+            if (dependencyReadiness == DependencyReadiness.READY && !uncertainties.isEmpty())
+                throw new IllegalArgumentException("ready dependency state cannot carry uncertainties");
+            if (dependencyReadiness == DependencyReadiness.INCOMPLETE && uncertainties.isEmpty())
+                throw new IllegalArgumentException("incomplete dependency state must explain uncertainty");
         }
     }
 
@@ -138,14 +148,13 @@ public final class ExperimentalCobolCallBoundary {
         }
     }
 
-    /** A2: one immutable publication for one analysis generation. */
-    public record State(String analysisGeneration, UnitId unit, Policy policy,
-                        AnalysisState analysis, List<CallFact> literalCalls) {
+    /** A2: one immutable materialized publication; this slice has no publication identity. */
+    public record State(UnitId unit, Policy policy, CallAnalysisState callAnalysis,
+                        List<CallFact> literalCalls) {
         public State {
-            analysisGeneration = requireText(analysisGeneration, "analysisGeneration");
             unit = Objects.requireNonNull(unit, "unit");
             policy = Objects.requireNonNull(policy, "policy");
-            analysis = Objects.requireNonNull(analysis, "analysis");
+            callAnalysis = Objects.requireNonNull(callAnalysis, "callAnalysis");
             literalCalls = List.copyOf(literalCalls);
             for (CallFact call : literalCalls) {
                 if (!call.site().unit().equals(unit))
@@ -153,15 +162,18 @@ public final class ExperimentalCobolCallBoundary {
                 if (call.targetSyntax() != TargetSyntax.LITERAL_PROGRAM_NAME)
                     throw new IllegalArgumentException("state accepts literal calls only");
             }
+            for (Uncertainty uncertainty : callAnalysis.uncertainties()) {
+                if (literalCalls.stream().noneMatch(call -> call.site().equals(uncertainty.site())))
+                    throw new IllegalArgumentException("uncertainty must be localized to a published call site");
+            }
         }
     }
 
     /** B: read-only queries over the already materialized A2 state. */
     public interface Port {
-        String analysisGeneration();
         UnitId unit();
         Policy policy();
-        AnalysisState analysis();
+        CallAnalysisState callAnalysis();
         List<CallFact> literalCalls();
     }
 
@@ -175,16 +187,13 @@ public final class ExperimentalCobolCallBoundary {
         }
 
         @Override
-        public String analysisGeneration() { return state.analysisGeneration(); }
-
-        @Override
         public UnitId unit() { return state.unit(); }
 
         @Override
         public Policy policy() { return state.policy(); }
 
         @Override
-        public AnalysisState analysis() { return state.analysis(); }
+        public CallAnalysisState callAnalysis() { return state.callAnalysis(); }
 
         @Override
         public List<CallFact> literalCalls() {

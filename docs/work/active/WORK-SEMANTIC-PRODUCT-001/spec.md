@@ -6,8 +6,8 @@ O frontend COBOL já produz vários artefatos semânticos separados, mas não ex
 
 Este work item é um Discovery arquitetural de alto risco, composto por uma
 baseline factual (Checkpoint 1) e pelo desenho/suficiência da boundary
-(Checkpoint 2). O Checkpoint 1 está concluído; o Checkpoint 2 está concluído e
-em review humano; o Checkpoint 3A foi autorizado para falsificação test-only.
+(Checkpoint 2). O Checkpoint 1 está concluído; o Checkpoint 2 foi aprovado e
+mergeado no PR #24; o Checkpoint 3A foi autorizado para falsificação test-only.
 A implementação de produção do produto, de `Cobol Lower`, da IR, de CFG, de
 dataflow, de possible-values e de dependency facts está fora do escopo.
 
@@ -51,7 +51,7 @@ conclusão arquitetural importante deve indicar `evidence_status` entre
 
 O plano contém três checkpoints independentes, cada um terminando em review
 humano. O Checkpoint 1 foi concluído e serviu de baseline factual para o
-Checkpoint 2; o Checkpoint 2 foi concluído e aguarda review. O Checkpoint 3A
+Checkpoint 2; o Checkpoint 2 foi concluído, aprovado e mergeado. O Checkpoint 3A
 tenta falsificar a candidata escolhida em código test-only e termina em review
 humano. Implementação de produção será outro work item.
 

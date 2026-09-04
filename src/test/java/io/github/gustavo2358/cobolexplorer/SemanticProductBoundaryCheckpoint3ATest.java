@@ -75,14 +75,16 @@ class SemanticProductBoundaryCheckpoint3ATest {
                 ExperimentalCobolCallBoundary.ResolutionReason.LITERAL_EXTERNAL_PROGRAM,
                 ExperimentalCobolCallBoundary.Linkage.UNKNOWN, provenance);
         ExperimentalCobolCallBoundary.State state = new ExperimentalCobolCallBoundary.State(
-                "standalone-generation", unit,
+                unit,
                 new ExperimentalCobolCallBoundary.Policy("test-policy", "1",
                         ExperimentalCobolCallBoundary.DynamMode.UNSPECIFIED,
                         ExperimentalCobolCallBoundary.DllMode.UNSPECIFIED),
-                new ExperimentalCobolCallBoundary.AnalysisState(
-                        ExperimentalCobolCallBoundary.Claim.INCOMPLETE,
-                        ExperimentalCobolCallBoundary.Availability.AVAILABLE,
+                new ExperimentalCobolCallBoundary.CallAnalysisState(
+                        ExperimentalCobolCallBoundary.ReferenceBindingCompleteness.COMPLETE,
+                        ExperimentalCobolCallBoundary.DependencyReadiness.INCOMPLETE,
                         List.of(new ExperimentalCobolCallBoundary.Uncertainty(
+                                new ExperimentalCobolCallBoundary.CallSiteId(unit, 0),
+                                ExperimentalCobolCallBoundary.UncertaintyScope.CALL_LINKAGE,
                                 "CALL_LINKAGE_UNKNOWN", "compiler options were not supplied"))),
                 List.of(fact));
 
@@ -94,7 +96,15 @@ class SemanticProductBoundaryCheckpoint3ATest {
                 consumed.calls().get(0).linkage());
         assertEquals(ExperimentalCobolCallConsumer.RuntimeTargetKnowledge.UNKNOWN,
                 consumed.calls().get(0).runtimeTarget());
+        assertEquals(ExperimentalCobolCallConsumer.ReferenceBindingCompleteness.COMPLETE,
+                consumed.referenceBindingCompleteness());
+        assertEquals(ExperimentalCobolCallConsumer.DependencyReadiness.INCOMPLETE,
+                consumed.dependencyReadiness());
         assertEquals("CALL_LINKAGE_UNKNOWN", consumed.uncertainties().get(0).code());
+        assertEquals(ExperimentalCobolCallConsumer.UncertaintyScope.CALL_LINKAGE,
+                consumed.uncertainties().get(0).scope());
+        assertEquals("CALLER", consumed.uncertainties().get(0).unitName());
+        assertEquals(0, consumed.uncertainties().get(0).callSiteLocalId());
 
         for (Class<?> type : List.of(ExperimentalCobolCallBoundary.class,
                 ExperimentalCobolCallConsumer.class)) {
@@ -126,8 +136,13 @@ class SemanticProductBoundaryCheckpoint3ATest {
                 first.policy().dynamMode());
         assertEquals(ExperimentalCobolCallBoundary.DllMode.UNSPECIFIED,
                 first.policy().dllMode());
-        assertEquals(ExperimentalCobolCallBoundary.Claim.INCOMPLETE, first.analysis().claim());
-        assertEquals("CALL_LINKAGE_UNKNOWN", first.analysis().uncertainties().get(0).code());
+        assertEquals(ExperimentalCobolCallBoundary.ReferenceBindingCompleteness.COMPLETE,
+                first.callAnalysis().referenceBindingCompleteness());
+        assertEquals(ExperimentalCobolCallBoundary.DependencyReadiness.INCOMPLETE,
+                first.callAnalysis().dependencyReadiness());
+        assertEquals("CALL_LINKAGE_UNKNOWN", first.callAnalysis().uncertainties().get(0).code());
+        assertEquals(ExperimentalCobolCallBoundary.UncertaintyScope.CALL_LINKAGE,
+                first.callAnalysis().uncertainties().get(0).scope());
         assertEquals(FIXTURE.getFileName().toString(), fact.provenance().original().file());
         assertTrue(fact.provenance().exact());
     }
@@ -141,9 +156,33 @@ class SemanticProductBoundaryCheckpoint3ATest {
                 () -> state.literalCalls().clear());
         assertThrows(UnsupportedOperationException.class,
                 () -> port.literalCalls().clear());
-        assertEquals(state.analysisGeneration(), port.analysisGeneration());
         assertEquals(state.unit(), port.unit());
         assertEquals(state.policy(), port.policy());
+        assertEquals(state.callAnalysis(), port.callAnalysis());
+    }
+
+    @Test
+    void unknownLinkageDoesNotBecomeNominalBindingIncomplete() throws Exception {
+        ExperimentalCobolCallBoundary.State state = adapt(analyze(FIXTURE));
+
+        assertEquals(ExperimentalCobolCallBoundary.ReferenceBindingCompleteness.COMPLETE,
+                state.callAnalysis().referenceBindingCompleteness(),
+                "CALL 'TARGET-A' remains a known nominal literal target");
+        assertEquals(ExperimentalCobolCallBoundary.DependencyReadiness.INCOMPLETE,
+                state.callAnalysis().dependencyReadiness(),
+                "only the policy-dependent call readiness is incomplete");
+        assertEquals(List.of("CALL_LINKAGE_UNKNOWN"), state.callAnalysis().uncertainties().stream()
+                .map(ExperimentalCobolCallBoundary.Uncertainty::code).toList());
+    }
+
+    @Test
+    void experimentDoesNotClaimCrossPublicationGenerationIdentity() {
+        assertFalse(Arrays.stream(ExperimentalCobolCallBoundary.State.class.getRecordComponents())
+                .anyMatch(component -> component.getName().equals("analysisGeneration")));
+        assertFalse(Arrays.stream(ExperimentalCobolCallBoundary.Port.class.getDeclaredMethods())
+                .anyMatch(method -> method.getName().equals("analysisGeneration")));
+        assertFalse(Arrays.stream(ExperimentalCobolCallConsumer.Consumption.class.getRecordComponents())
+                .anyMatch(component -> component.getName().equals("analysisGeneration")));
     }
 
     private static void assertAllCallFacts(ExperimentalCobolCallConsumer.Consumption consumed) {
@@ -155,7 +194,10 @@ class SemanticProductBoundaryCheckpoint3ATest {
                 consumed.calls().get(0).linkage());
         assertEquals(ExperimentalCobolCallConsumer.RuntimeTargetKnowledge.UNKNOWN,
                 consumed.calls().get(0).runtimeTarget());
-        assertEquals(ExperimentalCobolCallConsumer.Claim.INCOMPLETE, consumed.claim());
+        assertEquals(ExperimentalCobolCallConsumer.ReferenceBindingCompleteness.COMPLETE,
+                consumed.referenceBindingCompleteness());
+        assertEquals(ExperimentalCobolCallConsumer.DependencyReadiness.INCOMPLETE,
+                consumed.dependencyReadiness());
         assertEquals("CALL_LINKAGE_UNKNOWN", consumed.uncertainties().get(0).code());
     }
 
@@ -165,6 +207,7 @@ class SemanticProductBoundaryCheckpoint3ATest {
                 unit.id().compilationUnitId(), unit.id().structuralPath(),
                 unit.id().canonicalProgramName());
         List<ExperimentalCobolCallBoundary.CallFact> calls = new ArrayList<>();
+        Map<Integer, ExperimentalCobolCallBoundary.CallSiteId> literalSites = new LinkedHashMap<>();
         for (Ast.Node node : nodes(unit.program())) {
             if (!(node instanceof Ast.CallStatement call)
                     || call.targetSyntax() != Ast.CallTargetSyntax.LITERAL_PROGRAM_NAME)
@@ -178,31 +221,53 @@ class SemanticProductBoundaryCheckpoint3ATest {
                     .findFirst()
                     .orElseThrow(() -> new IllegalStateException(
                             "CALL target occurrence was not published by the frontend"));
-            calls.add(new ExperimentalCobolCallBoundary.CallFact(
+            ExperimentalCobolCallBoundary.CallSiteId site =
                     new ExperimentalCobolCallBoundary.CallSiteId(boundaryUnit,
-                            entry.occurrence().id()),
+                            entry.occurrence().id());
+            literalSites.put(entry.occurrence().id(), site);
+            calls.add(new ExperimentalCobolCallBoundary.CallFact(
+                    site,
                     target.programName(), mapTargetSyntax(call.targetSyntax()),
                     mapStatus(entry.status()), mapReason(entry.reason()),
                     mapLinkage(entry.callSemantics().orElseThrow().linkage()),
                     mapProvenance(target.meta().provenance())));
         }
 
-        List<ExperimentalCobolCallBoundary.Uncertainty> uncertainties = calls.stream()
-                .filter(call -> call.linkage() == ExperimentalCobolCallBoundary.Linkage.UNKNOWN)
-                .map(call -> new ExperimentalCobolCallBoundary.Uncertainty(
-                        "CALL_LINKAGE_UNKNOWN", "linkage depends on unavailable compiler options"))
-                .distinct()
+        List<ResolutionAnalysisReport.Gap> literalGaps = frontend.report().gaps().stream()
+                .filter(gap -> gap.programUnitId() != null && gap.programUnitId().equals(unit.id()))
+                .filter(gap -> literalSites.containsKey(gap.occurrenceId()))
                 .toList();
-        ExperimentalCobolCallBoundary.AnalysisState analysis = new ExperimentalCobolCallBoundary.AnalysisState(
-                uncertainties.isEmpty() ? ExperimentalCobolCallBoundary.Claim.COMPLETE
-                        : ExperimentalCobolCallBoundary.Claim.INCOMPLETE,
-                ExperimentalCobolCallBoundary.Availability.AVAILABLE, uncertainties);
+        List<ResolutionAnalysisReport.Gap> literalCallGaps = literalGaps.stream()
+                .filter(gap -> gap.category() == ResolutionAnalysisReport.GapCategory.CALL_SEMANTICS)
+                .toList();
+        List<ExperimentalCobolCallBoundary.Uncertainty> uncertainties = literalCallGaps.stream()
+                .map(gap -> new ExperimentalCobolCallBoundary.Uncertainty(
+                        literalSites.get(gap.occurrenceId()), mapUncertaintyScope(gap.code()),
+                        gap.code(), gap.message()))
+                .toList();
+        ExperimentalCobolCallBoundary.CallAnalysisState analysis =
+                new ExperimentalCobolCallBoundary.CallAnalysisState(
+                        literalGaps.stream().noneMatch(gap ->
+                                gap.category() != ResolutionAnalysisReport.GapCategory.CALL_SEMANTICS)
+                                ? ExperimentalCobolCallBoundary.ReferenceBindingCompleteness.COMPLETE
+                                : ExperimentalCobolCallBoundary.ReferenceBindingCompleteness.INCOMPLETE,
+                        literalCallGaps.isEmpty()
+                                ? ExperimentalCobolCallBoundary.DependencyReadiness.READY
+                                : ExperimentalCobolCallBoundary.DependencyReadiness.INCOMPLETE,
+                        uncertainties);
         ResolutionContracts.CobolResolutionPolicy policy = frontend.resolution().policy();
         return new ExperimentalCobolCallBoundary.State(
-                "test-generation/" + frontend.model().compilationUnitId(), boundaryUnit,
+                boundaryUnit,
                 new ExperimentalCobolCallBoundary.Policy(policy.policyId(), policy.version(),
                         mapDynamMode(policy.dynamMode()), mapDllMode(policy.dllMode())),
                 analysis, calls);
+    }
+
+    private static ExperimentalCobolCallBoundary.UncertaintyScope mapUncertaintyScope(
+            String code) {
+        if (!code.equals("CALL_LINKAGE_UNKNOWN"))
+            throw new IllegalStateException("unexpected literal CALL gap: " + code);
+        return ExperimentalCobolCallBoundary.UncertaintyScope.CALL_LINKAGE;
     }
 
     private static ExperimentalCobolCallBoundary.TargetSyntax mapTargetSyntax(
@@ -290,7 +355,11 @@ class SemanticProductBoundaryCheckpoint3ATest {
                 .withDllMode(outcome.dllMode());
         ReferenceResolution resolution = new CobolReferenceResolver(policy)
                 .resolve(model, tables, occurrences);
-        return new FrontendAnalysis(outcome, model, resolution);
+        ResolutionAnalysisReport report = ResolutionAnalysisReport.compose(build,
+                new ResolutionAnalysisReport.FrontendState(outcome.errors(), 0,
+                        parser.getNumberOfSyntaxErrors(), outcome.diagnostics()),
+                occurrences, resolution);
+        return new FrontendAnalysis(outcome, model, resolution, report);
     }
 
     private static List<Ast.Node> nodes(Ast.Node root) {
@@ -376,5 +445,6 @@ class SemanticProductBoundaryCheckpoint3ATest {
 
     private record FrontendAnalysis(PreprocessorEngine.Outcome outcome,
                                     CompilationUnitModel model,
-                                    ReferenceResolution resolution) { }
+                                    ReferenceResolution resolution,
+                                    ResolutionAnalysisReport report) { }
 }
