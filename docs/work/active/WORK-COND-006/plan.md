@@ -3,7 +3,7 @@
 ## Fatiamento
 
 1. **Checkpoint 1 — Discovery (Round 1):** validar baseline pós-PR #19, caracterizar grammar → parse tree → AST → occurrences → resolution, confirmar IBM normal/ALL, criar oracles S1–S6 e controle negativo, fechar migration contract e parar.
-2. **Checkpoint 1 — Discovery Round 2 (este PR):** fechar o routing tipado do collector, caracterizar a alternativa `NEXT SENTENCE`, medir `VARYING` para `INDEX` e `DATA`, executar CH-11–CH-15 e a self-review SR-01–SR-15. Nenhuma produção é autorizada.
+2. **Checkpoint 1 — Discovery Rounds 2–4 (este PR):** fechar o routing tipado do collector, caracterizar a alternativa `NEXT SENTENCE`, refutar e confirmar a policy shape-sensitive de `VARYING` para `INDEX` e `DATA`, fechar a matriz bare/qualified, executar CH-11–CH-15 e as self-reviews SR-01–SR-15/RF-01–RF-15/RF4-01–RF4-15. Nenhuma produção é autorizada.
 3. **Implementation futura, após review/autorização:** substituir somente o lowering preservado de `searchStatement` por `SearchStatement` e materializar `SearchWhen` com condition surface existente; adicionar routing explícito `SearchWhen.condition → typed CONDITION position → visitConditionSurface`, manter IDs pre-order e ownership de clauses, e representar `NEXT SENTENCE` com `Ast.NextSentenceStatement`.
 4. **Verification futura:** promover cobertura de `searchStatement`/`searchWhen`, atualizar snapshots/cardinalidades justificadas e provar que cada nominal escrito produz uma occurrence/resolution entry única.
 5. **Slice posterior separado:** validar restrições type-sensitive e específicas de SEARCH ALL, se o produto passar a declarar validade semântica.

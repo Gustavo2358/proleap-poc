@@ -159,4 +159,4 @@ Hoje `searchStatement` e `searchWhen` aparecem no manifest como `PRESERVED_UNINT
 
 ## Decisão de saída
 
-`READY_FOR_IMPLEMENTATION`. Os testes S1–S6, R1–R4, substituições de declaration/shape, o controle negativo e a inspeção de código fecharam sem alterar produção. A autorização de implementação continua dependente de review humano posterior.
+`READY_FOR_IMPLEMENTATION`. Os testes S1–S6, R1–R5, substituições de declaration/shape, o controle negativo e a inspeção de código fecharam sem alterar produção. O oracle R5 confirma que qualified DATA resolve com `{DATA}`; a autorização de implementação continua dependente de review humano posterior.
