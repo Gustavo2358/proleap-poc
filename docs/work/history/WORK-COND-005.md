@@ -18,6 +18,21 @@ Discovery Rounds 1–3 fecharam F1–F5: a surface AST permanece pre-binding; oc
 - regressões de AST, resolução, relatório, snapshots e CICS aprovadas; SET/EVALUATE permaneceram inalterados;
 - gates `fast`, `semantic`, `performance` e `full` passaram.
 
+## Semantic closure challenge
+
+1. Bug original `A = B OR C` resolvido genericamente — PASS.
+2. Cadeia WAUX-like resolve todos os tails DATA — PASS.
+3. `grammarRule` ainda é autoridade no collector — PASS negativo: permanece apenas metadata.
+4. Roots qualified/subscripted/reference-modified excluem INDEX — PASS.
+5. Cardinalidade um nominal escrito para uma occurrence — PASS.
+6. Condition-name real continua resolvendo CONDITION — PASS.
+7. INDEX bare continua resolvendo INDEX — PASS.
+8. RENAMES continua resolvendo DATA — PASS.
+9. `PERFORM UNTIL` usa contexto tipado CONDITION — PASS.
+10. Diagnostics contextuais não mentem — PASS.
+11. Resolver algorithm permaneceu inalterado — PASS.
+12. Slice 6, Slice 7 e `BACKLOG-RES-004` continuam abertos — PASS.
+
 ## Dependências futuras
 
 O PR #19 permanece sem merge até review humano final. O Slice 6 (`SEARCH WHEN`) e o Slice 7 (regressão ampla de corpus) continuam pendentes. `BACKLOG-RES-004` permanece aberto e separado. `ConditionSemantics` e `ConditionValidation`, além de CFG/dataflow, continuam trabalhos futuros.
