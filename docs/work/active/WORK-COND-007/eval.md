@@ -55,7 +55,7 @@ As seguintes transformações foram usadas para estruturar a refutação e ficam
 
 ## Expectativas de escala
 
-As medições são observacionais, executadas uma vez por programa com `ANALYZER_LOG_LEVEL=DEBUG`, portanto não são benchmark de hardware. O pipeline permaneceu finito nos sete programas completos; não foi possível medir peak memory porque o repositório não oferece mecanismo existente para isso.
+As medições são observacionais, executadas uma vez por programa com `ANALYZER_LOG_LEVEL=DEBUG`, portanto não caracterizam desempenho de hardware. O pipeline permaneceu finito nos sete programas completos; não foi possível medir peak memory porque o repositório não oferece mecanismo existente para isso.
 
 ## Corpus existente
 
@@ -301,3 +301,5 @@ The logger timings varied slightly between invocations and are retained only as 
 ## Gates and repository integrity
 
 Pre-expansion baseline on `8c6f449`: `check-fast.sh` PASS; `check-semantic.sh` PASS. The final gate results, commit SHAs and PR are appended to this document after all corpus/document changes and before handoff. Required integrity check: `git diff --name-only -- src/main grammar semantic manifest` must be empty for this checkpoint.
+
+After corpus and findings work, before the final documentation checkpoint: `verify-naming.sh` PASS and `check-fast.sh` PASS. The first post-corpus `check-full.sh` reached PASS for fast, semantic, structural artifact invariants and source-normalizer regression, then stopped only at naming because this document used a reserved legacy measurement word; the wording was corrected without changing the corpus. A clean final `check-full.sh` is required after this document commit.

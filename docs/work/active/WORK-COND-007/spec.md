@@ -43,7 +43,7 @@ Unresolved, ambiguous, unsupported, dependency missing, preprocessing failure e 
 
 ## Fora de escopo
 
-Não fazem parte deste checkpoint: correções em `src/main/**`; mudanças de gramática, AST, collector, resolver, manifesto ou baselines produtivos; validação runtime, CFG, dataflow, valores dinâmicos, targets finais de CALL, semântica completa de CICS/SQL/IMS/MQ; normalização para mascarar fonte upstream; stubs para COPY ausente; e benchmark definitivo dependente de hardware.
+Não fazem parte deste checkpoint: correções em `src/main/**`; mudanças de gramática, AST, collector, resolver, manifesto ou baselines produtivos; validação runtime, CFG, dataflow, valores dinâmicos, targets finais de CALL, semântica completa de CICS/SQL/IMS/MQ; normalização para mascarar fonte upstream; stubs para COPY ausente; e medição definitiva dependente de hardware.
 
 ## Regras de domínio relacionadas
 

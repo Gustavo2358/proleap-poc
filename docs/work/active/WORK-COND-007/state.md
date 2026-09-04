@@ -13,6 +13,7 @@ O CardDemo foi clonado externamente em `/tmp/work-cond-007/external-corpora/aws-
 - Há 44 candidatos COBOL no CardDemo; a seleção preliminar contém dez programas e 27 COPYs disponíveis.
 - Sete programas selecionados completam a pipeline; dois falham no preprocessing por `EXEC DLI`; um falha na normalização por TAB em fonte fixed-format. Esses resultados estão sendo tratados como dados de corpus, não mascarados.
 - Nenhuma alteração em `src/main/**`, gramática, resolver ou semantic manifest foi feita.
+- `check-fast.sh` e `check-semantic.sh` passaram após a expansão; a primeira execução de `check-full.sh` passou fast/semantic/E2E e falhou apenas no naming por palavra reservada na documentação, já corrigida.
 
 ## Restante
 
