@@ -1062,9 +1062,10 @@ INV-EXT-001/002/003/004, INV-COV-001/002/003, INV-EMB-001 e INV-DET-001.
 
 ## 18. Inputs for Checkpoint 3
 
-O Checkpoint 3 **não foi executado nem autorizado**. Se houver autorização
-posterior, estes são os inputs que devem ser levados adiante para falsificar a
-candidata, sem assumir que ela foi aceita:
+O Checkpoint 3 completo permanece não autorizado. O slice 3A foi autorizado
+posteriormente e executado no PR #25; estes inputs continuam sendo referências
+para trabalho posterior, sem ampliar o slice 3A nem assumir autorização para
+interchange:
 
 1. um consumer independente de `CobolSemanticPort` que não importe classes do
    frontend, ANTLR, snapshots ou `writtenText`, consumindo somente a facade B
@@ -1158,5 +1159,6 @@ Nenhum arquivo em `src/main/**`, `src/test/**` ou grammar foi alterado. Nenhum
 serializer, JSON, Semantic Product, `CobolLower`, IR, CFG ou dataflow foi
 executado ou implementado.
 
-**Checkpoint 2 status:** concluído e aguardando review humano.
-**Checkpoint 3 status:** não autorizado e não iniciado.
+**Checkpoint 2 status:** aprovado e mergeado no PR #24 (`a64c3b3`).
+**Checkpoint 3 status:** o checkpoint completo continua não autorizado; somente
+o slice 3A foi executado no PR #25 e aguarda review humano.

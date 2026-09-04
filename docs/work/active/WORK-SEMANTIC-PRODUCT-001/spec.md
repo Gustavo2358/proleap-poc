@@ -6,10 +6,10 @@ O frontend COBOL já produz vários artefatos semânticos separados, mas não ex
 
 Este work item é um Discovery arquitetural de alto risco, composto por uma
 baseline factual (Checkpoint 1) e pelo desenho/suficiência da boundary
-(Checkpoint 2). O Checkpoint 1 está concluído; o Checkpoint 2 está concluído e
-em review humano; o Checkpoint 3 permanece não autorizado. A implementação do
-produto, de `Cobol Lower`, da IR, de CFG, de dataflow, de possible-values e de
-dependency facts está fora do escopo.
+(Checkpoint 2). O Checkpoint 1 está concluído; o Checkpoint 2 foi aprovado e
+mergeado no PR #24; o Checkpoint 3A foi autorizado para falsificação test-only.
+A implementação de produção do produto, de `Cobol Lower`, da IR, de CFG, de
+dataflow, de possible-values e de dependency facts está fora do escopo.
 
 ## Objetivo
 
@@ -17,10 +17,10 @@ Produzir, ao longo do lifecycle completo de três checkpoints de Discovery,
 evidência suficiente para que um review humano decida se a menor boundary
 semântica COBOL-specific é suficiente para um futuro `CobolLower`. O Checkpoint 1
 estabelece a baseline factual do frontend; o Checkpoint 2 define a boundary e
-testa sua suficiência; e o Checkpoint 3, somente após autorização explícita,
-executa a falsificação executável e a prova de interchange. No estado atual, o
-Checkpoint 3 faz parte do plano do work item, mas não está autorizado nem
-iniciado. Nenhum checkpoint desenha a IR ou implementa o produto/lowerer.
+testa sua suficiência; e o Checkpoint 3A executa a falsificação executável da
+seam aprovada, sem prova de interchange. No estado atual, somente o Checkpoint
+3A está autorizado. Nenhum checkpoint desenha a IR ou implementa o
+produto/lowerer.
 
 ## Domínio de entrada suportado
 
@@ -51,9 +51,9 @@ conclusão arquitetural importante deve indicar `evidence_status` entre
 
 O plano contém três checkpoints independentes, cada um terminando em review
 humano. O Checkpoint 1 foi concluído e serviu de baseline factual para o
-Checkpoint 2; o Checkpoint 2 foi concluído e aguarda review. O Checkpoint 3
-deverá tentar falsificar a candidata escolhida somente após autorização
-explícita posterior. Implementação será outro work item.
+Checkpoint 2; o Checkpoint 2 foi concluído, aprovado e mergeado. O Checkpoint 3A
+tenta falsificar a candidata escolhida em código test-only e termina em review
+humano. Implementação de produção será outro work item.
 
 ## Comportamento diante de incerteza
 
@@ -67,7 +67,7 @@ O relatório deve usar os contratos atuais: cobertura `MODELED`, `PRESERVED_UNIN
 - Implementar `Cobol Lower`, IR, CFG, dataflow, reaching definitions, possible-values ou dependency extraction.
 - Corrigir F-01, ALTER, SEARCH ou qualquer lacuna oportunista de AST/resolver.
 - Alterar AST para carregar resolução, introduzir IDs de candidates na AST, refatorar `ExplorerMain`, criar parser embedded ou framework de plugins.
-- Executar o Checkpoint 3; ele continua não autorizado neste estado do work item.
+- Executar qualquer parte do Checkpoint 3 além do slice 3A autorizado neste estado do work item.
 
 ## Regras de domínio relacionadas
 
