@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -220,11 +221,139 @@ class SearchWhenConditionDiscoveryTest {
                         .anyMatch(occurrence -> occurrence.kind() == ResolutionContracts.ReferenceKind.CONDITION)));
     }
 
+    @Test
+    void F1_genericAstChildrenTraversalCannotSupplyConditionPositionRouting() {
+        AstBoundaryTestSupport.Analysis searchAnalysis = analyze("F1-SEARCH", """
+                SEARCH TABLE-ITEM
+                   WHEN FLAG-ON
+                      CONTINUE
+                END-SEARCH.
+                """);
+        AstBoundaryTestSupport.Analysis ifAnalysis = analyze("F1-IF", """
+                IF FLAG-ON
+                   CONTINUE
+                END-IF.
+                """);
+
+        ReferenceResolution.Entry ifFlag = entryForRole(ifAnalysis, "FLAG-ON",
+                ResolutionContracts.ReferenceRole.VALUE_READ);
+        assertAll("F1 typed boundary versus generic fallback",
+                () -> assertTrue(AstBoundaryTestSupport.nodes(searchAnalysis, Ast.ContextualConditionTail.class)
+                        .isEmpty()),
+                () -> assertFalse(writtenNames(searchAnalysis).contains("FLAG-ON")),
+                () -> assertEquals(ResolutionContracts.ReferenceKind.CONDITION, ifFlag.occurrence().kind()),
+                () -> assertEquals(Set.of(ResolutionContracts.ReferenceKind.CONDITION),
+                        ifFlag.occurrence().admissibleKinds()),
+                () -> assertEquals(ResolutionContracts.ResolutionStatus.RESOLVED, ifFlag.status()),
+                () -> assertEquals(ResolutionContracts.ReferenceKind.CONDITION,
+                        ifFlag.selectedCandidate().orElseThrow().kind()));
+    }
+
+    @Test
+    void F2_nextSentenceIsAnAlternativeTokenPathAndCurrentPreservedClauseRetainsIt() {
+        AstBoundaryTestSupport.Analysis analysis = analyze("F2-NEXT", """
+                SEARCH TABLE-ITEM
+                   WHEN FLAG-ON
+                      NEXT SENTENCE
+                END-SEARCH.
+                """);
+
+        CobolParser.SearchWhenContext when = onlyWhen(analysis);
+        Ast.StatementClause clause = search(analysis).clauses().get(0);
+        assertAll("F2 NEXT SENTENCE",
+                () -> assertEquals("FLAG-ON", when.condition().getText()),
+                () -> assertEquals(0, when.statement().size()),
+                () -> assertEquals("NEXT", when.NEXT().getText()),
+                () -> assertEquals("SENTENCE", when.SENTENCE().getText()),
+                () -> assertEquals("searchWhen", clause.grammarRule()),
+                () -> assertTrue(clause.recognizedNodes().isEmpty()),
+                () -> assertEquals(1, clause.nestedStatements().size()),
+                () -> assertInstanceOf(Ast.NextSentenceStatement.class, clause.nestedStatements().get(0)),
+                () -> assertFalse(writtenNames(analysis).contains("FLAG-ON")),
+                () -> assertTrue(AstBoundaryTestSupport.nodes(analysis, Ast.NextSentenceStatement.class).size() == 1));
+    }
+
+    @Test
+    void F3_varyingIndexIsCurrentlyDefaultDataButFuturePolicyMustAdmitIndex() {
+        AstBoundaryTestSupport.Analysis analysis = analyze("F3-INDEX", """
+                SEARCH TABLE-ITEM VARYING SEARCH-IDX
+                   WHEN SEARCH-A = SEARCH-B
+                      CONTINUE
+                END-SEARCH.
+                """);
+
+        ReferenceResolution.Entry varying = entryForRole(analysis, "SEARCH-IDX",
+                ResolutionContracts.ReferenceRole.CONTEXT_DEPENDENT);
+        assertAll("F3 VARYING index",
+                () -> assertEquals(ResolutionContracts.ReferenceKind.DATA, varying.occurrence().kind()),
+                () -> assertEquals(Set.of(ResolutionContracts.ReferenceKind.DATA),
+                        varying.occurrence().admissibleKinds()),
+                () -> assertEquals(ResolutionContracts.ResolutionStatus.UNRESOLVED, varying.status()),
+                () -> assertEquals(ResolutionContracts.ResolutionReason.INVALID_NAMESPACE_FOR_CONTEXT,
+                        varying.reason()),
+                () -> assertTrue(analysis.resolution().entries().stream()
+                        .filter(entry -> entry.occurrence().writtenText().equals("SEARCH-IDX"))
+                        .anyMatch(entry -> entry.occurrence().role() == ResolutionContracts.ReferenceRole.OCCURS_INDEX
+                                && entry.selectedCandidate().orElseThrow().kind()
+                                == ResolutionContracts.ReferenceKind.INDEX)));
+    }
+
+    @Test
+    void F3_varyingElementaryIntegerIsDataAndMustRemainAdmissibleAsData() {
+        AstBoundaryTestSupport.Analysis analysis = analyzeWithDeclarations("F3-DATA", """
+                01  SEARCH-COUNTER PIC 9(4).
+                """, """
+                SEARCH TABLE-ITEM VARYING SEARCH-COUNTER
+                   WHEN SEARCH-A = SEARCH-B
+                      CONTINUE
+                END-SEARCH.
+                """);
+
+        ReferenceResolution.Entry varying = entryForRole(analysis, "SEARCH-COUNTER",
+                ResolutionContracts.ReferenceRole.CONTEXT_DEPENDENT);
+        assertAll("F3 VARYING data",
+                () -> assertEquals(ResolutionContracts.ReferenceKind.DATA, varying.occurrence().kind()),
+                () -> assertEquals(Set.of(ResolutionContracts.ReferenceKind.DATA),
+                        varying.occurrence().admissibleKinds()),
+                () -> assertEquals(ResolutionContracts.ResolutionStatus.RESOLVED, varying.status()),
+                () -> assertEquals(ResolutionContracts.ReferenceKind.DATA,
+                        varying.selectedCandidate().orElseThrow().kind()));
+    }
+
+    @Test
+    void F3_varyingAndConditionUseIndependentSemanticPositions() {
+        AstBoundaryTestSupport.Analysis analysis = analyze("F3-SEPARATE", """
+                SEARCH TABLE-ITEM VARYING SEARCH-IDX
+                   WHEN FLAG-ON
+                      CONTINUE
+                END-SEARCH.
+                """);
+
+        ReferenceResolution.Entry varying = entryForRole(analysis, "SEARCH-IDX",
+                ResolutionContracts.ReferenceRole.CONTEXT_DEPENDENT);
+        assertAll("F3 separate VARYING and condition positions",
+                () -> assertEquals(ResolutionContracts.ReferenceKind.DATA, varying.occurrence().kind()),
+                () -> assertFalse(writtenNames(analysis).contains("FLAG-ON")),
+                () -> assertTrue(analysis.occurrences().values().stream()
+                        .flatMap(product -> product.occurrences().stream())
+                        .filter(occurrence -> occurrence.writtenText().equals("SEARCH-IDX"))
+                        .allMatch(occurrence -> occurrence.kind() != ResolutionContracts.ReferenceKind.CONDITION)));
+    }
+
     private static AstBoundaryTestSupport.Analysis analyze(String id, String search) {
         return AstBoundaryTestSupport.analyze(program(id, search), "search-when-" + id + ".cbl");
     }
 
+    private static AstBoundaryTestSupport.Analysis analyzeWithDeclarations(String id, String declarations,
+                                                                            String search) {
+        return AstBoundaryTestSupport.analyze(program(id, declarations, search), "search-when-" + id + ".cbl");
+    }
+
     private static String program(String id, String search) {
+        return program(id, "", search);
+    }
+
+    private static String program(String id, String extraDeclarations, String search) {
         String program = "SEARCH-WHEN-" + id;
         return """
                 IDENTIFICATION DIVISION.
@@ -236,6 +365,7 @@ class SearchWhenConditionDiscoveryTest {
                 01  SEARCH-C PIC 9(4).
                 01  SEARCH-D PIC 9(4).
                 01  SEARCH-KEY PIC 9(4).
+                %s
                 01  GROUP-X.
                     05  FLAG PIC X.
                         88  FLAG-ON VALUE 'Y'.
@@ -246,7 +376,7 @@ class SearchWhenConditionDiscoveryTest {
                 PROCEDURE DIVISION.
                 %s
                 END PROGRAM %s.
-                """.formatted(program, search, program);
+                """.formatted(program, extraDeclarations, search, program);
     }
 
     private static Ast.PreservedStatement search(AstBoundaryTestSupport.Analysis analysis) {
@@ -279,5 +409,15 @@ class SearchWhenConditionDiscoveryTest {
         return analysis.resolution().entries().stream()
                 .filter(candidate -> candidate.occurrence().writtenText().equals(writtenText))
                 .findFirst().orElseThrow(() -> new AssertionError("missing resolution entry: " + writtenText));
+    }
+
+    private static ReferenceResolution.Entry entryForRole(AstBoundaryTestSupport.Analysis analysis,
+                                                          String writtenText,
+                                                          ResolutionContracts.ReferenceRole role) {
+        return analysis.resolution().entries().stream()
+                .filter(candidate -> candidate.occurrence().writtenText().equals(writtenText)
+                        && candidate.occurrence().role() == role)
+                .findFirst().orElseThrow(() -> new AssertionError(
+                        "missing resolution entry: " + writtenText + " / " + role));
     }
 }
