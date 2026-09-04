@@ -14,6 +14,7 @@ O CardDemo foi clonado externamente em `/tmp/work-cond-007/external-corpora/aws-
 - Sete programas selecionados completam a pipeline; dois falham no preprocessing por `EXEC DLI`; um falha na normalização por TAB em fonte fixed-format. Esses resultados estão sendo tratados como dados de corpus, não mascarados.
 - Nenhuma alteração em `src/main/**`, gramática, resolver ou semantic manifest foi feita.
 - `check-fast.sh` e `check-semantic.sh` passaram após a expansão; a primeira execução de `check-full.sh` passou fast/semantic/E2E e falhou apenas no naming por palavra reservada na documentação, já corrigida.
+- A execução final de `check-full.sh` em `a613481` passou, incluindo naming; o diff `main...HEAD` não contém `src/main`, gramática, resolver ou semantic manifest. `check-performance.sh` não se aplica, pois não houve mudança algorítmica.
 
 ## Restante
 
@@ -21,6 +22,7 @@ O CardDemo foi clonado externamente em `/tmp/work-cond-007/external-corpora/aws-
 - Finalizar provenance, inventory, baseline detalhado, findings e bug-refutation.
 - Adicionar somente testes/harness de characterization necessários.
 - Executar gates finais fast, semantic e full; registrar SHAs, commits, head e PR.
+- Publicar o PR de Discovery e aguardar review humano; nenhuma implementação é permitida neste work item.
 
 ## Descobertas que afetam o plano
 
@@ -28,3 +30,7 @@ O CardDemo foi clonado externamente em `/tmp/work-cond-007/external-corpora/aws-
 - `EXEC DLI` é rejeitado pelo preprocessing atual e não deve ser convertido em stub.
 - `COTRTLIC.cbl` contém um TAB literal que viola a entrada fixed-format configurada; o source upstream não será alterado.
 - Há uma hipótese recorrente em `EVALUATE TRUE WHEN condition-name` que precisa ser submetida integralmente a BR-01..BR-15. O backlog já registra a lacuna conhecida de contexto de occurrence (`BACKLOG-RES-003`); não será corrigida neste checkpoint.
+
+## Status do checkpoint
+
+`DISCOVERY_REVIEW_READY`, aguardando review humano antes de qualquer implementação.

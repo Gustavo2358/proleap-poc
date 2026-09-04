@@ -300,6 +300,10 @@ The logger timings varied slightly between invocations and are retained only as 
 
 ## Gates and repository integrity
 
-Pre-expansion baseline on `8c6f449`: `check-fast.sh` PASS; `check-semantic.sh` PASS. The final gate results, commit SHAs and PR are appended to this document after all corpus/document changes and before handoff. Required integrity check: `git diff --name-only -- src/main grammar semantic manifest` must be empty for this checkpoint.
+Pre-expansion baseline on `8c6f449`: `check-fast.sh` PASS; `check-semantic.sh` PASS. Required integrity check: `git diff --name-only -- src/main grammar semantic manifest` must be empty for this checkpoint.
 
-After corpus and findings work, before the final documentation checkpoint: `verify-naming.sh` PASS and `check-fast.sh` PASS. The first post-corpus `check-full.sh` reached PASS for fast, semantic, structural artifact invariants and source-normalizer regression, then stopped only at naming because this document used a reserved legacy measurement word; the wording was corrected without changing the corpus. A clean final `check-full.sh` is required after this document commit.
+After corpus and findings work, `verify-naming.sh` PASS and `check-fast.sh` PASS. The first post-corpus `check-full.sh` reached PASS for fast, semantic, structural artifact invariants and source-normalizer regression, then stopped only at naming because this document used a reserved legacy measurement word; the wording was corrected without changing the corpus. The final `check-full.sh` at `a613481` PASSed, including naming. No production-scope path appears in `git diff main...HEAD -- src/main src/main/antlr4 grammar semantic-manifest.json`. `check-performance.sh` was not applicable: this checkpoint introduced no algorithmic change or production code.
+
+### Checkpoint conclusion
+
+`DISCOVERY_REVIEW_READY`. The branch contains only the active work-item documentation, selected upstream CardDemo evidence and licensing/provenance; no semantic correction has been implemented. The PR is intentionally a Discovery PR and is not ready for merge until human review authorizes a future implementation item.
