@@ -34,6 +34,7 @@ source_scope:
   - docs/engineering/downstream-impact-classification.md
   - docs/work/backlog.md
   - docs/work/index.md
+  - docs/work/history/WORK-COND-007.md
   - docs/work/active/WORK-HARNESS-IMPACT-001
   - src/test/java/io/github/gustavo2358/cobolexplorer/HarnessDocsTest.java
 test_scope:

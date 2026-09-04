@@ -20,8 +20,8 @@ frontend COBOL / semantic analysis
   → Cobol Lower
   → IR
   → CFG
-  → Dataflow
-  → precision / dependency extraction
+  → Dataflow / Possible Values
+  → Dependency Facts / semantic extractors
 ```
 
 Quando uma fronteira ainda não tem contrato definido, não se deve inferir seu
@@ -61,14 +61,47 @@ Lack of evidence results in `UNASSESSED`, never in inferred impact.”**
 | `BLOCKS_IR` | O Semantic Product é semanticamente correto, mas Cobol Lower/IR não representa a semântica necessária. | Semantic Product correto, contrato de IR definido e falha observada no lowering ou na representação da IR. |
 | `BLOCKS_CFG` | Semantic Product e IR são corretos, mas o CFG não consegue construir as arestas ou pontos exigidos. | Produtos anteriores corretos, contrato de CFG definido e construção incorreta/impossível demonstrada. |
 | `BLOCKS_DATAFLOW` | Semantic Product, IR e CFG são corretos, mas a análise de fluxo/efeitos não cumpre seu contrato. | Produtos anteriores corretos, contrato de dataflow definido e falha demonstrada em identity, aliases, effects, program points ou análise equivalente. |
+| `BLOCKS_DEPENDENCY_FACTS` | Os produtos anteriores necessários estão corretos, mas a transformação/composição que produz fatos finais de dependência ou fatos semânticos downstream viola seu contrato. | Cada produto anterior realmente exigido pelo extractor está correto; o contrato do fato está definido; e um fato final incorreto, unsound ou impossível de produzir é demonstrado. |
 | `REDUCES_PRECISION` | A análise continua sound e conservadora, mas retorna menos informação útil do que o contrato permite. | Um oracle ou argumento independente mostra que nenhum fato falso é afirmado e que a perda é somente de precisão. |
 | `UNASSESSED` | Ainda não há evidência suficiente para identificar a primeira fronteira ou distinguir incorreção de perda de precisão. | Rationale explícito sobre a lacuna de evidência e `reassess_when` indicando o que precisa ser definido ou observado. |
 | `NOT_APPLICABLE` | O finding não tem impacto semântico downstream dentro do escopo analisado. | Evidência de que o finding é exclusivamente documental, de licença, de organização ou de outra natureza sem consumidor semântico afetado. |
+
+Este é um vocabulário fechado de exatamente oito classes. Nenhum sinônimo ou
+classe adicional deve ser inventado em um registro.
+
+## Completude das fronteiras downstream
+
+Antes de considerar a taxonomia fechada, cada fronteira conhecida deve ter uma
+classe inequívoca para o caso em que ela seja a primeira a violar seu contrato:
+
+| Fronteira | Classe de bloqueio |
+| --- | --- |
+| `Semantic Product` | `BLOCKS_SEMANTIC_PRODUCT` |
+| `IR` | `BLOCKS_IR` |
+| `CFG` | `BLOCKS_CFG` |
+| `Dataflow / Possible Values` | `BLOCKS_DATAFLOW` |
+| `Dependency Facts` | `BLOCKS_DEPENDENCY_FACTS` |
+
+Se nenhuma fronteira estiver incorreta e somente houver perda conservadora de
+informação, a classe é `REDUCES_PRECISION`. Se a fronteira ainda não puder ser
+identificada, a classe é `UNASSESSED`.
 
 `BLOCKS_SEMANTIC_PRODUCT` não significa “todo bug do frontend é grave” e não
 é o default. Só é válido quando a fronteira e o contrato do produto semântico
 forem conhecidos e a falha nessa fronteira estiver demonstrada. Antes disso,
 use `UNASSESSED`.
+
+`BLOCKS_DEPENDENCY_FACTS` é uma fronteira posterior a dataflow, não um sinônimo
+de `BLOCKS_DATAFLOW`. Um extractor pode depender somente do Semantic Product ou
+de um subconjunto dos produtos anteriores; a evidência deve demonstrar apenas
+as precondições realmente exigidas por aquele extractor, sem pressupor CFG ou
+dataflow quando eles não participam da transformação.
+
+Para essa classe, o registro deve dizer explicitamente que o Semantic Product
+está correto quando aplicável, que a IR está correta, e que CFG e
+dataflow/possible-values estão corretos quando forem precondições do extractor.
+Também deve apontar o contrato do Dependency Fact e o fato final incorreto,
+ausente de forma unsound ou impossível de produzir.
 
 ## Registro mínimo de um finding
 
@@ -90,9 +123,14 @@ downstream_impact:
     - semantic-product-contract-defined
 ```
 
-`class`, `rationale`, `evidence` e `reassess_when` são obrigatórios. `evidence`
-deve ser verificável e não apenas uma opinião. Consequências posteriores podem
-ser descritas no rationale/evidence, mas não adicionam classes ao finding.
+`class`, `rationale` e `evidence` são obrigatórios para todo registro.
+`rationale` deve conter texto não vazio e `evidence` deve possuir pelo menos
+uma entrada não vazia e verificável. `reassess_when` é obrigatório somente
+para `UNASSESSED`; para as demais classes ele é opcional e só deve aparecer
+quando existir um gatilho legítimo, como `contract-version-changed`,
+`semantic-product-boundary-redefined` ou `new-downstream-oracle-added`. Se
+aparecer, não pode estar vazio. Consequências posteriores podem ser descritas
+no rationale/evidence, mas não adicionam classes ao finding.
 
 Não há `confidence` neste contrato. Hoje não existe escala de evidência ou
 schema de findings que torne `LOW`, `MEDIUM` ou `HIGH` reproduzível; introduzir
@@ -144,7 +182,7 @@ downstream_impact:
     como consequência presumida.
   evidence:
     - BACKLOG-RES-003 e a caracterização de WORK-COND-007 reproduzem 34 ocorrências com a cadeia occurrence/resolution incorreta.
-    - docs/architecture/pipeline.md declara Semantic Product, IR, CFG e dataflow como fronteiras futuras ou ainda não materializadas.
+    - docs/architecture/pipeline.md declara Semantic Product, IR, CFG, dataflow e Dependency Facts como fronteiras futuras ou ainda não materializadas.
   reassess_when:
     - semantic-product-contract-defined
     - ir-requirements-defined
@@ -175,6 +213,30 @@ análise exclui um target possível e afirma que o conjunto é completo, isso é
 comportamento unsound: deve-se localizar a primeira camada onde a afirmação
 incorreta ocorre e classificá-la como bloqueio dessa camada, não como mera
 precisão reduzida.
+
+### Dependency Facts versus precision
+
+Quando o contrato de um fato final está definido, os produtos anteriores
+necessários estão corretos e o defeito aparece na transformação/composição do
+fato, a classe é `BLOCKS_DEPENDENCY_FACTS`.
+
+- **Caso conservador:** o conjunto esperado `{PGM1, PGM2, UNKNOWN}` é publicado
+  como `{UNKNOWN}`. Se o resultado continua sound, trata-se de
+  `REDUCES_PRECISION`.
+- **Caso incorreto:** o target correto é `PGM-A`, mas o extractor publica
+  `PGM-B`, embora as precondições usadas pelo extractor estejam corretas. Isso
+  é `BLOCKS_DEPENDENCY_FACTS`, não `BLOCKS_DATAFLOW` nem `REDUCES_PRECISION`.
+- **Caso de perda unsound:** o conjunto completo esperado `{PGM1, PGM2}` é
+  publicado como `{PGM1}`. Isso não é apenas perda de precisão: localize a
+  primeira fronteira que perdeu `PGM2`. Se os produtos anteriores ainda contêm
+  `PGM2` e a perda ocorre ao produzir o fato final, use
+  `BLOCKS_DEPENDENCY_FACTS`; se uma fronteira anterior já o perdeu, vale a
+  classe anterior.
+
+Um extractor literal que consome somente Semantic Product pode, portanto,
+ser `BLOCKS_DEPENDENCY_FACTS` sem qualquer afirmação sobre dataflow. A classe
+descreve a primeira fronteira demonstradamente incorreta, não todas as fases
+que poderiam existir no roadmap.
 
 ### Sem evidência
 
@@ -212,6 +274,11 @@ Antes de aceitar uma classe diferente de `UNASSESSED`, confirme:
 - qual contrato é o primeiro que não pode ser cumprido;
 - por que as classes anteriores foram rejeitadas;
 - qual evidência reproduzível sustenta a decisão.
+
+Para `UNASSESSED`, confirme também por que ainda não é possível escolher a
+primeira fronteira e registre ao menos um gatilho em `reassess_when`. Para uma
+classe determinada, não invente `reassess_when`: omita-o quando não houver
+motivo real. Em todos os casos, um campo obrigatório vazio invalida o registro.
 
 Se qualquer resposta depender de “provavelmente”, de nome, regex, proximidade,
 regra gramatical isolada ou de uma camada ainda não definida, use

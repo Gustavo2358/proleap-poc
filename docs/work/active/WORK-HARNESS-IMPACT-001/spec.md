@@ -28,15 +28,19 @@ semântico.
 
 ## Classes semânticas
 
-A fonte canônica define exatamente estas sete classes: `BLOCKS_SEMANTIC_PRODUCT`,
-`BLOCKS_IR`, `BLOCKS_CFG`, `BLOCKS_DATAFLOW`, `REDUCES_PRECISION`, `UNASSESSED` e
-`NOT_APPLICABLE`. A classe é única e segue `earliest broken layer wins`.
+A fonte canônica define exatamente estas oito classes: `BLOCKS_SEMANTIC_PRODUCT`,
+`BLOCKS_IR`, `BLOCKS_CFG`, `BLOCKS_DATAFLOW`, `BLOCKS_DEPENDENCY_FACTS`,
+`REDUCES_PRECISION`, `UNASSESSED` e `NOT_APPLICABLE`. A classe é única e segue
+`earliest broken layer wins`.
 
-`BLOCKS_SEMANTIC_PRODUCT`, `BLOCKS_IR`, `BLOCKS_CFG` e `BLOCKS_DATAFLOW` exigem
-evidência dos contratos da fronteira escolhida e das fronteiras anteriores.
-`REDUCES_PRECISION` exige prova de soundness/conservadorismo. `UNASSESSED` é o
-resultado obrigatório quando essa prova não existe. `NOT_APPLICABLE` não é um
-substituto para desconhecimento.
+`BLOCKS_SEMANTIC_PRODUCT`, `BLOCKS_IR`, `BLOCKS_CFG`, `BLOCKS_DATAFLOW` e
+`BLOCKS_DEPENDENCY_FACTS` exigem evidência dos contratos da fronteira escolhida
+e das fronteiras anteriores realmente necessárias. Um semantic extractor pode
+depender somente do Semantic Product ou de um subconjunto das fases anteriores.
+`REDUCES_PRECISION` exige prova de soundness/conservadorismo.
+`UNASSESSED` é o resultado obrigatório quando essa prova não existe.
+`NOT_APPLICABLE` exige evidência positiva de ausência de consumidor semântico e
+não é um substituto para desconhecimento.
 
 ## Premissas
 
@@ -49,16 +53,21 @@ substituto para desconhecimento.
 - Semantic Product, Cobol Lower, IR, CFG e dataflow ainda não são produtos
   criados por este work item; uma fronteira inexistente não pode ser tratada
   como provada.
-- `UNASSESSED` preserva incerteza e deve indicar `reassess_when`.
+- `UNASSESSED` preserva incerteza e deve indicar `reassess_when`; para as demais
+  classes, esse campo só aparece quando houver motivo real e, se aparecer, não
+  pode estar vazio.
 - Não adotar `confidence` agora é uma decisão de simplicidade: não há escala
   reproduzível nem schema de findings que justifique seus valores.
 
 ## Comportamento esperado
 
 Todo finding semântico novo registra um bloco `downstream_impact` com `class`,
-`rationale`, `evidence` e `reassess_when`. O validator documental rejeita classe
-fora do vocabulário canônico em registros no formato definido e a documentação
-explica como justificar as fronteiras anteriores rejeitadas.
+`rationale` e `evidence`. `reassess_when` é obrigatório para `UNASSESSED`,
+opcional para as demais classes e, quando presente, deve ter uma entrada não
+vazia. O validator documental rejeita classe fora do vocabulário canônico,
+campos obrigatórios vazios, evidência sem entrada e registros `UNASSESSED` sem
+gatilho; a documentação explica como justificar as fronteiras anteriores
+rejeitadas.
 
 A classificação não altera o finding original, não autoriza a remediação e não
 gera prioridade implícita. O caso F-01 é usado como exemplo realista e mantém

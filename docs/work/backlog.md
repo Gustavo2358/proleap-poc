@@ -391,7 +391,7 @@ downstream_impact:
     como consequência presumida.
   evidence:
     - BACKLOG-RES-003 e a caracterização de WORK-COND-007 reproduzem 34 ocorrências com a cadeia occurrence/resolution incorreta.
-    - docs/architecture/pipeline.md declara Semantic Product, IR, CFG e dataflow como fronteiras futuras ou ainda não materializadas.
+    - docs/architecture/pipeline.md declara Semantic Product, IR, CFG, dataflow e Dependency Facts como fronteiras futuras ou ainda não materializadas.
   reassess_when:
     - semantic-product-contract-defined
     - ir-requirements-defined
@@ -418,7 +418,7 @@ Selectors de `EVALUATE` cujo subject correspondente não for booleano, ou cuja f
 5. Atualizar snapshot, catálogo de evals e baseline de COACTUPC somente para diferenças explicadas. A contagem de 108 é evidência de corpus, não especificação da regra.
 6. Rodar PIT focalizado sobre o lowering de `EVALUATE` e o collector. Os novos testes devem matar, no mínimo, mutações que removam a classificação CONDITION, ignorem o subject booleano, troquem a correspondência de `ALSO` ou classifiquem todo selector como CONDITION.
 
-Antes dessa implementação, um Discovery arquitetural deverá identificar a fronteira do produto semântico que alimentará consumidores downstream. A priorização futura pode então classificar o impacto de F-01 como `BLOCKS_IR`, `BLOCKS_CFG`, `BLOCKS_DATAFLOW` ou `REDUCES_PRECISION`, conforme a evidência; esta anotação não cria Semantic Product, Cobol Lower ou IR.
+Antes dessa implementação, um Discovery arquitetural deverá identificar a fronteira do produto semântico que alimentará consumidores downstream. A priorização futura pode então classificar o impacto de F-01 como `BLOCKS_IR`, `BLOCKS_CFG`, `BLOCKS_DATAFLOW`, `BLOCKS_DEPENDENCY_FACTS` ou `REDUCES_PRECISION`, conforme a evidência; esta anotação não cria Semantic Product, Cobol Lower ou IR.
 
 #### Autoridade, restrições e gates
 

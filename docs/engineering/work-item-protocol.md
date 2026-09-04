@@ -44,12 +44,13 @@ gates:
 
 Findings semânticos novos devem registrar um bloco `downstream_impact` conforme a
 [taxonomia canônica](downstream-impact-classification.md). O bloco possui uma
-classe primária única e os campos `class`, `rationale`, `evidence` e
-`reassess_when`; a falta de evidência exige `UNASSESSED`. A classificação não é
-severity, prioridade, tipo do finding ou autorização de remediação. Findings
-históricos não são migrados em massa: a regra prepara os próximos registros e
-deve ser aplicada quando um finding existente for reaberto ou alterado por um
-work item autorizado.
+classe primária única e exige `class`, `rationale` e `evidence`; a falta de
+evidência exige `UNASSESSED`. `reassess_when` é obrigatório para `UNASSESSED`,
+opcional para as demais classes e, quando presente, deve conter ao menos uma
+entrada não vazia. A classificação não é severity, prioridade, tipo do finding
+ou autorização de remediação. Findings históricos não são migrados em massa: a
+regra prepara os próximos registros e deve ser aplicada quando um finding
+existente for reaberto ou alterado por um work item autorizado.
 
 Durante um Discovery, `source_scope` e `test_scope` podem reservar um arquivo novo ainda inexistente com `planned:<caminho>`. O harness aceita essa forma somente sob `src/main` ou `src/test`, exige que o diretório pai já exista e falha se o arquivo estiver presente; ao iniciar a implementação autorizada, remova o prefixo no mesmo checkpoint que cria o arquivo. Os demais campos continuam aceitando apenas caminhos existentes.
 

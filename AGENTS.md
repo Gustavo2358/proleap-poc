@@ -61,7 +61,10 @@ Ao trabalhar em um item:
 2. carregue somente os caminhos em `must_read` relevantes ao slice atual;
 3. consulte `spec.md`, `plan.md` e `eval.md` conforme a decisão em curso;
 4. mantenha `state.md` curto e factual quando o estado material mudar;
-5. não transforme detalhes transitórios em documentação canônica.
+5. antes do handoff, execute a self-validation do harness: diretórios ativos,
+   índice, histórico, contratos documentais e escopo do diff devem permanecer
+   coerentes;
+6. não transforme detalhes transitórios em documentação canônica.
 
 Novo trabalho ativo segue o [protocolo](docs/engineering/work-item-protocol.md). Itens concluídos deixam `active/`; conhecimento durável vai para arquitetura, domínio, engenharia ou evals.
 
