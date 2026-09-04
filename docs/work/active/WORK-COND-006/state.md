@@ -2,21 +2,21 @@
 
 ## Onde estamos
 
-Checkpoint 1 — Discovery Round 4 concluído na branch `implementation/work-cond-006-search-when`, partindo do head revisado `57fa50c411a89b7f1c6ee18e8eeaba38c725618f` do Round 3. Os contratos e refutações dos Rounds 1–3 foram preservados; PR #19 e o commit `5f41bc1` foram confirmados como ancestrais. `WORK-COND-005` não existe em `active/` e seu resumo existe em `history/`.
+Checkpoint 2 — Implementation em andamento na branch `implementation/work-cond-006-search-when`, partindo do head aprovado `d0e63725c9ae3b007bd67bf4e14905fd48ec5259`. O worktree estava limpo, e os contratos e refutações do Discovery permanecem preservados.
 
 ## Verde conhecido
 
 - working tree limpa antes da criação da branch;
-- `./scripts/harness/check-fast.sh` verde no baseline pós-merge;
-- `SearchWhenConditionDiscoveryTest` verde com 20 testes, incluindo R1–R5, re-resolution controlada e substituições de declaration/shape;
-- regressões focais `ContextualConditionOccurrenceTest`, `ConditionSurfaceAstTest` e `SemanticConditionContextDiscoveryTest` verdes;
-- Rounds 3–4: suíte focal, `check-fast.sh`, `check-semantic.sh` e `check-full.sh` verdes;
-- nenhuma alteração em `src/main`, grammar, resolver, snapshots ou baselines;
-- S1–S6, SEARCH ALL, controle negativo e challenges documentados.
+- `./scripts/harness/check-fast.sh` e `./scripts/harness/check-semantic.sh` verdes no baseline isolado;
+- implementação funcional verde: `SearchWhenConditionDiscoveryTest` (20), `ContextualConditionOccurrenceTest`, `ConditionSurfaceAstTest` e `SemanticConditionContextDiscoveryTest`;
+- testes adversariais A1–A10 verdes em `SearchWhenMaterializationAdversarialTest`;
+- `./scripts/harness/check-semantic.sh` verde após a implementação;
+- alterações de produção limitadas a `Ast.java`, `AstBuilder.java`, `ReferenceOccurrenceCollector.java` e `grammar-rule-manifest.tsv`;
+- nenhum arquivo de grammar, resolver, contratos de resolução, symbol table, snapshots ou baselines foi alterado.
 
 ## Restante
 
-Review humano final do Discovery e autorização explícita para Implementation. A implementação continua proibida neste PR até essa autorização. Slice 7 e `BACKLOG-RES-004` permanecem separados.
+Restam `check-fast.sh` e `check-full.sh`, commits append-only, atualização do PR e review humano da implementação. Closure, merge, arquivamento e promoção histórica continuam não autorizados neste checkpoint. Slice 7 e `BACKLOG-RES-004` permanecem separados.
 
 ## Descobertas que afetam o plano
 
@@ -85,3 +85,28 @@ Foi procurado o menor contraexemplo em que um DATA qualified válido não resolv
 ## Tentativa manual de contraexemplo
 
 O menor contraexemplo procurado foi um `VARYING` qualified cujo índice hierarquicamente compatível pudesse ser selecionado. A grammar local aceita esse what-if, e o resolver seleciona INDEX somente quando a policy errada admite INDEX; isso confirma, em vez de quebrar, a regra de exclusão qualified. A busca por uma forma bare que exigisse excluir INDEX não encontrou contraexemplo: IBM 6.4 permite index-name ou item índice/integer; o root não tem subscript na regra local.
+
+## Checkpoint 2 implementation self-review
+
+- **IR-01 PASS** — `visitSearchStatement` não chama mais `preserved`; SEARCH é construído pela boundary tipada.
+- **IR-02 PASS** — existe uma única representação AST de SEARCH: `Ast.SearchStatement` com `Ast.SearchWhen`.
+- **IR-03 PASS** — `SearchWhen.condition` é roteada explicitamente por `visitConditionSurface`.
+- **IR-04 PASS** — nenhuma condition policy específica de SEARCH foi criada; as policies existentes são reutilizadas.
+- **IR-05 PASS** — VARYING bare usa primary DATA e admissible `{DATA, INDEX}`.
+- **IR-06 PASS** — VARYING qualified usa primary DATA e admissible `{DATA}`.
+- **IR-07 PASS** — `searchVaryingKinds` depende somente de `ref.qualifiers()`.
+- **IR-08 PASS** — nenhum resolver foi alterado.
+- **IR-09 PASS** — `NEXT SENTENCE` vira `Ast.NextSentenceStatement` na lista da branch.
+- **IR-10 PASS** — `all=true` é preservado como bit estrutural, sem claim de validade normativa.
+- **IR-11 PASS** — A1 verifica uma occurrence por nó nominal escrito, sem duplicação do preserved path.
+- **IR-12 PASS** — A1 e `assertActualProductsJoin` verificam a bijection occurrence → resolution entry.
+- **IR-13 PASS** — A6 verifica conditions e statements pertencendo às suas próprias branches.
+- **IR-14 PASS** — A10 e a suíte focal verificam `Ast.children` e IDs/pre-order através do join existente.
+- **IR-15 PASS** — A8 verifica qualifier independente do root condition.
+- **IR-16 PASS** — o collector só percorre AST e não consulta parse tree.
+- **IR-17 PASS** — não foi adicionado writtenText/regex/token inference ao collector.
+- **IR-18 PASS** — A1–A10 passaram.
+- **IR-19 PASS** — regressões do Slice 5 passaram.
+- **IR-20 PASS** — produção permanece integralmente dentro do source scope aprovado.
+
+Functional implementation green e adversarial green estão confirmados. Gates finais: `check-fast.sh` passou, `check-semantic.sh` passou e `check-full.sh` passou, incluindo regressão E2E e naming.
