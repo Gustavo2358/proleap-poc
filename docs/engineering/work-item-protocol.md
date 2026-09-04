@@ -8,6 +8,17 @@ Um work item ativo fica em `docs/work/active/<WORK-ID>/` e contém exatamente `w
 
 Ao concluir, promover conhecimento durável para a família canônica correspondente, manter oráculos nos testes e no catálogo de evals, registrar um resumo curto em `docs/work/history/<WORK-ID>.md` quando ele for útil e remover o diretório ativo. Um work item concluído não se torna uma tasklist permanente.
 
+Antes de iniciar ou encerrar um work item, a sessão deve executar lifecycle
+hygiene em duas camadas: a validação estrutural/local compara
+`docs/work/active`, `docs/work/index.md` e `docs/work/history`; a verificação
+contextual/remota usa somente contexto confiável do repositório ou GitHub para
+confirmar merge ou closure. Quando o PR que encerra um work item já foi
+mergeado, o item não pode continuar roteado como ativo e deve seguir o ciclo
+normal de promoção do conhecimento, resumo histórico quando útil, remoção de
+`active/` e atualização do índice. `HarnessDocsTest` cobre apenas a camada
+local, não infere estado remoto por heurística e não consulta a rede; na
+ausência de metadata confiável, a sessão não deve assumir merge ou closure.
+
 ## `work-item.yaml`
 
 O YAML é deliberadamente um mapa curto, com valores escalares e listas simples. Os campos obrigatórios são:

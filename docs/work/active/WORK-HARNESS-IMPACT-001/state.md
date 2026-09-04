@@ -28,15 +28,13 @@ ativo e está pronto para review humano.
   soundness versus precision, obrigatoriedade semântica dos campos, contracasos
   vazios, integridade de escopo e challenge pass.
 - `check-docs.sh`, `check-fast.sh`, `check-semantic.sh` e `check-full.sh`
-  passaram; `git diff --check` permanece obrigatório no handoff.
+  passaram; `check-performance.sh` não é aplicável a esta mudança documental
+  e `git diff --check` permanece obrigatório no handoff.
 - `confidence` foi conscientemente adiada por falta de escala reproduzível.
 - Nenhuma camada de produção semântica foi autorizada ou alterada.
 - F-01 recebeu o único registro retroativo permitido, com impacto
   `UNASSESSED`; seu tipo `CONFIRMED_KNOWN_BUG` e sua disposição permanecem
   intactos.
-- `check-docs.sh`, `check-fast.sh`, `check-semantic.sh` e `check-full.sh`
-  passaram; `check-performance.sh` não é aplicável a esta mudança documental.
-
 ## Restante
 
 - Review humano do contrato e encerramento formal do work item; não fazer merge
