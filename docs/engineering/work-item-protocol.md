@@ -8,6 +8,17 @@ Um work item ativo fica em `docs/work/active/<WORK-ID>/` e contém exatamente `w
 
 Ao concluir, promover conhecimento durável para a família canônica correspondente, manter oráculos nos testes e no catálogo de evals, registrar um resumo curto em `docs/work/history/<WORK-ID>.md` quando ele for útil e remover o diretório ativo. Um work item concluído não se torna uma tasklist permanente.
 
+Antes de iniciar ou encerrar um work item, a sessão deve executar lifecycle
+hygiene em duas camadas: a validação estrutural/local compara
+`docs/work/active`, `docs/work/index.md` e `docs/work/history`; a verificação
+contextual/remota usa somente contexto confiável do repositório ou GitHub para
+confirmar merge ou closure. Quando o PR que encerra um work item já foi
+mergeado, o item não pode continuar roteado como ativo e deve seguir o ciclo
+normal de promoção do conhecimento, resumo histórico quando útil, remoção de
+`active/` e atualização do índice. `HarnessDocsTest` cobre apenas a camada
+local, não infere estado remoto por heurística e não consulta a rede; na
+ausência de metadata confiável, a sessão não deve assumir merge ou closure.
+
 ## `work-item.yaml`
 
 O YAML é deliberadamente um mapa curto, com valores escalares e listas simples. Os campos obrigatórios são:
@@ -39,6 +50,18 @@ gates:
 ```
 
 `status` pode ser `active`, `blocked` ou `completed`; diretórios em `active/` usam somente `active` ou `blocked`. `risk` define a profundidade de contexto, não uma autorização para alterar escopo. `must_read` aponta para a menor rota canônica suficiente. Decisões, invariantes e evals devem usar IDs existentes. Os gates aceitos são `docs`, `fast`, `architecture`, `semantic`, `performance` e `full`.
+
+## Impacto semântico downstream
+
+Findings semânticos novos devem registrar um bloco `downstream_impact` conforme a
+[taxonomia canônica](downstream-impact-classification.md). O bloco possui uma
+classe primária única e exige `class`, `rationale` e `evidence`; a falta de
+evidência exige `UNASSESSED`. `reassess_when` é obrigatório para `UNASSESSED`,
+opcional para as demais classes e, quando presente, deve conter ao menos uma
+entrada não vazia. A classificação não é severity, prioridade, tipo do finding
+ou autorização de remediação. Findings históricos não são migrados em massa: a
+regra prepara os próximos registros e deve ser aplicada quando um finding
+existente for reaberto ou alterado por um work item autorizado.
 
 Durante um Discovery, `source_scope` e `test_scope` podem reservar um arquivo novo ainda inexistente com `planned:<caminho>`. O harness aceita essa forma somente sob `src/main` ou `src/test`, exige que o diretório pai já exista e falha se o arquivo estiver presente; ao iniciar a implementação autorizada, remova o prefixo no mesmo checkpoint que cria o arquivo. Os demais campos continuam aceitando apenas caminhos existentes.
 

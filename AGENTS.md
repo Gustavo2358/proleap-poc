@@ -45,6 +45,7 @@ Comece no [índice de conhecimento](docs/index.md). Carregue somente o contexto 
 | símbolos ou ocorrências | [modelo de símbolos](docs/domain/symbol-model.md) |
 | resolução ou CALL | [resolução de referências](docs/domain/reference-resolution.md) e política semântica |
 | mudança semântica transversal | [análise semântica](docs/engineering/semantic-analysis-policy.md) e [testes semânticos](docs/engineering/semantic-testing.md) |
+| impacto downstream de finding semântico | [classificação de impacto](docs/engineering/downstream-impact-classification.md) |
 | desempenho | [política de desempenho](docs/engineering/performance-policy.md) e domínio afetado |
 | logging | [política de observabilidade](docs/engineering/observability-policy.md) |
 | gate, docs ou workflow | [gates](docs/engineering/gates.md) e [protocolo de work items](docs/engineering/work-item-protocol.md) |
@@ -60,7 +61,10 @@ Ao trabalhar em um item:
 2. carregue somente os caminhos em `must_read` relevantes ao slice atual;
 3. consulte `spec.md`, `plan.md` e `eval.md` conforme a decisão em curso;
 4. mantenha `state.md` curto e factual quando o estado material mudar;
-5. não transforme detalhes transitórios em documentação canônica.
+5. antes do handoff, execute a self-validation do harness: diretórios ativos,
+   índice, histórico, contratos documentais e escopo do diff devem permanecer
+   coerentes;
+6. não transforme detalhes transitórios em documentação canônica.
 
 Novo trabalho ativo segue o [protocolo](docs/engineering/work-item-protocol.md). Itens concluídos deixam `active/`; conhecimento durável vai para arquitetura, domínio, engenharia ou evals.
 

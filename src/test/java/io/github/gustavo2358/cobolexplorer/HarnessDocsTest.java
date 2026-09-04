@@ -19,6 +19,7 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class HarnessDocsTest {
@@ -31,6 +32,16 @@ class HarnessDocsTest {
     private static final Pattern INVARIANT_HEADING = Pattern.compile("(?m)^### (INV-[A-Z]+-\\d{3}) — ");
     private static final Pattern EVAL_ROW = Pattern.compile("(?m)^\\| (EVAL-[A-Z0-9-]+-\\d{3}) \\|");
     private static final Pattern BACKLOG_HEADING = Pattern.compile("(?m)^### (BACKLOG-[A-Z]+-\\d{3}) — ");
+    private static final Pattern DOWNSTREAM_CLASS_ROW = Pattern.compile(
+            "(?m)^\\| `((?:BLOCKS_[A-Z_]+|REDUCES_PRECISION|UNASSESSED|NOT_APPLICABLE))` \\|");
+    private static final Pattern MARKDOWN_CODE_BLOCK = Pattern.compile(
+            "(?ms)^```(?:yaml|yml)?\\R(.*?)^```\\s*$\n?");
+    private static final Pattern DOWNSTREAM_FIELD = Pattern.compile("^  ([a-z_]+):(.*)$");
+    private static final Pattern DOWNSTREAM_LIST_ITEM = Pattern.compile("^    -(?:[ \\t]*(.*))?$");
+    private static final Pattern ACTIVE_WORK_INDEX_LINK = Pattern.compile(
+            "\\(active/(WORK-[A-Z0-9-]+)/spec\\.md\\)");
+    private static final Pattern HISTORY_WORK_INDEX_LINK = Pattern.compile(
+            "\\(history/(WORK-[A-Z0-9-]+)\\.md\\)");
     private static final Pattern CANONICAL_ID = Pattern.compile(
             "\\b(?:ADR-\\d{4}|INV-[A-Z]+-\\d{3}|EVAL-[A-Z0-9-]+-\\d{3}|BACKLOG-[A-Z]+-\\d{3})\\b");
     private static final Pattern YAML_KEY = Pattern.compile("^([a-z_]+):(?:\\s*(.*))?$");
@@ -40,6 +51,15 @@ class HarnessDocsTest {
             "source_scope", "test_scope", "must_not_change", "gates");
     private static final Set<String> HARNESS_GATES = Set.of("docs", "fast", "architecture", "semantic",
             "performance", "full");
+    private static final Set<String> DOWNSTREAM_IMPACT_CLASSES = Set.of(
+            "BLOCKS_SEMANTIC_PRODUCT", "BLOCKS_IR", "BLOCKS_CFG", "BLOCKS_DATAFLOW",
+            "BLOCKS_DEPENDENCY_FACTS", "REDUCES_PRECISION", "UNASSESSED", "NOT_APPLICABLE");
+    private static final Map<String, String> DOWNSTREAM_BOUNDARY_CLASSES = Map.of(
+            "Semantic Product", "BLOCKS_SEMANTIC_PRODUCT",
+            "IR", "BLOCKS_IR",
+            "CFG", "BLOCKS_CFG",
+            "Dataflow / Possible Values", "BLOCKS_DATAFLOW",
+            "Dependency Facts", "BLOCKS_DEPENDENCY_FACTS");
 
     @Test
     void stableGateEntrypointsExistAndAreExecutable() {
@@ -135,6 +155,45 @@ class HarnessDocsTest {
     }
 
     @Test
+    void workIndexHasNoStaleActiveOrArchivedRouting() throws Exception {
+        Path active = DOCS.resolve("work/active");
+        Path history = DOCS.resolve("work/history");
+        Set<String> activeDirectories = new HashSet<>();
+        try (Stream<Path> directories = Files.list(active)) {
+            for (Path directory : directories.filter(Files::isDirectory).toList()) {
+                activeDirectories.add(directory.getFileName().toString());
+            }
+        }
+
+        String index = read(DOCS.resolve("work/index.md"));
+        Set<String> indexedActive = matches(index, ACTIVE_WORK_INDEX_LINK);
+        Set<String> indexedHistory = matches(index, HISTORY_WORK_INDEX_LINK);
+        assertEquals(activeDirectories, indexedActive,
+                "o índice deve listar exatamente os diretórios ativos existentes");
+
+        Set<String> historyFiles = new HashSet<>();
+        try (Stream<Path> files = Files.list(history)) {
+            for (Path file : files.filter(path -> path.getFileName().toString().matches("WORK-[A-Z0-9-]+\\.md"))
+                    .toList()) {
+                historyFiles.add(file.getFileName().toString().replaceFirst("\\.md$", ""));
+            }
+        }
+        assertEquals(historyFiles, indexedHistory,
+                "o índice deve listar exatamente os resumos históricos existentes");
+        assertTrue(java.util.Collections.disjoint(activeDirectories, historyFiles),
+                "um work item ativo não pode possuir resumo histórico equivalente");
+
+        for (String id : indexedActive) {
+            assertTrue(Files.isRegularFile(active.resolve(id).resolve("work-item.yaml")),
+                    "roteamento ativo sem work-item.yaml: " + id);
+        }
+        for (String id : indexedHistory) {
+            assertTrue(Files.isRegularFile(history.resolve(id + ".md")),
+                    "roteamento histórico sem resumo: " + id);
+        }
+    }
+
+    @Test
     void completedHarnessMigrationIsArchivedOutsideDefaultRouting() throws Exception {
         Path archive = DOCS.resolve("history/harness-v1-migration");
         for (String document : List.of("README.md", "HARNESS_ENGINEERING_IMPLEMENTATION_PLAN.md",
@@ -148,6 +207,96 @@ class HarnessDocsTest {
                 "o plano-base concluído não deve continuar em specs/");
         assertTrue(Files.isRegularFile(DOCS.resolve("work/history/WORK-HARNESS-001.md")),
                 "resumo do work item concluído ausente");
+    }
+
+    @Test
+    void downstreamImpactClassificationIsCanonicalAndClosed() throws Exception {
+        Path classification = DOCS.resolve("engineering/downstream-impact-classification.md");
+        assertTrue(Files.isRegularFile(classification), "fonte canônica de impacto downstream ausente");
+        String content = read(classification);
+
+        Set<String> declaredClasses = new HashSet<>();
+        Matcher rows = DOWNSTREAM_CLASS_ROW.matcher(content);
+        while (rows.find()) declaredClasses.add(rows.group(1));
+        assertEquals(DOWNSTREAM_IMPACT_CLASSES, declaredClasses,
+                "a taxonomia canônica deve declarar exatamente as oito classes");
+
+        for (String phrase : List.of("Earliest broken layer wins", "Classe primária única",
+                "evidence-based", "exatamente oito classes", "`UNASSESSED`", "`NOT_APPLICABLE`",
+                "`BLOCKS_DEPENDENCY_FACTS`", "Dependency Facts versus precision", "não é severity",
+                "Não há `confidence`", "F-01")) {
+            assertTrue(content.contains(phrase), "guard missing in downstream impact policy: " + phrase);
+        }
+        for (Map.Entry<String, String> boundary : DOWNSTREAM_BOUNDARY_CLASSES.entrySet()) {
+            String mapping = "| `" + boundary.getKey() + "` | `" + boundary.getValue() + "` |";
+            assertTrue(content.contains(mapping), "fronteira downstream sem classe: " + boundary.getKey());
+        }
+
+        int records = 0;
+        for (Path document : markdownDocuments()) {
+            Matcher blocks = MARKDOWN_CODE_BLOCK.matcher(read(document));
+            while (blocks.find()) {
+                String block = blocks.group(1);
+                if (!block.startsWith("downstream_impact:")) continue;
+                records++;
+                validateDownstreamImpactRecord(block, ROOT.relativize(document).toString());
+            }
+        }
+        assertTrue(records > 0, "a política deve conter pelo menos um registro downstream validável");
+    }
+
+    @Test
+    void downstreamImpactValidationCoversRequiredAndAdversarialRecords() {
+        validateDownstreamImpactRecord("""
+                downstream_impact:
+                  class: BLOCKS_CFG
+                  rationale: >
+                    A IR preserva o branch, mas a construção CFG omite a aresta ELSE.
+                  evidence:
+                    - CFG fixture X demonstra ausência da edge.
+                """, "valid BLOCKS_CFG");
+        validateDownstreamImpactRecord("""
+                downstream_impact:
+                  class: UNASSESSED
+                  rationale: >
+                    A fronteira ainda não possui contrato suficiente.
+                  evidence:
+                    - Finding reproduzido na occurrence.
+                  reassess_when:
+                    - semantic-product-contract-defined
+                """, "valid UNASSESSED");
+
+        assertThrows(AssertionError.class, () -> validateDownstreamImpactRecord("""
+                downstream_impact:
+                  class: BLOCKS_CFG
+                  rationale:
+                  evidence:
+                """, "empty required fields"));
+        assertThrows(AssertionError.class, () -> validateDownstreamImpactRecord("""
+                downstream_impact:
+                  class: UNASSESSED
+                  rationale: >
+                    Ainda não sabemos.
+                  evidence:
+                    - finding reproduzido
+                """, "UNASSESSED without reassessment"));
+        assertThrows(AssertionError.class, () -> validateDownstreamImpactRecord("""
+                downstream_impact:
+                  class: BLOCKS_MAGIC
+                  rationale: >
+                    A fronteira foi demonstrada.
+                  evidence:
+                    - contrato e fato reproduzidos
+                """, "unknown class"));
+        assertThrows(AssertionError.class, () -> validateDownstreamImpactRecord("""
+                downstream_impact:
+                  class: BLOCKS_CFG
+                  rationale: >
+                    A construção foi reproduzida.
+                  evidence:
+                    - fixture reproduzível
+                  reassess_when:
+                """, "empty optional reassessment"));
     }
 
     @Test
@@ -328,6 +477,100 @@ class HarnessDocsTest {
         for (String section : sections) {
             assertTrue(content.contains("## " + section + "\n"), "seção ausente em "
                     + ROOT.relativize(document) + ": " + section);
+        }
+    }
+
+    private static void validateDownstreamImpactRecord(String block, String description) {
+        String[] lines = block.split("\\R");
+        assertTrue(lines.length > 0 && lines[0].equals("downstream_impact:"),
+                "registro downstream inválido: " + description);
+
+        Map<String, DownstreamField> fields = new LinkedHashMap<>();
+        String current = null;
+        for (int i = 1; i < lines.length; i++) {
+            String line = lines[i];
+            if (line.isBlank()) continue;
+            Matcher field = DOWNSTREAM_FIELD.matcher(line);
+            if (field.matches()) {
+                String name = field.group(1);
+                assertTrue(Set.of("class", "rationale", "evidence", "reassess_when").contains(name),
+                        "campo downstream desconhecido em " + description + ": " + name);
+                assertTrue(fields.putIfAbsent(name, new DownstreamField(field.group(2).trim())) == null,
+                        "campo downstream duplicado em " + description + ": " + name);
+                current = name;
+                continue;
+            }
+            assertTrue(current != null && line.startsWith("    "),
+                    "continuação YAML inválida em " + description + ": " + line);
+            fields.get(current).continuation.add(line);
+        }
+
+        for (String required : List.of("class", "rationale", "evidence")) {
+            assertTrue(fields.containsKey(required),
+                    "campo downstream ausente em " + description + ": " + required);
+        }
+
+        DownstreamField classField = fields.get("class");
+        assertTrue(classField.continuation.stream().allMatch(String::isBlank),
+                "class deve possuir exatamente um valor escalar em " + description);
+        String classValue = classField.inline.trim();
+        assertFalse(classValue.isBlank(), "class vazio em " + description);
+        assertTrue(DOWNSTREAM_IMPACT_CLASSES.contains(classValue),
+                "classe downstream desconhecida em " + description + ": " + classValue);
+
+        String rationale = textualValue(fields.get("rationale"), "rationale", description);
+        assertFalse(rationale.isBlank(), "rationale vazio em " + description);
+        assertNonEmptyList(fields.get("evidence"), "evidence", description);
+
+        if ("UNASSESSED".equals(classValue)) {
+            assertTrue(fields.containsKey("reassess_when"),
+                    "UNASSESSED exige reassess_when em " + description);
+            assertNonEmptyList(fields.get("reassess_when"), "reassess_when", description);
+        } else if (fields.containsKey("reassess_when")) {
+            assertNonEmptyList(fields.get("reassess_when"), "reassess_when", description);
+        }
+    }
+
+    private static String textualValue(DownstreamField field, String name, String description) {
+        String inline = field.inline.trim();
+        if (inline.equals(">") || inline.equals("|") || inline.isBlank()) {
+            return field.continuation.stream()
+                    .map(String::trim)
+                    .filter(value -> !value.isBlank())
+                    .reduce((left, right) -> left + " " + right)
+                    .orElse("");
+        }
+        assertTrue(field.continuation.stream().allMatch(String::isBlank),
+                name + " escalar não pode possuir continuação em " + description);
+        return inline;
+    }
+
+    private static void assertNonEmptyList(DownstreamField field, String name, String description) {
+        assertTrue(field.inline.isBlank(), name + " deve ser uma lista em " + description);
+        List<String> values = new ArrayList<>();
+        for (String line : field.continuation) {
+            Matcher item = DOWNSTREAM_LIST_ITEM.matcher(line);
+            assertTrue(item.matches(), name + " possui entrada inválida em " + description + ": " + line);
+            if (item.group(1) != null && !item.group(1).trim().isBlank()) {
+                values.add(item.group(1).trim());
+            }
+        }
+        assertFalse(values.isEmpty(), name + " deve possuir ao menos uma entrada não vazia em " + description);
+    }
+
+    private static Set<String> matches(String content, Pattern pattern) {
+        Set<String> values = new HashSet<>();
+        Matcher matcher = pattern.matcher(content);
+        while (matcher.find()) values.add(matcher.group(1));
+        return values;
+    }
+
+    private static final class DownstreamField {
+        private final String inline;
+        private final List<String> continuation = new ArrayList<>();
+
+        private DownstreamField(String inline) {
+            this.inline = inline;
         }
     }
 
