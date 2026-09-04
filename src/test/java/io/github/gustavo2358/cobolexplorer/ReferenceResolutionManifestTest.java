@@ -30,6 +30,8 @@ class ReferenceResolutionManifestTest {
 
         assertEntry(indexed, "qualifiedDataName", ReferenceResolutionManifest.RuleClass.REFERENCE_ORIGIN,
                 ResolutionContracts.ReferenceKind.DATA);
+        assertEntry(indexed, "conditionNameReference",
+                ReferenceResolutionManifest.RuleClass.CONTEXTUAL_REFERENCE_ORIGIN, null);
         assertEntry(indexed, "procedureName", ReferenceResolutionManifest.RuleClass.REFERENCE_ORIGIN,
                 ResolutionContracts.ReferenceKind.PROCEDURE);
         assertEntry(indexed, "fileName", ReferenceResolutionManifest.RuleClass.REFERENCE_ORIGIN,
@@ -84,6 +86,15 @@ class ReferenceResolutionManifestTest {
                 ResolutionContracts.ResolutionReason.MULTIPLE_VALID_CANDIDATES,
                 ResolutionContracts.ResolutionReason.DECLARATION_NOT_FOUND,
                 ResolutionContracts.ResolutionReason.UNSUPPORTED_GRAMMAR_FORM)));
+    }
+
+    @Test
+    void rejectsContextualOriginWithAReferenceKind() {
+        GrammarCoverageManifest.RuleKey key = new GrammarCoverageManifest.RuleKey(
+                GrammarCoverageManifest.Grammar.COBOL, "conditionNameReference");
+        assertThrows(IllegalArgumentException.class, () -> new ReferenceResolutionManifest.Entry(key,
+                ReferenceResolutionManifest.RuleClass.CONTEXTUAL_REFERENCE_ORIGIN,
+                ResolutionContracts.ReferenceKind.CONDITION, "condition-names", "invalid"));
     }
 
     private static void assertEntry(Map<GrammarCoverageManifest.RuleKey, ReferenceResolutionManifest.Entry> entries,

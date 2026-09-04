@@ -70,15 +70,18 @@ class SemanticConditionContextDiscoveryTest {
             assertAll(entry.toString(),
                     () -> assertEquals("conditionNameReference", entry.occurrence().grammarRule()),
                     () -> assertEquals(ResolutionContracts.ReferenceKind.CONDITION, entry.occurrence().kind()),
-                    () -> assertEquals(Set.of(ResolutionContracts.ReferenceKind.CONDITION),
+                    () -> assertEquals(EnumSet.of(ResolutionContracts.ReferenceKind.DATA,
+                                    ResolutionContracts.ReferenceKind.INDEX,
+                                    ResolutionContracts.ReferenceKind.CONDITION),
                             entry.occurrence().admissibleKinds()),
                     () -> assertEquals(ResolutionContracts.ReferenceRole.VALUE_READ, entry.occurrence().role()),
-                    () -> assertEquals(ResolutionContracts.ResolutionStatus.UNRESOLVED, entry.status()),
-                    () -> assertEquals(ResolutionContracts.ResolutionReason.INVALID_NAMESPACE_FOR_CONTEXT,
+                    () -> assertEquals(ResolutionContracts.ResolutionStatus.RESOLVED, entry.status()),
+                    () -> assertEquals(ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION,
                             entry.reason()),
-                    () -> assertTrue(entry.candidates().isEmpty()),
                     () -> assertEquals(SymbolTable.SymbolKind.DATA_ITEM,
-                            sameNameSymbols(analysis, entry.occurrence().writtenText()).get(0).kind()));
+                            sameNameSymbols(analysis, entry.occurrence().writtenText()).get(0).kind()),
+                    () -> assertEquals(ResolutionContracts.ReferenceKind.DATA,
+                            entry.selectedCandidate().orElseThrow().kind()));
         }
     }
 
@@ -96,9 +99,11 @@ class SemanticConditionContextDiscoveryTest {
                 () -> assertEquals(EnumSet.of(ResolutionContracts.ReferenceKind.DATA,
                         ResolutionContracts.ReferenceKind.INDEX), explicitC.occurrence().admissibleKinds()),
                 () -> assertEquals(ResolutionContracts.ResolutionStatus.RESOLVED, explicitC.status()),
-                () -> assertEquals(Set.of(ResolutionContracts.ReferenceKind.CONDITION),
+                () -> assertEquals(EnumSet.of(ResolutionContracts.ReferenceKind.DATA,
+                                ResolutionContracts.ReferenceKind.INDEX,
+                                ResolutionContracts.ReferenceKind.CONDITION),
                         abbreviatedC.occurrence().admissibleKinds()),
-                () -> assertEquals(ResolutionContracts.ResolutionReason.INVALID_NAMESPACE_FOR_CONTEXT,
+                () -> assertEquals(ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION,
                         abbreviatedC.reason()));
 
         Map<String, List<String>> inheritedDataTails = new LinkedHashMap<>();
@@ -115,8 +120,8 @@ class SemanticConditionContextDiscoveryTest {
         long rigidConditionOccurrences = inheritedDataTails.entrySet().stream()
                 .flatMap(item -> item.getValue().stream().map(name -> entry(analyses.get(item.getKey()), name)))
                 .peek(entry -> assertEquals("conditionNameReference", entry.occurrence().grammarRule()))
-                .peek(entry -> assertEquals(ResolutionContracts.ResolutionReason.INVALID_NAMESPACE_FOR_CONTEXT,
-                        entry.reason(), entry.toString()))
+                .peek(entry -> assertEquals(ResolutionContracts.ResolutionStatus.RESOLVED,
+                        entry.status(), entry.toString()))
                 .count();
         assertEquals(13, rigidConditionOccurrences);
 
@@ -195,35 +200,38 @@ class SemanticConditionContextDiscoveryTest {
                        List<SymbolTable.SymbolKind> declaredKinds) { }
         Map<String, Variant> variants = new LinkedHashMap<>();
         variants.put("data", new Variant("01 C PIC X.", "A = B OR C",
-                ResolutionContracts.ResolutionStatus.UNRESOLVED,
-                ResolutionContracts.ResolutionReason.INVALID_NAMESPACE_FOR_CONTEXT, null,
+                ResolutionContracts.ResolutionStatus.RESOLVED,
+                ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION,
+                ResolutionContracts.ReferenceKind.DATA,
                 List.of(SymbolTable.SymbolKind.DATA_ITEM)));
         variants.put("condition-name", new Variant("01 FLAG PIC X.\n   88 C VALUE 'Y'.", "A = B OR C",
                 ResolutionContracts.ResolutionStatus.RESOLVED,
                 ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION,
                 ResolutionContracts.ReferenceKind.CONDITION, List.of(SymbolTable.SymbolKind.CONDITION_NAME)));
         variants.put("index-name", new Variant("01 T OCCURS 2 TIMES INDEXED BY C.\n   05 V PIC X.", "A = B OR C",
-                ResolutionContracts.ResolutionStatus.UNRESOLVED,
-                ResolutionContracts.ResolutionReason.INVALID_NAMESPACE_FOR_CONTEXT, null,
+                ResolutionContracts.ResolutionStatus.RESOLVED,
+                ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION,
+                ResolutionContracts.ReferenceKind.INDEX,
                 List.of(SymbolTable.SymbolKind.INDEX_NAME)));
         variants.put("renames-66", new Variant(
                 "01 G.\n   05 C PIC X.\n   05 D PIC X.\n   66 R RENAMES C THRU D.", "A = B OR R",
-                ResolutionContracts.ResolutionStatus.UNRESOLVED,
-                ResolutionContracts.ResolutionReason.INVALID_NAMESPACE_FOR_CONTEXT, null,
+                ResolutionContracts.ResolutionStatus.RESOLVED,
+                ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION,
+                ResolutionContracts.ReferenceKind.DATA,
                 List.of(SymbolTable.SymbolKind.RENAMES)));
         variants.put("missing", new Variant("01 PRESENT PIC X.", "A = B OR MISSING",
                 ResolutionContracts.ResolutionStatus.UNRESOLVED,
                 ResolutionContracts.ResolutionReason.DECLARATION_NOT_FOUND, null, List.of()));
         variants.put("homonym-data-condition", new Variant(
                 "01 C PIC X.\n01 FLAG PIC X.\n   88 C VALUE 'Y'.", "A = B OR C",
-                ResolutionContracts.ResolutionStatus.RESOLVED,
-                ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION,
-                ResolutionContracts.ReferenceKind.CONDITION,
+                ResolutionContracts.ResolutionStatus.UNSUPPORTED,
+                ResolutionContracts.ResolutionReason.UNSUPPORTED_DIALECT_OPTION,
+                null,
                 List.of(SymbolTable.SymbolKind.DATA_ITEM, SymbolTable.SymbolKind.CONDITION_NAME)));
         variants.put("qualified-data", new Variant("01 G.\n   05 C PIC X.", "A = B OR C OF G",
-                ResolutionContracts.ResolutionStatus.UNRESOLVED,
-                ResolutionContracts.ResolutionReason.INVALID_NAMESPACE_FOR_CONTEXT, null,
-                List.of(SymbolTable.SymbolKind.DATA_ITEM)));
+                ResolutionContracts.ResolutionStatus.RESOLVED,
+                ResolutionContracts.ResolutionReason.QUALIFIED_HIERARCHY_MATCH,
+                ResolutionContracts.ReferenceKind.DATA, List.of(SymbolTable.SymbolKind.DATA_ITEM)));
         variants.put("qualified-condition", new Variant(
                 "01 G.\n   05 FLAG PIC X.\n      88 C VALUE 'Y'.", "A = B OR C OF G",
                 ResolutionContracts.ResolutionStatus.RESOLVED,
@@ -246,7 +254,12 @@ class SemanticConditionContextDiscoveryTest {
             assertAll(item.getKey(),
                     () -> assertEquals("conditionNameReference", tail.occurrence().grammarRule()),
                     () -> assertEquals(ResolutionContracts.ReferenceKind.CONDITION, tail.occurrence().kind()),
-                    () -> assertEquals(Set.of(ResolutionContracts.ReferenceKind.CONDITION),
+                    () -> assertEquals(expected.condition().contains(" OF ")
+                                    ? Set.of(ResolutionContracts.ReferenceKind.DATA,
+                                    ResolutionContracts.ReferenceKind.CONDITION)
+                                    : EnumSet.of(ResolutionContracts.ReferenceKind.DATA,
+                                    ResolutionContracts.ReferenceKind.INDEX,
+                                    ResolutionContracts.ReferenceKind.CONDITION),
                             tail.occurrence().admissibleKinds()),
                     () -> assertEquals(expected.status(), tail.status()),
                     () -> assertEquals(expected.reason(), tail.reason()),
@@ -279,15 +292,20 @@ class SemanticConditionContextDiscoveryTest {
 
         List<ReferenceResolution.Entry> tails = valueReads(analysis).stream()
                 .filter(entry -> entry.occurrence().writtenText().equals("C")).toList();
-        assertAll("IF, EVALUATE subject, and PERFORM UNTIL share the same lowering defect",
+        assertAll("IF, EVALUATE subject, and PERFORM UNTIL share contextual occurrence policy",
                 () -> assertEquals(1, AstBoundaryTestSupport.nodes(analysis, Ast.IfStatement.class).size()),
                 () -> assertEquals(1, AstBoundaryTestSupport.nodes(analysis, Ast.EvaluateStatement.class).size()),
                 () -> assertEquals(1, AstBoundaryTestSupport.nodes(analysis, Ast.PerformStatement.class).size()),
                 () -> assertEquals(3, tails.size()),
                 () -> assertTrue(tails.stream().allMatch(entry ->
-                        entry.occurrence().admissibleKinds().equals(Set.of(ResolutionContracts.ReferenceKind.CONDITION)))),
+                        entry.occurrence().admissibleKinds().equals(EnumSet.of(
+                                ResolutionContracts.ReferenceKind.DATA,
+                                ResolutionContracts.ReferenceKind.INDEX,
+                                ResolutionContracts.ReferenceKind.CONDITION)))),
                 () -> assertTrue(tails.stream().allMatch(entry ->
-                        entry.reason() == ResolutionContracts.ResolutionReason.INVALID_NAMESPACE_FOR_CONTEXT)));
+                        entry.status() == ResolutionContracts.ResolutionStatus.RESOLVED)),
+                () -> assertTrue(tails.stream().allMatch(entry ->
+                        entry.selectedCandidate().orElseThrow().kind() == ResolutionContracts.ReferenceKind.DATA)));
     }
 
     @Test
@@ -416,11 +434,12 @@ class SemanticConditionContextDiscoveryTest {
         assertAll("COPY provenance and nested lookup remain orthogonal to the classification defect",
                 () -> assertEquals("SEMCOND.cpy", copiedDeclaration.meta().provenance().original().file()),
                 () -> assertFalse(copiedDeclaration.meta().provenance().includeChain().isEmpty()),
-                () -> assertEquals(ResolutionContracts.ResolutionReason.INVALID_NAMESPACE_FOR_CONTEXT,
+                () -> assertEquals(ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION,
                         copyTail.reason()),
-                () -> assertEquals(ResolutionContracts.ResolutionReason.INVALID_NAMESPACE_FOR_CONTEXT,
+                () -> assertEquals(ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION,
                         nestedTail.reason()),
-                () -> assertTrue(nestedTail.candidates().isEmpty()));
+                () -> assertEquals(ResolutionContracts.ReferenceKind.DATA,
+                        nestedTail.selectedCandidate().orElseThrow().kind()));
     }
 
     @Test

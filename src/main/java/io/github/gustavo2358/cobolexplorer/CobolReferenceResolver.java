@@ -56,7 +56,7 @@ final class CobolReferenceResolver {
                 int id = diagnostics.size();
                 diagnostics.add(new ReferenceResolution.Diagnostic(id,
                         "REFERENCE_" + decision.status() + "_" + decision.reason(),
-                        decision.status() + " " + occurrence.kind() + " reference '"
+                        decision.status() + " " + diagnosticKind(occurrence) + " reference '"
                                 + occurrence.writtenText() + "': " + decision.reason(),
                         occurrence.programUnitId(), occurrence.id()));
                 diagnosticIds = List.of(id);
@@ -102,6 +102,13 @@ final class CobolReferenceResolver {
                 occurrence.id(), occurrence.kind(), occurrence.role(), occurrence.writtenText(),
                 occurrence.meta().span().startLine(), candidateIds.size(), candidateIds,
                 decision.status(), decision.reason());
+    }
+
+    private static String diagnosticKind(ReferenceOccurrences.Occurrence occurrence) {
+        return occurrence.kind() == ResolutionContracts.ReferenceKind.CONDITION
+                && occurrence.admissibleKinds().size() > 1
+                && occurrence.admissibleKinds().contains(ResolutionContracts.ReferenceKind.CONDITION)
+                ? "CONTEXTUAL_CONDITION" : occurrence.kind().toString();
     }
 
     private Optional<ReferenceResolution.CallSemantics> callSemantics(

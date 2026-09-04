@@ -460,7 +460,14 @@ final class DataAndIndexReferenceResolver {
     }
 
     private static String diagnosticMessage(ReferenceOccurrences.Occurrence occurrence, Decision decision) {
-        return decision.status() + " " + occurrence.kind() + " reference '" + occurrence.writtenText()
+        return decision.status() + " " + diagnosticKind(occurrence) + " reference '" + occurrence.writtenText()
                 + "': " + decision.reason();
+    }
+
+    private static String diagnosticKind(ReferenceOccurrences.Occurrence occurrence) {
+        return occurrence.kind() == ResolutionContracts.ReferenceKind.CONDITION
+                && occurrence.admissibleKinds().size() > 1
+                && occurrence.admissibleKinds().contains(ResolutionContracts.ReferenceKind.CONDITION)
+                ? "CONTEXTUAL_CONDITION" : occurrence.kind().toString();
     }
 }

@@ -285,7 +285,7 @@ public final class ResolutionAnalysisReport {
                     occurrence.programUnitId(), occurrence.id()))) continue;
             addGap(gaps, GapCategory.REFERENCE_BINDING,
                     "REFERENCE_" + entry.status() + "_" + entry.reason(),
-                    entry.status() + " " + occurrence.kind() + " reference '"
+                    entry.status() + " " + diagnosticKind(occurrence) + " reference '"
                             + occurrence.writtenText() + "': " + entry.reason(),
                     occurrence.programUnitId(), occurrence.grammarRule(),
                     occurrence.meta().span().startLine(), occurrence.id());
@@ -304,6 +304,13 @@ public final class ResolutionAnalysisReport {
                     occurrence == null ? 0 : occurrence.meta().span().startLine(),
                     occurrence == null ? -1 : occurrence.id());
         }
+    }
+
+    private static String diagnosticKind(ReferenceOccurrences.Occurrence occurrence) {
+        return occurrence.kind() == ResolutionContracts.ReferenceKind.CONDITION
+                && occurrence.admissibleKinds().size() > 1
+                && occurrence.admissibleKinds().contains(ResolutionContracts.ReferenceKind.CONDITION)
+                ? "CONTEXTUAL_CONDITION" : occurrence.kind().toString();
     }
 
     private static ExternalProjection validateExternalClassifications(

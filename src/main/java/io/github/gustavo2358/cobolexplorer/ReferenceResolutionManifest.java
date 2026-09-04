@@ -16,10 +16,11 @@ import java.util.Set;
  * supported merely because it appears in the corpus.</p>
  */
 final class ReferenceResolutionManifest {
-    static final String VERSION = "1.0.0";
+    static final String VERSION = "1.1.0";
 
     enum RuleClass {
         REFERENCE_ORIGIN,
+        CONTEXTUAL_REFERENCE_ORIGIN,
         QUALIFIER_COMPONENT,
         DECLARATION_RELATION,
         REFERENCE_CONTAINER,
@@ -42,6 +43,8 @@ final class ReferenceResolutionManifest {
                     || ruleClass == RuleClass.DECLARATION_RELATION;
             if (kindRequired && referenceKind == null)
                 throw new IllegalArgumentException(ruleClass + " requires referenceKind for " + key);
+            if (ruleClass == RuleClass.CONTEXTUAL_REFERENCE_ORIGIN && referenceKind != null)
+                throw new IllegalArgumentException(ruleClass + " must not carry referenceKind for " + key);
         }
     }
 
@@ -120,8 +123,8 @@ final class ReferenceResolutionManifest {
         Map<String, Override> result = new LinkedHashMap<>();
         origin(result, "qualifiedDataName", ResolutionContracts.ReferenceKind.DATA,
                 "data-qualification", "Structured DATA/condition reference origin; exact format is interpreted later.");
-        origin(result, "conditionNameReference", ResolutionContracts.ReferenceKind.CONDITION,
-                "condition-names", "Condition-name occurrence with structured qualifiers/subscripts.");
+        contextual(result, "conditionNameReference", "condition-names",
+                "Condition-name surface origin may be standalone or a contextual condition tail; occurrence policy is decided by typed AST position and nominal shape.");
         origin(result, "procedureName", ResolutionContracts.ReferenceKind.PROCEDURE,
                 "procedure-names", "Paragraph or section occurrence, optionally section-qualified.");
         origin(result, "fileName", ResolutionContracts.ReferenceKind.FILE,
@@ -152,6 +155,11 @@ final class ReferenceResolutionManifest {
     private static void origin(Map<String, Override> result, String rule,
                                ResolutionContracts.ReferenceKind kind, String section, String rationale) {
         putUnique(result, rule, new Override(RuleClass.REFERENCE_ORIGIN, kind, section, rationale));
+    }
+
+    private static void contextual(Map<String, Override> result, String rule,
+                                   String section, String rationale) {
+        putUnique(result, rule, new Override(RuleClass.CONTEXTUAL_REFERENCE_ORIGIN, null, section, rationale));
     }
 
     private static void qualifier(Map<String, Override> result, String rule,

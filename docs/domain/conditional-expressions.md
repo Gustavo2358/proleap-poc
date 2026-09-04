@@ -2,7 +2,7 @@
 
 ## Propósito e autoridade
 
-Este documento registra o contrato normativo usado pelo projeto para condições combinadas e abbreviated combined relation conditions. Ele descreve a regra COBOL que as representações internas precisam preservar; não afirma que o frontend atual já materializa todas essas formas corretamente.
+Este documento registra o contrato normativo usado pelo projeto para condições combinadas e abbreviated combined relation conditions. Ele descreve a regra COBOL que as representações internas precisam preservar e o contrato corrente de occurrences; `ConditionSemantics` e `ConditionValidation` continuam futuros.
 
 A autoridade é [IBM Enterprise COBOL for z/OS 6.4 Language Reference, SC27-8713-03, atualização de 28 de junho de 2024](https://publibfp.dhe.ibm.com/epubs/pdf/igy6lr40.pdf). As seções mínimas são **User-defined words** (pp. 12–13), **Scope of names** e **Referencing data names...** (pp. 63–72), **RENAMES clause** (pp. 228–230) e **Conditional expressions** (pp. 268–289, especialmente 283–289).
 
@@ -25,6 +25,14 @@ Um bare nominal tail como `C` em `A = B OR C` não possui classe semântica fina
 - se o binding identifica DATA, INDEX ou um level-66 RENAMES usado como data-name, `C` pode ser o object abreviado; a admissibilidade type-sensitive da comparação é verificada em etapa posterior, não no binding;
 - se o binding identifica um condition-name nível 88, `C` inicia nova simple condition e encerra a inserção;
 - se binding, qualification, scope ou opção de dialeto não permitem decisão única, a incerteza permanece explícita.
+
+## Contrato de occurrences contextuais
+
+O collector deriva a policy da posição tipada e da shape nominal escrita, nunca do nome da regra gramatical. Uma condição standalone como `IF C` produz `CONDITION/{CONDITION}`. Para operands de relation, `indexAdmissibleNominalShape(ref)` é verdadeiro somente quando `qualifiers()` e `subscriptGroups()` estão vazios e `referenceModification()` é `null`; essa shape produz `INDEX/{DATA, INDEX}`, enquanto as demais produzem `DATA/{DATA}`.
+
+Um contextual tail como `A = B OR C` mantém `CONDITION` como primary kind e admite `relationOperandKinds(ref) ∪ {CONDITION}`: `CONDITION/{DATA, INDEX, CONDITION}` para a shape bare index-admissible; roots qualified ou subscripted produzem `CONDITION/{DATA, CONDITION}` e `reference-modified` não é uma shape producível de `ContextualConditionTail` na grammar atual. `referenceModification()` continua compondo `indexAdmissibleNominalShape(ref)` para relation/distributed operands, onde `A = C(1:2)` produz `DATA/{DATA}`. Qualifiers e subscripts são occurrences independentes com policy própria. Cada nominal escrito produz exatamente uma occurrence; subject, operator e `NOT` herdados não produzem occurrences sintéticas.
+
+`Meta.origin.grammarRule()` pode permanecer como provenance/coverage metadata, mas não é autoridade semântica para `kind`, `admissibleKinds` ou namespace. O manifesto de coverage separa essa origem da policy: `conditionNameReference` é `CONTEXTUAL_REFERENCE_ORIGIN` com `referenceKind == null`, e `ReferenceResolutionManifest` está na versão `1.1.0`. Em `PERFORM`, `VALUE` e `CONDITION` são preservados em metadata tipada `PerformControl`, derivada de contexts ANTLR, não da posição de uma lista ou de `grammarRule`. Diagnostics de contextual unresolved comunicam a incerteza múltipla em vez de afirmar CONDITION exclusiva.
 
 ## Parênteses, distribuição e precedência
 
@@ -53,7 +61,7 @@ Quando qualification ou scope não tornam uma referência única, o source não 
 
 ## Fronteira de representação
 
-A parse tree registra a estrutura reconhecida pela grammar, mas não prova declaration kind. Desde `WORK-COND-003`, a AST de superfície preserva a sequência, precedência, parênteses, distribuição e abbreviations escritas sem fechar o significado binding-dependent; subject/operator omitidos permanecem omitidos e bare tails ficam contextuais. Desde `WORK-COND-004` (Slice 4), a condition-name reference escrita é um `DataReference` nominal estruturalmente lossless: nome base, qualification `IN`/`OF` em ordem escrita e subscripts como `SubscriptGroup` tipado, construídos dos children diretos do context, sem lookup e sem reparse textual. O último qualifier é `UNSPECIFIED` na surface (a parse tree não distingue DATA/FILE/MNEMONIC atrás de `inData`); o resolver o consome por mapeamento compatibility-preserving `{DATA}`, com candidate universe inalterado — a ampliação `{DATA, FILE}` pertence a `BACKLOG-RES-004` (IBM resolution-of-names step 3). A especialização e a validação continuam pós-binding, conforme a fronteira abaixo.
+A parse tree registra a estrutura reconhecida pela grammar, mas não prova declaration kind. Desde `WORK-COND-003`, a AST de superfície preserva a sequência, precedência, parênteses, distribuição e abbreviations escritas sem fechar o significado binding-dependent; subject/operator omitidos permanecem omitidos e bare tails ficam contextuais. Desde `WORK-COND-004` (Slice 4), `conditionNameReference` é um `DataReference` nominal estruturalmente lossless limitado a nome base, qualification `IN`/`OF` em ordem escrita e subscripts de condition-name como `SubscriptGroup` tipado: esse parse path sempre produz `referenceModification == null`. Outros `DataReference` podem carregar `ReferenceModification`, por exemplo o relation operand `C(1:2)` derivado de `tableCall`. No Slice 5, `referenceModification()` integra a nominal shape usada para decidir a admissibilidade de INDEX em relation/distributed operands; isso não amplia a shape do root de `conditionNameReference`. O último qualifier é `UNSPECIFIED` na surface (a parse tree não distingue DATA/FILE/MNEMONIC atrás de `inData`); o resolver o consome por mapeamento compatibility-preserving `{DATA}`, com candidate universe inalterado — a ampliação `{DATA, FILE}` pertence a `BACKLOG-RES-004` (IBM resolution-of-names step 3). A especialização e a validação continuam pós-binding, conforme a fronteira abaixo.
 
 A arquitetura aceita em ADR-0012 (status `Accepted`), guardada por INV-COND-001 e INV-COND-002, exige que a evolução que venha a ser autorizada:
 

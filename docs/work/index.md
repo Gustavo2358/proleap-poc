@@ -17,6 +17,7 @@ Work items delimitam a mudança em execução; o [backlog](backlog.md) registra 
 - [WORK-COND-002 — Decisão arquitetural para condições contextuais](history/WORK-COND-002.md) — Slice 2 concluído pelo PR #16; ADR-0012 `Accepted` e INV-COND-001/002 promovidos; diff exclusivamente documental.
 - [WORK-COND-003 — Surface AST lossless para condições combinadas e abreviadas](history/WORK-COND-003.md) — Slice 3 concluído pelo PR #17; nodes tipados da condition surface sem binding; collector/resolver intocados.
 - [WORK-COND-004 — Preservar estrutura nominal completa de condition-name references](history/WORK-COND-004.md) — Slice 4 de `BACKLOG-COND-001` concluído pelo PR #18; `DataReference` lossless para condition-name surface, `UNSPECIFIED` preserva a incerteza do qualifier, `BACKLOG-RES-004` mantém a resolução DATA/FILE futura.
+- [WORK-COND-005 — Contextualizar occurrences de condições](history/WORK-COND-005.md) — Slice 5 de `BACKLOG-COND-001` concluído pelo PR #19; occurrences contextuais shape-sensitive, `PerformControl` tipado e manifesto `1.1.0`.
 - [WORK-RES-001 — Observar CALLs literais externos por artefato](history/WORK-RES-001.md)
 - [WORK-RES-002 — Veredito sobre W3D-AUX e categorias de resolução](history/WORK-RES-002.md)
 - [WORK-RES-003 — Resolver SET de condition-name sem namespace DATA espúrio](history/WORK-RES-003.md)
