@@ -1,0 +1,89 @@
+id: WORK-COND-007
+title: Broad corpus regression for contextual conditions
+status: active
+risk: high
+goal: Verificar se as decisões semânticas dos Slices 1–6 permanecem corretas em um corpus COBOL amplo e realista, separando evidência de bug de limites conhecidos, input inválido e incerteza.
+must_read:
+  - docs/work/backlog.md#backlog-cond-001--contextualizar-condições-combinadas-e-referências-nominais
+  - docs/architecture/pipeline.md
+  - docs/architecture/invariants.md
+  - docs/domain/semantic-ast.md
+  - docs/domain/symbol-model.md
+  - docs/domain/reference-resolution.md
+  - docs/domain/provenance.md
+  - docs/engineering/semantic-analysis-policy.md
+  - docs/engineering/semantic-testing.md
+  - docs/engineering/work-item-protocol.md
+  - docs/evals/conditional-expression-oracles.md
+  - docs/evals/semantic-eval-catalog.md
+  - docs/work/history/WORK-COND-006.md
+related_domain_rules:
+  - docs/domain/semantic-ast.md
+  - docs/domain/symbol-model.md
+  - docs/domain/reference-resolution.md
+  - docs/domain/provenance.md
+related_decisions:
+  - ADR-0002
+  - ADR-0003
+  - ADR-0005
+  - ADR-0007
+  - ADR-0008
+  - ADR-0009
+  - ADR-0010
+  - ADR-0012
+related_invariants:
+  - INV-AST-001
+  - INV-AST-002
+  - INV-AST-003
+  - INV-SYM-001
+  - INV-RES-001
+  - INV-RES-002
+  - INV-PROV-002
+  - INV-COV-001
+  - INV-COV-002
+  - INV-DET-001
+  - INV-PERF-001
+evals:
+  - EVAL-AST-001
+  - EVAL-AST-002
+  - EVAL-AST-003
+  - EVAL-AST-004
+  - EVAL-AST-005
+  - EVAL-COV-001
+  - EVAL-COV-002
+  - EVAL-COV-003
+  - EVAL-SYM-001
+  - EVAL-SYM-002
+  - EVAL-RES-DATA-001
+  - EVAL-RES-DATA-002
+  - EVAL-RES-DATA-003
+  - EVAL-RES-REL-001
+  - EVAL-RES-COV-001
+  - EVAL-RES-REPORT-001
+  - EVAL-RES-DET-001
+  - EVAL-RES-PERF-001
+  - EVAL-MUT-001
+source_scope:
+  - corpus/cbl
+  - corpus/cpy
+  - corpus/cpy-bms
+  - corpus/carddemo/cbl
+  - corpus/carddemo/cpy
+  - corpus/carddemo/cpy-bms
+  - docs/work/active/WORK-COND-007
+test_scope:
+  - src/test/resources/cobol/resolution/evaluate-condition-names.cbl
+  - planned:src/test/java/io/github/gustavo2358/cobolexplorer/CardDemoCorpusCharacterizationTest.java
+  - planned:src/test/resources/cobol/semantic/work-cond-007-waux-like.cbl
+must_not_change:
+  - src/main/**
+  - gramática ANTLR e comportamento do parser
+  - resolver e política de resolução
+  - semantic manifest
+  - fixtures existentes e seus baselines duráveis
+  - fontes upstream selecionadas do CardDemo
+  - heurísticas baseadas em regra gramatical, texto, nome ou programa
+gates:
+  - fast
+  - semantic
+  - full
