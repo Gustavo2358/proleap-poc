@@ -35,7 +35,7 @@ Serão inventariadas, quando presentes: conditions de relação e abreviadas; ta
 
 Cada programa selecionado terá uma matriz com parse, AST, occurrences, resolution, diagnósticos, unresolved, ambiguous, unsupported, conditions e métricas observacionais. Para cada nominal estruturalmente compreendido, a caracterização tentará preservar a relação `nominal escrito → nominal AST → occurrence → resolution entry`, mantendo qualification e subscript como estrutura própria quando aplicável.
 
-Findings serão classificados entre `CONFIRMED_BUG`, `EXPECTED_BEHAVIOR`, `EXPECTED_UNRESOLVED`, `UNSUPPORTED`, `GRAMMAR_GAP`, `NORMATIVE_VALIDATION_GAP`, `CORPUS_INVALID`, `TEST_GAP` e `NEEDS_ARCHITECTURAL_DECISION`.
+Findings serão classificados entre `CONFIRMED_KNOWN_BUG`, `EXPECTED_BEHAVIOR`, `EXPECTED_UNRESOLVED`, `UNSUPPORTED`, `GRAMMAR_GAP`, `NORMATIVE_VALIDATION_GAP`, `CORPUS_INVALID`, `TEST_GAP` e `NEEDS_ARCHITECTURAL_DECISION`. A classificação de um bug confirmado e a autorização de sua remediação são dimensões separadas: `CONFIRMED_KNOWN_BUG` registra incorreção semântica já conhecida, enquanto `REMEDIATION_REQUIRES_ARCHITECTURAL_DECISION` registra que a correção depende de decisão e work item próprios.
 
 ## Comportamento diante de incerteza
 

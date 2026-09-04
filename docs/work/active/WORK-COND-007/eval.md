@@ -146,18 +146,19 @@ Across the seven complete programs: 21814 AST nodes, 5807 occurrences, 5244 reso
 
 ### Raw findings
 
-| ID | Observation | Primary classification | Evidence |
-| --- | --- | --- | --- |
-| F-01 | In `EVALUATE TRUE`, a condition-name used as the first operand of a combined `WHEN` (`AND`/`NOT` plus value relation) is emitted as `DATA/{DATA}`, status unresolved, reason `INVALID_NAMESPACE_FOR_CONTEXT`, although the 88 declaration is present. | `NEEDS_ARCHITECTURAL_DECISION` | COACTUPC 5, COCRDSLC 1, COTRTUPC 28; exact original provenance retained |
-| F-02 | Missing system/MQ COPYs cause unresolved symbols and/or incomplete products. | `EXPECTED_UNRESOLVED` | 8 unique names; no stubs; `COPY_NOT_FOUND` in provenance |
-| F-03 | `EXEC DLI` stops preprocessing with the existing closed failure policy. | `GRAMMAR_GAP` | COPAUS1C and CBPAUP0C; source retained |
-| F-04 | `COTRTLIC` contains one TAB in fixed-format source and normalization stops. | `CORPUS_INVALID` | upstream byte preserved; line 1811 |
-| F-05 | `WS-EDIT-DATE-X` has two valid visible declarations under REDEFINES and remains ambiguous. | `EXPECTED_BEHAVIOR` | COACTUPC and COTRTUPC, 2 each |
-| F-06 | Existing `PRESERVED_NAMED`/unsupported record forms remain `UNSUPPORTED_GRAMMAR_FORM`. | `UNSUPPORTED` | CBSTM03A has 95; no condition surface disappearance |
-| F-07 | `SEARCH ALL` is structurally present but normative sorted/key validation is not claimed. | `NORMATIVE_VALIDATION_GAP` | COPAUS1C source lines 319–328; product blocked by F-03 |
-| F-08 | No ordinary `SEARCH WHEN` sample exists in the fixed CardDemo candidate set. | `EXPECTED_BEHAVIOR` | source scan of all 44 candidates; synthetic SEARCH WHEN suite remains oracle |
+| ID | Observation | Primary classification | Remediation disposition | Evidence |
+| --- | --- | --- | --- | --- |
+| F-01 | In `EVALUATE TRUE`, a condition-name used as the first operand of a combined `WHEN` (`AND`/`NOT` plus value relation) is emitted as `DATA/{DATA}`, status unresolved, reason `INVALID_NAMESPACE_FOR_CONTEXT`, although the 88 declaration is present. | `CONFIRMED_KNOWN_BUG` | `REMEDIATION_REQUIRES_ARCHITECTURAL_DECISION` | COACTUPC 5, COCRDSLC 1, COTRTUPC 28; exact original provenance retained |
+| F-02 | Missing system/MQ COPYs cause unresolved symbols and/or incomplete products. | `EXPECTED_UNRESOLVED` | — | 8 unique names; no stubs; `COPY_NOT_FOUND` in provenance |
+| F-03 | `EXEC DLI` stops preprocessing with the existing closed failure policy. | `GRAMMAR_GAP` | — | COPAUS1C and CBPAUP0C; source retained |
+| F-04 | `COTRTLIC` contains one TAB in fixed-format source and normalization stops. | `CORPUS_INVALID` | — | upstream byte preserved; line 1811 |
+| F-05 | `WS-EDIT-DATE-X` has two valid visible declarations under REDEFINES and remains ambiguous. | `EXPECTED_BEHAVIOR` | — | COACTUPC and COTRTUPC, 2 each |
+| F-06 | Existing `PRESERVED_NAMED`/unsupported record forms remain `UNSUPPORTED_GRAMMAR_FORM`. | `UNSUPPORTED` | — | CBSTM03A has 95; no condition surface disappearance |
+| F-07 | `SEARCH ALL` is structurally present but normative sorted/key validation is not claimed. | `NORMATIVE_VALIDATION_GAP` | — | COPAUS1C source lines 319–328; product blocked by F-03 |
+| F-08 | No ordinary `SEARCH WHEN` sample exists in the fixed CardDemo candidate set. | `EXPECTED_BEHAVIOR` | — | source scan of all 44 candidates; synthetic SEARCH WHEN suite remains oracle |
+| F-09 | No active durable oracle covers a combined boolean selector such as `EVALUATE TRUE WHEN FLAG-ON AND OTHER-ON`; the existing fixture covers only simple boolean selectors. | `TEST_GAP` | Future architectural work item | proposed regression is intentionally not materialized in this checkpoint |
 
-Classification is per finding record and intentionally not per occurrence. `CONFIRMED_BUG` is zero in this checkpoint. F-01 is a real, reproducible semantic concern, but it is already delimited as `BACKLOG-RES-003` and requires an architectural context decision; it is not authorized as a Slice 7 production fix.
+Classification is per finding record and intentionally not per occurrence. The final classification is `CONFIRMED_KNOWN_BUG: 1` (F-01), `TEST_GAP: 1` (F-09), `EXPECTED_UNRESOLVED: 1` (F-02), `GRAMMAR_GAP: 1` (F-03), `CORPUS_INVALID: 1` (F-04), `EXPECTED_BEHAVIOR: 2` (F-05 and F-08), `UNSUPPORTED: 1` (F-06) and `NORMATIVE_VALIDATION_GAP: 1` (F-07). F-01 remains tracked by `BACKLOG-RES-003`; its remediation requires an architectural decision and is not authorized as a Slice 7 production fix. A known bug is still a bug: backlog ownership and lack of authorization do not change its classification.
 
 ## Bug-refutation record — F-01
 
@@ -219,7 +220,7 @@ It must not. A source-text, grammar-rule, name-prefix or CardDemo-specific branc
 
 **BR-15 — Qual é a classificação final?**
 
-`NEEDS_ARCHITECTURAL_DECISION`, with a known grammar/AST-context design gap component. It is not `CONFIRMED_BUG` in this Discovery checkpoint because the behavior is already documented, the resolver itself is correct for its input, and implementation authorization is absent. No production change was made.
+`CONFIRMED_KNOWN_BUG`, with remediation disposition `REMEDIATION_REQUIRES_ARCHITECTURAL_DECISION`. The resolver is correct for the `DATA/{DATA}` occurrence it receives, but that occurrence is semantically wrong for the valid combined selector. Existing backlog ownership and absent implementation authorization do not downgrade the finding. No production change was made.
 
 ### Minimal reproducer for F-01
 
@@ -244,18 +245,18 @@ It must not. A source-text, grammar-rule, name-prefix or CardDemo-specific branc
            GOBACK.
 ```
 
-Expected future oracle: `FLAG-ON` in the boolean `WHEN` condition must remain CONDITION-capable; the value/relation counterexample `EVALUATE FLAGS WHEN FLAGS = 'Y'` must remain DATA. The current simple selector oracle is already covered; the combined-selector oracle is proposed, not enabled as a passing production expectation.
+Expected future oracle: `FLAG-ON` and `OTHER-ON` in the boolean `WHEN` condition must remain CONDITION-capable; the value/relation counterexample `EVALUATE FLAGS WHEN FLAGS = 'Y'` must remain DATA. The current simple selector oracle is already covered; the combined-selector oracle is proposed, not enabled as a passing production expectation. This unprotected class is recorded as F-09 `TEST_GAP`; adding a test now would risk freezing the incorrect current behavior.
 
 ## Finding self-refutation
 
 - **FR-01:** 1 raw finding initially looked like a production bug (F-01).
-- **FR-02:** 0 survived as a newly confirmed production bug; F-01 survived as a bounded architectural gap already tracked by `BACKLOG-RES-003`.
+- **FR-02:** 1 survived as a confirmed known bug (F-01), already tracked by `BACKLOG-RES-003`; its remediation remains an architectural decision, not an authorization to change production here.
 - **FR-03:** 1 finding record is `EXPECTED_UNRESOLVED` (F-02), with 8 missing COPY names and 434 unresolved entries across complete products, not 434 independent bugs.
 - **FR-04:** 1 finding record is a grammar/preprocessor gap (F-03); the 95 preserved forms in F-06 are an additional unsupported boundary.
 - **FR-05:** 1 finding record is corpus/source invalid (F-04); upstream TAB was not removed.
-- **FR-06:** 0 `CONFIRMED_BUG` findings.
+- **FR-06:** 1 `CONFIRMED_KNOWN_BUG` finding (F-01); the absence of an authorized fix does not change that classification.
 - **FR-07:** Yes, F-01 would be heuristic if implemented by grammar rule, source text, name prefix or program special-case; such a fix is rejected.
-- **FR-08:** Yes, F-01 needs an architectural decision about explicit EVALUATE selector context; no decision is made here.
+- **FR-08:** Yes, F-01 needs an architectural decision about explicit EVALUATE selector context; no decision is made here and no production fix is authorized.
 - **FR-09:** F-01 is consistent with the already documented `BACKLOG-RES-003` and does not contradict ADR-0012 or product-identity invariants.
 - **FR-10:** No. F-01 was checked through AST node/provenance, occurrence fields, resolution entries and symbol products; source text supplied locations, not the classification alone.
 
@@ -263,7 +264,7 @@ Expected future oracle: `FLAG-ON` in the boolean `WHEN` condition must remain CO
 
 | Finding | Minimal reproducer / mutation | Proposed regression oracle |
 | --- | --- | --- |
-| F-01 | `EVALUATE TRUE WHEN FLAG-ON AND OTHER-ON`; contrast `EVALUATE FLAGS WHEN FLAGS = 'Y'` and `EVALUATE TRUE ALSO FLAGS WHEN FLAG-ON ALSO FLAGS = 'Y'` | Assert selector context, CONDITION vs DATA admissibility, positional `ALSO`, one occurrence/entry per written nominal, and no name-based heuristic. Requires future architectural authorization. |
+| F-01/F-09 | `EVALUATE TRUE WHEN FLAG-ON AND OTHER-ON`; contrast `EVALUATE FLAGS WHEN FLAGS = 'Y'` and `EVALUATE TRUE ALSO FLAGS WHEN FLAG-ON ALSO FLAGS = 'Y'` | Future regression must assert selector context, CONDITION vs DATA admissibility, positional `ALSO`, one occurrence/entry per written nominal, and no name-based heuristic. It requires future architectural authorization and is not active in this checkpoint. |
 | F-02 | remove one available COPY or retain a missing `DFHAID` | Assert `COPY_NOT_FOUND`, partial claim and unresolved provenance; never synthesize declaration. Existing `PartialAnalysisMissingCopyTest` is the regression anchor. |
 | F-03 | `EXEC DLI GU ...` in `COPAUS1C`/`CBPAUP0C` | Characterize closed preprocessing failure and preserve source-level inventory; do not treat failure as condition success. |
 | F-04 | upstream `COTRTLIC.cbl` with its single TAB | Assert fixed-format normalization diagnostic and byte/source provenance; no fixture rewrite. |
@@ -279,7 +280,7 @@ Expected future oracle: `FLAG-ON` in the boolean `WHEN` condition must remain CO
 4. Add a reusable corpus characterization harness only if it consumes the existing products and reports per-node provenance; do not freeze whole-program cardinality snapshots.
 5. Consider adding the selected CardDemo source paths to a stable, opt-in corpus command rather than the mandatory semantic gate if execution cost or environment dependencies grow.
 
-## Performance observacional
+## Performance observacional (não é gate deste checkpoint)
 
 Timings are milliseconds from the current debug phase logger, one run per program. `Parse` means lexer + parser where relevant; `AST build`, `Occurrences` and `Resolution` are the corresponding semantic phases. `Total` is total analysis elapsed time. Failed rows stopped at the indicated phase.
 
@@ -302,8 +303,8 @@ The logger timings varied slightly between invocations and are retained only as 
 
 Pre-expansion baseline on `8c6f449`: `check-fast.sh` PASS; `check-semantic.sh` PASS. Required integrity check: `git diff --name-only -- src/main grammar semantic manifest` must be empty for this checkpoint.
 
-After corpus and findings work, `verify-naming.sh` PASS and `check-fast.sh` PASS. The first post-corpus `check-full.sh` reached PASS for fast, semantic, structural artifact invariants and source-normalizer regression, then stopped only at naming because this document used a reserved legacy measurement word; the wording was corrected without changing the corpus. The final `check-full.sh` at `a613481` PASSed, including naming. No production-scope path appears in `git diff main...HEAD -- src/main src/main/antlr4 grammar semantic-manifest.json`. `check-performance.sh` was not applicable: this checkpoint introduced no algorithmic change or production code.
+After corpus and findings work, `verify-naming.sh` PASS and `check-fast.sh` PASS. The first post-corpus `check-full.sh` reached PASS for fast, semantic, structural artifact invariants and source-normalizer regression, then stopped only at naming because this document used a reserved legacy measurement word; the wording was corrected without changing the corpus. Após esta correção documental, `check-fast.sh`, `check-semantic.sh` e `check-full.sh` passaram; o `full` incluiu regressão E2E, invariantes de artefatos e naming. No production-scope path appears in `git diff main...HEAD -- src/main src/main/antlr4 grammar semantic-manifest.json`. `check-performance.sh` was not applicable and was not executed: this checkpoint introduced no algorithmic change or production code. The observational timing table above is retained as corpus characterization only; it is not a performance-gate result.
 
 ### Checkpoint conclusion
 
-`DISCOVERY_REVIEW_READY`. The branch contains only the active work-item documentation, selected upstream CardDemo evidence and licensing/provenance; no semantic correction has been implemented. The PR is intentionally a Discovery PR and is not ready for merge until human review authorizes a future implementation item.
+`DISCOVERY_REVIEW_READY`. The branch contains only the active work-item documentation, selected upstream CardDemo evidence and licensing/provenance; no semantic correction has been implemented. F-01 is a confirmed known bug, F-09 records the missing combined-selector oracle, and `BACKLOG-RES-003` preserves the future handoff. The PR is intentionally a Discovery PR and is ready for human review/closure; no future implementation item is authorized by this checkpoint.
