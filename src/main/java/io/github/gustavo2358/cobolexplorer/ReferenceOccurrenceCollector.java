@@ -138,6 +138,20 @@ final class ReferenceOccurrenceCollector {
             }
             return;
         }
+        if (node instanceof Ast.SearchStatement statement) {
+            visit(statement.searchedReference(), ResolutionContracts.ReferenceRole.CONTEXT_DEPENDENT, preservation);
+            if (statement.varying() != null)
+                visitSearchVarying(statement.varying(), preservation);
+            if (statement.atEnd() != null)
+                visit(statement.atEnd(), ResolutionContracts.ReferenceRole.CONTEXT_DEPENDENT, preservation);
+            for (Ast.SearchWhen when : statement.whens()) visit(when, role, preservation);
+            return;
+        }
+        if (node instanceof Ast.SearchWhen when) {
+            visitConditionSurface(when.condition(), preservation);
+            for (Ast.Statement nested : when.statements()) visit(nested, role, preservation);
+            return;
+        }
         if (node instanceof Ast.GoToStatement statement) {
             for (Ast.ProcedureReference target : statement.targets())
                 visit(target, ResolutionContracts.ReferenceRole.GO_TO_TARGET, preservation);
@@ -360,6 +374,20 @@ final class ReferenceOccurrenceCollector {
         EnumSet<ResolutionContracts.ReferenceKind> result = EnumSet.copyOf(relationOperandKinds(reference));
         result.add(ResolutionContracts.ReferenceKind.CONDITION);
         return result;
+    }
+
+    static Set<ResolutionContracts.ReferenceKind> searchVaryingKinds(Ast.DataReference reference) {
+        Objects.requireNonNull(reference, "reference");
+        return reference.qualifiers().isEmpty()
+                ? EnumSet.of(ResolutionContracts.ReferenceKind.DATA,
+                        ResolutionContracts.ReferenceKind.INDEX)
+                : Set.of(ResolutionContracts.ReferenceKind.DATA);
+    }
+
+    private void visitSearchVarying(Ast.DataReference reference,
+                                    ReferenceOccurrences.Preservation preservation) {
+        addDataReference(reference, ResolutionContracts.ReferenceRole.CONTEXT_DEPENDENT, preservation,
+                ResolutionContracts.ReferenceKind.DATA, searchVaryingKinds(reference));
     }
 
     private void addDataReference(Ast.DataReference reference, ResolutionContracts.ReferenceRole role,

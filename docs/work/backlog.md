@@ -420,7 +420,7 @@ Após a qualification identificar mais de um recurso, quando zero ou um deles é
 
 ### BACKLOG-COND-001 — Contextualizar condições combinadas e referências nominais
 
-Progresso: o Slice 1 foi concluído pelo PR #15 e arquivado como `WORK-COND-001`; o Slice 2 foi concluído pelo PR #16 e arquivado como `WORK-COND-002` (ADR-0012 `Accepted`); o Slice 3 foi concluído pelo PR #17 e arquivado como `WORK-COND-003`; o Slice 4 — `WORK-COND-004` — foi concluído pelo PR #18 e arquivado; o Slice 5 — `WORK-COND-005` — foi concluído pelo PR #19 e arquivado em `docs/work/history/WORK-COND-005.md`. A dependência `BACKLOG-RES-004` (IBM resolution-of-names step 3) permanece registrada e destravará `{DATA, FILE}` no resolver. O Slice 6 (`SEARCH WHEN`) e o Slice 7 (regressão de corpus) permanecem pendentes.
+Progresso: os Slices 1–6 foram concluídos pelos PRs #15–#20 e arquivados. O Slice 6 (`SEARCH WHEN`) materializa a boundary AST/occurrence aprovada, sem validar semanticamente `SEARCH ALL`; o Slice 7 (regressão de corpus) permanece pendente. A dependência `BACKLOG-RES-004` permanece separada e destravará `{DATA, FILE}` no resolver.
 
 #### Evidência e problema
 
@@ -451,8 +451,8 @@ Promover somente um slice revisável por vez, nesta ordem:
 3. **ativo em WORK-COND-003:** tornar a condition sequence lossless, preservando todos os connectors/children, NOT, parênteses, `relationCombinedComparison` e precedência sem alterar o resolver no mesmo slice;
 4. corrigir a estrutura de condition-name, qualification e subscripts com oracles próprios;
 5. **concluído no PR #19:** projetar occurrences contextuais shape-sensitive, remover o acoplamento semântico ao nome da grammar rule, tipar controls de PERFORM, atualizar o manifesto e cobrir a regressão WAUX-like local;
-6. materializar `SEARCH WHEN` ou boundary tipado equivalente, provando que nenhuma referência desaparece;
-7. executar regressão de corpus e promover somente diferenças justificadas, incluindo o fonte WAUX quando ele estiver disponível.
+6. **concluído no PR #20:** materializar `SEARCH WHEN` com boundary AST tipada, routing explícito de condition/varying, preservação de `NEXT SENTENCE` e prova de que nenhuma referência é duplicada ou desaparece;
+7. **pendente:** executar regressão de corpus e promover somente diferenças justificadas, incluindo o fonte WAUX quando ele estiver disponível.
 
 O slice arquitetural precede mudanças transversais de lowering/occurrence. Mudança no resolver só entra em escopo se o contrato aprovado demonstrar necessidade depois que a occurrence estiver semanticamente correta. SEARCH e condition-name subscriptado podem virar work items separados se seus `source_scope` e riscos não couberem no mesmo slice.
 

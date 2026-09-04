@@ -23,7 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** Discovery-only characterization; this class deliberately does not change production behavior. */
+/** Condition-surface regressions shared by the typed SEARCH implementation. */
 class SemanticConditionContextDiscoveryTest {
     private static final Path MINIMAL = Path.of(
             "src/test/resources/cobol/resolution/abbreviated-condition-context.cbl");
@@ -309,7 +309,7 @@ class SemanticConditionContextDiscoveryTest {
     }
 
     @Test
-    void characterizesSearchConditionReferencesThatDisappearAtThePreservedBoundary() {
+    void verifiesSearchConditionReferencesCrossTheTypedBoundary() {
         AstBoundaryTestSupport.Analysis analysis = AstBoundaryTestSupport.analyze("""
                 IDENTIFICATION DIVISION.
                 PROGRAM-ID. SEARCH-CONTEXT.
@@ -330,19 +330,19 @@ class SemanticConditionContextDiscoveryTest {
                 END PROGRAM SEARCH-CONTEXT.
                 """, "search-context.cbl");
 
-        Ast.PreservedStatement search = AstBoundaryTestSupport.nodes(analysis, Ast.PreservedStatement.class).stream()
-                .filter(statement -> statement.grammarRule().equals("searchStatement"))
+        Ast.SearchStatement search = AstBoundaryTestSupport.nodes(analysis, Ast.SearchStatement.class).stream()
                 .findFirst().orElseThrow();
         List<String> collected = analysis.resolution().entries().stream()
                 .map(entry -> entry.occurrence().writtenText()).toList();
         assertAll("SEARCH condition preservation",
-                () -> assertEquals(List.of("T", "A", "B"), search.operands().stream()
-                        .map(operand -> ((Ast.DataReference) operand.value()).baseName()).toList()),
-                () -> assertEquals(List.of("searchWhen", "searchWhen"), search.clauses().stream()
-                        .map(Ast.StatementClause::grammarRule).toList()),
+                () -> assertEquals("T", search.searchedReference().baseName()),
+                () -> assertEquals(2, search.whens().size()),
+                () -> assertInstanceOf(Ast.LogicalCondition.class, search.whens().get(0).condition()),
+                () -> assertInstanceOf(Ast.DataReference.class, search.whens().get(1).condition()),
                 () -> assertTrue(collected.containsAll(List.of("IDX", "T", "A", "B"))),
-                () -> assertFalse(collected.contains("C")),
-                () -> assertFalse(collected.contains("FLAG-ON")));
+                () -> assertTrue(collected.contains("C")),
+                () -> assertTrue(collected.contains("FLAG-ON")),
+                () -> { AstBoundaryTestSupport.assertActualProductsJoin(analysis); });
     }
 
     @Test

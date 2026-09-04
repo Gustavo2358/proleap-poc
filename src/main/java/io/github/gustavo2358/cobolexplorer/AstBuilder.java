@@ -589,7 +589,7 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
     @Override public Ast.Node visitReleaseStatement(CobolParser.ReleaseStatementContext ctx) { return modeled(ctx); }
     @Override public Ast.Node visitReturnStatement(CobolParser.ReturnStatementContext ctx) { return modeled(ctx); }
     @Override public Ast.Node visitRewriteStatement(CobolParser.RewriteStatementContext ctx) { return modeled(ctx); }
-    @Override public Ast.Node visitSearchStatement(CobolParser.SearchStatementContext ctx) { return preserved(ctx); }
+    @Override public Ast.Node visitSearchStatement(CobolParser.SearchStatementContext ctx) { return buildSearch(ctx); }
     @Override public Ast.Node visitSendStatement(CobolParser.SendStatementContext ctx) { return preserved(ctx); }
     @Override public Ast.Node visitSetStatement(CobolParser.SetStatementContext ctx) { return modeled(ctx); }
     @Override public Ast.Node visitSortStatement(CobolParser.SortStatementContext ctx) { return preserved(ctx); }
@@ -720,6 +720,29 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
         return preserved
                 ? new Ast.PreservedStatement(meta, rule(context), sourceText(context).strip(), operands, clauses)
                 : new Ast.ModeledStatement(meta, rule(context), sourceText(context).strip(), operands, clauses);
+    }
+
+    private Ast.SearchStatement buildSearch(CobolParser.SearchStatementContext context) {
+        Ast.Meta meta = meta(context);
+        Ast.DataReference searchedReference = (Ast.DataReference) expression(
+                context.qualifiedDataName(), "searched reference");
+        CobolParser.SearchVaryingContext varyingContext = context.searchVarying();
+        Ast.DataReference varying = varyingContext == null ? null
+                : (Ast.DataReference) expression(varyingContext.qualifiedDataName(), "search varying");
+        Ast.StatementClause atEnd = context.atEndPhrase() == null
+                ? null : buildStatementClause(context.atEndPhrase());
+        List<Ast.SearchWhen> whens = context.searchWhen().stream()
+                .map(this::buildSearchWhen).toList();
+        return new Ast.SearchStatement(meta, context.ALL() != null, searchedReference,
+                varying, atEnd, whens);
+    }
+
+    private Ast.SearchWhen buildSearchWhen(CobolParser.SearchWhenContext context) {
+        Ast.Meta meta = meta(context);
+        Ast.Expression condition = buildConditionSurface(context.condition(), ConditionState.CLOSED).node();
+        Ast.SearchWhen when = new Ast.SearchWhen(meta, condition, statementsInside(context));
+        recordCoverage(when, sourceText(context));
+        return when;
     }
 
     private void collectStatementOperands(ParserRuleContext root, ParserRuleContext context,

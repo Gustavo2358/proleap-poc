@@ -432,9 +432,9 @@ COBOL	returnStatement	STATEMENT	MODELED	REFERENCE_READY	Statement operands and f
 COBOL	returnInto	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	rewriteStatement	STATEMENT	MODELED	REFERENCE_READY	Statement operands and flow clauses are structurally modeled from grammar contexts.
 COBOL	rewriteFrom	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
-COBOL	searchStatement	STATEMENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement has a grammar-specific preserved node and requires later semantic interpretation.
+COBOL	searchStatement	STATEMENT	MODELED	REFERENCE_READY	SEARCH statement and its typed structural boundary are materialized from grammar contexts; SEARCH ALL validation remains separate.
 COBOL	searchVarying	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
-COBOL	searchWhen	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
+COBOL	searchWhen	STATEMENT_COMPONENT	MODELED	REFERENCE_READY	SEARCH WHEN condition and branch actions are materialized with existing condition lowering; normative validation remains separate.
 COBOL	sendStatement	STATEMENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement has a grammar-specific preserved node and requires later semantic interpretation.
 COBOL	sendStatementSync	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	sendStatementAsync	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.

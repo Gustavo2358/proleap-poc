@@ -82,3 +82,7 @@ DATA+CONDITION homônimos no mesmo programa não pertencem a esta classe: COND-N
 ## Expectativas de escala
 
 Os casos mínimos são locais e não definem cardinalidade de corpus. A implementação futura deve percorrer estrutura e joins indexados, sem scan textual/global ou complexidade `O(condition references × all declarations)`. Threshold dependente de hardware não faz parte destes oracles.
+
+## WORK-COND-006 — SEARCH WHEN
+
+Os oracles de implementação estão em `SearchWhenConditionDiscoveryTest` e `SearchWhenMaterializationAdversarialTest`. Eles cobrem boundary `SearchStatement`/`SearchWhen`, standalone condition-name, relation completa e abreviada, `NOT`, qualification, múltiplos WHEN, `NEXT SENTENCE`, `SEARCH ALL`, policy bare/qualified de VARYING e a bijeção de cada nominal escrito para uma occurrence e uma resolution entry. O contrato promovido é estrutural e nominal; `SEARCH ALL` validation, `ConditionSemantics`, `ConditionValidation`, CFG, dataflow e runtime permanecem futuros.

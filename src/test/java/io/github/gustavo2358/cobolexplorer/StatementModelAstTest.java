@@ -32,8 +32,9 @@ class StatementModelAstTest {
         assertTrue(missing.isEmpty(), "missing fixture alternatives: " + missing);
         assertTrue(nodes(result.program(), Ast.UnsupportedStatement.class).isEmpty());
         assertFalse(nodes(result.program(), Ast.ModeledStatement.class).isEmpty());
-        assertEquals(16, nodes(result.program(), Ast.PreservedStatement.class).stream()
+        assertEquals(15, nodes(result.program(), Ast.PreservedStatement.class).stream()
                 .map(Ast.PreservedStatement::grammarRule).distinct().count());
+        assertEquals(1, nodes(result.program(), Ast.SearchStatement.class).size());
         assertTrue(nodes(result.program(), Ast.StatementOperand.class).stream()
                 .anyMatch(o -> o.value() instanceof Ast.FileReference));
         assertTrue(nodes(result.program(), Ast.StatementOperand.class).stream()

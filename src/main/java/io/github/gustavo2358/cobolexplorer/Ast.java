@@ -35,7 +35,7 @@ public final class Ast {
     public sealed interface Node permits Program, Division, Section, FileBinding, FileDescription,
             DataEntry, Paragraph, Sentence, CallArgument, EvaluateBranch, DataQualifier,
             SubscriptGroup, ReferenceModification, ProcedureQualifier, ProcedureReference,
-            ProcedureSignature, ProcedureParameter, StatementOperand, StatementClause,
+            ProcedureSignature, ProcedureParameter, StatementOperand, StatementClause, SearchWhen,
             Statement, Expression, DataClause {
         Meta meta();
     }
@@ -162,7 +162,8 @@ public final class Ast {
 
     public sealed interface Statement extends Node permits CallStatement, IfStatement, EvaluateStatement,
             PerformStatement, GoToStatement, MoveStatement, EmbeddedLanguageStatement,
-            NextSentenceStatement, ModeledStatement, PreservedStatement, UnsupportedStatement {}
+            NextSentenceStatement, ModeledStatement, PreservedStatement, SearchStatement,
+            UnsupportedStatement {}
 
     public sealed interface Expression extends Node permits LiteralExpression, DataReference,
             OperationExpression, FunctionExpression, SpecialRegisterExpression,
@@ -262,6 +263,23 @@ public final class Ast {
                                             String rawText) implements Statement {}
 
     public record NextSentenceStatement(Meta meta) implements Statement {}
+
+    /** Typed SEARCH statement boundary; {@code all} is structural, not validation. */
+    public record SearchStatement(Meta meta, boolean all, DataReference searchedReference,
+                                  DataReference varying, StatementClause atEnd,
+                                  List<SearchWhen> whens) implements Statement {
+        public SearchStatement {
+            whens = List.copyOf(whens);
+        }
+    }
+
+    /** One written SEARCH WHEN branch, owning its condition and branch actions. */
+    public record SearchWhen(Meta meta, Expression condition,
+                             List<Statement> statements) implements Node {
+        public SearchWhen {
+            statements = List.copyOf(statements);
+        }
+    }
 
     public record StatementOperand(Meta meta, String grammarRole, StatementOperandContext context,
                                    Node value) implements Node {
@@ -490,6 +508,20 @@ public final class Ast {
         }
         if (node instanceof EvaluateBranch n) {
             List<Node> result = new ArrayList<>(n.selectorExpressions()); result.addAll(n.statements()); return result;
+        }
+        if (node instanceof SearchStatement n) {
+            List<Node> result = new ArrayList<>();
+            result.add(n.searchedReference());
+            if (n.varying() != null) result.add(n.varying());
+            if (n.atEnd() != null) result.add(n.atEnd());
+            result.addAll(n.whens());
+            return result;
+        }
+        if (node instanceof SearchWhen n) {
+            List<Node> result = new ArrayList<>();
+            result.add(n.condition());
+            result.addAll(n.statements());
+            return result;
         }
         if (node instanceof PerformStatement n) {
             List<Node> result = new ArrayList<>();
