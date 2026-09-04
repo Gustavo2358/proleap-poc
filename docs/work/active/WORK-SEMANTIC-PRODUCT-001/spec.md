@@ -4,11 +4,23 @@
 
 O frontend COBOL já produz vários artefatos semânticos separados, mas não existe ainda uma decisão sobre o estado semântico que deverá atravessar a futura fronteira para lowering. O nome `Cobol Semantic Product` é apenas uma hipótese de trabalho. A investigação precisa partir dos produtores e consumidores reais, preservando a distinção entre domínio, observabilidade e transporte.
 
-Este work item é um Discovery arquitetural de alto risco. O Checkpoint 1 é o único autorizado nesta sessão: estado semântico atual e requisitos de boundary. A implementação do produto, de `Cobol Lower`, da IR, de CFG, de dataflow, de possible-values e de dependency facts está fora do escopo.
+Este work item é um Discovery arquitetural de alto risco, composto por uma
+baseline factual (Checkpoint 1) e pelo desenho/suficiência da boundary
+(Checkpoint 2). O Checkpoint 1 está concluído; o Checkpoint 2 está concluído e
+em review humano; o Checkpoint 3 permanece não autorizado. A implementação do
+produto, de `Cobol Lower`, da IR, de CFG, de dataflow, de possible-values e de
+dependency facts está fora do escopo.
 
 ## Objetivo
 
-Produzir evidência suficiente para que um review humano possa decidir, no Checkpoint 2, quais informações precisam cruzar a futura boundary e quais perguntas ainda impedem essa decisão. O relatório deve reconstruir a pipeline executável, inventariar produtos, identidades, joins, provenance, incompletude, produtos pós-binding, apresentação e requisitos de lowering sem escolher um formato de API ou desenhar a IR.
+Produzir, ao longo do lifecycle completo de três checkpoints de Discovery,
+evidência suficiente para que um review humano decida se a menor boundary
+semântica COBOL-specific é suficiente para um futuro `CobolLower`. O Checkpoint 1
+estabelece a baseline factual do frontend; o Checkpoint 2 define a boundary e
+testa sua suficiência; e o Checkpoint 3, somente após autorização explícita,
+executa a falsificação executável e a prova de interchange. No estado atual, o
+Checkpoint 3 faz parte do plano do work item, mas não está autorizado nem
+iniciado. Nenhum checkpoint desenha a IR ou implementa o produto/lowerer.
 
 ## Domínio de entrada suportado
 
@@ -28,9 +40,20 @@ O Discovery distingue fatos estruturados do frontend, referências nominais e se
 
 ## Comportamento esperado
 
-O relatório do Checkpoint 1 deve descrever o que o frontend realmente estabelece ao terminar sua análise, como os produtos fazem joins e quais fatos um futuro lowerer precisará receber para os slices R1–R7. Cada conclusão arquitetural importante deve indicar `evidence_status` entre `PROVEN`, `STRONGLY_SUPPORTED`, `PLAUSIBLE`, `UNKNOWN` e `REFUTED`.
+O relatório do Checkpoint 1 deve descrever o que o frontend realmente
+estabelece ao terminar sua análise, como os produtos fazem joins e quais fatos
+um futuro lowerer precisará receber para os slices R1–R7. O relatório do
+Checkpoint 2 deve definir e comparar candidatas de boundary, incluindo a forma
+mais forte plausível de um modelo materializado próprio e de uma facade
+query-oriented, e testar a suficiência do contrato sem expor internals. Cada
+conclusão arquitetural importante deve indicar `evidence_status` entre
+`PROVEN`, `STRONGLY_SUPPORTED`, `PLAUSIBLE`, `UNKNOWN` e `REFUTED`.
 
-O plano contém três checkpoints independentes, cada um terminando em review humano. O Checkpoint 2 somente poderá definir e comparar candidatas de boundary depois deste relatório ser revisado. O Checkpoint 3 deverá tentar falsificar a candidata escolhida, e implementação será outro work item.
+O plano contém três checkpoints independentes, cada um terminando em review
+humano. O Checkpoint 1 foi concluído e serviu de baseline factual para o
+Checkpoint 2; o Checkpoint 2 foi concluído e aguarda review. O Checkpoint 3
+deverá tentar falsificar a candidata escolhida somente após autorização
+explícita posterior. Implementação será outro work item.
 
 ## Comportamento diante de incerteza
 
@@ -39,11 +62,12 @@ O relatório deve usar os contratos atuais: cobertura `MODELED`, `PRESERVED_UNIN
 ## Fora de escopo
 
 - Criar ou implementar `CobolSemanticProduct`.
-- Escolher record, facade, envelope, serializer, JSON, bundle ou schema.
+- Implementar ou promover a decisão de record, facade, envelope, modelo
+  materializado, serializer, JSON, bundle ou schema a contrato aceito.
 - Implementar `Cobol Lower`, IR, CFG, dataflow, reaching definitions, possible-values ou dependency extraction.
 - Corrigir F-01, ALTER, SEARCH ou qualquer lacuna oportunista de AST/resolver.
 - Alterar AST para carregar resolução, introduzir IDs de candidates na AST, refatorar `ExplorerMain`, criar parser embedded ou framework de plugins.
-- Executar o Checkpoint 2 ou o Checkpoint 3.
+- Executar o Checkpoint 3; ele continua não autorizado neste estado do work item.
 
 ## Regras de domínio relacionadas
 
