@@ -15,10 +15,21 @@ Checkpoint 2 — Implementation do work item na branch `implementation/work-cond
 - FACTs R2-01..R2-04, oracles de NOT e children independentes adicionados a `ContextualConditionOccurrenceDiscoveryTest`; suíte focal passou.
 - Round 3: FACTs R3-01..R3-03 adicionados. `A = C(1:2)` prova `referenceModification != null` com qualifiers/subscriptGroups vazios; occurrence atual registra `PREEXISTING_RELATION_REFERENCE_MODIFICATION_OVERADMISSIBILITY`; projeção futura `DATA/{DATA}` resolve C DATA sem mudar o resolver. `A = (C(1:2) OR D)` foi materializado como `DistributedOperandGroup` e recebe a mesma policy futura.
 - Gate `fast`: passou. Gate `semantic`: passou. Gate `full`: passou, incluindo regressão E2E e naming.
+- TDD RED confirmado antes das mudanças de produção; nenhum commit vermelho foi criado.
+- GREEN confirmado em `ContextualConditionOccurrenceTest` (13 casos), `ReferenceResolutionManifestTest` e na suíte de regressões diretamente afetada.
+- `indexAdmissibleNominalShape(ref)` é uma única policy O(1): qualifiers vazios, subscript groups vazios e `referenceModification == null`.
+- Relation e `DistributedOperandGroup` usam a mesma policy de admissibilidade; contextual tails fazem união com `CONDITION`, mantendo `CONDITION` como primary kind.
+- Uma referência escrita continua gerando uma ocorrência nominal e uma entrada de resolução; admissibility não é materializada em ocorrências sintéticas.
+- `PerformControl` tipado distingue `VALUE`/`CONDITION` sem ser `Ast.Node`; `controlExpressions`, pre-order e IDs permanecem compatíveis.
+- `conditionNameReference` agora mapeia para `CONTEXTUAL_REFERENCE_ORIGIN` com `referenceKind == null`; `qualifiedDataName` permanece `REFERENCE_ORIGIN/DATA`; manifesto em `1.1.0`; construção contextual com kind falha rápido.
+- Diagnósticos de admissibilidade múltipla usam `CONTEXTUAL_CONDITION`; `IF MISSING` mantém `CONDITION reference`.
+- Camada adversarial cobre grammarRule coupling, conjunto contextual universal, falso bare, contaminação de children, cardinalidade, boundaries, connector, NOT, manifesto, diagnostics, posição de PERFORM e substituição metamórfica de declaração.
+- Regressões `ConditionSurfaceAstTest`, `ConditionNameSurfaceAstTest`, `ConditionNameSurfaceDiscoveryTest`, `SemanticConditionContextDiscoveryTest`, `DataAndIndexReferenceResolverTest`, `ReferenceResolutionManifestTest`, `AstPreorderInvariantTest`, `ResolutionAnalysisReportTest`, `ResolutionSnapshotTest` e `CicsIntrinsicClassifierTest` passaram; SET/EVALUATE permaneceram sem alteração de policy.
+- Gates finais: `check-fast.sh` passou; `check-semantic.sh` passou; `check-performance.sh` passou; `check-full.sh` passou com E2E, artefatos semânticos e naming.
 
 ## Restante
 
-Implementar GREEN, adicionar adversarial tests, executar regressões/gates, atualizar o mesmo PR e parar para review humano. SEARCH WHEN permanece Slice 6; `BACKLOG-RES-004` permanece separado; closure/merge não são autorizados.
+Atualizar o mesmo PR com a evidência do Checkpoint 2, fazer push append-only e parar para review humano. SEARCH WHEN permanece Slice 6; `BACKLOG-RES-004` permanece separado; closure/merge não são autorizados.
 
 ## TDD RED — confirmado
 
@@ -79,3 +90,22 @@ Relation e distributed operands devem consumir o mesmo helper `indexAdmissibleNo
 ## Decisão final
 
 `READY_FOR_IMPLEMENTATION` (após fechamento de F5 no Discovery Round 3; aguarda novo review humano). Policy = `occurrencePolicy(position, nominalShape)`: standalone `{CONDITION}`; contextual `{DATA, INDEX, CONDITION}` somente para `indexAdmissibleNominalShape(ref)`, caso contrário `{DATA, CONDITION}`; relation/distribution `{DATA, INDEX}` somente para essa shape, caso contrário `{DATA}`; `indexAdmissibleNominalShape(ref)` exige qualifiers vazios, subscript groups vazios e `referenceModification == null`; qualifier/subscript independentes; resolver inalterado; manifesto com `CONTEXTUAL_REFERENCE_ORIGIN`/null e version bump; primary CONDITION é hint de superfície; diagnostics contextuais não mentem; `NOT A = B OR C` mantém C contextual. A implementação aguarda review humano.
+
+## Semantic challenge pass — Implementation
+
+1. Policy depende de `grammarRule`? PASS — traversal tipado e shape helpers decidem a policy.
+2. Policy depende de connector spelling? PASS — OR e AND compartilham a policy.
+3. Helper esquece `referenceModification`? PASS — a condição estrutural inclui explicitamente `== null`.
+4. Relation e distributed usam a mesma regra? PASS.
+5. Contexto vaza para children? PASS — qualifier e subscript mantêm policies próprias.
+6. Cardinalidade aumentou? PASS — uma ocorrência nominal por referência escrita e bijection com resolution entry.
+7. PERFORM depende de posição/list index? PASS — usa `PerformControlContext` construído de contextos ANTLR tipados.
+8. Manifesto virou policy table? PASS — não contém `admissibleKinds` e contextual origin exige kind nulo.
+9. Diagnostics mudaram resolução? PASS — somente label human-readable foi alterado.
+10. Resolver algorithm foi tocado? PASS — candidate selection, scope, qualification, visibility, ambiguity e dispatch não mudaram.
+11. AST ID/pre-order mudou? PASS — wrapper não é node e `Ast.children` usa a compatibility view existente.
+12. Declaração concreta influencia surface AST? PASS — substituição DATA/INDEX/CONDITION/RENAMES/MISSING altera somente resolução.
+
+## Checkpoint 2
+
+Implementação concluída sobre `b17f81f` no commit `d94043e`. PR #19 permanece aberto, sem closure e sem merge; aguarda review humano antes do Checkpoint 3.
