@@ -45,6 +45,7 @@ Comece no [índice de conhecimento](docs/index.md). Carregue somente o contexto 
 | símbolos ou ocorrências | [modelo de símbolos](docs/domain/symbol-model.md) |
 | resolução ou CALL | [resolução de referências](docs/domain/reference-resolution.md) e política semântica |
 | mudança semântica transversal | [análise semântica](docs/engineering/semantic-analysis-policy.md) e [testes semânticos](docs/engineering/semantic-testing.md) |
+| impacto downstream de finding semântico | [classificação de impacto](docs/engineering/downstream-impact-classification.md) |
 | desempenho | [política de desempenho](docs/engineering/performance-policy.md) e domínio afetado |
 | logging | [política de observabilidade](docs/engineering/observability-policy.md) |
 | gate, docs ou workflow | [gates](docs/engineering/gates.md) e [protocolo de work items](docs/engineering/work-item-protocol.md) |

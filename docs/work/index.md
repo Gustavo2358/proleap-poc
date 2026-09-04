@@ -6,6 +6,7 @@ Work items delimitam a mudança em execução; o [backlog](backlog.md) registra 
 
 - [WORK-AST-002 — Hardening da fronteira AST para CFG e dataflow](active/WORK-AST-002/spec.md) — Slice 1 mergeado no PR #10; Slice 2 no checkpoint de Discovery do PR #13. Implementar F-02 depende de merge/review e autorização explícita posterior.
 - [WORK-COND-007 — Broad corpus regression for contextual conditions](active/WORK-COND-007/spec.md) — Checkpoint 1 de Discovery + caracterização de corpus; PR #20 foi confirmado no histórico de `main`; nenhuma correção de produção está autorizada.
+- [WORK-HARNESS-IMPACT-001 — Downstream semantic impact classification](active/WORK-HARNESS-IMPACT-001/spec.md) — Taxonomia documental e validação mínima do vocabulário; não altera produtos semânticos nem classifica massivamente o backlog.
 
 ## Histórico
 

@@ -40,6 +40,17 @@ gates:
 
 `status` pode ser `active`, `blocked` ou `completed`; diretórios em `active/` usam somente `active` ou `blocked`. `risk` define a profundidade de contexto, não uma autorização para alterar escopo. `must_read` aponta para a menor rota canônica suficiente. Decisões, invariantes e evals devem usar IDs existentes. Os gates aceitos são `docs`, `fast`, `architecture`, `semantic`, `performance` e `full`.
 
+## Impacto semântico downstream
+
+Findings semânticos novos devem registrar um bloco `downstream_impact` conforme a
+[taxonomia canônica](downstream-impact-classification.md). O bloco possui uma
+classe primária única e os campos `class`, `rationale`, `evidence` e
+`reassess_when`; a falta de evidência exige `UNASSESSED`. A classificação não é
+severity, prioridade, tipo do finding ou autorização de remediação. Findings
+históricos não são migrados em massa: a regra prepara os próximos registros e
+deve ser aplicada quando um finding existente for reaberto ou alterado por um
+work item autorizado.
+
 Durante um Discovery, `source_scope` e `test_scope` podem reservar um arquivo novo ainda inexistente com `planned:<caminho>`. O harness aceita essa forma somente sob `src/main` ou `src/test`, exige que o diretório pai já exista e falha se o arquivo estiver presente; ao iniciar a implementação autorizada, remova o prefixo no mesmo checkpoint que cria o arquivo. Os demais campos continuam aceitando apenas caminhos existentes.
 
 ## Documentos de trabalho

@@ -378,6 +378,25 @@ O reproducer mínimo é:
 
 Na evidência do CardDemo, o source e a AST preservam os nominais escritos, as branches de `EVALUATE` e as declarações nível 88 visíveis. A ocorrência, porém, chega como `DATA/{DATA}`; a resolução então termina `UNRESOLVED / INVALID_NAMESPACE_FOR_CONTEXT` sem candidates CONDITION. O produto em que o erro se manifesta é a cadeia occurrence → resolution, não a ausência do símbolo ou o desaparecimento do texto na AST.
 
+```yaml
+downstream_impact:
+  class: UNASSESSED
+  rationale: >
+    O defeito foi observado nos produtos de occurrences/resolution, mas a
+    fronteira do Semantic Product e os requisitos da IR ainda não estão
+    definidos. Não há evidência suficiente para dizer se a primeira fronteira
+    quebrada é Semantic Product, IR, CFG, dataflow ou somente precisão; essas
+    classes são rejeitadas por falta de contrato downstream, não por evidência
+    de que estejam corretas. CFG e dataflow também não podem ser classificados
+    como consequência presumida.
+  evidence:
+    - BACKLOG-RES-003 e a caracterização de WORK-COND-007 reproduzem 34 ocorrências com a cadeia occurrence/resolution incorreta.
+    - docs/architecture/pipeline.md declara Semantic Product, IR, CFG e dataflow como fronteiras futuras ou ainda não materializadas.
+  reassess_when:
+    - semantic-product-contract-defined
+    - ir-requirements-defined
+```
+
 Selectors nominais diretos associados a subject booleano `TRUE`/`FALSE` já são tratados corretamente pelo contrato e pela cobertura atual, como em `EVALUATE TRUE WHEN FLAG-ON`. F-01 é mais específico: em determinadas expressions combinadas ou aninhadas, o contexto booleano não alcança corretamente os nominais internos durante a representação/propagação de contexto até o produto de occurrences. A evidência disponível ainda não prova o ponto exato da perda entre a representação AST e o traversal/context propagation do collector; essa localização deve ser confirmada antes de qualquer correção de produção.
 
 Este é um defeito distinto de `SET condition-name TO TRUE/FALSE`: a regra não pode ser ampliada por heurística de texto, nome, regex, regra gramatical isolada ou special-case de programa. `EVALUATE data-item WHEN identifier` continua comparação de valor e o identifier pode ser DATA/INDEX; `WHEN` também aceita literals, intervalos, `NOT`, condições completas e múltiplos `ALSO`. A correção futura não pode tratar todo `WHEN identifier` como CONDITION.

@@ -28,6 +28,7 @@ Testes, corpus e artefatos gerados são evidência executável; não definem a s
 | política para mudança semântica, testes, desempenho ou observabilidade | [engineering/](engineering/index.md) |
 | oracle, teste, fixture ou cenário de regressão | [evals/](evals/index.md) |
 | trabalho ativo, histórico curto ou backlog | [work/](work/index.md) |
+| impacto downstream de finding semântico | [classificação de impacto downstream](engineering/downstream-impact-classification.md) |
 | decisão antiga, relatório, baseline ou matriz de migração | [history/](history/index.md), somente quando necessário |
 
 Os work items ativos estão no [índice de trabalho](work/index.md). `WORK-AST-002` mantém seu Slice 2 no checkpoint de Discovery do PR #13; implementar F-02 continua dependendo de merge/review e autorização explícita posterior. `WORK-COND-001` foi concluído pelo PR #15, `WORK-COND-002` pelo PR #16, `WORK-COND-003` pelo PR #17, `WORK-COND-004` pelo PR #18 e `WORK-COND-005` pelo PR #19; todos possuem apenas [resumos históricos](work/history/WORK-COND-001.md). `WORK-AST-003` foi concluído pelos PRs #11/#12 e possui apenas um [resumo histórico](work/history/WORK-AST-003.md).

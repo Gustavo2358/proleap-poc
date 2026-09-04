@@ -9,6 +9,7 @@ Políticas disponíveis:
 - [desempenho](performance-policy.md);
 - [observabilidade](observability-policy.md);
 - [gates do harness](gates.md);
-- [protocolo de work items](work-item-protocol.md).
+- [protocolo de work items](work-item-protocol.md);
+- [classificação de impacto semântico downstream](downstream-impact-classification.md).
 
 Use esta família para método de engenharia. Para saber o comportamento atual de normalização, AST ou resolução, navegue para `../domain/`.

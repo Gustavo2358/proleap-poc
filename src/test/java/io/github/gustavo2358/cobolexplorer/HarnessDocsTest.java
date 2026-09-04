@@ -31,6 +31,12 @@ class HarnessDocsTest {
     private static final Pattern INVARIANT_HEADING = Pattern.compile("(?m)^### (INV-[A-Z]+-\\d{3}) — ");
     private static final Pattern EVAL_ROW = Pattern.compile("(?m)^\\| (EVAL-[A-Z0-9-]+-\\d{3}) \\|");
     private static final Pattern BACKLOG_HEADING = Pattern.compile("(?m)^### (BACKLOG-[A-Z]+-\\d{3}) — ");
+    private static final Pattern DOWNSTREAM_CLASS_ROW = Pattern.compile(
+            "(?m)^\\| `([A-Z_]+)` \\|");
+    private static final Pattern MARKDOWN_CODE_BLOCK = Pattern.compile(
+            "(?ms)^```(?:yaml|yml)?\\R(.*?)^```\\s*$\n?");
+    private static final Pattern DOWNSTREAM_CLASS_FIELD = Pattern.compile(
+            "(?m)^  class: (\\S+)\\s*$");
     private static final Pattern CANONICAL_ID = Pattern.compile(
             "\\b(?:ADR-\\d{4}|INV-[A-Z]+-\\d{3}|EVAL-[A-Z0-9-]+-\\d{3}|BACKLOG-[A-Z]+-\\d{3})\\b");
     private static final Pattern YAML_KEY = Pattern.compile("^([a-z_]+):(?:\\s*(.*))?$");
@@ -40,6 +46,9 @@ class HarnessDocsTest {
             "source_scope", "test_scope", "must_not_change", "gates");
     private static final Set<String> HARNESS_GATES = Set.of("docs", "fast", "architecture", "semantic",
             "performance", "full");
+    private static final Set<String> DOWNSTREAM_IMPACT_CLASSES = Set.of(
+            "BLOCKS_SEMANTIC_PRODUCT", "BLOCKS_IR", "BLOCKS_CFG", "BLOCKS_DATAFLOW",
+            "REDUCES_PRECISION", "UNASSESSED", "NOT_APPLICABLE");
 
     @Test
     void stableGateEntrypointsExistAndAreExecutable() {
@@ -148,6 +157,47 @@ class HarnessDocsTest {
                 "o plano-base concluído não deve continuar em specs/");
         assertTrue(Files.isRegularFile(DOCS.resolve("work/history/WORK-HARNESS-001.md")),
                 "resumo do work item concluído ausente");
+    }
+
+    @Test
+    void downstreamImpactClassificationIsCanonicalAndClosed() throws Exception {
+        Path classification = DOCS.resolve("engineering/downstream-impact-classification.md");
+        assertTrue(Files.isRegularFile(classification), "fonte canônica de impacto downstream ausente");
+        String content = read(classification);
+
+        Set<String> declaredClasses = new HashSet<>();
+        Matcher rows = DOWNSTREAM_CLASS_ROW.matcher(content);
+        while (rows.find()) declaredClasses.add(rows.group(1));
+        assertEquals(DOWNSTREAM_IMPACT_CLASSES, declaredClasses,
+                "a taxonomia canônica deve declarar exatamente as sete classes");
+
+        for (String phrase : List.of("Earliest broken layer wins", "Classe primária única",
+                "evidence-based", "`UNASSESSED`", "`NOT_APPLICABLE`", "não é severity",
+                "Não há `confidence`", "F-01")) {
+            assertTrue(content.contains(phrase), "guard missing in downstream impact policy: " + phrase);
+        }
+
+        int records = 0;
+        for (Path document : markdownDocuments()) {
+            Matcher blocks = MARKDOWN_CODE_BLOCK.matcher(read(document));
+            while (blocks.find()) {
+                String block = blocks.group(1);
+                if (!block.startsWith("downstream_impact:\n")) continue;
+                records++;
+                Matcher classes = DOWNSTREAM_CLASS_FIELD.matcher(block);
+                assertTrue(classes.find(), "registro downstream sem class: " + ROOT.relativize(document));
+                String value = classes.group(1);
+                assertTrue(DOWNSTREAM_IMPACT_CLASSES.contains(value),
+                        "classe downstream desconhecida em " + ROOT.relativize(document) + ": " + value);
+                assertFalse(classes.find(), "registro downstream com mais de uma class: "
+                        + ROOT.relativize(document));
+                for (String field : List.of("  rationale:", "  evidence:", "  reassess_when:")) {
+                    assertTrue(block.contains(field), "campo ausente em registro downstream "
+                            + ROOT.relativize(document) + ": " + field.trim());
+                }
+            }
+        }
+        assertTrue(records > 0, "a política deve conter pelo menos um registro downstream validável");
     }
 
     @Test
