@@ -1,0 +1,175 @@
+id: WORK-SEMANTIC-PRODUCT-001
+title: Semantic Product Boundary Discovery
+status: active
+risk: high
+goal: Reconstruir, com evidência de código e testes, o estado semântico final do frontend COBOL e os requisitos de boundary necessários antes de qualquer desenho ou implementação downstream.
+must_read:
+  - docs/index.md
+  - docs/architecture/pipeline.md
+  - docs/architecture/invariants.md
+  - docs/architecture/decisions/0002-provenance-originates-in-physical-source.md
+  - docs/architecture/decisions/0003-separate-semantic-analysis-products.md
+  - docs/architecture/decisions/0004-nominal-binding-excludes-runtime-values.md
+  - docs/architecture/decisions/0005-program-unit-is-analysis-boundary.md
+  - docs/architecture/decisions/0008-incompleteness-is-first-class.md
+  - docs/architecture/decisions/0009-explicit-grammar-coverage.md
+  - docs/architecture/decisions/0010-observe-external-literal-dependencies-per-artifact.md
+  - docs/architecture/decisions/0011-orthogonal-platform-classification.md
+  - docs/architecture/decisions/0012-contextual-conditions-use-post-binding-projection.md
+  - docs/domain/semantic-ast.md
+  - docs/domain/compilation-units.md
+  - docs/domain/symbol-model.md
+  - docs/domain/reference-resolution.md
+  - docs/domain/provenance.md
+  - docs/engineering/semantic-analysis-policy.md
+  - docs/engineering/semantic-testing.md
+  - docs/engineering/downstream-impact-classification.md
+  - docs/work/backlog.md
+  - docs/work/active/WORK-AST-002/work-item.yaml
+  - docs/work/active/WORK-AST-002/spec.md
+  - docs/work/active/WORK-AST-002/plan.md
+  - docs/work/active/WORK-AST-002/eval.md
+  - docs/work/active/WORK-AST-002/state.md
+  - docs/evals/semantic-eval-catalog.md
+related_domain_rules:
+  - docs/domain/semantic-ast.md
+  - docs/domain/compilation-units.md
+  - docs/domain/symbol-model.md
+  - docs/domain/reference-resolution.md
+  - docs/domain/provenance.md
+related_decisions:
+  - ADR-0002
+  - ADR-0003
+  - ADR-0004
+  - ADR-0005
+  - ADR-0008
+  - ADR-0009
+  - ADR-0010
+  - ADR-0011
+  - ADR-0012
+related_invariants:
+  - INV-AST-001
+  - INV-AST-002
+  - INV-AST-003
+  - INV-SYM-001
+  - INV-COND-001
+  - INV-COND-002
+  - INV-PROV-001
+  - INV-PROV-002
+  - INV-RES-001
+  - INV-RES-002
+  - INV-RES-003
+  - INV-EXT-001
+  - INV-EXT-002
+  - INV-EXT-003
+  - INV-EXT-004
+  - INV-COV-001
+  - INV-COV-002
+  - INV-COV-003
+  - INV-EMB-001
+  - INV-DET-001
+evals:
+  - EVAL-SRC-001
+  - EVAL-SRC-002
+  - EVAL-PRE-001
+  - EVAL-PRE-002
+  - EVAL-PROV-001
+  - EVAL-PROV-002
+  - EVAL-AST-001
+  - EVAL-AST-002
+  - EVAL-AST-003
+  - EVAL-AST-004
+  - EVAL-AST-005
+  - EVAL-COV-001
+  - EVAL-COV-002
+  - EVAL-COV-003
+  - EVAL-UNIT-001
+  - EVAL-SYM-001
+  - EVAL-SYM-002
+  - EVAL-RES-DATA-001
+  - EVAL-RES-DATA-002
+  - EVAL-RES-DATA-003
+  - EVAL-RES-REL-001
+  - EVAL-RES-PROC-001
+  - EVAL-RES-FILE-001
+  - EVAL-RES-PROG-001
+  - EVAL-RES-PROG-002
+  - EVAL-RES-CALL-001
+  - EVAL-RES-CALL-002
+  - EVAL-RES-COV-001
+  - EVAL-RES-REPORT-001
+  - EVAL-RES-DET-001
+  - EVAL-EXT-001
+  - EVAL-UI-001
+  - EVAL-ARCH-001
+source_scope:
+  - src/main/java/io/github/gustavo2358/cobolexplorer/ExplorerMain.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/SourceNormalizer.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/PreprocessorEngine.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/SourceMap.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/AstBuilder.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/Ast.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/AstBuildResult.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/CompilationUnitBuildResult.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/CompilationUnitModel.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/CompilationUnitSymbolTables.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/SymbolTable.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/CompilationUnitSymbolTableBuilder.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/AstScopeIndex.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/ReferenceOccurrences.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/ReferenceOccurrenceCollector.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/ReferenceResolution.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/CobolReferenceResolver.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/DeclarationRelationResolution.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/ResolutionContracts.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/ExternalClassification.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/CicsIntrinsicClassifier.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/ResolutionAnalysisReport.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/SemanticCoverage.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/Diagnostic.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/AstSnapshot.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/SymbolTableSnapshot.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/CoverageSnapshot.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/ResolutionSnapshot.java
+test_scope:
+  - src/test/java/io/github/gustavo2358/cobolexplorer/AstBoundaryTestSupport.java
+  - src/test/java/io/github/gustavo2358/cobolexplorer/AstBuilderTypedTraversalTest.java
+  - src/test/java/io/github/gustavo2358/cobolexplorer/AstPreorderInvariantTest.java
+  - src/test/java/io/github/gustavo2358/cobolexplorer/CallSemanticsTest.java
+  - src/test/java/io/github/gustavo2358/cobolexplorer/DataAndIndexReferenceResolverTest.java
+  - src/test/java/io/github/gustavo2358/cobolexplorer/EntityScopeAndOccurrenceTest.java
+  - src/test/java/io/github/gustavo2358/cobolexplorer/ConditionNameSurfaceDiscoveryTest.java
+  - src/test/java/io/github/gustavo2358/cobolexplorer/ContextualConditionOccurrenceDiscoveryTest.java
+  - src/test/java/io/github/gustavo2358/cobolexplorer/SearchWhenConditionDiscoveryTest.java
+  - src/test/java/io/github/gustavo2358/cobolexplorer/SearchWhenMaterializationAdversarialTest.java
+  - src/test/java/io/github/gustavo2358/cobolexplorer/ExternalCicsCharacterizationTest.java
+  - src/test/java/io/github/gustavo2358/cobolexplorer/CicsIntrinsicClassifierTest.java
+  - src/test/java/io/github/gustavo2358/cobolexplorer/ExternalClassificationProductTest.java
+  - src/test/java/io/github/gustavo2358/cobolexplorer/ExternalClassificationProjectionTest.java
+  - src/test/java/io/github/gustavo2358/cobolexplorer/PartialAnalysisMissingCopyTest.java
+  - src/test/java/io/github/gustavo2358/cobolexplorer/SourceProvenanceTest.java
+  - src/test/java/io/github/gustavo2358/cobolexplorer/ResolutionAnalysisReportTest.java
+  - src/test/java/io/github/gustavo2358/cobolexplorer/ResolutionSnapshotTest.java
+  - src/test/java/io/github/gustavo2358/cobolexplorer/ArchitectureBoundaryTest.java
+  - src/test/resources/cobol/resolution/data-binding.cbl
+  - src/test/resources/cobol/resolution/program-binding.cbl
+  - src/test/resources/cobol/resolution/call-identifier-runtime-target.cbl
+  - src/test/resources/cobol/resolution/procedure-binding.cbl
+  - src/test/resources/cobol/resolution/evaluate-condition-names.cbl
+  - src/test/resources/cobol/semantic/ast-cfg-boundary.cbl
+  - src/test/resources/cobol/provenance/main.cbl
+  - src/test/resources/cobol/provenance/cpy/FIRST.cpy
+  - src/test/resources/cobol/provenance/cpy/SECOND.cpy
+must_not_change:
+  - src/main/**
+  - AST, symbol, occurrence, nominal-resolution, grammar and parser behavior
+  - F-01, WORK-AST-002 and any other active work item scope
+  - Semantic Product, Cobol Lower, Canonical Analysis IR, CFG, dataflow, possible-values and dependency extraction implementation
+  - serializer, JSON schema, transport format, HTML contract and plugin framework
+  - production tests, fixtures and baselines except a durable oracle explicitly authorized by review
+gates:
+  - docs
+  - fast
+  - architecture
+  - semantic
+  - full
