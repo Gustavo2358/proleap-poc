@@ -7,8 +7,10 @@ public final class ReferenceOccurrences {
     public enum Preservation { STRUCTURED, PRESERVED_CONTAINER, PRESERVED_NODE }
 
     /**
-     * A nominal use before binding. {@code kind} is the primary syntactic interpretation;
-     * {@code admissibleKinds} retains every semantic category allowed by that syntax.
+     * A nominal use before binding. {@code kind} is the primary routing hint for the
+     * typed surface position; a contextual condition tail therefore keeps
+     * {@code CONDITION} as its primary hint while {@code admissibleKinds} retains DATA,
+     * INDEX and/or CONDITION as allowed by the written nominal shape.
      * Consumers must use the selected candidate kind, not this hint, as the final resolved category.
      */
     public record Occurrence(int id, ResolutionContracts.ProgramUnitId programUnitId,

@@ -846,18 +846,21 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
         CobolParser.PerformProcedureStatementContext procedure = context.performProcedureStatement();
         CobolParser.PerformTypeContext type = inline != null ? inline.performType() : procedure.performType();
         if (inline != null) {
-            List<Ast.Expression> controls = type == null ? List.of() : controlExpressions(type);
+            List<Ast.PerformControl> controlMetadata = type == null ? List.of() : performControls(type);
+            List<Ast.Expression> controls = controlMetadata.stream().map(Ast.PerformControl::expression).toList();
             return new Ast.PerformStatement(meta, Ast.PerformKind.INLINE, null, null,
-                    type == null ? "once" : compact(sourceText(type)), controls, statementsInside(inline));
+                    type == null ? "once" : compact(sourceText(type)), controls, controlMetadata,
+                    statementsInside(inline));
         }
         List<CobolParser.ProcedureNameContext> names = procedure == null ? List.of()
                 : nearestDescendants(procedure, CobolParser.ProcedureNameContext.class);
         Ast.ProcedureReference fromReference = names.isEmpty() ? null : procedureReference(names.get(0));
         Ast.ProcedureReference throughReference = names.size() < 2 ? null : procedureReference(names.get(1));
-        List<Ast.Expression> controls = type == null ? List.of() : controlExpressions(type);
+        List<Ast.PerformControl> controlMetadata = type == null ? List.of() : performControls(type);
+        List<Ast.Expression> controls = controlMetadata.stream().map(Ast.PerformControl::expression).toList();
         return new Ast.PerformStatement(meta, Ast.PerformKind.PROCEDURE,
                 fromReference, throughReference,
-                type == null ? "once" : compact(sourceText(type)), controls, List.of());
+                type == null ? "once" : compact(sourceText(type)), controls, controlMetadata, List.of());
     }
 
     private Ast.GoToStatement buildGoTo(CobolParser.GoToStatementContext context) {
@@ -926,9 +929,22 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
         return preservedExpression(context, "subscript");
     }
 
-    private List<Ast.Expression> controlExpressions(ParserRuleContext performType) {
-        return nearestDescendants(performType, AstBuilder::isRecognizedExpressionContext).stream()
-                .map(context -> expression(context, "perform control")).toList();
+    private List<Ast.PerformControl> performControls(CobolParser.PerformTypeContext performType) {
+        return nearestDescendants(performType, AstBuilder::isExpressionWrapperValueContext).stream()
+                .map(context -> new Ast.PerformControl(expression(context, "perform control"),
+                        isInsidePerformUntil(context) ? Ast.PerformControlContext.CONDITION
+                                : Ast.PerformControlContext.VALUE))
+                .toList();
+    }
+
+    private static boolean isInsidePerformUntil(ParserRuleContext context) {
+        ParseTree current = context.getParent();
+        while (current != null) {
+            if (current instanceof CobolParser.PerformUntilContext) return true;
+            if (current instanceof CobolParser.PerformTypeContext) return false;
+            current = current.getParent();
+        }
+        return false;
     }
 
     private Ast.Expression identifierExpression(CobolParser.IdentifierContext identifier) {

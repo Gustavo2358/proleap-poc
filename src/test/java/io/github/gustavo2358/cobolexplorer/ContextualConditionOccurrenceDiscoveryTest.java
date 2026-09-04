@@ -76,18 +76,21 @@ class ContextualConditionOccurrenceDiscoveryTest {
                        ResolutionContracts.ReferenceKind selectedKind) { }
         Map<String, Variant> variants = new LinkedHashMap<>();
         variants.put("DATA", new Variant("01 C PIC 9(4).",
-                ResolutionContracts.ResolutionStatus.UNRESOLVED,
-                ResolutionContracts.ResolutionReason.INVALID_NAMESPACE_FOR_CONTEXT, null));
+                ResolutionContracts.ResolutionStatus.RESOLVED,
+                ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION,
+                ResolutionContracts.ReferenceKind.DATA));
         variants.put("INDEX", new Variant("01 T OCCURS 2 TIMES INDEXED BY C.\n   05 V PIC X.",
-                ResolutionContracts.ResolutionStatus.UNRESOLVED,
-                ResolutionContracts.ResolutionReason.INVALID_NAMESPACE_FOR_CONTEXT, null));
+                ResolutionContracts.ResolutionStatus.RESOLVED,
+                ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION,
+                ResolutionContracts.ReferenceKind.INDEX));
         variants.put("CONDITION", new Variant("01 FLAG PIC X.\n   88 C VALUE 'Y'.",
                 ResolutionContracts.ResolutionStatus.RESOLVED,
                 ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION,
                 ResolutionContracts.ReferenceKind.CONDITION));
         variants.put("RENAMES", new Variant("01 G.\n   05 X PIC X.\n   05 Y PIC X.\n   66 C RENAMES X THRU Y.",
-                ResolutionContracts.ResolutionStatus.UNRESOLVED,
-                ResolutionContracts.ResolutionReason.INVALID_NAMESPACE_FOR_CONTEXT, null));
+                ResolutionContracts.ResolutionStatus.RESOLVED,
+                ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION,
+                ResolutionContracts.ReferenceKind.DATA));
         variants.put("MISSING", new Variant("01 PRESENT PIC X.",
                 ResolutionContracts.ResolutionStatus.UNRESOLVED,
                 ResolutionContracts.ResolutionReason.DECLARATION_NOT_FOUND, null));
@@ -111,7 +114,9 @@ class ContextualConditionOccurrenceDiscoveryTest {
                     () -> assertEquals("conditionNameReference", entry.occurrence().grammarRule()),
                     () -> assertEquals(ResolutionContracts.ReferenceKind.CONDITION,
                             entry.occurrence().kind()),
-                    () -> assertEquals(Set.of(ResolutionContracts.ReferenceKind.CONDITION),
+                    () -> assertEquals(EnumSet.of(ResolutionContracts.ReferenceKind.DATA,
+                                    ResolutionContracts.ReferenceKind.INDEX,
+                                    ResolutionContracts.ReferenceKind.CONDITION),
                             entry.occurrence().admissibleKinds()),
                     () -> assertEquals(variant.status(), entry.status()),
                     () -> assertEquals(variant.reason(), entry.reason()),
@@ -198,8 +203,9 @@ class ContextualConditionOccurrenceDiscoveryTest {
         ReferenceOccurrences.Occurrence subscript = occurrence(occurrences, subscriptId);
         assertAll("independent child policies",
                 () -> assertEquals(ResolutionContracts.ReferenceRole.VALUE_READ, root.role()),
-                () -> assertEquals(Set.of(ResolutionContracts.ReferenceKind.CONDITION),
-                        root.admissibleKinds(), "current root false gap remains characterized"),
+                () -> assertEquals(EnumSet.of(ResolutionContracts.ReferenceKind.DATA,
+                                ResolutionContracts.ReferenceKind.CONDITION),
+                        root.admissibleKinds(), "qualified+subscripted contextual root excludes INDEX"),
                 () -> assertEquals(ResolutionContracts.ReferenceRole.QUALIFIER_COMPONENT,
                         qualifier.role()),
                 () -> assertEquals(Set.of(ResolutionContracts.ReferenceKind.DATA),
@@ -442,7 +448,7 @@ class ContextualConditionOccurrenceDiscoveryTest {
         List<Ast.RelationCondition> qualifiedRelations = AstBoundaryTestSupport.nodes(
                 qualified, Ast.RelationCondition.class);
         assertEquals(2, qualifiedRelations.size());
-        assertCurrentRelationPolicyIgnoresShape(qualified, qualifiedRelations);
+        assertRelationPolicyUsesShape(qualified, qualifiedRelations);
 
         AstBoundaryTestSupport.Analysis subscripted = AstBoundaryTestSupport.analyze(source("R2-REL-SUB", """
                     01 T.
@@ -453,7 +459,7 @@ class ContextualConditionOccurrenceDiscoveryTest {
         List<Ast.RelationCondition> subscriptedRelations = AstBoundaryTestSupport.nodes(
                 subscripted, Ast.RelationCondition.class);
         assertEquals(1, subscriptedRelations.size());
-        assertCurrentRelationPolicyIgnoresShape(subscripted, subscriptedRelations);
+        assertRelationPolicyUsesShape(subscripted, subscriptedRelations);
 
         // Future shape-sensitive relation policy on valid roots: qualified/subscripted
         // roots bind DATA under {DATA}; the bare root keeps INDEX admissible ({DATA, INDEX}).
@@ -498,17 +504,20 @@ class ContextualConditionOccurrenceDiscoveryTest {
                         .count()));
     }
 
-    private static void assertCurrentRelationPolicyIgnoresShape(
+    private static void assertRelationPolicyUsesShape(
             AstBoundaryTestSupport.Analysis analysis, List<Ast.RelationCondition> relations) {
         ReferenceOccurrences occurrences = analysis.occurrences().values().iterator().next();
         for (Ast.RelationCondition relation : relations) {
             Ast.DataReference object = (Ast.DataReference) relation.object();
             ReferenceOccurrences.Occurrence root = occurrence(occurrences, object.meta().id());
-            assertAll("current relation-operand policy ignores nominal shape: " + object.writtenText(),
-                    () -> assertEquals(ResolutionContracts.ReferenceKind.INDEX, root.kind()),
-                    () -> assertEquals(EnumSet.of(ResolutionContracts.ReferenceKind.DATA,
-                                    ResolutionContracts.ReferenceKind.INDEX),
-                            root.admissibleKinds()));
+            Set<ResolutionContracts.ReferenceKind> expected = ReferenceOccurrenceCollector
+                    .relationOperandKinds(object);
+            ResolutionContracts.ReferenceKind primary = ReferenceOccurrenceCollector
+                    .indexAdmissibleNominalShape(object)
+                    ? ResolutionContracts.ReferenceKind.INDEX : ResolutionContracts.ReferenceKind.DATA;
+            assertAll("shape-sensitive relation-operand policy: " + object.writtenText(),
+                    () -> assertEquals(primary, root.kind()),
+                    () -> assertEquals(expected, root.admissibleKinds()));
         }
     }
 
@@ -586,12 +595,11 @@ class ContextualConditionOccurrenceDiscoveryTest {
 
         ReferenceOccurrences occurrences = analysis.occurrences().values().iterator().next();
         ReferenceOccurrences.Occurrence current = occurrence(occurrences, root.meta().id());
-        assertAll("FACT-R3-02 PREEXISTING_RELATION_REFERENCE_MODIFICATION_OVERADMISSIBILITY",
-                () -> assertEquals(ResolutionContracts.ReferenceKind.INDEX, current.kind()),
-                () -> assertEquals(EnumSet.of(ResolutionContracts.ReferenceKind.DATA,
-                                ResolutionContracts.ReferenceKind.INDEX),
+        assertAll("FACT-R3-02 implemented reference-modification shape policy",
+                () -> assertEquals(ResolutionContracts.ReferenceKind.DATA, current.kind()),
+                () -> assertEquals(Set.of(ResolutionContracts.ReferenceKind.DATA),
                         current.admissibleKinds(),
-                        "current relation policy treats the reference-modified root as bare"));
+                        "reference modification excludes INDEX"));
 
         Set<ResolutionContracts.ReferenceKind> futureKinds = Set.of(
                 ResolutionContracts.ReferenceKind.DATA);
@@ -672,10 +680,9 @@ class ContextualConditionOccurrenceDiscoveryTest {
 
         ReferenceOccurrences occurrences = analysis.occurrences().values().iterator().next();
         ReferenceOccurrences.Occurrence current = occurrence(occurrences, modified.meta().id());
-        assertAll("distributed current overadmissibility",
-                () -> assertEquals(ResolutionContracts.ReferenceKind.INDEX, current.kind()),
-                () -> assertEquals(EnumSet.of(ResolutionContracts.ReferenceKind.DATA,
-                                ResolutionContracts.ReferenceKind.INDEX),
+        assertAll("distributed implemented shape policy",
+                () -> assertEquals(ResolutionContracts.ReferenceKind.DATA, current.kind()),
+                () -> assertEquals(Set.of(ResolutionContracts.ReferenceKind.DATA),
                         current.admissibleKinds()));
 
         Set<ResolutionContracts.ReferenceKind> futureKinds = Set.of(

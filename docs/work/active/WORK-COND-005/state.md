@@ -2,7 +2,7 @@
 
 ## Onde estamos
 
-Discovery Round 3 do work item na branch `implementation/work-cond-005-contextual-occurrences`, sobre o head revisado `6e5ee8c`. O único finding restante do review foi F5: a definição de nominal shape para admissibilidade de INDEX ignorava `referenceModification`. F1–F4 permanecem fechados e não foram reabertos. Este round fecha F5 no Discovery; implementação não autorizada; zero arquivo de produção alterado.
+Checkpoint 2 — Implementation do work item na branch `implementation/work-cond-005-contextual-occurrences`, iniciado sobre o head aprovado `b17f81f`. F1–F5 permanecem fechados e não foram reabertos. A implementação foi autorizada; nenhum arquivo de produção foi alterado até a confirmação do TDD RED.
 
 ## Verde conhecido
 
@@ -18,7 +18,11 @@ Discovery Round 3 do work item na branch `implementation/work-cond-005-contextua
 
 ## Restante
 
-Novo review humano do Round 3 e autorização explícita para o Checkpoint 2 (ordem reorganizada no plan). SEARCH WHEN permanece Slice 6; `BACKLOG-RES-004` permanece separado; nenhuma implementação de produção começa neste round.
+Implementar GREEN, adicionar adversarial tests, executar regressões/gates, atualizar o mesmo PR e parar para review humano. SEARCH WHEN permanece Slice 6; `BACKLOG-RES-004` permanece separado; closure/merge não são autorizados.
+
+## TDD RED — confirmado
+
+`ContextualConditionOccurrenceTest` foi criado antes de qualquer mudança em `src/main/`. A suíte focal confirmou RED pelos motivos esperados: tails `A = B OR C` ainda eram `CONDITION/{CONDITION}`, relation roots qualified/subscripted/reference-modified ainda recebiam `{DATA, INDEX}`, `conditionNameReference` ainda era `REFERENCE_ORIGIN/CONDITION`, e `PerformStatement` ainda não expunha controls tipados. O teste de standalone permaneceu correto como controle negativo. Nenhum commit vermelho foi criado.
 
 ## Descobertas que afetam o plano
 

@@ -47,6 +47,8 @@ public final class Ast {
     /** Syntactic form only; linkage is compiler-option-dependent and belongs to resolution. */
     public enum CallTargetSyntax { LITERAL_PROGRAM_NAME, IDENTIFIER_OR_EXPRESSION }
     public enum PerformKind { INLINE, PROCEDURE }
+    /** Typed pre-binding context of a PERFORM control expression. */
+    public enum PerformControlContext { VALUE, CONDITION }
     public enum GoToKind { SIMPLE, DEPENDING_ON }
     public enum QualifierConnector { OF, IN }
     /**
@@ -213,13 +215,32 @@ public final class Ast {
     public record EvaluateSelector(Expression expression, int subjectIndex,
                                    EvaluateSelectorContext context) {}
 
+    /** Metadata for a PERFORM control; it is not an AST node and consumes no ID. */
+    public record PerformControl(Expression expression, PerformControlContext context) {
+        public PerformControl {
+            expression = Objects.requireNonNull(expression, "expression");
+            context = Objects.requireNonNull(context, "context");
+        }
+    }
+
     public record PerformStatement(Meta meta, PerformKind performKind, ProcedureReference fromReference,
                                    ProcedureReference throughReference, String writtenControl,
                                    List<Expression> controlExpressions,
+                                   List<PerformControl> controls,
                                    List<Statement> inlineBody) implements Statement {
         public PerformStatement {
             controlExpressions = List.copyOf(controlExpressions);
+            controls = List.copyOf(controls);
+            if (!controls.stream().map(PerformControl::expression).toList().equals(controlExpressions))
+                throw new IllegalArgumentException("PERFORM controls must preserve control expression order");
             inlineBody = List.copyOf(inlineBody);
+        }
+        public PerformStatement(Meta meta, PerformKind performKind, ProcedureReference fromReference,
+                                ProcedureReference throughReference, String writtenControl,
+                                List<Expression> controlExpressions, List<Statement> inlineBody) {
+            this(meta, performKind, fromReference, throughReference, writtenControl, controlExpressions,
+                    controlExpressions.stream().map(expression ->
+                            new PerformControl(expression, PerformControlContext.VALUE)).toList(), inlineBody);
         }
         public String fromProcedure() { return fromReference == null ? "" : fromReference.writtenText(); }
         public String throughProcedure() { return throughReference == null ? "" : throughReference.writtenText(); }

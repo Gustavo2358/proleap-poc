@@ -4,6 +4,7 @@ import io.github.gustavo2358.cobolexplorer.antlr.CobolParser;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -163,9 +164,10 @@ class ConditionNameSurfaceAstTest {
                 () -> assertEquals("C", tail.writtenText()),
                 () -> assertEquals(ResolutionContracts.ReferenceKind.CONDITION,
                         entry(plain, "C").occurrence().kind(),
-                        "the collector false gap stays reserved for Slice 5; this slice must not "
-                                + "convert the tail into a definitive condition"),
-                () -> assertEquals(Set.of(ResolutionContracts.ReferenceKind.CONDITION),
+                        "CONDITION remains the contextual primary routing hint"),
+                () -> assertEquals(EnumSet.of(ResolutionContracts.ReferenceKind.DATA,
+                                ResolutionContracts.ReferenceKind.INDEX,
+                                ResolutionContracts.ReferenceKind.CONDITION),
                         entry(plain, "C").occurrence().admissibleKinds()));
 
         AstBoundaryTestSupport.Analysis subscripted = AstBoundaryTestSupport.analyze(

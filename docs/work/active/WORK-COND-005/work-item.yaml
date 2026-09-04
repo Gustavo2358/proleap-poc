@@ -70,7 +70,7 @@ test_scope:
   - src/test/java/io/github/gustavo2358/cobolexplorer/DataAndIndexReferenceResolverTest.java
   - src/test/java/io/github/gustavo2358/cobolexplorer/ReferenceResolutionManifestTest.java
   - src/test/java/io/github/gustavo2358/cobolexplorer/AstPreorderInvariantTest.java
-  - planned:src/test/java/io/github/gustavo2358/cobolexplorer/ContextualConditionOccurrenceTest.java
+  - src/test/java/io/github/gustavo2358/cobolexplorer/ContextualConditionOccurrenceTest.java
 must_not_change:
   - src/main/antlr4/Cobol.g4
 # resolver files are source_scope for wording only (Round 2); no resolution

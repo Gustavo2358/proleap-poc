@@ -107,14 +107,16 @@ final class ReferenceOccurrenceCollector {
             return;
         }
         if (node instanceof Ast.IfStatement statement) {
-            visit(statement.condition(), ResolutionContracts.ReferenceRole.VALUE_READ, preservation);
+            visitConditionSurface(statement.condition(), preservation);
             for (Ast.Statement nested : statement.thenBranch()) visit(nested, role, preservation);
             for (Ast.Statement nested : statement.elseBranch()) visit(nested, role, preservation);
             return;
         }
         if (node instanceof Ast.EvaluateStatement statement) {
-            for (Ast.Expression subject : statement.subjects())
-                visit(subject, ResolutionContracts.ReferenceRole.VALUE_READ, preservation);
+            for (Ast.Expression subject : statement.subjects()) {
+                if (isConditionSurfaceExpression(subject)) visitConditionSurface(subject, preservation);
+                else visit(subject, ResolutionContracts.ReferenceRole.VALUE_READ, preservation);
+            }
             for (Ast.EvaluateBranch branch : statement.branches()) {
                 for (Ast.EvaluateSelector selector : branch.selectors()) {
                     if (selector.context() == Ast.EvaluateSelectorContext.BOOLEAN_SUBJECT_NOMINAL
@@ -148,8 +150,11 @@ final class ReferenceOccurrenceCollector {
                 visit(statement.fromReference(), ResolutionContracts.ReferenceRole.PERFORM_FROM, preservation);
             if (statement.throughReference() != null)
                 visit(statement.throughReference(), ResolutionContracts.ReferenceRole.PERFORM_THROUGH, preservation);
-            for (Ast.Expression control : statement.controlExpressions())
-                visit(control, ResolutionContracts.ReferenceRole.VALUE_READ, preservation);
+            for (Ast.PerformControl control : statement.controls()) {
+                if (control.context() == Ast.PerformControlContext.CONDITION)
+                    visitConditionSurface(control.expression(), preservation);
+                else visit(control.expression(), ResolutionContracts.ReferenceRole.VALUE_READ, preservation);
+            }
             for (Ast.Statement nested : statement.inlineBody()) visit(nested, role, preservation);
             return;
         }
@@ -267,12 +272,61 @@ final class ReferenceOccurrenceCollector {
                 ResolutionContracts.ReferenceRole.CONTEXT_DEPENDENT, preservation);
     }
 
+    private void visitConditionSurface(Ast.Expression expression,
+                                       ReferenceOccurrences.Preservation preservation) {
+        if (expression instanceof Ast.DataReference reference) {
+            addDataReference(reference, ResolutionContracts.ReferenceRole.VALUE_READ, preservation,
+                    ResolutionContracts.ReferenceKind.CONDITION,
+                    Set.of(ResolutionContracts.ReferenceKind.CONDITION));
+            return;
+        }
+        if (expression instanceof Ast.LogicalCondition logical) {
+            for (Ast.Expression operand : logical.operands()) visitConditionSurface(operand, preservation);
+            return;
+        }
+        if (expression instanceof Ast.GroupedCondition grouped) {
+            visitConditionSurface(grouped.inner(), preservation);
+            return;
+        }
+        if (expression instanceof Ast.NegatedCondition negated) {
+            visitConditionSurface(negated.operand(), preservation);
+            return;
+        }
+        if (expression instanceof Ast.RelationCondition relation) {
+            if (relation.subject() != null) visitRelationalOperand(relation.subject(), preservation);
+            visitRelationalOperand(relation.object(), preservation);
+            return;
+        }
+        if (expression instanceof Ast.ContextualConditionTail tail) {
+            Ast.DataReference reference = tail.nominalReference();
+            addDataReference(reference, ResolutionContracts.ReferenceRole.VALUE_READ, preservation,
+                    ResolutionContracts.ReferenceKind.CONDITION, contextualKinds(reference));
+            return;
+        }
+        if (expression instanceof Ast.ClassCondition classCondition) {
+            visit(classCondition.subject(), ResolutionContracts.ReferenceRole.VALUE_READ, preservation);
+            return;
+        }
+        visit(expression, ResolutionContracts.ReferenceRole.VALUE_READ, preservation);
+    }
+
+    private static boolean isConditionSurfaceExpression(Ast.Expression expression) {
+        return expression instanceof Ast.LogicalCondition
+                || expression instanceof Ast.GroupedCondition
+                || expression instanceof Ast.RelationCondition
+                || expression instanceof Ast.NegatedCondition
+                || expression instanceof Ast.ContextualConditionTail
+                || expression instanceof Ast.ClassCondition;
+    }
+
     private void visitRelationalOperand(Ast.Expression expression,
                                         ReferenceOccurrences.Preservation preservation) {
         if (expression instanceof Ast.DataReference reference) {
             addDataReference(reference, ResolutionContracts.ReferenceRole.VALUE_READ, preservation,
-                    ResolutionContracts.ReferenceKind.INDEX,
-                    EnumSet.of(ResolutionContracts.ReferenceKind.DATA, ResolutionContracts.ReferenceKind.INDEX));
+                    indexAdmissibleNominalShape(reference)
+                            ? ResolutionContracts.ReferenceKind.INDEX
+                            : ResolutionContracts.ReferenceKind.DATA,
+                    relationOperandKinds(reference));
             return;
         }
         if (expression instanceof Ast.DistributedOperandGroup group) {
@@ -289,6 +343,25 @@ final class ReferenceOccurrenceCollector {
         visit(expression, ResolutionContracts.ReferenceRole.VALUE_READ, preservation);
     }
 
+    static boolean indexAdmissibleNominalShape(Ast.DataReference reference) {
+        Objects.requireNonNull(reference, "reference");
+        return reference.qualifiers().isEmpty()
+                && reference.subscriptGroups().isEmpty()
+                && reference.referenceModification() == null;
+    }
+
+    static Set<ResolutionContracts.ReferenceKind> relationOperandKinds(Ast.DataReference reference) {
+        return indexAdmissibleNominalShape(reference)
+                ? EnumSet.of(ResolutionContracts.ReferenceKind.DATA, ResolutionContracts.ReferenceKind.INDEX)
+                : Set.of(ResolutionContracts.ReferenceKind.DATA);
+    }
+
+    static Set<ResolutionContracts.ReferenceKind> contextualKinds(Ast.DataReference reference) {
+        EnumSet<ResolutionContracts.ReferenceKind> result = EnumSet.copyOf(relationOperandKinds(reference));
+        result.add(ResolutionContracts.ReferenceKind.CONDITION);
+        return result;
+    }
+
     private void addDataReference(Ast.DataReference reference, ResolutionContracts.ReferenceRole role,
                                   ReferenceOccurrences.Preservation preservation,
                                   ResolutionContracts.ReferenceKind kindOverride) {
@@ -300,8 +373,7 @@ final class ReferenceOccurrenceCollector {
                                   ResolutionContracts.ReferenceKind kindOverride,
                                   Set<ResolutionContracts.ReferenceKind> admissibleKindsOverride) {
         ResolutionContracts.ReferenceKind kind = kindOverride != null ? kindOverride
-                : "conditionNameReference".equals(reference.meta().origin().grammarRule())
-                ? ResolutionContracts.ReferenceKind.CONDITION : ResolutionContracts.ReferenceKind.DATA;
+                : ResolutionContracts.ReferenceKind.DATA;
         ReferenceOccurrences.Preservation effective = reference.understanding() == Ast.ReferenceUnderstanding.PRESERVED
                 ? ReferenceOccurrences.Preservation.PRESERVED_NODE : preservation;
         add(reference, kind, role, reference.writtenText(), effective,
