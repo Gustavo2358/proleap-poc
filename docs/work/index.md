@@ -5,7 +5,7 @@ Work items delimitam a mudança em execução; o [backlog](backlog.md) registra 
 ## Ativo
 
 - [WORK-AST-002 — Hardening da fronteira AST para CFG e dataflow](active/WORK-AST-002/spec.md) — Slice 1 mergeado no PR #10; Slice 2 no checkpoint de Discovery do PR #13. Implementar F-02 depende de merge/review e autorização explícita posterior.
-- [WORK-SEMANTIC-PRODUCT-001 — Semantic Product Boundary Discovery](active/WORK-SEMANTIC-PRODUCT-001/spec.md) — Checkpoint 1 concluído após segunda remediation adversarial e aguardando novo review humano; Checkpoints 2 e 3 não autorizados, dependem de autorização explícita.
+- [WORK-SEMANTIC-PRODUCT-001 — Semantic Product Boundary Discovery](active/WORK-SEMANTIC-PRODUCT-001/spec.md) — Checkpoint 2 concluído e aguardando review humano; Checkpoint 3 NÃO autorizado e não iniciado.
 
 ## Histórico
 
