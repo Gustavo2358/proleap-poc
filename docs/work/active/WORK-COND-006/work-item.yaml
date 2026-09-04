@@ -1,0 +1,59 @@
+id: WORK-COND-006
+title: Materializar conditions de SEARCH WHEN
+status: active
+risk: high
+goal: Fechar o menor contrato tipado para que as conditions de SEARCH WHEN atravessem AST, occurrences e resolution sem duplicação nem alteração do resolver.
+must_read:
+  - docs/work/backlog.md#backlog-cond-001--contextualizar-condições-combinadas-e-referências-nominais
+  - docs/domain/conditional-expressions.md
+  - docs/domain/semantic-ast.md
+  - docs/domain/reference-resolution.md
+  - docs/architecture/decisions/0012-contextual-conditions-use-post-binding-projection.md
+  - docs/architecture/invariants.md
+  - docs/evals/conditional-expression-oracles.md
+  - docs/engineering/semantic-analysis-policy.md
+  - docs/engineering/semantic-testing.md
+related_domain_rules:
+  - docs/domain/conditional-expressions.md
+  - docs/domain/semantic-ast.md
+  - docs/domain/reference-resolution.md
+related_decisions:
+  - ADR-0012
+related_invariants:
+  - INV-AST-001
+  - INV-AST-002
+  - INV-AST-003
+  - INV-PROV-002
+  - INV-COND-001
+  - INV-COND-002
+  - INV-RES-001
+  - INV-RES-002
+  - INV-DET-001
+evals:
+  - EVAL-AST-001
+  - EVAL-AST-003
+  - EVAL-AST-004
+  - EVAL-AST-005
+  - EVAL-COV-001
+  - EVAL-COV-002
+  - EVAL-RES-COV-001
+  - EVAL-RES-REPORT-001
+  - EVAL-RES-DET-001
+source_scope:
+  - src/main/java/io/github/gustavo2358/cobolexplorer/Ast.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/AstBuilder.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/ReferenceOccurrenceCollector.java
+  - src/main/resources/semantic-coverage/grammar-rule-manifest.tsv
+test_scope:
+  - src/test/java/io/github/gustavo2358/cobolexplorer/SearchWhenConditionDiscoveryTest.java
+must_not_change:
+  - src/main neste checkpoint de Discovery
+  - src/main/antlr4/Cobol.g4 salvo defeito de parsing comprovado em review posterior
+  - ReferenceResolution, ResolutionContracts, SymbolTable, candidate filtering, scope e qualification
+  - snapshots, baselines de corpus e manifestos de resolução neste checkpoint
+  - ConditionSemantics, ConditionValidation, CFG, dataflow, valores de runtime e targets dinâmicos
+  - reparse textual, regex, token scan no collector ou occurrences sintéticas para subject/operator herdados
+gates:
+  - fast
+  - semantic
+  - full
