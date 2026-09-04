@@ -9,6 +9,8 @@ Checkpoint 1 — Discovery Round 2 concluído na branch `implementation/work-con
 - working tree limpa antes da criação da branch;
 - `./scripts/harness/check-fast.sh` verde no baseline pós-merge;
 - `SearchWhenConditionDiscoveryTest` verde com 13 testes, incluindo F1, NEXT SENTENCE e VARYING DATA/INDEX;
+- regressões focais `ContextualConditionOccurrenceTest`, `ConditionSurfaceAstTest` e `SemanticConditionContextDiscoveryTest` verdes;
+- Round 2: `check-fast.sh`, `check-semantic.sh` e `check-full.sh` verdes;
 - nenhuma alteração em `src/main`, grammar, resolver, snapshots ou baselines;
 - S1–S6, SEARCH ALL, controle negativo e challenges documentados.
 
