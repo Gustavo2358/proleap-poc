@@ -2,11 +2,12 @@
 
 ## Fatiamento
 
-1. **Checkpoint 1 — Discovery (este PR):** validar baseline pós-PR #19, caracterizar grammar → parse tree → AST → occurrences → resolution, confirmar IBM normal/ALL, criar oracles S1–S6 e controle negativo, fechar migration contract e parar.
-2. **Implementation futura, após review/autorização:** substituir somente o lowering preservado de `searchStatement` por `SearchStatement` e materializar `SearchWhen` com condition surface existente; manter IDs pre-order e ownership de clauses.
-3. **Verification futura:** promover cobertura de `searchStatement`/`searchWhen`, atualizar snapshots/cardinalidades justificadas e provar que cada nominal escrito produz uma occurrence/resolution entry única.
-4. **Slice posterior separado:** validar restrições type-sensitive e específicas de SEARCH ALL, se o produto passar a declarar validade semântica.
-5. Slice 7 de regressão de corpus permanece posterior e separado.
+1. **Checkpoint 1 — Discovery (Round 1):** validar baseline pós-PR #19, caracterizar grammar → parse tree → AST → occurrences → resolution, confirmar IBM normal/ALL, criar oracles S1–S6 e controle negativo, fechar migration contract e parar.
+2. **Checkpoint 1 — Discovery Round 2 (este PR):** fechar o routing tipado do collector, caracterizar a alternativa `NEXT SENTENCE`, medir `VARYING` para `INDEX` e `DATA`, executar CH-11–CH-15 e a self-review SR-01–SR-15. Nenhuma produção é autorizada.
+3. **Implementation futura, após review/autorização:** substituir somente o lowering preservado de `searchStatement` por `SearchStatement` e materializar `SearchWhen` com condition surface existente; adicionar routing explícito `SearchWhen.condition → typed CONDITION position → visitConditionSurface`, manter IDs pre-order e ownership de clauses, e representar `NEXT SENTENCE` com `Ast.NextSentenceStatement`.
+4. **Verification futura:** promover cobertura de `searchStatement`/`searchWhen`, atualizar snapshots/cardinalidades justificadas e provar que cada nominal escrito produz uma occurrence/resolution entry única.
+5. **Slice posterior separado:** validar restrições type-sensitive e específicas de SEARCH ALL, se o produto passar a declarar validade semântica.
+6. Slice 7 de regressão de corpus permanece posterior e separado.
 
 ## Dependências
 
@@ -17,7 +18,7 @@
 
 ## Superfície arquitetural provável
 
-Confirmada como mínima: `Ast.java`, `AstBuilder.java` e `ReferenceOccurrenceCollector.java`. O manifest de coverage precisa reclassificar `searchStatement`/`searchWhen` quando a implementação for autorizada. Testes focalizados e fixtures podem crescer em `src/test`; grammar não entra no escopo porque `searchStatement` já reconhece ambas as formas e `searchWhen.condition` já é o nó correto da parse tree.
+Confirmada como mínima: `Ast.java`, `AstBuilder.java` e `ReferenceOccurrenceCollector.java`. O collector só precisará de typed boundary routing para chamar `visitConditionSurface` na condition de cada `SearchWhen`; não deve receber nova policy de SEARCH, duplicação de `relationOperandKinds`/`contextualKinds` ou lógica de resolver. O manifest de coverage precisa reclassificar `searchStatement`/`searchWhen` quando a implementação for autorizada. Testes focalizados e fixtures podem crescer em `src/test`; grammar não entra no escopo porque `searchStatement` já reconhece ambas as formas e `searchWhen.condition` já é o nó correto da parse tree.
 
 `AstScopeIndex`, `ReferenceResolution`, `ResolutionContracts`, symbol tables e snapshots não precisam de alteração estrutural demonstrada neste Discovery; só entram em implementação se um oracle futuro revelar uma incompatibilidade concreta.
 
@@ -25,6 +26,9 @@ Confirmada como mínima: `Ast.java`, `AstBuilder.java` e `ReferenceOccurrenceCol
 
 - Remover a duplicação do caminho `PreservedStatement` quando SEARCH virar typed statement.
 - Preservar operands reconhecidos hoje e acrescentar apenas condition/branch nodes alcançáveis.
+- Rotear a condition pelo boundary semântico tipado; `Ast.children` permanece responsável por reachability, IDs, scope, provenance e pre-order, não por escolher `CONDITION`.
+- Preservar `NEXT SENTENCE` fora de `statement()` como `Ast.NextSentenceStatement` na action da branch.
+- Usar `SEARCH_VARYING` com `primary kind DATA` e `admissibleKinds {DATA, INDEX}`, permitindo seleção nominal de INDEX ou DATA conforme a declaração.
 - Atualizar coverage de `PRESERVED_UNINTERPRETED` para a classificação da boundary tipada, sem afirmar que validation/ConditionSemantics existem.
 - Rebaselinar IDs/snapshots somente com evidência aprovada e sem esconder diferenças de cardinalidade.
 

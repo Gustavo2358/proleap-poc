@@ -49,6 +49,7 @@ test_scope:
 must_not_change:
   - src/main neste checkpoint de Discovery
   - src/main/antlr4/Cobol.g4 salvo defeito de parsing comprovado em review posterior
+  - ReferenceOccurrenceCollector: em implementação futura, somente typed boundary routing de SearchWhen.condition para visitConditionSurface; sem nova policy de SEARCH ou duplicação de relationOperandKinds/contextualKinds
   - ReferenceResolution, ResolutionContracts, SymbolTable, candidate filtering, scope e qualification
   - snapshots, baselines de corpus e manifestos de resolução neste checkpoint
   - ConditionSemantics, ConditionValidation, CFG, dataflow, valores de runtime e targets dinâmicos

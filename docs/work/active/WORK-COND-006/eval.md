@@ -42,6 +42,11 @@ O caso contextual `SEARCH-A = SEARCH-B OR SEARCH-C` permanece semanticamente abe
 | CH-8 não propagar CONDITION para table/index/subscript | PASS | controle negativo exige roles/policies próprias |
 | CH-9 não misturar SEARCH/SEARCH ALL | PASS | teste ALL e seção IBM separada; `all` deve ser preservado |
 | CH-10 não mudar resolver para compensar AST | PASS | código e diff não alteram resolver; A resolve na fronteira AST |
+| CH-11 generic traversal fallacy: child sem typed condition routing | PASS | F1 contrasta `visitConditionSurface` no IF com fallback DATA no SEARCH |
+| CH-12 armazenar apenas `statement()` e perder NEXT SENTENCE | PASS | F2 prova tokens diretos e `statement().size() == 0` |
+| CH-13 VARYING sempre DATA | PASS | F3 INDEX registra atual DATA/{DATA} e futuro selectedCandidate INDEX |
+| CH-14 VARYING sempre INDEX | PASS | F3 DATA resolve selectedCandidate DATA |
+| CH-15 um role compartilhado para table/varying/condition/subscript | PASS | controle negativo + F3 separam as posições |
 
 ## Casos de regressão
 
@@ -68,6 +73,31 @@ O futuro lowering deve percorrer os contexts de SEARCH e sua condition surface u
 - relation operands: preservados pelo generic path e resolvidos como DATA quando declarados — confirmado.
 - resolver/candidate filtering: nenhum defeito observado; recebe somente occurrences sobreviventes — confirmado.
 
+## Discovery Round 2 — findings fechados
+
+### F1-COLLECTOR-ROUTING
+
+- **Current fact:** `ReferenceOccurrenceCollector.visit(Ast.Node, ...)` possui routing semântico explícito para `IfStatement`, `EvaluateStatement` e `PerformStatement`; somente esses boundaries chamam `visitConditionSurface`. O fallback `for (Ast.Node child : Ast.children(node)) visit(child, role, preservation)` propaga o role recebido e, para um `Ast.DataReference` standalone, cai em DATA/{DATA}. O SEARCH atual nem sequer coloca `condition` em `Ast.children`: `PreservedStatement → StatementClause(searchWhen)`, com `recognizedNodes` vazio.
+- **Future contract:** materializar `SearchWhen.condition` como condition surface e declarar explicitamente `SearchWhen.condition → typed CONDITION position → visitConditionSurface(condition)`. `Ast.children` continua necessário para reachability, IDs, scope, provenance e pre-order, mas não substitui routing semântico.
+- **Negative implementation killed:** `SearchWhen.condition` apenas como child estrutural, sem chamada explícita a `visitConditionSurface`, não pode produzir `CONDITION/{CONDITION}` para `WHEN FLAG-ON`.
+- **Evidence/test:** `F1_genericAstChildrenTraversalCannotSupplyConditionPositionRouting` contrasta SEARCH preservado com IF tipado: o IF resolve `FLAG-ON` como CONDITION/{CONDITION}; o SEARCH atual não tem condition node nem occurrence.
+
+### F2-SEARCH-NEXT-SENTENCE
+
+- **Current fact:** a grammar local é `searchWhen : WHEN condition (NEXT SENTENCE | statement*)`. Para `WHEN FLAG-ON NEXT SENTENCE`, `when.condition()` existe, `when.statement()` é vazio e os tokens `NEXT`/`SENTENCE` são filhos diretos da alternativa. O lowering preservado atual cria um `StatementClause(searchWhen)` e `AstBuilder.statementsInside` injeta um `Ast.NextSentenceStatement` quando encontra os dois tokens; a condition continua perdida.
+- **Future contract:** `SearchWhen` preserva a action como `statements = [Ast.NextSentenceStatement]` quando a alternativa `NEXT SENTENCE` estiver escrita. O builder deve reconhecer explicitamente os tokens, e não depender de `statement()`. O nó existente preserva a forma estrutural e evita boolean/action paralelo; provenance/span da ação escrita deve ser mantido.
+- **Negative implementation killed:** um modelo que armazene somente `searchWhen.statement()` perde NEXT SENTENCE e não é lossless.
+- **Evidence/test:** `F2_nextSentenceIsAnAlternativeTokenPathAndCurrentPreservedClauseRetainsIt` verifica parse path, ausência de `statement()`, clause preservada e nó AST atual.
+
+### F3-SEARCH-VARYING
+
+- **Current fact:** IBM 6.4 distingue `VARYING` do searched table e da condition: o varying pode ser index-name ou identificador que seja item índice/item elementar inteiro. A grammar local representa ambos por `searchVarying : VARYING qualifiedDataName`. Hoje o operand cai na policy default DATA/{DATA}: `SEARCH-IDX` (de `INDEXED BY`) fica UNRESOLVED/INVALID_NAMESPACE_FOR_CONTEXT, enquanto `SEARCH-COUNTER PIC 9(4)` resolve DATA.
+- **Future contract:** posição independente `SEARCH_VARYING`, sem novo `ReferenceKind`, com `role = CONTEXT_DEPENDENT`, `primary kind = DATA` e `admissibleKinds = {DATA, INDEX}`. Assim a seleção final pode ser INDEX para `SEARCH-IDX` e DATA para `SEARCH-COUNTER`; `searchedReference`, varying, condition e subscripts nunca compartilham uma policy global.
+- **Negative implementation killed:** `VARYING → DATA` sempre falha no oracle INDEX; `VARYING → INDEX` sempre falha no oracle DATA; aplicar CONDITION ao varying/table/subscript também falha.
+- **Evidence/test:** `F3_varyingIndexIsCurrentlyDefaultDataButFuturePolicyMustAdmitIndex`, `F3_varyingElementaryIntegerIsDataAndMustRemainAdmissibleAsData` e `F3_varyingAndConditionUseIndependentSemanticPositions` registram kind, admissibleKinds, status, selectedCandidate e separação de posições.
+
+IBM authority: [SEARCH statement, Enterprise COBOL 6.4](https://www.ibm.com/docs/en/cobol-zos/6.4.0?topic=statements-search-statement), [binary SEARCH/SEARCH ALL, Enterprise COBOL 6.4](https://www.ibm.com/docs/en/cobol-zos/6.4?topic=statement-binary-search) e [comparisons of index-names and index data items](https://www.ibm.com/docs/en/cobol-zos/6.4?topic=conditions-comparison-index-names-index-data-items).
+
 ## Status do Discovery
 
-`READY_FOR_IMPLEMENTATION`. A implementação continua proibida neste PR e requer novo review humano.
+`READY_FOR_IMPLEMENTATION` quanto ao contrato de Discovery Round 2. A implementação continua proibida neste PR e requer novo review humano.

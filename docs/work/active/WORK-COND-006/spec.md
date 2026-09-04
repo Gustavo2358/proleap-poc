@@ -35,7 +35,7 @@ Parser errors, preprocessing incompleto e formas que a grammar aceita mas IBM re
 
 ## Comportamento esperado
 
-O futuro lowering deve materializar somente a boundary tipada necessária para que cada `searchWhen.condition` seja uma child alcançável pela traversal AST. A recomendação mínima é:
+O futuro lowering deve materializar a boundary tipada de cada branch e declarar explicitamente a posição semântica da condition ao collector. `Ast.children` garante reachability estrutural, IDs, scope, provenance e pre-order; por si só não escolhe a policy `CONDITION`. A recomendação mínima é:
 
 ```text
 SearchStatement (Statement)
@@ -50,11 +50,49 @@ SearchWhen (Node)
   statements: List<Statement>
 ```
 
-`SearchWhen` precisa ser `Ast.Node`, pois condição e statements devem ter IDs, provenance e traversal de pre-order; um record fora de `Ast.children` obrigaria policy especial no collector. `SearchStatement` precisa ser `Ast.Statement` para substituir o preserved container sem introduzir uma segunda representação paralela. `SearchWhen` recebe ID próprio por ser Node; `all` não recebe ID. `AT END` pode reutilizar `StatementClause` existente (`atEndPhrase`), `VARYING` é uma referência estrutural opcional e `SEARCH ALL` cabe no mesmo shape com `all=true`, mantendo a distinção para validação futura.
+`SearchWhen` permanece `Ast.Node` porque representa uma branch escrita com identidade estrutural própria, provenance, ownership entre condition e statements e posição determinística na AST; `EvaluateBranch` é o precedente existente. A decisão não depende de IDs dos children: condition e statements já têm seus próprios IDs. `SearchStatement` precisa ser `Ast.Statement` para substituir o preserved container sem introduzir uma segunda representação paralela. `SearchWhen` recebe ID próprio por ser Node; `all` não recebe ID. `AT END` pode reutilizar `StatementClause` existente (`atEndPhrase`), `VARYING` é uma referência estrutural opcional e `SEARCH ALL` cabe no mesmo shape com `all=true`, mantendo a distinção para validação futura.
 
 `Ast.children(SearchStatement)` deve seguir ordem escrita: `searchedReference`, `varying` se presente, `atEnd` se presente e `whens`; `Ast.children(SearchWhen)` deve seguir `condition` e depois statements. O contador de IDs deve então continuar pre-order, sem IDs para metadata de controle, sem clones de relations e sem children compartilhados.
 
-Na condition, o futuro builder deve chamar o lowering existente (`buildConditionSurface`/equivalente `buildCondition`) no `SearchWhenContext.condition()`. Isso reutiliza as mesmas classes de surface e permite ao collector existente aplicar `visitConditionSurface`: relation operands usam `relationOperandKinds`, bare contextual tails usam `contextualKinds`, condition-name standalone usa `CONDITION`, e qualification/subscript continuam occurrences independentes. Nenhuma regra especial de SEARCH deve ser adicionada ao resolver.
+Na condition, o futuro builder deve chamar o lowering existente (`buildConditionSurface`/equivalente `buildCondition`) no `SearchWhenContext.condition()`. O routing futuro deve ser explícito e tipado:
+
+```text
+SearchStatement
+  searchedReference → search-specific/value role
+  varying          → SEARCH_VARYING policy
+  atEnd            → normal statement traversal
+  each SearchWhen
+    condition      → typed CONDITION position
+                    → ReferenceOccurrenceCollector.visitConditionSurface(condition)
+    statements     → normal statement traversal
+```
+
+Assim, a mesma condition surface reutiliza `RelationCondition`, `ContextualConditionTail`, `LogicalCondition`, `NegatedCondition`, `DistributedOperandGroup` e as policies `relationOperandKinds`, `contextualKinds`, standalone `CONDITION`, qualification e subscript do Slice 5. Nenhuma nova condition policy de SEARCH deve ser adicionada ao collector e nenhuma regra deve ser adicionada ao resolver.
+
+### SEARCH VARYING
+
+IBM permite que o `VARYING` seja um `index-name` ou um identificador que seja item índice ou item elementar inteiro. Na grammar local ambos chegam como `searchVarying : VARYING qualifiedDataName`, portanto o contrato nominal futuro é uma posição distinta, sem criar `ReferenceKind` novo:
+
+```text
+SEARCH_VARYING
+  role            = CONTEXT_DEPENDENT
+  primary kind    = DATA
+  admissibleKinds = {DATA, INDEX}
+```
+
+Esta é a policy de namespace, não uma policy de condition. O binding seleciona `INDEX` para `SEARCH-IDX` declarado por `INDEXED BY` e `DATA` para um item elementar inteiro válido, mantendo `searchedReference`, `varying`, condition, qualifiers e subscripts em posições semânticas separadas. A forma qualificada/subscriptada deve aplicar a shape admissibility já existente; não se deve transformar qualquer identifier dentro de SEARCH em `CONDITION`.
+
+### NEXT SENTENCE
+
+`searchWhen` não tem `nextSentenceStatement` na grammar: sua alternativa é o token literal `NEXT SENTENCE`, fora de `statement()`. O AST futuro deve reutilizar `Ast.NextSentenceStatement` como a única ação da branch quando essa alternativa estiver escrita:
+
+```text
+SearchWhen
+  condition
+  statements = [Ast.NextSentenceStatement]
+```
+
+Essa escolha é lossless para a alternativa estrutural, preserva a convenção existente de AST/IDs e mantém `Ast.children` e futuros consumers estruturais uniformes. O builder deve reconhecer explicitamente os tokens `NEXT`/`SENTENCE` ao materializar a branch; depender apenas de `searchWhen.statement()` perderia a ação. Sem antecipar semântica de CFG, o nó deve conservar a provenance/span do caminho escrito.
 
 ## Comportamento diante de incerteza
 
@@ -94,7 +132,7 @@ O collector tem a branch `PreservedStatement` → `visitStatementOperands`; ele 
 
 ## Alternativas
 
-- **A — recomendada:** `SearchStatement` + `SearchWhen` tipados e chamada ao lowering de condition existente. O collector segue genericamente por `Ast.children` e reaproveita relation, contextual tail, logical, negated, distributed e qualification/subscript policies.
+- **A — recomendada:** `SearchStatement` + `SearchWhen` tipados e chamada ao lowering de condition existente. O collector adiciona somente routing tipado no boundary de `SearchStatement`/`SearchWhen`: `condition` chama `visitConditionSurface`, enquanto `Ast.children` continua a traversal estrutural. Assim relation, contextual tail, logical, negated, distributed e qualification/subscript policies são reaproveitadas sem policy especial de SEARCH.
 - **B — rejeitada salvo prova de inviabilidade de A:** policy especial de SEARCH no collector. Violaria a fronteira AST → occurrences e duplicaria regras já existentes.
 - **C — rejeitada:** reparse de source text, regex ou token scan do statement preservado.
 - **D — rejeitada:** coletar diretamente da parse tree no collector, contornando AST, IDs e provenance.
