@@ -13,13 +13,14 @@ dependency facts está fora do escopo.
 
 ## Objetivo
 
-Produzir, em dois checkpoints de Discovery, evidência suficiente para que um
-review humano decida se a menor boundary semântica COBOL-specific é suficiente
-para um futuro `CobolLower`. O Checkpoint 1 reconstrói a pipeline executável e o
-estado semântico atual; o Checkpoint 2 compara candidatas de boundary, define o
-que cruza, testa suficiência, explicita incompletude/provenance/contexto e
-reavalia impactos downstream. Nenhum checkpoint desenha a IR ou implementa o
-produto/lowerer.
+Produzir, ao longo do lifecycle completo de três checkpoints de Discovery,
+evidência suficiente para que um review humano decida se a menor boundary
+semântica COBOL-specific é suficiente para um futuro `CobolLower`. O Checkpoint 1
+estabelece a baseline factual do frontend; o Checkpoint 2 define a boundary e
+testa sua suficiência; e o Checkpoint 3, somente após autorização explícita,
+executa a falsificação executável e a prova de interchange. No estado atual, o
+Checkpoint 3 faz parte do plano do work item, mas não está autorizado nem
+iniciado. Nenhum checkpoint desenha a IR ou implementa o produto/lowerer.
 
 ## Domínio de entrada suportado
 
