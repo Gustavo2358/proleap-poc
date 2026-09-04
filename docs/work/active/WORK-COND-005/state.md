@@ -2,7 +2,7 @@
 
 ## Onde estamos
 
-Checkpoint 2 — Implementation do work item na branch `implementation/work-cond-005-contextual-occurrences`, iniciado sobre o head aprovado `b17f81f`. F1–F5 permanecem fechados e não foram reabertos. A implementação foi autorizada; nenhum arquivo de produção foi alterado até a confirmação do TDD RED.
+Checkpoint 3 — Closure em execução na branch `implementation/work-cond-005-contextual-occurrences`, sobre o head aprovado `1f5d320`. Checkpoint 2 foi humanamente aprovado; F1–F5 permanecem fechados e não foram reabertos. Este checkpoint não autoriza mudanças em `src/main/`.
 
 ## Verde conhecido
 
@@ -29,7 +29,7 @@ Checkpoint 2 — Implementation do work item na branch `implementation/work-cond
 
 ## Restante
 
-Atualizar o mesmo PR com a evidência do Checkpoint 2, fazer push append-only e parar para review humano. SEARCH WHEN permanece Slice 6; `BACKLOG-RES-004` permanece separado; closure/merge não são autorizados.
+Criar o resumo histórico, promover contratos duráveis, atualizar backlog/índices e arquivar este diretório. SEARCH WHEN permanece Slice 6; `BACKLOG-RES-004` permanece separado; merge não é autorizado.
 
 ## TDD RED — confirmado
 
@@ -89,7 +89,7 @@ Relation e distributed operands devem consumir o mesmo helper `indexAdmissibleNo
 
 ## Decisão final
 
-`READY_FOR_IMPLEMENTATION` (após fechamento de F5 no Discovery Round 3; aguarda novo review humano). Policy = `occurrencePolicy(position, nominalShape)`: standalone `{CONDITION}`; contextual `{DATA, INDEX, CONDITION}` somente para `indexAdmissibleNominalShape(ref)`, caso contrário `{DATA, CONDITION}`; relation/distribution `{DATA, INDEX}` somente para essa shape, caso contrário `{DATA}`; `indexAdmissibleNominalShape(ref)` exige qualifiers vazios, subscript groups vazios e `referenceModification == null`; qualifier/subscript independentes; resolver inalterado; manifesto com `CONTEXTUAL_REFERENCE_ORIGIN`/null e version bump; primary CONDITION é hint de superfície; diagnostics contextuais não mentem; `NOT A = B OR C` mantém C contextual. A implementação aguarda review humano.
+Decisão final do Discovery: `READY_FOR_IMPLEMENTATION`, após o fechamento de F5 no Round 3. Ela foi implementada e aprovada humanamente no Checkpoint 2. Policy = `occurrencePolicy(position, nominalShape)`: standalone `{CONDITION}`; contextual `{DATA, INDEX, CONDITION}` somente para `indexAdmissibleNominalShape(ref)`, caso contrário `{DATA, CONDITION}`; relation/distribution `{DATA, INDEX}` somente para essa shape, caso contrário `{DATA}`; `indexAdmissibleNominalShape(ref)` exige qualifiers vazios, subscript groups vazios e `referenceModification == null`; qualifier/subscript independentes; resolver inalterado; manifesto com `CONTEXTUAL_REFERENCE_ORIGIN`/null; primary CONDITION é hint de superfície; diagnostics contextuais não mentem; `NOT A = B OR C` mantém C contextual.
 
 ## Semantic challenge pass — Implementation
 
@@ -106,6 +106,10 @@ Relation e distributed operands devem consumir o mesmo helper `indexAdmissibleNo
 11. AST ID/pre-order mudou? PASS — wrapper não é node e `Ast.children` usa a compatibility view existente.
 12. Declaração concreta influencia surface AST? PASS — substituição DATA/INDEX/CONDITION/RENAMES/MISSING altera somente resolução.
 
-## Checkpoint 2
+## Checkpoint 2 — aprovado humanamente
 
-Implementação concluída sobre `b17f81f` no commit `d94043e`. PR #19 permanece aberto, sem closure e sem merge; aguarda review humano antes do Checkpoint 3.
+Implementação concluída sobre `b17f81f` nos commits `d94043e` e `1f5d320`. PR #19 permanece aberto e sem merge.
+
+## Checkpoint 3 — Closure em execução
+
+O regression WAUX-like foi adicionado e passou sem alteração de produção. A promoção documental, o arquivamento e os gates finais ainda são os passos deste checkpoint.

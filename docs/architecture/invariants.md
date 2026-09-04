@@ -48,8 +48,8 @@ IDs neste documento são estáveis. `AUTOMATED` indica proteção executável at
 - **Rationale:** declaration kind, qualification e scope são necessários para distinguir condition-name de DATA/INDEX em abbreviated combined relation conditions.
 - **Scope:** lowering de condições, AST, coleta de occurrences e manifestos relacionados.
 - **Related ADRs:** ADR-0003 e ADR-0012.
-- **Enforcement:** `REVIEW` — os oracles `COND-*` e o checkpoint arquitetural definem o contrato; automação pertence aos slices executáveis posteriores.
-- **Known exceptions:** o lowering já preserva a surface lossless (`WORK-COND-003`); o collector atual ainda fecha a occurrence de bare tails por `conditionNameReference`, emitindo `CONDITION/{CONDITION}` — violação preexistente caracterizada pelo PR #14, reduzida neste slice ao coletor/resolver e mantida explícita em `BACKLOG-COND-001` até o slice de occurrences contextuais; não é exceção autorizada para novas mudanças.
+- **Enforcement:** `AUTOMATED` — `ContextualConditionOccurrenceTest`, `SemanticConditionContextDiscoveryTest`, `ReferenceResolutionManifestTest` e regressões de AST/resolution.
+- **Known exceptions:** `ConditionSemantics` e `ConditionValidation` ainda não existem; a especialização pós-binding permanece futura. A policy de occurrence, contudo, já é contextual e shape-sensitive desde `WORK-COND-005`: `grammarRule` permanece apenas metadata, uma referência escrita gera uma occurrence, e subject/operator/`NOT` herdados não geram occurrences sintéticas.
 
 ### INV-COND-002 — Predicate normalizado é produto pós-binding separado
 

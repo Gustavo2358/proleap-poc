@@ -420,7 +420,7 @@ Após a qualification identificar mais de um recurso, quando zero ou um deles é
 
 ### BACKLOG-COND-001 — Contextualizar condições combinadas e referências nominais
 
-Progresso: o Slice 1 foi concluído pelo PR #15 e arquivado como `WORK-COND-001`. O Slice 2 foi concluído pelo PR #16 e arquivado como `WORK-COND-002` (ADR-0012 `Accepted`). O Slice 3 foi concluído pelo PR #17 e arquivado como `WORK-COND-003`. O Slice 4 — `WORK-COND-004` — foi concluído e aprovado no review humano do PR #18 (decisão D — `DataReference` corrigido com alvo de qualifier `UNSPECIFIED` e mapeamento compatibility-preserving `{DATA}`) e arquivado em `docs/work/history/WORK-COND-004.md`; o resumo durável registra o contrato implementado e as decisões. A dependência `BACKLOG-RES-004` (IBM resolution-of-names step 3) permanece registrada e destravará `{DATA, FILE}` no resolver. O Slice 5 foi promovido para `WORK-COND-005` somente no checkpoint de Discovery; implementação continua não autorizada. Slices 6–7 permanecem backlog.
+Progresso: o Slice 1 foi concluído pelo PR #15 e arquivado como `WORK-COND-001`; o Slice 2 foi concluído pelo PR #16 e arquivado como `WORK-COND-002` (ADR-0012 `Accepted`); o Slice 3 foi concluído pelo PR #17 e arquivado como `WORK-COND-003`; o Slice 4 — `WORK-COND-004` — foi concluído pelo PR #18 e arquivado; o Slice 5 — `WORK-COND-005` — foi concluído pelo PR #19 e arquivado em `docs/work/history/WORK-COND-005.md`. A dependência `BACKLOG-RES-004` (IBM resolution-of-names step 3) permanece registrada e destravará `{DATA, FILE}` no resolver. O Slice 6 (`SEARCH WHEN`) e o Slice 7 (regressão de corpus) permanecem pendentes.
 
 #### Evidência e problema
 
@@ -450,7 +450,7 @@ Promover somente um slice revisável por vez, nesta ordem:
 2. **concluído no PR #16:** decidir em ADR/invariant se a representação será contextual na AST, normalizada no lowering ou projetada em produto pós-binding, incluindo IDs, provenance e occurrences sintéticas;
 3. **ativo em WORK-COND-003:** tornar a condition sequence lossless, preservando todos os connectors/children, NOT, parênteses, `relationCombinedComparison` e precedência sem alterar o resolver no mesmo slice;
 4. corrigir a estrutura de condition-name, qualification e subscripts com oracles próprios;
-5. projetar occurrences contextuais e remover o acoplamento semântico ao nome da grammar rule;
+5. **concluído no PR #19:** projetar occurrences contextuais shape-sensitive, remover o acoplamento semântico ao nome da grammar rule, tipar controls de PERFORM, atualizar o manifesto e cobrir a regressão WAUX-like local;
 6. materializar `SEARCH WHEN` ou boundary tipado equivalente, provando que nenhuma referência desaparece;
 7. executar regressão de corpus e promover somente diferenças justificadas, incluindo o fonte WAUX quando ele estiver disponível.
 

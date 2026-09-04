@@ -2,7 +2,7 @@
 
 ## Status e uso
 
-Os IDs `COND-*` são sentinelas normativos derivados do [contrato de expressões condicionais](../domain/conditional-expressions.md). Eles devem orientar os próximos slices de `BACKLOG-COND-001`, mas não alegam que a produção atual já atende às expectativas nem substituem futuros asserts executáveis.
+Os IDs `COND-*` são sentinelas normativos derivados do [contrato de expressões condicionais](../domain/conditional-expressions.md). Os oracles de occurrences contextuais do Slice 5 estão implementados e cobertos por `ContextualConditionOccurrenceTest`; os casos ainda não implementados continuam explicitamente atribuídos aos slices futuros.
 
 O oracle independente primário é [IBM Enterprise COBOL for z/OS 6.4 Language Reference, SC27-8713-03, atualização de 28 de junho de 2024](https://publibfp.dhe.ibm.com/epubs/pdf/igy6lr40.pdf), nas seções e páginas registradas pelo contrato de domínio. O compilador IBM é oracle adversarial desejável para inputs negativos quando estiver disponível; wording e código exatos de diagnostics não são contrato atual.
 

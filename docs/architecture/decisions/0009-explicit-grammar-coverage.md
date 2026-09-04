@@ -28,7 +28,7 @@ Inferir suporte pela presença no corpus, por nome da regra ou por fallback gen�
 
 ## Evidence in current implementation
 
-`grammar-rule-manifest.tsv`, `GrammarCoverageManifest`, `ReferenceResolutionManifest`, policy do preprocessor e seus testes de exaustividade.
+`grammar-rule-manifest.tsv`, `GrammarCoverageManifest`, `ReferenceResolutionManifest`, policy do preprocessor e seus testes de exaustividade. O `ReferenceResolutionManifest` está na versão `1.1.0`: `conditionNameReference` é `CONTEXTUAL_REFERENCE_ORIGIN` com `referenceKind == null`, separado da policy de occurrences (`admissibleKinds` não pertence ao manifesto).
 
 ## Related invariants
 
