@@ -358,8 +358,9 @@ Após `WORK-RES-003`, COACTUPC ainda possui um conjunto mais amplo de 108 occurr
 
 ```cobol
     EVALUATE TRUE
-       WHEN CCARD-AID-PFK03
-       WHEN ACUP-CHANGES-OKAYED-AND-DONE
+       WHEN ACUP-DETAILS-NOT-FETCHED AND CDEMO-PGM-ENTER
+          CONTINUE
+    END-EVALUATE
 ```
 
 O reproducer mínimo é:
@@ -375,9 +376,9 @@ O reproducer mínimo é:
            END-EVALUATE
 ```
 
-Na evidência do CardDemo, o source e a AST preservam os nominais escritos, as branches de `EVALUATE` e as declarações nível 88 visíveis. A perda ocorre na ocorrência: o collector emite `DATA/{DATA}`; a resolução então termina `UNRESOLVED / INVALID_NAMESPACE_FOR_CONTEXT` sem candidates CONDITION. O produto em que o erro se manifesta é a cadeia occurrence → resolution, não a ausência do símbolo ou o desaparecimento do texto na AST.
+Na evidência do CardDemo, o source e a AST preservam os nominais escritos, as branches de `EVALUATE` e as declarações nível 88 visíveis. A ocorrência, porém, chega como `DATA/{DATA}`; a resolução então termina `UNRESOLVED / INVALID_NAMESPACE_FOR_CONTEXT` sem candidates CONDITION. O produto em que o erro se manifesta é a cadeia occurrence → resolution, não a ausência do símbolo ou o desaparecimento do texto na AST.
 
-Esses nomes são condition-names de nível 88 e devem ser resolvidos no namespace CONDITION. A gramática aceita `evaluateCondition` tanto como `condition` quanto como `evaluateValue`; para um identificador isolado, o parse atual percorre `evaluateValue → identifier`. `AstBuilder.buildEvaluate` preserva somente uma lista de `Expression`, e `ReferenceOccurrenceCollector` visita cada selector como `VALUE_READ` genérico. O contexto `EVALUATE TRUE` se perde, fazendo o coletor emitir DATA e produzindo o erro semântico observado.
+Selectors nominais diretos associados a subject booleano `TRUE`/`FALSE` já são tratados corretamente pelo contrato e pela cobertura atual, como em `EVALUATE TRUE WHEN FLAG-ON`. F-01 é mais específico: em determinadas expressions combinadas ou aninhadas, o contexto booleano não alcança corretamente os nominais internos durante a representação/propagação de contexto até o produto de occurrences. A evidência disponível ainda não prova o ponto exato da perda entre a representação AST e o traversal/context propagation do collector; essa localização deve ser confirmada antes de qualquer correção de produção.
 
 Este é um defeito distinto de `SET condition-name TO TRUE/FALSE`: a regra não pode ser ampliada por heurística de texto, nome, regex, regra gramatical isolada ou special-case de programa. `EVALUATE data-item WHEN identifier` continua comparação de valor e o identifier pode ser DATA/INDEX; `WHEN` também aceita literals, intervalos, `NOT`, condições completas e múltiplos `ALSO`. A correção futura não pode tratar todo `WHEN identifier` como CONDITION.
 
@@ -393,8 +394,8 @@ Selectors de `EVALUATE` cujo subject correspondente não for booleano, ou cuja f
 
 1. Antes de alterar produção, criar fixtures adversariais para `EVALUATE TRUE` e `EVALUATE FALSE` com `WHEN condition-name`, `WHEN NOT condition-name`, múltiplos `WHEN`, branches distintas e correspondência posicional entre `EVALUATE ... ALSO ...` e `WHEN ... ALSO ...`.
 2. Criar contracasos: `EVALUATE data-item WHEN data-item`, `WHEN literal`, `WHEN value THRU value`, condition-name homônimo de DATA e condition-name ausente. Os oráculos precisam distinguir kind da occurrence, conjunto admissível, status e candidato selecionado.
-3. Evoluir a AST para preservar o contexto semântico de cada selector de `EVALUATE` (por exemplo, node/record `EvaluateSelector` com expression e contexto), derivado dos contexts `evaluateSelect`, `evaluateCondition`, `evaluateValue` e `booleanLiteral`. Não inferir a decisão pelo texto ou pela grafia de `TRUE`.
-4. No collector, usar o contexto do selector e o subject correspondente para emitir CONDITION somente na classe comprovada; manter a cardinalidade e a ordem determinísticas dos selectors/occurrences.
+3. Investigar, sem pré-julgar o componente defeituoso, a representação AST, a propagação do contexto booleano e o traversal do collector para cada nominal interno de selectors combinados/aninhados. A informação deve ser derivada dos contexts estruturais `evaluateSelect`, `evaluateCondition`, `evaluateValue` e `booleanLiteral`, não do texto ou da grafia de `TRUE`.
+4. Somente após confirmar a camada da perda, usar o contexto do selector e o subject correspondente para emitir CONDITION apenas na classe comprovada; manter a cardinalidade e a ordem determinísticas dos selectors/occurrences.
 5. Atualizar snapshot, catálogo de evals e baseline de COACTUPC somente para diferenças explicadas. A contagem de 108 é evidência de corpus, não especificação da regra.
 6. Rodar PIT focalizado sobre o lowering de `EVALUATE` e o collector. Os novos testes devem matar, no mínimo, mutações que removam a classificação CONDITION, ignorem o subject booleano, troquem a correspondência de `ALSO` ou classifiquem todo selector como CONDITION.
 
