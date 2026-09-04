@@ -5,6 +5,7 @@ risk: high
 goal: Derivar kind e admissibleKinds da posição semântica na condition surface tipada, sem usar grammarRule como autoridade nominal.
 must_read:
   - docs/work/backlog.md#backlog-cond-001--contextualizar-condições-combinadas-e-referências-nominais
+  - docs/architecture/decisions/0009-explicit-grammar-coverage.md
   - docs/architecture/decisions/0012-contextual-conditions-use-post-binding-projection.md
   - docs/architecture/invariants.md
   - docs/domain/conditional-expressions.md
@@ -22,6 +23,7 @@ related_domain_rules:
   - docs/domain/symbol-model.md
   - docs/domain/provenance.md
 related_decisions:
+  - ADR-0009
   - ADR-0012
 related_invariants:
   - INV-AST-001
@@ -30,6 +32,7 @@ related_invariants:
   - INV-SYM-001
   - INV-COND-001
   - INV-COND-002
+  - INV-COV-002
   - INV-PROV-002
   - INV-RES-001
   - INV-DET-001
@@ -53,6 +56,12 @@ source_scope:
   - src/main/java/io/github/gustavo2358/cobolexplorer/ReferenceResolutionManifest.java
   - src/main/java/io/github/gustavo2358/cobolexplorer/Ast.java
   - src/main/java/io/github/gustavo2358/cobolexplorer/AstBuilder.java
+# resolver/report files: presentation/diagnostic adaptation ONLY when needed;
+# NO resolution policy change (candidate selection, scope, qualification,
+# ambiguity, dispatch, compatibleCandidates, visibility, selectedCandidate)
+  - src/main/java/io/github/gustavo2358/cobolexplorer/DataAndIndexReferenceResolver.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/CobolReferenceResolver.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/ResolutionAnalysisReport.java
 test_scope:
   - src/test/java/io/github/gustavo2358/cobolexplorer/ContextualConditionOccurrenceDiscoveryTest.java
   - src/test/java/io/github/gustavo2358/cobolexplorer/SemanticConditionContextDiscoveryTest.java
@@ -64,9 +73,9 @@ test_scope:
   - planned:src/test/java/io/github/gustavo2358/cobolexplorer/ContextualConditionOccurrenceTest.java
 must_not_change:
   - src/main/antlr4/Cobol.g4
+# resolver files are source_scope for wording only (Round 2); no resolution
+# algorithm change is authorized for them (see source_scope annotation)
   - src/main/java/io/github/gustavo2358/cobolexplorer/ResolutionContracts.java
-  - src/main/java/io/github/gustavo2358/cobolexplorer/DataAndIndexReferenceResolver.java
-  - src/main/java/io/github/gustavo2358/cobolexplorer/CobolReferenceResolver.java
   - src/main/java/io/github/gustavo2358/cobolexplorer/SymbolTable.java
   - src/main/java/io/github/gustavo2358/cobolexplorer/CompilationUnitSymbolTables.java
   - src/main/java/io/github/gustavo2358/cobolexplorer/ReferenceResolution.java
