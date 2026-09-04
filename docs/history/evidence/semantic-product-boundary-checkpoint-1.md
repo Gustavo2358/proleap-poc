@@ -498,7 +498,6 @@ downstream_impact:
     - src/main/java/io/github/gustavo2358/cobolexplorer/AstSnapshot.java
     - src/main/java/io/github/gustavo2358/cobolexplorer/SymbolTableSnapshot.java
     - src/main/java/io/github/gustavo2358/cobolexplorer/ResolutionSnapshot.java
-  reassess_when: []
 ```
 
 **Rationale:** snapshot/HTML continuam adapters e não foram promovidos a API de domínio;
@@ -617,6 +616,11 @@ downstream_impact:
     Existe questão semântica real: ainda não se sabe se a futura boundary precisa
     carregar evidence bruta, policy normalizada, somente facts derivados com
     uncertainty, ou combinação auditável desses elementos.
+  evidence:
+    - src/main/java/io/github/gustavo2358/cobolexplorer/PreprocessorEngine.java
+    - src/main/java/io/github/gustavo2358/cobolexplorer/ResolutionContracts.java
+    - src/main/java/io/github/gustavo2358/cobolexplorer/ExplorerMain.java
+    - src/test/java/io/github/gustavo2358/cobolexplorer/CallSemanticsTest.java
   reassess_when:
     - analysis-context-boundary-responsibility-defined
 ```
