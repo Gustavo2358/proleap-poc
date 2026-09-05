@@ -357,11 +357,12 @@ feliz isolado não substitui os critérios de boundary e de escopo.
 | CA-09 | Em checkpoint posterior, o frontend produz `semantic-product.json` por adapter de saída separado, consumindo somente `CobolSemanticState`/`CobolSemanticPort`; para a mesma entrada normalizada/preprocessada, configuração efetiva/policy, versão do analisador e versão do contrato, o artefato reproduz IDs transportados e projeção determinística, sendo versionável, documentado, semanticamente suficiente para o slice e consumível sem executar o frontend. Isso não promete identidade persistente após edição, mudança estrutural ou mudança de versão. | Teste do adapter comparando bytes/valores, IDs e ordem observável; inspeção inclui UNKNOWN/partial/provenance e confirma que o JSON não entra no state/port nem no core do `CobolLower`. |
 | CA-10 | O contrato deixa explícitos os dois modos: desenvolvimento isolado por JSON output adapter → artefato → futuro JSON input adapter → `LowererInputPort`, e integração final por adapter in-memory `CobolSemanticPort` → `LowererInputPort`; a troca não exige alterar os cores nem exige que frontend/lowerer estejam no mesmo repositório. | Revisão documental dos diagramas e fronteiras; nenhum repositório `CobolLower`, JSON input adapter ou `LowererInputPort` é implementado neste work item. |
 
-O Checkpoint 1 deste PR satisfaz somente a parte documental desses critérios:
-o contrato, os oracles, o plano e o índice devem existir, e nenhum arquivo de
-produção, grammar, fixture, teste, JSON output adapter ou `semantic-product.json`
-deve ser antecipado. Os critérios CA-01 a CA-10 serão demonstrados nos
-checkpoints de implementação autorizados.
+O Checkpoint 1 deste work item satisfez somente a parte documental desses
+critérios: contrato, oracles, plano e índice. O Checkpoint 2 implementa o core
+A2 e o port B para os fatos materializados do slice e demonstra seus invariantes
+por construção direta em testes, sem antecipar adapter frontend, integração,
+JSON output adapter ou `semantic-product.json`. Os critérios que dependem da
+projeção do frontend e dos checkpoints posteriores permanecem abertos.
 
 ## Comportamento diante de incerteza
 

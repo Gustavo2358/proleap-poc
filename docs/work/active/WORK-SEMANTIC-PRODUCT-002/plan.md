@@ -175,17 +175,18 @@ checkpoint, sem antecipar arquitetura genérica.
 
 ## Artefatos esperados
 
-Neste checkpoint:
+No Checkpoint 1 foram esperados somente os documentos do item e sua entrada no
+índice, sem produção, grammar, fixture ou teste alterado. No Checkpoint 2 de
+implementação, os artefatos autorizados são:
 
-- `work-item.yaml`, `spec.md`, `plan.md`, `eval.md` e `state.md` deste item;
-- entrada no `docs/work/index.md`;
-- nenhum arquivo de produção, grammar, fixture ou teste alterado.
+- tipos A2/B em `src/main/java/.../semanticproduct/`;
+- testes diretos de contrato em `src/test/java/.../semanticproduct/`;
+- atualização factual do `state.md`, do índice e do escopo do work item.
 
 Nos checkpoints posteriores, somente quando autorizados:
 
-- tipos A2/B em `src/main/java/.../semanticproduct/`;
 - adapter de projeção do slice e a menor integração de publicação;
-- testes de contrato, adapter, closure/lifecycle e consumer independente;
+- testes de adapter, closure/lifecycle e consumer independente;
 - em checkpoint posterior próprio, JSON output adapter e
   `semantic-product.json`, com contrato documentado e teste de determinismo dos
   handles, valores e ordem para a mesma combinação de entrada, configuração,

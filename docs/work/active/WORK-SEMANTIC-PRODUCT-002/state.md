@@ -3,11 +3,12 @@
 ## Onde estamos
 
 `WORK-SEMANTIC-PRODUCT-002` foi criado como work item ativo para a primeira
-implementação de produção do slice `MOVE` literal → `CALL` variável. Este PR é
-somente o Checkpoint 1 e sua remediation contratual: contrato executável, plano,
-eval, estado e índice. Não há implementação de produção, JSON output adapter,
-`semantic-product.json`, serializer genérico, consumer de produção, CFG ou
-dataflow.
+implementação de produção do slice `MOVE` literal → `CALL` variável. Este PR
+executa somente o Checkpoint 2: o core A2 e a facade B foram materializados em
+tipos próprios, imutáveis e fechados, com testes que constroem o estado
+diretamente. Não há adapter frontend, integração no `ExplorerMain`, JSON output
+adapter, `semantic-product.json`, serializer genérico, consumer de produção,
+CFG ou dataflow.
 
 A branch parte da `main` atualizada, que já contém o Discovery dos Checkpoints 2
 e 3A e o Checkpoint 3B, mergeado no `PR #26`. `WORK-SEMANTIC-PRODUCT-001` foi
@@ -28,6 +29,17 @@ decisão H já provada sem reabrir A2 versus B.
 - O oracle 3B preserva `DataItemId` namespaced, `PIC`, literal, joins comuns,
   ordering explícito, provenance localizada, binding nominal `COMPLETE` e
   runtime target `UNKNOWN` com `DYNAMIC_CALL_TARGET_VALUE_UNKNOWN`.
+- `CobolSemanticProduct.State` publica somente fatos boundary-owned do slice:
+  unit/data identity, declaração/PIC, literal, MOVE, CALL variável, program
+  points, ordering, policy, nominal binding, runtime `UNKNOWN` e incertezas
+  localizadas. Binding parcial preserva status, reason e candidates sem
+  fabricar handle selecionado.
+- `CobolSemanticPort` é read-only e consulta apenas o estado publicado; não há
+  query lazy, parser, resolver, cache mutável ou tipo do frontend na boundary.
+- `SemanticProductMoveCallContractTest` prova construção sem frontend,
+  imutabilidade/closure, join de identidade, separação nominal/runtime,
+  ordering, estados partial/unknown, ambiguity e independência da ordem das
+  consultas.
 - O contrato corrigido distingue o Semantic Product in-memory do
   `semantic-product.json`: o JSON será um artefato interno, determinístico,
   versionável e documentado de transporte para inspeção e desenvolvimento
@@ -37,19 +49,21 @@ decisão H já provada sem reabrir A2 versus B.
   trocar o trecho JSON por um adapter in-memory. Os cores do frontend e do
   lowerer permanecem independentes de JSON e podem viver em repositórios
   separados.
-- O frontend atual não possui Semantic Product de produção; a composição vive
-  em `ExplorerMain` e os tipos A2/B existentes são exclusivamente test-only.
-- Nenhum arquivo em `src/main/**`, grammar, fixture, baseline ou teste foi
-  alterado neste checkpoint.
+- O frontend atual ainda não publica o Semantic Product: a composição continua
+  em `ExplorerMain` e os adapters de projeção permanecem fora deste checkpoint;
+  os tipos A2/B anteriores são exclusivamente test-only.
+- Nenhum arquivo de grammar, AST, symbols, occurrences, resolver, fixture,
+  baseline ou `ExplorerMain` foi alterado neste checkpoint.
 - `check-docs.sh`, `check-architecture.sh`, `check-fast.sh`,
   `check-semantic.sh`, `check-performance.sh` e `check-full.sh` passaram após
-  esta remediation; `git diff --check` também passou.
+  a implementação; `git diff --check` também passou.
 
 ## Restante
 
-- Review humano deste contrato e deste PR.
-- Após aprovação explícita, executar separadamente os Checkpoints 2, 3, 4 e 5
-  do `plan.md`, cada um com seu próprio review e sem antecipar generalização.
+- Review humano do Checkpoint 2 e deste PR.
+- Após aprovação explícita, executar separadamente o Checkpoint 3 — adapter de
+  projeção e joins do slice — e os demais checkpoints do `plan.md`, cada um com
+  seu próprio review e sem antecipar generalização.
 - O Checkpoint 5 produzirá `semantic-product.json` somente por JSON output
   adapter do frontend, consumindo `CobolSemanticState`/`CobolSemanticPort` e
   exigindo determinismo, suficiência, versionamento/documentação e preservação

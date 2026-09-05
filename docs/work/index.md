@@ -5,7 +5,7 @@ Work items delimitam a mudança em execução; o [backlog](backlog.md) registra 
 ## Ativo
 
 - [WORK-AST-002 — Hardening da fronteira AST para CFG e dataflow](active/WORK-AST-002/spec.md) — Slice 1 mergeado no PR #10; Slice 2 no checkpoint de Discovery do PR #13. Implementar F-02 depende de merge/review e autorização explícita posterior.
-- [WORK-SEMANTIC-PRODUCT-002 — Semantic Product de produção para MOVE literal e CALL variável](active/WORK-SEMANTIC-PRODUCT-002/spec.md) — Checkpoint 1: contrato executável e plano criados; sem implementação de produção; aguardando review humano.
+- [WORK-SEMANTIC-PRODUCT-002 — Semantic Product de produção para MOVE literal e CALL variável](active/WORK-SEMANTIC-PRODUCT-002/spec.md) — Checkpoint 2: core A2 + port B implementados sem frontend; aguardando review humano.
 
 ## Histórico
 

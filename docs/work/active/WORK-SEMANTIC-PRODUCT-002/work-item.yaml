@@ -90,14 +90,14 @@ evals:
 source_scope:
   - src/main/java/io/github/gustavo2358/cobolexplorer/ExplorerMain.java
   - src/main/java/io/github/gustavo2358/cobolexplorer/semanticproduct/
-  - planned:src/main/java/io/github/gustavo2358/cobolexplorer/semanticproduct/CobolSemanticProduct.java
-  - planned:src/main/java/io/github/gustavo2358/cobolexplorer/semanticproduct/CobolSemanticPort.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/semanticproduct/CobolSemanticProduct.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/semanticproduct/CobolSemanticPort.java
   - planned:src/main/java/io/github/gustavo2358/cobolexplorer/semanticproduct/CobolMoveCallAdapter.java
   - planned:src/main/java/io/github/gustavo2358/cobolexplorer/semanticproduct/SemanticProductJsonOutputAdapter.java
 test_scope:
   - src/test/java/io/github/gustavo2358/cobolexplorer/SemanticProductBoundaryCheckpoint3BTest.java
   - src/test/java/io/github/gustavo2358/cobolexplorer/semanticproduct/
-  - planned:src/test/java/io/github/gustavo2358/cobolexplorer/SemanticProductMoveCallContractTest.java
+  - src/test/java/io/github/gustavo2358/cobolexplorer/semanticproduct/SemanticProductMoveCallContractTest.java
   - planned:src/test/java/io/github/gustavo2358/cobolexplorer/SemanticProductMoveCallAdapterTest.java
   - planned:src/test/java/io/github/gustavo2358/cobolexplorer/SemanticProductMoveCallIntegrationTest.java
   - planned:src/test/java/io/github/gustavo2358/cobolexplorer/SemanticProductJsonOutputAdapterTest.java
