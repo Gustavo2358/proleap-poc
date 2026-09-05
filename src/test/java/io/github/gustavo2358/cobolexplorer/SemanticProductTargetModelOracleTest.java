@@ -1,6 +1,5 @@
 package io.github.gustavo2358.cobolexplorer;
 
-import io.github.gustavo2358.cobolexplorer.semanticproduct.CobolMoveCallAdapter;
 import io.github.gustavo2358.cobolexplorer.semanticproduct.targetmodel.SemanticProductTargetConsumer;
 import io.github.gustavo2358.cobolexplorer.semanticproduct.targetmodel.SemanticProductTargetModel;
 import org.junit.jupiter.api.Test;
@@ -50,7 +49,7 @@ class SemanticProductTargetModelOracleTest {
     private static final SemanticProductTargetModel.StatementId OBSERVED_DISPLAY = statementId(13);
 
     @Test
-    void controlledFixtureHasTheTargetEvidenceWhileCurrentAdapterRemainsSingletonBridge()
+    void controlledFixtureHasTargetEvidenceIndependentFromProductionProjection()
             throws Exception {
         AstBoundaryTestSupport.Analysis frontend = analyzeFixture();
         List<Ast.Statement> statements = AstBoundaryTestSupport.nodes(frontend).stream()
@@ -101,13 +100,6 @@ class SemanticProductTargetModelOracleTest {
         SemanticProductTargetModel.State target = targetState();
         assertEquals(statements.size(), target.coverage().observedStatements(),
                 "the target inventory must not silently omit a fixture statement");
-        IllegalArgumentException currentBridgeGap = assertThrows(IllegalArgumentException.class,
-                () -> CobolMoveCallAdapter.project(
-                        new CobolMoveCallAdapter.FrontendProducts(frontend.build(),
-                                frontend.tables(), frontend.occurrences(), frontend.resolution()),
-                        frontend.model().programUnits().get(0).id()));
-        assertEquals("the selected unit must contain exactly one MOVE",
-                currentBridgeGap.getMessage());
     }
 
     @Test
@@ -389,7 +381,7 @@ class SemanticProductTargetModelOracleTest {
             assertFalse(code.contains("io.github.gustavo2358.cobolexplorer.Ast"));
             assertFalse(code.contains("CobolSemanticProduct"));
             assertFalse(code.contains("CobolSemanticPort"));
-            assertFalse(code.contains("CobolMoveCallAdapter"));
+            assertFalse(code.contains("CobolSemanticProductProjector"));
             assertFalse(code.contains("org.antlr"));
             assertFalse(code.contains("writtenText"));
             assertFalse(code.contains("grammarRule"));

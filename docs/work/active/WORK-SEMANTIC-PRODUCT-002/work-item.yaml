@@ -47,9 +47,9 @@ must_read:
   - src/main/java/io/github/gustavo2358/cobolexplorer/SourceMap.java
   - src/main/java/io/github/gustavo2358/cobolexplorer/semanticproduct/CobolSemanticProduct.java
   - src/main/java/io/github/gustavo2358/cobolexplorer/semanticproduct/CobolSemanticPort.java
-  - src/main/java/io/github/gustavo2358/cobolexplorer/semanticproduct/CobolMoveCallAdapter.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/semanticproduct/projection/CobolSemanticProductProjector.java
   - src/test/java/io/github/gustavo2358/cobolexplorer/SemanticProductBoundaryCheckpoint3BTest.java
-  - src/test/java/io/github/gustavo2358/cobolexplorer/SemanticProductMoveCallAdapterTest.java
+  - src/test/java/io/github/gustavo2358/cobolexplorer/CobolSemanticProductProjectorTest.java
   - src/test/java/io/github/gustavo2358/cobolexplorer/semanticproduct/SemanticProductMoveCallContractTest.java
 related_domain_rules:
   - docs/domain/semantic-ast.md
@@ -112,7 +112,7 @@ source_scope:
   - src/main/java/io/github/gustavo2358/cobolexplorer/semanticproduct/
 test_scope:
   - src/test/java/io/github/gustavo2358/cobolexplorer/SemanticProductBoundaryCheckpoint3BTest.java
-  - src/test/java/io/github/gustavo2358/cobolexplorer/SemanticProductMoveCallAdapterTest.java
+  - src/test/java/io/github/gustavo2358/cobolexplorer/CobolSemanticProductProjectorTest.java
   - src/test/java/io/github/gustavo2358/cobolexplorer/semanticproduct/
   - src/test/java/io/github/gustavo2358/cobolexplorer/SemanticProductTargetModelOracleTest.java
   - src/test/resources/cobol/semantic/semantic-product-lowering-readiness.cbl

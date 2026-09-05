@@ -1,8 +1,8 @@
 package io.github.gustavo2358.cobolexplorer;
 
-import io.github.gustavo2358.cobolexplorer.semanticproduct.CobolMoveCallAdapter;
 import io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticPort;
 import io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct;
+import io.github.gustavo2358.cobolexplorer.semanticproduct.projection.CobolSemanticProductProjector;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
@@ -31,8 +31,6 @@ class ArchitectureBoundaryTest {
     private static final String PROJECT_PREFIX_INTERNAL = PROJECT_PREFIX.replace('.', '/');
     private static final String SEMANTIC_PRODUCT_PREFIX =
             (PROJECT_PREFIX + "semanticproduct.").replace('.', '/');
-    private static final String CURRENT_SEMANTIC_PRODUCT_ADAPTER =
-            CobolMoveCallAdapter.class.getName().replace('.', '/');
     private static final String ANTLR_PREFIX = "org/antlr/v4/";
     private static final Pattern DESCRIPTOR_CLASS =
             Pattern.compile("L([A-Za-z0-9_$/]+)(?=[;<])");
@@ -101,6 +99,23 @@ class ArchitectureBoundaryTest {
     }
 
     @Test
+    void semanticProductProjectionDoesNotDependOnAnalysisEnginesOrPresentation() throws Exception {
+        List<Class<?>> projectionTypes = List.of(CobolSemanticProductProjector.class,
+                CobolSemanticProductProjector.FrontendProducts.class);
+        assertNoDirectDependencies("INV-SP-004", projectionTypes,
+                names(AstBuilder.class, ReferenceOccurrenceCollector.class,
+                        CobolReferenceResolver.class, DataAndIndexReferenceResolver.class,
+                        SourceMap.class, AstSnapshot.class, SymbolTableSnapshot.class,
+                        CoverageSnapshot.class, ResolutionSnapshot.class, ExplorerMain.class));
+        for (Class<?> component : projectionTypes) {
+            assertTrue(directDependencies(component).stream()
+                            .noneMatch(name -> name.startsWith(ANTLR_PREFIX)),
+                    () -> "INV-SP-004: " + component.getSimpleName()
+                            + " depende diretamente de ANTLR");
+        }
+    }
+
+    @Test
     void bytecodeScannerSeesGenericAndRecordComponentTypeReferences() throws Exception {
         Set<String> references = directDependencies(BytecodeLeakageProbe.class);
 
@@ -124,9 +139,7 @@ class ArchitectureBoundaryTest {
     }
 
     private static boolean isSemanticProductProjection(String reference) {
-        return reference.equals(CURRENT_SEMANTIC_PRODUCT_ADAPTER)
-                || reference.startsWith(CURRENT_SEMANTIC_PRODUCT_ADAPTER + '$')
-                || reference.startsWith(SEMANTIC_PRODUCT_PREFIX + "projection/")
+        return reference.startsWith(SEMANTIC_PRODUCT_PREFIX + "projection/")
                 || reference.startsWith(SEMANTIC_PRODUCT_PREFIX + "adapter/");
     }
 
