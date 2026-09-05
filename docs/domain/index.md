@@ -11,6 +11,8 @@ Domínios disponíveis, na ordem do pipeline:
 5. [expressões condicionais combinadas e abreviadas](conditional-expressions.md), contrato transversal ainda parcialmente não materializado;
 6. [compilation units](compilation-units.md);
 7. [modelo de símbolos](symbol-model.md);
-8. [resolução de referências](reference-resolution.md).
+8. [resolução de referências](reference-resolution.md);
+9. [COBOL Semantic Product e lowering readiness](cobol-semantic-product.md),
+   boundary materializada antes do futuro `CobolLower`.
 
 CFG, dataflow, interpretação de linguagens embarcadas e descoberta final de dependências ainda não possuem contrato implementado; seu trabalho permanece no backlog. Não criar documentação especulativa para apresentá-los como domínio atual.

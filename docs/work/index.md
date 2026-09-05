@@ -5,7 +5,6 @@ Work items delimitam a mudança em execução; o [backlog](backlog.md) registra 
 ## Ativo
 
 - [WORK-AST-002 — Hardening da fronteira AST para CFG e dataflow](active/WORK-AST-002/spec.md) — Slice 1 mergeado no PR #10; Slice 2 no checkpoint de Discovery do PR #13. Implementar F-02 depende de merge/review e autorização explícita posterior.
-- [WORK-SEMANTIC-PRODUCT-002 — Semantic Product extensível para DATA, MOVE, CALL e IF/ELSE](active/WORK-SEMANTIC-PRODUCT-002/spec.md) — contrato corrigido para todas as ocorrências cobertas e incompletude explícita; a produção ainda é singleton e o próximo trabalho autorizado após a migração documental é o oracle executável do target model.
 
 ## Histórico
 
@@ -31,3 +30,4 @@ Work items delimitam a mudança em execução; o [backlog](backlog.md) registra 
 - [WORK-EXT-001 — Classificar `DFHRESP` e `DFHVALUE` unresolved como possíveis intrínsecos CICS](history/WORK-EXT-001.md)
 - [WORK-COV-001 — Preservar análise parcial diante de COPY ausente](history/WORK-COV-001.md)
 - [WORK-SEMANTIC-PRODUCT-001 — Semantic Product Boundary Discovery](history/WORK-SEMANTIC-PRODUCT-001.md) — Discovery concluído pelo PR #26; evidências dos Checkpoints 2, 3A e 3B preservadas.
+- [WORK-SEMANTIC-PRODUCT-002 — Semantic Product extensível e readiness final](history/WORK-SEMANTIC-PRODUCT-002.md) — CP1–CP8 concluídos no PR #27; boundary materializada, consumer/JSON independentes e handoff lowering/IR falsificado.

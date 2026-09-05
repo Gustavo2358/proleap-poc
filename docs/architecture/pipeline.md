@@ -12,7 +12,9 @@ fonte COBOL físico
   → ocorrências de referência
   → resolução nominal
   → classificação externa pós-resolução focalizada
-  → futuras análises CFG e dataflow
+  → relatório canônico de análise
+  → COBOL Semantic Product / CobolSemanticPort
+  → adapters JSON, snapshots e apresentação
 ```
 
 O caminho downstream adotado pela ADR-0013 é incremental e ainda não está todo
@@ -32,10 +34,13 @@ COBOL Frontend
 
 O Semantic Product é a boundary COBOL-specific materializada entre os produtos
 do frontend e o lowering. Neutralidade entre COBOL e outras linguagens começa
-no lowerer/Analysis IR, não nessa boundary. A implementação inicial do produto
-e de seu projector cobre apenas a prova DATA/MOVE/CALL e ainda não está ligada
-ao composition root; `WORK-SEMANTIC-PRODUCT-002` governa sua remediation. As
-fases a partir de `CobolLower` continuam futuras e aparecem aqui como direção e
+no lowerer/Analysis IR, não nessa boundary. O produto está ligado ao
+composition root e publica DATA, MOVE literal, CALL por identifier/expression,
+IF estrutural e um inventário positivo dos demais statements. DATA e o profile
+atual de CALL possuem lowering readiness suficiente; MOVE e IF permanecem
+parciais e `ObservedStatement` permanece bloqueado. A [matriz
+canônica](../domain/cobol-semantic-product.md) registra o limite exato. As fases
+a partir de `CobolLower` continuam futuras e aparecem aqui como direção e
 dependências, não como produtos existentes.
 
 Cada seta produz um artefato para a fase seguinte; uma fase não deve gravar conclusões de análise posterior no artefato anterior.

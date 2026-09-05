@@ -27,7 +27,7 @@ BACKLOG-EXT-001 infraestrutura de composição
 
 COBOL Frontend
   ↓
-WORK-SEMANTIC-PRODUCT-002 COBOL Semantic Product DATA/MOVE/CALL/IF
+COBOL Semantic Product DATA/MOVE/CALL/IF (WORK-SEMANTIC-PRODUCT-002 concluído)
   ↓ lowering-readiness por construct
 BACKLOG-LOWER-001 CobolLower incremental
   ↓
@@ -51,7 +51,7 @@ BACKLOG-SP-001/002/003/004 enrichments por construct
 Ordem executável de contratação e implementação do primeiro slice:
 
 ```text
-Semantic Product lowering-ready
+capabilities lowering-ready + partial/unknowns explícitos do Semantic Product
   ↓
 contrato mínimo da Analysis IR + oracles de consumo de CFG/effects
   ↓
@@ -511,7 +511,7 @@ Após a qualification identificar mais de um recurso, quando zero ou um deles é
 
 ### BACKLOG-COND-001 — Contextualizar condições combinadas e referências nominais
 
-Progresso: os Slices 1–6 foram concluídos pelos PRs #15–#20 e arquivados. O Slice 6 (`SEARCH WHEN`) materializa a boundary AST/occurrence aprovada, sem validar semanticamente `SEARCH ALL`; o Slice 7 (regressão de corpus) permanece pendente. A dependência `BACKLOG-RES-004` permanece separada e destravará `{DATA, FILE}` no resolver.
+Progresso: os Slices 1–6 foram concluídos pelos PRs #15–#20 e arquivados. O Slice 6 (`SEARCH WHEN`) materializa a boundary AST/occurrence aprovada, sem validar semanticamente `SEARCH ALL`; o Slice 7 concluiu a regressão de corpus no PR #21 sem implementar `ConditionSemantics`. A dependência `BACKLOG-RES-004` permanece separada e destravará `{DATA, FILE}` no resolver. A projeção pós-binding de `ConditionSemantics`/`ConditionValidation`, já decidida pela ADR-0012, ainda exige work item próprio antes de promover predicate lowering de IF/EVALUATE/SEARCH.
 
 #### Evidência e problema
 
@@ -539,11 +539,11 @@ Promover somente um slice revisável por vez, nesta ordem:
 
 1. **concluído no PR #15:** fechar o contrato IBM de inserção/término, operador distribuído, qualification, scope e homônimos DATA/CONDITION com oracles adversariais;
 2. **concluído no PR #16:** decidir em ADR/invariant se a representação será contextual na AST, normalizada no lowering ou projetada em produto pós-binding, incluindo IDs, provenance e occurrences sintéticas;
-3. **ativo em WORK-COND-003:** tornar a condition sequence lossless, preservando todos os connectors/children, NOT, parênteses, `relationCombinedComparison` e precedência sem alterar o resolver no mesmo slice;
+3. **concluído no PR #17:** tornar a condition sequence lossless, preservando todos os connectors/children, NOT, parênteses, `relationCombinedComparison` e precedência sem alterar o resolver no mesmo slice;
 4. corrigir a estrutura de condition-name, qualification e subscripts com oracles próprios;
 5. **concluído no PR #19:** projetar occurrences contextuais shape-sensitive, remover o acoplamento semântico ao nome da grammar rule, tipar controls de PERFORM, atualizar o manifesto e cobrir a regressão WAUX-like local;
 6. **concluído no PR #20:** materializar `SEARCH WHEN` com boundary AST tipada, routing explícito de condition/varying, preservação de `NEXT SENTENCE` e prova de que nenhuma referência é duplicada ou desaparece;
-7. **pendente:** executar regressão de corpus e promover somente diferenças justificadas, incluindo o fonte WAUX quando ele estiver disponível.
+7. **concluído no PR #21:** executar regressão de corpus e promover somente diferenças justificadas; o Discovery não autorizou remediação adicional.
 
 O slice arquitetural precede mudanças transversais de lowering/occurrence. Mudança no resolver só entra em escopo se o contrato aprovado demonstrar necessidade depois que a occurrence estiver semanticamente correta. SEARCH e condition-name subscriptado podem virar work items separados se seus `source_scope` e riscos não couberem no mesmo slice.
 
@@ -571,7 +571,7 @@ Preservar subjects, correspondência posicional de `ALSO`, ordered branches,
 selectors, `OTHER`, nesting, termination, bindings, provenance, coverage e
 incompletude. F-01 impede elevar conditions combinadas a completas; o slice
 deve projetar o status canônico e não reinterpretar texto. A promoção depende
-de `WORK-SEMANTIC-PRODUCT-002` verde e da remediação autorizada de
+da baseline concluída de `WORK-SEMANTIC-PRODUCT-002` e da remediação autorizada de
 `BACKLOG-RES-003` para as shapes que a exigirem.
 
 ### BACKLOG-SP-002 — Enriquecer o Semantic Product com PERFORM
@@ -604,13 +604,25 @@ eval próprios; efeitos sobre fluxo dependem de readiness demonstrada.
 
 Criar o lowerer COBOL-specific que consome somente o port do Semantic Product e
 traduz constructs lowering-ready para o contrato de entrada da Analysis IR. O
-primeiro slice pode cobrir DATA/MOVE/CALL/IF sem esperar todos os enrichments,
-mas nunca consulta AST, resolver, report, texto ou presentation para completar
-informação ausente. Constructs partial/unsupported geram representação/gap
-conservador conforme o contrato mínimo da IR já definido, não omissão
-silenciosa. A implementação do primeiro lowering pode ser coordenada com a
-definição desse contrato no mesmo work item, mas ocorre depois dos respectivos
-oracles e decisões de entrada/saída. CFG e dataflow não entram no lowerer.
+primeiro slice pode cobrir DATA e o profile atual de CALL como `SUFFICIENT`.
+MOVE literal e IF estrutural só podem entrar como partial-preserving enquanto
+`LITERAL_KIND_NOT_PUBLISHED` e `CONDITION_SEMANTICS_NOT_AVAILABLE` permanecerem;
+`ObservedStatement` continua inventário bloqueado, não operação vazia. O
+lowerer nunca consulta AST, resolver, report, texto ou presentation para
+completar informação ausente. Constructs partial/unsupported geram
+representação/gap conservador conforme o contrato mínimo da IR já definido,
+não omissão silenciosa.
+
+Antes de promover MOVE a lowering-ready, um work item específico de frontend
+deve publicar literal kind canônico derivado da estrutura reconhecida, sem
+inferência por `rawLexeme`, `PICTURE` ou spelling. Isso não bloqueia iniciar a
+infraestrutura partial-aware. Antes de promover o predicate de IF, um work item
+de `ConditionSemantics` conforme ADR-0012/BACKLOG-COND-001 deve materializar a
+semântica pós-binding; branch structure e CFG readiness já provadas não dependem
+dessa promoção. A implementação do primeiro lowering pode ser coordenada com a
+definição do contrato mínimo da IR no mesmo work item, mas ocorre depois dos
+respectivos oracles e decisões de entrada/saída. CFG e dataflow não entram no
+lowerer.
 
 ### BACKLOG-IR-001 — Analysis IR
 
@@ -619,6 +631,13 @@ Semantic Product lowering-ready disponível e de requisitos/oracles concretos de
 CFG e Statement Effects / Storage Semantics. Esses oracles descrevem o que os
 consumers precisarão observar; não exigem que lowerer, CFG builder ou effects
 analysis já estejam implementados.
+
+O contrato mínimo precisa representar explicitamente literal kind `UNKNOWN`,
+condition/predicate parcial, runtime CALL target desconhecido,
+`ObservedStatement` bloqueado, provenance e coverage; nenhuma dessas dimensões
+pode virar valor default, no-op ou ausência. DATA nominal não pode virar storage
+identity. Esses são constraints de entrada derivados do CP8, não uma escolha de
+classes, opcodes, SSA ou schema.
 
 Depois do contrato mínimo, implementar coordenadamente o primeiro lowering que
 produz a IR e só então seus primeiros consumers. A IR deve preservar operands,

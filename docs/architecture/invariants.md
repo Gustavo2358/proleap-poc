@@ -57,8 +57,8 @@ IDs neste documento são estáveis. `AUTOMATED` indica proteção executável at
 - **Rationale:** downstream precisa distinguir inexistência provada de incapacidade, falta de input ou suporte parcial para permanecer conservador.
 - **Scope:** Semantic Product, projeção, lowering-readiness, transporte e futuros consumers CFG/effects.
 - **Related ADRs:** ADR-0008 e ADR-0013.
-- **Enforcement:** `PARTIALLY_AUTOMATED` — INV-COV-001/003 protegem os produtos atuais; os testes da projection exigem facts e gaps localizados para containment, conteúdo de branch ou continuation incompletos, shapes fora da capability, bindings incompletos, literal kind desconhecido e toda ocorrência MOVE/CALL/IF coberta.
-- **Known exceptions:** o inventário completo de todas as famílias observadas da `ProgramUnit` permanece reservado ao Checkpoint 5 de `WORK-SEMANTIC-PRODUCT-002`; dentro do CP4, nenhuma ocorrência MOVE/CALL/IF observada pode ser omitida.
+- **Enforcement:** `AUTOMATED` — o core reconcilia inventário, coverage e gaps; `SemanticProductStatementInventoryTest` exige bijeção com todo statement AST observado; o probe de EVAL-SP-002 rejeita gap ou `ObservedStatement` escondido; INV-COV-001/003 continua protegendo as entradas canônicas.
+- **Known exceptions:** nenhuma omissão silenciosa é aceita. Inventário global `PARTIAL`/`INPUT_MISSING` permanece uma saída válida somente com readiness agregada rebaixada e sem transformar ausência de input em zero comprovado.
 
 ### INV-SP-003 — Boundary é suficiente para lowering sem frontend
 
@@ -66,8 +66,8 @@ IDs neste documento são estáveis. `AUTOMATED` indica proteção executável at
 - **Rationale:** retornar ao frontend duplicaria interpretação COBOL no downstream; confundir readiness estrutural, de controle e de efeitos criaria claims falsas.
 - **Scope:** Semantic Product, seu port, `CobolLower` futuro e contratos de readiness por construct.
 - **Related ADRs:** ADR-0003, ADR-0004 e ADR-0013.
-- **Enforcement:** `REVIEW` — consumer independente e matriz de readiness são requisitos do work item ativo; architecture gate já protege parte do leakage direto.
-- **Known exceptions:** DATA/MOVE/CALL/IF e suas relações estruturais cobertas já atravessam a boundary; a cobertura completa da unit permanece no CP5 e a prova final por consumer de produção independente permanece no CP6.
+- **Enforcement:** `AUTOMATED` — o consumer do CP6 e o probe independente de EVAL-SP-002 consomem somente o port; `ArchitectureBoundaryTest` inspeciona source e bytecode; falsificações controladas rejeitam perda de structure, binding e unknown. A matriz durável está em `docs/domain/cobol-semantic-product.md`.
+- **Known exceptions:** DATA e o profile atual de CALL têm lowering readiness suficiente. MOVE e IF permanecem `PARTIAL`; `ObservedStatement` permanece `BLOCKED`. Essas limitações são claims explícitas, não exceções à boundary nem autorização para buscar o frontend.
 
 ### INV-SP-004 — Projector não cria nova análise semântica
 
@@ -93,8 +93,8 @@ IDs neste documento são estáveis. `AUTOMATED` indica proteção executável at
 - **Rationale:** transporte e evals precisam de reprodutibilidade, enquanto estabilidade longitudinal requer contrato de identidade/migração próprio.
 - **Scope:** Semantic Product, ports, projectors e adapters de transporte.
 - **Related ADRs:** ADR-0005 e ADR-0013.
-- **Enforcement:** `PARTIALLY_AUTOMATED` — INV-DET-001 protege a ordem dos produtos atuais; o work item ativo exige testes específicos antes do JSON determinístico.
-- **Known exceptions:** persistência e migração de identity permanecem fora do contrato; o transporte JSON ainda não foi implementado.
+- **Enforcement:** `AUTOMATED` — EVAL-SP-003 compara bytes entre serializações repetidas e análises independentes, valida ordem/identidades/referências e prova que o composition root escreve o mesmo documento do adapter boundary-only; INV-DET-001 protege os produtos de origem.
+- **Known exceptions:** persistência, round-trip e migração de identity permanecem fora do contrato; o JSON v1 é transporte determinístico, não chave longitudinal.
 
 ## Condições contextuais
 

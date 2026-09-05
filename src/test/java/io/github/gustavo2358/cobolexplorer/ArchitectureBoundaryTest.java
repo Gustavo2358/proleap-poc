@@ -3,6 +3,7 @@ package io.github.gustavo2358.cobolexplorer;
 import io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticPort;
 import io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct;
 import io.github.gustavo2358.cobolexplorer.semanticproduct.consumer.CobolLoweringReadinessConsumer;
+import io.github.gustavo2358.cobolexplorer.semanticproduct.loweringreadiness.SemanticPortLoweringProbe;
 import io.github.gustavo2358.cobolexplorer.semanticproduct.projection.CobolSemanticProductProjector;
 import io.github.gustavo2358.cobolexplorer.semanticproduct.transport.SemanticProductJsonWriter;
 import org.junit.jupiter.api.Test;
@@ -44,6 +45,8 @@ class ArchitectureBoundaryTest {
             CobolLoweringReadinessConsumer.class.getName().replace('.', '/');
     private static final String JSON_WRITER_INTERNAL =
             SemanticProductJsonWriter.class.getName().replace('.', '/');
+    private static final String LOWERING_PROBE_INTERNAL =
+            SemanticPortLoweringProbe.class.getName().replace('.', '/');
     private static final Pattern DESCRIPTOR_CLASS =
             Pattern.compile("L([A-Za-z0-9_$/]+)(?=[;<])");
     private static final Pattern JAVA_IMPORT =
@@ -203,6 +206,45 @@ class ArchitectureBoundaryTest {
     }
 
     @Test
+    void checkpoint8ProbeDependsOnlyOnTheSemanticPortBoundary() throws Exception {
+        List<Class<?>> probeTypes = new ArrayList<>();
+        addNestedTypes(SemanticPortLoweringProbe.class, probeTypes);
+        for (Class<?> component : probeTypes) {
+            Set<String> violations = new LinkedHashSet<>();
+            for (String reference : directDependencies(component)) {
+                if ((reference.startsWith(PROJECT_PREFIX_INTERNAL)
+                        && !isLoweringProbeBoundaryType(reference))
+                        || reference.startsWith(ANTLR_PREFIX))
+                    violations.add(reference);
+            }
+            assertTrue(violations.isEmpty(), () -> "INV-SP-003/EVAL-SP-002: "
+                    + component.getName()
+                    + " depende de frontend, projector, adapter ou consumer auxiliar: "
+                    + violations);
+        }
+
+        Path sourcePath = Path.of("src/test/java/io/github/gustavo2358/cobolexplorer/"
+                + "semanticproduct/loweringreadiness/SemanticPortLoweringProbe.java");
+        String source = Files.readString(sourcePath);
+        Set<String> forbiddenImports = new LinkedHashSet<>();
+        Matcher imports = JAVA_IMPORT.matcher(source);
+        while (imports.find()) {
+            String imported = imports.group(1).replace('.', '/');
+            if (imported.startsWith(PROJECT_PREFIX_INTERNAL)
+                    && !isLoweringProbeBoundaryType(imported))
+                forbiddenImports.add(imported);
+        }
+        assertTrue(forbiddenImports.isEmpty(), () -> "INV-SP-003/EVAL-SP-002: "
+                + "probe importa implementação fora do port: " + forbiddenImports);
+        assertTrue(List.of("Ast", "SymbolTable", "ReferenceOccurrences",
+                        "ReferenceResolution", "ResolutionAnalysisReport", "SourceMap",
+                        "CobolSemanticProductProjector", "SemanticProductJsonWriter",
+                        "CobolLoweringReadinessConsumer", "ExplorerMain", "writtenText(",
+                        "grammarRule(", "org.antlr.v4").stream().noneMatch(source::contains),
+                "INV-SP-003/INV-SP-004: probe usa frontend, adapter ou consumer auxiliar");
+    }
+
+    @Test
     void bytecodeScannerSeesGenericAndRecordComponentTypeReferences() throws Exception {
         Set<String> references = directDependencies(BytecodeLeakageProbe.class);
 
@@ -245,6 +287,14 @@ class ArchitectureBoundaryTest {
                 || reference.startsWith(SEMANTIC_PRODUCT_INTERNAL + '$')
                 || reference.equals(JSON_WRITER_INTERNAL)
                 || reference.startsWith(JSON_WRITER_INTERNAL + '$');
+    }
+
+    private static boolean isLoweringProbeBoundaryType(String reference) {
+        return reference.equals(SEMANTIC_PORT_INTERNAL)
+                || reference.equals(SEMANTIC_PRODUCT_INTERNAL)
+                || reference.startsWith(SEMANTIC_PRODUCT_INTERNAL + '$')
+                || reference.equals(LOWERING_PROBE_INTERNAL)
+                || reference.startsWith(LOWERING_PROBE_INTERNAL + '$');
     }
 
     private static void assertNoDirectDependencies(String boundary, List<Class<?>> components,

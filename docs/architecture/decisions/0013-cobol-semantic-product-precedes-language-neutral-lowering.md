@@ -97,9 +97,11 @@ efeitos ou valores ainda desconhecidos.
 - Transporte JSON só pode ser congelado depois que a estrutura do produto e um
   consumer de lowering-readiness estiverem corretos; JSON permanece adapter,
   não domínio.
-- A implementação estreita atual continua evidência histórica e estado a
-  remediar por `WORK-SEMANTIC-PRODUCT-002`; esta decisão não implementa nenhuma
-  fase da cadeia.
+- A implementação estreita que motivou esta decisão foi remediada por
+  `WORK-SEMANTIC-PRODUCT-002`: o produto atual é materializado, plural,
+  partial-aware e integrado. Essa conclusão não implementa nenhuma fase a
+  partir de `CobolLower` nem promove capability cuja readiness continua
+  parcial/bloqueada.
 
 ## Rejected alternatives
 
@@ -116,6 +118,9 @@ efeitos ou valores ainda desconhecidos.
 - `WORK-SEMANTIC-PRODUCT-001` e seus relatórios dos Checkpoints 2, 3A e 3B;
 - implementação inicial de `CobolSemanticProduct`, `CobolSemanticPort` e do
   projector focalizado;
+- implementação e auditoria final de `WORK-SEMANTIC-PRODUCT-002`, incluindo o
+  consumer boundary-only, JSON determinístico e o probe independente do CP8;
+- `docs/domain/cobol-semantic-product.md` e EVAL-SP-001 a EVAL-SP-003;
 - ADR-0003, ADR-0004, ADR-0005 e ADR-0008;
 - INV-COV-001/003, INV-RES-002 e INV-DET-001.
 
