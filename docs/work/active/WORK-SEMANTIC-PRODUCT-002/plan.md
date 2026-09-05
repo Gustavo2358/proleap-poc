@@ -39,20 +39,25 @@
    ordering, provenance, policy e fechamento do lifecycle.
 8. **Review humano obrigatório.** Verificar o consumer independente, o
    fechamento do state e do port e a separação explícita entre produto tipado e
-   qualquer projeção de inspeção. O review não autoriza generalização,
-   interchange, CFG/dataflow ou capability posterior.
-9. **Checkpoint 5 — Inspection adapter determinístico.** Criar o adapter
-   separado que consome somente `CobolSemanticState`/`CobolSemanticPort` e produz
-   `semantic-product.json` para inspeção. A projeção deve ser determinística para
-   a mesma entrada/análise, incluindo ordem observável de campos e coleções,
-   sem timestamp, identidade incidental, metadata de ambiente ou dependência de
-   frontend. Este checkpoint não cria serializer/framework genérico, schema
-   público de interchange, round-trip, persistência ou abstração universal.
+   a projeção JSON de transporte. O review não autoriza generalização,
+   interchange público/universal, CFG/dataflow ou capability posterior.
+9. **Checkpoint 5 — JSON output adapter determinístico.** Criar o adapter de
+   saída do frontend, separado do estado/port, que consome somente
+   `CobolSemanticState`/`CobolSemanticPort` e produz `semantic-product.json`.
+   Esse mesmo artefato deve servir à inspeção/debug e ao desenvolvimento isolado
+   do futuro repositório `CobolLower`. A projeção deve ser deterministicamente
+   reproduzível para a mesma entrada/análise, semanticamente suficiente para o
+   slice, versionável, documentada, consumível sem executar o frontend e capaz
+   de preservar ordering, provenance e UNKNOWN/partial/incompleteness explícitos.
+   O checkpoint é responsável somente pela saída do frontend: não implementa o
+   JSON input adapter, o `LowererInputPort` ou o core do lowerer. Também não cria
+   serializer/framework genérico, schema público de interchange, round-trip,
+   persistência ou abstração universal.
 10. **Review humano obrigatório e encerramento do slice.** Executar os gates do
     contrato, revisar o diff completo, classificar qualquer finding novo pela
     taxonomia downstream e decidir se o produto está pronto para outro work
-    item. O encerramento não autoriza generalização, interchange, CFG/dataflow
-    ou qualquer capability posterior.
+    item. O encerramento não autoriza generalização, interchange público/
+    universal, CFG/dataflow ou qualquer capability posterior.
 
 Cada checkpoint de implementação deve ser pequeno o suficiente para ser
 revertido/revisado sozinho. A ordem impede que o adapter defina implicitamente a
@@ -89,29 +94,52 @@ ExplorerMain / composition root
   consumer independente do slice
 ```
 
-O adapter de inspeção é uma saída downstream separada:
+O JSON output adapter é uma saída downstream separada, com dois consumidores
+possíveis em fases distintas:
 
 ```text
-CobolSemanticState / CobolSemanticPort
-           │
-           ▼
-inspection adapter (somente no Checkpoint 5)
-           │
-           ▼
+DESENVOLVIMENTO ISOLADO
+
+Frontend Core
+    ↓ CobolSemanticPort
+JSON output adapter (Checkpoint 5, frontend)
+    ↓
 semantic-product.json
+    ↓
+JSON input adapter (futuro repositório CobolLower)
+    ↓
+Lowerer Input Port
+    ↓
+CobolLower Core
+
+INTEGRAÇÃO IN-MEMORY
+
+Frontend Core
+    ↓ CobolSemanticPort
+in-memory integration adapter
+    ↓
+Lowerer Input Port
+    ↓
+CobolLower Core
 ```
 
-Os nomes são uma superfície de implementação focalizada, não uma promessa de
-um Semantic Product universal. O package A2/B não deve importar o frontend; o
-adapter é o único tradutor que conhece `Ast`, `CompilationUnitModel`,
+O JSON output adapter é responsabilidade do frontend e o JSON input adapter será
+responsabilidade do futuro bounded context do lowerer. Os nomes são uma
+superfície de implementação focalizada, não uma promessa de um Semantic
+Product universal. O package A2/B não deve importar o frontend; o adapter de
+projeção é o único tradutor que conhece `Ast`, `CompilationUnitModel`,
 `SymbolTable`, `ReferenceResolution`, report e seus índices. O composition root
 não deve virar consumer nem transferir ownership dos providers vivos para o
 port.
 
-O adapter de inspeção do Checkpoint 5 é downstream separado: recebe somente o
-state/port tipado e produz o artefato de inspeção. Um futuro `CobolLower` também
-receberá somente o `CobolSemanticPort`; nenhum deles consome internals do
-frontend e o lowerer não consome JSON.
+No modo isolado, o futuro JSON input adapter recebe o artefato sem executar o
+frontend, valida a versão/shape suportada e o traduz para o `LowererInputPort`.
+No modo integrado, o adapter in-memory traduz diretamente o mesmo
+`CobolSemanticPort` para esse port do lowerer. Em ambos os casos, o core do
+lowerer depende somente do `LowererInputPort`, e a troca de adapter não exige
+alteração no core do frontend nem no core do lowerer. O JSON output adapter pode
+continuar disponível em produção para desenvolvimento local, debug, reprodução
+e testes, embora não seja o caminho principal de execução.
 
 O estado deve ser fechado por uma única construção. A ausência de um
 `analysisGeneration` público não pode ser compensada misturando objetos de
@@ -127,12 +155,14 @@ nenhuma migração nem altera `src/main/**`.
 
 Nos checkpoints posteriores, a única integração permitida é materializar o
 produto após os produtos de análise necessários existirem. A implementação deve
-preservar os produtos de entrada, manter a apresentação/inspeção como adapter
+preservar os produtos de entrada, manter a projeção JSON como adapter de saída
 separado e evitar tornar o produto dependente do lifecycle do `ExplorerMain`. O
-Checkpoint 5 não pode ser antecipado e não transforma `semantic-product.json` em
-domínio. Não haverá serializer/framework genérico, schema público de
-interchange, round-trip, persistência ou refatoração transversal como
-pré-requisito oculto.
+Checkpoint 5 não pode ser antecipado e transforma `semantic-product.json` em um
+contrato interno de transporte de desenvolvimento e inspeção, não em domínio.
+Não haverá serializer/framework genérico, schema público de interchange,
+round-trip, persistência ou refatoração transversal como pré-requisito oculto.
+Se necessário, um marcador mínimo de schema/versão será documentado nesse
+checkpoint, sem antecipar arquitetura genérica.
 
 ## Artefatos esperados
 
@@ -147,8 +177,10 @@ Nos checkpoints posteriores, somente quando autorizados:
 - tipos A2/B em `src/main/java/.../semanticproduct/`;
 - adapter de projeção do slice e a menor integração de publicação;
 - testes de contrato, adapter, closure/lifecycle e consumer independente;
-- em checkpoint posterior próprio, inspection adapter e
-  `semantic-product.json`, com teste de determinismo para a mesma
-  entrada/análise;
+- em checkpoint posterior próprio, JSON output adapter e
+  `semantic-product.json`, com contrato documentado e teste de determinismo,
+  suficiência e preservação de UNKNOWN/partial para a mesma entrada/análise;
+- nenhuma implementação do futuro JSON input adapter, `LowererInputPort`,
+  adapter in-memory ou core do repositório `CobolLower` neste work item;
 - eventual promoção de oracle/eval durável, se o review demonstrar repetição
   útil, sem copiar asserts para documentação canônica.

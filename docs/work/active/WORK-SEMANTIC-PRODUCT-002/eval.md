@@ -10,11 +10,14 @@ do `MOVE` com o operando do `CALL`, o ordering observado, provenance, policy e
 status de análise. Deve afirmar nominal binding conhecido somente onde há
 candidate único e deve publicar `UNKNOWN`/uncertainty para o target de runtime.
 
-Em checkpoint posterior, a inspeção também será correta quando um adapter
-separado consumir somente `CobolSemanticState`/`CobolSemanticPort` e produzir
-`semantic-product.json` de modo determinístico: a mesma entrada e a mesma
-análise devem gerar a mesma projeção observável, sem fazer do JSON o produto ou
-um schema público.
+Em checkpoint posterior, a projeção de transporte também será correta quando
+um JSON output adapter separado consumir somente
+`CobolSemanticState`/`CobolSemanticPort` e produzir `semantic-product.json` de
+modo determinístico. A mesma entrada e a mesma análise devem gerar a mesma
+projeção observável, semanticamente suficiente para o slice, versionável,
+documentada e consumível sem executar o frontend. O artefato deve atender tanto
+inspeção/debug quanto desenvolvimento isolado do futuro `CobolLower`, sem fazer
+do JSON o produto, um modelo de domínio ou um schema público.
 
 O oracle principal já foi executado no Checkpoint 3B e está em
 `docs/history/evidence/semantic-product-boundary-checkpoint-3b.md`; a
@@ -46,8 +49,11 @@ localizável no diff ou nos testes. O slice só passa quando todas forem PASS:
 7. O diff não antecipa `CobolLower`, IR, CFG, dataflow, possible-values,
    dependency extraction, serializer/framework genérico, schema público de
    interchange, outra construção ou outra linguagem. `semantic-product.json`
-   só é permitido no checkpoint posterior do inspection adapter e permanece
-   fora do state/port e do consumo do `CobolLower`.
+   só é produzido no checkpoint posterior pelo JSON output adapter do frontend;
+   permanece fora do state/port e do core do `CobolLower`. O contrato pode ser
+   consumido, no futuro, pelo JSON input adapter do repositório do lowerer, que o
+   traduzirá para `LowererInputPort`; esse adapter e o port ainda não são
+   implementados neste work item.
 
 Uma resposta “não demonstrado” é finding, não aprovação condicional. Se surgir
 um finding semântico novo, o reviewer deve classificá-lo pela taxonomia
@@ -75,9 +81,16 @@ autoriza expandir seu escopo para resolvê-lo.
   falta delas como licença para inventar linkage ou target.
 - O estado A2, a facade B e o consumer não carregam referências de frontend,
   ANTLR, presentation, serializer ou provider lazy.
-- No checkpoint posterior, o inspection adapter recebe somente state/port
+- No checkpoint posterior, o JSON output adapter recebe somente state/port
   tipado e repete a mesma projeção para a mesma entrada/análise, sem timestamp,
-  ordem incidental de mapa, identidade de objeto ou metadata de ambiente.
+  ordem incidental de mapa, identidade de objeto ou metadata de ambiente. O
+  artefato preserva ordering, provenance e UNKNOWN/partial/incompleteness, pode
+  ser usado sem executar o frontend e é adequado a fixtures, testes, debug e
+  desenvolvimento independente.
+- O futuro JSON input adapter do lowerer traduz o artefato para
+  `LowererInputPort`; o core do lowerer não conhece JSON. A integração final
+  pode trocar esse adapter por um adapter in-memory que liga
+  `CobolSemanticPort` ao mesmo port, sem alterar nenhum dos cores.
 
 ## Classes negativas
 
@@ -93,10 +106,10 @@ autoriza expandir seu escopo para resolvê-lo.
   desses objetos vivo para responder query.
 - Representar `UNKNOWN`, input missing, unsupported, unresolved ou ambiguity
   por lista vazia, exception genérica ou claim `COMPLETE`.
-- Anotar/mutar produtos anteriores, colocar JSON no state/port, criar
-  serializer/framework genérico ou schema público de interchange, alterar
-  grammar, implementar lowerer, CFG, dataflow ou generalizar o produto para
-  outros constructs/linguagens.
+- Anotar/mutar produtos anteriores, colocar JSON no state/port, fazer o core do
+  lowerer conhecer JSON, criar serializer/framework genérico ou schema público
+  de interchange, alterar grammar, implementar lowerer, CFG, dataflow ou
+  generalizar o produto para outros constructs/linguagens.
 
 ## Classes ambíguas
 
@@ -134,11 +147,17 @@ autoriza expandir seu escopo para resolvê-lo.
   selecionar ou fabricar handle.
 - Remover a provenance exata ou trocar COPY disponível por input ausente deve
   ser observável no status/anchor; fatos independentes não podem desaparecer.
-- Repetir o inspection adapter com a mesma entrada/análise deve produzir
+- Repetir o JSON output adapter com a mesma entrada/análise deve produzir
   `semantic-product.json` byte-a-byte/valor-a-valor equivalente e com a mesma
   ordem observável; consultar o port em ordem diferente não pode alterar a
-  projeção. Esse oracle pertence ao checkpoint posterior e não é implementado
-  neste Checkpoint 1.
+  projeção. O artefato deve conter versão/shape documentados e ser suficiente
+  para o slice sem executar o frontend. Esse oracle pertence ao checkpoint
+  posterior e não é implementado neste Checkpoint 1.
+- Um futuro JSON input adapter deve conseguir consumir o artefato fora do
+  frontend e produzir a entrada tipada do lowerer; a sua substituição pelo
+  adapter in-memory deve preservar o contrato do core e do `LowererInputPort`.
+  A implementação desses componentes pertence ao futuro repositório e não a
+  este work item.
 - Inspecionar bytecode e fonte da boundary/consumer deve detectar qualquer
   dependência direta de frontend, ANTLR, `writtenText` ou `grammarRule`.
 - Uma entrada fora do slice, como `CALL 'PGMA'`, outro statement ou outra unit,
@@ -151,8 +170,9 @@ Os gates existentes devem continuar verdes para AST, pre-order, symbols,
 occurrences, resolução nominal, CALL semantics, coverage, provenance,
 classificação externa, snapshots, performance e architecture boundary. O
 consumer independente novo deve ser coberto por testes de contrato e não deve
-ser acoplado aos testes de presentation. O inspection adapter posterior deve
-ter teste próprio de determinismo e não pode alterar os snapshots existentes.
+ser acoplado aos testes de presentation. O JSON output adapter posterior deve
+ter teste próprio de determinismo, suficiência e estados parciais, e não pode
+alterar os snapshots existentes.
 
 Evals canônicos relacionados:
 
