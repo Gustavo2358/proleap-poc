@@ -35,8 +35,10 @@
    um único estado A2 em memória e permitir que um consumer de teste opere
    somente pelo port depois de o frontend ser liberado. Não alterar snapshots,
    CLI ou contratos existentes de apresentação, nem gerar
-   `semantic-product.json` neste checkpoint. Exercitar determinismo por valor,
-   ordering, provenance, policy e fechamento do lifecycle.
+   `semantic-product.json` neste checkpoint. Exercitar reprodutibilidade
+   determinística de valores e handles no contexto equivalente, ordering,
+   provenance, policy e fechamento do lifecycle, sem tratar handles como
+   identidade persistente.
 8. **Review humano obrigatório.** Verificar o consumer independente, o
    fechamento do state e do port e a separação explícita entre produto tipado e
    a projeção JSON de transporte. O review não autoriza generalização,
@@ -45,10 +47,15 @@
    saída do frontend, separado do estado/port, que consome somente
    `CobolSemanticState`/`CobolSemanticPort` e produz `semantic-product.json`.
    Esse mesmo artefato deve servir à inspeção/debug e ao desenvolvimento isolado
-   do futuro repositório `CobolLower`. A projeção deve ser deterministicamente
-   reproduzível para a mesma entrada/análise, semanticamente suficiente para o
-   slice, versionável, documentada, consumível sem executar o frontend e capaz
-   de preservar ordering, provenance e UNKNOWN/partial/incompleteness explícitos.
+   do futuro repositório `CobolLower`. Para a mesma combinação de entrada
+   normalizada/preprocessada, configuração efetiva/policy, versão do analisador
+   e versão do contrato, a projeção deve reproduzir deterministicamente os
+   identificadores transportados, a ordem e os demais valores observáveis. Ela
+   deve ser semanticamente suficiente para o slice, versionável, documentada,
+   consumível sem executar o frontend e capaz de preservar ordering, provenance
+   e UNKNOWN/partial/incompleteness explícitos. Essa reprodutibilidade de
+   transporte não promete identidade persistente após edição, mudança estrutural
+   ou mudança de versão.
    O checkpoint é responsável somente pela saída do frontend: não implementa o
    JSON input adapter, o `LowererInputPort` ou o core do lowerer. Também não cria
    serializer/framework genérico, schema público de interchange, round-trip,
@@ -145,7 +152,9 @@ O estado deve ser fechado por uma única construção. A ausência de um
 `analysisGeneration` público não pode ser compensada misturando objetos de
 análises distintas; nesta primeira versão, a coerência mínima é garantida pelo
 mesmo objeto A2 contendo core, policy, status, provenance e facts do slice.
-Identidade persistente entre publicações continua fora do contrato provado.
+Execuções equivalentes devem reproduzir os handles necessários ao transporte,
+mas identidade persistente entre edições, mudanças estruturais ou versões
+continua fora do contrato provado.
 
 ## Migrações requeridas
 
@@ -178,8 +187,10 @@ Nos checkpoints posteriores, somente quando autorizados:
 - adapter de projeção do slice e a menor integração de publicação;
 - testes de contrato, adapter, closure/lifecycle e consumer independente;
 - em checkpoint posterior próprio, JSON output adapter e
-  `semantic-product.json`, com contrato documentado e teste de determinismo,
-  suficiência e preservação de UNKNOWN/partial para a mesma entrada/análise;
+  `semantic-product.json`, com contrato documentado e teste de determinismo dos
+  handles, valores e ordem para a mesma combinação de entrada, configuração,
+  versão do analisador e versão do contrato, além de suficiência e preservação
+  de UNKNOWN/partial;
 - nenhuma implementação do futuro JSON input adapter, `LowererInputPort`,
   adapter in-memory ou core do repositório `CobolLower` neste work item;
 - eventual promoção de oracle/eval durável, se o review demonstrar repetição

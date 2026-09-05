@@ -53,7 +53,9 @@ decisão H já provada sem reabrir A2 versus B.
 - O Checkpoint 5 produzirá `semantic-product.json` somente por JSON output
   adapter do frontend, consumindo `CobolSemanticState`/`CobolSemanticPort` e
   exigindo determinismo, suficiência, versionamento/documentação e preservação
-  explícita de UNKNOWN/partial/incompleteness para a mesma entrada/análise.
+  explícita de UNKNOWN/partial/incompleteness para a mesma entrada
+  normalizada/preprocessada, configuração efetiva/policy, versão do analisador e
+  versão do contrato.
 - O Checkpoint 5 é responsável apenas pela saída do frontend. Não implementa o
   futuro repositório `CobolLower`, JSON input adapter, `LowererInputPort` ou
   adapter in-memory; apenas documenta a fronteira necessária para a futura
@@ -74,11 +76,15 @@ decisão H já provada sem reabrir A2 versus B.
 - `ReferenceResolution` já separa `CallTargetSyntax` de `CallLinkage`, e o
   report já produz `DYNAMIC_CALL_TARGET_VALUE_UNKNOWN`; a boundary deve
   transportar essa distinção, não rederivá-la por texto.
-- A prova 3B demonstrou igualdade determinística de valores, mas não
-  `analysisGeneration`, persistência ou identidade cross-run/cross-version. O
-  primeiro produto usa uma publicação A2 única. O futuro JSON output adapter
-  deverá produzir um transporte determinístico para a mesma entrada/análise,
-  sem promover JSON a domínio, schema público ou protocolo universal.
+- A prova 3B demonstrou igualdade determinística de valores, mas não o contrato
+  completo de reprodução dos IDs transportados, `analysisGeneration`, persistência
+  ou identidade persistente. O primeiro produto usa uma publicação A2 única. O
+  futuro JSON output adapter deverá reproduzir handles e projeção para a mesma
+  combinação de entrada normalizada/preprocessada, configuração efetiva/policy,
+  versão do analisador e versão do contrato, sem converter essa propriedade de
+  transporte em identidade
+  persistente após edições ou mudanças de versão, nem promover JSON a domínio,
+  schema público ou protocolo universal.
 - O futuro `CobolLower` terá seu próprio `LowererInputPort` e core independente.
   Em desenvolvimento isolado, seu JSON input adapter poderá traduzir o artefato;
   na integração final, um adapter in-memory ligará `CobolSemanticPort` ao mesmo

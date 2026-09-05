@@ -2,7 +2,7 @@ id: WORK-SEMANTIC-PRODUCT-002
 title: Semantic Product de produção para MOVE literal e CALL variável
 status: active
 risk: high
-goal: Materializar em memória um Semantic Product COBOL-specific, fechado e imutável, que publique o slice provado MOVE literal → CALL variável por uma facade tipada sem inferir target de runtime e, em checkpoint posterior, produza semantic-product.json por um JSON output adapter determinístico, versionável, documentado e semanticamente suficiente para inspeção e desenvolvimento isolado, sem transformar JSON em domínio ou dependência dos cores.
+goal: Materializar em memória um Semantic Product COBOL-specific, fechado e imutável, que publique o slice provado MOVE literal → CALL variável por uma facade tipada sem inferir target de runtime e, em checkpoint posterior, produza semantic-product.json por um JSON output adapter determinístico para a mesma entrada, configuração, versão do analisador e versão do contrato, versionável, documentado e semanticamente suficiente para inspeção e desenvolvimento isolado, sem transformar JSON em domínio, identidade persistente ou dependência dos cores.
 must_read:
   - docs/index.md
   - docs/architecture/pipeline.md
@@ -106,7 +106,7 @@ must_not_change:
   - AST, grammar, symbol table, occurrence collector, nominal resolver and existing parser behavior
   - WORK-AST-002, F-01, BACKLOG-RES-003 and any other active work item scope
   - CobolLower, Canonical Analysis IR, CFG, dataflow, possible-values and dependency extraction; the future lowerer core depends on its LowererInputPort, with a JSON input adapter or an in-memory adapter outside the core
-  - generic serializer/framework, public interchange schema, round-trip, persistence, universal multi-language abstraction and HTML/snapshot contracts
+  - generic serializer/framework, public interchange schema, round-trip, persistence or persistent identity/migration, universal multi-language abstraction and HTML/snapshot contracts
   - semantic-product.json or its JSON output adapter before the later JSON checkpoint, JSON inside Semantic Product/state/port or JSON parsing in the future lowerer core
   - future CobolLower repository, JSON input adapter, LowererInputPort and in-memory integration adapter; this work item documents their required boundary but does not implement them
   - plugin framework, universal multi-language Semantic Product and external-language analyzers

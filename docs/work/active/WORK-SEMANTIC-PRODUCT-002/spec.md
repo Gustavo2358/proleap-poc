@@ -109,7 +109,10 @@ adapter; não são a boundary.
   altera qualquer produto anterior.
 - `ProgramUnitId` é a autoridade de namespace na entrada. A boundary cria seus
   próprios handles; `Ast.Meta.id` e IDs locais do frontend não são identidades
-  globais nem prometem estabilidade entre edições, runs ou versões.
+  persistentes. `UnitId`, `DataItemId` e os demais handles publicados devem ser
+  reproduzíveis em execuções equivalentes, conforme a definição de determinismo
+  de transporte abaixo, mas podem mudar após edição do código, mudança estrutural,
+  nova versão do analisador ou nova versão do contrato.
 - O literal do `MOVE` e o binding nominal do `CALL WS-PGM` são fatos
   independentes. Mesmo quando há uma ordem linear observada, ela não é análise
   de valores.
@@ -118,10 +121,13 @@ adapter; não são a boundary.
   um `SourceMap` sobre texto transformado.
 - Os tipos experimentais do Checkpoint 3B são evidência executável e oracle de
   shape; não são API de produção nem devem ser importados pelo produto.
-- Nenhum contrato de persistência cross-run, identidade cross-version,
-  interchange público ou snapshot é necessário para este slice. O contrato
-  interno de transporte `semantic-product.json` é necessário apenas para o
-  desenvolvimento isolado e a inspeção previstos no checkpoint posterior.
+- Não há contrato de persistência nem de identidade persistente entre edições,
+  mudanças estruturais ou versões para este slice. Há, porém, um contrato de
+  reprodutibilidade determinística para transporte equivalente: o mesmo input,
+  configuração, versão do analisador e versão do contrato devem reproduzir os
+  handles transportados e a projeção observável. O contrato interno de
+  transporte `semantic-product.json` é necessário apenas para o desenvolvimento
+  isolado e a inspeção previstos no checkpoint posterior.
 
 ## Comportamento esperado
 
@@ -163,14 +169,22 @@ Lowerer Input Port
 CobolLower Core
 ```
 
-O JSON output adapter não pode ser uma dependência do estado ou do port. Para a
-mesma entrada e a mesma análise, ele deve produzir a mesma projeção, incluindo
-a mesma ordem observável de campos e coleções; não pode inserir timestamp,
-identidade de objeto, ordem incidental de mapa ou metadata de ambiente. O
-artefato deve carregar os fatos semanticamente suficientes para o slice e
-preservar UNKNOWN, partial, incompleteness, provenance e ordering observáveis.
-Essa determinidade não promete identidade cross-run/cross-version nem transforma
-o artefato em schema público, protocolo universal ou persistência.
+O JSON output adapter não pode ser uma dependência do estado ou do port. Para os
+fins deste contrato, execuções equivalentes usam a mesma entrada
+normalizada/preprocessada, a mesma configuração efetiva/policy, a mesma versão do
+analisador e a mesma versão do contrato. Nessas condições, ele deve reproduzir
+`UnitId`, `DataItemId` e os demais identificadores transportados, além da mesma
+projeção observável e da mesma ordem de campos e coleções; não pode inserir
+timestamp, identidade de objeto, ordem incidental de mapa ou metadata de
+ambiente. O artefato deve carregar os fatos semanticamente suficientes para o
+slice e preservar UNKNOWN, partial, incompleteness, provenance e ordering
+observáveis.
+
+Essa é uma propriedade de reprodutibilidade determinística do transporte, não de
+identidade persistente. Ela não garante a preservação dos mesmos `UnitId`,
+`DataItemId` ou outros handles depois de uma edição do código, mudança estrutural,
+nova versão do analisador ou nova versão do contrato. Persistência ou migração de
+identidade exigiria contrato próprio e não é definida aqui.
 
 O futuro JSON input adapter pertence ao bounded context do `CobolLower`: ele
 validará a versão/shape suportada e traduzirá o artefato para o
@@ -186,7 +200,9 @@ mesmo não sendo o caminho principal de execução.
 O checkpoint posterior deve documentar e testar, para o slice suportado, um
 artefato que seja:
 
-- determinístico para a mesma entrada/análise, inclusive na ordem de campos,
+- determinístico para a mesma entrada normalizada/preprocessada, configuração
+  efetiva/policy, versão do analisador e versão do contrato, inclusive na
+  reprodução de `UnitId`, `DataItemId` e demais handles, na ordem de campos,
   coleções e facts observáveis;
 - semanticamente suficiente para reconstruir o slice sem executar o frontend,
   sem expor seus internals e sem depender de texto reprocessado;
@@ -304,9 +320,16 @@ Cada checkpoint de implementação deve proteger estes invariantes:
   falsa identity map.
 - **Ordering observável:** a relação publicada é determinística e verificável,
   mas não é uma aresta de CFG nem uma garantia de reachability.
+- **Determinismo de transporte != identidade persistente:** em execuções
+  equivalentes — mesma entrada normalizada/preprocessada, configuração
+  efetiva/policy, versão do analisador e versão do contrato — os identificadores
+  transportados e a ordem observável são reproduzíveis o suficiente para gerar
+  JSON determinístico. Isso não torna `UnitId`, `DataItemId` ou outros handles
+  identidades persistentes nem garante seus mesmos valores após edição do código,
+  mudança estrutural, nova versão do analisador ou nova versão do contrato.
 - **Publicação coerente:** core e capabilities da mesma consulta pertencem ao
-  mesmo estado A2; persistência e identidade estável entre gerações continuam
-  fora deste slice.
+  mesmo estado A2; persistência e migração de identidade entre publicações
+  continuam fora deste slice.
 - **Semantic Product != JSON:** `CobolSemanticState`/`CobolSemanticPort` são o
   produto tipado materializado em memória. `semantic-product.json` é produzido
   por um adapter de saída e é um transporte interno, determinístico, versionável
@@ -331,7 +354,7 @@ feliz isolado não substitui os critérios de boundary e de escopo.
 | CA-06 | State e port são imutáveis, a publicação é fechada e o consumer opera depois da liberação do frontend. | Teste de mutação de coleções, construção sem frontend e verificação de dependências no bytecode. |
 | CA-07 | Boundary e consumer não dependem de ANTLR, parse tree, internals do frontend, snapshots, serializer, `writtenText` ou `grammarRule` para semântica. | `ArchitectureBoundaryTest`/teste focalizado de leakage e inspeção de source/bytecode. |
 | CA-08 | A implementação muda somente o escopo autorizado, mantém os produtos de entrada separados e deixa todos os gates declarados verdes. | Revisão do diff, `git diff --check`, `check-docs`, `check-fast`, `check-architecture`, `check-semantic`, `check-performance` e `check-full`. |
-| CA-09 | Em checkpoint posterior, o frontend produz `semantic-product.json` por adapter de saída separado, consumindo somente `CobolSemanticState`/`CobolSemanticPort`; o artefato é determinístico, versionável, documentado, semanticamente suficiente para o slice e consumível sem executar o frontend. | Teste do adapter comparando bytes/valores e ordem observável, incluindo UNKNOWN/partial/provenance; inspeção confirma que o JSON não entra no state/port nem no core do `CobolLower`. |
+| CA-09 | Em checkpoint posterior, o frontend produz `semantic-product.json` por adapter de saída separado, consumindo somente `CobolSemanticState`/`CobolSemanticPort`; para a mesma entrada normalizada/preprocessada, configuração efetiva/policy, versão do analisador e versão do contrato, o artefato reproduz IDs transportados e projeção determinística, sendo versionável, documentado, semanticamente suficiente para o slice e consumível sem executar o frontend. Isso não promete identidade persistente após edição, mudança estrutural ou mudança de versão. | Teste do adapter comparando bytes/valores, IDs e ordem observável; inspeção inclui UNKNOWN/partial/provenance e confirma que o JSON não entra no state/port nem no core do `CobolLower`. |
 | CA-10 | O contrato deixa explícitos os dois modos: desenvolvimento isolado por JSON output adapter → artefato → futuro JSON input adapter → `LowererInputPort`, e integração final por adapter in-memory `CobolSemanticPort` → `LowererInputPort`; a troca não exige alterar os cores nem exige que frontend/lowerer estejam no mesmo repositório. | Revisão documental dos diagramas e fronteiras; nenhum repositório `CobolLower`, JSON input adapter ou `LowererInputPort` é implementado neste work item. |
 
 O Checkpoint 1 deste PR satisfaz somente a parte documental desses critérios:
@@ -367,7 +390,8 @@ resultados pertencem a CFG/dataflow futuros.
 - implementar o futuro repositório `CobolLower`, seu JSON input adapter,
   `LowererInputPort` ou o adapter in-memory de integração final;
 - criar serializer/framework genérico, schema público de interchange, round-trip,
-  persistência ou identidade cross-run/cross-version;
+  persistência ou identidade persistente/migração entre edições, mudanças
+  estruturais ou versões;
 - colocar JSON dentro do Semantic Product, do `CobolSemanticState` ou do
   `CobolSemanticPort`, ou fazer o core do futuro `CobolLower` conhecer JSON. O
   contrato permite apenas o futuro JSON input adapter, fora deste work item,

@@ -13,11 +13,21 @@ candidate único e deve publicar `UNKNOWN`/uncertainty para o target de runtime.
 Em checkpoint posterior, a projeção de transporte também será correta quando
 um JSON output adapter separado consumir somente
 `CobolSemanticState`/`CobolSemanticPort` e produzir `semantic-product.json` de
-modo determinístico. A mesma entrada e a mesma análise devem gerar a mesma
-projeção observável, semanticamente suficiente para o slice, versionável,
+modo determinístico. A mesma combinação de entrada normalizada/preprocessada,
+configuração efetiva/policy, versão do analisador e versão do contrato deve gerar
+a mesma projeção observável, semanticamente suficiente para o slice, versionável,
 documentada e consumível sem executar o frontend. O artefato deve atender tanto
 inspeção/debug quanto desenvolvimento isolado do futuro `CobolLower`, sem fazer
 do JSON o produto, um modelo de domínio ou um schema público.
+
+Para este eval, execuções equivalentes usam a mesma entrada
+normalizada/preprocessada, a mesma configuração efetiva/policy, a mesma versão
+do analisador e a mesma versão do contrato. Nessa condição, a projeção deve
+reproduzir `UnitId`, `DataItemId` e os demais handles transportados, além de seus
+valores e ordem, o suficiente para produzir JSON determinístico. Isso é
+reprodutibilidade de transporte, não identidade persistente: não há garantia de
+preservar esses handles depois de edição do código, mudança estrutural, nova
+versão do analisador ou nova versão do contrato.
 
 O oracle principal já foi executado no Checkpoint 3B e está em
 `docs/history/evidence/semantic-product-boundary-checkpoint-3b.md`; a
@@ -75,18 +85,19 @@ autoriza expandir seu escopo para resolvê-lo.
 - O estado é construído uma vez, todas as coleções expostas são imutáveis, o
   port é query-only e o consumer continua operando depois de o frontend ser
   liberado.
-- Execuções repetidas com a mesma entrada/policy produzem os mesmos valores e
-  a mesma ordem; isso não vira promessa de identidade cross-run.
+- Execuções equivalentes produzem os mesmos valores, handles transportados e a
+  mesma ordem; essa reprodutibilidade de transporte não transforma `UnitId`,
+  `DataItemId` ou outros handles em identidades persistentes.
 - A policy normalizada mantém opções ausentes como `UNSPECIFIED` e não trata a
   falta delas como licença para inventar linkage ou target.
 - O estado A2, a facade B e o consumer não carregam referências de frontend,
   ANTLR, presentation, serializer ou provider lazy.
 - No checkpoint posterior, o JSON output adapter recebe somente state/port
-  tipado e repete a mesma projeção para a mesma entrada/análise, sem timestamp,
-  ordem incidental de mapa, identidade de objeto ou metadata de ambiente. O
-  artefato preserva ordering, provenance e UNKNOWN/partial/incompleteness, pode
-  ser usado sem executar o frontend e é adequado a fixtures, testes, debug e
-  desenvolvimento independente.
+  tipado e repete a mesma projeção, inclusive IDs, para execuções equivalentes,
+  sem timestamp, ordem incidental de mapa, identidade de objeto ou metadata de
+  ambiente. O artefato preserva ordering, provenance e
+  UNKNOWN/partial/incompleteness, pode ser usado sem executar o frontend e é
+  adequado a fixtures, testes, debug e desenvolvimento independente.
 - O futuro JSON input adapter do lowerer traduz o artefato para
   `LowererInputPort`; o core do lowerer não conhece JSON. A integração final
   pode trocar esse adapter por um adapter in-memory que liga
@@ -138,8 +149,9 @@ autoriza expandir seu escopo para resolvê-lo.
   frontend.
 - Tentar mutar as listas retornadas por state e port deve falhar; chamar as
   queries em ordens diferentes não pode mudar valores, ordering ou status.
-- Repetir a análise deve preservar a ordem e os joins; não deve comparar ou
-  reivindicar IDs estáveis entre execuções independentes.
+- Repetir a análise em uma execução equivalente deve preservar IDs, valores,
+  ordem e joins; uma execução posterior com edição do código, mudança estrutural
+  ou versão diferente não tem garantia de preservar os mesmos handles.
 - Alterar apenas a policy ausente deve manter o binding DATA e tornar somente
   facts dependentes da policy `UNSPECIFIED`/`UNKNOWN`.
 - Montar candidate ambiguity, unresolved, unsupported ou input missing para um
@@ -147,12 +159,15 @@ autoriza expandir seu escopo para resolvê-lo.
   selecionar ou fabricar handle.
 - Remover a provenance exata ou trocar COPY disponível por input ausente deve
   ser observável no status/anchor; fatos independentes não podem desaparecer.
-- Repetir o JSON output adapter com a mesma entrada/análise deve produzir
-  `semantic-product.json` byte-a-byte/valor-a-valor equivalente e com a mesma
-  ordem observável; consultar o port em ordem diferente não pode alterar a
-  projeção. O artefato deve conter versão/shape documentados e ser suficiente
-  para o slice sem executar o frontend. Esse oracle pertence ao checkpoint
-  posterior e não é implementado neste Checkpoint 1.
+- Repetir o JSON output adapter com a mesma entrada
+  normalizada/preprocessada, configuração efetiva/policy, versão do analisador e
+  versão do contrato deve produzir `semantic-product.json` byte-a-byte/valor-a-
+  valor equivalente, incluindo os IDs transportados e a mesma ordem observável;
+  consultar o port em ordem diferente não pode alterar a projeção. O artefato
+  deve conter versão/shape documentados e ser suficiente para o slice sem
+  executar o frontend. Esse oracle pertence ao checkpoint posterior e não é
+  implementado neste Checkpoint 1. Isso não exige preservar handles entre
+  entradas editadas ou versões diferentes.
 - Um futuro JSON input adapter deve conseguir consumir o artefato fora do
   frontend e produzir a entrada tipada do lowerer; a sua substituição pelo
   adapter in-memory deve preservar o contrato do core e do `LowererInputPort`.
@@ -195,16 +210,20 @@ Evals canônicos relacionados:
   transforma nem torna conhecido o target de runtime do `CALL`.
 - Renomear consistentemente a DATA e os dois usos altera somente a identidade/
   grafia projetada; o join comum e o status nominal permanecem.
-- Alterar uma declaração não relacionada não muda o `DataItemId`/binding quando
-  a resolução canônica continua única.
+- Alterar uma declaração não relacionada cria uma nova entrada: se a resolução
+  canônica continuar única, o binding nominal pode permanecer equivalente, mas o
+  contrato não exige preservar o `DataItemId` ou outros handles da publicação
+  anterior.
 - Substituir uma option ausente por outra policy explícita altera somente facts
   policy-dependent; não pode reclassificar `CALL WS-PGM` como target concreto.
 - Tornar um input estruturalmente ausente preserva facts independentes e muda
   a claim/readiness para incompleta, em vez de produzir sucesso vazio.
 - Projetar duas vezes o mesmo state/port, ou produzir o state duas vezes a
-  partir da mesma entrada/análise, preserva bytes/valores e ordem do
-  `semantic-product.json`; isso não reivindica identidade cross-run/cross-version
-  dos handles.
+  partir da mesma combinação de entrada, configuração, versão do analisador e
+  versão do contrato, preserva bytes, handles, valores e ordem do
+  `semantic-product.json`. Isso
+  garante reprodutibilidade determinística do transporte, mas não identidade
+  persistente dos handles após edição, mudança estrutural ou mudança de versão.
 
 ## Expectativas de escala
 
