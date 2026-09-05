@@ -382,6 +382,7 @@ public final class CobolSemanticProduct {
      * Branch children are the statements whose containment names this IF.
      */
     public record IfFact(StatementHeader header, ConditionSurface condition,
+                         boolean explicitlyTerminated,
                          Optional<StatementId> continuation) implements StatementFact {
         public IfFact {
             header = Objects.requireNonNull(header, "header");

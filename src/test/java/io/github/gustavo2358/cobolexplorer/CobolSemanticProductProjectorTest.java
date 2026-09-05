@@ -10,18 +10,20 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** Production projection coverage for WORK-SEMANTIC-PRODUCT-002 Checkpoint 3. */
+/** Production projection coverage for WORK-SEMANTIC-PRODUCT-002 Checkpoints 3 and 4. */
 class CobolSemanticProductProjectorTest {
     private static final String SOURCE_NAME = "semantic-product-projection.cbl";
     private static final String MULTIPLE_SOURCE = String.join("\n",
@@ -138,7 +140,7 @@ class CobolSemanticProductProjectorTest {
     }
 
     @Test
-    void targetFixtureKeepsEveryMoveAndCallEvenWhenItsParentIsNotProjected()
+    void targetFixtureProjectsEveryIfAndRefinesOnlyCanonicalBranchContainment()
             throws IOException {
         Path fixture = Path.of(
                 "src/test/resources/cobol/semantic/semantic-product-lowering-readiness.cbl");
@@ -148,29 +150,208 @@ class CobolSemanticProductProjectorTest {
 
         assertEquals(7, port.moves().size());
         assertEquals(3, port.calls().size());
-        assertEquals(10, port.statements().size());
-        assertEquals(List.of(0, 1, 3, 5, 6, 7, 8, 9, 10, 12),
+        assertEquals(3, port.ifs().size());
+        assertEquals(13, port.statements().size());
+        assertEquals(List.of(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12),
                 port.statements().stream()
                         .map(statement -> statement.header().point().ordinal()).toList());
-        assertEquals(4, port.rootStatements().size());
+        assertEquals(List.of(0, 1, 2, 4, 5, 6, 9), port.moves().stream()
+                .map(move -> move.header().id().localId()).toList(),
+                "adding IF facts must retain the CP3 MOVE identities");
+        assertEquals(List.of(3, 7, 8), port.calls().stream()
+                .map(call -> call.header().id().localId()).toList(),
+                "adding IF facts must retain the CP3 CALL identities");
+        CobolSemanticProduct.StatementId outer = statementId(port, 10);
+        CobolSemanticProduct.StatementId nested = statementId(port, 11);
+        CobolSemanticProduct.StatementId emptyFalseBranch = statementId(port, 12);
+        assertEquals(List.of(outer, nested, emptyFalseBranch), port.ifs().stream()
+                .map(branch -> branch.header().id()).toList());
+        assertEquals(List.of(statementId(port, 0), statementId(port, 1), outer,
+                        statementId(port, 7), statementId(port, 8), emptyFalseBranch),
+                port.rootStatements());
 
-        List<CobolSemanticProduct.StatementFact> nested = port.statements().stream()
+        assertEquals(List.of(statementId(port, 2), nested, statementId(port, 5)),
+                ids(port.children(outer, CobolSemanticProduct.Branch.THEN)));
+        assertEquals(List.of(statementId(port, 6)),
+                ids(port.children(outer, CobolSemanticProduct.Branch.ELSE)));
+        assertEquals(List.of(statementId(port, 3)),
+                ids(port.children(nested, CobolSemanticProduct.Branch.THEN)));
+        assertEquals(List.of(statementId(port, 4)),
+                ids(port.children(nested, CobolSemanticProduct.Branch.ELSE)));
+        assertEquals(List.of(statementId(port, 9)),
+                ids(port.children(emptyFalseBranch, CobolSemanticProduct.Branch.THEN)));
+        assertTrue(port.children(emptyFalseBranch, CobolSemanticProduct.Branch.ELSE).isEmpty());
+
+        assertEquals(Optional.of(statementId(port, 7)), port.ifs().get(0).continuation());
+        assertEquals(Optional.of(statementId(port, 5)), port.ifs().get(1).continuation());
+        assertTrue(port.ifs().get(2).continuation().isEmpty());
+        assertTrue(port.ifs().stream().allMatch(CobolSemanticProduct.IfFact::explicitlyTerminated));
+        assertTrue(port.ifs().stream().allMatch(branch ->
+                branch.condition().shape().equals("RELATION")
+                        && branch.condition().references().size() == 1
+                        && branch.condition().references().get(0).role()
+                        == CobolSemanticProduct.OperandRole.READ));
+
+        Map<CobolSemanticProduct.DataItemId, String> names = new LinkedHashMap<>();
+        port.dataDeclarations().forEach(declaration ->
+                names.put(declaration.id(), declaration.canonicalName()));
+        assertTrue(port.ifs().stream().allMatch(branch -> names.get(
+                branch.condition().references().get(0).binding().selected().orElseThrow())
+                .equals("FLAG")));
+
+        List<CobolSemanticProduct.StatementFact> exactChildren = port.statements().stream()
                 .filter(statement -> statement.header().containment().branch()
-                        == CobolSemanticProduct.Branch.UNKNOWN)
+                        == CobolSemanticProduct.Branch.THEN
+                        || statement.header().containment().branch()
+                        == CobolSemanticProduct.Branch.ELSE)
                 .toList();
-        assertEquals(6, nested.size());
-        assertTrue(nested.stream().allMatch(statement ->
-                statement.header().containment().parent().isEmpty()
-                        && statement.header().coverage()
-                        == CobolSemanticProduct.CoverageStatus.PARTIAL
-                        && statement.header().readiness().cfg().status()
-                        == CobolSemanticProduct.ReadinessStatus.PARTIAL));
-        assertEquals(6, port.gaps().stream().filter(gap ->
+        assertEquals(7, exactChildren.size());
+        assertTrue(port.statements().stream().noneMatch(statement ->
+                statement.header().containment().branch()
+                        == CobolSemanticProduct.Branch.UNKNOWN));
+        assertEquals(0, port.gaps().stream().filter(gap ->
                 gap.scope() == CobolSemanticProduct.GapScope.STRUCTURE
                         && gap.code().equals("CONTAINMENT_NOT_PROJECTED")).count());
-        assertTrue(nested.stream().allMatch(statement -> port.gaps().stream().anyMatch(gap ->
-                gap.statement().equals(statement.header().id())
-                        && gap.scope() == CobolSemanticProduct.GapScope.STRUCTURE)));
+        assertTrue(port.gaps().stream().anyMatch(gap ->
+                gap.statement().equals(emptyFalseBranch)
+                        && gap.scope() == CobolSemanticProduct.GapScope.STRUCTURE
+                        && gap.code().equals("CONTINUATION_NOT_PROJECTED")),
+                "DISPLAY remains a CP5 fact, so CP4 must not skip it to invent a continuation");
+        assertEquals(3, port.gaps().stream().filter(gap ->
+                gap.scope() == CobolSemanticProduct.GapScope.CONDITION_SEMANTICS
+                        && gap.code().equals("CONDITION_SEMANTICS_NOT_AVAILABLE")).count());
+
+        Set<String> ifComponents = new HashSet<>(Arrays.stream(
+                CobolSemanticProduct.IfFact.class.getRecordComponents())
+                .map(component -> component.getName()).toList());
+        assertTrue(ifComponents.contains("explicitlyTerminated"));
+        assertFalse(ifComponents.contains("elsePresent"));
+        assertFalse(ifComponents.contains("hasElse"));
+        assertTrue(ifComponents.stream().noneMatch(Set.of(
+                "cfgEdges", "reachability", "truthValue", "branchSelection")::contains));
+    }
+
+    @Test
+    void ambiguousConditionBindingPreservesCandidatesBranchesAndContinuation() {
+        String source = String.join("\n",
+                "       IDENTIFICATION DIVISION.",
+                "       PROGRAM-ID. SEMANTIC-IF-AMBIGUOUS.",
+                "       DATA DIVISION.",
+                "       WORKING-STORAGE SECTION.",
+                "       01 FLAG PIC 9.",
+                "       01 FLAG PIC 9.",
+                "       01 WS-PGM PIC X(8).",
+                "       PROCEDURE DIVISION.",
+                "           IF FLAG = 1",
+                "               MOVE 'PGMA' TO WS-PGM",
+                "           END-IF.",
+                "           CALL WS-PGM.",
+                "           GOBACK.",
+                "       END PROGRAM SEMANTIC-IF-AMBIGUOUS.", "");
+        CobolSemanticPort port = CobolSemanticPort.open(project(
+                analyze(source, "semantic-product-if-ambiguous.cbl")));
+        CobolSemanticProduct.IfFact branch = port.ifs().get(0);
+        CobolSemanticProduct.NominalBinding binding =
+                branch.condition().references().get(0).binding();
+
+        assertEquals(CobolSemanticProduct.ResolutionStatus.AMBIGUOUS, binding.status());
+        assertEquals(CobolSemanticProduct.ResolutionReason.MULTIPLE_VALID_CANDIDATES,
+                binding.reason());
+        assertEquals(2, binding.candidates().size());
+        assertTrue(binding.selected().isEmpty());
+        assertEquals(List.of(statementId(port, 0)), ids(port.children(
+                branch.header().id(), CobolSemanticProduct.Branch.THEN)));
+        assertTrue(port.children(branch.header().id(),
+                CobolSemanticProduct.Branch.ELSE).isEmpty());
+        assertEquals(Optional.of(statementId(port, 1)), branch.continuation());
+        assertEquals(CobolSemanticProduct.ReadinessStatus.SUFFICIENT,
+                branch.header().readiness().cfg().status(),
+                "partial predicate binding must not erase reconstructible control structure");
+        assertTrue(port.gaps().stream().anyMatch(gap ->
+                gap.statement().equals(branch.header().id())
+                        && gap.scope() == CobolSemanticProduct.GapScope.NOMINAL_BINDING));
+    }
+
+    @Test
+    void qualifiedConditionPublishesTheValueReadWithoutInventingQualifierReads() {
+        String source = String.join("\n",
+                "       IDENTIFICATION DIVISION.",
+                "       PROGRAM-ID. SEMANTIC-IF-QUALIFIED.",
+                "       DATA DIVISION.",
+                "       WORKING-STORAGE SECTION.",
+                "       01 GROUP-A.",
+                "          05 ITEM PIC X.",
+                "       01 WS-PGM PIC X(8).",
+                "       PROCEDURE DIVISION.",
+                "           IF ITEM OF GROUP-A = 'Y'",
+                "               MOVE 'PGMA' TO WS-PGM",
+                "           END-IF.",
+                "           CALL WS-PGM.",
+                "           GOBACK.",
+                "       END PROGRAM SEMANTIC-IF-QUALIFIED.", "");
+        CobolSemanticPort port = CobolSemanticPort.open(project(
+                analyze(source, "semantic-product-if-qualified.cbl")));
+        CobolSemanticProduct.IfFact branch = port.ifs().get(0);
+
+        assertEquals(1, branch.condition().references().size());
+        assertEquals(CobolSemanticProduct.ResolutionReason.QUALIFIED_HIERARCHY_MATCH,
+                branch.condition().references().get(0).binding().reason());
+        assertFalse(port.gaps().stream().anyMatch(gap ->
+                gap.statement().equals(branch.header().id())
+                        && gap.code().equals("CONDITION_REFERENCE_KIND_NOT_PROJECTED")));
+    }
+
+    @Test
+    void ifUnderPerformIsPublishedWithoutRefiningTheUnprojectedParent() {
+        String source = String.join("\n",
+                "       IDENTIFICATION DIVISION.",
+                "       PROGRAM-ID. SEMANTIC-IF-IN-PERFORM.",
+                "       DATA DIVISION.",
+                "       WORKING-STORAGE SECTION.",
+                "       01 FLAG PIC X.",
+                "          88 FLAG-ON VALUE 'Y'.",
+                "       01 WS-PGM PIC X(8).",
+                "       PROCEDURE DIVISION.",
+                "           PERFORM UNTIL FLAG = 'Y'",
+                "               IF FLAG-ON",
+                "                   MOVE 'PGMA' TO WS-PGM",
+                "               END-IF",
+                "               CALL WS-PGM",
+                "           END-PERFORM.",
+                "           GOBACK.",
+                "       END PROGRAM SEMANTIC-IF-IN-PERFORM.", "");
+        CobolSemanticPort port = CobolSemanticPort.open(project(
+                analyze(source, "semantic-product-if-in-perform.cbl")));
+        CobolSemanticProduct.IfFact branch = port.ifs().get(0);
+        CobolSemanticProduct.StatementId move = port.moves().get(0).header().id();
+        CobolSemanticProduct.StatementId call = port.calls().get(0).header().id();
+
+        assertEquals(CobolSemanticProduct.Containment.unknown(),
+                branch.header().containment());
+        assertEquals(CobolSemanticProduct.Containment.childOf(
+                        branch.header().id(), CobolSemanticProduct.Branch.THEN),
+                port.statement(move).orElseThrow().header().containment());
+        assertEquals(CobolSemanticProduct.Containment.unknown(),
+                port.statement(call).orElseThrow().header().containment());
+        assertEquals(List.of(move), ids(port.children(
+                branch.header().id(), CobolSemanticProduct.Branch.THEN)));
+        assertTrue(port.children(branch.header().id(),
+                CobolSemanticProduct.Branch.ELSE).isEmpty());
+        assertEquals(Optional.of(call), branch.continuation());
+        assertTrue(branch.condition().references().isEmpty(),
+                "the DATA-only ConditionSurface must not fabricate a condition-name identity");
+        assertTrue(port.gaps().stream().anyMatch(gap ->
+                gap.statement().equals(branch.header().id())
+                        && gap.code().equals("CONDITION_REFERENCE_KIND_NOT_PROJECTED")));
+        assertTrue(port.gaps().stream().anyMatch(gap ->
+                gap.statement().equals(branch.header().id())
+                        && gap.code().equals("CONTAINMENT_NOT_PROJECTED")));
+        assertTrue(port.gaps().stream().anyMatch(gap ->
+                gap.statement().equals(call)
+                        && gap.code().equals("CONTAINMENT_NOT_PROJECTED")));
+        assertFalse(port.gaps().stream().anyMatch(gap ->
+                gap.statement().equals(move)
+                        && gap.code().equals("CONTAINMENT_NOT_PROJECTED")));
     }
 
     @Test
@@ -433,5 +614,15 @@ class CobolSemanticProductProjectorTest {
     private static CobolSemanticProduct.State portState(CobolSemanticPort port) {
         return new CobolSemanticProduct.State(port.unit(), port.policy(),
                 port.dataDeclarations(), port.statements(), port.gaps(), port.coverage());
+    }
+
+    private static CobolSemanticProduct.StatementId statementId(
+            CobolSemanticPort port, int localId) {
+        return new CobolSemanticProduct.StatementId(port.unit(), localId);
+    }
+
+    private static List<CobolSemanticProduct.StatementId> ids(
+            List<CobolSemanticProduct.StatementFact> facts) {
+        return facts.stream().map(fact -> fact.header().id()).toList();
     }
 }

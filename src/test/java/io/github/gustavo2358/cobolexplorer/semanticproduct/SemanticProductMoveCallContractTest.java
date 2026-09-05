@@ -153,6 +153,10 @@ class SemanticProductMoveCallContractTest {
         assertTrue(port.children(empty, CobolSemanticProduct.Branch.ELSE).isEmpty());
         assertEquals(Optional.of(statementId(6)), port.ifs().get(0).continuation());
         assertEquals(Optional.of(statementId(8)), port.ifs().get(2).continuation());
+        assertTrue(port.ifs().stream().allMatch(CobolSemanticProduct.IfFact::explicitlyTerminated));
+        assertTrue(Arrays.stream(CobolSemanticProduct.IfFact.class.getRecordComponents())
+                .map(component -> component.getName())
+                .noneMatch(name -> name.equals("elsePresent") || name.equals("hasElse")));
         assertEquals(CobolSemanticProduct.Containment.childOf(
                         outer, CobolSemanticProduct.Branch.THEN),
                 port.statement(nested).orElseThrow().header().containment());
@@ -720,7 +724,7 @@ class SemanticProductMoveCallContractTest {
                                 CobolSemanticProduct.ReadinessStatus.PARTIAL)),
                 new CobolSemanticProduct.ConditionSurface("RELATION",
                         List.of(reference(id, 0, FLAG, CobolSemanticProduct.OperandRole.READ)),
-                        PROVENANCE), continuation);
+                        PROVENANCE), true, continuation);
     }
 
     private static CobolSemanticProduct.ObservedStatement observed(

@@ -2,7 +2,7 @@
 
 ## Onde estamos
 
-Os seis checkpoints da migração documental e os Checkpoints 1–3 foram
+Os seis checkpoints da migração documental e os Checkpoints 1–4 foram
 executados no PR #27, que permanece sob review. O CP1 mantém o target model e o
 consumer exclusivamente em `src/test`; eles continuam como especificação
 executável independente.
@@ -17,10 +17,14 @@ O CP3 removeu `CobolMoveCallAdapter` e introduziu
 `semanticproduct.projection.CobolSemanticProductProjector` como seam estável de
 produção. A projection recebe uma publicação fechada dos produtos canônicos e
 materializa, para a `ProgramUnit` selecionada, todas as DATA entries suportadas
-e todos os MOVE/CALL observados, inclusive dentro de parents ainda não
-projetados. Essas ocorrências aninhadas usam containment `UNKNOWN` e gap
-estrutural localizado até o CP4, sem serem omitidas ou falsamente publicadas
-como roots. `ExplorerMain` e o composition root continuam inalterados.
+e todos os MOVE/CALL observados.
+
+O CP4 acrescentou todos os IF estruturais da mesma unit ao inventário. Condition
+surface, referências READ com binding DATA disponível, termination, branches,
+nesting e continuation segura são projetados por identities tipadas. Filhos
+diretos de IF agora usam `THEN(parentIf)`/`ELSE(parentIf)`; statements sob
+PERFORM ou outra família estrutural ainda não projetada preservam `UNKNOWN` e o
+gap correspondente. `ExplorerMain` e o composition root continuam inalterados.
 
 ## Verde conhecido
 
@@ -58,6 +62,17 @@ como roots. `ExplorerMain` e o composition root continuam inalterados.
   roles, binding, candidates e provenance próprios. Ambiguidade nominal mantém
   todos os candidates sem selecionar um deles; candidate de namespace inválido
   faz a projection falhar fechada.
+- Cada IF suportado recebe um `IfFact` no mesmo inventário, inclusive IF nested.
+  A condition preserva shape tipado, provenance e todas as referências DATA
+  READ disponíveis com status/reason/candidates/selected canônicos. Binding
+  ambíguo não apaga IF, children nem continuation.
+- Continuação de IF é um fact estrutural, não edge: o projector usa o próximo
+  sibling tipado ou a continuação do IF enclosing. Quando o próximo statement
+  imediato está fora da capability atual, publica
+  `CONTINUATION_NOT_PROJECTED` em vez de saltá-lo ou inferir successor.
+- Ramo falso vazio continua sendo uma coleção vazia com continuation
+  conservadora. `explicitlyTerminated` preserva apenas termination do IF; não há
+  `elsePresent`, `hasElse` ou tentativa de distinguir ELSE ausente de ELSE vazio.
 - Reasons resolvidas atravessam da resolution sem perda: tanto
   `UNIQUE_VISIBLE_DECLARATION` quanto `QUALIFIED_HIERARCHY_MATCH` permanecem
   distintos no `NominalBinding` da boundary.
@@ -89,20 +104,23 @@ como roots. `ExplorerMain` e o composition root continuam inalterados.
   IF aninhado, branches vazias, containment, bindings incompletos,
   observed/unmodeled, coverage conservadora, readiness dimensional,
   imutabilidade, namespace e ausência de API singleton.
-- Os 42 testes focais de projection/core/oracle/architecture passam. O fixture
-  estrutural do CP1 atravessa a production projection com seus sete MOVE e três
-  CALL; seis ocorrências aninhadas permanecem explícitas com containment/gap
-  conservadores. Uma regressão separada prova o mesmo para dois MOVE e um CALL
-  dentro de PERFORM inline. Os gates `docs`, `architecture`, `fast`, `semantic`,
-  `performance` e `full` passam. AST, grammar, symbols, occurrences, resolution,
-  report, `ExplorerMain`, snapshots e fixtures de produção não foram alterados.
+- Os testes focais de projection/core/oracle/architecture passam. O fixture
+  estrutural do CP1 atravessa a production projection com sete MOVE, três CALL e
+  três IF; branches, nesting e continuations sustentadas são exatos. A
+  continuation do último IF permanece explicitamente incompleta porque seu
+  próximo sibling é DISPLAY, família reservada ao CP5. Uma regressão separada
+  preserva `UNKNOWN` para dois MOVE e um CALL diretamente sob PERFORM inline.
+  Os gates `docs`, `architecture`, `fast`, `semantic`, `performance` e `full`
+  passam no fechamento do CP4.
+  AST, grammar, symbols, occurrences, resolution, report, `ExplorerMain`,
+  snapshots e fixtures de produção não foram alterados.
 
 ## Restante
 
-- Obter review humano do Checkpoint 3 no PR #27.
-- Executar os Checkpoints 4–8 somente na ordem registrada e com a autorização
-  aplicável. IF frontend projection, coverage completa da `ProgramUnit`,
-  composition root, consumer de lowering-readiness e JSON permanecem futuros.
+- Obter review humano do Checkpoint 4 no PR #27.
+- Executar os Checkpoints 5–8 somente na ordem registrada e com a autorização
+  aplicável. Coverage completa da `ProgramUnit`, composition root, consumer de
+  lowering-readiness e JSON permanecem futuros.
 - Manter EVALUATE, PERFORM, GO TO, terminal semantics, ALTER, SEARCH,
   CobolLower, IR, CFG, effects/storage e dataflow fora deste checkpoint.
 
@@ -119,10 +137,18 @@ como roots. `ExplorerMain` e o composition root continuam inalterados.
   Produzir `ALPHANUMERIC`/`NUMERIC` conhecido exige enrichment canônico anterior
   do frontend; até lá, a projection conserva `UNKNOWN` e incompletude localizada.
 - O core exige parent `IfFact` publicado para containment exato `THEN`/`ELSE`.
-  Como IF frontend projection pertence ao CP4, o CP3 preserva MOVE/CALL
-  aninhados com containment `UNKNOWN`, coverage/readiness conservadoras e
-  `CONTAINMENT_NOT_PROJECTED`. O CP4 pode refinar essa relação sem recuperar uma
-  ocorrência antes omitida; o inventário agregado permanece `PARTIAL`.
+  O CP4 usa essa autoridade somente para filhos diretos de IF e remove deles o
+  `CONTAINMENT_NOT_PROJECTED`; `UNKNOWN` sob estruturas não cobertas permanece
+  intacto. O inventário agregado continua `PARTIAL` até o CP5.
+- A AST tipada sustenta continuation quando o próximo sibling é uma família já
+  publicada ou quando o IF termina em um scope de IF cuja continuation é segura.
+  Ela não autoriza saltar um sibling ainda não projetado. O DISPLAY posterior ao
+  último IF do oracle torna essa continuation incompleta no CP4, sem impedir a
+  reconstrução dos branches nem antecipar o inventário do CP5.
+- Algumas referências de condição resolvem para entidades fora do namespace DATA
+  representável por `ConditionSurface`; o IF estrutural continua publicado e
+  recebe `CONDITION_REFERENCE_KIND_NOT_PROJECTED`, sem fabricar `DataItemId` ou
+  recalcular o binding.
 - A resolution produz `QUALIFIED_HIERARCHY_MATCH` para bindings qualificados
   bem-sucedidos. O core e a projection agora preservam essa reason distintamente
   de `UNIQUE_VISIBLE_DECLARATION`; normalizá-las seria perda de autoridade.
