@@ -17,9 +17,10 @@ O CP3 removeu `CobolMoveCallAdapter` e introduziu
 `semanticproduct.projection.CobolSemanticProductProjector` como seam estável de
 produção. A projection recebe uma publicação fechada dos produtos canônicos e
 materializa, para a `ProgramUnit` selecionada, todas as DATA entries suportadas
-e todos os MOVE/CALL de raiz observados. MOVE/CALL dentro de branches não são
-falsamente publicados como roots: dependem da IF frontend projection reservada
-ao CP4. `ExplorerMain` e o composition root continuam inalterados.
+e todos os MOVE/CALL observados, inclusive dentro de parents ainda não
+projetados. Essas ocorrências aninhadas usam containment `UNKNOWN` e gap
+estrutural localizado até o CP4, sem serem omitidas ou falsamente publicadas
+como roots. `ExplorerMain` e o composition root continuam inalterados.
 
 ## Verde conhecido
 
@@ -28,9 +29,12 @@ ao CP4. `ExplorerMain` e o composition root continuam inalterados.
 - O inventário tipado usa `StatementFact` com `MoveFact`, `CallFact`, `IfFact`
   estrutural e `ObservedStatement` genérico. Uma nova família não altera o
   envelope do state.
-- Containment flat/híbrido preserva `ROOT`, `THEN`, `ELSE`, nesting e
-  continuation por identity. Branches vazias são consultáveis sem afirmar se
-  havia ELSE sintaticamente vazio ou ELSE ausente e sem publicar CFG.
+- Containment flat/híbrido preserva `ROOT`, `THEN`, `ELSE`, `UNKNOWN`, nesting e
+  continuation por identity. `UNKNOWN` identifica uma ocorrência sabidamente
+  aninhada cuja relação de parent/branch ainda não foi projetada; não pertence
+  aos roots e exige coverage parcial e gap estrutural localizado. Branches
+  vazias são consultáveis sem afirmar se havia ELSE sintaticamente vazio ou
+  ELSE ausente e sem publicar CFG.
 - `NominalBinding` representa `RESOLVED`, `AMBIGUOUS`, `UNRESOLVED` e
   `INPUT_MISSING`; somente o caso resolvido único possui `selected`.
   Operand/reference identity continua existindo nos demais casos.
@@ -54,6 +58,9 @@ ao CP4. `ExplorerMain` e o composition root continuam inalterados.
   roles, binding, candidates e provenance próprios. Ambiguidade nominal mantém
   todos os candidates sem selecionar um deles; candidate de namespace inválido
   faz a projection falhar fechada.
+- Reasons resolvidas atravessam da resolution sem perda: tanto
+  `UNIQUE_VISIBLE_DECLARATION` quanto `QUALIFIED_HIERARCHY_MATCH` permanecem
+  distintos no `NominalBinding` da boundary.
 - DATA vem da symbol table canônica e seus atributos/provenance/coverage vêm da
   declaração AST e do report de coverage já publicados. Declarations necessárias
   à closure de candidates também atravessam por identity canônica, inclusive
@@ -82,10 +89,13 @@ ao CP4. `ExplorerMain` e o composition root continuam inalterados.
   IF aninhado, branches vazias, containment, bindings incompletos,
   observed/unmodeled, coverage conservadora, readiness dimensional,
   imutabilidade, namespace e ausência de API singleton.
-- Os 37 testes focais de projection/core/oracle/architecture e os gates `docs`,
-  `architecture`, `fast`, `semantic`, `performance` e `full` passam. AST,
-  grammar, symbols, occurrences, resolution, report, `ExplorerMain`, snapshots
-  e fixtures de produção não foram alterados.
+- Os 42 testes focais de projection/core/oracle/architecture passam. O fixture
+  estrutural do CP1 atravessa a production projection com seus sete MOVE e três
+  CALL; seis ocorrências aninhadas permanecem explícitas com containment/gap
+  conservadores. Uma regressão separada prova o mesmo para dois MOVE e um CALL
+  dentro de PERFORM inline. Os gates `docs`, `architecture`, `fast`, `semantic`,
+  `performance` e `full` passam. AST, grammar, symbols, occurrences, resolution,
+  report, `ExplorerMain`, snapshots e fixtures de produção não foram alterados.
 
 ## Restante
 
@@ -108,10 +118,14 @@ ao CP4. `ExplorerMain` e o composition root continuam inalterados.
 - `Ast.LiteralExpression` publica value e `rawLexeme`, mas não um kind tipado.
   Produzir `ALPHANUMERIC`/`NUMERIC` conhecido exige enrichment canônico anterior
   do frontend; até lá, a projection conserva `UNKNOWN` e incompletude localizada.
-- O core do CP2 exige parent `IfFact` publicado para containment `THEN`/`ELSE`.
-  Como IF frontend projection pertence ao CP4, MOVE/CALL aninhados são
-  deliberadamente adiados em vez de receber containment `ROOT` falso. O
-  inventário agregado do CP3 permanece `PARTIAL` por esse recorte.
+- O core exige parent `IfFact` publicado para containment exato `THEN`/`ELSE`.
+  Como IF frontend projection pertence ao CP4, o CP3 preserva MOVE/CALL
+  aninhados com containment `UNKNOWN`, coverage/readiness conservadoras e
+  `CONTAINMENT_NOT_PROJECTED`. O CP4 pode refinar essa relação sem recuperar uma
+  ocorrência antes omitida; o inventário agregado permanece `PARTIAL`.
+- A resolution produz `QUALIFIED_HIERARCHY_MATCH` para bindings qualificados
+  bem-sucedidos. O core e a projection agora preservam essa reason distintamente
+  de `UNIQUE_VISIBLE_DECLARATION`; normalizá-las seria perda de autoridade.
 - O report canônico publica claims nominais/dependency-ready por unit, não as
   três dimensões próprias de readiness do Semantic Product. O projector traduz
   somente esses claims disponíveis, limita-os pelo fact individual mais fraco e

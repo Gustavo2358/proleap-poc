@@ -76,7 +76,7 @@ final class MaterializedCobolSemanticPort implements CobolSemanticPort {
             statementsById.put(header.id(), statement);
             if (header.containment().branch() == CobolSemanticProduct.Branch.ROOT) {
                 roots.add(header.id());
-            } else {
+            } else if (header.containment().parent().isPresent()) {
                 children.computeIfAbsent(header.containment(), ignored -> new ArrayList<>())
                         .add(statement);
             }
@@ -151,7 +151,8 @@ final class MaterializedCobolSemanticPort implements CobolSemanticPort {
             CobolSemanticProduct.StatementId parent, CobolSemanticProduct.Branch branch) {
         Objects.requireNonNull(parent, "parent");
         Objects.requireNonNull(branch, "branch");
-        if (branch == CobolSemanticProduct.Branch.ROOT)
+        if (branch == CobolSemanticProduct.Branch.ROOT
+                || branch == CobolSemanticProduct.Branch.UNKNOWN)
             throw new IllegalArgumentException("children belong to THEN or ELSE");
         CobolSemanticProduct.Containment containment =
                 CobolSemanticProduct.Containment.childOf(parent, branch);

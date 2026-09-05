@@ -48,8 +48,8 @@ IDs neste documento são estáveis. `AUTOMATED` indica proteção executável at
 - **Rationale:** cobertura incremental define quais formas são compreendidas, enquanto cardinalidade pertence ao programa; confundi-las trunca silenciosamente código suportado e impede evolução aditiva.
 - **Scope:** tipos, ports, projectors, adapters de transporte e consumers do Semantic Product.
 - **Related ADRs:** ADR-0005, ADR-0008 e ADR-0013.
-- **Enforcement:** `REVIEW` — o work item ativo exige oracle de multiple occurrences e container extensível antes da remediation de produção.
-- **Known exceptions:** a implementação inicial de `CobolSemanticProduct`/`CobolSemanticPort` e do projector focalizado ainda materializa um único `MOVE` e um único `CALL`; `WORK-SEMANTIC-PRODUCT-002` registra essa dívida como estado implementado, não como direção arquitetural.
+- **Enforcement:** `AUTOMATED` — os testes de contrato do core e da projection exercitam cardinalidade plural, DATA independente, todas as ocorrências MOVE/CALL do fixture estrutural e ausência de seleção first/last/singleton.
+- **Known exceptions:** nenhuma para as capabilities DATA/MOVE/CALL atualmente declaradas; novas famílias continuam obrigadas a acrescentar o oracle correspondente.
 
 ### INV-SP-002 — Incompletude não vira omissão silenciosa
 
@@ -57,8 +57,8 @@ IDs neste documento são estáveis. `AUTOMATED` indica proteção executável at
 - **Rationale:** downstream precisa distinguir inexistência provada de incapacidade, falta de input ou suporte parcial para permanecer conservador.
 - **Scope:** Semantic Product, projeção, lowering-readiness, transporte e futuros consumers CFG/effects.
 - **Related ADRs:** ADR-0008 e ADR-0013.
-- **Enforcement:** `PARTIALLY_AUTOMATED` — INV-COV-001/003 protegem os produtos atuais; `WORK-SEMANTIC-PRODUCT-002` acrescentará oracles de inventário e no-silent-omission.
-- **Known exceptions:** o projector inicial falha fora do fixture estreito e ainda não publica coverage/incompleteness de todos os statements observados; essa lacuna permanece explícita no work item ativo.
+- **Enforcement:** `PARTIALLY_AUTOMATED` — INV-COV-001/003 protegem os produtos atuais; os testes da projection exigem facts e gaps localizados para MOVE/CALL aninhados, shapes fora da capability, bindings incompletos e literal kind desconhecido.
+- **Known exceptions:** o inventário completo de todas as famílias observadas da `ProgramUnit` permanece reservado ao Checkpoint 5 de `WORK-SEMANTIC-PRODUCT-002`; dentro do CP3, nenhuma ocorrência MOVE/CALL observada pode ser omitida.
 
 ### INV-SP-003 — Boundary é suficiente para lowering sem frontend
 

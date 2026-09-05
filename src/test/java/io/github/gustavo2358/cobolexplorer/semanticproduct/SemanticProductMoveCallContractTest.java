@@ -82,6 +82,58 @@ class SemanticProductMoveCallContractTest {
     }
 
     @Test
+    void resolvedBindingPreservesQualifiedHierarchyReason() {
+        CobolSemanticProduct.DataCandidate candidate =
+                new CobolSemanticProduct.DataCandidate(WS_PGM, "WS-PGM");
+        CobolSemanticProduct.NominalBinding qualified =
+                new CobolSemanticProduct.NominalBinding(
+                        CobolSemanticProduct.ResolutionStatus.RESOLVED,
+                        CobolSemanticProduct.ResolutionReason.QUALIFIED_HIERARCHY_MATCH,
+                        List.of(candidate), Optional.of(WS_PGM));
+
+        assertEquals(CobolSemanticProduct.ResolutionReason.QUALIFIED_HIERARCHY_MATCH,
+                qualified.reason());
+        assertThrows(IllegalArgumentException.class, () ->
+                new CobolSemanticProduct.NominalBinding(
+                        CobolSemanticProduct.ResolutionStatus.RESOLVED,
+                        CobolSemanticProduct.ResolutionReason.DECLARATION_NOT_FOUND,
+                        List.of(candidate), Optional.of(WS_PGM)));
+    }
+
+    @Test
+    void unknownContainmentIsVisibleButCannotClaimRootOrModeledStructure() {
+        CobolSemanticProduct.StatementId nestedId = statementId(0);
+        CobolSemanticProduct.MoveFact nested = new CobolSemanticProduct.MoveFact(
+                header(nestedId, CobolSemanticProduct.Containment.unknown(),
+                        CobolSemanticProduct.CoverageStatus.PARTIAL,
+                        readiness(CobolSemanticProduct.ReadinessStatus.SUFFICIENT,
+                                CobolSemanticProduct.ReadinessStatus.PARTIAL,
+                                CobolSemanticProduct.ReadinessStatus.PARTIAL)),
+                literal(nestedId, "NESTED"),
+                reference(nestedId, 1, WS_PGM, CobolSemanticProduct.OperandRole.WRITE));
+        CobolSemanticProduct.State state = new CobolSemanticProduct.State(
+                UNIT, CobolSemanticProduct.Policy.unspecified(),
+                List.of(declaration(WS_PGM, "WS-PGM", "X(8)")), List.of(nested),
+                List.of(gap(nestedId, CobolSemanticProduct.GapScope.STRUCTURE,
+                        "CONTAINMENT_NOT_PROJECTED")),
+                coverage(CobolSemanticProduct.InventoryStatus.PARTIAL,
+                        1, 0, 1, 0, 0,
+                        readiness(CobolSemanticProduct.ReadinessStatus.PARTIAL,
+                                CobolSemanticProduct.ReadinessStatus.PARTIAL,
+                                CobolSemanticProduct.ReadinessStatus.PARTIAL)));
+        CobolSemanticPort port = CobolSemanticPort.open(state);
+
+        assertTrue(port.rootStatements().isEmpty());
+        assertEquals(CobolSemanticProduct.Branch.UNKNOWN,
+                port.moves().get(0).header().containment().branch());
+        assertThrows(IllegalArgumentException.class,
+                () -> port.children(nestedId, CobolSemanticProduct.Branch.UNKNOWN));
+        assertThrows(IllegalArgumentException.class, () -> new CobolSemanticProduct.State(
+                state.unit(), state.policy(), state.dataDeclarations(), state.statements(),
+                List.of(), state.coverage()));
+    }
+
+    @Test
     void structuralIfFactsExposeContainmentNestingEmptyBranchesAndContinuation() {
         CobolSemanticPort port = CobolSemanticPort.open(pluralState());
         CobolSemanticProduct.StatementId outer = statementId(1);

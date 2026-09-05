@@ -26,6 +26,7 @@ public final class CobolSemanticProduct {
 
     public enum ResolutionReason {
         UNIQUE_VISIBLE_DECLARATION,
+        QUALIFIED_HIERARCHY_MATCH,
         MULTIPLE_VALID_CANDIDATES,
         DECLARATION_NOT_FOUND,
         INPUT_INCOMPLETE,
@@ -41,7 +42,7 @@ public final class CobolSemanticProduct {
 
     public enum ReadinessStatus { SUFFICIENT, PARTIAL, BLOCKED, NOT_APPLICABLE }
 
-    public enum Branch { ROOT, THEN, ELSE }
+    public enum Branch { ROOT, THEN, ELSE, UNKNOWN }
 
     public enum OperandRole { READ, WRITE, CALL_TARGET }
 
@@ -58,6 +59,7 @@ public final class CobolSemanticProduct {
         LITERAL_KIND,
         NOMINAL_BINDING,
         CONDITION_SEMANTICS,
+        STRUCTURE,
         CAPABILITY,
         ANALYSIS_INPUT
     }
@@ -225,9 +227,10 @@ public final class CobolSemanticProduct {
                 throw new IllegalArgumentException(
                         "ambiguous binding must preserve all valid candidates");
             if (status == ResolutionStatus.RESOLVED
-                    && reason != ResolutionReason.UNIQUE_VISIBLE_DECLARATION)
+                    && reason != ResolutionReason.UNIQUE_VISIBLE_DECLARATION
+                    && reason != ResolutionReason.QUALIFIED_HIERARCHY_MATCH)
                 throw new IllegalArgumentException(
-                        "resolved binding must retain its unique-selection reason");
+                        "resolved binding must retain its successful-selection reason");
             if (status == ResolutionStatus.AMBIGUOUS
                     && reason != ResolutionReason.MULTIPLE_VALID_CANDIDATES)
                 throw new IllegalArgumentException(
@@ -266,18 +269,24 @@ public final class CobolSemanticProduct {
         public Containment {
             parent = Objects.requireNonNull(parent, "parent");
             branch = Objects.requireNonNull(branch, "branch");
-            if ((branch == Branch.ROOT) != parent.isEmpty())
+            boolean requiresParent = branch == Branch.THEN || branch == Branch.ELSE;
+            if (requiresParent != parent.isPresent())
                 throw new IllegalArgumentException(
-                        "only root statements may omit a parent");
+                        "THEN/ELSE require a parent; ROOT/UNKNOWN must omit it");
         }
 
         public static Containment root() {
             return new Containment(Optional.empty(), Branch.ROOT);
         }
 
+        /** Statement is known to be nested, but its parent relation is not projected yet. */
+        public static Containment unknown() {
+            return new Containment(Optional.empty(), Branch.UNKNOWN);
+        }
+
         public static Containment childOf(StatementId parent, Branch branch) {
             Objects.requireNonNull(parent, "parent");
-            if (branch == Branch.ROOT)
+            if (branch == Branch.ROOT || branch == Branch.UNKNOWN)
                 throw new IllegalArgumentException("a child must belong to THEN or ELSE");
             return new Containment(Optional.of(parent), branch);
         }
@@ -586,6 +595,12 @@ public final class CobolSemanticProduct {
             if (statement instanceof ObservedStatement observed)
                 require(hasGap(localized, GapScope.CAPABILITY, observed.gapCode()),
                         "observed unmodeled statement must retain its capability gap");
+            if (statement.header().containment().branch() == Branch.UNKNOWN) {
+                require(statement.header().coverage() != CoverageStatus.MODELED,
+                        "unknown containment cannot be hidden by MODELED coverage");
+                require(localized.stream().anyMatch(gap -> gap.scope() == GapScope.STRUCTURE),
+                        "unknown containment must retain a structural gap");
+            }
             if (references(statement).stream()
                     .anyMatch(reference -> reference.binding().status()
                             != ResolutionStatus.RESOLVED)) {

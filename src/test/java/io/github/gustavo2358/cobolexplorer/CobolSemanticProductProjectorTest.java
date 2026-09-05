@@ -138,6 +138,108 @@ class CobolSemanticProductProjectorTest {
     }
 
     @Test
+    void targetFixtureKeepsEveryMoveAndCallEvenWhenItsParentIsNotProjected()
+            throws IOException {
+        Path fixture = Path.of(
+                "src/test/resources/cobol/semantic/semantic-product-lowering-readiness.cbl");
+        AstBoundaryTestSupport.Analysis frontend = analyze(
+                Files.readString(fixture, StandardCharsets.UTF_8), fixture.getFileName().toString());
+        CobolSemanticPort port = CobolSemanticPort.open(project(frontend));
+
+        assertEquals(7, port.moves().size());
+        assertEquals(3, port.calls().size());
+        assertEquals(10, port.statements().size());
+        assertEquals(List.of(0, 1, 3, 5, 6, 7, 8, 9, 10, 12),
+                port.statements().stream()
+                        .map(statement -> statement.header().point().ordinal()).toList());
+        assertEquals(4, port.rootStatements().size());
+
+        List<CobolSemanticProduct.StatementFact> nested = port.statements().stream()
+                .filter(statement -> statement.header().containment().branch()
+                        == CobolSemanticProduct.Branch.UNKNOWN)
+                .toList();
+        assertEquals(6, nested.size());
+        assertTrue(nested.stream().allMatch(statement ->
+                statement.header().containment().parent().isEmpty()
+                        && statement.header().coverage()
+                        == CobolSemanticProduct.CoverageStatus.PARTIAL
+                        && statement.header().readiness().cfg().status()
+                        == CobolSemanticProduct.ReadinessStatus.PARTIAL));
+        assertEquals(6, port.gaps().stream().filter(gap ->
+                gap.scope() == CobolSemanticProduct.GapScope.STRUCTURE
+                        && gap.code().equals("CONTAINMENT_NOT_PROJECTED")).count());
+        assertTrue(nested.stream().allMatch(statement -> port.gaps().stream().anyMatch(gap ->
+                gap.statement().equals(statement.header().id())
+                        && gap.scope() == CobolSemanticProduct.GapScope.STRUCTURE)));
+    }
+
+    @Test
+    void moveAndCallNestedUnderPerformAlsoRemainExplicit() {
+        String source = String.join("\n",
+                "       IDENTIFICATION DIVISION.",
+                "       PROGRAM-ID. SEMANTIC-PERFORM-NESTED.",
+                "       DATA DIVISION.",
+                "       WORKING-STORAGE SECTION.",
+                "       01 WS-PGM PIC X(8).",
+                "       01 DONE PIC X.",
+                "       PROCEDURE DIVISION.",
+                "           PERFORM UNTIL DONE = 'Y'",
+                "               MOVE 'PGMA' TO WS-PGM",
+                "               CALL WS-PGM",
+                "               MOVE 'Y' TO DONE",
+                "           END-PERFORM.",
+                "           GOBACK.",
+                "       END PROGRAM SEMANTIC-PERFORM-NESTED.", "");
+        CobolSemanticPort port = CobolSemanticPort.open(project(
+                analyze(source, "semantic-product-perform-nested.cbl")));
+
+        assertEquals(2, port.moves().size());
+        assertEquals(1, port.calls().size());
+        assertEquals(3, port.statements().size());
+        assertTrue(port.rootStatements().isEmpty());
+        assertTrue(port.statements().stream().allMatch(statement ->
+                statement.header().containment().equals(
+                        CobolSemanticProduct.Containment.unknown())));
+        assertEquals(3, port.gaps().stream().filter(gap ->
+                gap.scope() == CobolSemanticProduct.GapScope.STRUCTURE).count());
+    }
+
+    @Test
+    void qualifiedHierarchyReasonCrossesTheBoundaryWithoutNormalization() {
+        String source = String.join("\n",
+                "       IDENTIFICATION DIVISION.",
+                "       PROGRAM-ID. SEMANTIC-QUALIFIED.",
+                "       DATA DIVISION.",
+                "       WORKING-STORAGE SECTION.",
+                "       01 GROUP-A.",
+                "          05 ITEM PIC X.",
+                "       01 CTRL-GROUP.",
+                "          05 PGM PIC X(8).",
+                "       PROCEDURE DIVISION.",
+                "           MOVE 'X' TO ITEM OF GROUP-A.",
+                "           CALL PGM OF CTRL-GROUP.",
+                "           GOBACK.",
+                "       END PROGRAM SEMANTIC-QUALIFIED.", "");
+        AstBoundaryTestSupport.Analysis frontend = analyze(
+                source, "semantic-product-qualified.cbl");
+        List<ReferenceResolution.Entry> projectedEntries = frontend.resolution().entries().stream()
+                .filter(entry -> entry.occurrence().role()
+                        == ResolutionContracts.ReferenceRole.VALUE_WRITE
+                        || entry.occurrence().role()
+                        == ResolutionContracts.ReferenceRole.CALL_TARGET)
+                .toList();
+        CobolSemanticPort port = CobolSemanticPort.open(project(frontend));
+
+        assertEquals(2, projectedEntries.size());
+        assertTrue(projectedEntries.stream().allMatch(entry -> entry.reason()
+                == ResolutionContracts.ResolutionReason.QUALIFIED_HIERARCHY_MATCH));
+        assertEquals(CobolSemanticProduct.ResolutionReason.QUALIFIED_HIERARCHY_MATCH,
+                port.moves().get(0).target().binding().reason());
+        assertEquals(CobolSemanticProduct.ResolutionReason.QUALIFIED_HIERARCHY_MATCH,
+                port.calls().get(0).operand().binding().reason());
+    }
+
+    @Test
     void missingLiteralKindAuthorityStaysUnknownForEveryLiteralSpelling() {
         CobolSemanticPort port = CobolSemanticPort.open(project(
                 analyze(MULTIPLE_SOURCE, SOURCE_NAME)));
