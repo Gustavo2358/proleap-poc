@@ -30,9 +30,10 @@ import java.util.Set;
  * boundary-owned Semantic Product.
  *
  * <p>The current projection capability covers DATA declarations in the selected
- * unit and every MOVE/CALL/IF occurrence. Direct IF branch membership and safe
- * structural continuations come from the typed AST; statements nested under
- * structural families not yet projected retain unknown containment. The
+ * unit, typed MOVE/CALL/IF facts and one explicit observed fact for every other
+ * statement in the canonical AST inventory. Direct IF branch membership and
+ * safe structural continuations come from the typed AST; statements nested
+ * under structural families not yet projected retain unknown containment. The
  * projector only translates and reconciles facts; it performs no parsing,
  * nominal lookup, resolution or runtime inference.</p>
  */
@@ -47,6 +48,11 @@ public final class CobolSemanticProductProjector {
             "CONDITION_REFERENCE_KIND_NOT_PROJECTED";
     private static final String CONTINUATION_GAP = "CONTINUATION_NOT_PROJECTED";
     private static final String BRANCH_CONTENT_GAP = "BRANCH_CONTENT_NOT_PROJECTED";
+    private static final String OBSERVED_PARTIAL_GAP = "OBSERVED_STATEMENT_PARTIAL";
+    private static final String OBSERVED_UNSUPPORTED_GAP =
+            "OBSERVED_STATEMENT_UNSUPPORTED";
+    private static final String OBSERVED_INPUT_MISSING_GAP =
+            "OBSERVED_STATEMENT_INPUT_MISSING";
 
     private CobolSemanticProductProjector() { }
 
@@ -72,22 +78,17 @@ public final class CobolSemanticProductProjector {
         }
     }
 
-    /** Materializes the DATA/MOVE/CALL/IF capability for one selected program unit. */
+    /** Materializes the complete observed statement inventory for one selected unit. */
     public static CobolSemanticProduct.State project(
             FrontendProducts products, ResolutionContracts.ProgramUnitId unitId) {
         Objects.requireNonNull(products, "products");
         Objects.requireNonNull(unitId, "unitId");
         ProjectionInputs inputs = ProjectionInputs.index(products, unitId);
 
-        List<StatementPosition> projectedPositions = inputs.statementPositions().stream()
-                .filter(position -> position.statement() instanceof Ast.MoveStatement
-                        || position.statement() instanceof Ast.CallStatement
-                        || position.statement() instanceof Ast.IfStatement)
-                .toList();
-        List<StatementPlan> plans = new ArrayList<>(projectedPositions.size());
+        List<StatementPlan> plans = new ArrayList<>(inputs.statementPositions().size());
         LinkedHashSet<ResolutionContracts.SemanticEntityId> referencedData =
                 new LinkedHashSet<>();
-        for (StatementPosition position : projectedPositions) {
+        for (StatementPosition position : inputs.statementPositions()) {
             StatementPlan plan = plan(position, inputs);
             plans.add(plan);
             if (plan.capability().supported()) {
@@ -104,17 +105,29 @@ public final class CobolSemanticProductProjector {
         List<CobolSemanticProduct.Gap> gaps = new ArrayList<>();
         Map<Ast.Statement, CobolSemanticProduct.StatementId> statementIds =
                 new IdentityHashMap<>();
-        // An additive fact family receives new handles after the already-published
-        // MOVE/CALL namespace; structural order remains the independent ProgramPoint.
+        // Additive fact families receive handles after the previously published
+        // MOVE/CALL and IF namespaces. Structural order remains the independent
+        // ProgramPoint and now covers the complete observed statement inventory.
         int nextStatementId = 0;
         for (StatementPlan plan : plans) {
-            if (plan.position().statement() instanceof Ast.IfStatement) continue;
+            if (!(plan.position().statement() instanceof Ast.MoveStatement)
+                    && !(plan.position().statement() instanceof Ast.CallStatement))
+                continue;
             statementIds.put(plan.position().statement(),
                     new CobolSemanticProduct.StatementId(
                             inputs.boundaryUnit(), nextStatementId++));
         }
         for (StatementPlan plan : plans) {
             if (!(plan.position().statement() instanceof Ast.IfStatement)) continue;
+            statementIds.put(plan.position().statement(),
+                    new CobolSemanticProduct.StatementId(
+                            inputs.boundaryUnit(), nextStatementId++));
+        }
+        for (StatementPlan plan : plans) {
+            if (plan.position().statement() instanceof Ast.MoveStatement
+                    || plan.position().statement() instanceof Ast.CallStatement
+                    || plan.position().statement() instanceof Ast.IfStatement)
+                continue;
             statementIds.put(plan.position().statement(),
                     new CobolSemanticProduct.StatementId(
                             inputs.boundaryUnit(), nextStatementId++));
@@ -131,7 +144,7 @@ public final class CobolSemanticProductProjector {
                 inputs.report().gaps().stream().anyMatch(gap ->
                         gap.category() == ResolutionAnalysisReport.GapCategory.INPUT)
                         ? CobolSemanticProduct.InventoryStatus.INPUT_MISSING
-                        : CobolSemanticProduct.InventoryStatus.PARTIAL;
+                        : CobolSemanticProduct.InventoryStatus.COMPLETE;
         CobolSemanticProduct.CoverageSummary coverage = coverage(
                 inventoryStatus, statements, inputs.unitSummary());
         return new CobolSemanticProduct.State(inputs.boundaryUnit(),
@@ -161,67 +174,133 @@ public final class CobolSemanticProductProjector {
         }
 
         if (position.statement() instanceof Ast.IfStatement branch)
-            return new StatementPlan(position, Capability.supported("IF_STRUCTURAL"),
+            return new StatementPlan(position, Capability.supported("IF", "IF_STRUCTURAL"),
                     conditionEntries(branch.condition(), inputs));
 
-        Ast.CallStatement call = (Ast.CallStatement) position.statement();
-        Capability capability = callCapability(call);
-        ReferenceResolution.Entry entry = null;
-        if (capability.supported()) {
-            Ast.DataReference operand = (Ast.DataReference) call.target();
-            entry = inputs.entryFor(operand);
-            require(entry.occurrence().role() == ResolutionContracts.ReferenceRole.CALL_TARGET,
-                    "CALL operand role must come from the canonical occurrence");
-            ReferenceResolution.CallSemantics semantics = entry.callSemantics()
-                    .orElseThrow(() -> new IllegalArgumentException(
-                            "CALL resolution must publish typed call semantics"));
-            require(semantics.targetSyntax() == Ast.CallTargetSyntax.IDENTIFIER_OR_EXPRESSION,
-                    "CALL resolution must preserve identifier/expression syntax");
-            capability = bindingCapability(capability, entry, "CALL");
-        } else if (call.target() != null) {
-            entry = inputs.optionalEntryFor(call.target());
+        if (position.statement() instanceof Ast.CallStatement call) {
+            Capability capability = callCapability(call);
+            ReferenceResolution.Entry entry = null;
+            if (capability.supported()) {
+                Ast.DataReference operand = (Ast.DataReference) call.target();
+                entry = inputs.entryFor(operand);
+                require(entry.occurrence().role()
+                                == ResolutionContracts.ReferenceRole.CALL_TARGET,
+                        "CALL operand role must come from the canonical occurrence");
+                ReferenceResolution.CallSemantics semantics = entry.callSemantics()
+                        .orElseThrow(() -> new IllegalArgumentException(
+                                "CALL resolution must publish typed call semantics"));
+                require(semantics.targetSyntax()
+                                == Ast.CallTargetSyntax.IDENTIFIER_OR_EXPRESSION,
+                        "CALL resolution must preserve identifier/expression syntax");
+                capability = bindingCapability(capability, entry, "CALL");
+            } else if (call.target() != null) {
+                entry = inputs.optionalEntryFor(call.target());
+            }
+            return new StatementPlan(position, capability,
+                    entry == null ? List.of() : List.of(entry));
         }
-        return new StatementPlan(position, capability,
-                entry == null ? List.of() : List.of(entry));
+
+        ObservedDescriptor observed = observedDescriptor(position.statement());
+        CobolSemanticProduct.CoverageStatus observedCoverage = observedCoverage(
+                inputs.finding(position.statement().meta().id()));
+        return new StatementPlan(position,
+                Capability.unmodeled(observed.kind(), observed.shape(),
+                        observedGapCode(observedCoverage)), List.of());
     }
 
     private static Capability moveCapability(Ast.MoveStatement move) {
         if (move.corresponding())
-            return Capability.unsupported("MOVE_CORRESPONDING",
+            return Capability.unsupported("MOVE", "MOVE_CORRESPONDING",
                     "MOVE_CORRESPONDING_OUTSIDE_CAPABILITY");
         if (!(move.source() instanceof Ast.LiteralExpression))
-            return Capability.unsupported("MOVE_NON_LITERAL_SOURCE",
+            return Capability.unsupported("MOVE", "MOVE_NON_LITERAL_SOURCE",
                     "MOVE_NON_LITERAL_SOURCE_OUTSIDE_CAPABILITY");
         if (move.targets().size() != 1)
-            return Capability.unsupported("MOVE_TARGET_CARDINALITY",
+            return Capability.unsupported("MOVE", "MOVE_TARGET_CARDINALITY",
                     "MOVE_TARGET_CARDINALITY_OUTSIDE_CAPABILITY");
         if (!(move.targets().get(0) instanceof Ast.DataReference))
-            return Capability.unsupported("MOVE_NON_DATA_TARGET",
+            return Capability.unsupported("MOVE", "MOVE_NON_DATA_TARGET",
                     "MOVE_NON_DATA_TARGET_OUTSIDE_CAPABILITY");
-        return Capability.supported("MOVE_LITERAL_TO_DATA");
+        return Capability.supported("MOVE", "MOVE_LITERAL_TO_DATA");
     }
 
     private static Capability callCapability(Ast.CallStatement call) {
         if (call.targetSyntax() != Ast.CallTargetSyntax.IDENTIFIER_OR_EXPRESSION)
-            return Capability.unsupported("CALL_LITERAL_TARGET",
+            return Capability.unsupported("CALL", "CALL_LITERAL_TARGET",
                     "CALL_LITERAL_TARGET_OUTSIDE_CAPABILITY");
         if (!(call.target() instanceof Ast.DataReference))
-            return Capability.unsupported("CALL_NON_DATA_TARGET",
+            return Capability.unsupported("CALL", "CALL_NON_DATA_TARGET",
                     "CALL_NON_DATA_TARGET_OUTSIDE_CAPABILITY");
-        return Capability.supported("CALL_DATA_TARGET");
+        return Capability.supported("CALL", "CALL_DATA_TARGET");
+    }
+
+    /**
+     * Carries only distinctions already represented by typed AST variants and
+     * fields. Generic statement metadata and source text are deliberately not
+     * interpreted to recover a more specific family.
+     */
+    private static ObservedDescriptor observedDescriptor(Ast.Statement statement) {
+        if (statement instanceof Ast.EvaluateStatement)
+            return new ObservedDescriptor("EVALUATE", "TYPED_EVALUATE_STATEMENT");
+        if (statement instanceof Ast.PerformStatement perform)
+            return new ObservedDescriptor("PERFORM",
+                    "TYPED_PERFORM_" + perform.performKind().name());
+        if (statement instanceof Ast.GoToStatement goTo)
+            return new ObservedDescriptor("GO_TO",
+                    "TYPED_GO_TO_" + goTo.goToKind().name());
+        if (statement instanceof Ast.EmbeddedLanguageStatement embedded)
+            return new ObservedDescriptor("EMBEDDED_LANGUAGE",
+                    "OPAQUE_" + embedded.language().name());
+        if (statement instanceof Ast.NextSentenceStatement)
+            return new ObservedDescriptor("NEXT_SENTENCE", "TYPED_NEXT_SENTENCE");
+        if (statement instanceof Ast.SearchStatement search)
+            return new ObservedDescriptor("SEARCH",
+                    search.all() ? "TYPED_SEARCH_ALL" : "TYPED_SEARCH_SEQUENTIAL");
+        if (statement instanceof Ast.ModeledStatement)
+            return new ObservedDescriptor("MODELED_STATEMENT",
+                    "GENERIC_MODELED_STATEMENT");
+        if (statement instanceof Ast.PreservedStatement)
+            return new ObservedDescriptor("PRESERVED_STATEMENT",
+                    "GENERIC_PRESERVED_STATEMENT");
+        if (statement instanceof Ast.UnsupportedStatement)
+            return new ObservedDescriptor("UNSUPPORTED_STATEMENT",
+                    "GENERIC_UNSUPPORTED_STATEMENT");
+        throw new IllegalArgumentException(
+                "canonical AST statement family is not classified for inventory: "
+                        + statement.getClass().getName());
+    }
+
+    private static CobolSemanticProduct.CoverageStatus observedCoverage(
+            SemanticCoverage.Finding finding) {
+        CobolSemanticProduct.CoverageStatus frontendCoverage = coverage(finding);
+        if (frontendCoverage == CobolSemanticProduct.CoverageStatus.INPUT_MISSING)
+            return CobolSemanticProduct.CoverageStatus.INPUT_MISSING;
+        if (frontendCoverage == CobolSemanticProduct.CoverageStatus.PARTIAL)
+            return CobolSemanticProduct.CoverageStatus.PARTIAL;
+        return CobolSemanticProduct.CoverageStatus.UNSUPPORTED;
+    }
+
+    private static String observedGapCode(CobolSemanticProduct.CoverageStatus coverage) {
+        return switch (coverage) {
+            case PARTIAL -> OBSERVED_PARTIAL_GAP;
+            case INPUT_MISSING -> OBSERVED_INPUT_MISSING_GAP;
+            case UNSUPPORTED, MODELED -> OBSERVED_UNSUPPORTED_GAP;
+        };
     }
 
     private static Capability bindingCapability(Capability capability,
                                                 ReferenceResolution.Entry entry,
                                                 String statementKind) {
         if (entry.status() == ResolutionContracts.ResolutionStatus.EXTERNAL_OBSERVED)
-            return Capability.unsupported(statementKind + "_EXTERNAL_BINDING",
+            return Capability.unsupported(statementKind,
+                    statementKind + "_EXTERNAL_BINDING",
                     statementKind + "_BINDING_OUTSIDE_CAPABILITY");
         for (ReferenceResolution.Candidate candidate : entry.candidates()) {
             if (candidate.kind() != ResolutionContracts.ReferenceKind.DATA
                     || candidate.entityId().domain()
                     != ResolutionContracts.SemanticEntityDomain.DATA_SYMBOL)
-                return Capability.unsupported(statementKind + "_NON_DATA_BINDING",
+                return Capability.unsupported(statementKind,
+                        statementKind + "_NON_DATA_BINDING",
                         statementKind + "_BINDING_OUTSIDE_CAPABILITY");
         }
         return capability;
@@ -343,18 +422,34 @@ public final class CobolSemanticProductProjector {
                 plan.position(), statementIds);
 
         if (!plan.capability().supported()) {
+            boolean typedCapabilityFamily = plan.position().statement() instanceof Ast.MoveStatement
+                    || plan.position().statement() instanceof Ast.CallStatement;
+            SemanticCoverage.Finding finding = inputs.finding(
+                    plan.position().statement().meta().id());
+            CobolSemanticProduct.CoverageStatus statementCoverage = typedCapabilityFamily
+                    ? CobolSemanticProduct.CoverageStatus.UNSUPPORTED
+                    : observedCoverage(finding);
+            statementCoverage = weakest(statementCoverage,
+                    containmentCoverage(containment));
             CobolSemanticProduct.StatementHeader header = header(statementId,
                     plan.position().ordinal(), containment, statementProvenance,
-                    CobolSemanticProduct.CoverageStatus.UNSUPPORTED,
+                    statementCoverage,
                     blockedReadiness("statement shape is outside the current projection capability"));
-            String kind = plan.position().statement() instanceof Ast.MoveStatement ? "MOVE" : "CALL";
-            statements.add(new CobolSemanticProduct.ObservedStatement(header, kind,
+            statements.add(new CobolSemanticProduct.ObservedStatement(header,
+                    plan.capability().kind(),
                     plan.capability().shape(), plan.capability().gapCode()));
             gaps.add(new CobolSemanticProduct.Gap(statementId,
                     CobolSemanticProduct.GapScope.CAPABILITY,
                     plan.capability().gapCode(),
-                    "typed statement shape is outside the current DATA/MOVE/CALL capability",
+                    typedCapabilityFamily
+                            ? "typed statement shape is outside the current MOVE/CALL capability"
+                            : finding.reason(),
                     statementProvenance));
+            if (statementCoverage == CobolSemanticProduct.CoverageStatus.INPUT_MISSING)
+                gaps.add(new CobolSemanticProduct.Gap(statementId,
+                        CobolSemanticProduct.GapScope.ANALYSIS_INPUT,
+                        OBSERVED_INPUT_MISSING_GAP,
+                        finding.reason(), statementProvenance));
             addContainmentGap(containment, statementId, statementProvenance, gaps);
             if (!plan.entries().isEmpty())
                 addReportGaps(statementId, plan.entries().get(0).occurrence(), inputs,
@@ -897,27 +992,54 @@ public final class CobolSemanticProductProjector {
                 case INPUT_MISSING -> inputMissing++;
             }
         }
+        if (statements.isEmpty()) {
+            CobolSemanticProduct.ReadinessStatus emptyStatus =
+                    inventoryStatus == CobolSemanticProduct.InventoryStatus.COMPLETE
+                            ? CobolSemanticProduct.ReadinessStatus.NOT_APPLICABLE
+                            : CobolSemanticProduct.ReadinessStatus.BLOCKED;
+            return new CobolSemanticProduct.CoverageSummary(inventoryStatus, 0,
+                    0, 0, 0, 0,
+                    readiness(emptyStatus,
+                            inventoryStatus == CobolSemanticProduct.InventoryStatus.COMPLETE
+                                    ? "complete inventory proves that the unit has no statements"
+                                    : "statement inventory is unavailable because analysis input is missing",
+                            emptyStatus,
+                            inventoryStatus == CobolSemanticProduct.InventoryStatus.COMPLETE
+                                    ? "no statement requires a control successor"
+                                    : "control readiness is blocked by unavailable statement inventory",
+                            emptyStatus,
+                            inventoryStatus == CobolSemanticProduct.InventoryStatus.COMPLETE
+                                    ? "no statement requires effects or dataflow input"
+                                    : "effects readiness is blocked by unavailable statement inventory"));
+        }
         CobolSemanticProduct.ReadinessStatus lowering = reportSummary.referenceBindingComplete()
-                ? CobolSemanticProduct.ReadinessStatus.PARTIAL
+                ? CobolSemanticProduct.ReadinessStatus.SUFFICIENT
                 : CobolSemanticProduct.ReadinessStatus.BLOCKED;
         CobolSemanticProduct.ReadinessStatus effects = reportSummary.dependencyAnalysisReady()
-                ? CobolSemanticProduct.ReadinessStatus.PARTIAL
+                ? CobolSemanticProduct.ReadinessStatus.SUFFICIENT
                 : CobolSemanticProduct.ReadinessStatus.BLOCKED;
+        CobolSemanticProduct.ReadinessStatus inventoryCeiling = switch (inventoryStatus) {
+            case COMPLETE -> CobolSemanticProduct.ReadinessStatus.SUFFICIENT;
+            case PARTIAL -> CobolSemanticProduct.ReadinessStatus.PARTIAL;
+            case INPUT_MISSING -> CobolSemanticProduct.ReadinessStatus.BLOCKED;
+        };
+        lowering = weakerReadiness(lowering, inventoryCeiling);
+        effects = weakerReadiness(effects, inventoryCeiling);
         lowering = summaryStatus(lowering, statements,
                 readiness -> readiness.lowering().status());
         CobolSemanticProduct.ReadinessStatus cfg = summaryStatus(
-                CobolSemanticProduct.ReadinessStatus.PARTIAL, statements,
+                inventoryCeiling, statements,
                 readiness -> readiness.cfg().status());
         effects = summaryStatus(effects, statements,
                 readiness -> readiness.effectsDataflow().status());
         return new CobolSemanticProduct.CoverageSummary(inventoryStatus, statements.size(),
                 modeled, partial, unsupported, inputMissing,
                 readiness(lowering,
-                        "report binding claim combined with the partial MOVE/CALL/IF inventory",
+                        "report binding claim combined with every observed statement fact",
                         cfg,
-                        "projected IF structure combined with the still-partial ProgramUnit inventory",
+                        "complete observed inventory bounded by each statement's structural readiness",
                         effects,
-                        "report dependency claim combined with unknown storage and call effects"));
+                        "report dependency claim bounded by each statement's effects readiness"));
     }
 
     private static CobolSemanticProduct.ReadinessStatus summaryStatus(
@@ -943,6 +1065,12 @@ public final class CobolSemanticProductProjector {
             case SUFFICIENT -> 2;
             case NOT_APPLICABLE -> 3;
         };
+    }
+
+    private static CobolSemanticProduct.ReadinessStatus weakerReadiness(
+            CobolSemanticProduct.ReadinessStatus first,
+            CobolSemanticProduct.ReadinessStatus second) {
+        return readinessRank(first) <= readinessRank(second) ? first : second;
     }
 
     private static CobolSemanticProduct.Policy policy(
@@ -1014,15 +1142,27 @@ public final class CobolSemanticProductProjector {
             Ast.Statement nextSibling,
             int ordinal) { }
 
-    private record Capability(boolean supported, String shape, String gapCode) {
-        private static Capability supported(String shape) {
-            return new Capability(true, shape, "");
+    private record Capability(boolean supported, String kind, String shape, String gapCode) {
+        private Capability {
+            kind = Objects.requireNonNull(kind, "kind");
+            shape = Objects.requireNonNull(shape, "shape");
+            gapCode = Objects.requireNonNull(gapCode, "gapCode");
         }
 
-        private static Capability unsupported(String shape, String gapCode) {
-            return new Capability(false, shape, gapCode);
+        private static Capability supported(String kind, String shape) {
+            return new Capability(true, kind, shape, "");
+        }
+
+        private static Capability unsupported(String kind, String shape, String gapCode) {
+            return new Capability(false, kind, shape, gapCode);
+        }
+
+        private static Capability unmodeled(String kind, String shape, String gapCode) {
+            return new Capability(false, kind, shape, gapCode);
         }
     }
+
+    private record ObservedDescriptor(String kind, String shape) { }
 
     private record StatementPlan(StatementPosition position, Capability capability,
                                  List<ReferenceResolution.Entry> entries) {

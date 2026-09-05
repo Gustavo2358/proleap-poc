@@ -330,6 +330,37 @@ class SemanticProductMoveCallContractTest {
     }
 
     @Test
+    void inputMissingObservedStatementIsRepresentableWithAVisibleLocalizedReason() {
+        CobolSemanticProduct.StatementId id = statementId(0);
+        CobolSemanticProduct.ObservedStatement observed =
+                new CobolSemanticProduct.ObservedStatement(
+                        header(id, CobolSemanticProduct.Containment.root(),
+                                CobolSemanticProduct.CoverageStatus.INPUT_MISSING,
+                                blockedReadiness()),
+                        "PRESERVED_STATEMENT", "GENERIC_PRESERVED_STATEMENT",
+                        "OBSERVED_STATEMENT_INPUT_MISSING");
+        List<CobolSemanticProduct.Gap> gaps = List.of(
+                gap(id, CobolSemanticProduct.GapScope.CAPABILITY,
+                        "OBSERVED_STATEMENT_INPUT_MISSING"),
+                gap(id, CobolSemanticProduct.GapScope.ANALYSIS_INPUT,
+                        "OBSERVED_STATEMENT_INPUT_MISSING"));
+        CobolSemanticProduct.State state = new CobolSemanticProduct.State(
+                UNIT, CobolSemanticProduct.Policy.unspecified(), List.of(),
+                List.of(observed), gaps,
+                coverage(CobolSemanticProduct.InventoryStatus.COMPLETE,
+                        1, 0, 0, 0, 1, blockedReadiness()));
+
+        assertEquals(CobolSemanticProduct.CoverageStatus.INPUT_MISSING,
+                CobolSemanticPort.open(state).observedStatements().get(0).header().coverage());
+        assertTrue(state.gaps().stream().anyMatch(gap ->
+                gap.statement().equals(id)
+                        && gap.scope() == CobolSemanticProduct.GapScope.ANALYSIS_INPUT));
+        assertThrows(IllegalArgumentException.class, () -> new CobolSemanticProduct.State(
+                state.unit(), state.policy(), state.dataDeclarations(), state.statements(),
+                List.of(), state.coverage()));
+    }
+
+    @Test
     void originalMoveCallExampleRemainsAValidCardinalityOneRegression() {
         CobolSemanticPort port = CobolSemanticPort.open(singleMoveCallState());
         CobolSemanticProduct.MoveFact move = port.moves().get(0);

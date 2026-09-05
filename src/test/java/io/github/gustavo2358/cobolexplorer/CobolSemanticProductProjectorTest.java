@@ -20,10 +20,11 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** Production projection coverage for WORK-SEMANTIC-PRODUCT-002 Checkpoints 3 and 4. */
+/** Production projection coverage for WORK-SEMANTIC-PRODUCT-002 Checkpoints 3 to 5. */
 class CobolSemanticProductProjectorTest {
     private static final String SOURCE_NAME = "semantic-product-projection.cbl";
     private static final String MULTIPLE_SOURCE = String.join("\n",
@@ -70,10 +71,12 @@ class CobolSemanticProductProjectorTest {
                         Optional.of("X")),
                 port.dataDeclarations().stream()
                         .map(CobolSemanticProduct.DataDeclaration::picture).toList());
-        assertEquals(6, port.statements().size());
+        assertEquals(7, port.statements().size());
         assertEquals(3, port.moves().size());
         assertEquals(3, port.calls().size());
-        assertTrue(port.observedStatements().isEmpty());
+        assertEquals(1, port.observedStatements().size());
+        assertEquals("MODELED_STATEMENT",
+                port.observedStatements().get(0).observedKind());
 
         Map<CobolSemanticProduct.DataItemId, String> names = new LinkedHashMap<>();
         port.dataDeclarations().forEach(declaration ->
@@ -87,9 +90,9 @@ class CobolSemanticProductProjectorTest {
         assertEquals(List.of("A", "B", "1"), port.moves().stream()
                 .map(move -> move.source().value()).toList());
 
-        assertEquals(6, new HashSet<>(port.statements().stream()
+        assertEquals(7, new HashSet<>(port.statements().stream()
                 .map(statement -> statement.header().id()).toList()).size());
-        assertEquals(List.of(0, 1, 2, 3, 4, 5), port.statements().stream()
+        assertEquals(List.of(0, 1, 2, 3, 4, 5, 6), port.statements().stream()
                 .map(statement -> statement.header().point().ordinal()).toList());
         assertTrue(port.statements().stream().allMatch(statement ->
                 statement.header().id().unit().equals(port.unit())));
@@ -104,14 +107,15 @@ class CobolSemanticProductProjectorTest {
                         && call.runtimeTarget()
                         == CobolSemanticProduct.RuntimeTargetKnowledge.UNKNOWN));
 
-        assertEquals(CobolSemanticProduct.InventoryStatus.PARTIAL,
+        assertEquals(CobolSemanticProduct.InventoryStatus.COMPLETE,
                 state.coverage().inventoryStatus());
-        assertEquals(6, state.coverage().observedStatements());
+        assertEquals(7, state.coverage().observedStatements());
         assertEquals(3, state.coverage().modeledStatements());
         assertEquals(3, state.coverage().partialStatements());
-        assertEquals(CobolSemanticProduct.ReadinessStatus.PARTIAL,
+        assertEquals(1, state.coverage().unsupportedStatements());
+        assertEquals(CobolSemanticProduct.ReadinessStatus.BLOCKED,
                 state.coverage().readiness().lowering().status());
-        assertEquals(CobolSemanticProduct.ReadinessStatus.PARTIAL,
+        assertEquals(CobolSemanticProduct.ReadinessStatus.BLOCKED,
                 state.coverage().readiness().cfg().status());
         assertEquals(CobolSemanticProduct.ReadinessStatus.BLOCKED,
                 state.coverage().readiness().effectsDataflow().status());
@@ -151,8 +155,8 @@ class CobolSemanticProductProjectorTest {
         assertEquals(7, port.moves().size());
         assertEquals(3, port.calls().size());
         assertEquals(3, port.ifs().size());
-        assertEquals(13, port.statements().size());
-        assertEquals(List.of(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12),
+        assertEquals(14, port.statements().size());
+        assertEquals(List.of(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13),
                 port.statements().stream()
                         .map(statement -> statement.header().point().ordinal()).toList());
         assertEquals(List.of(0, 1, 2, 4, 5, 6, 9), port.moves().stream()
@@ -166,8 +170,10 @@ class CobolSemanticProductProjectorTest {
         CobolSemanticProduct.StatementId emptyFalseBranch = statementId(port, 12);
         assertEquals(List.of(outer, nested, emptyFalseBranch), port.ifs().stream()
                 .map(branch -> branch.header().id()).toList());
+        CobolSemanticProduct.StatementId display = statementId(port, 13);
         assertEquals(List.of(statementId(port, 0), statementId(port, 1), outer,
-                        statementId(port, 7), statementId(port, 8), emptyFalseBranch),
+                        statementId(port, 7), statementId(port, 8), emptyFalseBranch,
+                        display),
                 port.rootStatements());
 
         assertEquals(List.of(statementId(port, 2), nested, statementId(port, 5)),
@@ -184,7 +190,7 @@ class CobolSemanticProductProjectorTest {
 
         assertEquals(Optional.of(statementId(port, 7)), port.ifs().get(0).continuation());
         assertEquals(Optional.of(statementId(port, 5)), port.ifs().get(1).continuation());
-        assertTrue(port.ifs().get(2).continuation().isEmpty());
+        assertEquals(Optional.of(display), port.ifs().get(2).continuation());
         assertTrue(port.ifs().stream().allMatch(CobolSemanticProduct.IfFact::explicitlyTerminated));
         assertTrue(port.ifs().stream().allMatch(branch ->
                 branch.condition().shape().equals("RELATION")
@@ -212,11 +218,11 @@ class CobolSemanticProductProjectorTest {
         assertEquals(0, port.gaps().stream().filter(gap ->
                 gap.scope() == CobolSemanticProduct.GapScope.STRUCTURE
                         && gap.code().equals("CONTAINMENT_NOT_PROJECTED")).count());
-        assertTrue(port.gaps().stream().anyMatch(gap ->
+        assertFalse(port.gaps().stream().anyMatch(gap ->
                 gap.statement().equals(emptyFalseBranch)
                         && gap.scope() == CobolSemanticProduct.GapScope.STRUCTURE
                         && gap.code().equals("CONTINUATION_NOT_PROJECTED")),
-                "DISPLAY remains a CP5 fact, so CP4 must not skip it to invent a continuation");
+                "the observed DISPLAY is now the exact structural continuation");
         assertFalse(port.gaps().stream().anyMatch(gap ->
                 gap.code().equals("BRANCH_CONTENT_NOT_PROJECTED")),
                 "the fixture has no unprojected direct IF child; its empty ELSE is genuine");
@@ -299,16 +305,19 @@ class CobolSemanticProductProjectorTest {
                 analyze(source, "semantic-product-if-display.cbl")));
         CobolSemanticProduct.IfFact branch = port.ifs().get(0);
 
-        assertTrue(port.children(branch.header().id(),
-                CobolSemanticProduct.Branch.THEN).isEmpty());
+        assertEquals(1, port.children(branch.header().id(),
+                CobolSemanticProduct.Branch.THEN).size());
+        assertInstanceOf(CobolSemanticProduct.ObservedStatement.class,
+                port.children(branch.header().id(),
+                        CobolSemanticProduct.Branch.THEN).get(0));
         assertTrue(port.children(branch.header().id(),
                 CobolSemanticProduct.Branch.ELSE).isEmpty());
         assertEquals(Optional.of(port.calls().get(0).header().id()), branch.continuation());
         assertEquals(CobolSemanticProduct.CoverageStatus.PARTIAL,
                 branch.header().coverage());
-        assertEquals(CobolSemanticProduct.ReadinessStatus.PARTIAL,
+        assertEquals(CobolSemanticProduct.ReadinessStatus.SUFFICIENT,
                 branch.header().readiness().cfg().status());
-        assertTrue(port.gaps().stream().anyMatch(gap ->
+        assertFalse(port.gaps().stream().anyMatch(gap ->
                 gap.statement().equals(branch.header().id())
                         && gap.scope() == CobolSemanticProduct.GapScope.STRUCTURE
                         && gap.code().equals("BRANCH_CONTENT_NOT_PROJECTED")));
@@ -337,14 +346,15 @@ class CobolSemanticProductProjectorTest {
                 analyze(source, "semantic-product-if-perform.cbl")));
         CobolSemanticProduct.IfFact branch = port.ifs().get(0);
 
-        assertEquals(List.of(port.moves().get(0).header().id()), ids(port.children(
-                branch.header().id(), CobolSemanticProduct.Branch.THEN)));
+        assertEquals(List.of(port.moves().get(0).header().id(),
+                        observedByKind(port, "PERFORM").header().id()),
+                ids(port.children(branch.header().id(), CobolSemanticProduct.Branch.THEN)));
         assertTrue(port.children(branch.header().id(),
                 CobolSemanticProduct.Branch.ELSE).isEmpty());
         assertEquals(Optional.of(port.calls().get(0).header().id()), branch.continuation());
-        assertEquals(CobolSemanticProduct.ReadinessStatus.PARTIAL,
+        assertEquals(CobolSemanticProduct.ReadinessStatus.SUFFICIENT,
                 branch.header().readiness().cfg().status());
-        assertTrue(port.gaps().stream().anyMatch(gap ->
+        assertFalse(port.gaps().stream().anyMatch(gap ->
                 gap.statement().equals(branch.header().id())
                         && gap.scope() == CobolSemanticProduct.GapScope.STRUCTURE
                         && gap.code().equals("BRANCH_CONTENT_NOT_PROJECTED")));
@@ -454,9 +464,12 @@ class CobolSemanticProductProjectorTest {
 
         assertEquals(2, port.moves().size());
         assertEquals(1, port.calls().size());
-        assertEquals(3, port.statements().size());
-        assertTrue(port.rootStatements().isEmpty());
-        assertTrue(port.statements().stream().allMatch(statement ->
+        assertEquals(5, port.statements().size());
+        assertEquals(2, port.rootStatements().size());
+        assertTrue(port.moves().stream().allMatch(statement ->
+                statement.header().containment().equals(
+                        CobolSemanticProduct.Containment.unknown())));
+        assertTrue(port.calls().stream().allMatch(statement ->
                 statement.header().containment().equals(
                         CobolSemanticProduct.Containment.unknown())));
         assertEquals(3, port.gaps().stream().filter(gap ->
@@ -529,11 +542,13 @@ class CobolSemanticProductProjectorTest {
 
         assertTrue(port.moves().isEmpty());
         assertTrue(port.calls().isEmpty());
-        assertEquals(List.of("MOVE_NON_LITERAL_SOURCE", "CALL_LITERAL_TARGET"),
+        assertEquals(List.of("MOVE_NON_LITERAL_SOURCE", "CALL_LITERAL_TARGET",
+                        "GENERIC_MODELED_STATEMENT"),
                 port.observedStatements().stream()
                         .map(CobolSemanticProduct.ObservedStatement::observedShape).toList());
         assertEquals(List.of("MOVE_NON_LITERAL_SOURCE_OUTSIDE_CAPABILITY",
-                        "CALL_LITERAL_TARGET_OUTSIDE_CAPABILITY"),
+                        "CALL_LITERAL_TARGET_OUTSIDE_CAPABILITY",
+                        "OBSERVED_STATEMENT_UNSUPPORTED"),
                 port.observedStatements().stream()
                         .map(CobolSemanticProduct.ObservedStatement::gapCode).toList());
         assertTrue(port.observedStatements().stream().allMatch(observed ->
@@ -702,5 +717,19 @@ class CobolSemanticProductProjectorTest {
     private static List<CobolSemanticProduct.StatementId> ids(
             List<CobolSemanticProduct.StatementFact> facts) {
         return facts.stream().map(fact -> fact.header().id()).toList();
+    }
+
+    private static CobolSemanticProduct.ObservedStatement observedByKind(
+            CobolSemanticPort port, String kind) {
+        CobolSemanticProduct.ObservedStatement result = null;
+        for (CobolSemanticProduct.ObservedStatement observed : port.observedStatements()) {
+            if (!observed.observedKind().equals(kind)) continue;
+            if (result != null)
+                throw new AssertionError("fixture has multiple observed statements of kind " + kind);
+            result = observed;
+        }
+        if (result == null)
+            throw new AssertionError("fixture has no observed statement of kind " + kind);
+        return result;
     }
 }

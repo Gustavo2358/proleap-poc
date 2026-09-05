@@ -2,7 +2,7 @@
 
 ## Onde estamos
 
-Os seis checkpoints da migração documental e os Checkpoints 1–4 foram
+Os seis checkpoints da migração documental e os Checkpoints 1–5 foram
 executados no PR #27, que permanece sob review. O CP1 mantém o target model e o
 consumer exclusivamente em `src/test`; eles continuam como especificação
 executável independente.
@@ -22,17 +22,24 @@ e todos os MOVE/CALL observados.
 O CP4 acrescentou todos os IF estruturais da mesma unit ao inventário. Condition
 surface, referências READ com binding DATA disponível, termination, branches,
 nesting e continuation segura são projetados por identities tipadas. Filhos
-diretos de IF agora usam `THEN(parentIf)`/`ELSE(parentIf)`; statements sob
-PERFORM ou outra família estrutural ainda não projetada preservam `UNKNOWN` e o
-gap correspondente. `ExplorerMain` e o composition root continuam inalterados.
+diretos de IF usam `THEN(parentIf)`/`ELSE(parentIf)`.
+
+O CP5 percorre o inventário estrutural tipado completo da `ProgramUnit` e
+publica exatamente um fact para cada `Ast.Statement`: MOVE/CALL/IF sustentados
+permanecem facts tipados e as demais ocorrências atravessam como
+`ObservedStatement`. Statements sob PERFORM ou outra família estrutural ainda
+não projetada existem no produto, mas preservam containment `UNKNOWN` e gap
+localizado. `ExplorerMain` e o composition root continuam inalterados.
 
 ## Verde conhecido
 
 - `CobolSemanticProduct.State` é fechado, imutável e namespaced por
   `UnitId`; DATA, statement, operand e candidate possuem identities próprias.
 - O inventário tipado usa `StatementFact` com `MoveFact`, `CallFact`, `IfFact`
-  estrutural e `ObservedStatement` genérico. Uma nova família não altera o
-  envelope do state.
+  estrutural e `ObservedStatement` genérico. Cada statement alcançável por
+  `Ast.children` na unit recebe um único fact, anchor/provenance e
+  `ProgramPoint` estrutural; a sequência completa é `0..N-1`. Uma nova família
+  não altera o envelope do state e uma variante AST desconhecida falha fechada.
 - Containment flat/híbrido preserva `ROOT`, `THEN`, `ELSE`, `UNKNOWN`, nesting e
   continuation por identity. `UNKNOWN` identifica uma ocorrência sabidamente
   aninhada cuja relação de parent/branch ainda não foi projetada; não pertence
@@ -45,19 +52,20 @@ gap correspondente. `ExplorerMain` e o composition root continuam inalterados.
 - Candidates e facts não podem cruzar namespace, e todo candidate publicado
   precisa ter declaration correspondente na publicação fechada.
 - Coverage individual distingue `MODELED`, `PARTIAL`, `UNSUPPORTED` e
-  `INPUT_MISSING`. A summary classifica exatamente o inventário, distingue zero
-  statements de inventário indisponível e não pode elevar lowering, CFG ou
-  effects/dataflow acima do fact individual mais fraco.
+  `INPUT_MISSING`. A summary satisfaz a igualdade entre statements observados e
+  a soma de modeled, partial, unsupported e input-missing, corresponde aos facts
+  individuais, distingue zero statements de inventário indisponível e não pode
+  elevar lowering, CFG ou effects/dataflow acima do fact individual mais fraco
+  ou do status do inventário.
 - CALL variável continua com runtime target `UNKNOWN` e gap localizado;
   binding nominal não se torna target de runtime nem storage identity.
 - `LiteralSource` preserva `LiteralKind` no core. Um teste direto atravessa o
   port com numeric `1` e alphanumeric `'1'`, ambos com value `"1"`, e
   prova que continuam semanticamente distinguíveis sem AST, raw text ou PIC.
 - A projection percorre deterministicamente as coleções canônicas, sem
-  `single(...)`, `findFirst()`, primeiro/último match ou pairing MOVE→CALL. O
-  teste adversarial publica quatro DATA, três MOVE e três CALL intercalados para
-  DATA distintas, incluindo declaration não usada, e preserva o caso N=1 como
-  regressão.
+  `single(...)`, `findFirst()`, primeiro/último match, filtro que descarte
+  statements ou pairing MOVE→CALL. Os joins continuam indexados; completar o
+  inventário acrescenta somente passes lineares sobre nodes/facts.
 - Cada MOVE/CALL publicado retém identity, program point estrutural, operands,
   roles, binding, candidates e provenance próprios. Ambiguidade nominal mantém
   todos os candidates sem selecionar um deles; candidate de namespace inválido
@@ -67,14 +75,15 @@ gap correspondente. `ExplorerMain` e o composition root continuam inalterados.
   READ disponíveis com status/reason/candidates/selected canônicos. Binding
   ambíguo não apaga IF, children nem continuation.
 - Continuação de IF é um fact estrutural, não edge: o projector usa o próximo
-  sibling tipado ou a continuação do IF enclosing. Quando o próximo statement
-  imediato está fora da capability atual, publica
-  `CONTINUATION_NOT_PROJECTED` em vez de saltá-lo ou inferir successor.
-- Completude dos branches é independente da continuation. Se THEN ou ELSE contém
-  um filho direto fora do inventário CP4, os filhos suportados continuam
-  publicados, mas o IF recebe `BRANCH_CONTENT_NOT_PROJECTED` e CFG readiness
-  `PARTIAL`. Somente uma lista AST realmente vazia representa ramo vazio sem esse
-  gap.
+  sibling tipado ou a continuação do IF enclosing. Como o CP5 publica todo
+  sibling observado, um DISPLAY posterior deixa de causar
+  `CONTINUATION_NOT_PROJECTED`; o gap permanece somente quando o IF termina sob
+  uma família estrutural cuja continuação ainda não é projetável.
+- Completude dos branches é independente da continuation. DISPLAY/PERFORM ou
+  outro filho direto observado agora pertence explicitamente ao THEN/ELSE e não
+  mantém `BRANCH_CONTENT_NOT_PROJECTED`; uma lista AST realmente vazia continua
+  sendo ramo vazio. Isso não modela a semântica do filho nem elimina
+  `CONDITION_SEMANTICS_NOT_AVAILABLE` do IF.
 - Ramo falso vazio continua sendo uma coleção vazia com continuation
   conservadora. `explicitlyTerminated` preserva apenas termination do IF; não há
   `elsePresent`, `hasElse` ou tentativa de distinguir ELSE ausente de ELSE vazio.
@@ -93,6 +102,12 @@ gap correspondente. `ExplorerMain` e o composition root continuam inalterados.
   `ObservedStatement` com coverage/gap localizado. CALL variável continua com
   runtime target `UNKNOWN`; argumentos, `RETURNING` e exception flow ainda não
   representáveis no fact são mantidos como incompletude explícita.
+- EVALUATE, PERFORM, GO TO, SEARCH, embedded language e NEXT SENTENCE preservam
+  kind/shape que a variante AST tipada sustenta. `ModeledStatement`,
+  `PreservedStatement` e `UnsupportedStatement` permanecem deliberadamente
+  genéricos: seus campos textuais não são usados como uma segunda parser engine.
+  Todo `ObservedStatement` recebe coverage conservadora e gap de capability
+  correspondente; containment desconhecido acrescenta gap estrutural.
 - Como a AST canônica ainda não publica literal kind tipado, todo MOVE literal
   do CP3 usa `LiteralKind.UNKNOWN`, coverage/readiness conservadoras e o gap
   localizado `LITERAL_KIND_NOT_PUBLISHED`, sem inferência por `rawLexeme`, value
@@ -105,30 +120,25 @@ gap correspondente. `ExplorerMain` e o composition root continuam inalterados.
   deixa de varrer o inventário global; roots e views MOVE/CALL/IF/observed são
   pré-computadas em ordem estrutural. A semântica de `CobolSemanticProduct.State`
   não mudou.
-- Testes diretos de produção cobrem N DATA/statements, multiple MOVE/CALL,
-  IF aninhado, branches vazias, containment, bindings incompletos,
-  observed/unmodeled, coverage conservadora, readiness dimensional,
-  imutabilidade, namespace e ausência de API singleton.
-- Os testes focais de projection/core/oracle/architecture passam. O fixture
-  estrutural do CP1 atravessa a production projection com sete MOVE, três CALL e
-  três IF; branches, nesting e continuations sustentadas são exatos. A
-  continuation do último IF permanece explicitamente incompleta porque seu
-  próximo sibling é DISPLAY, família reservada ao CP5. Uma regressão separada
-  preserva `UNKNOWN` para dois MOVE e um CALL diretamente sob PERFORM inline.
-  Adversariais com DISPLAY e PERFORM como filhos diretos de IF provam que esses
-  branches não parecem vazios/CFG-ready e que fatos MOVE suportados coexistentes
-  permanecem disponíveis.
-  Os gates `docs`, `architecture`, `fast`, `semantic`, `performance` e `full`
-  passam no fechamento do CP4.
-  AST, grammar, symbols, occurrences, resolution, report, `ExplorerMain`,
-  snapshots e fixtures de produção não foram alterados.
+- `SemanticProductStatementInventoryTest` é um oracle permanente independente
+  do projector: deriva o esperado apenas da AST tipada, reconcilia anchors,
+  containment, famílias, counts, gaps e readiness, e cobre statements fora da
+  capability antes/entre/depois de facts suportados, consecutivos, em branches,
+  sob estrutura não projetada, em units sem MOVE/CALL/IF e em múltiplos IFs
+  nested. O core prova separadamente a representabilidade de statement
+  `INPUT_MISSING` com motivo localizado e de zero real versus inventário
+  indisponível.
+- Os testes focais de projection/core/inventário e os gates `docs`,
+  `architecture`, `fast`, `semantic`, `performance` e `full` passam no
+  fechamento do CP5. AST, grammar, symbols, occurrences, resolution, report,
+  `ExplorerMain`, snapshots e fixtures de produção não foram alterados.
 
 ## Restante
 
-- Obter review humano do Checkpoint 4 no PR #27.
-- Executar os Checkpoints 5–8 somente na ordem registrada e com a autorização
-  aplicável. Coverage completa da `ProgramUnit`, composition root, consumer de
-  lowering-readiness e JSON permanecem futuros.
+- Obter review humano do Checkpoint 5 no PR #27.
+- Executar os Checkpoints 6–8 somente na ordem registrada e com a autorização
+  aplicável. Composition root, consumer de lowering-readiness e JSON permanecem
+  futuros.
 - Manter EVALUATE, PERFORM, GO TO, terminal semantics, ALTER, SEARCH,
   CobolLower, IR, CFG, effects/storage e dataflow fora deste checkpoint.
 
@@ -145,18 +155,22 @@ gap correspondente. `ExplorerMain` e o composition root continuam inalterados.
   Produzir `ALPHANUMERIC`/`NUMERIC` conhecido exige enrichment canônico anterior
   do frontend; até lá, a projection conserva `UNKNOWN` e incompletude localizada.
 - O core exige parent `IfFact` publicado para containment exato `THEN`/`ELSE`.
-  O CP4 usa essa autoridade somente para filhos diretos de IF e remove deles o
-  `CONTAINMENT_NOT_PROJECTED`; `UNKNOWN` sob estruturas não cobertas permanece
-  intacto. O inventário agregado continua `PARTIAL` até o CP5.
-- A AST tipada sustenta continuation quando o próximo sibling é uma família já
-  publicada ou quando o IF termina em um scope de IF cuja continuation é segura.
-  Ela não autoriza saltar um sibling ainda não projetado. O DISPLAY posterior ao
-  último IF do oracle torna essa continuation incompleta no CP4, sem impedir a
-  reconstrução dos branches nem antecipar o inventário do CP5.
-- Continuation exata não prova que THEN/ELSE estejam completos. O CP4 precisa
-  comparar as listas tipadas de filhos diretos com o inventário publicado e
-  localizar a incompletude no IF; isso distingue ramo genuinamente vazio de ramo
-  que apenas não possui fact para DISPLAY/PERFORM, sem projetar essas famílias.
+  O CP5 usa essa autoridade para qualquer filho direto de IF, inclusive facts
+  observados; `UNKNOWN` sob estruturas não cobertas permanece intacto.
+- A AST tipada sustenta continuation quando o próximo sibling observado possui
+  fact ou quando o IF termina em um scope de IF cuja continuation é segura. Ela
+  não sustenta a continuação de um IF que termina sob PERFORM/EVALUATE ou outra
+  família estrutural ainda não projetada.
+- A cobertura de `Ast.ModeledStatement` não publica a família COBOL específica:
+  distinguir DISPLAY de GOBACK nesse nó exigiria interpretar `grammarRule` ou
+  `writtenText`. O CP5 preserva honestamente kind/shape genéricos nesses casos;
+  variantes estruturais tipadas continuam mais específicas.
+- O frontend atual não produz legitimamente um finding statement-level
+  `INPUT_MISSING` nas fixtures disponíveis. O core prova que o estado e o gap
+  localizado são representáveis; na projection, gaps globais de input tornam o
+  `InventoryStatus` `INPUT_MISSING`, preservam facts independentes já observados
+  e bloqueiam as três claims agregadas sem atribuir o gap global a um statement
+  arbitrário.
 - Algumas referências de condição resolvem para entidades fora do namespace DATA
   representável por `ConditionSurface`; o IF estrutural continua publicado e
   recebe `CONDITION_REFERENCE_KIND_NOT_PROJECTED`, sem fabricar `DataItemId` ou
@@ -166,6 +180,6 @@ gap correspondente. `ExplorerMain` e o composition root continuam inalterados.
   de `UNIQUE_VISIBLE_DECLARATION`; normalizá-las seria perda de autoridade.
 - O report canônico publica claims nominais/dependency-ready por unit, não as
   três dimensões próprias de readiness do Semantic Product. O projector traduz
-  somente esses claims disponíveis, limita-os pelo fact individual mais fraco e
-  mantém a summary parcial; uma equivalência mais rica depende de autoridade
-  canônica adicional, não de classificação paralela local.
+  somente esses claims disponíveis e limita-os pelo fact individual mais fraco
+  e pela disponibilidade do inventário; uma equivalência mais rica depende de
+  autoridade canônica adicional, não de classificação paralela local.

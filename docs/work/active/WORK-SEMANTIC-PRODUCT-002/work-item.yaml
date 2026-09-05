@@ -113,6 +113,7 @@ source_scope:
 test_scope:
   - src/test/java/io/github/gustavo2358/cobolexplorer/SemanticProductBoundaryCheckpoint3BTest.java
   - src/test/java/io/github/gustavo2358/cobolexplorer/CobolSemanticProductProjectorTest.java
+  - src/test/java/io/github/gustavo2358/cobolexplorer/SemanticProductStatementInventoryTest.java
   - src/test/java/io/github/gustavo2358/cobolexplorer/semanticproduct/
   - src/test/java/io/github/gustavo2358/cobolexplorer/SemanticProductTargetModelOracleTest.java
   - src/test/resources/cobol/semantic/semantic-product-lowering-readiness.cbl
