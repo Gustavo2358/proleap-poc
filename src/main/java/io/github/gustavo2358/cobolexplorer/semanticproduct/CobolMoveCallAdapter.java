@@ -130,31 +130,42 @@ public final class CobolMoveCallAdapter {
                 callEntry, dataItem);
         CobolSemanticProduct.RuntimeTargetKnowledge runtimeTarget =
                 CobolSemanticProduct.RuntimeTargetKnowledge.UNKNOWN;
-        CobolSemanticProduct.Uncertainty runtimeUncertainty = new CobolSemanticProduct.Uncertainty(
-                callPoint, CobolSemanticProduct.UncertaintyScope.RUNTIME_CALL_TARGET,
+        CobolSemanticProduct.StatementId moveId = new CobolSemanticProduct.StatementId(
+                boundaryUnit, movePoint.ordinal());
+        CobolSemanticProduct.StatementId callId = new CobolSemanticProduct.StatementId(
+                boundaryUnit, callPoint.ordinal());
+        CobolSemanticProduct.MoveFact moveFact = new CobolSemanticProduct.MoveFact(
+                header(moveId, movePoint, moveProvenance, moveReadiness()),
+                new CobolSemanticProduct.LiteralSource(
+                        new CobolSemanticProduct.OperandId(moveId, 0),
+                        literal.value(), provenance(literal.meta().provenance())),
+                new CobolSemanticProduct.DataReference(
+                        new CobolSemanticProduct.OperandId(moveId, 1),
+                        CobolSemanticProduct.OperandRole.WRITE, moveBinding, moveProvenance));
+        CobolSemanticProduct.CallFact callFact = new CobolSemanticProduct.CallFact(
+                header(callId, callPoint, callProvenance, callReadiness()),
+                CobolSemanticProduct.CallSyntax.IDENTIFIER_OR_EXPRESSION,
+                new CobolSemanticProduct.DataReference(
+                        new CobolSemanticProduct.OperandId(callId, 0),
+                        CobolSemanticProduct.OperandRole.CALL_TARGET,
+                        callBinding, callProvenance),
+                runtimeTarget, RUNTIME_TARGET_GAP);
+        CobolSemanticProduct.Gap runtimeGap = new CobolSemanticProduct.Gap(
+                callId, CobolSemanticProduct.GapScope.RUNTIME_CALL_TARGET,
                 RUNTIME_TARGET_GAP,
                 "CALL identifier/expression binds its DATA operand, not its runtime program target",
                 callProvenance);
+        require(movePoint.ordinal() < callPoint.ordinal(),
+                "ordering must be strict and forward");
+        List<CobolSemanticProduct.StatementFact> statementFacts = List.of(moveFact, callFact);
 
         return new CobolSemanticProduct.State(
                 boundaryUnit,
-                List.of(declaration),
                 policy(products.resolution()),
-                new CobolSemanticProduct.MoveFact(
-                        movePoint,
-                        new CobolSemanticProduct.LiteralSource(
-                                literal.value(), provenance(literal.meta().provenance())),
-                        Optional.of(dataItem), moveBinding, moveProvenance),
-                new CobolSemanticProduct.CallFact(
-                        callPoint, Optional.of(dataItem),
-                        CobolSemanticProduct.CallSyntax.IDENTIFIER_OR_EXPRESSION,
-                        callBinding, runtimeTarget, callProvenance),
-                new CobolSemanticProduct.Ordering(movePoint, callPoint),
-                new CobolSemanticProduct.AnalysisStatus(
-                        nominalBinding(moveEntry, callEntry),
-                        CobolSemanticProduct.AnalysisClaim.PARTIAL,
-                        CobolSemanticProduct.DependencyReadiness.INCOMPLETE,
-                        runtimeTarget, List.of(runtimeUncertainty)));
+                List.of(declaration), statementFacts, List.of(runtimeGap),
+                new CobolSemanticProduct.CoverageSummary(
+                        CobolSemanticProduct.InventoryStatus.PARTIAL,
+                        2, 2, 0, 0, 0, summaryReadiness()));
     }
 
     /** Opens the read-only port over one already-materialized projection. */
@@ -297,8 +308,9 @@ public final class CobolMoveCallAdapter {
         require(pictures.size() == 1 && !pictures.get(0).picture().isBlank(),
                 "slice DATA declaration must publish exactly one PIC");
         return new CobolSemanticProduct.DataDeclaration(
-                dataItem, symbol.canonicalName(), pictures.get(0).picture(),
-                provenance(entry.meta().provenance()));
+                dataItem, symbol.canonicalName(), Optional.of(pictures.get(0).picture()),
+                provenance(entry.meta().provenance()),
+                CobolSemanticProduct.CoverageStatus.MODELED, dataReadiness());
     }
 
     private static CobolSemanticProduct.NominalBinding nominalBinding(
@@ -313,12 +325,59 @@ public final class CobolMoveCallAdapter {
                 dataItem, candidate.canonicalName());
     }
 
-    private static CobolSemanticProduct.BindingStatus nominalBinding(
-            ReferenceResolution.Entry move, ReferenceResolution.Entry call) {
-        return move.status() == ResolutionContracts.ResolutionStatus.RESOLVED
-                && call.status() == ResolutionContracts.ResolutionStatus.RESOLVED
-                ? CobolSemanticProduct.BindingStatus.COMPLETE
-                : CobolSemanticProduct.BindingStatus.INCOMPLETE;
+    private static CobolSemanticProduct.StatementHeader header(
+            CobolSemanticProduct.StatementId id, CobolSemanticProduct.ProgramPoint point,
+            CobolSemanticProduct.Provenance provenance,
+            CobolSemanticProduct.Readiness readiness) {
+        return new CobolSemanticProduct.StatementHeader(id, point,
+                CobolSemanticProduct.Containment.root(), provenance,
+                CobolSemanticProduct.CoverageStatus.MODELED, readiness);
+    }
+
+    private static CobolSemanticProduct.Readiness dataReadiness() {
+        return readiness(CobolSemanticProduct.ReadinessStatus.SUFFICIENT,
+                "declaration surface and nominal identity available",
+                CobolSemanticProduct.ReadinessStatus.NOT_APPLICABLE,
+                "declaration alone has no control successor",
+                CobolSemanticProduct.ReadinessStatus.PARTIAL,
+                "nominal identity available; storage layout and aliases unknown");
+    }
+
+    private static CobolSemanticProduct.Readiness moveReadiness() {
+        return readiness(CobolSemanticProduct.ReadinessStatus.SUFFICIENT,
+                "literal source, nominal target and structure available",
+                CobolSemanticProduct.ReadinessStatus.SUFFICIENT,
+                "structural fallthrough available",
+                CobolSemanticProduct.ReadinessStatus.PARTIAL,
+                "nominal DEF available; storage region and aliases unknown");
+    }
+
+    private static CobolSemanticProduct.Readiness callReadiness() {
+        return readiness(CobolSemanticProduct.ReadinessStatus.SUFFICIENT,
+                "variable CALL syntax and nominal operand available",
+                CobolSemanticProduct.ReadinessStatus.SUFFICIENT,
+                "local structural continuation available",
+                CobolSemanticProduct.ReadinessStatus.PARTIAL,
+                "nominal USE available; runtime target and call effects unknown");
+    }
+
+    private static CobolSemanticProduct.Readiness summaryReadiness() {
+        return readiness(CobolSemanticProduct.ReadinessStatus.PARTIAL,
+                "the compatibility bridge publishes only its narrow MOVE/CALL slice",
+                CobolSemanticProduct.ReadinessStatus.PARTIAL,
+                "control structure outside the compatibility slice is not inventoried",
+                CobolSemanticProduct.ReadinessStatus.PARTIAL,
+                "storage aliases and runtime call effects remain unknown");
+    }
+
+    private static CobolSemanticProduct.Readiness readiness(
+            CobolSemanticProduct.ReadinessStatus lowering, String loweringScope,
+            CobolSemanticProduct.ReadinessStatus cfg, String cfgScope,
+            CobolSemanticProduct.ReadinessStatus effects, String effectsScope) {
+        return new CobolSemanticProduct.Readiness(
+                new CobolSemanticProduct.ReadinessClaim(lowering, loweringScope),
+                new CobolSemanticProduct.ReadinessClaim(cfg, cfgScope),
+                new CobolSemanticProduct.ReadinessClaim(effects, effectsScope));
     }
 
     private static CobolSemanticProduct.Policy policy(ReferenceResolution resolution) {

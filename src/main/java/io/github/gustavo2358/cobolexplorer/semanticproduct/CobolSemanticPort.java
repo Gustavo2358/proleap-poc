@@ -2,26 +2,71 @@ package io.github.gustavo2358.cobolexplorer.semanticproduct;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
- * Closed, read-only facade over one already-materialized
- * {@link CobolSemanticProduct.State}.  Queries only select facts; they never
- * perform parsing, resolution, lazy analysis or caching.
+ * Closed, read-only facade over one already-materialized publication. Queries
+ * only select boundary facts; they perform no parsing, resolution or analysis.
  */
 public interface CobolSemanticPort {
     CobolSemanticProduct.UnitId unit();
 
-    List<CobolSemanticProduct.DataDeclaration> dataItems();
-
     CobolSemanticProduct.Policy policy();
 
-    CobolSemanticProduct.MoveFact move();
+    List<CobolSemanticProduct.DataDeclaration> dataDeclarations();
 
-    CobolSemanticProduct.CallFact call();
+    List<CobolSemanticProduct.StatementFact> statements();
 
-    CobolSemanticProduct.Ordering ordering();
+    List<CobolSemanticProduct.Gap> gaps();
 
-    CobolSemanticProduct.AnalysisStatus analysis();
+    CobolSemanticProduct.CoverageSummary coverage();
+
+    default List<CobolSemanticProduct.StatementId> rootStatements() {
+        return statements().stream()
+                .filter(statement -> statement.header().containment()
+                        .equals(CobolSemanticProduct.Containment.root()))
+                .map(statement -> statement.header().id()).toList();
+    }
+
+    default Optional<CobolSemanticProduct.StatementFact> statement(
+            CobolSemanticProduct.StatementId id) {
+        Objects.requireNonNull(id, "id");
+        return statements().stream().filter(fact -> fact.header().id().equals(id)).findFirst();
+    }
+
+    default List<CobolSemanticProduct.StatementFact> children(
+            CobolSemanticProduct.StatementId parent, CobolSemanticProduct.Branch branch) {
+        Objects.requireNonNull(parent, "parent");
+        Objects.requireNonNull(branch, "branch");
+        if (branch == CobolSemanticProduct.Branch.ROOT)
+            throw new IllegalArgumentException("children belong to THEN or ELSE");
+        CobolSemanticProduct.Containment containment =
+                CobolSemanticProduct.Containment.childOf(parent, branch);
+        return statements().stream()
+                .filter(statement -> statement.header().containment().equals(containment))
+                .toList();
+    }
+
+    default List<CobolSemanticProduct.MoveFact> moves() {
+        return statements().stream().filter(CobolSemanticProduct.MoveFact.class::isInstance)
+                .map(CobolSemanticProduct.MoveFact.class::cast).toList();
+    }
+
+    default List<CobolSemanticProduct.CallFact> calls() {
+        return statements().stream().filter(CobolSemanticProduct.CallFact.class::isInstance)
+                .map(CobolSemanticProduct.CallFact.class::cast).toList();
+    }
+
+    default List<CobolSemanticProduct.IfFact> ifs() {
+        return statements().stream().filter(CobolSemanticProduct.IfFact.class::isInstance)
+                .map(CobolSemanticProduct.IfFact.class::cast).toList();
+    }
+
+    default List<CobolSemanticProduct.ObservedStatement> observedStatements() {
+        return statements().stream()
+                .filter(CobolSemanticProduct.ObservedStatement.class::isInstance)
+                .map(CobolSemanticProduct.ObservedStatement.class::cast).toList();
+    }
 
     static CobolSemanticPort open(CobolSemanticProduct.State state) {
         return new MaterializedCobolSemanticPort(Objects.requireNonNull(state, "state"));
@@ -41,32 +86,27 @@ final class MaterializedCobolSemanticPort implements CobolSemanticPort {
     }
 
     @Override
-    public List<CobolSemanticProduct.DataDeclaration> dataItems() {
-        return state.dataItems();
-    }
-
-    @Override
     public CobolSemanticProduct.Policy policy() {
         return state.policy();
     }
 
     @Override
-    public CobolSemanticProduct.MoveFact move() {
-        return state.move();
+    public List<CobolSemanticProduct.DataDeclaration> dataDeclarations() {
+        return state.dataDeclarations();
     }
 
     @Override
-    public CobolSemanticProduct.CallFact call() {
-        return state.call();
+    public List<CobolSemanticProduct.StatementFact> statements() {
+        return state.statements();
     }
 
     @Override
-    public CobolSemanticProduct.Ordering ordering() {
-        return state.ordering();
+    public List<CobolSemanticProduct.Gap> gaps() {
+        return state.gaps();
     }
 
     @Override
-    public CobolSemanticProduct.AnalysisStatus analysis() {
-        return state.analysis();
+    public CobolSemanticProduct.CoverageSummary coverage() {
+        return state.coverage();
     }
 }

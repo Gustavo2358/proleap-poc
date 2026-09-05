@@ -48,41 +48,39 @@ class SemanticProductMoveCallAdapterTest {
         FrontendAnalysis frontend = analyze();
         CobolSemanticProduct.State state = project(frontend);
         CobolSemanticPort port = CobolMoveCallAdapter.open(products(frontend), frontend.unit().id());
+        CobolSemanticProduct.MoveFact move = port.moves().get(0);
+        CobolSemanticProduct.CallFact call = port.calls().get(0);
 
-        CobolSemanticProduct.DataItemId dataItem = state.dataItems().get(0).id();
+        CobolSemanticProduct.DataItemId dataItem = state.dataDeclarations().get(0).id();
         assertEquals(COMPILATION_UNIT_ID, state.unit().compilationUnitId());
         assertEquals(List.of(0), state.unit().structuralPath());
         assertEquals("SEMANTIC-ADAPTER", state.unit().canonicalProgramName());
-        assertEquals("WS-PGM", state.dataItems().get(0).name());
-        assertEquals("X(8)", state.dataItems().get(0).picture());
-        assertEquals(Optional.of(dataItem), state.move().target());
-        assertEquals(Optional.of(dataItem), state.call().operand());
-        assertEquals(Optional.of(dataItem), state.move().targetBinding().selected());
-        assertEquals(Optional.of(dataItem), state.call().operandBinding().selected());
-        assertEquals(CobolSemanticProduct.BindingStatus.COMPLETE,
-                state.move().targetBinding().status());
-        assertEquals(CobolSemanticProduct.BindingStatus.COMPLETE,
-                state.call().operandBinding().status());
-        assertEquals("PGMA", state.move().source().value());
+        assertEquals("WS-PGM", state.dataDeclarations().get(0).canonicalName());
+        assertEquals(Optional.of("X(8)"), state.dataDeclarations().get(0).picture());
+        assertEquals(Optional.of(dataItem), move.target().binding().selected());
+        assertEquals(Optional.of(dataItem), call.operand().binding().selected());
+        assertEquals(CobolSemanticProduct.ResolutionStatus.RESOLVED,
+                move.target().binding().status());
+        assertEquals(CobolSemanticProduct.ResolutionStatus.RESOLVED,
+                call.operand().binding().status());
+        assertEquals("PGMA", move.source().value());
         assertEquals(CobolSemanticProduct.CallSyntax.IDENTIFIER_OR_EXPRESSION,
-                state.call().syntax());
+                call.syntax());
         assertEquals(CobolSemanticProduct.RuntimeTargetKnowledge.UNKNOWN,
-                state.call().runtimeTarget());
-        assertEquals(CobolSemanticProduct.BindingStatus.COMPLETE,
-                state.analysis().nominalBinding());
-        assertEquals(CobolSemanticProduct.AnalysisClaim.PARTIAL,
-                state.analysis().claim());
-        assertEquals(CobolSemanticProduct.DependencyReadiness.INCOMPLETE,
-                state.analysis().dependencyReadiness());
-        assertEquals(CobolSemanticProduct.RuntimeTargetKnowledge.UNKNOWN,
-                state.analysis().runtimeTarget());
+                call.runtimeTarget());
+        assertEquals(CobolSemanticProduct.InventoryStatus.PARTIAL,
+                state.coverage().inventoryStatus());
+        assertEquals(2, state.coverage().observedStatements());
+        assertEquals(CobolSemanticProduct.ReadinessStatus.PARTIAL,
+                state.coverage().readiness().lowering().status());
+        assertEquals(CobolSemanticProduct.ReadinessStatus.PARTIAL,
+                state.coverage().readiness().cfg().status());
+        assertEquals(CobolSemanticProduct.ReadinessStatus.PARTIAL,
+                state.coverage().readiness().effectsDataflow().status());
         assertEquals(List.of("DYNAMIC_CALL_TARGET_VALUE_UNKNOWN"),
-                state.analysis().uncertainties().stream()
-                        .map(CobolSemanticProduct.Uncertainty::code).toList());
-        assertEquals(state.call().point(), state.analysis().uncertainties().get(0).point());
-        assertTrue(state.move().point().ordinal() < state.call().point().ordinal());
-        assertEquals(state.move().point(), state.ordering().earlier());
-        assertEquals(state.call().point(), state.ordering().later());
+                state.gaps().stream().map(CobolSemanticProduct.Gap::code).toList());
+        assertEquals(call.header().id(), state.gaps().get(0).statement());
+        assertTrue(move.header().point().ordinal() < call.header().point().ordinal());
 
         assertEquals(CobolSemanticProduct.QualifyMode.UNSPECIFIED,
                 port.policy().qualifyMode());
@@ -101,15 +99,15 @@ class SemanticProductMoveCallAdapterTest {
                         .findFirst().orElseThrow().callSemantics().orElseThrow().linkage());
         assertEquals(state, portState(port));
 
-        assertProvenance(SOURCE_NAME, state.dataItems().get(0).provenance());
-        assertProvenance(SOURCE_NAME, state.move().source().provenance());
-        assertProvenance(SOURCE_NAME, state.move().provenance());
-        assertProvenance(SOURCE_NAME, state.call().provenance());
-        assertTrue(state.dataItems().get(0).provenance().original().startLine()
-                < state.move().provenance().original().startLine());
-        assertTrue(state.move().provenance().original().startLine()
-                < state.call().provenance().original().startLine());
-        assertTrue(state.analysis().uncertainties().get(0).provenance().exact());
+        assertProvenance(SOURCE_NAME, state.dataDeclarations().get(0).provenance());
+        assertProvenance(SOURCE_NAME, move.source().provenance());
+        assertProvenance(SOURCE_NAME, move.header().provenance());
+        assertProvenance(SOURCE_NAME, call.header().provenance());
+        assertTrue(state.dataDeclarations().get(0).provenance().original().startLine()
+                < move.header().provenance().original().startLine());
+        assertTrue(move.header().provenance().original().startLine()
+                < call.header().provenance().original().startLine());
+        assertTrue(state.gaps().get(0).provenance().exact());
     }
 
     @Test
@@ -121,10 +119,14 @@ class SemanticProductMoveCallAdapterTest {
         CobolSemanticProduct.State second = project(secondFrontend);
 
         assertEquals(first, second);
-        assertEquals(first.move().target(), first.call().operand());
-        assertEquals(first.move().target(), second.move().target());
-        assertEquals(first.dataItems().get(0).id(), second.dataItems().get(0).id());
-        assertEquals(first.analysis().uncertainties(), second.analysis().uncertainties());
+        CobolSemanticPort firstPort = CobolSemanticPort.open(first);
+        CobolSemanticPort secondPort = CobolSemanticPort.open(second);
+        assertEquals(firstPort.moves().get(0).target().binding().selected(),
+                firstPort.calls().get(0).operand().binding().selected());
+        assertEquals(firstPort.moves(), secondPort.moves());
+        assertEquals(first.dataDeclarations().get(0).id(),
+                second.dataDeclarations().get(0).id());
+        assertEquals(first.gaps(), second.gaps());
     }
 
     @Test
@@ -180,8 +182,8 @@ class SemanticProductMoveCallAdapterTest {
     }
 
     private static CobolSemanticProduct.State portState(CobolSemanticPort port) {
-        return new CobolSemanticProduct.State(port.unit(), port.dataItems(), port.policy(),
-                port.move(), port.call(), port.ordering(), port.analysis());
+        return new CobolSemanticProduct.State(port.unit(), port.policy(),
+                port.dataDeclarations(), port.statements(), port.gaps(), port.coverage());
     }
 
     private static void assertProvenance(String sourceName,

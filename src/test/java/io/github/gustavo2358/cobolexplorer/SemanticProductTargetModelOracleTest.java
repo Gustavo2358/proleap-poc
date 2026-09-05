@@ -50,7 +50,8 @@ class SemanticProductTargetModelOracleTest {
     private static final SemanticProductTargetModel.StatementId OBSERVED_DISPLAY = statementId(13);
 
     @Test
-    void controlledFixtureHasTheTargetEvidenceWhileProductionRemainsSingleton() throws Exception {
+    void controlledFixtureHasTheTargetEvidenceWhileCurrentAdapterRemainsSingletonBridge()
+            throws Exception {
         AstBoundaryTestSupport.Analysis frontend = analyzeFixture();
         List<Ast.Statement> statements = AstBoundaryTestSupport.nodes(frontend).stream()
                 .filter(Ast.Statement.class::isInstance).map(Ast.Statement.class::cast).toList();
@@ -100,12 +101,13 @@ class SemanticProductTargetModelOracleTest {
         SemanticProductTargetModel.State target = targetState();
         assertEquals(statements.size(), target.coverage().observedStatements(),
                 "the target inventory must not silently omit a fixture statement");
-        IllegalArgumentException currentGap = assertThrows(IllegalArgumentException.class,
+        IllegalArgumentException currentBridgeGap = assertThrows(IllegalArgumentException.class,
                 () -> CobolMoveCallAdapter.project(
                         new CobolMoveCallAdapter.FrontendProducts(frontend.build(),
                                 frontend.tables(), frontend.occurrences(), frontend.resolution()),
                         frontend.model().programUnits().get(0).id()));
-        assertEquals("the selected unit must contain exactly one MOVE", currentGap.getMessage());
+        assertEquals("the selected unit must contain exactly one MOVE",
+                currentBridgeGap.getMessage());
     }
 
     @Test

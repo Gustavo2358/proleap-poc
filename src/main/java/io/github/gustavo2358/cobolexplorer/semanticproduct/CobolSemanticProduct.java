@@ -1,31 +1,28 @@
 package io.github.gustavo2358.cobolexplorer.semanticproduct;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 
 /**
- * Boundary-owned semantic state for the first narrow COBOL slice.
+ * Boundary-owned, materialized COBOL semantic state.
  *
- * <p>This is a materialized in-memory product, not a view of frontend
- * products.  It deliberately models only one DATA item, one literal MOVE and
- * one variable CALL.  Values of the MOVE and nominal DATA binding are facts;
- * they do not constitute runtime-value analysis.</p>
+ * <p>The state is a closed publication, not a view of frontend products. Its
+ * statement inventory is cardinality-independent: a vertical slice controls
+ * which fact shapes are modeled, never how many occurrences may be published.
+ * Program points and containment are structural anchors, not execution order
+ * or CFG edges.</p>
  */
 public final class CobolSemanticProduct {
     private CobolSemanticProduct() { }
 
-    public enum BindingStatus { COMPLETE, INCOMPLETE }
-
-    public enum ResolutionStatus {
-        RESOLVED,
-        AMBIGUOUS,
-        UNRESOLVED,
-        UNSUPPORTED,
-        INPUT_MISSING
-    }
+    public enum ResolutionStatus { RESOLVED, AMBIGUOUS, UNRESOLVED, INPUT_MISSING }
 
     public enum ResolutionReason {
         UNIQUE_VISIBLE_DECLARATION,
@@ -37,18 +34,27 @@ public final class CobolSemanticProduct {
         INVALID_NAMESPACE_FOR_CONTEXT
     }
 
+    public enum CoverageStatus { MODELED, PARTIAL, UNSUPPORTED, INPUT_MISSING }
+
+    /** Whether the statement inventory itself could be produced. */
+    public enum InventoryStatus { COMPLETE, PARTIAL, INPUT_MISSING }
+
+    public enum ReadinessStatus { SUFFICIENT, PARTIAL, BLOCKED, NOT_APPLICABLE }
+
+    public enum Branch { ROOT, THEN, ELSE }
+
+    public enum OperandRole { READ, WRITE, CALL_TARGET }
+
     public enum CallSyntax { IDENTIFIER_OR_EXPRESSION }
 
     /** Runtime values are outside nominal binding and this checkpoint. */
     public enum RuntimeTargetKnowledge { UNKNOWN }
 
-    public enum AnalysisClaim { COMPLETE, PARTIAL, UNKNOWN }
-
-    public enum DependencyReadiness { READY, INCOMPLETE, UNKNOWN }
-
-    public enum UncertaintyScope {
+    public enum GapScope {
         RUNTIME_CALL_TARGET,
         NOMINAL_BINDING,
+        CONDITION_SEMANTICS,
+        CAPABILITY,
         ANALYSIS_INPUT
     }
 
@@ -61,9 +67,8 @@ public final class CobolSemanticProduct {
     public enum DllMode { DLL, NODLL, UNSPECIFIED }
 
     /**
-     * A unit namespace.  Structural/local identities are meaningful only
-     * together with this value and are not persistent identities across edits
-     * or analyzer/contract versions.
+     * A unit namespace. Local identities have meaning only with this value and
+     * are not persistent identities across edits or contract versions.
      */
     public record UnitId(String compilationUnitId, List<Integer> structuralPath,
                          String canonicalProgramName) {
@@ -77,13 +82,28 @@ public final class CobolSemanticProduct {
         }
     }
 
-    /**
-     * Boundary-local DATA identity.  The local id is never a global or
-     * persistent identity by itself.
-     */
+    /** Nominal DATA identity; it is not a storage identity. */
     public record DataItemId(UnitId unit, int localId) {
         public DataItemId {
             unit = Objects.requireNonNull(unit, "unit");
+            if (localId < 0)
+                throw new IllegalArgumentException("localId must be non-negative");
+        }
+    }
+
+    /** Boundary-owned statement occurrence identity. */
+    public record StatementId(UnitId unit, int localId) {
+        public StatementId {
+            unit = Objects.requireNonNull(unit, "unit");
+            if (localId < 0)
+                throw new IllegalArgumentException("localId must be non-negative");
+        }
+    }
+
+    /** Operand occurrence identity remains distinct from a selected DATA id. */
+    public record OperandId(StatementId statement, int localId) {
+        public OperandId {
+            statement = Objects.requireNonNull(statement, "statement");
             if (localId < 0)
                 throw new IllegalArgumentException("localId must be non-negative");
         }
@@ -109,7 +129,7 @@ public final class CobolSemanticProduct {
         }
     }
 
-    /** Localized provenance; the full frontend SourceMap does not cross here. */
+    /** Localized provenance; the frontend SourceMap never crosses the boundary. */
     public record Provenance(Location expanded, Location original,
                              List<IncludeFrame> includeChain, boolean exact) {
         public Provenance {
@@ -130,7 +150,6 @@ public final class CobolSemanticProduct {
             dllMode = Objects.requireNonNull(dllMode, "dllMode");
         }
 
-        /** The absence of compiler options remains explicit in every mode. */
         public static Policy unspecified() {
             return new Policy("cobol-explorer/explicit-options", "3.0.0",
                     QualifyMode.UNSPECIFIED, PgmnameMode.UNSPECIFIED,
@@ -138,32 +157,38 @@ public final class CobolSemanticProduct {
         }
     }
 
-    public record DataDeclaration(DataItemId id, String name, String picture,
-                                  Provenance provenance) {
+    public record ReadinessClaim(ReadinessStatus status, String scope) {
+        public ReadinessClaim {
+            status = Objects.requireNonNull(status, "status");
+            scope = requireText(scope, "scope");
+        }
+    }
+
+    /** Lowering, CFG and effects/dataflow are independent claims. */
+    public record Readiness(ReadinessClaim lowering, ReadinessClaim cfg,
+                            ReadinessClaim effectsDataflow) {
+        public Readiness {
+            lowering = Objects.requireNonNull(lowering, "lowering");
+            cfg = Objects.requireNonNull(cfg, "cfg");
+            effectsDataflow = Objects.requireNonNull(effectsDataflow,
+                    "effectsDataflow");
+        }
+    }
+
+    public record DataDeclaration(DataItemId id, String canonicalName,
+                                  Optional<String> picture, Provenance provenance,
+                                  CoverageStatus coverage, Readiness readiness) {
         public DataDeclaration {
             id = Objects.requireNonNull(id, "id");
-            name = requireText(name, "name");
-            picture = requireText(picture, "picture");
+            canonicalName = requireText(canonicalName, "canonicalName");
+            picture = Objects.requireNonNull(picture, "picture");
+            picture.ifPresent(value -> requireText(value, "picture value"));
             provenance = Objects.requireNonNull(provenance, "provenance");
+            coverage = Objects.requireNonNull(coverage, "coverage");
+            readiness = Objects.requireNonNull(readiness, "readiness");
         }
     }
 
-    public record LiteralSource(String value, Provenance provenance) {
-        public LiteralSource {
-            value = Objects.requireNonNull(value, "value");
-            provenance = Objects.requireNonNull(provenance, "provenance");
-        }
-    }
-
-    /** Source/program order only; this is not CFG, reachability or execution order. */
-    public record ProgramPoint(int ordinal) {
-        public ProgramPoint {
-            if (ordinal < 0)
-                throw new IllegalArgumentException("ordinal must be non-negative");
-        }
-    }
-
-    /** A DATA candidate is a boundary fact, not a frontend symbol reference. */
     public record DataCandidate(DataItemId id, String canonicalName) {
         public DataCandidate {
             id = Objects.requireNonNull(id, "id");
@@ -171,98 +196,204 @@ public final class CobolSemanticProduct {
         }
     }
 
-    /**
-     * Nominal resolution preserves status, reason and every candidate.  A
-     * selected identity exists only for a unique resolved DATA binding.
-     */
-    public record NominalBinding(BindingStatus status, ResolutionStatus resolution,
-                                 ResolutionReason reason, List<DataCandidate> candidates,
+    /** Nominal binding never contains a runtime value or a fabricated selection. */
+    public record NominalBinding(ResolutionStatus status, ResolutionReason reason,
+                                 List<DataCandidate> candidates,
                                  Optional<DataItemId> selected) {
         public NominalBinding {
             status = Objects.requireNonNull(status, "status");
-            resolution = Objects.requireNonNull(resolution, "resolution");
             reason = Objects.requireNonNull(reason, "reason");
             candidates = List.copyOf(candidates);
             selected = Objects.requireNonNull(selected, "selected");
-
-            if (resolution == ResolutionStatus.RESOLVED) {
-                if (status != BindingStatus.COMPLETE || candidates.size() != 1
-                        || selected.isEmpty() || !selected.get().equals(candidates.get(0).id()))
+            Set<DataItemId> candidateIds = new HashSet<>();
+            if (candidates.stream().anyMatch(candidate -> !candidateIds.add(candidate.id())))
+                throw new IllegalArgumentException("binding candidates must have unique identities");
+            if (status == ResolutionStatus.RESOLVED) {
+                if (candidates.size() != 1 || selected.isEmpty()
+                        || !selected.get().equals(candidates.get(0).id()))
                     throw new IllegalArgumentException(
-                            "resolved binding must have exactly one selected candidate");
-            } else if (status != BindingStatus.INCOMPLETE || selected.isPresent()) {
+                            "resolved binding must select its only candidate");
+            } else if (selected.isPresent()) {
                 throw new IllegalArgumentException(
-                        "non-resolved binding must be incomplete and unselected");
+                        "non-resolved binding cannot select a candidate");
             }
-            if (resolution == ResolutionStatus.AMBIGUOUS && candidates.size() < 2)
+            if (status == ResolutionStatus.AMBIGUOUS && candidates.size() < 2)
                 throw new IllegalArgumentException(
                         "ambiguous binding must preserve all valid candidates");
+            if (status == ResolutionStatus.RESOLVED
+                    && reason != ResolutionReason.UNIQUE_VISIBLE_DECLARATION)
+                throw new IllegalArgumentException(
+                        "resolved binding must retain its unique-selection reason");
+            if (status == ResolutionStatus.AMBIGUOUS
+                    && reason != ResolutionReason.MULTIPLE_VALID_CANDIDATES)
+                throw new IllegalArgumentException(
+                        "ambiguous binding must retain its ambiguity reason");
+            if (status == ResolutionStatus.INPUT_MISSING
+                    && reason != ResolutionReason.INPUT_INCOMPLETE)
+                throw new IllegalArgumentException(
+                        "input-missing binding must retain its input reason");
         }
 
         public static NominalBinding resolved(DataItemId id, String canonicalName) {
             DataCandidate candidate = new DataCandidate(id, canonicalName);
-            return new NominalBinding(BindingStatus.COMPLETE, ResolutionStatus.RESOLVED,
-                    ResolutionReason.UNIQUE_VISIBLE_DECLARATION, List.of(candidate),
-                    Optional.of(id));
+            return new NominalBinding(ResolutionStatus.RESOLVED,
+                    ResolutionReason.UNIQUE_VISIBLE_DECLARATION,
+                    List.of(candidate), Optional.of(id));
         }
 
-        public static NominalBinding incomplete(ResolutionStatus resolution,
+        public static NominalBinding incomplete(ResolutionStatus status,
                                                 ResolutionReason reason,
                                                 List<DataCandidate> candidates) {
-            if (resolution == ResolutionStatus.RESOLVED)
-                throw new IllegalArgumentException("resolved binding needs a selected candidate");
-            return new NominalBinding(BindingStatus.INCOMPLETE, resolution, reason,
-                    candidates, Optional.empty());
+            if (status == ResolutionStatus.RESOLVED)
+                throw new IllegalArgumentException("resolved binding needs a selection");
+            return new NominalBinding(status, reason, candidates, Optional.empty());
         }
     }
 
-    public record MoveFact(ProgramPoint point, LiteralSource source,
-                           Optional<DataItemId> target, NominalBinding targetBinding,
-                           Provenance provenance) {
-        public MoveFact {
+    /** Structural order only; this is neither execution order nor a CFG node. */
+    public record ProgramPoint(int ordinal) {
+        public ProgramPoint {
+            if (ordinal < 0)
+                throw new IllegalArgumentException("ordinal must be non-negative");
+        }
+    }
+
+    public record Containment(Optional<StatementId> parent, Branch branch) {
+        public Containment {
+            parent = Objects.requireNonNull(parent, "parent");
+            branch = Objects.requireNonNull(branch, "branch");
+            if ((branch == Branch.ROOT) != parent.isEmpty())
+                throw new IllegalArgumentException(
+                        "only root statements may omit a parent");
+        }
+
+        public static Containment root() {
+            return new Containment(Optional.empty(), Branch.ROOT);
+        }
+
+        public static Containment childOf(StatementId parent, Branch branch) {
+            Objects.requireNonNull(parent, "parent");
+            if (branch == Branch.ROOT)
+                throw new IllegalArgumentException("a child must belong to THEN or ELSE");
+            return new Containment(Optional.of(parent), branch);
+        }
+    }
+
+    public record StatementHeader(StatementId id, ProgramPoint point,
+                                  Containment containment, Provenance provenance,
+                                  CoverageStatus coverage, Readiness readiness) {
+        public StatementHeader {
+            id = Objects.requireNonNull(id, "id");
             point = Objects.requireNonNull(point, "point");
+            containment = Objects.requireNonNull(containment, "containment");
+            provenance = Objects.requireNonNull(provenance, "provenance");
+            coverage = Objects.requireNonNull(coverage, "coverage");
+            readiness = Objects.requireNonNull(readiness, "readiness");
+        }
+    }
+
+    public record LiteralSource(OperandId id, String value, Provenance provenance) {
+        public LiteralSource {
+            id = Objects.requireNonNull(id, "id");
+            value = Objects.requireNonNull(value, "value");
+            provenance = Objects.requireNonNull(provenance, "provenance");
+        }
+    }
+
+    public record DataReference(OperandId id, OperandRole role,
+                                NominalBinding binding, Provenance provenance) {
+        public DataReference {
+            id = Objects.requireNonNull(id, "id");
+            role = Objects.requireNonNull(role, "role");
+            binding = Objects.requireNonNull(binding, "binding");
+            provenance = Objects.requireNonNull(provenance, "provenance");
+        }
+    }
+
+    /**
+     * Surface retained for structural IF facts. Predicate normalization remains
+     * a later post-binding product; references here are only those already known.
+     */
+    public record ConditionSurface(String shape, List<DataReference> references,
+                                   Provenance provenance) {
+        public ConditionSurface {
+            shape = requireText(shape, "shape");
+            references = List.copyOf(references);
+            provenance = Objects.requireNonNull(provenance, "provenance");
+            if (references.stream().anyMatch(reference -> reference.role() != OperandRole.READ))
+                throw new IllegalArgumentException("condition references must have READ role");
+        }
+    }
+
+    /** Adding a fact type extends this inventory without changing the State envelope. */
+    public sealed interface StatementFact permits MoveFact, CallFact, IfFact,
+            ObservedStatement {
+        StatementHeader header();
+    }
+
+    public record MoveFact(StatementHeader header, LiteralSource source,
+                           DataReference target) implements StatementFact {
+        public MoveFact {
+            header = Objects.requireNonNull(header, "header");
             source = Objects.requireNonNull(source, "source");
             target = Objects.requireNonNull(target, "target");
-            targetBinding = Objects.requireNonNull(targetBinding, "targetBinding");
-            provenance = Objects.requireNonNull(provenance, "provenance");
-            if (!target.equals(targetBinding.selected()))
-                throw new IllegalArgumentException(
-                        "MOVE target must equal its selected nominal binding");
+            if (target.role() != OperandRole.WRITE)
+                throw new IllegalArgumentException("MOVE target must have WRITE role");
         }
     }
 
-    public record CallFact(ProgramPoint point, Optional<DataItemId> operand,
-                           CallSyntax syntax, NominalBinding operandBinding,
+    public record CallFact(StatementHeader header, CallSyntax syntax,
+                           DataReference operand,
                            RuntimeTargetKnowledge runtimeTarget,
-                           Provenance provenance) {
+                           String runtimeUncertaintyCode) implements StatementFact {
         public CallFact {
-            point = Objects.requireNonNull(point, "point");
-            operand = Objects.requireNonNull(operand, "operand");
+            header = Objects.requireNonNull(header, "header");
             syntax = Objects.requireNonNull(syntax, "syntax");
-            operandBinding = Objects.requireNonNull(operandBinding, "operandBinding");
+            operand = Objects.requireNonNull(operand, "operand");
             runtimeTarget = Objects.requireNonNull(runtimeTarget, "runtimeTarget");
-            provenance = Objects.requireNonNull(provenance, "provenance");
+            runtimeUncertaintyCode = requireText(runtimeUncertaintyCode,
+                    "runtimeUncertaintyCode");
             if (syntax != CallSyntax.IDENTIFIER_OR_EXPRESSION)
-                throw new IllegalArgumentException("the slice accepts variable CALL syntax only");
-            if (!operand.equals(operandBinding.selected()))
                 throw new IllegalArgumentException(
-                        "CALL operand must equal its selected nominal binding");
+                        "typed CallFact covers identifier/expression syntax only");
+            if (operand.role() != OperandRole.CALL_TARGET)
+                throw new IllegalArgumentException(
+                        "CALL operand must have CALL_TARGET role");
         }
     }
 
-    public record Ordering(ProgramPoint earlier, ProgramPoint later) {
-        public Ordering {
-            earlier = Objects.requireNonNull(earlier, "earlier");
-            later = Objects.requireNonNull(later, "later");
-            if (earlier.ordinal() >= later.ordinal())
-                throw new IllegalArgumentException("ordering must be strict and forward");
+    /**
+     * IF owns its condition surface and optional structural continuation.
+     * Branch children are the statements whose containment names this IF.
+     */
+    public record IfFact(StatementHeader header, ConditionSurface condition,
+                         Optional<StatementId> continuation) implements StatementFact {
+        public IfFact {
+            header = Objects.requireNonNull(header, "header");
+            condition = Objects.requireNonNull(condition, "condition");
+            continuation = Objects.requireNonNull(continuation, "continuation");
         }
     }
 
-    public record Uncertainty(ProgramPoint point, UncertaintyScope scope,
-                              String code, String detail, Provenance provenance) {
-        public Uncertainty {
-            point = Objects.requireNonNull(point, "point");
+    /** A visible statement whose family or shape is not modeled by this capability. */
+    public record ObservedStatement(StatementHeader header, String observedKind,
+                                    String observedShape,
+                                    String gapCode) implements StatementFact {
+        public ObservedStatement {
+            header = Objects.requireNonNull(header, "header");
+            observedKind = requireText(observedKind, "observedKind");
+            observedShape = requireText(observedShape, "observedShape");
+            gapCode = requireText(gapCode, "gapCode");
+            if (header.coverage() == CoverageStatus.MODELED)
+                throw new IllegalArgumentException(
+                        "an unmodeled statement cannot publish MODELED coverage");
+        }
+    }
+
+    public record Gap(StatementId statement, GapScope scope, String code,
+                      String detail, Provenance provenance) {
+        public Gap {
+            statement = Objects.requireNonNull(statement, "statement");
             scope = Objects.requireNonNull(scope, "scope");
             code = requireText(code, "code");
             detail = requireText(detail, "detail");
@@ -270,134 +401,250 @@ public final class CobolSemanticProduct {
         }
     }
 
-    /**
-     * Completeness and runtime knowledge are separate dimensions.  In
-     * particular, a known nominal DATA binding may coexist with an unknown
-     * runtime CALL target.
-     */
-    public record AnalysisStatus(BindingStatus nominalBinding,
-                                 AnalysisClaim claim,
-                                 DependencyReadiness dependencyReadiness,
-                                 RuntimeTargetKnowledge runtimeTarget,
-                                 List<Uncertainty> uncertainties) {
-        public AnalysisStatus {
-            nominalBinding = Objects.requireNonNull(nominalBinding, "nominalBinding");
-            claim = Objects.requireNonNull(claim, "claim");
-            dependencyReadiness = Objects.requireNonNull(
-                    dependencyReadiness, "dependencyReadiness");
-            runtimeTarget = Objects.requireNonNull(runtimeTarget, "runtimeTarget");
-            uncertainties = List.copyOf(uncertainties);
-
-            if (runtimeTarget == RuntimeTargetKnowledge.UNKNOWN
-                    && uncertainties.stream().noneMatch(uncertainty ->
-                    uncertainty.scope() == UncertaintyScope.RUNTIME_CALL_TARGET))
+    public record CoverageSummary(InventoryStatus inventoryStatus,
+                                  int observedStatements, int modeledStatements,
+                                  int partialStatements, int unsupportedStatements,
+                                  int inputMissingStatements, Readiness readiness) {
+        public CoverageSummary {
+            inventoryStatus = Objects.requireNonNull(inventoryStatus, "inventoryStatus");
+            if (observedStatements < 0 || modeledStatements < 0 || partialStatements < 0
+                    || unsupportedStatements < 0 || inputMissingStatements < 0)
+                throw new IllegalArgumentException("coverage counts must be non-negative");
+            if (observedStatements != modeledStatements + partialStatements
+                    + unsupportedStatements + inputMissingStatements)
                 throw new IllegalArgumentException(
-                        "unknown runtime target must have localized uncertainty");
-            if (nominalBinding == BindingStatus.COMPLETE
-                    && uncertainties.stream().anyMatch(uncertainty ->
-                    uncertainty.scope() == UncertaintyScope.NOMINAL_BINDING))
-                throw new IllegalArgumentException(
-                        "complete nominal binding cannot carry nominal binding uncertainty");
-            if (dependencyReadiness != DependencyReadiness.READY && uncertainties.isEmpty())
-                throw new IllegalArgumentException(
-                        "non-ready dependency state must explain uncertainty");
-            if (runtimeTarget == RuntimeTargetKnowledge.UNKNOWN
-                    && dependencyReadiness == DependencyReadiness.READY)
-                throw new IllegalArgumentException(
-                        "unknown runtime target cannot be dependency-ready");
-            if (claim == AnalysisClaim.COMPLETE
-                    && (nominalBinding != BindingStatus.COMPLETE
-                    || dependencyReadiness != DependencyReadiness.READY
-                    || !uncertainties.isEmpty()))
-                throw new IllegalArgumentException(
-                        "complete claim cannot hide incomplete or unknown facts");
-            if (claim == AnalysisClaim.UNKNOWN && uncertainties.isEmpty())
-                throw new IllegalArgumentException("unknown claim must explain uncertainty");
-        }
-
-        public static AnalysisStatus partial(BindingStatus nominalBinding,
-                                             List<Uncertainty> uncertainties) {
-            return new AnalysisStatus(nominalBinding, AnalysisClaim.PARTIAL,
-                    DependencyReadiness.INCOMPLETE, RuntimeTargetKnowledge.UNKNOWN,
-                    uncertainties);
+                        "coverage summary must classify every observed statement");
+            readiness = Objects.requireNonNull(readiness, "readiness");
         }
     }
 
-    /** One coherent, immutable publication for the narrow MOVE/CALL slice. */
-    public record State(UnitId unit, List<DataDeclaration> dataItems, Policy policy,
-                        MoveFact move, CallFact call, Ordering ordering,
-                        AnalysisStatus analysis) {
+    /** One immutable, closed publication with a cardinality-independent envelope. */
+    public record State(UnitId unit, Policy policy,
+                        List<DataDeclaration> dataDeclarations,
+                        List<StatementFact> statements,
+                        List<Gap> gaps, CoverageSummary coverage) {
         public State {
             unit = Objects.requireNonNull(unit, "unit");
-            dataItems = List.copyOf(dataItems);
             policy = Objects.requireNonNull(policy, "policy");
-            move = Objects.requireNonNull(move, "move");
-            call = Objects.requireNonNull(call, "call");
-            ordering = Objects.requireNonNull(ordering, "ordering");
-            analysis = Objects.requireNonNull(analysis, "analysis");
+            dataDeclarations = List.copyOf(dataDeclarations);
+            statements = List.copyOf(statements);
+            gaps = List.copyOf(gaps);
+            coverage = Objects.requireNonNull(coverage, "coverage");
+            validateState(unit, dataDeclarations, statements, gaps, coverage);
+        }
+    }
 
-            Set<DataItemId> declarations = new HashSet<>();
-            for (DataDeclaration item : dataItems) {
-                if (!item.id().unit().equals(unit))
-                    throw new IllegalArgumentException("data item belongs to another unit");
-                if (!declarations.add(item.id()))
-                    throw new IllegalArgumentException("duplicate DATA item identity");
-            }
-            requireUnit(move.target(), unit, "MOVE target");
-            requireUnit(call.operand(), unit, "CALL operand");
-            requireCandidateUnits(move.targetBinding(), unit);
-            requireCandidateUnits(call.operandBinding(), unit);
-            if (!ordering.earlier().equals(move.point())
-                    || !ordering.later().equals(call.point()))
-                throw new IllegalArgumentException("ordering must publish MOVE before CALL");
-            for (Uncertainty uncertainty : analysis.uncertainties()) {
-                if (!uncertainty.point().equals(move.point())
-                        && !uncertainty.point().equals(call.point()))
-                    throw new IllegalArgumentException(
-                            "uncertainty must be localized to a published fact");
-                if (uncertainty.scope() == UncertaintyScope.RUNTIME_CALL_TARGET
-                        && !uncertainty.point().equals(call.point()))
-                    throw new IllegalArgumentException(
-                            "runtime target uncertainty must be localized to CALL");
-            }
-            if (move.targetBinding().status() == BindingStatus.COMPLETE
-                    && call.operandBinding().status() == BindingStatus.COMPLETE
-                    && (!move.target().isPresent() || !call.operand().isPresent()
-                    || !move.target().equals(call.operand())))
-                throw new IllegalArgumentException(
-                        "resolved MOVE and CALL must share the same DATA identity");
-            if (analysis.nominalBinding() == BindingStatus.COMPLETE
-                    && (move.targetBinding().status() != BindingStatus.COMPLETE
-                    || call.operandBinding().status() != BindingStatus.COMPLETE))
-                throw new IllegalArgumentException(
-                        "analysis cannot claim complete nominal binding for incomplete facts");
-            if (move.targetBinding().status() == BindingStatus.COMPLETE
-                    && call.operandBinding().status() == BindingStatus.COMPLETE
-                    && analysis.nominalBinding() != BindingStatus.COMPLETE)
-                throw new IllegalArgumentException(
-                        "complete nominal facts must be published as complete binding");
-            if (analysis.runtimeTarget() != call.runtimeTarget())
-                throw new IllegalArgumentException(
-                        "analysis runtime knowledge must match the CALL fact");
-            for (DataItemId selected : List.of(move.target(), call.operand()).stream()
-                    .flatMap(Optional::stream).toList()) {
-                if (!declarations.contains(selected))
-                    throw new IllegalArgumentException(
-                            "selected DATA identity has no published declaration");
-            }
+    private static void validateState(UnitId unit, List<DataDeclaration> declarations,
+                                      List<StatementFact> statements, List<Gap> gaps,
+                                      CoverageSummary coverage) {
+        Map<DataItemId, DataDeclaration> dataById = new LinkedHashMap<>();
+        for (DataDeclaration declaration : declarations) {
+            require(declaration.id().unit().equals(unit),
+                    "DATA declaration crossed the unit namespace");
+            require(dataById.put(declaration.id(), declaration) == null,
+                    "duplicate DATA identity");
         }
 
-        private static void requireUnit(Optional<DataItemId> identity, UnitId unit,
-                                        String name) {
-            if (identity.isPresent() && !identity.get().unit().equals(unit))
-                throw new IllegalArgumentException(name + " belongs to another unit");
+        Map<StatementId, StatementFact> statementById = new LinkedHashMap<>();
+        Set<Integer> points = new HashSet<>();
+        int previousPoint = -1;
+        for (StatementFact statement : statements) {
+            StatementHeader header = statement.header();
+            require(header.id().unit().equals(unit),
+                    "statement crossed the unit namespace");
+            require(statementById.put(header.id(), statement) == null,
+                    "duplicate statement identity");
+            require(points.add(header.point().ordinal()), "duplicate program point");
+            require(header.point().ordinal() > previousPoint,
+                    "statement inventory must follow structural program points");
+            previousPoint = header.point().ordinal();
+            validateReferences(statement, dataById);
         }
+        validateOperandIdentities(statements);
+        validateStructure(statementById);
 
-        private static void requireCandidateUnits(NominalBinding binding, UnitId unit) {
-            if (binding.candidates().stream().anyMatch(candidate ->
-                    !candidate.id().unit().equals(unit)))
-                throw new IllegalArgumentException("binding candidate belongs to another unit");
+        Map<StatementId, List<Gap>> gapsByStatement = new HashMap<>();
+        for (Gap gap : gaps) {
+            require(gap.statement().unit().equals(unit),
+                    "gap crossed the unit namespace");
+            require(statementById.containsKey(gap.statement()),
+                    "gap references an unknown statement");
+            gapsByStatement.computeIfAbsent(gap.statement(), ignored -> new java.util.ArrayList<>())
+                    .add(gap);
         }
+        validateLocalizedIncompleteness(statements, gapsByStatement);
+        validateCoverage(statements, coverage);
+    }
+
+    private static void validateReferences(StatementFact statement,
+                                           Map<DataItemId, DataDeclaration> declarations) {
+        for (DataReference reference : references(statement)) {
+            for (DataCandidate candidate : reference.binding().candidates()) {
+                require(candidate.id().unit().equals(statement.header().id().unit()),
+                        "binding candidate crossed the statement unit namespace");
+                require(declarations.containsKey(candidate.id()),
+                        "binding candidate has no declaration in the publication");
+                require(declarations.get(candidate.id()).canonicalName()
+                                .equals(candidate.canonicalName()),
+                        "binding candidate name contradicts its declaration");
+            }
+        }
+    }
+
+    private static List<DataReference> references(StatementFact statement) {
+        if (statement instanceof MoveFact move) return List.of(move.target());
+        if (statement instanceof CallFact call) return List.of(call.operand());
+        if (statement instanceof IfFact branch) return branch.condition().references();
+        return List.of();
+    }
+
+    private static void validateOperandIdentities(List<StatementFact> statements) {
+        Set<OperandId> identities = new HashSet<>();
+        for (StatementFact statement : statements) {
+            List<OperandId> operands;
+            if (statement instanceof MoveFact move) {
+                operands = List.of(move.source().id(), move.target().id());
+            } else if (statement instanceof CallFact call) {
+                operands = List.of(call.operand().id());
+            } else if (statement instanceof IfFact branch) {
+                operands = branch.condition().references().stream()
+                        .map(DataReference::id).toList();
+            } else {
+                operands = List.of();
+            }
+            for (OperandId operand : operands) {
+                require(operand.statement().equals(statement.header().id()),
+                        "operand identity belongs to another statement");
+                require(identities.add(operand), "duplicate operand identity");
+            }
+        }
+    }
+
+    private static void validateStructure(Map<StatementId, StatementFact> statements) {
+        for (StatementFact statement : statements.values()) {
+            StatementHeader header = statement.header();
+            header.containment().parent().ifPresent(parentId -> {
+                StatementFact parent = statements.get(parentId);
+                require(parent instanceof IfFact,
+                        "branch parent must be a published IF fact");
+                require(parent.header().point().ordinal() < header.point().ordinal(),
+                        "branch parent must precede its structural child");
+            });
+            if (statement instanceof IfFact branch) {
+                branch.continuation().ifPresent(continuationId -> {
+                    StatementFact continuation = statements.get(continuationId);
+                    require(continuation != null,
+                            "IF continuation must reference a published statement");
+                    require(continuation.header().point().ordinal()
+                                    > branch.header().point().ordinal(),
+                            "IF continuation must follow its structural program point");
+                    require(!isDescendantOf(continuation, branch.header().id(), statements),
+                            "IF continuation cannot be contained by that IF");
+                });
+            }
+        }
+    }
+
+    private static boolean isDescendantOf(StatementFact statement, StatementId ancestor,
+                                          Map<StatementId, StatementFact> statements) {
+        Optional<StatementId> parent = statement.header().containment().parent();
+        while (parent.isPresent()) {
+            if (parent.get().equals(ancestor)) return true;
+            StatementFact parentStatement = statements.get(parent.get());
+            if (parentStatement == null) return false;
+            parent = parentStatement.header().containment().parent();
+        }
+        return false;
+    }
+
+    private static void validateLocalizedIncompleteness(
+            List<StatementFact> statements, Map<StatementId, List<Gap>> gaps) {
+        for (StatementFact statement : statements) {
+            StatementId id = statement.header().id();
+            List<Gap> localized = gaps.getOrDefault(id, List.of());
+            if (statement.header().coverage() != CoverageStatus.MODELED)
+                require(!localized.isEmpty(),
+                        "non-modeled statement must retain a localized gap");
+            if (statement instanceof CallFact call)
+                require(hasGap(localized, GapScope.RUNTIME_CALL_TARGET,
+                                call.runtimeUncertaintyCode()),
+                        "unknown runtime CALL target must retain its localized gap");
+            if (statement instanceof ObservedStatement observed)
+                require(hasGap(localized, GapScope.CAPABILITY, observed.gapCode()),
+                        "observed unmodeled statement must retain its capability gap");
+            if (references(statement).stream()
+                    .anyMatch(reference -> reference.binding().status()
+                            != ResolutionStatus.RESOLVED)) {
+                require(statement.header().coverage() != CoverageStatus.MODELED,
+                        "incomplete binding cannot be hidden by MODELED coverage");
+                require(localized.stream().anyMatch(gap -> gap.scope()
+                                == GapScope.NOMINAL_BINDING),
+                        "incomplete binding must retain a nominal binding gap");
+            }
+        }
+    }
+
+    private static boolean hasGap(List<Gap> gaps, GapScope scope, String code) {
+        return gaps.stream().anyMatch(gap -> gap.scope() == scope && gap.code().equals(code));
+    }
+
+    private static void validateCoverage(List<StatementFact> statements,
+                                         CoverageSummary coverage) {
+        Map<CoverageStatus, Long> counts = new HashMap<>();
+        for (StatementFact statement : statements)
+            counts.merge(statement.header().coverage(), 1L, Long::sum);
+        require(coverage.observedStatements() == statements.size(),
+                "coverage summary omitted observed statements");
+        require(coverage.modeledStatements() == count(counts, CoverageStatus.MODELED)
+                        && coverage.partialStatements() == count(counts, CoverageStatus.PARTIAL)
+                        && coverage.unsupportedStatements()
+                        == count(counts, CoverageStatus.UNSUPPORTED)
+                        && coverage.inputMissingStatements()
+                        == count(counts, CoverageStatus.INPUT_MISSING),
+                "coverage summary contradicts individual statement facts");
+        validateSummaryClaim(coverage.readiness().lowering(), statements,
+                readiness -> readiness.lowering());
+        validateSummaryClaim(coverage.readiness().cfg(), statements,
+                readiness -> readiness.cfg());
+        validateSummaryClaim(coverage.readiness().effectsDataflow(), statements,
+                readiness -> readiness.effectsDataflow());
+        if (coverage.inventoryStatus() != InventoryStatus.COMPLETE) {
+            require(coverage.readiness().lowering().status() != ReadinessStatus.SUFFICIENT
+                            && coverage.readiness().cfg().status()
+                            != ReadinessStatus.SUFFICIENT
+                            && coverage.readiness().effectsDataflow().status()
+                            != ReadinessStatus.SUFFICIENT,
+                    "incomplete inventory cannot publish sufficient aggregate readiness");
+        }
+    }
+
+    private static void validateSummaryClaim(ReadinessClaim summary,
+                                             List<StatementFact> statements,
+                                             Function<Readiness, ReadinessClaim> dimension) {
+        int weakest = statements.stream().map(StatementFact::header)
+                .map(StatementHeader::readiness).map(dimension)
+                .mapToInt(claim -> readinessRank(claim.status()))
+                .filter(rank -> rank >= 0).min().orElse(-1);
+        if (weakest >= 0)
+            require(readinessRank(summary.status()) <= weakest,
+                    "summary readiness cannot exceed its weakest statement fact");
+    }
+
+    private static int readinessRank(ReadinessStatus status) {
+        return switch (status) {
+            case BLOCKED -> 0;
+            case PARTIAL -> 1;
+            case SUFFICIENT -> 2;
+            case NOT_APPLICABLE -> -1;
+        };
+    }
+
+    private static long count(Map<CoverageStatus, Long> counts, CoverageStatus status) {
+        return counts.getOrDefault(status, 0L);
+    }
+
+    private static void require(boolean condition, String message) {
+        if (!condition) throw new IllegalArgumentException(message);
     }
 
     private static String requireText(String value, String name) {
