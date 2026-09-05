@@ -51,6 +51,11 @@ IF projection neste checkpoint.
 - O gate de arquitetura inspeciona explicitamente os tipos do core/port e agora
   bloqueia também dependência no `CobolMoveCallAdapter` e em áreas futuras de
   projection/adapter, além de frontend e ANTLR.
+- `MaterializedCobolSemanticPort` constrói eager, uma única vez e em `O(N)`,
+  índices derivados do state materializado. Lookup por statement e containment
+  deixa de varrer o inventário global; roots e views MOVE/CALL/IF/observed são
+  pré-computadas em ordem estrutural. A semântica de `CobolSemanticProduct.State`
+  não mudou.
 - Testes diretos de produção cobrem N DATA/statements, multiple MOVE/CALL,
   IF aninhado, branches vazias, containment, bindings incompletos,
   observed/unmodeled, coverage conservadora, readiness dimensional,

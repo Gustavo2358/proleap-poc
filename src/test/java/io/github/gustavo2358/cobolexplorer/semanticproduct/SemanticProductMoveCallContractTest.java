@@ -2,17 +2,20 @@ package io.github.gustavo2358.cobolexplorer.semanticproduct;
 
 import org.junit.jupiter.api.Test;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -101,6 +104,80 @@ class SemanticProductMoveCallContractTest {
         assertEquals(CobolSemanticProduct.Containment.childOf(
                         outer, CobolSemanticProduct.Branch.THEN),
                 port.statement(nested).orElseThrow().header().containment());
+    }
+
+    @Test
+    void indexedQueriesPreserveTheStateFactsIdentityAndStructuralOrder() {
+        CobolSemanticProduct.State state = pluralState();
+        CobolSemanticPort port = CobolSemanticPort.open(state);
+        List<CobolSemanticProduct.StatementFact> expectedMoves = state.statements().stream()
+                .filter(CobolSemanticProduct.MoveFact.class::isInstance).toList();
+        List<CobolSemanticProduct.StatementFact> expectedCalls = state.statements().stream()
+                .filter(CobolSemanticProduct.CallFact.class::isInstance).toList();
+        List<CobolSemanticProduct.StatementFact> expectedIfs = state.statements().stream()
+                .filter(CobolSemanticProduct.IfFact.class::isInstance).toList();
+        List<CobolSemanticProduct.StatementFact> expectedObserved = state.statements().stream()
+                .filter(CobolSemanticProduct.ObservedStatement.class::isInstance).toList();
+        List<CobolSemanticProduct.StatementId> expectedRoots = state.statements().stream()
+                .filter(statement -> statement.header().containment()
+                        .equals(CobolSemanticProduct.Containment.root()))
+                .map(statement -> statement.header().id()).toList();
+
+        assertSame(state.unit(), port.unit());
+        assertSame(state.policy(), port.policy());
+        assertSame(state.dataDeclarations(), port.dataDeclarations());
+        assertSame(state.statements(), port.statements());
+        assertSame(state.gaps(), port.gaps());
+        assertSame(state.coverage(), port.coverage());
+        assertEquals(expectedRoots, port.rootStatements());
+        assertSameElements(expectedRoots, port.rootStatements());
+        assertSameElements(expectedMoves, port.moves());
+        assertSameElements(expectedCalls, port.calls());
+        assertSameElements(expectedIfs, port.ifs());
+        assertSameElements(expectedObserved, port.observedStatements());
+
+        for (CobolSemanticProduct.StatementFact fact : state.statements())
+            assertSame(fact, port.statement(fact.header().id()).orElseThrow());
+        assertEquals(Optional.empty(), port.statement(statementId(100)));
+
+        CobolSemanticProduct.StatementId outer = statementId(1);
+        List<CobolSemanticProduct.StatementFact> thenChildren = port.children(
+                outer, CobolSemanticProduct.Branch.THEN);
+        assertSameElements(List.of(state.statements().get(2), state.statements().get(3)),
+                thenChildren);
+        assertSame(thenChildren, port.children(outer, CobolSemanticProduct.Branch.THEN));
+        assertSame(port.rootStatements(), port.rootStatements());
+        assertSame(port.moves(), port.moves());
+        assertSame(port.calls(), port.calls());
+        assertSame(port.ifs(), port.ifs());
+        assertSame(port.observedStatements(), port.observedStatements());
+    }
+
+    @Test
+    void equivalentStatesProduceDeterministicIndexedViewsRegardlessOfQueryOrder() {
+        CobolSemanticPort first = CobolSemanticPort.open(pluralState());
+        CobolSemanticPort second = CobolSemanticPort.open(pluralState());
+
+        first.observedStatements();
+        first.children(statementId(1), CobolSemanticProduct.Branch.ELSE);
+        first.moves();
+        second.ifs();
+        second.rootStatements();
+        second.calls();
+
+        assertEquals(first.statements(), second.statements());
+        assertEquals(first.rootStatements(), second.rootStatements());
+        assertEquals(first.moves(), second.moves());
+        assertEquals(first.calls(), second.calls());
+        assertEquals(first.ifs(), second.ifs());
+        assertEquals(first.observedStatements(), second.observedStatements());
+        for (CobolSemanticProduct.StatementId parent : List.of(statementId(1), statementId(3),
+                statementId(7))) {
+            assertEquals(first.children(parent, CobolSemanticProduct.Branch.THEN),
+                    second.children(parent, CobolSemanticProduct.Branch.THEN));
+            assertEquals(first.children(parent, CobolSemanticProduct.Branch.ELSE),
+                    second.children(parent, CobolSemanticProduct.Branch.ELSE));
+        }
     }
 
     @Test
@@ -216,7 +293,8 @@ class SemanticProductMoveCallContractTest {
     }
 
     @Test
-    void collectionsAreImmutableAndPortRetainsOnlyTheMaterializedState() {
+    void collectionsAndIndexedViewsAreImmutableAndRetainOnlyStateDerivedData()
+            throws ReflectiveOperationException {
         List<CobolSemanticProduct.DataDeclaration> declarations =
                 new ArrayList<>(pluralState().dataDeclarations());
         List<CobolSemanticProduct.StatementFact> statements =
@@ -236,7 +314,19 @@ class SemanticProductMoveCallContractTest {
                 () -> state.dataDeclarations().clear());
         assertThrows(UnsupportedOperationException.class, () -> state.statements().clear());
         assertThrows(UnsupportedOperationException.class, () -> state.gaps().clear());
+        assertThrows(UnsupportedOperationException.class, () -> port.dataDeclarations().clear());
+        assertThrows(UnsupportedOperationException.class, () -> port.statements().clear());
+        assertThrows(UnsupportedOperationException.class, () -> port.gaps().clear());
+        assertThrows(UnsupportedOperationException.class, () -> port.rootStatements().clear());
         assertThrows(UnsupportedOperationException.class, () -> port.moves().clear());
+        assertThrows(UnsupportedOperationException.class, () -> port.calls().clear());
+        assertThrows(UnsupportedOperationException.class, () -> port.ifs().clear());
+        assertThrows(UnsupportedOperationException.class,
+                () -> port.observedStatements().clear());
+        assertThrows(UnsupportedOperationException.class, () -> port.children(
+                statementId(1), CobolSemanticProduct.Branch.THEN).clear());
+        assertThrows(UnsupportedOperationException.class, () -> port.children(
+                statementId(3), CobolSemanticProduct.Branch.ELSE).clear());
         assertThrows(UnsupportedOperationException.class,
                 () -> state.unit().structuralPath().clear());
         assertThrows(UnsupportedOperationException.class, () ->
@@ -244,8 +334,68 @@ class SemanticProductMoveCallContractTest {
                         .map(CobolSemanticProduct.IfFact.class::cast).findFirst().orElseThrow()
                         .condition().references().clear());
         assertTrue(Modifier.isFinal(CobolSemanticProduct.State.class.getModifiers()));
-        assertEquals(1, port.getClass().getDeclaredFields().length,
-                "the facade retains only the immutable state");
+
+        List<Field> retainedFields = Arrays.stream(port.getClass().getDeclaredFields())
+                .filter(field -> !Modifier.isStatic(field.getModifiers())).toList();
+        assertTrue(retainedFields.size() > 1, "the materialized port must build eager indexes");
+        assertTrue(retainedFields.stream().allMatch(field ->
+                Modifier.isFinal(field.getModifiers())));
+        int retainedStates = 0;
+        for (Field field : retainedFields) {
+            field.setAccessible(true);
+            Object retained = field.get(port);
+            assertTrue(retained != null, () -> field.getName() + " must be built eagerly");
+            if (retained == state) {
+                retainedStates++;
+            } else {
+                assertTrue(retained instanceof List<?> || retained instanceof Map<?, ?>,
+                        () -> field.getName()
+                                + " must contain only collections derived from State");
+                assertDerivedOnlyFromState(retained, state);
+            }
+        }
+        assertEquals(1, retainedStates,
+                "the only directly retained publication is the materialized State");
+    }
+
+    @Test
+    void materializedPortIndexesScaleLinearly()
+            throws ReflectiveOperationException {
+        int branches = 1_024;
+        CobolSemanticProduct.State state = indexedScaleState(branches);
+        CobolSemanticPort port = CobolSemanticPort.open(state);
+
+        Map<?, ?> statementsById = (Map<?, ?>) retainedField(port, "statementById");
+        Map<?, ?> childrenByContainment =
+                (Map<?, ?>) retainedField(port, "childrenByContainment");
+        List<?> roots = (List<?>) retainedField(port, "rootStatements");
+        List<?> moves = (List<?>) retainedField(port, "moves");
+        List<?> calls = (List<?>) retainedField(port, "calls");
+        List<?> ifs = (List<?>) retainedField(port, "ifs");
+        List<?> observed = (List<?>) retainedField(port, "observedStatements");
+        int statementCount = branches * 2;
+        long indexedChildren = childrenByContainment.values().stream()
+                .map(List.class::cast).mapToLong(List::size).sum();
+        long indexedReferences = statementsById.size() + indexedChildren + roots.size()
+                + moves.size() + calls.size() + ifs.size() + observed.size();
+
+        assertEquals(statementCount, statementsById.size());
+        assertEquals(branches, childrenByContainment.size());
+        assertEquals(branches, indexedChildren);
+        assertEquals(branches, roots.size());
+        assertEquals(branches, moves.size());
+        assertEquals(branches, ifs.size());
+        assertTrue(calls.isEmpty());
+        assertTrue(observed.isEmpty());
+        assertTrue(indexedReferences <= statementCount * 4L,
+                "derived indexes must retain only O(N) references");
+        assertSame(port.rootStatements(), port.rootStatements());
+        assertSame(port.moves(), port.moves());
+        assertSame(port.ifs(), port.ifs());
+        assertSame(state.statements().get(statementCount - 1),
+                port.statement(statementId(statementCount - 1)).orElseThrow());
+        assertSame(port.children(statementId(0), CobolSemanticProduct.Branch.THEN),
+                port.children(statementId(0), CobolSemanticProduct.Branch.THEN));
     }
 
     @Test
@@ -292,6 +442,78 @@ class SemanticProductMoveCallContractTest {
                 List.of(forged), List.of(),
                 coverage(CobolSemanticProduct.InventoryStatus.COMPLETE,
                         1, 1, 0, 0, 0, modeledReadiness())));
+    }
+
+    private static CobolSemanticProduct.State indexedScaleState(int branches) {
+        List<CobolSemanticProduct.StatementFact> statements =
+                new ArrayList<>(branches * 2);
+        List<CobolSemanticProduct.Gap> gaps = new ArrayList<>(branches);
+        for (int index = 0; index < branches; index++) {
+            CobolSemanticProduct.StatementId parent = statementId(index * 2);
+            CobolSemanticProduct.StatementId child = statementId(index * 2 + 1);
+            statements.add(branch(parent, CobolSemanticProduct.Containment.root(),
+                    Optional.empty()));
+            statements.add(move(child, "VALUE-" + index, WS_PGM,
+                    CobolSemanticProduct.Containment.childOf(
+                            parent, CobolSemanticProduct.Branch.THEN)));
+            gaps.add(gap(parent, CobolSemanticProduct.GapScope.CONDITION_SEMANTICS,
+                    "CONDITION_SEMANTICS_NOT_AVAILABLE"));
+        }
+        return new CobolSemanticProduct.State(UNIT, CobolSemanticProduct.Policy.unspecified(),
+                List.of(declaration(WS_PGM, "WS-PGM", "X(8)"),
+                        declaration(FLAG, "FLAG", "9")),
+                statements, gaps,
+                coverage(CobolSemanticProduct.InventoryStatus.COMPLETE,
+                        branches * 2, branches, branches, 0, 0, blockedReadiness()));
+    }
+
+    private static Object retainedField(CobolSemanticPort port, String name)
+            throws ReflectiveOperationException {
+        Field field = port.getClass().getDeclaredField(name);
+        field.setAccessible(true);
+        return field.get(port);
+    }
+
+    private static void assertDerivedOnlyFromState(
+            Object derived, CobolSemanticProduct.State state) {
+        if (derived instanceof List<?> list) {
+            assertThrows(UnsupportedOperationException.class, list::clear);
+            list.forEach(element -> assertDerivedOnlyFromState(element, state));
+            return;
+        }
+        if (derived instanceof Map<?, ?> map) {
+            assertThrows(UnsupportedOperationException.class, map::clear);
+            map.forEach((key, value) -> {
+                assertDerivedOnlyFromState(key, state);
+                assertDerivedOnlyFromState(value, state);
+            });
+            return;
+        }
+        if (derived instanceof CobolSemanticProduct.StatementFact) {
+            assertTrue(state.statements().stream().anyMatch(fact -> fact == derived),
+                    "an index must reference a fact already materialized in State");
+            return;
+        }
+        if (derived instanceof CobolSemanticProduct.StatementId) {
+            assertTrue(state.statements().stream()
+                            .anyMatch(fact -> fact.header().id() == derived),
+                    "a derived root/map key must reuse a statement identity from State");
+            return;
+        }
+        if (derived instanceof CobolSemanticProduct.Containment) {
+            assertTrue(state.statements().stream()
+                            .anyMatch(fact -> fact.header().containment() == derived),
+                    "a containment index key must originate in State");
+            return;
+        }
+        assertTrue(false, () -> "unexpected retained index value: "
+                + derived.getClass().getName());
+    }
+
+    private static void assertSameElements(List<?> expected, List<?> actual) {
+        assertEquals(expected.size(), actual.size());
+        for (int index = 0; index < expected.size(); index++)
+            assertSame(expected.get(index), actual.get(index));
     }
 
     private static CobolSemanticProduct.State pluralState() {
