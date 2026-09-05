@@ -79,8 +79,9 @@ Fonte transitória inventariada:
 | KM-008 | INV-SP-003 e o pipeline fixam program point/anchor estrutural sem claim de execução/CFG. |
 | Routing | `AGENTS.md`, `docs/index.md`, `docs/architecture/index.md` e `ARCHITECTURE.md` encaminham Semantic Product/lowering/readiness às fontes novas sem copiar o contrato detalhado. |
 
-Os itens cujo destino principal é o contrato do work item (CP3), backlog/handoff
-(CP4) ou auditoria/remoção (CP5–CP6) permanecem abertos neste mapa.
+Ao fim do Checkpoint 2, os itens cujo destino principal era o contrato do work
+item (CP3), backlog/handoff (CP4) ou auditoria/remoção (CP5–CP6) ainda
+permaneciam abertos neste mapa.
 
 ## Destinos realizados no Checkpoint 3
 
@@ -107,6 +108,85 @@ Os itens cujo destino principal é o contrato do work item (CP3), backlog/handof
 | KM-015, KG-007 | `BACKLOG-DF-001` exige storage/layout/alias explícito para REDEFINES/RENAMES e rejeita `DataItemId` nominal como storage físico definitivo. |
 | KG-004–KG-006 | Os handoffs de lower/CFG/dataflow proíbem reconsulta ao frontend, fallthrough presumido e target de runtime derivado de binding nominal. |
 | F-01 | `BACKLOG-RES-003` foi reavaliado para `BLOCKS_SEMANTIC_PRODUCT` contra a boundary já definida, preservando que classificação não autoriza remediação. |
+
+## Auditoria final do Checkpoint 5
+
+### Decisões normativas
+
+| IDs | Estado final | Evidência/destino auditado |
+| --- | --- | --- |
+| KM-001 | `MIGRADA` | ADR-0013, `docs/architecture/pipeline.md` e o mapa de dependências de `docs/work/backlog.md` contêm a cadeia completa Frontend → Semantic Product → CobolLower → Analysis IR → CFG → effects/storage → reaching definitions → possible-values → Dependency Facts. |
+| KM-002 | `MIGRADA` | ADR-0013 decide que o Semantic Product é COBOL-specific e que neutralidade começa no lower/Analysis IR. |
+| KM-003–KM-004 | `MIGRADA` | ADR-0013 e `spec.md` preservam A2+B materializado, imutável, fechado e namespaced, e rejeitam AST/CFG/IR/serializer/snapshot/bag universal como produto. |
+| KM-005–KM-010 | `MIGRADA` | INV-SP-001/002, `AGENTS.md`, `spec.md` e `eval.md` separam capability, cardinalidade, coverage e incompletude; todas as ocorrências cobertas e todo statement observado precisam de classificação explícita. |
+| KM-011–KM-013 | `MIGRADA` | INV-SP-004, ADR-0013 e a seção “Fronteira e autoridades” de `spec.md` delimitam projector como tradução dos produtos canônicos, boundary isolada e presentation sem autoridade semântica. |
+| KM-014 | `MIGRADA` | ADR-0004, INV-RES-002, ADR-0013, `eval.md` e BACKLOG-DF-002 mantêm binding nominal separado de runtime value/target. |
+| KM-015 | `MIGRADA` | INV-SP-005 e BACKLOG-DF-001 separam `DataItemId` de storage/layout/alias de REDEFINES/RENAMES. |
+| KM-016–KM-019 | `MIGRADA` | INV-SP-003, pipeline e a matriz por construct de `spec.md` exigem surface, identity, structure, binding, três readiness dimensions, unknowns, provenance e coverage; `eval.md` testa reconstruction sem frontend. |
+| KM-020–KM-021 | `MIGRADA` | `spec.md` e `eval.md` registram o oracle `MOVE → IF/ELSE → CALL`, RD `{MOVE B, MOVE C}` e possible-values `{B,C}` como resultado futuro, nunca como análise do projector. |
+| KM-022–KM-025 | `MIGRADA` | `spec.md`, `plan.md` e `eval.md` incluem IF/ELSE e N DATA/MOVE/CALL, com branches/nesting/operands/roles/binding/provenance/coverage e sem truth/edges/runtime target inventados. |
+| KM-026 | `MIGRADA` | BACKLOG-SP-001 posiciona EVALUATE como próximo enrichment após IF e preserva F-01/predicate partial. |
+| KM-027 | `MIGRADA` | BACKLOG-SP-002 registra PERFORM e bloqueios de TIMES, test mode, VARYING, FROM/BY/UNTIL e AFTER. |
+| KM-028 | `MIGRADA` | BACKLOG-SP-003/004 e BACKLOG-CFG-001/002 registram GO TO, GO TO DEPENDING ON, terminal semantics, ALTER e SEARCH com readiness própria. |
+| KM-029–KM-031 | `MIGRADA` | BACKLOG-LOWER-001, BACKLOG-IR-001 e BACKLOG-CFG-001 preservam as três fases separadas e suas dependências, sem congelar o schema da IR. |
+| KM-032–KM-034 | `MIGRADA` | BACKLOG-DF-001/004/003/002 e BACKLOG-DEPS-001 separam effects/storage, Reaching Definitions, Possible Values, target dinâmico e fatos finais. |
+| KM-035–KM-036 | `MIGRADA` | INV-SP-006, `spec.md`, `plan.md` e `eval.md` separam deterministic transport de persistent identity e deixam JSON depois de state/container/consumer corretos. |
+| KM-037 | `MIGRADA` | ADR-0013, INV-SP-003/004 e `spec.md` fixam `projection → boundary` e proíbem `boundary → projection/frontend`. |
+| KM-038 | `MIGRADA` | `spec.md`, `plan.md` e `state.md` tratam `CobolMoveCallAdapter` somente como nome implementado a substituir no checkpoint corretivo de projection; nenhum contrato o mantém como seam futura. |
+| KM-039 | `MIGRADA` | `spec.md` e `eval.md` deixam flat/hierárquico/híbrido em aberto, mas exigem nesting/relações reconstruíveis por identidade tipada. |
+| KM-040–KM-043 | `MIGRADA` | Work item, invariantes e backlog limitam o slice por capability, mantêm os anti-goals/gates e fixam o sucesso como pequeno em coverage, completo no que afirma e lowering-ready. |
+| KM-044 | `MIGRADA` | `plan.md`, `state.md`, `work-item.yaml` e `docs/work/index.md` apontam o oracle executável test-only como próximo trabalho autorizado e confirmam que esta migração não altera produção. |
+| KM-045 | `EXECUTADA/TRANSITÓRIA` | Esta auditoria verificou os destinos e as buscas; o Checkpoint 6 remove a fonte e este mapa. É uma regra de migração, não conhecimento arquitetural permanente. |
+
+### Guardrails, contexto e decisões deliberadamente não promovidas
+
+| Item | Estado final | Justificativa/destino |
+| --- | --- | --- |
+| KG-001–KG-003 | `MIGRADOS` | INV-SP-001/002/004 e os casos negativos/adversariais de `eval.md` vedam singleton novo, nova análise no projector e silent omission. |
+| KG-004–KG-007 | `MIGRADOS` | INV-SP-003/005, ADR-0004 e backlog de lower/CFG/effects vedam reconsulta ao frontend, fallthrough presumido, runtime target por binding e storage físico por nominal ID. |
+| KG-008–KG-010 | `MIGRADOS` | `plan.md`, `eval.md`, `work-item.yaml` e revisão do diff impõem JSON posterior, fixture não normativa e zero implementação nesta migração. |
+| KH-001–KH-006 | `CONTEXTO HISTÓRICO` | Permanecem nos relatórios/summary de `WORK-SEMANTIC-PRODUCT-001`; `state.md` repete apenas o estado implementado necessário para orientar a correção. Não governam o target model. |
+| KH-007 | `DESCARTADO COMO NORMA` | O prazo de 15 de setembro explicou o recorte transitório, mas tempo não é arquitetura nem autorização; nenhuma fonte canônica depende dele. |
+| Nome `CobolSemanticProductProjector` e layout de packages exemplificados | `NÃO PROMOVIDOS` | Eram exemplos, não decisão. `plan.md` exige nome/pacote estável por responsabilidade no checkpoint corretivo; o oracle e o architecture gate decidirão a forma concreta. |
+| Shape flat, hierárquica ou híbrida | `DELIBERADAMENTE ABERTA` | `spec.md`/`eval.md` promovem apenas o critério downstream de reconstrução, nesting, identidade e lookup; um ADR prematuro seria indevido. |
+| Records/campos e schema de IR mostrados como pseudocódigo | `NÃO PROMOVIDOS` | ADR-0013 e BACKLOG-IR-001 preservam responsabilidades e dependências, mas proíbem congelar classes/nodes/SSA sem consumer/oracle. |
+
+### Claims de saída verificadas
+
+| Claim exigida | Destino confirmado |
+| --- | --- |
+| `coverage != cardinality` e multiple occurrences | INV-SP-001/002; `AGENTS.md`; `spec.md` §§ objetivo, cardinalidade e aceitação; SP-P01–P03. |
+| Container extensível | INV-SP-001; `spec.md` § Extensibilidade; Checkpoint corretivo 2; classes negativas do eval. |
+| IF/ELSE no slice | `spec.md` § Domínio/matriz; Checkpoint corretivo 4; SP-P04–P06. |
+| Lowering sufficiency e boundary isolada | INV-SP-003; `spec.md` § Fronteira; Checkpoints 1, 6 e 8; SP-P08. |
+| CFG readiness e effects/dataflow readiness | pipeline; ADR-0013; matriz da spec; SP-P09; BACKLOG-CFG-001 e BACKLOG-DF-001. |
+| Reaching Definitions como driver | oracle de `eval.md`; BACKLOG-DF-004; cadeia do backlog. |
+| Oracle `MOVE → IF/ELSE → CALL` | `spec.md` § Oracle downstream; abertura de `eval.md`; Checkpoint corretivo 1. |
+| Partial/unsupported sem silent omission | INV-SP-002; inventário/coverage da spec; SP-P07 e adversariais 3/6/14. |
+| Nominal identity != storage identity | INV-SP-005; matriz/contracasos da spec; BACKLOG-DF-001. |
+| Projector traduz, não analisa | INV-SP-004; authorities da spec; Checkpoint corretivo 3; classes negativas do eval. |
+| Produtos/report canônicos são autoridades | `spec.md` § Premissas e § Fronteira; INV-SP-004; `state.md` registra a exceção corrente. |
+| Deterministic transport != persistent identity | INV-SP-006; ADR-0013; `spec.md`/`eval.md`. |
+| JSON somente depois do contrato estrutural | ADR-0013; Checkpoint corretivo 7; SP-P10 e classes negativas. |
+| Próximos vertical slices | BACKLOG-SP-001–004, LOWER-001, IR-001, CFG-001/002, DF-001/004/003/002 e DEPS-001. |
+
+### Auditoria textual de claims antigos
+
+- `State.move()`/`State.call()` aparecem apenas como classe negativa no eval.
+- `CobolMoveCallAdapter` aparece no `must_read` porque ainda é código corrente,
+  em `state.md`/`plan.md` como dívida factual e em `spec.md` explicitamente como
+  seam que não deve permanecer. Não aparece como nome arquitetural futuro.
+- “exatamente um MOVE/CALL” aparece somente na descrição factual da
+  implementação corrente e na regra que remove esse limite.
+- `MOVE→CALL` aparece apenas como filtro rejeitado; o fixture N=1 permanece
+  baseline, e o oracle normativo inclui IF/ELSE e múltiplas ocorrências.
+- A busca não encontrou fonte ativa que equipare ausência de fact a
+  unsupported/unknown. INV-SP-002 e o contrato exigem inventário/classificação.
+- `docs/engineering/downstream-impact-classification.md` ainda mantinha a
+  classificação pré-Discovery de F-01; foi reconciliado com a reavaliação
+  `BLOCKS_SEMANTIC_PRODUCT` já preservada na história e no backlog.
+- De `4d97e73` até este checkpoint, a lista de paths alterados não contém
+  `src/**`; o código singleton permanece intocado e explicitamente registrado.
 
 ## Contexto histórico que não deve virar norma nova
 
@@ -175,14 +255,14 @@ Cada item deve aparecer no destino indicado; não basta classificá-lo como
 
 ## Checklist de saída
 
-- [ ] KM-001–KM-045 possuem destino materializado ou descarte explícito.
-- [ ] KG-001–KG-010 aparecem nos contratos indicados.
-- [ ] KH-001–KH-007 continuam distinguíveis de direção normativa.
-- [ ] Arquitetura geral e routing do harness foram atualizados.
-- [ ] `WORK-SEMANTIC-PRODUCT-002` foi corrigido integralmente.
-- [ ] Backlog/handoffs preservam a cadeia de dependências sem antecipar a IR.
-- [ ] Auditoria textual não encontra cardinalidade singleton como direção ativa.
-- [ ] O documento temporário não é referenciado por fonte canônica.
-- [ ] A autorização explícita desta task cobre a revisão da migração e remoção
+- [x] KM-001–KM-045 possuem destino materializado ou descarte explícito.
+- [x] KG-001–KG-010 aparecem nos contratos indicados.
+- [x] KH-001–KH-007 continuam distinguíveis de direção normativa.
+- [x] Arquitetura geral e routing do harness foram atualizados.
+- [x] `WORK-SEMANTIC-PRODUCT-002` foi corrigido integralmente.
+- [x] Backlog/handoffs preservam a cadeia de dependências sem antecipar a IR.
+- [x] Auditoria textual não encontra cardinalidade singleton como direção ativa.
+- [x] O documento temporário não é referenciado por fonte canônica.
+- [x] A autorização explícita desta task cobre a revisão da migração e remoção
   após a auditoria dos Checkpoints 5 e 6; não há espera entre checkpoints.
 - [ ] Documento temporário e este mapa foram removidos no Checkpoint 6.
