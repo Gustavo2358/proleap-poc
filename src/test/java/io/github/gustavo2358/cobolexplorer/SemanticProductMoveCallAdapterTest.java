@@ -63,9 +63,17 @@ class SemanticProductMoveCallAdapterTest {
                 move.target().binding().status());
         assertEquals(CobolSemanticProduct.ResolutionStatus.RESOLVED,
                 call.operand().binding().status());
-        assertEquals(CobolSemanticProduct.LiteralKind.ALPHANUMERIC,
+        assertEquals(CobolSemanticProduct.LiteralKind.UNKNOWN,
                 move.source().kind());
         assertEquals("PGMA", move.source().value());
+        assertEquals(CobolSemanticProduct.CoverageStatus.PARTIAL,
+                move.header().coverage());
+        assertEquals(CobolSemanticProduct.ReadinessStatus.PARTIAL,
+                move.header().readiness().lowering().status());
+        assertEquals(CobolSemanticProduct.ReadinessStatus.SUFFICIENT,
+                move.header().readiness().cfg().status());
+        assertEquals(CobolSemanticProduct.ReadinessStatus.PARTIAL,
+                move.header().readiness().effectsDataflow().status());
         assertEquals(CobolSemanticProduct.CallSyntax.IDENTIFIER_OR_EXPRESSION,
                 call.syntax());
         assertEquals(CobolSemanticProduct.RuntimeTargetKnowledge.UNKNOWN,
@@ -73,15 +81,21 @@ class SemanticProductMoveCallAdapterTest {
         assertEquals(CobolSemanticProduct.InventoryStatus.PARTIAL,
                 state.coverage().inventoryStatus());
         assertEquals(2, state.coverage().observedStatements());
+        assertEquals(1, state.coverage().modeledStatements());
+        assertEquals(1, state.coverage().partialStatements());
         assertEquals(CobolSemanticProduct.ReadinessStatus.PARTIAL,
                 state.coverage().readiness().lowering().status());
         assertEquals(CobolSemanticProduct.ReadinessStatus.PARTIAL,
                 state.coverage().readiness().cfg().status());
         assertEquals(CobolSemanticProduct.ReadinessStatus.PARTIAL,
                 state.coverage().readiness().effectsDataflow().status());
-        assertEquals(List.of("DYNAMIC_CALL_TARGET_VALUE_UNKNOWN"),
+        assertEquals(List.of("LITERAL_KIND_NOT_PUBLISHED",
+                        "DYNAMIC_CALL_TARGET_VALUE_UNKNOWN"),
                 state.gaps().stream().map(CobolSemanticProduct.Gap::code).toList());
-        assertEquals(call.header().id(), state.gaps().get(0).statement());
+        assertEquals(CobolSemanticProduct.GapScope.LITERAL_KIND,
+                state.gaps().get(0).scope());
+        assertEquals(move.header().id(), state.gaps().get(0).statement());
+        assertEquals(call.header().id(), state.gaps().get(1).statement());
         assertTrue(move.header().point().ordinal() < call.header().point().ordinal());
 
         assertEquals(CobolSemanticProduct.QualifyMode.UNSPECIFIED,
@@ -132,15 +146,24 @@ class SemanticProductMoveCallAdapterTest {
     }
 
     @Test
-    void compatibilityBridgeFailsClosedInsteadOfMisclassifyingNumericLiteral() {
-        FrontendAnalysis frontend = analyze(SOURCE.replace(
-                "MOVE 'PGMA' TO WS-PGM.", "MOVE 1 TO WS-PGM."));
+    void compatibilityBridgeDoesNotInferLiteralKindFromRawLexeme() {
+        CobolSemanticProduct.State alphanumeric = project(analyze());
+        CobolSemanticProduct.State numeric = project(analyze(SOURCE.replace(
+                "MOVE 'PGMA' TO WS-PGM.", "MOVE 1 TO WS-PGM.")));
 
-        IllegalArgumentException error = assertThrows(IllegalArgumentException.class,
-                () -> project(frontend));
-
-        assertEquals("the compatibility bridge supports only quote-delimited "
-                + "alphanumeric literals", error.getMessage());
+        assertEquals(CobolSemanticProduct.LiteralKind.UNKNOWN,
+                alphanumeric.statements().stream()
+                        .filter(CobolSemanticProduct.MoveFact.class::isInstance)
+                        .map(CobolSemanticProduct.MoveFact.class::cast)
+                        .findFirst().orElseThrow().source().kind());
+        assertEquals(CobolSemanticProduct.LiteralKind.UNKNOWN,
+                numeric.statements().stream()
+                        .filter(CobolSemanticProduct.MoveFact.class::isInstance)
+                        .map(CobolSemanticProduct.MoveFact.class::cast)
+                        .findFirst().orElseThrow().source().kind());
+        assertTrue(numeric.gaps().stream().anyMatch(gap ->
+                gap.scope() == CobolSemanticProduct.GapScope.LITERAL_KIND
+                        && gap.code().equals("LITERAL_KIND_NOT_PUBLISHED")));
     }
 
     @Test
@@ -179,6 +202,7 @@ class SemanticProductMoveCallAdapterTest {
                 "src/main/java/io/github/gustavo2358/cobolexplorer/semanticproduct/CobolMoveCallAdapter.java"),
                 StandardCharsets.UTF_8);
         assertFalse(source.contains("writtenText"));
+        assertFalse(source.contains("rawLexeme"));
         assertFalse(source.contains("grammarRule"));
         assertFalse(source.contains("SourceMap"));
         assertFalse(source.contains("Snapshot"));

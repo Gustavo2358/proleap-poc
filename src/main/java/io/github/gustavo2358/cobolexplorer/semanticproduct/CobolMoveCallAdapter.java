@@ -29,6 +29,7 @@ import java.util.Optional;
  */
 public final class CobolMoveCallAdapter {
     private static final String RUNTIME_TARGET_GAP = "DYNAMIC_CALL_TARGET_VALUE_UNKNOWN";
+    private static final String LITERAL_KIND_GAP = "LITERAL_KIND_NOT_PUBLISHED";
 
     private CobolMoveCallAdapter() { }
 
@@ -135,10 +136,11 @@ public final class CobolMoveCallAdapter {
         CobolSemanticProduct.StatementId callId = new CobolSemanticProduct.StatementId(
                 boundaryUnit, callPoint.ordinal());
         CobolSemanticProduct.MoveFact moveFact = new CobolSemanticProduct.MoveFact(
-                header(moveId, movePoint, moveProvenance, moveReadiness()),
+                header(moveId, movePoint, moveProvenance,
+                        CobolSemanticProduct.CoverageStatus.PARTIAL, moveReadiness()),
                 new CobolSemanticProduct.LiteralSource(
                         new CobolSemanticProduct.OperandId(moveId, 0),
-                        bridgeLiteralKind(literal), literal.value(),
+                        CobolSemanticProduct.LiteralKind.UNKNOWN, literal.value(),
                         provenance(literal.meta().provenance())),
                 new CobolSemanticProduct.DataReference(
                         new CobolSemanticProduct.OperandId(moveId, 1),
@@ -151,6 +153,11 @@ public final class CobolMoveCallAdapter {
                         CobolSemanticProduct.OperandRole.CALL_TARGET,
                         callBinding, callProvenance),
                 runtimeTarget, RUNTIME_TARGET_GAP);
+        CobolSemanticProduct.Gap literalKindGap = new CobolSemanticProduct.Gap(
+                moveId, CobolSemanticProduct.GapScope.LITERAL_KIND,
+                LITERAL_KIND_GAP,
+                "the canonical frontend AST does not publish a typed literal kind",
+                provenance(literal.meta().provenance()));
         CobolSemanticProduct.Gap runtimeGap = new CobolSemanticProduct.Gap(
                 callId, CobolSemanticProduct.GapScope.RUNTIME_CALL_TARGET,
                 RUNTIME_TARGET_GAP,
@@ -163,10 +170,10 @@ public final class CobolMoveCallAdapter {
         return new CobolSemanticProduct.State(
                 boundaryUnit,
                 policy(products.resolution()),
-                List.of(declaration), statementFacts, List.of(runtimeGap),
+                List.of(declaration), statementFacts, List.of(literalKindGap, runtimeGap),
                 new CobolSemanticProduct.CoverageSummary(
                         CobolSemanticProduct.InventoryStatus.PARTIAL,
-                        2, 2, 0, 0, 0, summaryReadiness()));
+                        2, 1, 1, 0, 0, summaryReadiness()));
     }
 
     /** Opens the read-only port over one already-materialized projection. */
@@ -326,24 +333,21 @@ public final class CobolMoveCallAdapter {
                 dataItem, candidate.canonicalName());
     }
 
-    private static CobolSemanticProduct.LiteralKind bridgeLiteralKind(
-            Ast.LiteralExpression literal) {
-        String lexeme = Objects.requireNonNull(literal.rawLexeme(), "literal rawLexeme");
-        boolean quoteDelimited = lexeme.length() >= 2
-                && (lexeme.charAt(0) == '\'' || lexeme.charAt(0) == '"')
-                && lexeme.charAt(lexeme.length() - 1) == lexeme.charAt(0);
-        require(quoteDelimited,
-                "the compatibility bridge supports only quote-delimited alphanumeric literals");
-        return CobolSemanticProduct.LiteralKind.ALPHANUMERIC;
+    private static CobolSemanticProduct.StatementHeader header(
+            CobolSemanticProduct.StatementId id, CobolSemanticProduct.ProgramPoint point,
+            CobolSemanticProduct.Provenance provenance,
+            CobolSemanticProduct.Readiness readiness) {
+        return header(id, point, provenance,
+                CobolSemanticProduct.CoverageStatus.MODELED, readiness);
     }
 
     private static CobolSemanticProduct.StatementHeader header(
             CobolSemanticProduct.StatementId id, CobolSemanticProduct.ProgramPoint point,
             CobolSemanticProduct.Provenance provenance,
+            CobolSemanticProduct.CoverageStatus coverage,
             CobolSemanticProduct.Readiness readiness) {
         return new CobolSemanticProduct.StatementHeader(id, point,
-                CobolSemanticProduct.Containment.root(), provenance,
-                CobolSemanticProduct.CoverageStatus.MODELED, readiness);
+                CobolSemanticProduct.Containment.root(), provenance, coverage, readiness);
     }
 
     private static CobolSemanticProduct.Readiness dataReadiness() {
@@ -356,12 +360,12 @@ public final class CobolMoveCallAdapter {
     }
 
     private static CobolSemanticProduct.Readiness moveReadiness() {
-        return readiness(CobolSemanticProduct.ReadinessStatus.SUFFICIENT,
-                "literal source, nominal target and structure available",
+        return readiness(CobolSemanticProduct.ReadinessStatus.PARTIAL,
+                "literal value and nominal target available; canonical literal kind missing",
                 CobolSemanticProduct.ReadinessStatus.SUFFICIENT,
                 "structural fallthrough available",
                 CobolSemanticProduct.ReadinessStatus.PARTIAL,
-                "nominal DEF available; storage region and aliases unknown");
+                "nominal DEF available; literal kind, storage region and aliases unknown");
     }
 
     private static CobolSemanticProduct.Readiness callReadiness() {

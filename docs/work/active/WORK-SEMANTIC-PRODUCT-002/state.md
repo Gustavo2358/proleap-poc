@@ -45,8 +45,9 @@ IF projection neste checkpoint.
   prova que continuam semanticamente distinguíveis sem AST, raw text ou PIC.
 - O caso original DATA + MOVE literal + CALL variável continua coberto como
   regressão N=1, com provenance, policy e handles determinísticos no contexto
-  equivalente. A bridge transporta explicitamente o kind `ALPHANUMERIC` desse
-  literal e marca seu inventário agregado como `PARTIAL`.
+  equivalente. Sem autoridade canônica para o kind do literal, a bridge publica
+  `UNKNOWN`, coverage e lowering/effects readiness `PARTIAL`, além de gap
+  localizado; seu inventário agregado também permanece `PARTIAL`.
 - O gate de arquitetura inspeciona explicitamente os tipos do core/port e agora
   bloqueia também dependência no `CobolMoveCallAdapter` e em áreas futuras de
   projection/adapter, além de frontend e ANTLR.
@@ -82,10 +83,10 @@ IF projection neste checkpoint.
   CP2 não afirma semântica de condição que o frontend ainda não publicou.
 - A bridge N=1 mantém todos os guards do adapter atual, inclusive exatamente um
   MOVE/CALL/target, DATA comum e MOVE anterior ao CALL. Como o frontend atual
-  não publica um kind tipado no `Ast.LiteralExpression`, a bridge aceita somente
-  sua shape histórica quote-delimited e a transporta como `ALPHANUMERIC`; uma
-  source numeric falha fechada em vez de ser classificada por value ou PIC. O
-  core já representa `NUMERIC`; o CP3 deve remover a bridge e projetar apenas os
-  kinds sustentados por autoridade canônica, localizando os demais como gap.
+  não publica um kind tipado no `Ast.LiteralExpression`, a bridge não consulta
+  `rawLexeme` nem classifica por value ou PIC: ela preserva o literal com kind
+  `UNKNOWN` e incompletude localizada. O core já representa `ALPHANUMERIC` e
+  `NUMERIC`; no CP3 deve-se encontrar uma autoridade canônica existente ou
+  registrar o enrichment de frontend necessário antes de projetar kind conhecido.
 - O adapter ainda cria localmente o gap/readiness do CALL dinâmico; essa dívida
   preexistente continua reservada ao CP3, que deverá consumir o report canônico.

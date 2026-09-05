@@ -46,7 +46,7 @@ public final class CobolSemanticProduct {
     public enum OperandRole { READ, WRITE, CALL_TARGET }
 
     /** Literal category is semantic input; consumers must not recover it from value text. */
-    public enum LiteralKind { ALPHANUMERIC, NUMERIC }
+    public enum LiteralKind { ALPHANUMERIC, NUMERIC, UNKNOWN }
 
     public enum CallSyntax { IDENTIFIER_OR_EXPRESSION }
 
@@ -55,6 +55,7 @@ public final class CobolSemanticProduct {
 
     public enum GapScope {
         RUNTIME_CALL_TARGET,
+        LITERAL_KIND,
         NOMINAL_BINDING,
         CONDITION_SEMANTICS,
         CAPABILITY,
@@ -574,6 +575,14 @@ public final class CobolSemanticProduct {
                 require(hasGap(localized, GapScope.RUNTIME_CALL_TARGET,
                                 call.runtimeUncertaintyCode()),
                         "unknown runtime CALL target must retain its localized gap");
+            if (statement instanceof MoveFact move
+                    && move.source().kind() == LiteralKind.UNKNOWN) {
+                require(statement.header().coverage() != CoverageStatus.MODELED,
+                        "unknown literal kind cannot be hidden by MODELED coverage");
+                require(localized.stream().anyMatch(gap -> gap.scope()
+                                == GapScope.LITERAL_KIND),
+                        "unknown literal kind must retain a literal-kind gap");
+            }
             if (statement instanceof ObservedStatement observed)
                 require(hasGap(localized, GapScope.CAPABILITY, observed.gapCode()),
                         "observed unmodeled statement must retain its capability gap");
