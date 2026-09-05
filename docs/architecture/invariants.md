@@ -57,7 +57,7 @@ IDs neste documento são estáveis. `AUTOMATED` indica proteção executável at
 - **Rationale:** downstream precisa distinguir inexistência provada de incapacidade, falta de input ou suporte parcial para permanecer conservador.
 - **Scope:** Semantic Product, projeção, lowering-readiness, transporte e futuros consumers CFG/effects.
 - **Related ADRs:** ADR-0008 e ADR-0013.
-- **Enforcement:** `PARTIALLY_AUTOMATED` — INV-COV-001/003 protegem os produtos atuais; os testes da projection exigem facts e gaps localizados para containment/continuation incompletos, shapes fora da capability, bindings incompletos, literal kind desconhecido e toda ocorrência MOVE/CALL/IF coberta.
+- **Enforcement:** `PARTIALLY_AUTOMATED` — INV-COV-001/003 protegem os produtos atuais; os testes da projection exigem facts e gaps localizados para containment, conteúdo de branch ou continuation incompletos, shapes fora da capability, bindings incompletos, literal kind desconhecido e toda ocorrência MOVE/CALL/IF coberta.
 - **Known exceptions:** o inventário completo de todas as famílias observadas da `ProgramUnit` permanece reservado ao Checkpoint 5 de `WORK-SEMANTIC-PRODUCT-002`; dentro do CP4, nenhuma ocorrência MOVE/CALL/IF observada pode ser omitida.
 
 ### INV-SP-003 — Boundary é suficiente para lowering sem frontend

@@ -46,6 +46,7 @@ public final class CobolSemanticProductProjector {
     private static final String CONDITION_REFERENCE_GAP =
             "CONDITION_REFERENCE_KIND_NOT_PROJECTED";
     private static final String CONTINUATION_GAP = "CONTINUATION_NOT_PROJECTED";
+    private static final String BRANCH_CONTENT_GAP = "BRANCH_CONTENT_NOT_PROJECTED";
 
     private CobolSemanticProductProjector() { }
 
@@ -431,6 +432,7 @@ public final class CobolSemanticProductProjector {
         Ast.IfStatement branch = (Ast.IfStatement) plan.position().statement();
         ContinuationProjection continuation = continuation(plan.position(), statementIds,
                 positionsByStatement, continuations);
+        BranchContentProjection branchContent = branchContent(branch, statementIds);
         List<CobolSemanticProduct.DataReference> references = new ArrayList<>();
         CobolSemanticProduct.CoverageStatus ifCoverage = weakest(
                 CobolSemanticProduct.CoverageStatus.PARTIAL,
@@ -457,10 +459,12 @@ public final class CobolSemanticProductProjector {
         }
         if (!continuation.exact())
             ifCoverage = weakest(ifCoverage, CobolSemanticProduct.CoverageStatus.PARTIAL);
+        if (!branchContent.exact())
+            ifCoverage = weakest(ifCoverage, CobolSemanticProduct.CoverageStatus.PARTIAL);
         CobolSemanticProduct.StatementHeader ifHeader = header(statementId,
                 plan.position().ordinal(), containment, statementProvenance, ifCoverage,
                 containmentReadiness(containment,
-                        ifReadiness(plan.entries(), continuation)));
+                        ifReadiness(plan.entries(), continuation, branchContent)));
         CobolSemanticProduct.IfFact fact = new CobolSemanticProduct.IfFact(
                 ifHeader,
                 new CobolSemanticProduct.ConditionSurface(conditionShape(branch.condition()),
@@ -476,6 +480,10 @@ public final class CobolSemanticProductProjector {
             gaps.add(new CobolSemanticProduct.Gap(statementId,
                     CobolSemanticProduct.GapScope.STRUCTURE, CONTINUATION_GAP,
                     continuation.detail(), statementProvenance));
+        if (!branchContent.exact())
+            gaps.add(new CobolSemanticProduct.Gap(statementId,
+                    CobolSemanticProduct.GapScope.STRUCTURE, BRANCH_CONTENT_GAP,
+                    branchContent.detail(), statementProvenance));
         addContainmentGap(containment, statementId, statementProvenance, gaps);
         for (ReferenceResolution.Entry entry : plan.entries()) {
             if (projectableDataBinding(entry))
@@ -565,6 +573,26 @@ public final class CobolSemanticProductProjector {
         }
         continuations.put(position.statement(), result);
         return result;
+    }
+
+    private static BranchContentProjection branchContent(
+            Ast.IfStatement branch,
+            Map<Ast.Statement, CobolSemanticProduct.StatementId> statementIds) {
+        List<CobolSemanticProduct.Branch> incomplete = new ArrayList<>(2);
+        if (hasUnprojectedDirectChild(branch.thenBranch(), statementIds))
+            incomplete.add(CobolSemanticProduct.Branch.THEN);
+        if (hasUnprojectedDirectChild(branch.elseBranch(), statementIds))
+            incomplete.add(CobolSemanticProduct.Branch.ELSE);
+        if (incomplete.isEmpty()) return BranchContentProjection.complete();
+        return BranchContentProjection.incomplete(
+                "direct statement content is outside the current capability in "
+                        + String.join(" and ", incomplete.stream().map(Enum::name).toList()));
+    }
+
+    private static boolean hasUnprojectedDirectChild(
+            List<Ast.Statement> branch,
+            Map<Ast.Statement, CobolSemanticProduct.StatementId> statementIds) {
+        return branch.stream().anyMatch(statement -> !statementIds.containsKey(statement));
     }
 
     private static String conditionShape(Ast.Expression condition) {
@@ -809,7 +837,8 @@ public final class CobolSemanticProductProjector {
 
     private static CobolSemanticProduct.Readiness ifReadiness(
             List<ReferenceResolution.Entry> entries,
-            ContinuationProjection continuation) {
+            ContinuationProjection continuation,
+            BranchContentProjection branchContent) {
         CobolSemanticProduct.ReadinessStatus lowering =
                 CobolSemanticProduct.ReadinessStatus.PARTIAL;
         CobolSemanticProduct.ReadinessStatus effects =
@@ -820,14 +849,17 @@ public final class CobolSemanticProductProjector {
             lowering = CobolSemanticProduct.ReadinessStatus.BLOCKED;
             effects = CobolSemanticProduct.ReadinessStatus.BLOCKED;
         }
-        CobolSemanticProduct.ReadinessStatus cfg = continuation.exact()
+        boolean structureExact = continuation.exact() && branchContent.exact();
+        CobolSemanticProduct.ReadinessStatus cfg = structureExact
                 ? CobolSemanticProduct.ReadinessStatus.SUFFICIENT
                 : CobolSemanticProduct.ReadinessStatus.PARTIAL;
         return readiness(lowering,
                 "condition surface and branches are projected; predicate semantics remain partial",
                 cfg,
-                continuation.exact()
+                structureExact
                         ? "two conservative branches and structural continuation are reconstructible"
+                        : !branchContent.exact()
+                        ? "direct branch content is incomplete in the current statement capability"
                         : "branches are known but the structural continuation is incomplete",
                 effects,
                 "condition reads are available only to canonical binding precision");
@@ -1025,6 +1057,26 @@ public final class CobolSemanticProductProjector {
 
         private static ContinuationProjection incomplete(String detail) {
             return new ContinuationProjection(Optional.empty(), false, detail);
+        }
+    }
+
+    private record BranchContentProjection(boolean exact, String detail) {
+        private BranchContentProjection {
+            detail = Objects.requireNonNullElse(detail, "");
+            if (exact && !detail.isEmpty())
+                throw new IllegalArgumentException(
+                        "exact branch content must not carry an incompleteness detail");
+            if (!exact && detail.isBlank())
+                throw new IllegalArgumentException(
+                        "incomplete branch content must explain its structural gap");
+        }
+
+        private static BranchContentProjection complete() {
+            return new BranchContentProjection(true, "");
+        }
+
+        private static BranchContentProjection incomplete(String detail) {
+            return new BranchContentProjection(false, detail);
         }
     }
 

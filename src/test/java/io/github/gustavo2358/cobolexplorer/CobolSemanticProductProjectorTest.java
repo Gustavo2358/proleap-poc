@@ -217,6 +217,9 @@ class CobolSemanticProductProjectorTest {
                         && gap.scope() == CobolSemanticProduct.GapScope.STRUCTURE
                         && gap.code().equals("CONTINUATION_NOT_PROJECTED")),
                 "DISPLAY remains a CP5 fact, so CP4 must not skip it to invent a continuation");
+        assertFalse(port.gaps().stream().anyMatch(gap ->
+                gap.code().equals("BRANCH_CONTENT_NOT_PROJECTED")),
+                "the fixture has no unprojected direct IF child; its empty ELSE is genuine");
         assertEquals(3, port.gaps().stream().filter(gap ->
                 gap.scope() == CobolSemanticProduct.GapScope.CONDITION_SEMANTICS
                         && gap.code().equals("CONDITION_SEMANTICS_NOT_AVAILABLE")).count());
@@ -270,6 +273,81 @@ class CobolSemanticProductProjectorTest {
         assertTrue(port.gaps().stream().anyMatch(gap ->
                 gap.statement().equals(branch.header().id())
                         && gap.scope() == CobolSemanticProduct.GapScope.NOMINAL_BINDING));
+        assertFalse(port.gaps().stream().anyMatch(gap ->
+                gap.statement().equals(branch.header().id())
+                        && gap.code().equals("BRANCH_CONTENT_NOT_PROJECTED")),
+                "a genuinely empty false branch must not acquire an incompleteness gap");
+    }
+
+    @Test
+    void directDisplayChildCannotLookLikeAnExactEmptyBranch() {
+        String source = String.join("\n",
+                "       IDENTIFICATION DIVISION.",
+                "       PROGRAM-ID. SEMANTIC-IF-DISPLAY.",
+                "       DATA DIVISION.",
+                "       WORKING-STORAGE SECTION.",
+                "       01 FLAG PIC 9.",
+                "       01 WS-PGM PIC X(8).",
+                "       PROCEDURE DIVISION.",
+                "           IF FLAG = 1",
+                "               DISPLAY 'X'",
+                "           END-IF.",
+                "           CALL WS-PGM.",
+                "           GOBACK.",
+                "       END PROGRAM SEMANTIC-IF-DISPLAY.", "");
+        CobolSemanticPort port = CobolSemanticPort.open(project(
+                analyze(source, "semantic-product-if-display.cbl")));
+        CobolSemanticProduct.IfFact branch = port.ifs().get(0);
+
+        assertTrue(port.children(branch.header().id(),
+                CobolSemanticProduct.Branch.THEN).isEmpty());
+        assertTrue(port.children(branch.header().id(),
+                CobolSemanticProduct.Branch.ELSE).isEmpty());
+        assertEquals(Optional.of(port.calls().get(0).header().id()), branch.continuation());
+        assertEquals(CobolSemanticProduct.CoverageStatus.PARTIAL,
+                branch.header().coverage());
+        assertEquals(CobolSemanticProduct.ReadinessStatus.PARTIAL,
+                branch.header().readiness().cfg().status());
+        assertTrue(port.gaps().stream().anyMatch(gap ->
+                gap.statement().equals(branch.header().id())
+                        && gap.scope() == CobolSemanticProduct.GapScope.STRUCTURE
+                        && gap.code().equals("BRANCH_CONTENT_NOT_PROJECTED")));
+    }
+
+    @Test
+    void directPerformChildKeepsSupportedBranchFactsButDowngradesCfgReadiness() {
+        String source = String.join("\n",
+                "       IDENTIFICATION DIVISION.",
+                "       PROGRAM-ID. SEMANTIC-IF-PERFORM.",
+                "       DATA DIVISION.",
+                "       WORKING-STORAGE SECTION.",
+                "       01 FLAG PIC 9.",
+                "       01 WS-PGM PIC X(8).",
+                "       PROCEDURE DIVISION.",
+                "           IF FLAG = 1",
+                "               MOVE 'PGMA' TO WS-PGM",
+                "               PERFORM WORK-PARA",
+                "           END-IF.",
+                "           CALL WS-PGM.",
+                "           GOBACK.",
+                "       WORK-PARA.",
+                "           CONTINUE.",
+                "       END PROGRAM SEMANTIC-IF-PERFORM.", "");
+        CobolSemanticPort port = CobolSemanticPort.open(project(
+                analyze(source, "semantic-product-if-perform.cbl")));
+        CobolSemanticProduct.IfFact branch = port.ifs().get(0);
+
+        assertEquals(List.of(port.moves().get(0).header().id()), ids(port.children(
+                branch.header().id(), CobolSemanticProduct.Branch.THEN)));
+        assertTrue(port.children(branch.header().id(),
+                CobolSemanticProduct.Branch.ELSE).isEmpty());
+        assertEquals(Optional.of(port.calls().get(0).header().id()), branch.continuation());
+        assertEquals(CobolSemanticProduct.ReadinessStatus.PARTIAL,
+                branch.header().readiness().cfg().status());
+        assertTrue(port.gaps().stream().anyMatch(gap ->
+                gap.statement().equals(branch.header().id())
+                        && gap.scope() == CobolSemanticProduct.GapScope.STRUCTURE
+                        && gap.code().equals("BRANCH_CONTENT_NOT_PROJECTED")));
     }
 
     @Test

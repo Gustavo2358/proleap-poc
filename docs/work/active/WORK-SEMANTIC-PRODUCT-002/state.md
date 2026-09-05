@@ -70,6 +70,11 @@ gap correspondente. `ExplorerMain` e o composition root continuam inalterados.
   sibling tipado ou a continuação do IF enclosing. Quando o próximo statement
   imediato está fora da capability atual, publica
   `CONTINUATION_NOT_PROJECTED` em vez de saltá-lo ou inferir successor.
+- Completude dos branches é independente da continuation. Se THEN ou ELSE contém
+  um filho direto fora do inventário CP4, os filhos suportados continuam
+  publicados, mas o IF recebe `BRANCH_CONTENT_NOT_PROJECTED` e CFG readiness
+  `PARTIAL`. Somente uma lista AST realmente vazia representa ramo vazio sem esse
+  gap.
 - Ramo falso vazio continua sendo uma coleção vazia com continuation
   conservadora. `explicitlyTerminated` preserva apenas termination do IF; não há
   `elsePresent`, `hasElse` ou tentativa de distinguir ELSE ausente de ELSE vazio.
@@ -110,6 +115,9 @@ gap correspondente. `ExplorerMain` e o composition root continuam inalterados.
   continuation do último IF permanece explicitamente incompleta porque seu
   próximo sibling é DISPLAY, família reservada ao CP5. Uma regressão separada
   preserva `UNKNOWN` para dois MOVE e um CALL diretamente sob PERFORM inline.
+  Adversariais com DISPLAY e PERFORM como filhos diretos de IF provam que esses
+  branches não parecem vazios/CFG-ready e que fatos MOVE suportados coexistentes
+  permanecem disponíveis.
   Os gates `docs`, `architecture`, `fast`, `semantic`, `performance` e `full`
   passam no fechamento do CP4.
   AST, grammar, symbols, occurrences, resolution, report, `ExplorerMain`,
@@ -145,6 +153,10 @@ gap correspondente. `ExplorerMain` e o composition root continuam inalterados.
   Ela não autoriza saltar um sibling ainda não projetado. O DISPLAY posterior ao
   último IF do oracle torna essa continuation incompleta no CP4, sem impedir a
   reconstrução dos branches nem antecipar o inventário do CP5.
+- Continuation exata não prova que THEN/ELSE estejam completos. O CP4 precisa
+  comparar as listas tipadas de filhos diretos com o inventário publicado e
+  localizar a incompletude no IF; isso distingue ramo genuinamente vazio de ramo
+  que apenas não possui fact para DISPLAY/PERFORM, sem projetar essas famílias.
 - Algumas referências de condição resolvem para entidades fora do namespace DATA
   representável por `ConditionSurface`; o IF estrutural continua publicado e
   recebe `CONDITION_REFERENCE_KIND_NOT_PROJECTED`, sem fabricar `DataItemId` ou
