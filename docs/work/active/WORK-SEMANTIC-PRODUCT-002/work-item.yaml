@@ -114,8 +114,8 @@ test_scope:
   - src/test/java/io/github/gustavo2358/cobolexplorer/SemanticProductBoundaryCheckpoint3BTest.java
   - src/test/java/io/github/gustavo2358/cobolexplorer/SemanticProductMoveCallAdapterTest.java
   - src/test/java/io/github/gustavo2358/cobolexplorer/semanticproduct/
-  - planned:src/test/java/io/github/gustavo2358/cobolexplorer/SemanticProductTargetModelOracleTest.java
-  - planned:src/test/resources/cobol/semantic/semantic-product-lowering-readiness.cbl
+  - src/test/java/io/github/gustavo2358/cobolexplorer/SemanticProductTargetModelOracleTest.java
+  - src/test/resources/cobol/semantic/semantic-product-lowering-readiness.cbl
 must_not_change:
   - src/main/antlr4/**
   - AST, grammar, symbol table, occurrence collector, nominal resolver and existing parser behavior

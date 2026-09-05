@@ -2,12 +2,11 @@
 
 ## Onde estamos
 
-Os seis checkpoints da migração documental foram executados no PR #27, que
-permanece sob review. O target de produção deixou de ser o fixture singleton e
-passou a ser uma `ProgramUnit` com todas as ocorrências semanticamente cobertas
-de DATA, MOVE literal, CALL variável e IF/ELSE, mais inventário explícito de
-constructs observados que sejam partial, unsupported ou bloqueados por input
-ausente.
+Os seis checkpoints da migração documental e o Checkpoint 1 corretivo foram
+executados no PR #27, que permanece sob review. O oracle test-only agora
+falsifica uma `ProgramUnit` com todas as ocorrências semanticamente cobertas de
+DATA, MOVE literal, CALL variável e IF/ELSE, mais inventário explícito de um
+construct observado fora da capability.
 
 ADR-0013 e INV-SP-001–006 fixam a direção durável. `spec.md`, `plan.md` e
 `eval.md` descrevem a correção em oito checkpoints independentes. O mapa de
@@ -15,11 +14,13 @@ migração e o documento de direção transitório foram retirados da árvore
 publicada no commit `82030b0`; a auditoria item a item que precedeu a remoção
 permanece rastreável no commit `41e47d0`.
 
-Esta migração e os ajustes de review são somente harness/documentação. A
-implementação continua no estado anterior ao contrato corrigido: nenhum Java,
-fixture ou teste do Semantic Product foi alterado. O próximo trabalho autorizado
-é o Checkpoint 1 do `plan.md`: um oracle executável, test-only, do target model,
-sem alteração de produção.
+`SemanticProductTargetModelOracleTest`, seu fixture e os tipos próprios de
+target/consumer existem somente em `src/test`. A implementação de produção
+continua no estado anterior ao contrato corrigido: nenhum `src/main` foi
+alterado e o oracle permanece deliberadamente desconectado do state/port
+singleton. Nenhum checkpoint de produção está autorizado por esta execução;
+após review humano, o próximo checkpoint planejado é o Checkpoint 2 do
+`plan.md`.
 
 ## Verde conhecido
 
@@ -29,6 +30,19 @@ sem alteração de produção.
 - O fixture mínimo continua provando, como caso N=1, uma DATA, um MOVE literal,
   um CALL variável, binding nominal comum, provenance, ordering e runtime
   target `UNKNOWN` com `DYNAMIC_CALL_TARGET_VALUE_UNKNOWN`.
+- O novo fixture de target prova 3 DATA, 6 MOVE literal, 3 CALL variáveis, 2 IF
+  aninhados com statements nos dois ramos e 1 CALL literal observado fora da
+  capability. Seu inventário contém 12 statements, sem seleção first/last nem
+  paridade artificial entre MOVE e CALL.
+- O consumer test-only conhece somente o port target plural. Ele reconstrói
+  identities namespaced, program points, containment, branches, continuations,
+  identities próprias dos operands, condição relacional tipada, roles, binding,
+  provenance, coverage, gaps e as três dimensões de readiness, sem publicar IR,
+  CFG, reachability, reaching definitions ou possible-values.
+- O oracle preserva `MOVE 'B'` e `MOVE 'C'` nos ramos do IF, ambos ligados a
+  `WS-X`, e `CALL WS-X` como continuação. Essa é a informação necessária para o
+  futuro oracle de reaching definitions; nenhum conjunto RD é calculado neste
+  checkpoint.
 - `CobolSemanticPort` consulta somente o state publicado; a boundary atual não
   expõe parser, AST, symbols, occurrences, resolution ou presentation.
 - `SemanticProductMoveCallContractTest` protege closure, imutabilidade,
@@ -45,22 +59,22 @@ sem alteração de produção.
 - Não há composition-root publication nem JSON do Semantic Product em
   produção. Lowering, Analysis IR, CFG, effects/storage e dataflow também não
   estão implementados por este work item.
-- O fechamento da migração e estes ajustes de review foram verificados por
-  `git diff --check` e `./scripts/harness/check-full.sh`; a lista integral dos
-  destinos auditados permanece no commit `41e47d0`.
+- O oracle focalizado, todas as regressões `SemanticProduct*Test`, os gates de
+  arquitetura, performance e `full`, além de `git diff --check`, passam. A
+  lista integral dos destinos da migração documental permanece no commit
+  `41e47d0`.
 
 ## Restante
 
-- Obter aprovação do review documental do PR #27; os quatro ajustes solicitados
-  foram incorporados, os transitórios já foram removidos e a auditoria
-  permanece no histórico Git.
-- Executar, como próximo trabalho autorizado, o Checkpoint 1 corretivo:
-  fixture e oracle/consumer test-only do target model com multiple
-  DATA/MOVE/CALL, IF/ELSE, nesting, incompletude e readiness.
-- Executar os Checkpoints 2–8 do `plan.md` somente na ordem registrada, com a
-  evidência do anterior e a autorização aplicável. Eles remodelam A2+B,
-  corrigem projection, acrescentam IF/coverage, integram o composition root,
-  provam lowering-readiness, publicam JSON por último e fecham o handoff.
+- Obter review humano do Checkpoint 1 no PR #27. O oracle está executável, mas
+  não é contrato de produção nem autorização implícita para remodelá-lo.
+- Mediante autorização posterior, executar o Checkpoint 2 do `plan.md`:
+  remodelar o core A2+B para cardinalidade e extensão até satisfazer a parte
+  boundary-only do oracle, sem iniciar projection ou IF facts de produção.
+- Executar os Checkpoints 3–8 somente na ordem registrada, com a evidência do
+  anterior e a autorização aplicável. Eles corrigem projection, acrescentam
+  IF/coverage, integram o composition root, provam lowering-readiness, publicam
+  JSON por último e fecham o handoff.
 - Manter EVALUATE, PERFORM, GO TO, terminal semantics, ALTER, SEARCH,
   CobolLower, IR, CFG e dataflow em backlog até seus pré-requisitos e work
   items próprios.
@@ -73,6 +87,14 @@ sem alteração de produção.
 - `CobolSemanticProduct.State` ainda contém `MoveFact move`, `CallFact call` e
   `Ordering ordering`; `CobolSemanticPort` ainda publica `move()`, `call()` e
   `ordering()`. Isso é estado implementado, não arquitetura desejada.
+- O frontend atual aceita o fixture controlado e publica a evidência tipada para
+  3 DATA, 6 MOVE, 3 CALL variáveis, 1 CALL literal e 2 IF aninhados. Não surgiu
+  gap novo de AST/binding para este oracle; o adapter de produção o rejeita no
+  guard existente `the selected unit must contain exactly one MOVE`.
+- O CALL literal é mantido no target inventory como `UNSUPPORTED` pela
+  capability inicial, com gap localizado. Os 6 MOVE, 3 CALL variáveis e os
+  facts estruturais continuam disponíveis, e a summary global fica `BLOCKED`
+  em vez de aparentar completude.
 - `CobolMoveCallAdapter` ainda usa `single(...)`, exige exatamente um MOVE, um
   CALL e um target por statement, além de exigir o mesmo `DataItemId` no par.
   O Checkpoint 3 corretivo precisa substituir seleção por publicação de todas as
