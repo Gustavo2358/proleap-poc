@@ -51,6 +51,34 @@ class SemanticProductMoveCallContractTest {
     }
 
     @Test
+    void literalKindDistinguishesNumericFromAlphanumericAfterTheBoundary() {
+        CobolSemanticProduct.StatementId numericMove = statementId(20);
+        CobolSemanticProduct.StatementId alphanumericMove = statementId(21);
+        CobolSemanticProduct.State state = new CobolSemanticProduct.State(
+                UNIT, CobolSemanticProduct.Policy.unspecified(),
+                List.of(declaration(WS_PGM, "WS-PGM", "X(8)")),
+                List.of(
+                        move(numericMove, CobolSemanticProduct.LiteralKind.NUMERIC,
+                                "1", WS_PGM, CobolSemanticProduct.Containment.root()),
+                        move(alphanumericMove, CobolSemanticProduct.LiteralKind.ALPHANUMERIC,
+                                "1", WS_PGM, CobolSemanticProduct.Containment.root())),
+                List.of(),
+                coverage(CobolSemanticProduct.InventoryStatus.COMPLETE,
+                        2, 2, 0, 0, 0, modeledReadiness()));
+
+        List<CobolSemanticProduct.LiteralSource> sources = CobolSemanticPort.open(state)
+                .moves().stream().map(CobolSemanticProduct.MoveFact::source).toList();
+
+        assertEquals(List.of("1", "1"), sources.stream()
+                .map(CobolSemanticProduct.LiteralSource::value).toList());
+        assertEquals(List.of(CobolSemanticProduct.LiteralKind.NUMERIC,
+                        CobolSemanticProduct.LiteralKind.ALPHANUMERIC),
+                sources.stream().map(CobolSemanticProduct.LiteralSource::kind).toList());
+        assertNotEquals(sources.get(0).kind(), sources.get(1).kind(),
+                "equal normalized values must retain distinct literal semantics");
+    }
+
+    @Test
     void structuralIfFactsExposeContainmentNestingEmptyBranchesAndContinuation() {
         CobolSemanticPort port = CobolSemanticPort.open(pluralState());
         CobolSemanticProduct.StatementId outer = statementId(1);
@@ -369,9 +397,18 @@ class SemanticProductMoveCallContractTest {
             CobolSemanticProduct.StatementId id, String value,
             CobolSemanticProduct.DataItemId target,
             CobolSemanticProduct.Containment containment) {
+        return move(id, CobolSemanticProduct.LiteralKind.ALPHANUMERIC,
+                value, target, containment);
+    }
+
+    private static CobolSemanticProduct.MoveFact move(
+            CobolSemanticProduct.StatementId id,
+            CobolSemanticProduct.LiteralKind literalKind, String value,
+            CobolSemanticProduct.DataItemId target,
+            CobolSemanticProduct.Containment containment) {
         return new CobolSemanticProduct.MoveFact(
                 header(id, containment, CobolSemanticProduct.CoverageStatus.MODELED,
-                        modeledReadiness()), literal(id, value),
+                        modeledReadiness()), literal(id, literalKind, value),
                 reference(id, 1, target, CobolSemanticProduct.OperandRole.WRITE));
     }
 
@@ -432,8 +469,14 @@ class SemanticProductMoveCallContractTest {
 
     private static CobolSemanticProduct.LiteralSource literal(
             CobolSemanticProduct.StatementId id, String value) {
+        return literal(id, CobolSemanticProduct.LiteralKind.ALPHANUMERIC, value);
+    }
+
+    private static CobolSemanticProduct.LiteralSource literal(
+            CobolSemanticProduct.StatementId id,
+            CobolSemanticProduct.LiteralKind kind, String value) {
         return new CobolSemanticProduct.LiteralSource(operandId(id, 0),
-                value, PROVENANCE);
+                kind, value, PROVENANCE);
     }
 
     private static CobolSemanticProduct.DataReference reference(

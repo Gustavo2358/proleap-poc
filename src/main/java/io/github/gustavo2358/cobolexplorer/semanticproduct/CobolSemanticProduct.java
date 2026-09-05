@@ -45,6 +45,9 @@ public final class CobolSemanticProduct {
 
     public enum OperandRole { READ, WRITE, CALL_TARGET }
 
+    /** Literal category is semantic input; consumers must not recover it from value text. */
+    public enum LiteralKind { ALPHANUMERIC, NUMERIC }
+
     public enum CallSyntax { IDENTIFIER_OR_EXPRESSION }
 
     /** Runtime values are outside nominal binding and this checkpoint. */
@@ -292,9 +295,11 @@ public final class CobolSemanticProduct {
         }
     }
 
-    public record LiteralSource(OperandId id, String value, Provenance provenance) {
+    public record LiteralSource(OperandId id, LiteralKind kind, String value,
+                                Provenance provenance) {
         public LiteralSource {
             id = Objects.requireNonNull(id, "id");
+            kind = Objects.requireNonNull(kind, "kind");
             value = Objects.requireNonNull(value, "value");
             provenance = Objects.requireNonNull(provenance, "provenance");
         }

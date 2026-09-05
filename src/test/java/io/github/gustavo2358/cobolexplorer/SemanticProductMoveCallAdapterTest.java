@@ -63,6 +63,8 @@ class SemanticProductMoveCallAdapterTest {
                 move.target().binding().status());
         assertEquals(CobolSemanticProduct.ResolutionStatus.RESOLVED,
                 call.operand().binding().status());
+        assertEquals(CobolSemanticProduct.LiteralKind.ALPHANUMERIC,
+                move.source().kind());
         assertEquals("PGMA", move.source().value());
         assertEquals(CobolSemanticProduct.CallSyntax.IDENTIFIER_OR_EXPRESSION,
                 call.syntax());
@@ -130,6 +132,18 @@ class SemanticProductMoveCallAdapterTest {
     }
 
     @Test
+    void compatibilityBridgeFailsClosedInsteadOfMisclassifyingNumericLiteral() {
+        FrontendAnalysis frontend = analyze(SOURCE.replace(
+                "MOVE 'PGMA' TO WS-PGM.", "MOVE 1 TO WS-PGM."));
+
+        IllegalArgumentException error = assertThrows(IllegalArgumentException.class,
+                () -> project(frontend));
+
+        assertEquals("the compatibility bridge supports only quote-delimited "
+                + "alphanumeric literals", error.getMessage());
+    }
+
+    @Test
     void canonicalNamespaceMismatchFailsInsteadOfJoiningBySameName() {
         FrontendAnalysis frontend = analyze();
         ReferenceResolution.Entry originalCall = frontend.resolution().entries().stream()
@@ -194,9 +208,13 @@ class SemanticProductMoveCallAdapterTest {
     }
 
     private static FrontendAnalysis analyze() {
+        return analyze(SOURCE);
+    }
+
+    private static FrontendAnalysis analyze(String source) {
         GrammarBinding grammar = Bindings.cobol();
         SourceNormalizer.Result normalized = SourceNormalizer.normalize(
-                SOURCE, SOURCE_NAME, SourceNormalizer.SourceFormat.FIXED);
+                source, SOURCE_NAME, SourceNormalizer.SourceFormat.FIXED);
         PreprocessorEngine.Outcome preprocessed;
         try {
             preprocessed = new PreprocessorEngine(grammar, new CopybookLibrary(Path.of(

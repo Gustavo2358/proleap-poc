@@ -138,7 +138,8 @@ public final class CobolMoveCallAdapter {
                 header(moveId, movePoint, moveProvenance, moveReadiness()),
                 new CobolSemanticProduct.LiteralSource(
                         new CobolSemanticProduct.OperandId(moveId, 0),
-                        literal.value(), provenance(literal.meta().provenance())),
+                        bridgeLiteralKind(literal), literal.value(),
+                        provenance(literal.meta().provenance())),
                 new CobolSemanticProduct.DataReference(
                         new CobolSemanticProduct.OperandId(moveId, 1),
                         CobolSemanticProduct.OperandRole.WRITE, moveBinding, moveProvenance));
@@ -323,6 +324,17 @@ public final class CobolMoveCallAdapter {
                 "the narrow slice does not project an unrepresentable resolution reason");
         return CobolSemanticProduct.NominalBinding.resolved(
                 dataItem, candidate.canonicalName());
+    }
+
+    private static CobolSemanticProduct.LiteralKind bridgeLiteralKind(
+            Ast.LiteralExpression literal) {
+        String lexeme = Objects.requireNonNull(literal.rawLexeme(), "literal rawLexeme");
+        boolean quoteDelimited = lexeme.length() >= 2
+                && (lexeme.charAt(0) == '\'' || lexeme.charAt(0) == '"')
+                && lexeme.charAt(lexeme.length() - 1) == lexeme.charAt(0);
+        require(quoteDelimited,
+                "the compatibility bridge supports only quote-delimited alphanumeric literals");
+        return CobolSemanticProduct.LiteralKind.ALPHANUMERIC;
     }
 
     private static CobolSemanticProduct.StatementHeader header(

@@ -40,9 +40,13 @@ IF projection neste checkpoint.
   effects/dataflow acima do fact individual mais fraco.
 - CALL variável continua com runtime target `UNKNOWN` e gap localizado;
   binding nominal não se torna target de runtime nem storage identity.
+- `LiteralSource` preserva `LiteralKind` no core. Um teste direto atravessa o
+  port com numeric `1` e alphanumeric `'1'`, ambos com value `"1"`, e
+  prova que continuam semanticamente distinguíveis sem AST, raw text ou PIC.
 - O caso original DATA + MOVE literal + CALL variável continua coberto como
   regressão N=1, com provenance, policy e handles determinísticos no contexto
-  equivalente. A bridge marca seu inventário agregado como `PARTIAL`.
+  equivalente. A bridge transporta explicitamente o kind `ALPHANUMERIC` desse
+  literal e marca seu inventário agregado como `PARTIAL`.
 - O gate de arquitetura inspeciona explicitamente os tipos do core/port e agora
   bloqueia também dependência no `CobolMoveCallAdapter` e em áreas futuras de
   projection/adapter, além de frontend e ANTLR.
@@ -77,8 +81,11 @@ IF projection neste checkpoint.
   provenance. Predicate normalization continua produto pós-binding futuro; o
   CP2 não afirma semântica de condição que o frontend ainda não publicou.
 - A bridge N=1 mantém todos os guards do adapter atual, inclusive exatamente um
-  MOVE/CALL/target, DATA comum e MOVE anterior ao CALL. Ela não classifica
-  novamente o literal nem eleva seu inventário estreito a completo. O CP3 deve
-  remover essa bridge ao corrigir a projection.
+  MOVE/CALL/target, DATA comum e MOVE anterior ao CALL. Como o frontend atual
+  não publica um kind tipado no `Ast.LiteralExpression`, a bridge aceita somente
+  sua shape histórica quote-delimited e a transporta como `ALPHANUMERIC`; uma
+  source numeric falha fechada em vez de ser classificada por value ou PIC. O
+  core já representa `NUMERIC`; o CP3 deve remover a bridge e projetar apenas os
+  kinds sustentados por autoridade canônica, localizando os demais como gap.
 - O adapter ainda cria localmente o gap/readiness do CALL dinâmico; essa dívida
   preexistente continua reservada ao CP3, que deverá consumir o report canônico.
