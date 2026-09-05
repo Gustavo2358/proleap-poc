@@ -1,236 +1,204 @@
-# Eval da implementação do primeiro Semantic Product
+# Eval do Semantic Product extensível e lowering-ready
 
 ## O que prova corretude
 
-O trabalho é correto quando, para a classe de entrada suportada, um adapter
-COBOL-specific constrói uma publicação A2 fechada e um consumer independente
-reconstrói o slice somente pela facade B. A publicação deve preservar a
-identidade namespaced da DATA, o `PIC`, o literal do `MOVE`, a ligação do target
-do `MOVE` com o operando do `CALL`, o ordering observado, provenance, policy e
-status de análise. Deve afirmar nominal binding conhecido somente onde há
-candidate único e deve publicar `UNKNOWN`/uncertainty para o target de runtime.
+O work item é correto quando um consumer independente, conhecendo somente o
+port A2+B, reconstrói todas as ocorrências cobertas de uma `ProgramUnit` com
+multiple DATA, multiple MOVE, multiple CALL e IF/ELSE nested, sem parser, AST,
+symbols, occurrences, resolver, report ou presentation. A reconstrução preserva
+identity, structure, branches, program points, operands, roles, nominal binding,
+provenance, coverage, unknowns e readiness por construct.
 
-Em checkpoint posterior, a projeção de transporte também será correta quando
-um JSON output adapter separado consumir somente
-`CobolSemanticState`/`CobolSemanticPort` e produzir `semantic-product.json` de
-modo determinístico. A mesma combinação de entrada normalizada/preprocessada,
-configuração efetiva/policy, versão do analisador e versão do contrato deve gerar
-a mesma projeção observável, semanticamente suficiente para o slice, versionável,
-documentada e consumível sem executar o frontend. O artefato deve atender tanto
-inspeção/debug quanto desenvolvimento isolado do futuro `CobolLower`, sem fazer
-do JSON o produto, um modelo de domínio ou um schema público.
+O oracle arquitetural primário é:
 
-Para este eval, execuções equivalentes usam a mesma entrada
-normalizada/preprocessada, a mesma configuração efetiva/policy, a mesma versão
-do analisador e a mesma versão do contrato. Nessa condição, a projeção deve
-reproduzir `UnitId`, `DataItemId` e os demais handles transportados, além de seus
-valores e ordem, o suficiente para produzir JSON determinístico. Isso é
-reprodutibilidade de transporte, não identidade persistente: não há garantia de
-preservar esses handles depois de edição do código, mudança estrutural, nova
-versão do analisador ou nova versão do contrato.
+```cobol
+01 WS-X PIC X(8).
+01 FLAG PIC 9.
 
-O oracle principal já foi executado no Checkpoint 3B e está em
-`docs/history/evidence/semantic-product-boundary-checkpoint-3b.md`; a
-implementação de produção precisa reproduzir sua propriedade sem copiar a
-boundary test-only como API. Os evals existentes listados no `work-item.yaml`
-continuam sendo os contratos executáveis das fases de entrada.
+MOVE 'A' TO WS-X.
+IF FLAG = 1
+    MOVE 'B' TO WS-X
+ELSE
+    MOVE 'C' TO WS-X
+END-IF.
+CALL WS-X.
+```
 
-## Oracle de review humano
+O fixture executável deve acrescentar ao menos outra ocorrência relevante ou IF
+nested para falsificar limites acidentais de `1`. O consumer não calcula CFG,
+reaching definitions nem values. Ele prova que um futuro lowerer poderá
+representar store/branch/call e que a cadeia posterior poderá concluir, sem
+reinterpretar COBOL:
 
-O reviewer deve tratar cada resposta como PASS/FAIL e exigir evidência
-localizável no diff ou nos testes. O slice só passa quando todas forem PASS:
+```text
+RD(CALL, WS-X) = { MOVE 'B' TO WS-X, MOVE 'C' TO WS-X }
+possible values at CALL = { "B", "C" }
+```
 
-1. Os tipos no port pertencem à boundary e não são aliases, wrappers
-   transparentes ou referências retidas de AST, symbols, occurrences,
-   resolution, ANTLR, snapshots ou composition root.
-2. A construção é materializada antes de o consumer consultar o port; nenhuma
-   query executa análise lazy, faz reparse ou depende da ordem de queries.
-3. O join comum entre `MOVE` e `CALL` usa identidade namespaced e candidate
-   DATA, e não nome escrito, linha, posição, primeiro candidato ou `Ast.Meta.id`
-   isolado.
-4. O reviewer consegue apontar onde o contrato distingue binding nominal,
-   ordering observado e target de runtime. Ver `PGMA` como target concreto é
-   FAIL, mesmo para a fixture linear.
-5. Unknown e partial permanecem informação positiva e localizada: nenhum
-   campo ausente é reinterpretado como lista vazia, nenhum ambiguity é
-   colapsado e nenhum gap é escondido para elevar readiness.
-6. Provenance/exactness/include chain e policy `UNSPECIFIED` continuam
-   observáveis sem exigir o `SourceMap` inteiro ou options raw inexistentes.
-7. O diff não antecipa `CobolLower`, IR, CFG, dataflow, possible-values,
-   dependency extraction, serializer/framework genérico, schema público de
-   interchange, outra construção ou outra linguagem. `semantic-product.json`
-   só é produzido no checkpoint posterior pelo JSON output adapter do frontend;
-   permanece fora do state/port e do core do `CobolLower`. O contrato pode ser
-   consumido, no futuro, pelo JSON input adapter do repositório do lowerer, que o
-   traduzirá para `LowererInputPort`; esse adapter e o port ainda não são
-   implementados neste work item.
+Correctness também exige que cada construct seja avaliado nas nove dimensões
+da spec: surface, identity, structure, nominal binding, CFG readiness,
+effects/dataflow readiness, unknowns, provenance e coverage. Um PASS estrutural
+não autoriza elevar predicate, CFG ou effects a completos.
 
-Uma resposta “não demonstrado” é finding, não aprovação condicional. Se surgir
-um finding semântico novo, o reviewer deve classificá-lo pela taxonomia
-`downstream_impact` antes de propor qualquer correção; este work item não
-autoriza expandir seu escopo para resolvê-lo.
+Os testes atuais de singleton permanecem regressão do estado implementado até
+o checkpoint que os migra. Eles não provam cardinalidade/extensibilidade. O
+novo oracle do target model é o próximo checkpoint autorizado e deve ser criado
+sem mudar produção; checkpoints seguintes fazem a implementação satisfazê-lo em
+slices revisáveis.
 
 ## Classes positivas
 
-- O consumer obtém uma unit namespaced e um `DataItemId` boundary-owned; o
-  mesmo handle aparece no target do `MOVE` e no operando do `CALL`.
-- `WS-PGM`, `PIC X(8)`, literal `PGMA`, provenance da declaração/literal/
-  statements e exactness são publicados por fatos tipados.
-- A sintaxe `IDENTIFIER_OR_EXPRESSION` do `CALL` atravessa como chamada
-  variável; binding DATA é `COMPLETE`, mas `runtimeTarget` é `UNKNOWN`.
-- `DYNAMIC_CALL_TARGET_VALUE_UNKNOWN` permanece localizado no `CALL`, sem
-  reduzir ou apagar o binding nominal conhecido.
-- `MOVE` precede `CALL` por ordering/program points explícitos. O consumer não
-  precisa de parse tree, grammar metadata, snapshots ou texto semântico.
-- O estado é construído uma vez, todas as coleções expostas são imutáveis, o
-  port é query-only e o consumer continua operando depois de o frontend ser
-  liberado.
-- Execuções equivalentes produzem os mesmos valores, handles transportados e a
-  mesma ordem; essa reprodutibilidade de transporte não transforma `UnitId`,
-  `DataItemId` ou outros handles em identidades persistentes.
-- A policy normalizada mantém opções ausentes como `UNSPECIFIED` e não trata a
-  falta delas como licença para inventar linkage ou target.
-- O estado A2, a facade B e o consumer não carregam referências de frontend,
-  ANTLR, presentation, serializer ou provider lazy.
-- No checkpoint posterior, o JSON output adapter recebe somente state/port
-  tipado e repete a mesma projeção, inclusive IDs, para execuções equivalentes,
-  sem timestamp, ordem incidental de mapa, identidade de objeto ou metadata de
-  ambiente. O artefato preserva ordering, provenance e
-  UNKNOWN/partial/incompleteness, pode ser usado sem executar o frontend e é
-  adequado a fixtures, testes, debug e desenvolvimento independente.
-- O futuro JSON input adapter do lowerer traduz o artefato para
-  `LowererInputPort`; o core do lowerer não conhece JSON. A integração final
-  pode trocar esse adapter por um adapter in-memory que liga
-  `CobolSemanticPort` ao mesmo port, sem alterar nenhum dos cores.
+| ID local | Classe | Propriedade observável |
+| --- | --- | --- |
+| SP-P01 | N DATA suportadas | Todas as declarations cobertas têm `DataItemId` namespaced, atributos disponíveis, provenance e coverage; nenhuma é escolhida apenas por participar do primeiro MOVE/CALL. |
+| SP-P02 | N MOVE literal → DATA | Cada ocorrência tem statement identity, program point, literal/target, role de write, binding e provenance próprios. |
+| SP-P03 | N CALL identifier/expression | Cada ocorrência preserva operando/binding DATA e runtime target `UNKNOWN`; não precisa parear com MOVE específico. |
+| SP-P04 | IF com ELSE | Condition surface, THEN, ELSE, children, nesting, termination e join/fallthrough estrutural são reconstruíveis. |
+| SP-P05 | IF sem ELSE | A ausência de ELSE é explícita e o successor falso conservador pode ser reconstruído como fallthrough, sem branch inventada. |
+| SP-P06 | Statements antes/dentro/depois de branches | Um inventário único preserva containment e ordem estrutural sem confundir com execution order. |
+| SP-P07 | Supported + partial coexistem | Facts suportados permanecem disponíveis e o statement parcial aparece no inventário/coverage com motivo. |
+| SP-P08 | Consumer boundary-only | Um fake lowerer produz uma representação equivalente do slice sem imports ou objetos do frontend. |
+| SP-P09 | Readiness dimensional | DATA/MOVE/CALL/IF publicam claims coerentes de lowering/CFG/effects conforme a matriz da spec, sem alegar as fases futuras. |
+| SP-P10 | Transporte posterior | Depois dos demais checkpoints, JSON reproduz state/port extensível, inclusive gaps/readiness, em ordem determinística. |
+
+Para counts exatos, a fixture mínima controlada é autoridade: se ela escreve
+quatro MOVE e dois CALL suportados, o oracle exige quatro e dois. Isso é
+consistência da fixture, não limite global de cardinalidade.
 
 ## Classes negativas
 
-- Publicar `PGMA` como `runtimeTarget` do `CALL WS-PGM`, ou criar uma lista de
-  possible-values a partir do `MOVE` e da ordem linear.
-- Juntar referências por nome escrito, nome terminal, linha, posição ou
-  `Ast.Meta.id` sem namespace; escolher o primeiro candidate; descartar
-  candidates em ambiguity.
-- Reparsear `writtenText`, `grammarRule`, HTML/JS ou snapshots para recuperar
-  literal, papel ou ordering.
-- Expor `Ast`, `ParseTree`, `SymbolTable`, `ReferenceResolution`,
-  `ResolutionAnalysisReport`, `SourceMap` ou índices no port, ou manter um
-  desses objetos vivo para responder query.
-- Representar `UNKNOWN`, input missing, unsupported, unresolved ou ambiguity
-  por lista vazia, exception genérica ou claim `COMPLETE`.
-- Anotar/mutar produtos anteriores, colocar JSON no state/port, fazer o core do
-  lowerer conhecer JSON, criar serializer/framework genérico ou schema público
-  de interchange, alterar grammar, implementar lowerer, CFG, dataflow ou
-  generalizar o produto para outros constructs/linguagens.
+- `State.move()`, `State.call()` ou campo singleton equivalente como envelope
+  desejado de produção.
+- Projector usando `single(...)`, `findFirst()`, primeiro/último match ou par
+  MOVE→CALL como filtro de uma unit.
+- Adicionar `if`, `evaluate`, `perform` ou outro campo singular a cada família.
+- Omitir statement partial/unsupported e ainda publicar summary completa.
+- Tratar coleção vazia como prova simultânea de capability disponível e nenhum
+  statement, sem availability/coverage.
+- Usar `writtenText`, `grammarRule`, linha ou nome como fonte de structure,
+  role, binding ou join.
+- Fazer o projector resolver nomes, selecionar candidate, recalcular gap do
+  report, inferir runtime target ou construir mini-dataflow.
+- Expor AST, ParseTree, SymbolTable, occurrences, resolution, report,
+  `SourceMap`, snapshots ou `ExplorerMain` pela boundary/port.
+- Tratar program point como execution order, reachability ou edge de CFG.
+- Marcar IF como predicate completo ou escolher THEN/ELSE por valor presumido.
+- Tratar `DataItemId` como storage region independente ou ignorar aliases.
+- Congelar JSON singleton antes de state/consumer corretos, ou anunciar handles
+  determinísticos como identidade persistente.
 
 ## Classes ambíguas
 
-- Nome e organização dos arquivos Java da boundary podem variar, mas a
-  ownership, os papéis e as dependências do contrato não.
-- A implementação pode usar um root com records aninhados ou tipos separados;
-  ambos são válidos somente se o port expuser tipos próprios, imutáveis e
-  namespaced.
-- Uma API pode devolver fatos diretamente ou views tipadas; não é válido decidir
-  essa forma adicionando internals, reflection ou bag dinâmico.
-- O `ProgramPoint` do slice pode ser chamado de ordinal/source order, desde que
-  não seja apresentado como ordem de execução ou CFG.
-- A policy e a claim global podem ser expostas como core ou capability do
-  estado, desde que a ausência seja explícita e fique coerente na publicação.
-- Os tipos `ExperimentalCobolMoveCallBoundary` e
-  `ExperimentalCobolMoveCallConsumer` servem como oracles de Discovery; não
-  são uma especificação de nomes nem uma autorização para reutilizá-los em
-  produção.
+- **Flat, hierárquico ou híbrido:** todos podem passar se branches/nesting forem
+  reconstruíveis por relações tipadas e identities, com lookup determinístico;
+  posição incidental ou duplicação de statement falha.
+- **Records aninhados ou tipos separados:** ambos são válidos se preservarem
+  ownership, imutabilidade, extension typing e port estreito.
+- **Taxonomia nominal de readiness:** nomes concretos podem variar; precisam
+  distinguir pelo menos suficiente, partial, blocked e not-applicable, declarar
+  claim scope e impedir promoção silenciosa.
+- **Condition surface parcial:** IF pode ser estruturalmente CFG-ready enquanto
+  predicate/effects permaneçam partial. Isso é combinação explícita, não FAIL
+  automático nem claim completa.
+- **DATA publicada:** declarations independentes podem ser mais amplas que as
+  usadas por MOVE/CALL desde que a regra seja determinística e toda entry da
+  capability seja classificada; selecionar apenas a primeira ou só a
+  declaration comum falha.
+- **CALL literal:** permanece fora da capability inicial de CALL variável, mas
+  sua ocorrência observada precisa aparecer como partial/unsupported ou fact
+  canônico explicitamente classificado; não pode sumir.
+- **Zero ocorrências:** é sucesso somente quando a capability foi produzida e o
+  inventário prova zero; capability unavailable/blocked é outro estado.
 
 ## Casos adversariais
 
-- A fixture `MOVE 'PGMA' TO WS-PGM` / `CALL WS-PGM` deve falhar uma mutação que
-  converta o literal em target final, mesmo com ordering linear.
-- Construir o estado diretamente, sem frontend, e consumi-lo pela facade deve
-  produzir o mesmo shape e deve continuar válido após liberar referências ao
-  frontend.
-- Tentar mutar as listas retornadas por state e port deve falhar; chamar as
-  queries em ordens diferentes não pode mudar valores, ordering ou status.
-- Repetir a análise em uma execução equivalente deve preservar IDs, valores,
-  ordem e joins; uma execução posterior com edição do código, mudança estrutural
-  ou versão diferente não tem garantia de preservar os mesmos handles.
-- Alterar apenas a policy ausente deve manter o binding DATA e tornar somente
-  facts dependentes da policy `UNSPECIFIED`/`UNKNOWN`.
-- Montar candidate ambiguity, unresolved, unsupported ou input missing para um
-  uso do slice deve preservar status/reason/candidates e claim incompleta, sem
-  selecionar ou fabricar handle.
-- Remover a provenance exata ou trocar COPY disponível por input ausente deve
-  ser observável no status/anchor; fatos independentes não podem desaparecer.
-- Repetir o JSON output adapter com a mesma entrada
-  normalizada/preprocessada, configuração efetiva/policy, versão do analisador e
-  versão do contrato deve produzir `semantic-product.json` byte-a-byte/valor-a-
-  valor equivalente, incluindo os IDs transportados e a mesma ordem observável;
-  consultar o port em ordem diferente não pode alterar a projeção. O artefato
-  deve conter versão/shape documentados e ser suficiente para o slice sem
-  executar o frontend. Esse oracle pertence ao checkpoint posterior e não é
-  implementado neste Checkpoint 1. Isso não exige preservar handles entre
-  entradas editadas ou versões diferentes.
-- Um futuro JSON input adapter deve conseguir consumir o artefato fora do
-  frontend e produzir a entrada tipada do lowerer; a sua substituição pelo
-  adapter in-memory deve preservar o contrato do core e do `LowererInputPort`.
-  A implementação desses componentes pertence ao futuro repositório e não a
-  este work item.
-- Inspecionar bytecode e fonte da boundary/consumer deve detectar qualquer
-  dependência direta de frontend, ANTLR, `writtenText` ou `grammarRule`.
-- Uma entrada fora do slice, como `CALL 'PGMA'`, outro statement ou outra unit,
-  deve permanecer explicitamente fora do domínio/unsupported; sua aceitação não
-  pode surgir por fallback genérico.
+1. Intercalar dois MOVE e dois CALL para DATA diferentes; remover a exigência de
+   mesma identity entre um par específico sem perder os bindings individuais.
+2. Colocar MOVE antes do IF, nos dois branches, depois do IF e em IF nested;
+   exigir cada occurrence uma vez e containment correto.
+3. Inserir statement unsupported entre `MOVE` e `CALL`; facts adjacentes
+   continuam, mas coverage/readiness não alegam sequência completa.
+4. Usar IF sem ELSE e IF com ELSE vazio; distinguir as duas shapes sem inventar
+   reachability.
+5. Tornar uma condition reference ambiguous/unresolved; preservar candidates,
+   status e structure do IF sem escolher branch nem apagar children.
+6. Usar MOVE fora da capability inicial antes de um MOVE suportado; o projector
+   não pode selecionar somente o suportado e omitir o primeiro.
+7. Usar CALL variável sem MOVE anterior, com múltiplos MOVE possíveis e com
+   `VALUE` na declaration; runtime target continua `UNKNOWN` nos três casos.
+8. Construir duas units com local IDs iguais; todos os joins permanecem
+   namespaced e nenhum fact cruza a unit.
+9. Tornar COPY/provenance parcial; facts independentes continuam, exactness e
+   gap permanecem observáveis.
+10. Criar divergência controlada entre fact individual e summary do report; a
+    projeção falha fechada em vez de elevar claim ou recalcular o report.
+11. Inspecionar source/bytecode de boundary e consumer contra dependências de
+    frontend, ANTLR, presentation, `writtenText` e `grammarRule` semântico.
+12. Repetir a projeção equivalente e variar a ordem das queries do port; facts,
+    handles e ordem permanecem iguais.
+13. Editar a estrutura entre execuções; nenhum teste exige preservar handles da
+    execução anterior, evitando identidade persistente acidental.
+14. Desafiar readiness: IF com condition partial ainda enumera dois successors
+    estruturais; statement de fluxo unsupported não vira fallthrough.
+15. Desafiar effects: MOVE expõe source/target roles, IF expõe reads cobertos e
+    CALL expõe uso do operando; nenhum teste aceita `GEN/KILL` no produto ou
+    `DataItemId == StorageId`.
 
 ## Casos de regressão
 
-Os gates existentes devem continuar verdes para AST, pre-order, symbols,
-occurrences, resolução nominal, CALL semantics, coverage, provenance,
-classificação externa, snapshots, performance e architecture boundary. O
-consumer independente novo deve ser coberto por testes de contrato e não deve
-ser acoplado aos testes de presentation. O JSON output adapter posterior deve
-ter teste próprio de determinismo, suficiência e estados parciais, e não pode
-alterar os snapshots existentes.
-
-Evals canônicos relacionados:
-
-- `EVAL-AST-001`, `EVAL-AST-004`, `EVAL-AST-005` para surface, separação e
-  identidade estrutural;
-- `EVAL-PROV-001`, `EVAL-PROV-002`, `EVAL-COV-003` para provenance e análise
-  parcial;
-- `EVAL-UNIT-001`, `EVAL-SYM-001`, `EVAL-SYM-002` e
-  `EVAL-RES-DATA-001/002/003` para namespaces, declarations e joins;
-- `EVAL-RES-CALL-001/002` e `EVAL-RES-REPORT-001` para sintaxe, binding,
-  unknown e readiness;
-- `EVAL-RES-DET-001` e `EVAL-ARCH-001` para determinismo e leakage.
+- O fixture 3B continua provando DATA + MOVE literal + CALL variável, binding
+  nominal comum, provenance e runtime target `UNKNOWN`, agora como caso N=1.
+- Tests de imutabilidade/closure e consulta fora de ordem continuam verdes após
+  a migração para collections.
+- ADR-0004/EVAL-RES-CALL-002 continuam rejeitando target dinâmico derivado de
+  binding nominal, literal, `VALUE` ou ordem linear.
+- EVAL-AST-003/005 continuam protegendo structure, coverage e pre-order; o
+  Semantic Product não muda IDs da AST nem a usa como identidade persistente.
+- EVAL-COV-002/003 e EVAL-RES-REPORT-001 preservam unknown/input missing,
+  facts independentes e claim conservadora.
+- `Ast.IfStatement`, condition surface e occurrence traversal continuam
+  inalterados; F-01 e `ConditionSemantics` não são remediados neste item.
+- Architecture gate continua protegendo produtos existentes e passa a proteger
+  `boundary → frontend/projection` quando o package split for materializado.
+- Snapshots, HTML, CLI, grammar, fixtures/baselines existentes, AST, symbols,
+  occurrences e resolver permanecem semanticamente equivalentes.
 
 ## Propriedades/relações metamórficas
 
-- Mesma entrada normalizada e mesma policy produzem a mesma ordem de facts,
-  mesma relação `MOVE` → `CALL` e os mesmos valores; a análise não depende da
-  ordem de chamadas à facade.
-- Trocar o literal escrito do `MOVE` altera o literal e sua provenance, mas não
-  transforma nem torna conhecido o target de runtime do `CALL`.
-- Renomear consistentemente a DATA e os dois usos altera somente a identidade/
-  grafia projetada; o join comum e o status nominal permanecem.
-- Alterar uma declaração não relacionada cria uma nova entrada: se a resolução
-  canônica continuar única, o binding nominal pode permanecer equivalente, mas o
-  contrato não exige preservar o `DataItemId` ou outros handles da publicação
-  anterior.
-- Substituir uma option ausente por outra policy explícita altera somente facts
-  policy-dependent; não pode reclassificar `CALL WS-PGM` como target concreto.
-- Tornar um input estruturalmente ausente preserva facts independentes e muda
-  a claim/readiness para incompleta, em vez de produzir sucesso vazio.
-- Projetar duas vezes o mesmo state/port, ou produzir o state duas vezes a
-  partir da mesma combinação de entrada, configuração, versão do analisador e
-  versão do contrato, preserva bytes, handles, valores e ordem do
-  `semantic-product.json`. Isso
-  garante reprodutibilidade determinística do transporte, mas não identidade
-  persistente dos handles após edição, mudança estrutural ou mudança de versão.
+- Duplicar um MOVE/CALL suportado com novos program points acrescenta exatamente
+  um fact, sem substituir o anterior nem exigir novo campo no state.
+- Inserir declaration não relacionada acrescenta sua classificação/declaration
+  fact conforme a capability, sem alterar bindings existentes que continuem
+  únicos.
+- Mover um statement de top-level estrutural para THEN/ELSE conserva seus facts
+  nominais e provenance, alterando somente containment/program point legítimos.
+- Expandir IF sem ELSE para ELSE explícito acrescenta a branch; não altera o
+  target de runtime dos CALLs nem cria CFG no produto.
+- Trocar o literal de um MOVE altera apenas source/value/provenance dependente;
+  o CALL variável continua runtime `UNKNOWN`.
+- Renomear consistentemente DATA e seus usos preserva relações e statuses; IDs
+  podem mudar se o contrato determinístico assim definir, sem promessa
+  persistente.
+- Resolver input/COPY ausente refina gaps e facts dependentes sem apagar facts
+  independentes já sustentados.
+- Reordenar queries do port não altera facts; repetir execução equivalente
+  preserva handles/ordem transportáveis.
+- Acrescentar statement unsupported reduz ou mantém readiness conforme o
+  escopo, nunca aumenta a claim nem desaparece do inventário.
+- Acrescentar uma futura família tipada não muda a semântica das famílias
+  existentes nem exige converter o envelope em bag genérico.
 
 ## Expectativas de escala
 
-Não há threshold de hardware novo nem autorização para otimização semântica.
-Para o slice pequeno, a projeção deve percorrer a surface da unit de forma
-determinística, fazer joins por índices/identidades existentes e evitar
-`O(references × all declarations)`. A boundary não pode reduzir candidates,
-provenance ou estados para ganhar memória/tempo. Qualquer custo adicional de
-materialização deve ser medido somente em checkpoint autorizado posterior,
-preservando os contratos semânticos.
+A projeção percorre a surface da `ProgramUnit` e os inventários relevantes em
+ordem determinística, com joins por índices/identities. A meta é
+`O(nodes + declarations + occurrences + resolution entries + gaps + facts)`,
+descontados os lookups canônicos já executados. É proibido resolver cada uso
+varrendo todas as declarations ou reconciliar statements por busca textual.
+
+Cardinalidade alta não autoriza truncar facts, candidates, branches, provenance
+ou unknowns. Qualquer index auxiliar é construído uma vez por publicação. O
+consumer de lowering-readiness percorre o produto, não o frontend. JSON
+posterior preserva ordem sem depender de map/hash incidental. Threshold de
+hardware não é oracle; `check-performance.sh` é exigido quando a implementação
+alterar o caminho de projeção/indexação.

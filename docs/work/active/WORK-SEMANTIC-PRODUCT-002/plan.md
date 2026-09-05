@@ -2,197 +2,174 @@
 
 ## Fatiamento
 
-1. **Checkpoint 1 — Contrato executável e work item (este PR).** Registrar a
-   decisão A2+B, o domínio exato `MOVE` literal → `CALL` variável, os tipos e
-   invariantes da boundary, o oracle de review e a decomposição abaixo. Este
-   checkpoint altera somente documentação e o índice de trabalho; não cria
-   tipo, adapter, consumer ou integração de produção.
-2. **Review humano obrigatório.** Confirmar que o contrato deste work item é
-   suficiente e que o slice não está usando o literal do `MOVE` como análise de
-   runtime. Nenhum checkpoint de implementação começa sem este review.
-3. **Checkpoint 2 — Core A2 + port B, sem frontend.** Criar os tipos
-   boundary-owned, imutáveis e namespaced para o estado mínimo e a facade
-   read-only. O core deve poder ser construído diretamente em teste, sem
-   parser, AST, symbols, resolver, report, ANTLR ou composition root. Validar
-   closure, imutabilidade, invariantes de ordering e representação explícita de
-   `UNKNOWN`/`INCOMPLETE`.
-4. **Review humano obrigatório.** Verificar bytecode/dependências, ownership,
-   ausência de collections mutáveis e que o port só seleciona fatos já
-   materializados.
-5. **Checkpoint 3 — Adapter de projeção e joins do slice.** Implementar o
-   adapter COBOL-specific que consome os produtos atuais, localiza as shapes
-   tipadas e reconcilia `ProgramUnitId` + node/occurrence IDs + candidate
-   `DATA_SYMBOL`. Publicar declaração, literal, facts `MOVE`/`CALL`, ordering,
-   policy, provenance e uncertainty sem reparse ou alteração nos produtos de
-   entrada. Manter o adapter separado do package de tipos da boundary.
-6. **Review humano obrigatório.** Comparar o resultado com o oracle 3B,
-   desafiar joins por nome/ID local, ausência de options e qualquer tentativa de
-   inferir runtime value. O review pode rejeitar uma projeção que carregue
-   internals mesmo que os asserts felizes passem.
-7. **Checkpoint 4 — Publicação no composition root e consumer independente.**
-   Acoplar a menor chamada necessária no ponto em que AST, units, symbols,
-   occurrences, resolution, report e provenance já estão coerentes. Publicar
-   um único estado A2 em memória e permitir que um consumer de teste opere
-   somente pelo port depois de o frontend ser liberado. Não alterar snapshots,
-   CLI ou contratos existentes de apresentação, nem gerar
-   `semantic-product.json` neste checkpoint. Exercitar reprodutibilidade
-   determinística de valores e handles no contexto equivalente, ordering,
-   provenance, policy e fechamento do lifecycle, sem tratar handles como
-   identidade persistente.
-8. **Review humano obrigatório.** Verificar o consumer independente, o
-   fechamento do state e do port e a separação explícita entre produto tipado e
-   a projeção JSON de transporte. O review não autoriza generalização,
-   interchange público/universal, CFG/dataflow ou capability posterior.
-9. **Checkpoint 5 — JSON output adapter determinístico.** Criar o adapter de
-   saída do frontend, separado do estado/port, que consome somente
-   `CobolSemanticState`/`CobolSemanticPort` e produz `semantic-product.json`.
-   Esse mesmo artefato deve servir à inspeção/debug e ao desenvolvimento isolado
-   do futuro repositório `CobolLower`. Para a mesma combinação de entrada
-   normalizada/preprocessada, configuração efetiva/policy, versão do analisador
-   e versão do contrato, a projeção deve reproduzir deterministicamente os
-   identificadores transportados, a ordem e os demais valores observáveis. Ela
-   deve ser semanticamente suficiente para o slice, versionável, documentada,
-   consumível sem executar o frontend e capaz de preservar ordering, provenance
-   e UNKNOWN/partial/incompleteness explícitos. Essa reprodutibilidade de
-   transporte não promete identidade persistente após edição, mudança estrutural
-   ou mudança de versão.
-   O checkpoint é responsável somente pela saída do frontend: não implementa o
-   JSON input adapter, o `LowererInputPort` ou o core do lowerer. Também não cria
-   serializer/framework genérico, schema público de interchange, round-trip,
-   persistência ou abstração universal.
-10. **Review humano obrigatório e encerramento do slice.** Executar os gates do
-    contrato, revisar o diff completo, classificar qualquer finding novo pela
-    taxonomia downstream e decidir se o produto está pronto para outro work
-    item. O encerramento não autoriza generalização, interchange público/
-    universal, CFG/dataflow ou qualquer capability posterior.
+O fixture original continua como regressão da boundary, não como limite. Os
+checkpoints antigos ainda não executados são substituídos pela sequência abaixo.
+Cada checkpoint deve revisar seu diff completo, executar os gates proporcionais
+ao risco e preservar facts conhecidos mesmo quando encontre gaps.
 
-Cada checkpoint de implementação deve ser pequeno o suficiente para ser
-revertido/revisado sozinho. A ordem impede que o adapter defina implicitamente a
-API e impede que a integração no composition root esconda dependências de
-lifecycle.
+1. **Oracle executável do target model — próximo checkpoint autorizado.** Sem
+   alterar produção, criar fixture e consumer/oracle test-only executável com
+   multiple DATA, multiple MOVE literal, multiple CALL variável, `IF/ELSE`,
+   statement dentro/fora de branches, merge posterior e nesting simples. O
+   oracle define todas as ocorrências esperadas, relations/anchors, binding,
+   provenance, coverage e readiness. Deve provar que unsupported observado não
+   pode desaparecer e que um consumer boundary-only consegue reconstruir a
+   entrada necessária ao lowering. Não implementa CFG nem calcula o conjunto de
+   reaching definitions.
+2. **Remodelagem do core A2+B para cardinalidade e extensão.** Sem frontend,
+   substituir singleton `move/call/ordering` por container imutável de
+   declarations/statements e relações estruturais tipadas. Provar N facts,
+   zero-facts versus unavailable, ordering/program points, identities
+   namespaced, closure, imutabilidade, no frontend leakage e crescimento por
+   família tipada. Decidir hierárquico/flat/híbrido somente pela capacidade de
+   reconstruir nesting e lookup, sem fixar IR.
+3. **Projector de todas as ocorrências MOVE/CALL e correções arquiteturais.**
+   Dar à seam nome/pacote estável por responsabilidade, projetar todas as
+   ocorrências cobertas de MOVE/CALL e as DATA necessárias, remover `single(...)`
+   e a obrigação de um par comum. Usar cada produto canônico como autoridade,
+   inclusive `ResolutionAnalysisReport` para gaps/readiness/claims. Provar joins
+   por identity, ausência de reparse/resolução/inferência e publicação explícita
+   das shapes fora da capability.
+4. **IF/ELSE facts.** Acrescentar a segunda família estrutural ao mesmo
+   container, preservando condition surface, references/bindings disponíveis,
+   then/else, ausência explícita de ELSE, nesting, termination, program points,
+   provenance, coverage e readiness. Provar dois successors conservadores e
+   join reconstruível como informação de CFG-readiness, sem publicar edges,
+   truth, reachability ou predicate semantics inexistente.
+5. **Coverage e incompleteness da ProgramUnit.** Reconciliar inventário de
+   statements com modeled/partial/unsupported/input-missing, localizar unknowns
+   e impedir claim global acima dos facts individuais. Provar que statement
+   desconhecido entre facts suportados não some, não vira efeito vazio e não
+   elimina facts independentes.
+6. **Composition root e consumer independente de lowering-readiness.** Inserir
+   a menor publicação atômica após os produtos do frontend estarem coerentes.
+   O consumer recebe somente o port, opera após liberar o frontend e reconstrói
+   DATA/MOVE/CALL/IF/ELSE, structure, operands, roles, binding, gaps e
+   provenance. Auditar explicitamente lowering, CFG e effects/dataflow
+   sufficiency sem implementar lowerer, IR, CFG ou effects.
+7. **JSON determinístico v1.** Somente com state/container e consumer verdes,
+   criar JSON output adapter separado, consumindo apenas state/port. Documentar
+   versão e envelope extensível; preservar statements, structure, coverage,
+   uncertainties, provenance e readiness; provar bytes/ordem/handles
+   determinísticos para execuções equivalentes. JSON permanece transporte
+   interno de inspeção/desenvolvimento, não domínio nem identidade persistente.
+8. **Review de lowering/IR readiness e handoff.** Auditar a matriz por construct
+   e o oracle `MOVE → IF/ELSE → CALL`; demonstrar que um futuro `CobolLower`
+   pode iniciar sem frontend internals. Registrar gaps e dependências de
+   EVALUATE/PERFORM/outros constructs no backlog, sem desenhar a IR nem iniciar
+   CFG/dataflow. Encerrar o work item somente se invariantes, evals e lifecycle
+   hygiene estiverem coerentes.
+
+Esta task documental autoriza, depois de concluir sua migração, somente o
+Checkpoint 1 corretivo acima. Checkpoints 2–8 exigem que a evidência do anterior
+esteja disponível e a autorização aplicável; nenhum checkpoint autoriza
+implicitamente work de backlog.
 
 ## Dependências
 
-- O contrato aprovado nos Checkpoints 2, 3A e 3B de
-  `WORK-SEMANTIC-PRODUCT-001`, preservado no [resumo histórico](../../history/WORK-SEMANTIC-PRODUCT-001.md),
-  especialmente a recomendação H e o oracle
-  `SemanticProductBoundaryCheckpoint3BTest`.
-- AST, compilation units, symbol tables, occurrences, resolução nominal,
-  `ResolutionAnalysisReport`, policy e provenance existentes na `main`.
-- ADRs/invariantes e evals listados no `work-item.yaml`; os testes atuais são
-  evidência e não substituem a regra do dialeto nem o contrato desta spec.
-- Review/autorização de cada checkpoint anterior. Nenhum trabalho de
-  WORK-AST-002, F-01, CFG, dataflow ou backlog paralelo é dependência implícita.
+- ADR-0013 e INV-SP-001–006 definem capability versus cardinalidade, boundary
+  COBOL-specific, projection sem análise, readiness, storage identity e
+  determinismo de transporte.
+- `WORK-SEMANTIC-PRODUCT-001` e os relatórios 3A/3B preservam a prova A2+B e o
+  fixture linear como baseline histórica.
+- A implementação atual de `CobolSemanticProduct`, `CobolSemanticPort` e
+  `CobolMoveCallAdapter` é o ponto de partida factual: singleton MOVE/CALL,
+  `single(...)`, mesmo DATA e gap local de CALL ainda existem.
+- `Ast.IfStatement`, `Ast.children` e `ReferenceOccurrenceCollector` já
+  preservam condition, branches, nesting e nominal references suficientes para
+  o slice estrutural; `ConditionSemantics`/`Validation` continuam futuros.
+- AST, units, symbol tables, occurrences, resolution, report, policy e
+  provenance são autoridades separadas; o projector depende deles, nunca o
+  inverso.
+- F-01 bloqueia as shapes combinadas de `EVALUATE TRUE`; F-SP-007 bloqueia
+  lowering exato dos controls de PERFORM. Nenhum dos dois é corrigido aqui.
+- `CobolLower`, Analysis IR, CFG, effects/storage e dataflow dependem dos
+  contratos de readiness e do backlog; não são precondição implementada para os
+  checkpoints deste work item.
 
 ## Superfície arquitetural provável
 
-```text
-ExplorerMain / composition root
-  ├─ mantém internals do frontend até a análise terminar
-  └─ chama CobolMoveCallAdapter
-           │
-           ▼
-  CobolSemanticProduct (A2: estado próprio e imutável)
-           │
-           ▼
-  CobolSemanticPort (B: facade read-only)
-           │
-           ▼
-  consumer independente do slice
-```
-
-O JSON output adapter é uma saída downstream separada, com dois consumidores
-possíveis em fases distintas:
+Os nomes abaixo indicam responsabilidades, não classes congeladas:
 
 ```text
-DESENVOLVIMENTO ISOLADO
-
-Frontend Core
-    ↓ CobolSemanticPort
-JSON output adapter (Checkpoint 5, frontend)
-    ↓
-semantic-product.json
-    ↓
-JSON input adapter (futuro repositório CobolLower)
-    ↓
-Lowerer Input Port
-    ↓
-CobolLower Core
-
-INTEGRAÇÃO IN-MEMORY
-
-Frontend Core
-    ↓ CobolSemanticPort
-in-memory integration adapter
-    ↓
-Lowerer Input Port
-    ↓
-CobolLower Core
+frontend products canônicos
+  AST / units / symbols / occurrences / resolution / report / policy / provenance
+                              │
+                              ▼
+                  projection/translation seam
+                              │
+                              ▼
+Cobol Semantic Product A2
+  ├─ Unit + Policy
+  ├─ DataDeclarations[]
+  ├─ StatementFacts[]
+  │    ├─ MoveFact
+  │    ├─ CallFact
+  │    ├─ IfFact
+  │    └─ observed partial/unsupported facts
+  ├─ typed structural relations
+  ├─ coverage/readiness summary
+  └─ localized uncertainties/provenance
+                              │
+                              ▼
+Cobol Semantic Port B
+                              │
+                ┌─────────────┴─────────────┐
+                ▼                           ▼
+lowering-readiness consumer       JSON output adapter (CP7)
 ```
 
-O JSON output adapter é responsabilidade do frontend e o JSON input adapter será
-responsabilidade do futuro bounded context do lowerer. Os nomes são uma
-superfície de implementação focalizada, não uma promessa de um Semantic
-Product universal. O package A2/B não deve importar o frontend; o adapter de
-projeção é o único tradutor que conhece `Ast`, `CompilationUnitModel`,
-`SymbolTable`, `ReferenceResolution`, report e seus índices. O composition root
-não deve virar consumer nem transferir ownership dos providers vivos para o
-port.
+Dependency direction obrigatória:
 
-No modo isolado, o futuro JSON input adapter recebe o artefato sem executar o
-frontend, valida a versão/shape suportada e o traduz para o `LowererInputPort`.
-No modo integrado, o adapter in-memory traduz diretamente o mesmo
-`CobolSemanticPort` para esse port do lowerer. Em ambos os casos, o core do
-lowerer depende somente do `LowererInputPort`, e a troca de adapter não exige
-alteração no core do frontend nem no core do lowerer. O JSON output adapter pode
-continuar disponível em produção para desenvolvimento local, debug, reprodução
-e testes, embora não seja o caminho principal de execução.
+```text
+projection → boundary    permitido
+boundary → projection    proibido
+boundary → frontend      proibido
+```
 
-O estado deve ser fechado por uma única construção. A ausência de um
-`analysisGeneration` público não pode ser compensada misturando objetos de
-análises distintas; nesta primeira versão, a coerência mínima é garantida pelo
-mesmo objeto A2 contendo core, policy, status, provenance e facts do slice.
-Execuções equivalentes devem reproduzir os handles necessários ao transporte,
-mas identidade persistente entre edições, mudanças estruturais ou versões
-continua fora do contrato provado.
+O futuro `CobolLower` dependerá de seu próprio input port e receberá uma
+tradução do `CobolSemanticPort`, por adapter in-memory ou JSON input adapter
+fora deste work item. Neutralidade começa no lower/Analysis IR. O state não
+adquire campos `evaluate`, `perform`, `goto` ou equivalentes a cada novo slice;
+novos statement facts entram na mesma disciplina de extensão tipada.
 
 ## Migrações requeridas
 
-Nenhuma migração de AST, symbols, occurrences, resolução, grammar, fixture,
-baseline ou snapshot é necessária. O Checkpoint 1 desta branch não implementa
-nenhuma migração nem altera `src/main/**`.
+- Preservar o fixture e testes atuais como regressão da capability inicial, mas
+  remover de contratos futuros qualquer significado de “exatamente um”.
+- Remodelar state/port e testes de singleton para collections/structure somente
+  no Checkpoint 2 corretivo.
+- Substituir a seam nomeada pelo fixture por papel de projection estável e, se
+  necessário, separar package de boundary e package de projection no
+  Checkpoint 3; o nome concreto não é decidido nesta documentação.
+- Trocar selection `single(...)` por traversal/inventário determinístico de
+  todas as ocorrências cobertas; joins continuam indexed/namespaced.
+- Incorporar report/coverage como autoridade de gaps/readiness sem duplicar
+  classifications no projector.
+- Acrescentar IF/ELSE e relações estruturais sem migrar AST, grammar,
+  occurrences ou resolver.
+- Integrar a publicação no composition root somente após core/projector/coverage
+  estarem corretos.
+- Migrar JSON antigo planejado para depois do consumer de lowering-readiness;
+  nenhum schema é congelado antes do Checkpoint 7.
 
-Nos checkpoints posteriores, a única integração permitida é materializar o
-produto após os produtos de análise necessários existirem. A implementação deve
-preservar os produtos de entrada, manter a projeção JSON como adapter de saída
-separado e evitar tornar o produto dependente do lifecycle do `ExplorerMain`. O
-Checkpoint 5 não pode ser antecipado e transforma `semantic-product.json` em um
-contrato interno de transporte de desenvolvimento e inspeção, não em domínio.
-Não haverá serializer/framework genérico, schema público de interchange,
-round-trip, persistência ou refatoração transversal como pré-requisito oculto.
-Se necessário, um marcador mínimo de schema/versão será documentado nesse
-checkpoint, sem antecipar arquitetura genérica.
+Nenhuma migração de código, fixture, baseline ou schema ocorre na task
+documental que reescreve este plano.
 
 ## Artefatos esperados
 
-No Checkpoint 1 foram esperados somente os documentos do item e sua entrada no
-índice, sem produção, grammar, fixture ou teste alterado. No Checkpoint 2 de
-implementação, os artefatos autorizados são:
+| Checkpoint | Artefatos focalizados |
+| --- | --- |
+| 1 | fixture de target model; oracle/consumer test-only executável; contrato explícito de counts, structure e readiness; nenhum `src/main` alterado |
+| 2 | core A2+B extensível e testes diretos sem frontend |
+| 3 | projection seam corrigida, adapter tests de multiple MOVE/CALL/DATA e architecture gate ampliado |
+| 4 | IF/ELSE facts e testes de branches/nesting/partial predicate |
+| 5 | inventário/coverage/incompleteness por unit e oracles de no-silent-omission |
+| 6 | menor wiring no composition root e consumer independente de lowering-readiness |
+| 7 | JSON output adapter, artefato/versionamento documentado e testes de determinismo/suficiência |
+| 8 | review/handoff factual para lowering/IR e atualização final de evals/state/backlog/lifecycle |
 
-- tipos A2/B em `src/main/java/.../semanticproduct/`;
-- testes diretos de contrato em `src/test/java/.../semanticproduct/`;
-- atualização factual do `state.md`, do índice e do escopo do work item.
-
-Nos checkpoints posteriores, somente quando autorizados:
-
-- adapter de projeção do slice e a menor integração de publicação;
-- testes de adapter, closure/lifecycle e consumer independente;
-- em checkpoint posterior próprio, JSON output adapter e
-  `semantic-product.json`, com contrato documentado e teste de determinismo dos
-  handles, valores e ordem para a mesma combinação de entrada, configuração,
-  versão do analisador e versão do contrato, além de suficiência e preservação
-  de UNKNOWN/partial;
-- nenhuma implementação do futuro JSON input adapter, `LowererInputPort`,
-  adapter in-memory ou core do repositório `CobolLower` neste work item;
-- eventual promoção de oracle/eval durável, se o review demonstrar repetição
-  útil, sem copiar asserts para documentação canônica.
+Todos os checkpoints preservam grammar, AST, symbols, occurrences, resolver,
+snapshots e baselines, salvo autorização nova baseada em finding independente.
+Nenhum artefato de `CobolLower`, IR, CFG, effects/storage, dataflow ou Dependency
+Facts é criado por este work item.

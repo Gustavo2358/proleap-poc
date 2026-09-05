@@ -1,8 +1,8 @@
 id: WORK-SEMANTIC-PRODUCT-002
-title: Semantic Product de produção para MOVE literal e CALL variável
+title: Semantic Product extensível para DATA, MOVE, CALL e IF/ELSE
 status: active
 risk: high
-goal: Materializar em memória um Semantic Product COBOL-specific, fechado e imutável, que publique o slice provado MOVE literal → CALL variável por uma facade tipada sem inferir target de runtime e, em checkpoint posterior, produza semantic-product.json por um JSON output adapter determinístico para a mesma entrada, configuração, versão do analisador e versão do contrato, versionável, documentado e semanticamente suficiente para inspeção e desenvolvimento isolado, sem transformar JSON em domínio, identidade persistente ou dependência dos cores.
+goal: Materializar por ProgramUnit um Semantic Product COBOL-specific A2+B que publique todas as ocorrências semanticamente cobertas de DATA, MOVE literal, CALL variável e IF/ELSE, preserve incompletude e seja suficiente para lowering independente antes do transporte JSON.
 must_read:
   - docs/index.md
   - docs/architecture/pipeline.md
@@ -14,17 +14,22 @@ must_read:
   - docs/architecture/decisions/0008-incompleteness-is-first-class.md
   - docs/architecture/decisions/0009-explicit-grammar-coverage.md
   - docs/architecture/decisions/0010-observe-external-literal-dependencies-per-artifact.md
+  - docs/architecture/decisions/0012-contextual-conditions-use-post-binding-projection.md
+  - docs/architecture/decisions/0013-cobol-semantic-product-precedes-language-neutral-lowering.md
   - docs/domain/semantic-ast.md
   - docs/domain/compilation-units.md
   - docs/domain/symbol-model.md
   - docs/domain/reference-resolution.md
   - docs/domain/provenance.md
+  - docs/domain/conditional-expressions.md
   - docs/engineering/work-item-protocol.md
   - docs/engineering/semantic-analysis-policy.md
   - docs/engineering/semantic-testing.md
   - docs/engineering/downstream-impact-classification.md
   - docs/engineering/gates.md
   - docs/evals/semantic-eval-catalog.md
+  - docs/evals/conditional-expression-oracles.md
+  - docs/work/backlog.md
   - docs/work/history/WORK-SEMANTIC-PRODUCT-001.md
   - docs/history/evidence/semantic-product-boundary-checkpoint-2.md
   - docs/history/evidence/semantic-product-boundary-checkpoint-3a.md
@@ -40,15 +45,19 @@ must_read:
   - src/main/java/io/github/gustavo2358/cobolexplorer/ResolutionContracts.java
   - src/main/java/io/github/gustavo2358/cobolexplorer/ResolutionAnalysisReport.java
   - src/main/java/io/github/gustavo2358/cobolexplorer/SourceMap.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/semanticproduct/CobolSemanticProduct.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/semanticproduct/CobolSemanticPort.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/semanticproduct/CobolMoveCallAdapter.java
   - src/test/java/io/github/gustavo2358/cobolexplorer/SemanticProductBoundaryCheckpoint3BTest.java
-  - src/test/java/io/github/gustavo2358/cobolexplorer/semanticproduct/boundary/ExperimentalCobolMoveCallBoundary.java
-  - src/test/java/io/github/gustavo2358/cobolexplorer/semanticproduct/consumer/ExperimentalCobolMoveCallConsumer.java
+  - src/test/java/io/github/gustavo2358/cobolexplorer/SemanticProductMoveCallAdapterTest.java
+  - src/test/java/io/github/gustavo2358/cobolexplorer/semanticproduct/SemanticProductMoveCallContractTest.java
 related_domain_rules:
   - docs/domain/semantic-ast.md
   - docs/domain/compilation-units.md
   - docs/domain/symbol-model.md
   - docs/domain/reference-resolution.md
   - docs/domain/provenance.md
+  - docs/domain/conditional-expressions.md
 related_decisions:
   - ADR-0002
   - ADR-0003
@@ -57,6 +66,8 @@ related_decisions:
   - ADR-0008
   - ADR-0009
   - ADR-0010
+  - ADR-0012
+  - ADR-0013
 related_invariants:
   - INV-AST-001
   - INV-AST-002
@@ -69,8 +80,15 @@ related_invariants:
   - INV-COV-001
   - INV-COV-003
   - INV-DET-001
+  - INV-SP-001
+  - INV-SP-002
+  - INV-SP-003
+  - INV-SP-004
+  - INV-SP-005
+  - INV-SP-006
 evals:
   - EVAL-AST-001
+  - EVAL-AST-003
   - EVAL-AST-004
   - EVAL-AST-005
   - EVAL-PROV-001
@@ -83,34 +101,31 @@ evals:
   - EVAL-RES-DATA-003
   - EVAL-RES-CALL-001
   - EVAL-RES-CALL-002
+  - EVAL-RES-COV-001
   - EVAL-RES-REPORT-001
   - EVAL-RES-DET-001
+  - EVAL-COV-002
   - EVAL-COV-003
   - EVAL-ARCH-001
 source_scope:
   - src/main/java/io/github/gustavo2358/cobolexplorer/ExplorerMain.java
   - src/main/java/io/github/gustavo2358/cobolexplorer/semanticproduct/
-  - src/main/java/io/github/gustavo2358/cobolexplorer/semanticproduct/CobolSemanticProduct.java
-  - src/main/java/io/github/gustavo2358/cobolexplorer/semanticproduct/CobolSemanticPort.java
-  - src/main/java/io/github/gustavo2358/cobolexplorer/semanticproduct/CobolMoveCallAdapter.java
-  - planned:src/main/java/io/github/gustavo2358/cobolexplorer/semanticproduct/SemanticProductJsonOutputAdapter.java
 test_scope:
   - src/test/java/io/github/gustavo2358/cobolexplorer/SemanticProductBoundaryCheckpoint3BTest.java
-  - src/test/java/io/github/gustavo2358/cobolexplorer/semanticproduct/
-  - src/test/java/io/github/gustavo2358/cobolexplorer/semanticproduct/SemanticProductMoveCallContractTest.java
   - src/test/java/io/github/gustavo2358/cobolexplorer/SemanticProductMoveCallAdapterTest.java
-  - planned:src/test/java/io/github/gustavo2358/cobolexplorer/SemanticProductMoveCallIntegrationTest.java
-  - planned:src/test/java/io/github/gustavo2358/cobolexplorer/SemanticProductJsonOutputAdapterTest.java
+  - src/test/java/io/github/gustavo2358/cobolexplorer/semanticproduct/
+  - planned:src/test/java/io/github/gustavo2358/cobolexplorer/SemanticProductTargetModelOracleTest.java
+  - planned:src/test/resources/cobol/semantic/semantic-product-lowering-readiness.cbl
 must_not_change:
   - src/main/antlr4/**
   - AST, grammar, symbol table, occurrence collector, nominal resolver and existing parser behavior
   - WORK-AST-002, F-01, BACKLOG-RES-003 and any other active work item scope
-  - CobolLower, Canonical Analysis IR, CFG, dataflow, possible-values and dependency extraction; the future lowerer core depends on its LowererInputPort, with a JSON input adapter or an in-memory adapter outside the core
-  - generic serializer/framework, public interchange schema, round-trip, persistence or persistent identity/migration, universal multi-language abstraction and HTML/snapshot contracts
-  - semantic-product.json or its JSON output adapter before the later JSON checkpoint, JSON inside Semantic Product/state/port or JSON parsing in the future lowerer core
-  - future CobolLower repository, JSON input adapter, LowererInputPort and in-memory integration adapter; this work item documents their required boundary but does not implement them
-  - plugin framework, universal multi-language Semantic Product and external-language analyzers
-  - existing production fixtures, baselines and test-only experimental classes, except a new oracle explicitly authorized by a checkpoint
+  - EVALUATE, PERFORM, GO TO, terminal, ALTER and SEARCH frontend enrichment outside the IF/ELSE slice
+  - CobolLower, Analysis IR, CFG, Statement Effects, Storage Semantics, dataflow, Reaching Definitions, Possible Values and Dependency Facts
+  - semantic-product.json or its JSON output adapter before Checkpoint 7
+  - future CobolLower repository, JSON input adapter, LowererInputPort and in-memory integration adapter
+  - generic serializer/framework, public interchange schema, round-trip, persistence, persistent identity/migration and universal multi-language Semantic Product
+  - existing production fixtures, baselines and historical experimental classes except the new oracle explicitly authorized by Checkpoint 1
 gates:
   - docs
   - fast

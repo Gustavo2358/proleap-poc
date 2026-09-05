@@ -2,121 +2,83 @@
 
 ## Onde estamos
 
-`WORK-SEMANTIC-PRODUCT-002` permanece ativo para a primeira implementação de
-produção do slice `MOVE` literal → `CALL` variável. Este PR executa somente o
-Checkpoint 3: `CobolMoveCallAdapter` projeta os produtos canônicos já fechados
-do frontend para `CobolSemanticProduct.State`, e `CobolSemanticPort` continua a
-ser a única superfície downstream.
+O contrato deste work item foi corrigido documentalmente no PR #27. O target
+de produção deixa de ser o fixture singleton e passa a ser uma `ProgramUnit`
+com todas as ocorrências semanticamente cobertas de DATA, MOVE literal, CALL
+variável e IF/ELSE, mais inventário explícito de constructs observados que sejam
+partial, unsupported ou bloqueados por input ausente.
 
-O adapter não altera `ExplorerMain`, não executa resolução, não usa
-`ResolutionAnalysisReport`, snapshots ou HTML como fonte semântica e não
-reparseia texto. O Checkpoint 4 continua reservado para publicação no
-composition root e consumer independente; JSON, lowering, IR, CFG e dataflow
-continuam fora deste checkpoint.
+ADR-0013 e INV-SP-001–006 fixam a direção durável. `spec.md`, `plan.md` e
+`eval.md` agora descrevem a correção em oito checkpoints independentes. Esta
+migração é somente harness/documentação: nenhum arquivo de produção ou teste do
+Semantic Product foi alterado por ela.
 
-A branch parte da `main` atualizada, que já contém o Discovery dos Checkpoints 2
-e 3A e o Checkpoint 3B, mergeado no `PR #26`. `WORK-SEMANTIC-PRODUCT-001` foi
-arquivado conforme o lifecycle hygiene; seu resumo e os relatórios históricos
-dos Checkpoints 2, 3A e 3B preservam a memória necessária. Este item executa a
-decisão H já provada sem reabrir A2 versus B.
+A implementação continua no estado anterior ao contrato corrigido. Depois que
+os seis checkpoints documentais desta migração terminarem, o próximo trabalho
+autorizado é o Checkpoint 1 do novo `plan.md`: um oracle executável, test-only,
+do target model, sem alteração de produção.
 
 ## Verde conhecido
 
-- Antes da alteração, `main` estava limpa, em sincronia com `origin/main`, e a
-  branch focalizada foi criada a partir dela.
-- O Checkpoint 2 aprovou A2 + B: estado COBOL-specific, materializado,
-  boundary-owned, imutável, partial-aware e namespaced, acessado por facade
-  fechada, tipada e read-only.
-- O Checkpoint 3A provou closure, ausência de leakage e ausência de semantic
-  reparsing para `CALL` literal; o Checkpoint 3B provou a mesma seam para
-  declaração DATA + `MOVE` literal + `CALL` variável.
-- O oracle 3B preserva `DataItemId` namespaced, `PIC`, literal, joins comuns,
-  ordering explícito, provenance localizada, binding nominal `COMPLETE` e
-  runtime target `UNKNOWN` com `DYNAMIC_CALL_TARGET_VALUE_UNKNOWN`.
-- `CobolSemanticProduct.State` publica somente fatos boundary-owned do slice:
-  unit/data identity, declaração/PIC, literal, MOVE, CALL variável, program
-  points, ordering, policy, nominal binding, runtime `UNKNOWN` e incertezas
-  localizadas. Binding parcial preserva status, reason e candidates sem
-  fabricar handle selecionado.
-- `CobolSemanticPort` é read-only e consulta apenas o estado publicado; não há
-  query lazy, parser, resolver, cache mutável ou tipo do frontend na boundary.
-- `SemanticProductMoveCallContractTest` prova construção sem frontend,
-  imutabilidade/closure, join de identidade, separação nominal/runtime,
-  ordering, estados partial/unknown, ambiguity e independência da ordem das
-  consultas.
-- O contrato corrigido distingue o Semantic Product in-memory do
-  `semantic-product.json`: o JSON será um artefato interno, determinístico,
-  versionável e documentado de transporte para inspeção e desenvolvimento
-  isolado, não um modelo de domínio ou formato público.
-- O fluxo isolado será `CobolSemanticPort` → JSON output adapter → artefato →
-  futuro JSON input adapter → `LowererInputPort`; a integração final poderá
-  trocar o trecho JSON por um adapter in-memory. Os cores do frontend e do
-  lowerer permanecem independentes de JSON e podem viver em repositórios
-  separados.
-- O adapter de produção consome `CompilationUnitBuildResult`,
-  `CompilationUnitSymbolTables`, occurrences e `ReferenceResolution`; os tipos
-  A2/B não carregam nenhuma dessas referências.
-- O adapter usa `CallSemantics.targetSyntax` para preservar
-  `DYNAMIC_CALL_TARGET_VALUE_UNKNOWN`, sem depender do report composto; policy,
-  binding nominal, partialidade e provenance são projetados dos produtos
-  canônicos correspondentes.
-- A composição continua em `ExplorerMain`; o adapter foi implementado como
-  ponto de tradução reutilizável, sem wiring ou consumer de produção.
-- Nenhum arquivo de grammar, AST, symbols, occurrences, resolver, fixture,
-  baseline ou `ExplorerMain` foi alterado neste checkpoint.
-- O teste focalizado do adapter, o Checkpoint 3B, o contrato A2/B,
-  `check-docs.sh`, `check-architecture.sh`, `check-fast.sh`,
-  `check-semantic.sh`, `check-performance.sh`, `check-full.sh` e
-  `git diff --check` passaram após a implementação.
+- `WORK-SEMANTIC-PRODUCT-001` e os relatórios 3A/3B provaram a alternativa
+  A2+B: state COBOL-specific, materializado, imutável, partial-aware e
+  namespaced, exposto por port fechado, tipado e read-only.
+- O fixture mínimo continua provando, como caso N=1, uma DATA, um MOVE literal,
+  um CALL variável, binding nominal comum, provenance, ordering e runtime
+  target `UNKNOWN` com `DYNAMIC_CALL_TARGET_VALUE_UNKNOWN`.
+- `CobolSemanticPort` consulta somente o state publicado; a boundary atual não
+  expõe parser, AST, symbols, occurrences, resolution ou presentation.
+- `SemanticProductMoveCallContractTest` protege closure, imutabilidade,
+  identities namespaced, separação nominal/runtime, partialidade e consulta
+  fora de ordem para o slice implementado.
+- `Ast.IfStatement` já preserva condition, THEN, ELSE, termination e nesting;
+  `Ast.children` e o collector percorrem sua estrutura e referências. Isso
+  sustenta o slice estrutural de IF/ELSE, não predicate semantics, CFG,
+  reachability ou dataflow.
+- AST, compilation units, symbol tables, occurrences, resolution, report,
+  policy, provenance e presentation permanecem produtos separados e
+  autoridades de suas próprias semânticas.
+- Não há composition-root publication nem JSON do Semantic Product em
+  produção. Lowering, Analysis IR, CFG, effects/storage e dataflow também não
+  estão implementados por este work item.
 
 ## Restante
 
-- Review humano do Checkpoint 3 e deste PR.
-- Após aprovação explícita, executar separadamente o Checkpoint 4 e os demais
-  checkpoints do `plan.md`, sem antecipar generalização.
-- O Checkpoint 5 produzirá `semantic-product.json` somente por JSON output
-  adapter do frontend, consumindo `CobolSemanticState`/`CobolSemanticPort` e
-  exigindo determinismo, suficiência, versionamento/documentação e preservação
-  explícita de UNKNOWN/partial/incompleteness para a mesma entrada
-  normalizada/preprocessada, configuração efetiva/policy, versão do analisador e
-  versão do contrato.
-- O Checkpoint 5 é responsável apenas pela saída do frontend. Não implementa o
-  futuro repositório `CobolLower`, JSON input adapter, `LowererInputPort` ou
-  adapter in-memory; apenas documenta a fronteira necessária para a futura
-  troca de adapters sem alteração dos cores.
-- Manter o produto limitado ao domínio descrito: uma unit selecionada, uma
-  DATA, um `MOVE` literal e um `CALL` variável para o mesmo handle nominal.
-- Promover eval/oracle adicional ao catálogo somente se uma repetição útil for
-  demonstrada em checkpoint posterior.
+- Concluir os Checkpoints 4–6 desta migração documental: backlog/handoffs,
+  auditoria integral e remoção dos dois documentos transitórios.
+- Executar depois, como próximo trabalho autorizado, o Checkpoint 1 corretivo:
+  fixture e oracle/consumer test-only do target model com multiple
+  DATA/MOVE/CALL, IF/ELSE, nesting, incompletude e readiness.
+- Executar os Checkpoints 2–8 do `plan.md` somente na ordem registrada, com a
+  evidência do anterior e a autorização aplicável. Eles remodelam A2+B,
+  corrigem projection, acrescentam IF/coverage, integram o composition root,
+  provam lowering-readiness, publicam JSON por último e fecham o handoff.
+- Manter EVALUATE, PERFORM, GO TO, terminal semantics, ALTER, SEARCH,
+  CobolLower, IR, CFG e dataflow em backlog até seus pré-requisitos e work
+  items próprios.
 
 ## Descobertas que afetam o plano
 
-- `ExplorerMain` é o composition root atual e mantém os produtos do frontend
-  separados; a integração futura deve inserir a projeção no menor ponto
-  possível, sem entregar esse lifecycle ao port.
-- `Ast.Meta.id` permanece local ao pre-order da unit. O adapter usa esse ID
-  somente no join namespaced com occurrence/resolution e projeta
-  `DataItemId` a partir do `SemanticEntityId(DATA_SYMBOL, localId)` do
-  candidate resolvido.
-- `ReferenceResolution` separa `CallTargetSyntax` de `CallLinkage`. Para este
-  slice, `IDENTIFIER_OR_EXPRESSION` é suficiente para publicar runtime
-  `UNKNOWN`, a incerteza exigida e partialidade sem consultar report ou inferir
-  valor do `MOVE`.
-- O adapter publica somente o candidate DATA selecionado, sua declaração
-  tipada/PIC, o literal AST, os dois fatos e a relação de ordem; shapes fora do
-  slice ou joins inconsistentes falham de forma fechada.
-- A prova 3B demonstrou igualdade determinística de valores, mas não o contrato
-  completo de reprodução dos IDs transportados, `analysisGeneration`, persistência
-  ou identidade persistente. O primeiro produto usa uma publicação A2 única. O
-  futuro JSON output adapter deverá reproduzir handles e projeção para a mesma
-  combinação de entrada normalizada/preprocessada, configuração efetiva/policy,
-  versão do analisador e versão do contrato, sem converter essa propriedade de
-  transporte em identidade
-  persistente após edições ou mudanças de versão, nem promover JSON a domínio,
-  schema público ou protocolo universal.
-- O futuro `CobolLower` terá seu próprio `LowererInputPort` e core independente.
-  Em desenvolvimento isolado, seu JSON input adapter poderá traduzir o artefato;
-  na integração final, um adapter in-memory ligará `CobolSemanticPort` ao mesmo
-  port. Nenhuma dessas implementações está autorizada neste work item.
-- `CobolLower`, IR, CFG, dataflow, possible-values e dependency extraction
-  continuam explicitamente fora deste work item.
+- `CobolSemanticProduct.State` ainda contém `MoveFact move`, `CallFact call` e
+  `Ordering ordering`; `CobolSemanticPort` ainda publica `move()`, `call()` e
+  `ordering()`. Isso é estado implementado, não arquitetura desejada.
+- `CobolMoveCallAdapter` ainda usa `single(...)`, exige exatamente um MOVE, um
+  CALL e um target por statement, além de exigir o mesmo `DataItemId` no par.
+  O Checkpoint 3 corretivo precisa substituir seleção por publicação de todas as
+  ocorrências cobertas.
+- O adapter atual não consome `ResolutionAnalysisReport`; cria localmente o gap
+  do CALL dinâmico a partir de `CallSemantics`. A correção deve projetar cada
+  autoridade canônica sem refazer análise ou reconciliar por texto.
+- O projector atual publica somente a DATA participante do par MOVE/CALL.
+  Declarations independentes, statements adicionais e incompletude da unit
+  ainda não formam um produto fechado.
+- `DataItemId` representa identidade nominal determinística no escopo da unit;
+  não representa sozinho storage físico, região de alias ou layout final.
+- Program points/ordering atuais são anchors estruturais. Não constituem
+  execution order, reachability ou edges de CFG.
+- IF/ELSE tem surface suficiente para o slice estrutural inicial. EVALUATE é
+  partial por F-01; PERFORM permanece bloqueado pelos controles incompletos de
+  F-SP-007, inclusive TIMES, test mode, VARYING e AFTER.
+- O futuro consumer de lowering-readiness precisa depender somente do port.
+  Determinismo de handles/JSON dentro do mesmo contrato de transporte não cria
+  identidade persistente entre edições, versões ou execuções distintas.

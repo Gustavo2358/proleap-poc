@@ -82,6 +82,19 @@ Fonte transitória inventariada:
 Os itens cujo destino principal é o contrato do work item (CP3), backlog/handoff
 (CP4) ou auditoria/remoção (CP5–CP6) permanecem abertos neste mapa.
 
+## Destinos realizados no Checkpoint 3
+
+| IDs | Destino efetivo |
+| --- | --- |
+| KM-005–KM-010, KM-016–KM-025, KM-035–KM-044 | `spec.md` fixa cardinalidade irrestrita dentro da capability, container extensível, matriz de readiness, IF/ELSE, oracle downstream, incompletude, authorities, A2+B e transporte posterior; `eval.md` torna essas propriedades falsificáveis. |
+| KM-020–KM-021 | `spec.md` e `eval.md` registram o oracle `MOVE → IF/ELSE → CALL` e a suficiência necessária para que reaching definitions e possible-values sejam calculados somente downstream. |
+| KM-026–KM-034 | `spec.md` e `plan.md` delimitam EVALUATE/PERFORM e a cadeia lower/IR/CFG/effects/dataflow como handoffs; seus destinos duráveis de backlog permanecem para o Checkpoint 4. |
+| KM-037–KM-039 | `spec.md`, `plan.md` e `eval.md` exigem expansão por famílias tipadas e relações estruturais, vedam novos singletons e deixam flat/hierárquico/híbrido como decisão de implementação orientada pelo consumer. |
+| KM-042 | `eval.md` define as classes positivas, negativas, ambíguas, adversariais, regressões, propriedades metamórficas e escala; `plan.md` associa gates e evidências a cada checkpoint. |
+| KM-044 | `work-item.yaml`, `plan.md`, `state.md` e `docs/work/index.md` identificam o oracle executável do target model, sem mudança de produção, como próximo trabalho autorizado após esta migração documental. |
+| KH-001–KH-006 | `state.md` separa o verde histórico/implementado das correções planejadas; `spec.md` preserva o fixture linear como prova N=1 e usa a surface atual de IF apenas no alcance demonstrado. |
+| KG-001–KG-010 | `spec.md`, `plan.md`, `eval.md` e `work-item.yaml` materializam os guardrails do slice; os vínculos com backlog são concluídos no Checkpoint 4. |
+
 ## Contexto histórico que não deve virar norma nova
 
 | ID | Contexto | Tratamento |

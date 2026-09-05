@@ -1,10 +1,9 @@
-# Semantic Product de produção — `MOVE` literal → `CALL` variável
+# Semantic Product de produção — DATA, MOVE, CALL e IF/ELSE
 
 ## Problema
 
-O frontend COBOL atual termina a análise com AST, compilation units, símbolos,
-occurrences, resolução, cobertura, diagnostics, provenance e classificações
-separados. O Checkpoint 3B provou, somente em código test-only, que o slice
+O Discovery de `WORK-SEMANTIC-PRODUCT-001` provou a boundary A2+B com o
+fixture mínimo:
 
 ```cobol
 01 WS-PGM PIC X(8).
@@ -12,434 +11,312 @@ MOVE 'PGMA' TO WS-PGM.
 CALL WS-PGM.
 ```
 
-pode atravessar uma boundary A2+B sem carregar ANTLR, parse tree, internals do
-frontend ou snapshots. Ainda não existe a mesma boundary em produção. Sem um
-work item próprio, a implementação tende a promover os produtos atuais como
-API, a consultar providers vivos ou a transformar o literal do `MOVE` em um
-target de runtime — três violações do contrato aprovado.
+Esse fixture demonstrou estado COBOL-specific próprio, closure, imutabilidade,
+identities namespaced, joins por binding nominal, provenance, program order e
+target de runtime `UNKNOWN`. Ele era prova de boundary, não cardinalidade de
+produção.
 
-Também falta uma projeção determinística para inspeção e para o desenvolvimento
-isolado entre os dois bounded contexts. Ela deve existir como um adapter de
-saída do frontend, na forma `CobolSemanticState` / `CobolSemanticPort` → JSON
-output adapter → `semantic-product.json`. Esse artefato é um contrato interno
-de transporte de desenvolvimento e inspeção: pode ser produzido pelo frontend,
-copiado para um repositório independente e consumido, no futuro, por um JSON
-input adapter que traduza seus fatos para o `LowererInputPort` do `CobolLower`.
-Ele não é o Semantic Product, um modelo de domínio ou um formato universal
-público. O core do frontend e o core do lowerer permanecem independentes de
-JSON.
+A primeira implementação transformou a prova em limite: o state/port têm
+`move()`, `call()` e um `Ordering` específico; o projector exige exatamente um
+`MOVE`, exatamente um `CALL`, um único target e uma única DATA comum aos dois.
+O projector também produz localmente parte do gap/readiness do CALL em vez de
+consumir `ResolutionAnalysisReport`. Esses são fatos do código atual e
+permanecem úteis como baseline, mas conflitam com INV-SP-001/002/004 e com a
+direção aceita na ADR-0013.
+
+Um produto que entende uma classe de statement, mas publica somente sua primeira
+ocorrência, cria falsa completude. Do mesmo modo, omitir um statement observado
+porque sua semântica é parcial faz downstream confundir “não suportado” com
+“não existe”. A remediation precisa corrigir cardinalidade, extensibilidade e
+readiness antes de congelar o transporte JSON ou iniciar `CobolLower`.
 
 ## Objetivo
 
-Implementar o primeiro Semantic Product COBOL-specific de produção para esse
-slice, como estado materializado em memória, imutável e fechado, exposto por uma
-facade/port read-only com tipos próprios da boundary; o produto deve publicar o
-binding nominal de `WS-PGM`, o literal escrito, a ordenação observada,
-provenance localizada, policy/readiness e a incerteza explícita de que o target
-de runtime do `CALL` continua desconhecido. Em checkpoint posterior, produzir
-`semantic-product.json` por um adapter de saída separado, determinístico e
-documentado, suficiente para o slice suportado e consumível sem executar o
-frontend. Esse artefato servirá tanto à inspeção/debug quanto ao desenvolvimento
-isolado do futuro `CobolLower`; nesse modo, um adapter JSON do repositório do
-lowerer o traduzirá para seu `LowererInputPort`. Na integração final, um adapter
-in-memory poderá ligar `CobolSemanticPort` ao mesmo `LowererInputPort`, sem
-alterar o core de nenhum dos lados. O core do `CobolLower` não dependerá de JSON.
+Materializar, para cada `ProgramUnit` selecionada, um Semantic Product
+COBOL-specific A2+B, fechado e imutável, que:
+
+- publique todas as ocorrências semanticamente cobertas de DATA, `MOVE`
+  literal para DATA, `CALL` identifier/expression e `IF/ELSE`;
+- preserve statement identity, program point estrutural, ordem, nesting,
+  branches, operands, roles, binding nominal, provenance e policy;
+- represente constructs observados mas partial/unsupported/unknown sem omissão;
+- cresça por famílias/coleções tipadas de facts, sem singleton por construct;
+- permita a um consumer que conhece somente o port reconstruir a parte suportada
+  da unit e iniciar lowering sem AST, symbols, occurrences, resolver ou report;
+- declare separadamente lowering readiness, CFG readiness e effects/dataflow
+  readiness por construct;
+- mantenha target dinâmico de CALL desconhecido e `DataItemId` distinto de
+  identidade final de storage;
+- só depois dessa prova produza um JSON determinístico por adapter separado.
+
+O Semantic Product continua anterior a `CobolLower`, Analysis IR, CFG,
+Statement Effects/Storage Semantics, Reaching Definitions, Possible Values e
+Dependency Facts. Este work item prepara a entrada dessas fases; não as
+implementa.
 
 ## Domínio de entrada suportado
 
-O slice desta implementação é deliberadamente estreito:
+O domínio é uma fonte COBOL normalizada e preprocessada cuja compilation unit
+contenha uma ou mais `ProgramUnit`; cada publicação é namespaced por uma unit
+selecionada. Dentro dela podem existir quaisquer quantidades, inclusive zero,
+das capabilities cobertas:
 
-- uma fonte COBOL já normalizada e preprocessada, com uma compilation unit e um
-  `ProgramUnit` selecionado;
-- uma declaração DATA elementar, nominalmente resolvida, com `PIC` disponível;
-- um `MOVE` com uma única fonte literal e um único target DATA, nominalmente
-  resolvido;
-- um `CALL` cuja sintaxe seja identifier/expression e cujo operando seja a
-  mesma declaração DATA nominalmente resolvida do target do `MOVE`;
-- uma sequência linear observada em que o statement `MOVE` precede o `CALL`.
+- DATA entries da superfície de declaração suportada, inclusive múltiplas
+  declarações necessárias aos facts publicados, com `PIC` quando disponível e
+  incompletude localizada quando atributos relevantes faltarem;
+- todos os `MOVE` cuja capability inicial seja source literal tipada e um único
+  target DATA nominalmente resolvido;
+- todos os `CALL` cuja sintaxe seja identifier/expression e cujo operando DATA
+  tenha binding nominal representável, sem exigir que compartilhe identidade
+  com algum `MOVE` específico;
+- todos os `IF/ELSE` estruturais suportados, inclusive IF sem ELSE, nesting
+  simples e statements antes, dentro e depois de branches;
+- todos os statements observados no inventário da unit, mesmo quando a família
+  ainda não possui fact completo: esses casos atravessam como coverage/gap
+  localizado, não somem.
 
-O caso de referência usa `WS-PGM`, `PIC X(8)`, o literal `PGMA` e a policy
-realmente produzida pelo frontend. Nomes e valores podem variar dentro da mesma
-classe semântica; isso não autoriza suportar outras formas de statement,
-multiple targets, expressions de `MOVE`, CALL literal, nested units ou outros
-constructs. O produto pode carregar a identidade namespaced da unit exigida
-pelos joins, mas a aceitação deste slice não reivindica cobertura de nested
-programs ou de múltiplas units.
+Outra forma de `MOVE`, `CALL` literal, condição cuja semântica pós-binding ainda
+não exista, `EVALUATE`, `PERFORM`, `GO TO`, terminal, `ALTER`, `SEARCH` ou outro
+statement não eleva automaticamente a ProgramUnit inteira a falha. O produto
+publica o que é independentemente sustentado e registra a forma fora da
+capability como partial/unsupported/unknown. Enrichment semântico dessas
+famílias pertence aos slices indicados no backlog.
+
+Multiple/nested program units não autorizam lookup global: cada publicação usa
+`ProgramUnitId`, parentage e identities compostas conforme ADR-0005. Coverage
+incremental pode limitar shapes semânticas aceitas; nunca limita artificialmente
+quantas ocorrências da shape aceita aparecem na unit.
 
 ## Classes semânticas
 
-O produto publica somente classes de domínio necessárias para o slice:
+- **Unit e contexto:** identity namespaced da unit, parentage/structural path
+  necessário, policy normalizada/versionada e availability dos facts que dela
+  dependem.
+- **Declarations:** coleção imutável de DATA facts com handle boundary-owned,
+  nome canônico, atributos suportados, provenance e coverage. Handle nominal
+  não afirma storage independente.
+- **Statements:** coleção/família tipada e extensível com identity, kind,
+  program point, structure, operands/roles, binding, provenance, coverage e
+  readiness. O contrato inicial inclui `MOVE`, `CALL` e `IF`; inventário
+  parcial/unsupported continua representado.
+- **Structure:** relações tipadas de containment/branch/nesting, reconstruíveis
+  sem posição incidental. O shape concreto pode ser hierárquico, flat por
+  identities ou híbrido; o oracle decide pela suficiência ao consumer.
+- **Binding nominal:** status, reason, candidates e selected identity somente
+  quando a resolução canônica é única. Ambiguity nunca escolhe candidate.
+- **Readiness:** dimensões distintas para structure/lowering, CFG e
+  effects/dataflow. A implementação pode escolher nomes equivalentes a
+  `SUFFICIENT`, `PARTIAL`, `BLOCKED` e `NOT_APPLICABLE`, desde que significado
+  e claim scope sejam explícitos.
+- **Coverage e uncertainties:** modeled/partial/unsupported/input-missing e
+  gaps localizados, mais summary reconciliado com o inventário de statements.
+- **Provenance:** localização expandida/original, exactness e include chain por
+  declaration, statement, operand/reference, branch/condition e gap localizado.
+- **Transport:** projeção JSON posterior, versionada e determinística, derivada
+  somente do state/port correto. JSON não é uma classe de domínio do produto.
 
-- **surface tipada:** declaração DATA, `PIC`, literal, `MOVE`, `CALL` variável e
-  seus papéis, sem usar texto como fonte de semântica;
-- **identidade namespaced:** `UnitId` e `DataItemId` boundary-owned, sempre
-  incluindo compilation unit/program unit e um identificador local do domínio;
-- **binding nominal:** status, reason e candidate facts necessários para
-  mostrar que os dois usos apontam à mesma DATA; binding não é valor;
-- **relação de ordering:** program points e a relação estrita `MOVE` antes de
-  `CALL`, sem afirmar reachability ou ordem de execução;
-- **análise e incerteza:** binding nominal completo/incompleto, readiness do
-  slice, `RuntimeTargetKnowledge.UNKNOWN` e uncertainty localizada;
-- **provenance:** localização expandida e original, exactness e include chain
-  para declaração, literal, `MOVE` e `CALL`;
-- **analysis context mínimo:** policy COBOL normalizada, versionada e com modos
-  ausentes representados como `UNSPECIFIED`, além dos facts derivados que
-  explicam o limite da análise.
-- **projeção de transporte separada:** `semantic-product.json` é um artefato
-  posterior, produzido pelo adapter de saída do frontend a partir do estado/port
-  tipado. Ele atende inspeção/debug e desenvolvimento isolado entre os bounded
-  contexts; não é uma classe do Semantic Product, modelo de domínio ou formato
-  universal/público.
-
-Essas classes pertencem ao produto e não são aliases públicos de `Ast.*`,
-`SymbolTable`, `ReferenceOccurrences`, `ReferenceResolution`, `SourceMap` ou
-`ResolutionAnalysisReport`. O report e os produtos do frontend são entradas do
-adapter; não são a boundary.
+Adicionar nova família de statement não pode exigir um novo campo singleton no
+state fundamental nem um novo método singular que redefina o envelope. Também
+não autoriza `Map<String,Object>`: extensão permanece tipada.
 
 ## Premissas
 
-- A decisão do Discovery é H: A2 é o estado semântico COBOL-specific,
-  materializado, próprio, imutável, partial-aware e namespaced; B é a facade/port
-  fechada, tipada, read-only e orientada a fatos sobre esse estado.
-- A publicação é uma unidade coerente: o port só consulta um estado A2 já
-  fechado. Nenhuma query chama parser, preprocessor, resolver, índice ou cache
-  mutável depois da publicação.
-- AST, símbolos, occurrences e resolução continuam produtos separados e
-  imutáveis. O adapter faz joins entre eles, mas não grava binding na AST nem
-  altera qualquer produto anterior.
-- `ProgramUnitId` é a autoridade de namespace na entrada. A boundary cria seus
-  próprios handles; `Ast.Meta.id` e IDs locais do frontend não são identidades
-  persistentes. `UnitId`, `DataItemId` e os demais handles publicados devem ser
-  reproduzíveis em execuções equivalentes, conforme a definição de determinismo
-  de transporte abaixo, mas podem mudar após edição do código, mudança estrutural,
-  nova versão do analisador ou nova versão do contrato.
-- O literal do `MOVE` e o binding nominal do `CALL WS-PGM` são fatos
-  independentes. Mesmo quando há uma ordem linear observada, ela não é análise
-  de valores.
-- Provenance já chega do fonte físico através de normalização/preprocessing e
-  COPY. A boundary transporta a proveniência localizada necessária, não recria
-  um `SourceMap` sobre texto transformado.
-- Os tipos experimentais do Checkpoint 3B são evidência executável e oracle de
-  shape; não são API de produção nem devem ser importados pelo produto.
-- Não há contrato de persistência nem de identidade persistente entre edições,
-  mudanças estruturais ou versões para este slice. Há, porém, um contrato de
-  reprodutibilidade determinística para transporte equivalente: o mesmo input,
-  configuração, versão do analisador e versão do contrato devem reproduzir os
-  handles transportados e a projeção observável. O contrato interno de
-  transporte `semantic-product.json` é necessário apenas para o desenvolvimento
-  isolado e a inspeção previstos no checkpoint posterior.
+- ADR-0013 e INV-SP-001–006 governam a direção. A decisão H permanece A2
+  boundary-owned + B read-only sobre uma publicação fechada.
+- O código atual é a fonte de verdade do estado implementado: core e adapter
+  cobrem uma única relação DATA/MOVE/CALL; `ExplorerMain` ainda não publica o
+  produto; IF facts, coverage da unit e JSON não existem.
+- A AST atual já materializa `Ast.IfStatement` com condition, `thenBranch`,
+  `elseBranch`, explicit termination e nesting; o collector percorre condition
+  e ambos os branches. Isso sustenta o slice estrutural de IF, não predicate
+  completo, CFG ou reachability.
+- AST, compilation units, symbol tables, occurrences, resolution, report,
+  policy e provenance permanecem produtos separados e imutáveis. O projector
+  faz joins por identities canônicas, sem mutá-los.
+- `ResolutionAnalysisReport` é autoridade de seus gaps, readiness e claims; o
+  projector não mantém classificação paralela. Cada produto canônico governa
+  somente os fatos que realmente publica.
+- `ProgramPoint` é ordem estrutural determinística da publicação, não ordem de
+  execução. Branches e nesting exigem relações tipadas próprias.
+- Binding nominal de `CALL WS-PGM` não é value analysis. Literal de algum
+  `MOVE`, `VALUE` de declaration ou proximidade textual nunca vira target final.
+- Execuções equivalentes reproduzem handles, facts e ordem transportáveis; isso
+  não promete identidade persistente após edição ou mudança de versão.
+- Um `DataItemId` identifica a declaration/binding nominal. Storage layout,
+  regions, aliases e overlap de `REDEFINES`/`RENAMES` continuam posteriores.
+- Fixture, corpus e implementação estreita são evidência; o contrato deste
+  work item e as fontes canônicas definem a direção futura.
 
 ## Comportamento esperado
 
-### Arquitetura A2 + B aprovada
-
-O fluxo de produção deve ser:
+### Fronteira e autoridades
 
 ```text
-frontend COBOL já concluído
-  AST / units / symbols / occurrences / resolution / report / provenance
-             │
-             ▼
-adapter COBOL-specific de projeção e joins
-             │
-             ▼
-A2 — estado materializado, boundary-owned e imutável
-             │
-             ▼
-B — facade/port tipada, fechada e read-only
-             │
-             ▼
-consumer de teste independente do slice
+AST / units / symbols / occurrences / resolution / report / policy / provenance
+                              │
+                              ▼
+              projector COBOL-specific de facts canônicos
+                              │
+                              ▼
+       A2 — state próprio, imutável, fechado e namespaced
+                              │
+                              ▼
+               B — port tipado, read-only e fechado
+                              │
+                              ▼
+               consumer independente de lowering-readiness
 ```
 
-A projeção JSON é uma saída posterior e separada do produto:
+O projector projeta e reconcilia; não redescobre. A AST tipada fornece
+surface/shape; units fornecem namespace; symbols fornecem declarations;
+occurrences fornecem roles; resolution fornece binding, candidates, status e
+reason; report fornece gaps/readiness/claims; provenance/policy vêm de seus
+produtos canônicos. Ausência de informação vira estado explícito.
+
+Boundary e port não importam nem retêm AST, parser/ANTLR, SymbolTable,
+occurrences, resolver, report, `SourceMap` completo, snapshots, HTML ou
+`ExplorerMain`. O package/área de projection é o único ponto que conhece as
+entradas do frontend. Nome e layout exatos dessa área serão decididos pelo
+oracle e pelo gate de arquitetura; `CobolMoveCallAdapter` não é seam futura.
+
+### Cardinalidade, ordem e structure
+
+Para uma unit com `N` DATA, `N` MOVE, `N` CALL e múltiplos IF/ELSE, o produto
+publica cada ocorrência coberta exatamente uma vez e mantém identity/anchor
+estável dentro da publicação. Zero ocorrências de uma família é distinguível de
+capability indisponível ou statement observado porém unsupported.
+
+Statements em branches continuam pertencendo ao inventário da unit e à sua
+relação estrutural. Um consumer deve reconstruir sequência, IF, THEN, ELSE,
+nesting e fallthrough estrutural potencial sem inspecionar AST. O produto não
+publica edge, reachability, truth value ou branch probability.
+
+### Disciplina de readiness por construct
+
+| Construct | Surface | Identity | Structure | Nominal binding | CFG readiness | Effects/dataflow readiness | Unknowns | Provenance | Coverage |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| DATA suportada | declaration, nome e atributos cobertos | `DataItemId` namespaced | parentage/hierarquia necessária ao slice | declaration/entity reconciliada | `NOT_APPLICABLE` isoladamente | partial até existir Storage Semantics para layout/alias; identity nominal disponível | PIC/clause/layout ausente localizado | declaration e atributos publicados | cada entry observada classificada |
+| `MOVE` literal → DATA | source literal e target tipados | statement, operand e DATA handles | program point e containment/branch | target com status/reason/candidates | suficiente para fallthrough estrutural, salvo gap explícito | suficiente para derivar source literal e `DEF` nominal do target; storage effect permanece partial | binding/shape/storage gaps localizados | statement, literal e target | cada MOVE observado modeled ou gap explícito |
+| `CALL` identifier/expression | syntax e operando DATA tipados | statement, operand e DATA handles | program point, containment e exception structure coberta | operando com status/reason/candidates; runtime target separado | suficiente apenas para sucessor local/fallthrough coberto; efeitos interprocedurais separados | suficiente para `USE` nominal do operando de target; efeitos da chamada continuam partial | runtime target `UNKNOWN`, policy/linkage/gaps localizados | statement e operando | cada CALL observado modeled ou gap explícito |
+| `IF/ELSE` estrutural | condition surface, then/else e termination | statement, condition, branch/child handles | ordem, branches, nesting e join reconstruíveis | references da condition usam binding canônico disponível | estruturalmente suficiente para dois successors conservadores e join/fallthrough; predicate pode ser partial | references/roles suficientes apenas onde condition surface/binding suportam `USE`; sem effects de branch | predicate/validation/branch knowledge parciais localizados | IF, condition e branches/children | cada IF observado e seus children classificados |
+| statement fora da capability | kind/surface preservável e anchor quando disponível | identity namespaced se estruturalmente produzida | containment conhecido ou gap | binding existente continua transportado; nada é fabricado | `PARTIAL/BLOCKED`, nunca fallthrough implícito | `PARTIAL/BLOCKED`, nunca efeito vazio | motivo específico | provenance disponível | observed + partial/unsupported/input-missing |
+
+Readiness é uma claim sobre a informação publicada, não sobre a fase futura já
+existir. Marcar IF como CFG-ready significa que o futuro lowerer pode enumerar
+successors conservadores; não significa que CFG foi construída. Marcar MOVE
+como effects-ready em nível nominal não transforma `DataItemId` em storage
+region nem publica `GEN/KILL`.
+
+### Oracle downstream
+
+O primeiro target model deve conter, no mínimo:
+
+```cobol
+01 WS-X PIC X(8).
+01 FLAG PIC 9.
+
+MOVE 'A' TO WS-X.
+IF FLAG = 1
+    MOVE 'B' TO WS-X
+ELSE
+    MOVE 'C' TO WS-X
+END-IF.
+CALL WS-X.
+```
+
+O fixture final pode acrescentar outro DATA, MOVE, CALL e IF nested para provar
+cardinalidade e nesting. Um fake lowerer que só conhece o port deve conseguir
+reconstruir declarations, statements, branches, operands/roles, bindings,
+program points, coverage, gaps e provenance. Ele não calcula CFG nem reaching
+definitions, mas demonstra informação suficiente para que, futuramente, o
+join no CALL permita:
 
 ```text
-Frontend Core
-    │ CobolSemanticPort
-    ▼
-JSON output adapter (checkpoint posterior)
-    ▼
-semantic-product.json
-    ▼
-JSON input adapter (futuro repositório CobolLower)
-    ▼
-Lowerer Input Port
-    ▼
-CobolLower Core
+RD(CALL, WS-X) = { MOVE 'B' TO WS-X, MOVE 'C' TO WS-X }
+possible values at CALL = { "B", "C" }
 ```
 
-O JSON output adapter não pode ser uma dependência do estado ou do port. Para os
-fins deste contrato, execuções equivalentes usam a mesma entrada
-normalizada/preprocessada, a mesma configuração efetiva/policy, a mesma versão do
-analisador e a mesma versão do contrato. Nessas condições, ele deve reproduzir
-`UnitId`, `DataItemId` e os demais identificadores transportados, além da mesma
-projeção observável e da mesma ordem de campos e coleções; não pode inserir
-timestamp, identidade de objeto, ordem incidental de mapa ou metadata de
-ambiente. O artefato deve carregar os fatos semanticamente suficientes para o
-slice e preservar UNKNOWN, partial, incompleteness, provenance e ordering
-observáveis.
+O `MOVE 'A'` não alcança esse ponto pelos dois caminhos e o Semantic Product
+não deve antecipar essa conclusão; ela é somente o oracle arquitetural das
+boundaries posteriores.
 
-Essa é uma propriedade de reprodutibilidade determinística do transporte, não de
-identidade persistente. Ela não garante a preservação dos mesmos `UnitId`,
-`DataItemId` ou outros handles depois de uma edição do código, mudança estrutural,
-nova versão do analisador ou nova versão do contrato. Persistência ou migração de
-identidade exigiria contrato próprio e não é definida aqui.
+### Critérios de aceitação
 
-O futuro JSON input adapter pertence ao bounded context do `CobolLower`: ele
-validará a versão/shape suportada e traduzirá o artefato para o
-`LowererInputPort`, sem fazer o core conhecer JSON ou internals do frontend. Na
-integração in-memory, um adapter diferente fará a mesma tradução diretamente a
-partir do `CobolSemanticPort`; a troca de adapters não exige mudança no core do
-frontend nem no core do lowerer. O JSON adapter de saída pode permanecer
-disponível em produção para desenvolvimento local, debug, reprodução e testes,
-mesmo não sendo o caminho principal de execução.
-
-### Contrato mínimo de `semantic-product.json`
-
-O checkpoint posterior deve documentar e testar, para o slice suportado, um
-artefato que seja:
-
-- determinístico para a mesma entrada normalizada/preprocessada, configuração
-  efetiva/policy, versão do analisador e versão do contrato, inclusive na
-  reprodução de `UnitId`, `DataItemId` e demais handles, na ordem de campos,
-  coleções e facts observáveis;
-- semanticamente suficiente para reconstruir o slice sem executar o frontend,
-  sem expor seus internals e sem depender de texto reprocessado;
-- versionável e documentado. Se a evolução exigir um marcador mínimo de schema
-  ou versão do contrato, ele deve ser incluído e explicado sem criar um schema
-  universal ou framework genérico;
-- explícito sobre UNKNOWN, partial, incompleteness, ambiguity, unsupported,
-  input missing, provenance e ordering, sem converter esses estados em ausência
-  silenciosa ou coleção vazia;
-- adequado para fixtures, testes, inspeção/debug, reprodução e desenvolvimento
-  independente em repositório separado, sem exigir a execução do frontend;
-- uma projeção de transporte interna entre bounded contexts, e não o modelo de
-  domínio A2/B, formato público de interchange, protocolo multi-language ou
-  infraestrutura de persistência.
-
-O Checkpoint 5 é responsável somente por produzir a saída do frontend e por
-provar esse contrato. Ele não implementa o repositório `CobolLower`, seu JSON
-input adapter ou seu `LowererInputPort`.
-
-O consumer de teste representa o primeiro uso downstream; `CobolLower` não é
-implementado neste work item. O package da boundary não pode depender de
-ANTLR, parse contexts, parser, `AstScopeIndex`, `SourceMap` completo, snapshots,
-HTML, JavaScript ou composition root. Somente o adapter conhece os produtos do
-frontend. A facade não é uma linguagem de consulta nem um bag dinâmico: suas
-operações e resultados são tipados.
-
-### Estado A2 mínimo
-
-O estado materializado deve conter tipos boundary-owned equivalentes aos
-seguintes papéis, sem exigir que os nomes de classes sejam iguais aos da prova
-test-only:
-
-| Papel | Conteúdo obrigatório | Regra de publicação |
-| --- | --- | --- |
-| `UnitId` | compilation unit identity, structural path e nome canônico da unit | nenhum handle local pode existir sem essa namespace |
-| `DataItemId` | `UnitId` + identidade local própria do item DATA | deriva do candidate `DATA_SYMBOL`, não do nome escrito nem do `Ast.Meta.id` |
-| declaração DATA | `DataItemId`, nome canônico, `PIC` e provenance | atributos ausentes permanecem desconhecidos/incompletos |
-| literal do `MOVE` | valor semântico e provenance do literal | obtido da expression tipada; não de substring ou reparse |
-| fato `MOVE` | program point, literal, target `DataItemId`, binding e provenance do statement | target precisa ser `VALUE_WRITE` e nominalmente resolvido |
-| fato `CALL` | program point, operando `DataItemId`, sintaxe variável, binding, runtime target e provenance | sintaxe identifier/expression não pode virar nome de programa |
-| ordering | relação estrita entre os dois program points | representa ordering observado, não CFG nem execução |
-| analysis status | binding nominal, readiness/claim de escopo, `UNKNOWN` de runtime e uncertainties | unknown nunca é coleção vazia ou sucesso implícito |
-| policy | `policyId`, versão e modos relevantes (`PGMNAME`, `DYNAM`, `DLL`, `QUALIFY`) | option ausente é `UNSPECIFIED`, sem invalidar fatos independentes |
-
-O produto deve publicar o mesmo `DataItemId` no target do `MOVE` e no operando
-do `CALL`. No caso provado, os dois bindings nominais são `COMPLETE`, o literal
-é `PGMA`, o `MOVE` vem antes do `CALL`, e o runtime target é
-`UNKNOWN` com a incerteza `DYNAMIC_CALL_TARGET_VALUE_UNKNOWN` localizada no
-`CALL`. A policy ausente pode manter `DYNAM`/`DLL`/`PGMNAME` como
-`UNSPECIFIED`; ela não cria um target final.
-
-### Regras de construção e joins
-
-O adapter deve:
-
-1. localizar `Ast.MoveStatement`, `Ast.CallStatement`,
-   `Ast.LiteralExpression`, `Ast.DataReference` e `Ast.PictureClause` por
-   traversal/shape tipada da unit;
-2. obter a ocorrência de cada referência pelo par namespaced
-   `(ProgramUnitId, referenceAstNodeId)` e confirmar os papéis canônicos
-   `VALUE_WRITE` e `CALL_TARGET`;
-3. exigir uma resolução `RESOLVED` com um único candidate DATA compatível para
-   cada uso, reconciliar o `SemanticEntityId` e projetar um único
-   `DataItemId` boundary-owned;
-4. obter `name`, `PIC` e declaration anchor do símbolo/nó de declaração, e o
-   valor do literal da AST tipada;
-5. atribuir program points pela ordem semântica determinística da traversal
-   publicada, sem usar `writtenText`, linha física ou `Ast.Meta.id` como prova de
-   execução;
-6. transportar do report os gaps e a razão de runtime desconhecido, mantendo
-   binding nominal e readiness em dimensões distintas;
-7. congelar todos os valores e coleções em uma publicação única antes de
-   entregar o port.
-
-Candidate, status, reason e diagnostics relevantes não podem ser descartados
-quando a conclusão não for única. No caminho de aceitação feliz, o candidate
-selecionado DATA é projetado como handle; nos caminhos parciais, o produto
-publica o status/uncertainty e não fabrica um handle escolhido.
-
-### Contrato da facade B
-
-As consultas precisam permitir a um consumer independente obter, sem frontend
-vivo: a unit namespaced, a declaração DATA, o fato `MOVE`, o fato `CALL`, a
-relação de ordering, o analysis status, a policy e a provenance de cada anchor.
-As consultas são somente leitura e não podem alterar resultados, construir
-facts lazy ou depender da ordem em que forem chamadas. A facade não devolve
-produtos do frontend nem expõe serializer, snapshot ou JSON. O JSON output
-adapter posterior recebe somente tipos boundary-owned do state/port e fica fora
-do contrato do domínio; um eventual JSON input adapter existe no bounded context
-do lowerer, não no core do Semantic Product.
-
-### Invariantes da boundary
-
-Cada checkpoint de implementação deve proteger estes invariantes:
-
-- **Boundary ownership:** nenhum tipo exposto pelo port pertence ao parser,
-  AST, symbols, occurrences, resolver, report ou presentation.
-- **Imutabilidade e closure:** state, records, listas, mapas e port são
-  read-only; depois de o adapter publicar o estado, o frontend pode ser
-  liberado sem invalidar uma consulta já aberta.
-- **Join namespaced:** `UnitId` acompanha todos os handles; local ID isolado,
-  nome escrito ou `Ast.Meta.id` isolado não resolve join na boundary.
-- **Surface/semantic separation:** o adapter compõe surface e binding sem
-  anotar AST, symbols, occurrences ou resolution.
-- **No semantic reparsing:** `writtenText`, `grammarRule`, HTML/JS e posição
-  lexical não são reprocessados para recuperar papel, binding ou ordering.
-- **Nominal binding != runtime value:** `MOVE 'PGMA' TO WS-PGM` pode publicar
-  literal, target nominal e ordering, mas nunca `PGMA` como target final do
-  `CALL WS-PGM`.
-- **Unknown/partial explícitos:** `UNKNOWN`, `INCOMPLETE`, ambiguity,
-  unresolved, unsupported, input missing e dependency unknown não são
-  representados por lista vazia ou sucesso completo.
-- **Provenance observável:** cada declaração, literal, statement e uncertainty
-  localizada mantém origem física/expandida, exactness e include chain; não há
-  falsa identity map.
-- **Ordering observável:** a relação publicada é determinística e verificável,
-  mas não é uma aresta de CFG nem uma garantia de reachability.
-- **Determinismo de transporte != identidade persistente:** em execuções
-  equivalentes — mesma entrada normalizada/preprocessada, configuração
-  efetiva/policy, versão do analisador e versão do contrato — os identificadores
-  transportados e a ordem observável são reproduzíveis o suficiente para gerar
-  JSON determinístico. Isso não torna `UnitId`, `DataItemId` ou outros handles
-  identidades persistentes nem garante seus mesmos valores após edição do código,
-  mudança estrutural, nova versão do analisador ou nova versão do contrato.
-- **Publicação coerente:** core e capabilities da mesma consulta pertencem ao
-  mesmo estado A2; persistência e migração de identidade entre publicações
-  continuam fora deste slice.
-- **Semantic Product != JSON:** `CobolSemanticState`/`CobolSemanticPort` são o
-  produto tipado materializado em memória. `semantic-product.json` é produzido
-  por um adapter de saída e é um transporte interno, determinístico, versionável
-  e documentado para inspeção e desenvolvimento isolado; não é API/modelo de
-  domínio, schema público ou dependência do core do frontend/lowerer. Um futuro
-  JSON input adapter pode traduzi-lo para o `LowererInputPort`; a integração
-  final pode substituí-lo por um adapter in-memory.
-
-## Critérios observáveis de aceitação
-
-O work item só pode ser considerado concluído quando todos os critérios abaixo
-forem demonstrados por testes, inspeção de bytecode/fonte ou gates. Um teste
-feliz isolado não substitui os critérios de boundary e de escopo.
-
-| ID | Critério | Evidência mínima |
-| --- | --- | --- |
-| CA-01 | A publicação do caso de referência contém unit namespaced, declaração `WS-PGM`, `PIC X(8)`, literal `PGMA`, fatos `MOVE`/`CALL` e provenance localizada. | `SemanticProductMoveCallAdapterTest` ou equivalente, com asserts estruturais por campo. |
-| CA-02 | Target do `MOVE` e operando do `CALL` têm o mesmo `DataItemId` boundary-owned, derivado de binding DATA único. | Teste de join com namespace e candidate `DATA_SYMBOL`; nenhum lookup por nome como chave. |
-| CA-03 | `MOVE` antes de `CALL` é uma relação/program order explícita e determinística, sem claim de reachability, execução ou CFG. | Teste de ordering e inspeção do contrato do tipo. |
-| CA-04 | `CALL` variável publica binding nominal conhecido, `runtimeTarget=UNKNOWN` e `DYNAMIC_CALL_TARGET_VALUE_UNKNOWN` localizado no call site; `PGMA` não aparece como target de runtime. | Consumer independente e mutação adversarial que tenta promover o literal a target. |
-| CA-05 | Policy ausente, ambiguity, unresolved, unsupported e input missing permanecem estados/reasons/candidates/uncertainties observáveis; nenhum vira empty success ou `COMPLETE` indevido. | Testes de contrato/adversariais sobre state e adapter, usando os enums do domínio atual. |
-| CA-06 | State e port são imutáveis, a publicação é fechada e o consumer opera depois da liberação do frontend. | Teste de mutação de coleções, construção sem frontend e verificação de dependências no bytecode. |
-| CA-07 | Boundary e consumer não dependem de ANTLR, parse tree, internals do frontend, snapshots, serializer, `writtenText` ou `grammarRule` para semântica. | `ArchitectureBoundaryTest`/teste focalizado de leakage e inspeção de source/bytecode. |
-| CA-08 | A implementação muda somente o escopo autorizado, mantém os produtos de entrada separados e deixa todos os gates declarados verdes. | Revisão do diff, `git diff --check`, `check-docs`, `check-fast`, `check-architecture`, `check-semantic`, `check-performance` e `check-full`. |
-| CA-09 | Em checkpoint posterior, o frontend produz `semantic-product.json` por adapter de saída separado, consumindo somente `CobolSemanticState`/`CobolSemanticPort`; para a mesma entrada normalizada/preprocessada, configuração efetiva/policy, versão do analisador e versão do contrato, o artefato reproduz IDs transportados e projeção determinística, sendo versionável, documentado, semanticamente suficiente para o slice e consumível sem executar o frontend. Isso não promete identidade persistente após edição, mudança estrutural ou mudança de versão. | Teste do adapter comparando bytes/valores, IDs e ordem observável; inspeção inclui UNKNOWN/partial/provenance e confirma que o JSON não entra no state/port nem no core do `CobolLower`. |
-| CA-10 | O contrato deixa explícitos os dois modos: desenvolvimento isolado por JSON output adapter → artefato → futuro JSON input adapter → `LowererInputPort`, e integração final por adapter in-memory `CobolSemanticPort` → `LowererInputPort`; a troca não exige alterar os cores nem exige que frontend/lowerer estejam no mesmo repositório. | Revisão documental dos diagramas e fronteiras; nenhum repositório `CobolLower`, JSON input adapter ou `LowererInputPort` é implementado neste work item. |
-
-O Checkpoint 1 deste work item satisfez somente a parte documental desses
-critérios: contrato, oracles, plano e índice. O Checkpoint 2 implementa o core
-A2 e o port B para os fatos materializados do slice e demonstra seus invariantes
-por construção direta em testes, sem antecipar adapter frontend, integração,
-JSON output adapter ou `semantic-product.json`. Os critérios que dependem da
-projeção do frontend e dos checkpoints posteriores permanecem abertos.
+1. State/port aceitam N statements e não têm cardinalidade singleton por kind.
+2. Todas as ocorrências cobertas da unit são publicadas exatamente uma vez.
+3. Statement partial/unsupported observado permanece no inventário/coverage.
+4. IF/ELSE e nesting são reconstruíveis sem AST e sem edges de CFG no produto.
+5. MOVE/CALL preservam operands, roles, identities e binding sem runtime value.
+6. Matriz de readiness é observável e coerente com coverage individual/global.
+7. Consumer independente usa apenas o port e consegue preparar lowering.
+8. Boundary não tem frontend leakage; projector não executa nova análise.
+9. Handles/ordem são determinísticos em execuções equivalentes e não são
+   anunciados como identidade persistente.
+10. JSON só é criado depois dos critérios estruturais e do consumer estarem
+    verdes; seu envelope é extensível e preserva incompletude.
 
 ## Comportamento diante de incerteza
 
-O produto deve falhar de forma fechada e localizar a incerteza:
-
 | Situação | Publicação obrigatória | Proibição |
 | --- | --- | --- |
-| ambos os usos resolvem a mesma DATA | bindings `COMPLETE`, `DataItemId` comum e readiness do slice observável | não usar nome textual como chave de reconciliação |
-| `CALL` identifier/expression | operando nominal e `runtimeTarget=UNKNOWN`, com `DYNAMIC_CALL_TARGET_VALUE_UNKNOWN` no call site | não publicar `PGMA`, catálogo de programas ou target final |
-| options ausentes | policy com modos `UNSPECIFIED`; fatos independentes continuam publicados | não bloquear binding nominal nem inventar linkage |
-| binding ambíguo, unresolved ou unsupported | status, reason, candidates quando houver, gap/uncertainty e claim incompleta | não selecionar primeiro candidate nem fabricar `DataItemId` |
-| COPY/input ou pré-requisito ausente | fatos estruturalmente sustentados + incompletude identificável | não trocar a análise por coleções vazias ou alegar `COMPLETE` |
-| forma fora do slice | `UNSUPPORTED`/`INCOMPLETE` observável e provenance disponível quando possível | não ampliar o produto silenciosamente |
-
-O fato de o `MOVE` preceder o `CALL` é somente uma relação publicada para o
-consumer deste slice. Não autoriza reaching definitions, propagação de
-constante, conjunto de possible-values ou qualquer target de runtime. Esses
-resultados pertencem a CFG/dataflow futuros.
+| zero statements de uma família | coleção vazia acompanhada de capability/coverage disponível | confundir com capability não produzida |
+| segundo, terceiro ou enésimo MOVE/CALL suportado | um fact por ocorrência, com identity/program point próprios | selecionar primeiro/último ou exigir par MOVE→CALL |
+| MOVE fora da shape inicial | statement observado + surface possível + partial/unsupported e motivo | falhar a unit inteira ou omitir o MOVE |
+| CALL variável resolvido nominalmente | operando DATA, binding e runtime target `UNKNOWN` | usar literal/`VALUE`/MOVE anterior como target final |
+| ambiguity/unresolved/input missing | status, reason, todos os candidates aplicáveis, gaps e facts independentes | escolher candidate, fabricar handle ou empty success |
+| IF com predicate semanticamente parcial | branches/nesting e references sustentadas + predicate/readiness partial | apagar IF, escolher branch ou alegar reachability |
+| ELSE ausente | branch ausente explicitamente, com fallthrough estrutural reconstruível | tratar como unsupported ou inventar branch |
+| statement unsupported entre statements suportados | inventário/coverage localizado preserva sua posição/containment | fechar a sequência como se o statement não existisse |
+| report e facts individuais divergem | falha fechada identificando autoridade/unit/fact | reconciliar por heurística ou elevar claim global |
+| provenance aproximada ou COPY ausente | exactness/input gap e facts independentes preservados | inventar source span ou apagar a unit inteira |
+| storage/layout não modelado | identity nominal + storage/effects readiness partial | assumir storage independente por `DataItemId` |
 
 ## Fora de escopo
 
-- implementar `CobolLower`, Canonical Analysis IR, CFG, dataflow, reaching
-  definitions, possible-values, call graph ou dependency extraction;
-- implementar o JSON output adapter ou gerar `semantic-product.json` antes do
-  Checkpoint 5, que é o checkpoint posterior próprio para essa projeção;
-- implementar o futuro repositório `CobolLower`, seu JSON input adapter,
-  `LowererInputPort` ou o adapter in-memory de integração final;
-- criar serializer/framework genérico, schema público de interchange, round-trip,
-  persistência ou identidade persistente/migração entre edições, mudanças
-  estruturais ou versões;
-- colocar JSON dentro do Semantic Product, do `CobolSemanticState` ou do
-  `CobolSemanticPort`, ou fazer o core do futuro `CobolLower` conhecer JSON. O
-  contrato permite apenas o futuro JSON input adapter, fora deste work item,
-  para traduzir o artefato ao `LowererInputPort`;
-- generalizar a boundary para outras construções COBOL, outras linguagens,
-  nested/multiple program units, `CALL` literal, `MOVE CORRESPONDING`, múltiplos
-  targets, expressions de source ou control constructs;
-- calcular valor de `WS-PGM`, targets possíveis ou target final de runtime por
-  meio do `MOVE`, ordem linear, `VALUE`, texto ou qualquer heurística;
-- alterar grammar, parser, AST, symbol tables, occurrence collector, resolver,
-  `ResolutionAnalysisReport` ou seus contratos para fazer o slice passar;
-- implementar `ConditionSemantics`, `ConditionValidation`, `ExternalClassification`
-  adicional, embedded-language analyzer ou capabilities pós-binding novas;
-- promover os tipos experimentais dos Checkpoints 3A/3B a contrato de produção;
-- usar snapshots, HTML, JavaScript, `writtenText`, `grammarRule` ou
-  `SourceMap` completo como fonte da boundary;
-- refatorar o composition root além da menor publicação necessária no ponto
-  existente da análise, ou alterar o contrato de saída dos snapshots;
-- remediar F-01, F-SP-007, WORK-AST-002 ou qualquer finding/lacuna não exigido
-  pelo slice.
+- implementar ou desenhar prematuramente `CobolLower`, Analysis IR, CFG,
+  Statement Effects, Storage Semantics, Reaching Definitions, Possible Values,
+  targets dinâmicos finais ou Dependency Facts;
+- implementar `EVALUATE`, `PERFORM`, `GO TO`, terminal semantics, `ALTER` ou
+  `SEARCH` facts neste slice; cada família tem handoff próprio;
+- corrigir F-01, F-SP-007, `ConditionSemantics`, `ConditionValidation`, grammar,
+  AST, symbol tables, occurrence collector, resolver ou report para acomodar o
+  produto;
+- resolver possible-values por busca textual, ordem linear, `VALUE`, primeiro
+  `MOVE`, nearest write ou qualquer mini-dataflow no projector/consumer;
+- transformar o Semantic Product em AST 1:1, IR, CFG, bag sem tipos, schema
+  multi-language, plugin framework, serializer genérico ou snapshot;
+- decidir antecipadamente representação hierárquica versus flat/híbrida de
+  branches sem o oracle do consumer;
+- criar `semantic-product.json` antes do Checkpoint 7 ou colocar JSON no
+  state/port/core do lowerer;
+- implementar futuro JSON input adapter, `LowererInputPort`, adapter in-memory
+  ou repositório do `CobolLower`;
+- criar identidade persistente/migração entre edições ou versões;
+- modelar layout/aliases completos, tratar `REDEFINES`/`RENAMES` como regiões
+  prontas ou assumir `DataItemId == StorageId`;
+- alterar snapshots/UI, fixtures existentes, baselines, grammar ou refatorar
+  componentes fora da menor incisão autorizada por cada checkpoint.
 
 ## Regras de domínio relacionadas
 
-- A AST é surface sem binding, derivada de contextos tipados e com IDs de
-  pre-order locais: `docs/domain/semantic-ast.md`.
-- Compilation units e program units fornecem namespace, parentage e fronteira
-  de análise: `docs/domain/compilation-units.md`.
-- Símbolos publicam declarações e entidades sem executar binding:
-  `docs/domain/symbol-model.md`.
-- Occurrences e resolution fazem o join nominal e preservam status/candidates:
-  `docs/domain/reference-resolution.md`.
-- Provenance começa no fonte físico e mantém exactness/include chain:
-  `docs/domain/provenance.md`.
+- `docs/domain/semantic-ast.md`: surface, statements, IF, conditions, coverage e
+  pre-order estrutural atuais.
+- `docs/domain/compilation-units.md`: `ProgramUnitId`, parentage e boundary de
+  análise.
+- `docs/domain/symbol-model.md`: declarations e relações nominais sem binding ou
+  layout.
+- `docs/domain/reference-resolution.md`: occurrences, binding, candidates,
+  CALL semantics e separação de runtime values.
+- `docs/domain/provenance.md`: origem física, exactness e include chain.
+- `docs/domain/conditional-expressions.md`: condition surface atual e limites
+  de `ConditionSemantics`/`ConditionValidation` ainda futuros.
 
 ## ADRs/invariantes relacionados
 
-Este trabalho executa a boundary aprovada no Discovery e preserva ADR-0002,
-ADR-0003, ADR-0004, ADR-0005, ADR-0008, ADR-0009 e ADR-0010. Os invariantes
-diretamente aplicáveis são INV-AST-001/002/003, INV-SYM-001,
-INV-PROV-001/002, INV-RES-001/002, INV-COV-001/003 e INV-DET-001. As decisões
-dos Checkpoints 2, 3A e 3B estão em:
+ADR-0013 é a decisão principal. Permanecem aplicáveis ADR-0002, ADR-0003,
+ADR-0004, ADR-0005, ADR-0008, ADR-0009, ADR-0010 e ADR-0012.
 
-- `docs/history/evidence/semantic-product-boundary-checkpoint-2.md`;
-- `docs/history/evidence/semantic-product-boundary-checkpoint-3a.md`;
-- `docs/history/evidence/semantic-product-boundary-checkpoint-3b.md`.
-
-Este work item não reabre a escolha A2+B. Uma mudança desse contrato exigiria
-novo Discovery/autorização, não ajuste incidental durante a implementação do
-slice. A projeção JSON de transporte prevista no Checkpoint 5 não reabre a
-escolha A2+B nem autoriza implementar o bounded context do lowerer.
+Os invariantes centrais são INV-SP-001–006, complementados por INV-AST-001–003,
+INV-SYM-001, INV-PROV-001/002, INV-RES-001/002, INV-COV-001/003 e
+INV-DET-001. A implementação atual é uma exceção explícita nos invariantes
+INV-SP; o plano corretivo abaixo é o único caminho autorizado para removê-la.
