@@ -52,5 +52,5 @@ produção, lowering, CFG ou dataflow neste checkpoint.
 
 A boundary está suficiente para iniciar o vertical slice de produção em um novo
 work item explicitamente autorizado; o próximo trabalho deve manter a mesma
-separação A2 → adapter → estado próprio imutável → port read-only → consumer e
+separação frontend → adapter → A2/estado imutável → port → consumer e
 preservar `UNKNOWN`/uncertainty até existir análise de valores autorizada.
