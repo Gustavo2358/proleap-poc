@@ -2,7 +2,7 @@ id: WORK-SEMANTIC-PRODUCT-002
 title: Semantic Product de produção para MOVE literal e CALL variável
 status: active
 risk: high
-goal: Materializar em memória um Semantic Product COBOL-specific, fechado e imutável, que publique o slice provado MOVE literal → CALL variável por uma facade tipada sem inferir target de runtime.
+goal: Materializar em memória um Semantic Product COBOL-specific, fechado e imutável, que publique o slice provado MOVE literal → CALL variável por uma facade tipada sem inferir target de runtime e, em checkpoint posterior, produza uma projeção de inspeção determinística semantic-product.json sem transformar JSON em domínio.
 must_read:
   - docs/index.md
   - docs/architecture/pipeline.md
@@ -25,11 +25,7 @@ must_read:
   - docs/engineering/downstream-impact-classification.md
   - docs/engineering/gates.md
   - docs/evals/semantic-eval-catalog.md
-  - docs/work/active/WORK-SEMANTIC-PRODUCT-001/work-item.yaml
-  - docs/work/active/WORK-SEMANTIC-PRODUCT-001/spec.md
-  - docs/work/active/WORK-SEMANTIC-PRODUCT-001/plan.md
-  - docs/work/active/WORK-SEMANTIC-PRODUCT-001/eval.md
-  - docs/work/active/WORK-SEMANTIC-PRODUCT-001/state.md
+  - docs/work/history/WORK-SEMANTIC-PRODUCT-001.md
   - docs/history/evidence/semantic-product-boundary-checkpoint-2.md
   - docs/history/evidence/semantic-product-boundary-checkpoint-3a.md
   - docs/history/evidence/semantic-product-boundary-checkpoint-3b.md
@@ -97,18 +93,21 @@ source_scope:
   - planned:src/main/java/io/github/gustavo2358/cobolexplorer/semanticproduct/CobolSemanticProduct.java
   - planned:src/main/java/io/github/gustavo2358/cobolexplorer/semanticproduct/CobolSemanticPort.java
   - planned:src/main/java/io/github/gustavo2358/cobolexplorer/semanticproduct/CobolMoveCallAdapter.java
+  - planned:src/main/java/io/github/gustavo2358/cobolexplorer/semanticproduct/SemanticProductInspectionAdapter.java
 test_scope:
   - src/test/java/io/github/gustavo2358/cobolexplorer/SemanticProductBoundaryCheckpoint3BTest.java
   - src/test/java/io/github/gustavo2358/cobolexplorer/semanticproduct/
   - planned:src/test/java/io/github/gustavo2358/cobolexplorer/SemanticProductMoveCallContractTest.java
   - planned:src/test/java/io/github/gustavo2358/cobolexplorer/SemanticProductMoveCallAdapterTest.java
   - planned:src/test/java/io/github/gustavo2358/cobolexplorer/SemanticProductMoveCallIntegrationTest.java
+  - planned:src/test/java/io/github/gustavo2358/cobolexplorer/SemanticProductInspectionAdapterTest.java
 must_not_change:
   - src/main/antlr4/**
   - AST, grammar, symbol table, occurrence collector, nominal resolver and existing parser behavior
   - WORK-AST-002, F-01, BACKLOG-RES-003 and any other active work item scope
-  - CobolLower, Canonical Analysis IR, CFG, dataflow, possible-values and dependency extraction
-  - JSON, serializer, schema, interchange, round-trip, persistence and HTML/snapshot contracts
+  - CobolLower, Canonical Analysis IR, CFG, dataflow, possible-values and dependency extraction; when authorized in the future, CobolLower may consume only the typed CobolSemanticPort
+  - generic serializer/framework, public interchange schema, round-trip, persistence, universal multi-language abstraction and HTML/snapshot contracts
+  - semantic-product.json or its inspection adapter before the later inspection checkpoint, or JSON inside Semantic Product/state/port
   - plugin framework, universal multi-language Semantic Product and external-language analyzers
   - existing production fixtures, baselines and test-only experimental classes, except a new oracle explicitly authorized by a checkpoint
 gates:

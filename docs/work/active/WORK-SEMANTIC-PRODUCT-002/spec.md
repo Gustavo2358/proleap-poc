@@ -18,6 +18,12 @@ work item próprio, a implementação tende a promover os produtos atuais como
 API, a consultar providers vivos ou a transformar o literal do `MOVE` em um
 target de runtime — três violações do contrato aprovado.
 
+Também falta uma projeção determinística para inspeção. Ela deve existir como
+um adapter separado, na forma `CobolSemanticState` /
+`CobolSemanticPort` → inspection adapter → `semantic-product.json`. O JSON é um
+artefato de inspeção derivado do produto tipado; não é o Semantic Product, não
+define a boundary e não deve ser consumido pelo futuro `CobolLower`.
+
 ## Objetivo
 
 Implementar o primeiro Semantic Product COBOL-specific de produção para esse
@@ -25,7 +31,10 @@ slice, como estado materializado em memória, imutável e fechado, exposto por u
 facade/port read-only com tipos próprios da boundary; o produto deve publicar o
 binding nominal de `WS-PGM`, o literal escrito, a ordenação observada,
 provenance localizada, policy/readiness e a incerteza explícita de que o target
-de runtime do `CALL` continua desconhecido.
+de runtime do `CALL` continua desconhecido. Em checkpoint posterior, produzir
+`semantic-product.json` por um adapter de inspeção separado, determinístico para
+a mesma entrada/análise. O futuro `CobolLower`, quando autorizado, consumirá
+somente o port tipado.
 
 ## Domínio de entrada suportado
 
@@ -67,6 +76,10 @@ O produto publica somente classes de domínio necessárias para o slice:
 - **analysis context mínimo:** policy COBOL normalizada, versionada e com modos
   ausentes representados como `UNSPECIFIED`, além dos facts derivados que
   explicam o limite da análise.
+- **inspection projection separada:** `semantic-product.json` é uma projeção
+  posterior de inspeção, produzida por adapter que consome somente o estado/port
+  tipado; não é uma classe do Semantic Product nem um contrato público de
+  interchange.
 
 Essas classes pertencem ao produto e não são aliases públicos de `Ast.*`,
 `SymbolTable`, `ReferenceOccurrences`, `ReferenceResolution`, `SourceMap` ou
@@ -120,6 +133,26 @@ B — facade/port tipada, fechada e read-only
              ▼
 consumer de teste independente do slice
 ```
+
+A inspeção é uma saída posterior e separada do produto:
+
+```text
+CobolSemanticState / CobolSemanticPort
+                 │
+                 ▼
+inspection adapter determinístico (checkpoint posterior)
+                 │
+                 ▼
+semantic-product.json
+```
+
+O adapter de inspeção não pode ser uma dependência do estado ou do port. Para a
+mesma entrada e a mesma análise, ele deve produzir a mesma projeção, incluindo
+a mesma ordem observável de campos e coleções; não pode inserir timestamp,
+identidade de objeto, ordem incidental de mapa ou metadata de ambiente. Essa
+determinidade da inspeção não promete identidade cross-run/cross-version nem
+transforma o artefato em schema público de interchange. Qualquer futuro
+`CobolLower` continua consumindo somente o `CobolSemanticPort`, nunca JSON.
 
 O consumer de teste representa o primeiro uso downstream; `CobolLower` não é
 implementado neste work item. O package da boundary não pode depender de
@@ -188,7 +221,9 @@ vivo: a unit namespaced, a declaração DATA, o fato `MOVE`, o fato `CALL`, a
 relação de ordering, o analysis status, a policy e a provenance de cada anchor.
 As consultas são somente leitura e não podem alterar resultados, construir
 facts lazy ou depender da ordem em que forem chamadas. A facade não devolve
-produtos do frontend e não expõe serializer, snapshot ou schema.
+produtos do frontend e não expõe serializer, snapshot ou schema. O inspection
+adapter posterior recebe somente tipos boundary-owned do state/port e fica fora
+do contrato do domínio.
 
 ### Invariantes da boundary
 
@@ -219,6 +254,10 @@ Cada checkpoint de implementação deve proteger estes invariantes:
 - **Publicação coerente:** core e capabilities da mesma consulta pertencem ao
   mesmo estado A2; persistência e identidade estável entre gerações continuam
   fora deste slice.
+- **Semantic Product != JSON:** `CobolSemanticState`/`CobolSemanticPort` são o
+  produto tipado. `semantic-product.json` é somente uma projeção de inspeção
+  separada, posterior e determinística para a mesma entrada/análise; não é API
+  de domínio, schema público ou entrada do `CobolLower`.
 
 ## Critérios observáveis de aceitação
 
@@ -236,11 +275,13 @@ feliz isolado não substitui os critérios de boundary e de escopo.
 | CA-06 | State e port são imutáveis, a publicação é fechada e o consumer opera depois da liberação do frontend. | Teste de mutação de coleções, construção sem frontend e verificação de dependências no bytecode. |
 | CA-07 | Boundary e consumer não dependem de ANTLR, parse tree, internals do frontend, snapshots, serializer, `writtenText` ou `grammarRule` para semântica. | `ArchitectureBoundaryTest`/teste focalizado de leakage e inspeção de source/bytecode. |
 | CA-08 | A implementação muda somente o escopo autorizado, mantém os produtos de entrada separados e deixa todos os gates declarados verdes. | Revisão do diff, `git diff --check`, `check-docs`, `check-fast`, `check-architecture`, `check-semantic`, `check-performance` e `check-full`. |
+| CA-09 | Em checkpoint posterior, a inspeção produz `semantic-product.json` por adapter separado, consumindo somente `CobolSemanticState`/`CobolSemanticPort`, e repetições com a mesma entrada/análise produzem a mesma projeção determinística. | Teste do adapter comparando bytes/valores e ordem observável; inspeção de dependências confirma que JSON não entra no state/port nem no `CobolLower`. |
 
 O Checkpoint 1 deste PR satisfaz somente a parte documental desses critérios:
 o contrato, os oracles, o plano e o índice devem existir, e nenhum arquivo de
-produção, grammar, fixture ou teste deve ser antecipado. Os critérios CA-01 a
-CA-08 serão demonstrados nos checkpoints de implementação autorizados.
+produção, grammar, fixture, teste, inspection adapter ou `semantic-product.json`
+deve ser antecipado. Os critérios CA-01 a CA-09 serão demonstrados nos
+checkpoints de implementação autorizados.
 
 ## Comportamento diante de incerteza
 
@@ -264,8 +305,12 @@ resultados pertencem a CFG/dataflow futuros.
 
 - implementar `CobolLower`, Canonical Analysis IR, CFG, dataflow, reaching
   definitions, possible-values, call graph ou dependency extraction;
-- criar serializer, JSON, schema, interchange, round-trip, persistência ou
-  identidade cross-run/cross-version;
+- implementar o inspection adapter ou gerar `semantic-product.json` antes do
+  checkpoint posterior próprio para essa projeção;
+- criar serializer/framework genérico, schema público de interchange, round-trip,
+  persistência ou identidade cross-run/cross-version;
+- colocar JSON dentro do Semantic Product, do `CobolSemanticState` ou do
+  `CobolSemanticPort`, ou fazer o futuro `CobolLower` consumir JSON;
 - generalizar a boundary para outras construções COBOL, outras linguagens,
   nested/multiple program units, `CALL` literal, `MOVE CORRESPONDING`, múltiplos
   targets, expressions de source ou control constructs;
@@ -310,4 +355,5 @@ dos Checkpoints 2, 3A e 3B estão em:
 
 Este work item não reabre a escolha A2+B. Uma mudança desse contrato exigiria
 novo Discovery/autorização, não ajuste incidental durante a implementação do
-slice.
+slice. A projeção de inspeção prevista no Checkpoint 5 não reabre a escolha
+A2+B.

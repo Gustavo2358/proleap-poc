@@ -10,6 +10,12 @@ do `MOVE` com o operando do `CALL`, o ordering observado, provenance, policy e
 status de análise. Deve afirmar nominal binding conhecido somente onde há
 candidate único e deve publicar `UNKNOWN`/uncertainty para o target de runtime.
 
+Em checkpoint posterior, a inspeção também será correta quando um adapter
+separado consumir somente `CobolSemanticState`/`CobolSemanticPort` e produzir
+`semantic-product.json` de modo determinístico: a mesma entrada e a mesma
+análise devem gerar a mesma projeção observável, sem fazer do JSON o produto ou
+um schema público.
+
 O oracle principal já foi executado no Checkpoint 3B e está em
 `docs/history/evidence/semantic-product-boundary-checkpoint-3b.md`; a
 implementação de produção precisa reproduzir sua propriedade sem copiar a
@@ -38,7 +44,10 @@ localizável no diff ou nos testes. O slice só passa quando todas forem PASS:
 6. Provenance/exactness/include chain e policy `UNSPECIFIED` continuam
    observáveis sem exigir o `SourceMap` inteiro ou options raw inexistentes.
 7. O diff não antecipa `CobolLower`, IR, CFG, dataflow, possible-values,
-   dependency extraction, serializer/JSON, outra construção ou outra linguagem.
+   dependency extraction, serializer/framework genérico, schema público de
+   interchange, outra construção ou outra linguagem. `semantic-product.json`
+   só é permitido no checkpoint posterior do inspection adapter e permanece
+   fora do state/port e do consumo do `CobolLower`.
 
 Uma resposta “não demonstrado” é finding, não aprovação condicional. Se surgir
 um finding semântico novo, o reviewer deve classificá-lo pela taxonomia
@@ -66,6 +75,9 @@ autoriza expandir seu escopo para resolvê-lo.
   falta delas como licença para inventar linkage ou target.
 - O estado A2, a facade B e o consumer não carregam referências de frontend,
   ANTLR, presentation, serializer ou provider lazy.
+- No checkpoint posterior, o inspection adapter recebe somente state/port
+  tipado e repete a mesma projeção para a mesma entrada/análise, sem timestamp,
+  ordem incidental de mapa, identidade de objeto ou metadata de ambiente.
 
 ## Classes negativas
 
@@ -81,9 +93,10 @@ autoriza expandir seu escopo para resolvê-lo.
   desses objetos vivo para responder query.
 - Representar `UNKNOWN`, input missing, unsupported, unresolved ou ambiguity
   por lista vazia, exception genérica ou claim `COMPLETE`.
-- Anotar/mutar produtos anteriores, criar serializer/JSON, alterar grammar,
-  implementar lowerer, CFG, dataflow ou generalizar o produto para outros
-  constructs/linguagens.
+- Anotar/mutar produtos anteriores, colocar JSON no state/port, criar
+  serializer/framework genérico ou schema público de interchange, alterar
+  grammar, implementar lowerer, CFG, dataflow ou generalizar o produto para
+  outros constructs/linguagens.
 
 ## Classes ambíguas
 
@@ -121,6 +134,11 @@ autoriza expandir seu escopo para resolvê-lo.
   selecionar ou fabricar handle.
 - Remover a provenance exata ou trocar COPY disponível por input ausente deve
   ser observável no status/anchor; fatos independentes não podem desaparecer.
+- Repetir o inspection adapter com a mesma entrada/análise deve produzir
+  `semantic-product.json` byte-a-byte/valor-a-valor equivalente e com a mesma
+  ordem observável; consultar o port em ordem diferente não pode alterar a
+  projeção. Esse oracle pertence ao checkpoint posterior e não é implementado
+  neste Checkpoint 1.
 - Inspecionar bytecode e fonte da boundary/consumer deve detectar qualquer
   dependência direta de frontend, ANTLR, `writtenText` ou `grammarRule`.
 - Uma entrada fora do slice, como `CALL 'PGMA'`, outro statement ou outra unit,
@@ -133,7 +151,8 @@ Os gates existentes devem continuar verdes para AST, pre-order, symbols,
 occurrences, resolução nominal, CALL semantics, coverage, provenance,
 classificação externa, snapshots, performance e architecture boundary. O
 consumer independente novo deve ser coberto por testes de contrato e não deve
-ser acoplado aos testes de presentation.
+ser acoplado aos testes de presentation. O inspection adapter posterior deve
+ter teste próprio de determinismo e não pode alterar os snapshots existentes.
 
 Evals canônicos relacionados:
 
@@ -162,6 +181,10 @@ Evals canônicos relacionados:
   policy-dependent; não pode reclassificar `CALL WS-PGM` como target concreto.
 - Tornar um input estruturalmente ausente preserva facts independentes e muda
   a claim/readiness para incompleta, em vez de produzir sucesso vazio.
+- Projetar duas vezes o mesmo state/port, ou produzir o state duas vezes a
+  partir da mesma entrada/análise, preserva bytes/valores e ordem do
+  `semantic-product.json`; isso não reivindica identidade cross-run/cross-version
+  dos handles.
 
 ## Expectativas de escala
 
