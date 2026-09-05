@@ -95,6 +95,19 @@ Os itens cujo destino principal é o contrato do work item (CP3), backlog/handof
 | KH-001–KH-006 | `state.md` separa o verde histórico/implementado das correções planejadas; `spec.md` preserva o fixture linear como prova N=1 e usa a surface atual de IF apenas no alcance demonstrado. |
 | KG-001–KG-010 | `spec.md`, `plan.md`, `eval.md` e `work-item.yaml` materializam os guardrails do slice; os vínculos com backlog são concluídos no Checkpoint 4. |
 
+## Destinos realizados no Checkpoint 4
+
+| IDs | Destino efetivo |
+| --- | --- |
+| KM-026 | `BACKLOG-SP-001` registra EVALUATE como próximo enrichment após IF/ELSE, condicionado por F-01 e sem promover surface parcial a predicate semantics completa. |
+| KM-027 | `BACKLOG-SP-002` registra PERFORM e os gaps de TIMES, test mode, VARYING, FROM/BY/UNTIL e AFTER como precondições de readiness. |
+| KM-028, KM-031 | `BACKLOG-SP-003/004` e `BACKLOG-CFG-001/002` preservam GO TO, GO TO DEPENDING ON, terminal semantics, ALTER e SEARCH por slices dependentes da CFG readiness de cada construct. |
+| KM-029–KM-030 | `BACKLOG-LOWER-001` e `BACKLOG-IR-001` preservam CobolLower e Analysis IR como fases distintas, incrementais e ainda sem schema prematuro. |
+| KM-032–KM-034 | `BACKLOG-DF-001`, `BACKLOG-DF-004`, `BACKLOG-DF-003`, `BACKLOG-DF-002` e `BACKLOG-DEPS-001` fixam a ordem effects/storage → reaching definitions → possible-values → targets dinâmicos/dependency facts. |
+| KM-015, KG-007 | `BACKLOG-DF-001` exige storage/layout/alias explícito para REDEFINES/RENAMES e rejeita `DataItemId` nominal como storage físico definitivo. |
+| KG-004–KG-006 | Os handoffs de lower/CFG/dataflow proíbem reconsulta ao frontend, fallthrough presumido e target de runtime derivado de binding nominal. |
+| F-01 | `BACKLOG-RES-003` foi reavaliado para `BLOCKS_SEMANTIC_PRODUCT` contra a boundary já definida, preservando que classificação não autoriza remediação. |
+
 ## Contexto histórico que não deve virar norma nova
 
 | ID | Contexto | Tratamento |
