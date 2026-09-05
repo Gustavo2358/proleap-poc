@@ -2,7 +2,7 @@
 
 ## Onde estamos
 
-Os seis checkpoints da migração documental e os Checkpoints 1–5 foram
+Os seis checkpoints da migração documental e os Checkpoints 1–6 foram
 executados no PR #27, que permanece sob review. O CP1 mantém o target model e o
 consumer exclusivamente em `src/test`; eles continuam como especificação
 executável independente.
@@ -29,7 +29,20 @@ publica exatamente um fact para cada `Ast.Statement`: MOVE/CALL/IF sustentados
 permanecem facts tipados e as demais ocorrências atravessam como
 `ObservedStatement`. Statements sob PERFORM ou outra família estrutural ainda
 não projetada existem no produto, mas preservam containment `UNKNOWN` e gap
-localizado. `ExplorerMain` e o composition root continuam inalterados.
+localizado.
+
+O CP6 publica o produto no composition root imediatamente após
+`ResolutionAnalysisReport.compose`, quando AST/units, symbols, occurrences,
+resolution, report e policy/provenance já estão fechados, e antes de snapshots
+de resolution e da apresentação final. `ExplorerMain.publishSemanticProduct`
+apenas reúne esses produtos em `FrontendProducts` e chama
+`CobolSemanticProductProjector.open`; não reconstrói produto canônico nem contém
+regra de projeção.
+
+No mesmo fluxo, somente o `CobolSemanticPort` materializado é entregue a
+`CobolLoweringReadinessConsumer`. O consumer produz um audit imutável e tipado,
+não retém o port e não depende de frontend, projection, snapshots, presentation
+ou composition root.
 
 ## Verde conhecido
 
@@ -112,9 +125,33 @@ localizado. `ExplorerMain` e o composition root continuam inalterados.
   do CP3 usa `LiteralKind.UNKNOWN`, coverage/readiness conservadoras e o gap
   localizado `LITERAL_KIND_NOT_PUBLISHED`, sem inferência por `rawLexeme`, value
   ou PIC.
-- O gate de arquitetura inspeciona o novo pacote de projection e proíbe
-  dependência em builders/collectors/resolvers, `SourceMap`, ANTLR, snapshots e
-  presentation. O oracle CP1 permanece independente da implementação.
+- O gate de arquitetura inspeciona o pacote de projection e proíbe dependência
+  em builders/collectors/resolvers, `SourceMap`, ANTLR, snapshots e
+  presentation. No CP6, ele também inspeciona source e bytecode do consumer:
+  somente o port, os facts do core e os tipos próprios são permitidos;
+  `writtenText` e `grammarRule` também permanecem proibidos. O oracle CP1
+  continua independente da implementação.
+- O consumer do CP6 percorre exclusivamente o port e reconstrói Unit, policy,
+  DATA, todos os statements, program points, roots, containment, branches,
+  nesting e continuation. MOVE retém literal/target/role/binding; CALL retém
+  operand/binding/runtime `UNKNOWN`; IF retém condition surface/references e
+  membership THEN/ELSE; `ObservedStatement` retém existência, kind/shape,
+  coverage e gap. Provenance, coverage, gaps e readiness são copiados sem
+  promoção ou nova interpretação COBOL.
+- No fixture estrutural, o audit contém 3 DATA e 14 statements: 7 MOVE, 3 CALL,
+  3 IF e 1 `ObservedStatement`. O summary contém 3 modeled, 11 partial, zero
+  unsupported e zero input-missing; o observado preservado é partial com gap
+  `OBSERVED_STATEMENT_PARTIAL` e bloqueia conservadoramente as três claims
+  agregadas.
+
+  | família | lowering | CFG | effects/dataflow | incompletude visível |
+  | --- | --- | --- | --- | --- |
+  | DATA | `SUFFICIENT` | `NOT_APPLICABLE` | `PARTIAL` | storage/layout/aliases ausentes |
+  | MOVE | `PARTIAL` | `SUFFICIENT` | `PARTIAL` | literal kind e storage ausentes |
+  | CALL | `SUFFICIENT` | `SUFFICIENT` | `PARTIAL` | runtime target `UNKNOWN` e storage ausente |
+  | IF | `PARTIAL` | `SUFFICIENT` | `PARTIAL` | condition semantics não publicada |
+  | observed preservado | `BLOCKED` | `BLOCKED` | `BLOCKED` | capability de lowering ainda não tipada |
+  | agregado do fixture | `BLOCKED` | `BLOCKED` | `BLOCKED` | herda o fact observado mais fraco |
 - `MaterializedCobolSemanticPort` constrói eager, uma única vez e em `O(N)`,
   índices derivados do state materializado. Lookup por statement e containment
   deixa de varrer o inventário global; roots e views MOVE/CALL/IF/observed são
@@ -128,17 +165,18 @@ localizado. `ExplorerMain` e o composition root continuam inalterados.
   nested. O core prova separadamente a representabilidade de statement
   `INPUT_MISSING` com motivo localizado e de zero real versus inventário
   indisponível.
-- Os testes focais de projection/core/inventário e os gates `docs`,
-  `architecture`, `fast`, `semantic`, `performance` e `full` passam no
-  fechamento do CP5. AST, grammar, symbols, occurrences, resolution, report,
-  `ExplorerMain`, snapshots e fixtures de produção não foram alterados.
+- O oracle permanente do CP6 prova a publicação fechada e a reconstrução
+  boundary-only. As falsificações removendo continuation, promovendo `PARTIAL`
+  e introduzindo dependência em `Ast` foram detectadas e revertidas. Os testes
+  focais e os gates `docs`, `architecture`, `fast`, `semantic`, `performance` e
+  `full` passam no fechamento do CP6. AST, grammar, symbols, occurrences,
+  resolution, report, snapshots e fixtures de produção não foram alterados.
 
 ## Restante
 
-- Obter review humano do Checkpoint 5 no PR #27.
-- Executar os Checkpoints 6–8 somente na ordem registrada e com a autorização
-  aplicável. Composition root, consumer de lowering-readiness e JSON permanecem
-  futuros.
+- Obter review humano do Checkpoint 6 no PR #27.
+- Executar os Checkpoints 7–8 somente na ordem registrada e com a autorização
+  aplicável. JSON e integração downstream posterior permanecem futuros.
 - Manter EVALUATE, PERFORM, GO TO, terminal semantics, ALTER, SEARCH,
   CobolLower, IR, CFG, effects/storage e dataflow fora deste checkpoint.
 
@@ -183,3 +221,9 @@ localizado. `ExplorerMain` e o composition root continuam inalterados.
   somente esses claims disponíveis e limita-os pelo fact individual mais fraco
   e pela disponibilidade do inventário; uma equivalência mais rica depende de
   autoridade canônica adicional, não de classificação paralela local.
+- A integração no composition root expôs occurrences cobertas, com input
+  completo, por uma `ExternalClassification` canônica cujo gap nominal é
+  deliberadamente suprimido pelo report. O projector indexa essa cobertura,
+  mantém tais referências fora de `DataReference` e registra
+  `CONDITION_REFERENCE_KIND_NOT_PROJECTED`; não altera resolver/report nem
+  fabrica binding DATA para um construct externo.

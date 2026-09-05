@@ -2,6 +2,7 @@ package io.github.gustavo2358.cobolexplorer;
 
 import io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticPort;
 import io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct;
+import io.github.gustavo2358.cobolexplorer.semanticproduct.consumer.CobolLoweringReadinessConsumer;
 import io.github.gustavo2358.cobolexplorer.semanticproduct.projection.CobolSemanticProductProjector;
 import org.junit.jupiter.api.Test;
 
@@ -9,6 +10,8 @@ import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -32,8 +35,16 @@ class ArchitectureBoundaryTest {
     private static final String SEMANTIC_PRODUCT_PREFIX =
             (PROJECT_PREFIX + "semanticproduct.").replace('.', '/');
     private static final String ANTLR_PREFIX = "org/antlr/v4/";
+    private static final String SEMANTIC_PORT_INTERNAL =
+            CobolSemanticPort.class.getName().replace('.', '/');
+    private static final String SEMANTIC_PRODUCT_INTERNAL =
+            CobolSemanticProduct.class.getName().replace('.', '/');
+    private static final String LOWERING_CONSUMER_INTERNAL =
+            CobolLoweringReadinessConsumer.class.getName().replace('.', '/');
     private static final Pattern DESCRIPTOR_CLASS =
             Pattern.compile("L([A-Za-z0-9_$/]+)(?=[;<])");
+    private static final Pattern JAVA_IMPORT =
+            Pattern.compile("(?m)^import\\s+(?:static\\s+)?([^;]+);");
 
     @Test
     void astConstructionDoesNotDependOnLaterSemanticProductsOrPresentation() throws Exception {
@@ -116,6 +127,42 @@ class ArchitectureBoundaryTest {
     }
 
     @Test
+    void loweringReadinessConsumerDependsOnlyOnTheSemanticPortBoundary() throws Exception {
+        List<Class<?>> consumerTypes = new ArrayList<>();
+        addNestedTypes(CobolLoweringReadinessConsumer.class, consumerTypes);
+        for (Class<?> component : consumerTypes) {
+            Set<String> violations = new LinkedHashSet<>();
+            for (String reference : directDependencies(component)) {
+                if ((reference.startsWith(PROJECT_PREFIX_INTERNAL)
+                        && !isConsumerBoundaryType(reference))
+                        || reference.startsWith(ANTLR_PREFIX))
+                    violations.add(reference);
+            }
+            assertTrue(violations.isEmpty(), () -> "INV-SP-003/EVAL-ARCH-001: "
+                    + component.getName()
+                    + " depende de frontend, projection, presentation ou composition root: "
+                    + violations);
+        }
+
+        Path sourcePath = Path.of("src/main/java/io/github/gustavo2358/cobolexplorer/"
+                + "semanticproduct/consumer/CobolLoweringReadinessConsumer.java");
+        String source = Files.readString(sourcePath);
+        Set<String> forbiddenImports = new LinkedHashSet<>();
+        Matcher imports = JAVA_IMPORT.matcher(source);
+        while (imports.find()) {
+            String imported = imports.group(1).replace('.', '/');
+            if (imported.startsWith(PROJECT_PREFIX_INTERNAL)
+                    && !isConsumerBoundaryType(imported))
+                forbiddenImports.add(imported);
+        }
+        assertTrue(forbiddenImports.isEmpty(), () -> "INV-SP-003/EVAL-ARCH-001: "
+                + "consumer importa implementação fora do port: " + forbiddenImports);
+        assertTrue(List.of("writtenText(", "grammarRule(", "org.antlr.v4").stream()
+                        .noneMatch(source::contains),
+                "INV-SP-003/INV-SP-004: consumer reinterpreta metadata do frontend");
+    }
+
+    @Test
     void bytecodeScannerSeesGenericAndRecordComponentTypeReferences() throws Exception {
         Set<String> references = directDependencies(BytecodeLeakageProbe.class);
 
@@ -141,6 +188,14 @@ class ArchitectureBoundaryTest {
     private static boolean isSemanticProductProjection(String reference) {
         return reference.startsWith(SEMANTIC_PRODUCT_PREFIX + "projection/")
                 || reference.startsWith(SEMANTIC_PRODUCT_PREFIX + "adapter/");
+    }
+
+    private static boolean isConsumerBoundaryType(String reference) {
+        return reference.equals(SEMANTIC_PORT_INTERNAL)
+                || reference.equals(SEMANTIC_PRODUCT_INTERNAL)
+                || reference.startsWith(SEMANTIC_PRODUCT_INTERNAL + '$')
+                || reference.equals(LOWERING_CONSUMER_INTERNAL)
+                || reference.startsWith(LOWERING_CONSUMER_INTERNAL + '$');
     }
 
     private static void assertNoDirectDependencies(String boundary, List<Class<?>> components,

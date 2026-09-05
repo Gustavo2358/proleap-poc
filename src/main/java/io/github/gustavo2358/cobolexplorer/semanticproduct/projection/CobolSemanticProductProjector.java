@@ -4,6 +4,7 @@ import io.github.gustavo2358.cobolexplorer.Ast;
 import io.github.gustavo2358.cobolexplorer.CompilationUnitBuildResult;
 import io.github.gustavo2358.cobolexplorer.CompilationUnitModel;
 import io.github.gustavo2358.cobolexplorer.CompilationUnitSymbolTables;
+import io.github.gustavo2358.cobolexplorer.ExternalClassification;
 import io.github.gustavo2358.cobolexplorer.ReferenceOccurrences;
 import io.github.gustavo2358.cobolexplorer.ReferenceResolution;
 import io.github.gustavo2358.cobolexplorer.ResolutionAnalysisReport;
@@ -93,7 +94,7 @@ public final class CobolSemanticProductProjector {
             plans.add(plan);
             if (plan.capability().supported()) {
                 for (ReferenceResolution.Entry entry : plan.entries()) {
-                    if (!projectableDataBinding(entry)) continue;
+                    if (!projectableDataBinding(entry, inputs)) continue;
                     for (ReferenceResolution.Candidate candidate : entry.candidates())
                         referencedData.add(requireDataCandidate(candidate).entityId());
                 }
@@ -329,7 +330,9 @@ public final class CobolSemanticProductProjector {
                 || role == ResolutionContracts.ReferenceRole.REFERENCE_MODIFICATION_LENGTH;
     }
 
-    private static boolean projectableDataBinding(ReferenceResolution.Entry entry) {
+    private static boolean projectableDataBinding(
+            ReferenceResolution.Entry entry, ProjectionInputs inputs) {
+        if (inputs.nominalGapSuppressedByExternalClassification(entry.occurrence())) return false;
         if (entry.status() == ResolutionContracts.ResolutionStatus.EXTERNAL_OBSERVED)
             return false;
         if (entry.candidates().isEmpty())
@@ -537,7 +540,7 @@ public final class CobolSemanticProductProjector {
             CobolSemanticProduct.Provenance referenceProvenance =
                     provenance(entry.occurrence().meta().provenance());
             addReportGaps(statementId, entry.occurrence(), inputs, referenceProvenance, gaps);
-            if (!projectableDataBinding(entry)) {
+            if (!projectableDataBinding(entry, inputs)) {
                 ifCoverage = weakest(ifCoverage, CobolSemanticProduct.CoverageStatus.PARTIAL);
                 gaps.add(new CobolSemanticProduct.Gap(statementId,
                         CobolSemanticProduct.GapScope.CONDITION_SEMANTICS,
@@ -559,7 +562,7 @@ public final class CobolSemanticProductProjector {
         CobolSemanticProduct.StatementHeader ifHeader = header(statementId,
                 plan.position().ordinal(), containment, statementProvenance, ifCoverage,
                 containmentReadiness(containment,
-                        ifReadiness(plan.entries(), continuation, branchContent)));
+                        ifReadiness(plan.entries(), continuation, branchContent, inputs)));
         CobolSemanticProduct.IfFact fact = new CobolSemanticProduct.IfFact(
                 ifHeader,
                 new CobolSemanticProduct.ConditionSurface(conditionShape(branch.condition()),
@@ -581,7 +584,7 @@ public final class CobolSemanticProductProjector {
                     branchContent.detail(), statementProvenance));
         addContainmentGap(containment, statementId, statementProvenance, gaps);
         for (ReferenceResolution.Entry entry : plan.entries()) {
-            if (projectableDataBinding(entry))
+            if (projectableDataBinding(entry, inputs))
                 requireBindingGapWhenNeeded(ifHeader, entry, gaps);
         }
     }
@@ -933,14 +936,15 @@ public final class CobolSemanticProductProjector {
     private static CobolSemanticProduct.Readiness ifReadiness(
             List<ReferenceResolution.Entry> entries,
             ContinuationProjection continuation,
-            BranchContentProjection branchContent) {
+            BranchContentProjection branchContent,
+            ProjectionInputs inputs) {
         CobolSemanticProduct.ReadinessStatus lowering =
                 CobolSemanticProduct.ReadinessStatus.PARTIAL;
         CobolSemanticProduct.ReadinessStatus effects =
                 CobolSemanticProduct.ReadinessStatus.PARTIAL;
         if (entries.stream().anyMatch(entry ->
                 entry.status() == ResolutionContracts.ResolutionStatus.UNSUPPORTED
-                        || !projectableDataBinding(entry))) {
+                        || !projectableDataBinding(entry, inputs))) {
             lowering = CobolSemanticProduct.ReadinessStatus.BLOCKED;
             effects = CobolSemanticProduct.ReadinessStatus.BLOCKED;
         }
@@ -1247,6 +1251,7 @@ public final class CobolSemanticProductProjector {
             Map<OccurrenceAstKey, ReferenceOccurrences.Occurrence> occurrencesByAst,
             Map<OccurrenceIdKey, ReferenceOccurrences.Occurrence> occurrencesById,
             Map<OccurrenceAstKey, ReferenceResolution.Entry> resolutionsByAst,
+            Set<OccurrenceIdKey> externallySuppressedNominalOccurrences,
             Map<OccurrenceIdKey, List<ResolutionAnalysisReport.Gap>> reportGaps,
             ResolutionAnalysisReport.ProgramUnitSummary unitSummary,
             ResolutionAnalysisReport report) {
@@ -1270,6 +1275,9 @@ public final class CobolSemanticProductProjector {
             indexOccurrences(products.occurrencesByUnit(), occurrencesByAst, occurrencesById);
             Map<OccurrenceAstKey, ReferenceResolution.Entry> resolutionsByAst =
                     indexResolutions(products.resolution(), occurrencesByAst);
+            Set<OccurrenceIdKey> externallySuppressedNominalOccurrences =
+                    indexExternallySuppressedNominalOccurrences(
+                            products.report(), occurrencesById);
             Map<OccurrenceIdKey, List<ResolutionAnalysisReport.Gap>> reportGaps =
                     indexReportGaps(products.report(), occurrencesById);
             ResolutionAnalysisReport.ProgramUnitSummary unitSummary =
@@ -1281,7 +1289,8 @@ public final class CobolSemanticProductProjector {
                     Collections.unmodifiableMap(units), statements(selected.program()),
                     Collections.unmodifiableMap(occurrencesByAst),
                     Collections.unmodifiableMap(occurrencesById),
-                    Collections.unmodifiableMap(resolutionsByAst), reportGaps,
+                    Collections.unmodifiableMap(resolutionsByAst),
+                    externallySuppressedNominalOccurrences, reportGaps,
                     unitSummary, products.report());
         }
 
@@ -1308,6 +1317,12 @@ public final class CobolSemanticProductProjector {
                 ReferenceOccurrences.Occurrence occurrence) {
             return reportGaps.getOrDefault(new OccurrenceIdKey(
                     occurrence.programUnitId(), occurrence.id()), List.of());
+        }
+
+        private boolean nominalGapSuppressedByExternalClassification(
+                ReferenceOccurrences.Occurrence occurrence) {
+            return externallySuppressedNominalOccurrences.contains(new OccurrenceIdKey(
+                    occurrence.programUnitId(), occurrence.id()));
         }
 
         private ResolutionAnalysisReport.Gap requiredReportGap(
@@ -1478,6 +1493,27 @@ public final class CobolSemanticProductProjector {
                 new LinkedHashMap<>();
         mutable.forEach((key, value) -> result.put(key, List.copyOf(value)));
         return Collections.unmodifiableMap(result);
+    }
+
+    private static Set<OccurrenceIdKey> indexExternallySuppressedNominalOccurrences(
+            ResolutionAnalysisReport report,
+            Map<OccurrenceIdKey, ReferenceOccurrences.Occurrence> occurrences) {
+        LinkedHashSet<OccurrenceIdKey> result = new LinkedHashSet<>();
+        for (ExternalClassification.Entry classification
+                : report.externalClassifications().entries()) {
+            if (classification.copyInputCompleteness()
+                    != ExternalClassification.CopyInputCompleteness.COMPLETE)
+                continue;
+            for (int occurrenceId : classification.coveredOccurrenceIds()) {
+                OccurrenceIdKey key = new OccurrenceIdKey(
+                        classification.programUnitId(), occurrenceId);
+                require(occurrences.containsKey(key),
+                        "external classification references no canonical occurrence");
+                require(result.add(key),
+                        "canonical occurrence is covered by multiple external classifications");
+            }
+        }
+        return Collections.unmodifiableSet(result);
     }
 
     private static ResolutionAnalysisReport.ProgramUnitSummary reportSummary(
