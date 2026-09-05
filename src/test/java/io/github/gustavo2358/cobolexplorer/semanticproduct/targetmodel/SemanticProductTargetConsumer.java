@@ -2,6 +2,7 @@ package io.github.gustavo2358.cobolexplorer.semanticproduct.targetmodel;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Independent test-only consumer that checks lowering sufficiency using only
@@ -52,14 +53,25 @@ public final class SemanticProductTargetConsumer {
         }
     }
 
+    public record BindingInput(SemanticProductTargetModel.ResolutionStatus status,
+                               String reason,
+                               List<SemanticProductTargetModel.DataCandidate> candidates,
+                               Optional<SemanticProductTargetModel.DataItemId> selected) {
+        public BindingInput {
+            status = Objects.requireNonNull(status, "status");
+            reason = requireText(reason, "reason");
+            candidates = List.copyOf(candidates);
+            selected = Objects.requireNonNull(selected, "selected");
+        }
+    }
+
     public record MoveInput(SemanticProductTargetModel.StatementId statement,
                             SemanticProductTargetModel.OperandId sourceOperand,
                             SemanticProductTargetModel.LiteralKind literalKind,
                             String literal,
                             SemanticProductTargetModel.OperandId targetOperand,
-                            SemanticProductTargetModel.DataItemId target,
                             SemanticProductTargetModel.OperandRole role,
-                            SemanticProductTargetModel.ResolutionStatus binding,
+                            BindingInput targetBinding,
                             SourceAnchor literalSource) {
         public MoveInput {
             statement = Objects.requireNonNull(statement, "statement");
@@ -67,9 +79,8 @@ public final class SemanticProductTargetConsumer {
             literalKind = Objects.requireNonNull(literalKind, "literalKind");
             literal = requireText(literal, "literal");
             targetOperand = Objects.requireNonNull(targetOperand, "targetOperand");
-            target = Objects.requireNonNull(target, "target");
             role = Objects.requireNonNull(role, "role");
-            binding = Objects.requireNonNull(binding, "binding");
+            targetBinding = Objects.requireNonNull(targetBinding, "targetBinding");
             literalSource = Objects.requireNonNull(literalSource, "literalSource");
         }
     }
@@ -77,17 +88,15 @@ public final class SemanticProductTargetConsumer {
     public record CallInput(SemanticProductTargetModel.StatementId statement,
                             SemanticProductTargetModel.CallSyntax syntax,
                             SemanticProductTargetModel.OperandId operandIdentity,
-                            SemanticProductTargetModel.DataItemId operand,
                             SemanticProductTargetModel.OperandRole role,
-                            SemanticProductTargetModel.ResolutionStatus binding,
+                            BindingInput operandBinding,
                             SemanticProductTargetModel.RuntimeTargetKnowledge runtimeTarget) {
         public CallInput {
             statement = Objects.requireNonNull(statement, "statement");
             syntax = Objects.requireNonNull(syntax, "syntax");
             operandIdentity = Objects.requireNonNull(operandIdentity, "operandIdentity");
-            operand = Objects.requireNonNull(operand, "operand");
             role = Objects.requireNonNull(role, "role");
-            binding = Objects.requireNonNull(binding, "binding");
+            operandBinding = Objects.requireNonNull(operandBinding, "operandBinding");
             runtimeTarget = Objects.requireNonNull(runtimeTarget, "runtimeTarget");
         }
     }
@@ -95,9 +104,8 @@ public final class SemanticProductTargetConsumer {
     public record ConditionInput(
                           String surface,
                           SemanticProductTargetModel.OperandId subjectIdentity,
-                          SemanticProductTargetModel.DataItemId subject,
                           SemanticProductTargetModel.OperandRole subjectRole,
-                          SemanticProductTargetModel.ResolutionStatus subjectBinding,
+                          BindingInput subjectBinding,
                           SemanticProductTargetModel.RelationalOperator operator,
                           SemanticProductTargetModel.OperandId objectIdentity,
                           SemanticProductTargetModel.LiteralKind objectKind,
@@ -106,7 +114,6 @@ public final class SemanticProductTargetConsumer {
         public ConditionInput {
             surface = requireText(surface, "surface");
             subjectIdentity = Objects.requireNonNull(subjectIdentity, "subjectIdentity");
-            subject = Objects.requireNonNull(subject, "subject");
             subjectRole = Objects.requireNonNull(subjectRole, "subjectRole");
             subjectBinding = Objects.requireNonNull(subjectBinding, "subjectBinding");
             operator = Objects.requireNonNull(operator, "operator");
@@ -114,6 +121,21 @@ public final class SemanticProductTargetConsumer {
             objectKind = Objects.requireNonNull(objectKind, "objectKind");
             objectValue = requireText(objectValue, "objectValue");
             source = Objects.requireNonNull(source, "source");
+        }
+    }
+
+    public record ObservedStatementInput(
+            SemanticProductTargetModel.StatementId statement,
+            String observedKind,
+            String observedShape,
+            SemanticProductTargetModel.CoverageStatus coverage,
+            String gapCode) {
+        public ObservedStatementInput {
+            statement = Objects.requireNonNull(statement, "statement");
+            observedKind = requireText(observedKind, "observedKind");
+            observedShape = requireText(observedShape, "observedShape");
+            coverage = Objects.requireNonNull(coverage, "coverage");
+            gapCode = requireText(gapCode, "gapCode");
         }
     }
 
@@ -150,6 +172,7 @@ public final class SemanticProductTargetConsumer {
             List<MoveInput> moves,
             List<CallInput> calls,
             List<IfInput> branches,
+            List<ObservedStatementInput> unmodeledStatements,
             List<GapInput> gaps,
             SemanticProductTargetModel.CoverageSummary coverage) {
         public LoweringReadinessOutline {
@@ -160,6 +183,7 @@ public final class SemanticProductTargetConsumer {
             moves = List.copyOf(moves);
             calls = List.copyOf(calls);
             branches = List.copyOf(branches);
+            unmodeledStatements = List.copyOf(unmodeledStatements);
             gaps = List.copyOf(gaps);
             coverage = Objects.requireNonNull(coverage, "coverage");
         }
@@ -179,24 +203,31 @@ public final class SemanticProductTargetConsumer {
         }).toList();
         List<MoveInput> moves = port.moves().stream().map(move ->
                 new MoveInput(move.header().id(), move.source().id(), move.source().kind(),
-                        move.source().value(), move.target().id(), move.target().dataItem(),
-                        move.target().role(),
-                        move.target().binding().status(), anchor(move.source().provenance())))
+                        move.source().value(), move.target().id(), move.target().role(),
+                        binding(move.target().binding()), anchor(move.source().provenance())))
                 .toList();
         List<CallInput> calls = port.calls().stream().map(call ->
                 new CallInput(call.header().id(), call.syntax(), call.operand().id(),
-                        call.operand().dataItem(), call.operand().role(),
-                        call.operand().binding().status(), call.runtimeTarget())).toList();
+                        call.operand().role(), binding(call.operand().binding()),
+                        call.runtimeTarget())).toList();
         List<IfInput> branches = port.ifs().stream().map(branch ->
                 new IfInput(branch.header().id(), condition(branch.condition()),
                         branch.thenChildren(), branch.elseChildren(), branch.continuation()))
+                .toList();
+        List<ObservedStatementInput> unmodeledStatements = port.statements().stream()
+                .filter(SemanticProductTargetModel.ObservedStatementFact.class::isInstance)
+                .map(SemanticProductTargetModel.ObservedStatementFact.class::cast)
+                .map(observed -> new ObservedStatementInput(observed.header().id(),
+                        observed.observedKind(), observed.observedShape(),
+                        observed.header().coverage(), observed.gapCode()))
                 .toList();
         List<GapInput> gaps = port.gaps().stream().map(gap ->
                 new GapInput(gap.statement(), gap.scope(), gap.code(),
                         anchor(gap.provenance()))).toList();
 
         return new LoweringReadinessOutline(port.unit(), data, port.rootStatements(),
-                statements, moves, calls, branches, gaps, port.coverage());
+                statements, moves, calls, branches, unmodeledStatements, gaps,
+                port.coverage());
     }
 
     private static SourceAnchor anchor(SemanticProductTargetModel.Provenance provenance) {
@@ -207,10 +238,15 @@ public final class SemanticProductTargetConsumer {
     private static ConditionInput condition(
             SemanticProductTargetModel.ConditionFact condition) {
         return new ConditionInput(condition.surface(), condition.subject().id(),
-                condition.subject().dataItem(), condition.subject().role(),
-                condition.subject().binding().status(), condition.operator(),
+                condition.subject().role(), binding(condition.subject().binding()),
+                condition.operator(),
                 condition.object().id(), condition.object().kind(),
                 condition.object().value(), anchor(condition.provenance()));
+    }
+
+    private static BindingInput binding(SemanticProductTargetModel.NominalBinding binding) {
+        return new BindingInput(binding.status(), binding.reason(), binding.candidates(),
+                binding.selected());
     }
 
     private static String requireText(String value, String name) {

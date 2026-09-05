@@ -30,10 +30,10 @@ após review humano, o próximo checkpoint planejado é o Checkpoint 2 do
 - O fixture mínimo continua provando, como caso N=1, uma DATA, um MOVE literal,
   um CALL variável, binding nominal comum, provenance, ordering e runtime
   target `UNKNOWN` com `DYNAMIC_CALL_TARGET_VALUE_UNKNOWN`.
-- O novo fixture de target prova 3 DATA, 6 MOVE literal, 3 CALL variáveis, 2 IF
-  aninhados com statements nos dois ramos e 1 CALL literal observado fora da
-  capability. Seu inventário contém 12 statements, sem seleção first/last nem
-  paridade artificial entre MOVE e CALL.
+- O novo fixture de target prova 3 DATA, 7 MOVE literal, 3 CALL variáveis, 2 IF
+  aninhados com statements nos dois ramos, 1 IF com ramo falso vazio e 1
+  DISPLAY observado fora da capability. Seu inventário contém 14 statements,
+  sem seleção first/last nem paridade artificial entre MOVE e CALL.
 - O consumer test-only conhece somente o port target plural. Ele reconstrói
   identities namespaced, program points, containment, branches, continuations,
   identities próprias dos operands, condição relacional tipada, roles, binding,
@@ -43,6 +43,10 @@ após review humano, o próximo checkpoint planejado é o Checkpoint 2 do
   `WS-X`, e `CALL WS-X` como continuação. Essa é a informação necessária para o
   futuro oracle de reaching definitions; nenhum conjunto RD é calculado neste
   checkpoint.
+- O adversarial nominal mantém um IF completo quando sua condition reference é
+  `AMBIGUOUS`: status, reason e todos os candidates chegam ao consumer, enquanto
+  selected permanece vazio. `UNRESOLVED` também é representável sem fabricar
+  `DataItemId`.
 - `CobolSemanticPort` consulta somente o state publicado; a boundary atual não
   expõe parser, AST, symbols, occurrences, resolution ou presentation.
 - `SemanticProductMoveCallContractTest` protege closure, imutabilidade,
@@ -88,13 +92,14 @@ após review humano, o próximo checkpoint planejado é o Checkpoint 2 do
   `Ordering ordering`; `CobolSemanticPort` ainda publica `move()`, `call()` e
   `ordering()`. Isso é estado implementado, não arquitetura desejada.
 - O frontend atual aceita o fixture controlado e publica a evidência tipada para
-  3 DATA, 6 MOVE, 3 CALL variáveis, 1 CALL literal e 2 IF aninhados. Não surgiu
-  gap novo de AST/binding para este oracle; o adapter de produção o rejeita no
-  guard existente `the selected unit must contain exactly one MOVE`.
-- O CALL literal é mantido no target inventory como `UNSUPPORTED` pela
-  capability inicial, com gap localizado. Os 6 MOVE, 3 CALL variáveis e os
-  facts estruturais continuam disponíveis, e a summary global fica `BLOCKED`
-  em vez de aparentar completude.
+  3 DATA, 7 MOVE, 3 CALL variáveis, 1 DISPLAY e 3 IF, inclusive `elseBranch`
+  vazia. Não surgiu gap novo de AST/binding para este oracle; o adapter de
+  produção o rejeita no guard existente `the selected unit must contain exactly
+  one MOVE`.
+- O DISPLAY é mantido no target inventory genérico como `UNSUPPORTED`, com
+  observed kind/shape e gap localizado, sem fingir que pertence a MOVE, CALL ou
+  IF. Os 7 MOVE, 3 CALL variáveis e os facts estruturais continuam disponíveis,
+  e a summary global fica `BLOCKED` em vez de aparentar completude.
 - `CobolMoveCallAdapter` ainda usa `single(...)`, exige exatamente um MOVE, um
   CALL e um target por statement, além de exigir o mesmo `DataItemId` no par.
   O Checkpoint 3 corretivo precisa substituir seleção por publicação de todas as

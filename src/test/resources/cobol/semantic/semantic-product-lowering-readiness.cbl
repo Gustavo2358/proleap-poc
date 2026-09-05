@@ -21,5 +21,8 @@
            END-IF.
            CALL WS-X.
            CALL AUX-PGM.
-           CALL 'STATIC-PGM'.
+           IF FLAG = 3
+               MOVE 'D' TO WS-X
+           END-IF.
+           DISPLAY 'UNMODELED'.
        END PROGRAM SEMANTIC-TARGET.

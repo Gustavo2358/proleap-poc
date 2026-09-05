@@ -45,7 +45,9 @@ class SemanticProductTargetModelOracleTest {
     private static final SemanticProductTargetModel.StatementId MOVE_C = statementId(8);
     private static final SemanticProductTargetModel.StatementId CALL_X = statementId(9);
     private static final SemanticProductTargetModel.StatementId CALL_AUX = statementId(10);
-    private static final SemanticProductTargetModel.StatementId LITERAL_CALL = statementId(11);
+    private static final SemanticProductTargetModel.StatementId EMPTY_ELSE_IF = statementId(11);
+    private static final SemanticProductTargetModel.StatementId MOVE_D = statementId(12);
+    private static final SemanticProductTargetModel.StatementId OBSERVED_DISPLAY = statementId(13);
 
     @Test
     void controlledFixtureHasTheTargetEvidenceWhileProductionRemainsSingleton() throws Exception {
@@ -58,19 +60,24 @@ class SemanticProductTargetModelOracleTest {
         List<Ast.IfStatement> branches = statements.stream()
                 .filter(Ast.IfStatement.class::isInstance)
                 .map(Ast.IfStatement.class::cast).toList();
+        List<Ast.PreservedStatement> preserved = statements.stream()
+                .filter(Ast.PreservedStatement.class::isInstance)
+                .map(Ast.PreservedStatement.class::cast).toList();
 
-        assertEquals(12, statements.size());
-        assertEquals(6, statements.stream().filter(Ast.MoveStatement.class::isInstance).count());
-        assertEquals(4, calls.size());
+        assertEquals(14, statements.size());
+        assertEquals(7, statements.stream().filter(Ast.MoveStatement.class::isInstance).count());
+        assertEquals(3, calls.size());
         assertEquals(3, calls.stream().filter(call -> call.targetSyntax()
                 == Ast.CallTargetSyntax.IDENTIFIER_OR_EXPRESSION).count());
-        assertEquals(1, calls.stream().filter(call -> call.targetSyntax()
-                == Ast.CallTargetSyntax.LITERAL_PROGRAM_NAME).count());
-        assertEquals(2, branches.size());
+        assertEquals(1, preserved.size());
+        assertEquals("displayStatement", preserved.get(0).grammarRule());
+        assertEquals(3, branches.size());
         assertEquals(3, branches.get(0).thenBranch().size());
         assertEquals(1, branches.get(0).elseBranch().size());
         assertEquals(1, branches.get(1).thenBranch().size());
         assertEquals(1, branches.get(1).elseBranch().size());
+        assertEquals(1, branches.get(2).thenBranch().size());
+        assertTrue(branches.get(2).elseBranch().isEmpty());
         assertTrue(branches.stream().allMatch(branch ->
                 branch.condition() instanceof Ast.RelationCondition relation
                         && relation.subject() instanceof Ast.DataReference
@@ -81,7 +88,7 @@ class SemanticProductTargetModelOracleTest {
         assertEquals(3, table.symbols().stream()
                 .filter(symbol -> symbol.namespace() == SymbolTable.Namespace.DATA)
                 .filter(symbol -> symbol.kind() == SymbolTable.SymbolKind.DATA_ITEM).count());
-        assertEquals(6, frontend.resolution().entries().stream()
+        assertEquals(7, frontend.resolution().entries().stream()
                 .filter(entry -> entry.occurrence().role()
                         == ResolutionContracts.ReferenceRole.VALUE_WRITE).count());
         assertEquals(3, frontend.resolution().entries().stream()
@@ -117,13 +124,14 @@ class SemanticProductTargetModelOracleTest {
         assertTrue(outline.data().stream().allMatch(data -> data.identity().unit().equals(UNIT)));
         assertTrue(outline.data().stream().allMatch(data -> data.declaration().exact()));
 
-        assertEquals(12, outline.statements().size());
-        assertEquals(6, outline.moves().size());
+        assertEquals(14, outline.statements().size());
+        assertEquals(7, outline.moves().size());
         assertEquals(3, outline.calls().size());
-        assertEquals(2, outline.branches().size());
-        assertEquals(12, new HashSet<>(outline.statements().stream()
+        assertEquals(3, outline.branches().size());
+        assertEquals(1, outline.unmodeledStatements().size());
+        assertEquals(14, new HashSet<>(outline.statements().stream()
                 .map(SemanticProductTargetConsumer.StatementInput::identity).toList()).size());
-        assertEquals(12, new HashSet<>(outline.statements().stream()
+        assertEquals(14, new HashSet<>(outline.statements().stream()
                 .map(SemanticProductTargetConsumer.StatementInput::programPoint).toList()).size());
         assertTrue(outline.statements().stream()
                 .allMatch(statement -> statement.identity().unit().equals(UNIT)));
@@ -133,24 +141,26 @@ class SemanticProductTargetModelOracleTest {
         assertTrue(outline.moves().stream().allMatch(move ->
                 move.literalKind() == SemanticProductTargetModel.LiteralKind.ALPHANUMERIC
                         && move.role() == SemanticProductTargetModel.OperandRole.WRITE
-                        && move.binding()
+                        && move.targetBinding().status()
                         == SemanticProductTargetModel.ResolutionStatus.RESOLVED));
         assertTrue(port.moves().stream().allMatch(move ->
-                move.target().binding().selected().equals(java.util.Optional.of(
-                        move.target().dataItem()))
+                move.target().binding().selected().isPresent()
                         && move.target().binding().candidates().size() == 1
+                        && move.target().binding().selected().equals(java.util.Optional.of(
+                                move.target().binding().candidates().get(0).id()))
                         && move.target().provenance().exact()
                         && move.source().provenance().exact()));
         assertTrue(outline.calls().stream().allMatch(call ->
                 call.syntax() == SemanticProductTargetModel.CallSyntax.IDENTIFIER_OR_EXPRESSION
                         && call.role() == SemanticProductTargetModel.OperandRole.CALL_TARGET
-                        && call.binding()
+                        && call.operandBinding().status()
                         == SemanticProductTargetModel.ResolutionStatus.RESOLVED
                         && call.runtimeTarget()
                         == SemanticProductTargetModel.RuntimeTargetKnowledge.UNKNOWN));
         assertTrue(port.calls().stream().allMatch(call ->
-                call.operand().binding().selected().equals(java.util.Optional.of(
-                        call.operand().dataItem()))
+                call.operand().binding().selected().isPresent()
+                        && call.operand().binding().selected().equals(java.util.Optional.of(
+                                call.operand().binding().candidates().get(0).id()))
                         && call.operand().provenance().exact()
                         && call.header().provenance().exact()));
         assertTrue(port.ifs().stream().flatMap(branch ->
@@ -170,10 +180,10 @@ class SemanticProductTargetModelOracleTest {
             operands.add(branch.condition().subject().id());
             operands.add(branch.condition().object().id());
         });
-        assertEquals(19, operands.size());
+        assertEquals(23, operands.size());
         assertTrue(operands.stream().allMatch(operand -> operand.statement().unit().equals(UNIT)));
         assertEquals(List.of(AUX_PGM, WS_X, AUX_PGM), outline.calls().stream()
-                .map(SemanticProductTargetConsumer.CallInput::operand).toList(),
+                .map(call -> call.operandBinding().selected().orElseThrow()).toList(),
                 "CALL facts are independent from MOVE pairing and source proximity");
 
         assertTrue(outline.statements().stream().allMatch(statement ->
@@ -197,17 +207,21 @@ class SemanticProductTargetModelOracleTest {
                 .filter(branch -> branch.statement().equals(OUTER_IF)).findFirst().orElseThrow();
         SemanticProductTargetConsumer.IfInput inner = outline.branches().stream()
                 .filter(branch -> branch.statement().equals(INNER_IF)).findFirst().orElseThrow();
+        SemanticProductTargetConsumer.IfInput emptyElse = outline.branches().stream()
+                .filter(branch -> branch.statement().equals(EMPTY_ELSE_IF))
+                .findFirst().orElseThrow();
         SemanticProductTargetConsumer.MoveInput moveB = move(outline, "B");
         SemanticProductTargetConsumer.MoveInput moveC = move(outline, "C");
         SemanticProductTargetConsumer.CallInput callX = outline.calls().stream()
                 .filter(call -> call.statement().equals(CALL_X)).findFirst().orElseThrow();
 
         assertEquals("FLAG = 1", outer.condition().surface());
-        assertEquals(FLAG, outer.condition().subject());
         assertEquals(SemanticProductTargetModel.OperandRole.READ,
                 outer.condition().subjectRole());
         assertEquals(SemanticProductTargetModel.ResolutionStatus.RESOLVED,
-                outer.condition().subjectBinding());
+                outer.condition().subjectBinding().status());
+        assertEquals(java.util.Optional.of(FLAG),
+                outer.condition().subjectBinding().selected());
         assertEquals(SemanticProductTargetModel.RelationalOperator.EQUALS,
                 outer.condition().operator());
         assertEquals(SemanticProductTargetModel.LiteralKind.NUMERIC,
@@ -219,10 +233,14 @@ class SemanticProductTargetModelOracleTest {
         assertEquals(List.of(NESTED_CALL_AUX), inner.thenChildren());
         assertEquals(List.of(MOVE_NEST), inner.elseChildren());
         assertEquals(MOVE_AFTER, inner.continuation());
+        assertEquals(List.of(MOVE_D), emptyElse.thenChildren());
+        assertTrue(emptyElse.elseChildren().isEmpty());
+        assertEquals(OBSERVED_DISPLAY, emptyElse.continuation(),
+                "an empty false branch falls through structurally to the continuation");
 
-        assertEquals(WS_X, moveB.target());
-        assertEquals(WS_X, moveC.target());
-        assertEquals(WS_X, callX.operand());
+        assertEquals(java.util.Optional.of(WS_X), moveB.targetBinding().selected());
+        assertEquals(java.util.Optional.of(WS_X), moveC.targetBinding().selected());
+        assertEquals(java.util.Optional.of(WS_X), callX.operandBinding().selected());
         assertTrue(outline.rootStatements().indexOf(MOVE_A)
                 < outline.rootStatements().indexOf(OUTER_IF));
         assertTrue(outline.rootStatements().indexOf(OUTER_IF)
@@ -243,28 +261,83 @@ class SemanticProductTargetModelOracleTest {
     void unsupportedAndUnknownRemainVisibleWithoutSuppressingIndependentFacts() {
         SemanticProductTargetModel.Port port = SemanticProductTargetModel.open(targetState());
 
-        assertEquals(12, port.coverage().observedStatements());
-        assertEquals(9, port.coverage().modeledStatements());
-        assertEquals(2, port.coverage().partialStatements());
+        assertEquals(14, port.coverage().observedStatements());
+        assertEquals(10, port.coverage().modeledStatements());
+        assertEquals(3, port.coverage().partialStatements());
         assertEquals(1, port.coverage().unsupportedStatements());
         assertEquals(0, port.coverage().inputMissingStatements());
-        assertEquals(List.of("CALL_LITERAL_OUTSIDE_INITIAL_CAPABILITY"), port.statements().stream()
-                .filter(SemanticProductTargetModel.UnsupportedStatementFact.class::isInstance)
-                .map(SemanticProductTargetModel.UnsupportedStatementFact.class::cast)
-                .map(SemanticProductTargetModel.UnsupportedStatementFact::gapCode).toList());
+        SemanticProductTargetConsumer.LoweringReadinessOutline outline =
+                SemanticProductTargetConsumer.consume(port);
+        SemanticProductTargetConsumer.ObservedStatementInput observed =
+                outline.unmodeledStatements().get(0);
+        assertEquals(List.of("DISPLAY"), outline.unmodeledStatements().stream()
+                .map(SemanticProductTargetConsumer.ObservedStatementInput::observedKind)
+                .toList());
+        assertEquals(List.of("DISPLAY_STATEMENT"), outline.unmodeledStatements().stream()
+                .map(SemanticProductTargetConsumer.ObservedStatementInput::observedShape)
+                .toList());
+        assertEquals(List.of("DISPLAY_OUTSIDE_INITIAL_CAPABILITY"),
+                outline.unmodeledStatements().stream()
+                        .map(SemanticProductTargetConsumer.ObservedStatementInput::gapCode)
+                        .toList());
+        assertEquals(OBSERVED_DISPLAY, observed.statement());
+        assertEquals(SemanticProductTargetModel.CoverageStatus.UNSUPPORTED,
+                observed.coverage());
+        SemanticProductTargetConsumer.StatementInput inventoryEntry = outline.statements().stream()
+                .filter(statement -> statement.identity().equals(observed.statement()))
+                .findFirst().orElseThrow();
+        assertEquals(SemanticProductTargetModel.StatementKind.OBSERVED_UNMODELED,
+                inventoryEntry.kind());
+        assertEquals(13, inventoryEntry.programPoint());
+        assertEquals(SemanticProductTargetModel.Containment.root(),
+                inventoryEntry.containment());
+        assertTrue(inventoryEntry.source().exact());
         assertEquals(3, port.gaps().stream()
                 .filter(gap -> gap.scope()
                         == SemanticProductTargetModel.GapScope.RUNTIME_CALL_TARGET).count());
-        assertEquals(2, port.gaps().stream()
+        assertEquals(3, port.gaps().stream()
                 .filter(gap -> gap.scope()
                         == SemanticProductTargetModel.GapScope.CONDITION_SEMANTICS).count());
         assertEquals(1, port.gaps().stream()
                 .filter(gap -> gap.scope()
                         == SemanticProductTargetModel.GapScope.CAPABILITY).count());
-        assertEquals(6, port.moves().size(),
-                "unsupported CALL must not erase independently supported MOVE facts");
+        assertEquals(7, port.moves().size(),
+                "unmodeled DISPLAY must not erase independently supported MOVE facts");
         assertEquals(3, port.calls().size(),
-                "unsupported CALL shape must not erase supported variable CALL facts");
+                "unmodeled DISPLAY must not erase supported variable CALL facts");
+    }
+
+    @Test
+    void ambiguousOrUnresolvedConditionBindingPreservesStructureWithoutFabricatingDataIdentity() {
+        SemanticProductTargetConsumer.LoweringReadinessOutline outline =
+                SemanticProductTargetConsumer.consume(
+                        SemanticProductTargetModel.open(stateWithAmbiguousOuterCondition()));
+        SemanticProductTargetConsumer.IfInput outer = outline.branches().stream()
+                .filter(branch -> branch.statement().equals(OUTER_IF)).findFirst().orElseThrow();
+        SemanticProductTargetConsumer.BindingInput binding = outer.condition().subjectBinding();
+
+        assertEquals(SemanticProductTargetModel.ResolutionStatus.AMBIGUOUS, binding.status());
+        assertEquals("MULTIPLE_VISIBLE_DECLARATIONS", binding.reason());
+        assertEquals(List.of(FLAG, WS_X), binding.candidates().stream()
+                .map(SemanticProductTargetModel.DataCandidate::id).toList());
+        assertTrue(binding.selected().isEmpty(),
+                "an ambiguous reference must not fabricate a selected DATA identity");
+        assertEquals(List.of(MOVE_B, INNER_IF, MOVE_AFTER), outer.thenChildren());
+        assertEquals(List.of(MOVE_C), outer.elseChildren());
+        assertEquals(CALL_X, outer.continuation());
+        assertEquals(14, outline.statements().size(),
+                "an incomplete binding must not erase the IF or independent facts");
+
+        SemanticProductTargetModel.DataReference unresolved =
+                new SemanticProductTargetModel.DataReference(
+                        operandId(OUTER_IF, 99), SemanticProductTargetModel.OperandRole.READ,
+                        new SemanticProductTargetModel.NominalBinding(
+                                SemanticProductTargetModel.ResolutionStatus.UNRESOLVED,
+                                "NO_VISIBLE_DECLARATION", List.of(), java.util.Optional.empty()),
+                        provenance(11));
+        assertEquals(SemanticProductTargetModel.ResolutionStatus.UNRESOLVED,
+                unresolved.binding().status());
+        assertTrue(unresolved.binding().selected().isEmpty());
     }
 
     @Test
@@ -283,12 +356,12 @@ class SemanticProductTargetModelOracleTest {
                 target.unit(), target.dataDeclarations(), target.rootStatements(),
                 target.statements(), target.gaps(),
                 new SemanticProductTargetModel.CoverageSummary(
-                        12, 9, 2, 1, 0, falselyComplete)));
+                        14, 10, 3, 1, 0, falselyComplete)));
         assertThrows(IllegalArgumentException.class, () -> new SemanticProductTargetModel.State(
                 target.unit(), target.dataDeclarations(), target.rootStatements(),
-                target.statements().subList(0, 11), target.gaps(),
+                target.statements().subList(0, 13), target.gaps(),
                 new SemanticProductTargetModel.CoverageSummary(
-                        12, 9, 2, 1, 0, target.coverage().readiness())));
+                        14, 10, 3, 1, 0, target.coverage().readiness())));
     }
 
     @Test
@@ -357,7 +430,12 @@ class SemanticProductTargetModelOracleTest {
                 call(CALL_X, 9, WS_X, 22, SemanticProductTargetModel.Containment.root()),
                 call(CALL_AUX, 10, AUX_PGM, 23,
                         SemanticProductTargetModel.Containment.root()),
-                unsupportedLiteralCall());
+                branch(EMPTY_ELSE_IF, 11, "FLAG = 3", "3", 24,
+                        SemanticProductTargetModel.Containment.root(),
+                        List.of(MOVE_D), List.of(), OBSERVED_DISPLAY),
+                move(MOVE_D, 12, "D", WS_X, 25,
+                        childOf(EMPTY_ELSE_IF, SemanticProductTargetModel.Branch.THEN)),
+                observedDisplay());
 
         List<SemanticProductTargetModel.Gap> gaps = List.of(
                 gap(OUTER_IF, SemanticProductTargetModel.GapScope.CONDITION_SEMANTICS,
@@ -370,20 +448,56 @@ class SemanticProductTargetModelOracleTest {
                         "DYNAMIC_CALL_TARGET_VALUE_UNKNOWN", 22),
                 gap(CALL_AUX, SemanticProductTargetModel.GapScope.RUNTIME_CALL_TARGET,
                         "DYNAMIC_CALL_TARGET_VALUE_UNKNOWN", 23),
-                gap(LITERAL_CALL, SemanticProductTargetModel.GapScope.CAPABILITY,
-                        "CALL_LITERAL_OUTSIDE_INITIAL_CAPABILITY", 24));
+                gap(EMPTY_ELSE_IF, SemanticProductTargetModel.GapScope.CONDITION_SEMANTICS,
+                        "CONDITION_SEMANTICS_NOT_AVAILABLE", 24),
+                gap(OBSERVED_DISPLAY, SemanticProductTargetModel.GapScope.CAPABILITY,
+                        "DISPLAY_OUTSIDE_INITIAL_CAPABILITY", 27));
 
         SemanticProductTargetModel.Readiness summary = readiness(
                 SemanticProductTargetModel.ReadinessStatus.BLOCKED,
-                "literal CALL has no lowering contract in this capability",
+                "DISPLAY has no lowering contract in this capability",
                 SemanticProductTargetModel.ReadinessStatus.BLOCKED,
-                "literal CALL control semantics are not claimed",
+                "DISPLAY control semantics are not claimed",
                 SemanticProductTargetModel.ReadinessStatus.BLOCKED,
-                "literal CALL effects are not claimed");
+                "DISPLAY effects are not claimed");
         return new SemanticProductTargetModel.State(UNIT, data,
-                List.of(MOVE_A, MOVE_AUX, OUTER_IF, CALL_X, CALL_AUX, LITERAL_CALL),
+                List.of(MOVE_A, MOVE_AUX, OUTER_IF, CALL_X, CALL_AUX,
+                        EMPTY_ELSE_IF, OBSERVED_DISPLAY),
                 statements, gaps,
-                new SemanticProductTargetModel.CoverageSummary(12, 9, 2, 1, 0, summary));
+                new SemanticProductTargetModel.CoverageSummary(14, 10, 3, 1, 0, summary));
+    }
+
+    private static SemanticProductTargetModel.State stateWithAmbiguousOuterCondition() {
+        SemanticProductTargetModel.State target = targetState();
+        List<SemanticProductTargetModel.StatementFact> statements = target.statements().stream()
+                .map(statement -> {
+                    if (!(statement instanceof SemanticProductTargetModel.IfFact branch)
+                            || !branch.header().id().equals(OUTER_IF))
+                        return statement;
+                    SemanticProductTargetModel.DataReference ambiguous =
+                            new SemanticProductTargetModel.DataReference(
+                                    branch.condition().subject().id(),
+                                    SemanticProductTargetModel.OperandRole.READ,
+                                    new SemanticProductTargetModel.NominalBinding(
+                                            SemanticProductTargetModel.ResolutionStatus.AMBIGUOUS,
+                                            "MULTIPLE_VISIBLE_DECLARATIONS",
+                                            List.of(
+                                                    new SemanticProductTargetModel.DataCandidate(
+                                                            FLAG, "FLAG"),
+                                                    new SemanticProductTargetModel.DataCandidate(
+                                                            WS_X, "WS-X")),
+                                            java.util.Optional.empty()),
+                                    branch.condition().subject().provenance());
+                    SemanticProductTargetModel.ConditionFact condition =
+                            new SemanticProductTargetModel.ConditionFact(
+                                    branch.condition().surface(), ambiguous,
+                                    branch.condition().operator(), branch.condition().object(),
+                                    branch.condition().provenance());
+                    return new SemanticProductTargetModel.IfFact(branch.header(), condition,
+                            branch.thenChildren(), branch.elseChildren(), branch.continuation());
+                }).toList();
+        return new SemanticProductTargetModel.State(target.unit(), target.dataDeclarations(),
+                target.rootStatements(), statements, target.gaps(), target.coverage());
     }
 
     private static SemanticProductTargetModel.DataDeclaration declaration(
@@ -467,19 +581,20 @@ class SemanticProductTargetModelOracleTest {
                 thenChildren, elseChildren, continuation);
     }
 
-    private static SemanticProductTargetModel.UnsupportedStatementFact unsupportedLiteralCall() {
+    private static SemanticProductTargetModel.ObservedStatementFact observedDisplay() {
         SemanticProductTargetModel.Readiness blocked = readiness(
                 SemanticProductTargetModel.ReadinessStatus.BLOCKED,
-                "literal CALL is outside the initial CALL capability",
+                "DISPLAY is outside the initial statement capability",
                 SemanticProductTargetModel.ReadinessStatus.BLOCKED,
                 "no control claim for the unsupported shape",
                 SemanticProductTargetModel.ReadinessStatus.BLOCKED,
                 "no effect claim for the unsupported shape");
-        return new SemanticProductTargetModel.UnsupportedStatementFact(
-                header(LITERAL_CALL, SemanticProductTargetModel.StatementKind.CALL, 11, 24,
+        return new SemanticProductTargetModel.ObservedStatementFact(
+                header(OBSERVED_DISPLAY, SemanticProductTargetModel.StatementKind.OBSERVED_UNMODELED,
+                        13, 27,
                         SemanticProductTargetModel.Containment.root(),
                         SemanticProductTargetModel.CoverageStatus.UNSUPPORTED, blocked),
-                "CALL_LITERAL_PROGRAM_NAME", "CALL_LITERAL_OUTSIDE_INITIAL_CAPABILITY");
+                "DISPLAY", "DISPLAY_STATEMENT", "DISPLAY_OUTSIDE_INITIAL_CAPABILITY");
     }
 
     private static SemanticProductTargetModel.StatementHeader header(
@@ -499,7 +614,7 @@ class SemanticProductTargetModelOracleTest {
             SemanticProductTargetModel.OperandRole role, int line) {
         String name = data.equals(WS_X) ? "WS-X" : data.equals(FLAG) ? "FLAG" : "AUX-PGM";
         return new SemanticProductTargetModel.DataReference(
-                operandId(statement, localOperandId), data, role,
+                operandId(statement, localOperandId), role,
                 SemanticProductTargetModel.NominalBinding.resolved(data, name),
                 provenance(line));
     }

@@ -27,7 +27,7 @@ public final class SemanticProductTargetModel {
 
     public enum Branch { ROOT, THEN, ELSE }
 
-    public enum StatementKind { MOVE, CALL, IF }
+    public enum StatementKind { MOVE, CALL, IF, OBSERVED_UNMODELED }
 
     public enum LiteralKind { ALPHANUMERIC, NUMERIC }
 
@@ -176,17 +176,13 @@ public final class SemanticProductTargetModel {
         }
     }
 
-    public record DataReference(OperandId id, DataItemId dataItem, OperandRole role,
+    public record DataReference(OperandId id, OperandRole role,
                                 NominalBinding binding, Provenance provenance) {
         public DataReference {
             id = Objects.requireNonNull(id, "id");
-            dataItem = Objects.requireNonNull(dataItem, "dataItem");
             role = Objects.requireNonNull(role, "role");
             binding = Objects.requireNonNull(binding, "binding");
             provenance = Objects.requireNonNull(provenance, "provenance");
-            if (!binding.selected().equals(Optional.of(dataItem)))
-                throw new IllegalArgumentException(
-                        "reference identity must equal its selected nominal binding");
         }
     }
 
@@ -243,7 +239,7 @@ public final class SemanticProductTargetModel {
     }
 
     public sealed interface StatementFact permits MoveFact, CallFact, IfFact,
-            UnsupportedStatementFact {
+            ObservedStatementFact {
         StatementHeader header();
     }
 
@@ -311,22 +307,21 @@ public final class SemanticProductTargetModel {
             thenChildren = List.copyOf(thenChildren);
             elseChildren = List.copyOf(elseChildren);
             continuation = Objects.requireNonNull(continuation, "continuation");
-            if (thenChildren.isEmpty() || elseChildren.isEmpty())
-                throw new IllegalArgumentException(
-                        "this oracle requires statements in both IF branches");
         }
     }
 
-    /** A visible statement whose shape is outside this target capability. */
-    public record UnsupportedStatementFact(StatementHeader header, String observedShape,
-                                           String gapCode) implements StatementFact {
-        public UnsupportedStatementFact {
-            header = requireKind(header, StatementKind.CALL);
+    /** A visible statement whose family or shape is not fully modeled yet. */
+    public record ObservedStatementFact(StatementHeader header, String observedKind,
+                                        String observedShape,
+                                        String gapCode) implements StatementFact {
+        public ObservedStatementFact {
+            header = requireKind(header, StatementKind.OBSERVED_UNMODELED);
+            observedKind = requireText(observedKind, "observedKind");
             observedShape = requireText(observedShape, "observedShape");
             gapCode = requireText(gapCode, "gapCode");
-            if (header.coverage() != CoverageStatus.UNSUPPORTED)
+            if (header.coverage() == CoverageStatus.MODELED)
                 throw new IllegalArgumentException(
-                        "unsupported fact must publish UNSUPPORTED coverage");
+                        "unmodeled fact cannot publish MODELED coverage");
         }
     }
 
@@ -489,10 +484,10 @@ public final class SemanticProductTargetModel {
                 require(gapsByStatement.getOrDefault(branch.header().id(), List.of()).stream()
                                 .anyMatch(gap -> gap.scope() == GapScope.CONDITION_SEMANTICS),
                         "partial IF condition must retain its localized semantics gap");
-            if (statement instanceof UnsupportedStatementFact unsupported)
-                require(hasGap(gapsByStatement, unsupported.header().id(),
-                                unsupported.gapCode(), GapScope.CAPABILITY),
-                        "unsupported statement must retain its localized capability gap");
+            if (statement instanceof ObservedStatementFact observed)
+                require(hasGap(gapsByStatement, observed.header().id(),
+                                observed.gapCode(), GapScope.CAPABILITY),
+                        "unmodeled statement must retain its localized capability gap");
         }
 
         Map<CoverageStatus, Long> actualCoverage = new HashMap<>();
@@ -524,8 +519,6 @@ public final class SemanticProductTargetModel {
             references = List.of();
         }
         for (DataReference reference : references) {
-            require(declarations.containsKey(reference.dataItem()),
-                    "bound DATA identity has no declaration in the publication");
             require(reference.binding().candidates().stream()
                             .allMatch(candidate -> declarations.containsKey(candidate.id())),
                     "binding candidate has no declaration in the publication");
