@@ -4,6 +4,7 @@ import io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticPort;
 import io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct;
 import io.github.gustavo2358.cobolexplorer.semanticproduct.consumer.CobolLoweringReadinessConsumer;
 import io.github.gustavo2358.cobolexplorer.semanticproduct.projection.CobolSemanticProductProjector;
+import io.github.gustavo2358.cobolexplorer.semanticproduct.transport.SemanticProductJsonWriter;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
@@ -41,6 +42,8 @@ class ArchitectureBoundaryTest {
             CobolSemanticProduct.class.getName().replace('.', '/');
     private static final String LOWERING_CONSUMER_INTERNAL =
             CobolLoweringReadinessConsumer.class.getName().replace('.', '/');
+    private static final String JSON_WRITER_INTERNAL =
+            SemanticProductJsonWriter.class.getName().replace('.', '/');
     private static final Pattern DESCRIPTOR_CLASS =
             Pattern.compile("L([A-Za-z0-9_$/]+)(?=[;<])");
     private static final Pattern JAVA_IMPORT =
@@ -163,6 +166,43 @@ class ArchitectureBoundaryTest {
     }
 
     @Test
+    void semanticProductJsonAdapterDependsOnlyOnTheClosedBoundaryAndJsonLibrary()
+            throws Exception {
+        List<Class<?>> adapterTypes = new ArrayList<>();
+        addNestedTypes(SemanticProductJsonWriter.class, adapterTypes);
+        for (Class<?> component : adapterTypes) {
+            Set<String> violations = new LinkedHashSet<>();
+            for (String reference : directDependencies(component)) {
+                if ((reference.startsWith(PROJECT_PREFIX_INTERNAL)
+                        && !isJsonAdapterBoundaryType(reference))
+                        || reference.startsWith(ANTLR_PREFIX))
+                    violations.add(reference);
+            }
+            assertTrue(violations.isEmpty(), () -> "INV-SP-004/INV-SP-006: "
+                    + component.getName()
+                    + " depende de frontend, projection, consumer ou composition root: "
+                    + violations);
+        }
+
+        Path sourcePath = Path.of("src/main/java/io/github/gustavo2358/cobolexplorer/"
+                + "semanticproduct/transport/SemanticProductJsonWriter.java");
+        String source = Files.readString(sourcePath);
+        Set<String> forbiddenImports = new LinkedHashSet<>();
+        Matcher imports = JAVA_IMPORT.matcher(source);
+        while (imports.find()) {
+            String imported = imports.group(1).replace('.', '/');
+            if (imported.startsWith(PROJECT_PREFIX_INTERNAL)
+                    && !isJsonAdapterBoundaryType(imported))
+                forbiddenImports.add(imported);
+        }
+        assertTrue(forbiddenImports.isEmpty(), () -> "INV-SP-004/INV-SP-006: "
+                + "JSON adapter importa implementação fora da boundary: " + forbiddenImports);
+        assertTrue(List.of("writtenText(", "grammarRule(", "Map<String, Object>",
+                        "Map<String,Object>", "org.antlr.v4").stream().noneMatch(source::contains),
+                "INV-SP-004: JSON adapter reinterpreta frontend ou usa bag semântico genérico");
+    }
+
+    @Test
     void bytecodeScannerSeesGenericAndRecordComponentTypeReferences() throws Exception {
         Set<String> references = directDependencies(BytecodeLeakageProbe.class);
 
@@ -187,7 +227,8 @@ class ArchitectureBoundaryTest {
 
     private static boolean isSemanticProductProjection(String reference) {
         return reference.startsWith(SEMANTIC_PRODUCT_PREFIX + "projection/")
-                || reference.startsWith(SEMANTIC_PRODUCT_PREFIX + "adapter/");
+                || reference.startsWith(SEMANTIC_PRODUCT_PREFIX + "adapter/")
+                || reference.startsWith(SEMANTIC_PRODUCT_PREFIX + "transport/");
     }
 
     private static boolean isConsumerBoundaryType(String reference) {
@@ -196,6 +237,14 @@ class ArchitectureBoundaryTest {
                 || reference.startsWith(SEMANTIC_PRODUCT_INTERNAL + '$')
                 || reference.equals(LOWERING_CONSUMER_INTERNAL)
                 || reference.startsWith(LOWERING_CONSUMER_INTERNAL + '$');
+    }
+
+    private static boolean isJsonAdapterBoundaryType(String reference) {
+        return reference.equals(SEMANTIC_PORT_INTERNAL)
+                || reference.equals(SEMANTIC_PRODUCT_INTERNAL)
+                || reference.startsWith(SEMANTIC_PRODUCT_INTERNAL + '$')
+                || reference.equals(JSON_WRITER_INTERNAL)
+                || reference.startsWith(JSON_WRITER_INTERNAL + '$');
     }
 
     private static void assertNoDirectDependencies(String boundary, List<Class<?>> components,

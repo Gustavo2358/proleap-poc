@@ -3,6 +3,7 @@ package io.github.gustavo2358.cobolexplorer;
 import io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticPort;
 import io.github.gustavo2358.cobolexplorer.semanticproduct.consumer.CobolLoweringReadinessConsumer;
 import io.github.gustavo2358.cobolexplorer.semanticproduct.projection.CobolSemanticProductProjector;
+import io.github.gustavo2358.cobolexplorer.semanticproduct.transport.SemanticProductJsonWriter;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.*;
 import org.slf4j.Logger;
@@ -207,6 +208,8 @@ public final class ExplorerMain {
         long semanticProductStarted = System.nanoTime();
         CobolSemanticPort semanticProduct = publishSemanticProduct(primaryUnit.id(), compilationBuild,
                 symbolTables, occurrences, resolution, resolutionReport);
+        SemanticProductJsonWriter.write(semanticProduct,
+                output.resolve("semantic-product.json"));
         CobolLoweringReadinessConsumer.Audit loweringReadiness =
                 CobolLoweringReadinessConsumer.audit(semanticProduct);
         LOG.debug("event=semantic_product_published phase=SEMANTIC_PRODUCT elapsedMs={} unit={} dataDeclarations={} statements={} gaps={} loweringReadiness={} cfgReadiness={} effectsDataflowReadiness={}",

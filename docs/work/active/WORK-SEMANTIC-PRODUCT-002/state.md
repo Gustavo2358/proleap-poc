@@ -2,7 +2,7 @@
 
 ## Onde estamos
 
-Os seis checkpoints da migração documental e os Checkpoints 1–6 foram
+Os seis checkpoints da migração documental e os Checkpoints 1–7 foram
 executados no PR #27, que permanece sob review. O CP1 mantém o target model e o
 consumer exclusivamente em `src/test`; eles continuam como especificação
 executável independente.
@@ -43,6 +43,13 @@ No mesmo fluxo, somente o `CobolSemanticPort` materializado é entregue a
 `CobolLoweringReadinessConsumer`. O consumer produz um audit imutável e tipado,
 não retém o port e não depende de frontend, projection, snapshots, presentation
 ou composition root.
+
+O CP7 acrescentou `semanticproduct.transport.SemanticProductJsonWriter` como
+output adapter separado e fez o composition root escrever
+`semantic-product.json` diretamente do `CobolSemanticPort`. O envelope
+`cobol-semantic-product` usa `contractVersion` `1.0.0`, inventário de statements
+com discriminador tipado e DTOs de transporte; não depende do audit do CP6 nem
+reabre produtos do frontend.
 
 ## Verde conhecido
 
@@ -138,6 +145,29 @@ ou composition root.
   membership THEN/ELSE; `ObservedStatement` retém existência, kind/shape,
   coverage e gap. Provenance, coverage, gaps e readiness são copiados sem
   promoção ou nova interpretação COBOL.
+- O JSON v1 transporta unit, policy, DATA, statement headers, MOVE/CALL/IF e
+  `ObservedStatement`, roots/branches/containment/continuation, operands,
+  bindings, condition surface, runtime unknowns, gaps, coverage, readiness e
+  provenance. Campos opcionais indisponíveis permanecem explicitamente `null`.
+- DATA, statements, candidates, gaps e include chains mantêm a ordem publicada.
+  Branch relations seguem IFs em program point canônico, sempre THEN antes de
+  ELSE, e children mantêm a ordem do port. A materialização e a escrita são
+  lineares no tamanho do produto e não usam bag `Map<String,Object>`.
+- Handles JSON são unit-scoped (`data:*`, `statement:*`, `operand:*`) e
+  reproduzíveis para publicações equivalentes. Eles não são identidade
+  persistente e nenhum contrato preserva IDs após edição estrutural, mudança de
+  analyzer ou mudança de versão do transporte.
+- O oracle do CP7 parseia o documento com uma biblioteca JSON genérica, prova o
+  fixture de 3 DATA e 14 statements, integridade de todas as referências,
+  igualdade byte a byte entre análises independentes e serializações repetidas,
+  ausência de metadata volátil e consistência após edição estrutural.
+- Falsificações temporárias de ordem, `generatedAt`, perda de IF continuation e
+  import de `Ast` falharam nos gates esperados e foram removidas. O gate de
+  arquitetura inspeciona source e bytecode do adapter e permite somente a
+  boundary do Semantic Product, JDK e biblioteca JSON.
+- No fechamento do CP7, os testes focais e os gates `docs`, `architecture`,
+  `fast`, `semantic`, `performance` e `full` passaram em duas execuções. A
+  segunda passagem ocorreu após revisão adversarial completa do diff.
 - No fixture estrutural, o audit contém 3 DATA e 14 statements: 7 MOVE, 3 CALL,
   3 IF e 1 `ObservedStatement`. O summary contém 3 modeled, 11 partial, zero
   unsupported e zero input-missing; o observado preservado é partial com gap
@@ -174,9 +204,9 @@ ou composition root.
 
 ## Restante
 
-- Obter review humano do Checkpoint 6 no PR #27.
-- Executar os Checkpoints 7–8 somente na ordem registrada e com a autorização
-  aplicável. JSON e integração downstream posterior permanecem futuros.
+- Obter review humano do Checkpoint 7 no PR #27.
+- Executar o Checkpoint 8 somente com a autorização aplicável. Lowering e a
+  integração downstream posterior permanecem futuros.
 - Manter EVALUATE, PERFORM, GO TO, terminal semantics, ALTER, SEARCH,
   CobolLower, IR, CFG, effects/storage e dataflow fora deste checkpoint.
 
@@ -227,3 +257,10 @@ ou composition root.
   mantém tais referências fora de `DataReference` e registra
   `CONDITION_REFERENCE_KIND_NOT_PROJECTED`; não altera resolver/report nem
   fabrica binding DATA para um construct externo.
+- O transporte não precisa duplicar joins: roots e children vêm das views já
+  indexadas do port; as demais coleções são copiadas na ordem canônica. A
+  estrutura flat/híbrida permanece observável por containment mais relations de
+  branch, sem introduzir CFG ou execution order.
+- O JSON v1 é somente output. Não existe reader de produção, round-trip de
+  domínio, migração longitudinal ou promessa de compatibilidade entre versões;
+  essas ausências são deliberadas neste checkpoint.
