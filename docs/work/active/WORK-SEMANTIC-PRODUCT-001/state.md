@@ -3,9 +3,9 @@
 ## Onde estamos
 
 Work item permanece `active`, risco `high`. CP1 está concluído. CP2 foi aprovado
-e mergeado no PR #24 (`a64c3b3`). Checkpoint 3A foi explicitamente autorizado,
-executado e aguarda review humano; qualquer trabalho posterior continua não
-autorizado.
+e mergeado no PR #24 (`a64c3b3`). Checkpoint 3A foi aprovado e mergeado no PR
+#25. Checkpoint 3B foi autorizado e executado no PR #26; aguarda review humano.
+Qualquer trabalho posterior continua não autorizado.
 
 ## Verde conhecido
 
@@ -14,16 +14,20 @@ autorizado.
 - Não houve alteração em `src/main/**`, gramática, AST, símbolos, occurrences, resolução ou fixtures.
 - O Checkpoint 2 aprovou, após o strongest-opponent test, uma boundary híbrida: estado semântico COBOL-specific, próprio, imutável e materializado, exposto ao lowerer por facade/port tipado e somente leitura; o relatório compara A2, B e envelope, explicita a decisão de analysis context, a matriz de suficiência e a reavaliação dos oito findings.
 - Gates `docs`, `architecture`, `fast`, `semantic`, `performance` e `full` passaram; `git diff --check` passou.
-- O slice experimental do Checkpoint 3A está restrito a `CALL` literal e aos
-  testes adversariais de closure, no leakage e ausência de semantic reparsing.
+- O slice experimental do Checkpoint 3A, restrito a `CALL` literal e aos testes
+  adversariais de closure, no leakage e ausência de semantic reparsing, foi
+  aprovado e mergeado no PR #25.
+- O Checkpoint 3B executa, em código test-only, a falsificação da boundary para
+  o slice `MOVE` → `CALL`; o PR #26 aguarda review.
 
 ## Restante
 
-- Review humano do Checkpoint 3A.
+- Review humano do Checkpoint 3B.
 - Incorporar findings adicionais caso existam, classificando findings semânticos
   novos pela taxonomia downstream existente.
 - Não iniciar interchange, snapshot/round-trip, outros slices ou implementação
-  de produção sem nova autorização.
+  de produção sem nova autorização; todo trabalho posterior permanece não
+  autorizado.
 
 ## Descobertas que afetam o plano
 

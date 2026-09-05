@@ -2,7 +2,7 @@ id: WORK-SEMANTIC-PRODUCT-001
 title: Semantic Product Boundary Discovery
 status: active
 risk: high
-goal: Estabelecer, com evidência e comparação arquitetural, o estado semântico do frontend COBOL e a menor boundary COBOL-specific capaz de alimentar um futuro CobolLower, mantendo implementação downstream e Checkpoint 3 fora da autorização atual.
+goal: Estabelecer, com evidência e comparação arquitetural, o estado semântico do frontend COBOL e a menor boundary COBOL-specific capaz de alimentar um futuro CobolLower, mantendo o Semantic Product Discovery ativo; 3A aprovado e mergeado; 3B autorizado e executado, aguardando review; implementação downstream e qualquer trabalho posterior continuam não autorizados.
 must_read:
   - docs/index.md
   - docs/architecture/pipeline.md
@@ -152,8 +152,11 @@ test_scope:
   - src/test/java/io/github/gustavo2358/cobolexplorer/ResolutionSnapshotTest.java
   - src/test/java/io/github/gustavo2358/cobolexplorer/ArchitectureBoundaryTest.java
   - src/test/java/io/github/gustavo2358/cobolexplorer/SemanticProductBoundaryCheckpoint3ATest.java
+  - src/test/java/io/github/gustavo2358/cobolexplorer/SemanticProductBoundaryCheckpoint3BTest.java
   - src/test/java/io/github/gustavo2358/cobolexplorer/semanticproduct/boundary/ExperimentalCobolCallBoundary.java
+  - src/test/java/io/github/gustavo2358/cobolexplorer/semanticproduct/boundary/ExperimentalCobolMoveCallBoundary.java
   - src/test/java/io/github/gustavo2358/cobolexplorer/semanticproduct/consumer/ExperimentalCobolCallConsumer.java
+  - src/test/java/io/github/gustavo2358/cobolexplorer/semanticproduct/consumer/ExperimentalCobolMoveCallConsumer.java
   - src/test/resources/cobol/resolution/data-binding.cbl
   - src/test/resources/cobol/resolution/program-binding.cbl
   - src/test/resources/cobol/resolution/call-identifier-runtime-target.cbl

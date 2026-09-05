@@ -5,11 +5,13 @@
 O frontend COBOL já produz vários artefatos semânticos separados, mas não existe ainda uma decisão sobre o estado semântico que deverá atravessar a futura fronteira para lowering. O nome `Cobol Semantic Product` é apenas uma hipótese de trabalho. A investigação precisa partir dos produtores e consumidores reais, preservando a distinção entre domínio, observabilidade e transporte.
 
 Este work item é um Discovery arquitetural de alto risco, composto por uma
-baseline factual (Checkpoint 1) e pelo desenho/suficiência da boundary
-(Checkpoint 2). O Checkpoint 1 está concluído; o Checkpoint 2 foi aprovado e
-mergeado no PR #24; o Checkpoint 3A foi autorizado para falsificação test-only.
-A implementação de produção do produto, de `Cobol Lower`, da IR, de CFG, de
-dataflow, de possible-values e de dependency facts está fora do escopo.
+baseline factual (Checkpoint 1), pelo desenho/suficiência da boundary
+(Checkpoint 2) e por slices de falsificação executável (3A e 3B). O Checkpoint 1
+está concluído; o Checkpoint 2 foi aprovado e mergeado no PR #24; o Checkpoint 3A
+foi aprovado e mergeado no PR #25; e o Checkpoint 3B foi autorizado e executado
+no PR #26, aguardando review. A implementação de produção do produto, de
+`Cobol Lower`, da IR, de CFG, de dataflow, de possible-values e de dependency
+facts está fora do escopo.
 
 ## Objetivo
 
@@ -17,10 +19,12 @@ Produzir, ao longo do lifecycle completo de três checkpoints de Discovery,
 evidência suficiente para que um review humano decida se a menor boundary
 semântica COBOL-specific é suficiente para um futuro `CobolLower`. O Checkpoint 1
 estabelece a baseline factual do frontend; o Checkpoint 2 define a boundary e
-testa sua suficiência; e o Checkpoint 3A executa a falsificação executável da
-seam aprovada, sem prova de interchange. No estado atual, somente o Checkpoint
-3A está autorizado. Nenhum checkpoint desenha a IR ou implementa o
-produto/lowerer.
+testa sua suficiência; o Checkpoint 3A executa a falsificação executável da seam
+aprovada para `CALL` literal; e o Checkpoint 3B executa a falsificação executável
+da mesma seam para o slice `MOVE` → `CALL`, ambos sem prova de interchange. O 3A
+foi aprovado e mergeado no PR #25; o 3B foi autorizado, executado no PR #26 e
+aguarda review. Trabalho posterior não está autorizado. Nenhum checkpoint
+desenha a IR ou implementa o produto/lowerer.
 
 ## Domínio de entrada suportado
 
@@ -51,9 +55,10 @@ conclusão arquitetural importante deve indicar `evidence_status` entre
 
 O plano contém três checkpoints independentes, cada um terminando em review
 humano. O Checkpoint 1 foi concluído e serviu de baseline factual para o
-Checkpoint 2; o Checkpoint 2 foi concluído, aprovado e mergeado. O Checkpoint 3A
-tenta falsificar a candidata escolhida em código test-only e termina em review
-humano. Implementação de produção será outro work item.
+Checkpoint 2; o Checkpoint 2 foi concluído, aprovado e mergeado no PR #24; o
+Checkpoint 3A foi aprovado e mergeado no PR #25; e o Checkpoint 3B foi executado
+no PR #26 e aguarda review humano. Implementação de produção e qualquer trabalho
+posterior serão outro work item explicitamente autorizado.
 
 ## Comportamento diante de incerteza
 
@@ -67,7 +72,8 @@ O relatório deve usar os contratos atuais: cobertura `MODELED`, `PRESERVED_UNIN
 - Implementar `Cobol Lower`, IR, CFG, dataflow, reaching definitions, possible-values ou dependency extraction.
 - Corrigir F-01, ALTER, SEARCH ou qualquer lacuna oportunista de AST/resolver.
 - Alterar AST para carregar resolução, introduzir IDs de candidates na AST, refatorar `ExplorerMain`, criar parser embedded ou framework de plugins.
-- Executar qualquer parte do Checkpoint 3 além do slice 3A autorizado neste estado do work item.
+- Executar qualquer parte do Checkpoint 3 além dos slices 3A e 3B autorizados
+  neste estado do work item.
 
 ## Regras de domínio relacionadas
 
