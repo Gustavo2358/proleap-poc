@@ -2,7 +2,7 @@ id: WORK-SEMANTIC-PRODUCT-001
 title: Semantic Product Boundary Discovery
 status: active
 risk: high
-goal: Estabelecer, com evidência e comparação arquitetural, o estado semântico do frontend COBOL e a menor boundary COBOL-specific capaz de alimentar um futuro CobolLower, mantendo implementação downstream e Checkpoint 3 fora da autorização atual.
+goal: Estabelecer, com evidência e comparação arquitetural, o estado semântico do frontend COBOL e a menor boundary COBOL-specific capaz de alimentar um futuro CobolLower, mantendo o Semantic Product Discovery ativo; 3A aprovado e mergeado; 3B autorizado e executado, aguardando review; implementação downstream e qualquer trabalho posterior continuam não autorizados.
 must_read:
   - docs/index.md
   - docs/architecture/pipeline.md
