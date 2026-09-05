@@ -69,8 +69,10 @@ das capabilities cobertas:
 - todos os `CALL` cuja sintaxe seja identifier/expression e cujo operando DATA
   tenha binding nominal representável, sem exigir que compartilhe identidade
   com algum `MOVE` específico;
-- todos os `IF/ELSE` estruturais suportados, inclusive IF sem ELSE, nesting
-  simples e statements antes, dentro e depois de branches;
+- todos os `IF/ELSE` estruturais suportados, inclusive IF com ramo ELSE não
+  vazio, IF sem statements no ramo falso, nesting simples e statements antes,
+  dentro e depois de branches; a surface tipada atual não distingue ausência
+  sintática de ELSE de uma cláusula ELSE vazia;
 - todos os statements observados no inventário da unit, mesmo quando a família
   ainda não possui fact completo: esses casos atravessam como coverage/gap
   localizado, não somem.
@@ -128,8 +130,11 @@ não autoriza `Map<String,Object>`: extensão permanece tipada.
   produto; IF facts, coverage da unit e JSON não existem.
 - A AST atual já materializa `Ast.IfStatement` com condition, `thenBranch`,
   `elseBranch`, explicit termination e nesting; o collector percorre condition
-  e ambos os branches. Isso sustenta o slice estrutural de IF, não predicate
-  completo, CFG ou reachability.
+  e os statements presentes em ambos os branches. Quando `elseBranch` está
+  vazia, não há marcador tipado que diferencie ausência de ELSE de cláusula
+  ELSE sintaticamente vazia; `explicitlyTerminated` não cumpre esse papel. Isso
+  sustenta o ramo falso e sua continuação estrutural, não essa distinção
+  sintática, predicate completo, CFG ou reachability.
 - AST, compilation units, symbol tables, occurrences, resolution, report,
   policy e provenance permanecem produtos separados e imutáveis. O projector
   faz joins por identities canônicas, sem mutá-los.
@@ -187,9 +192,12 @@ estável dentro da publicação. Zero ocorrências de uma família é distinguí
 capability indisponível ou statement observado porém unsupported.
 
 Statements em branches continuam pertencendo ao inventário da unit e à sua
-relação estrutural. Um consumer deve reconstruir sequência, IF, THEN, ELSE,
-nesting e fallthrough estrutural potencial sem inspecionar AST. O produto não
-publica edge, reachability, truth value ou branch probability.
+relação estrutural. Um consumer deve reconstruir sequência, IF, THEN, o ramo
+falso com os statements disponíveis, nesting e a continuação estrutural
+potencial sem inspecionar AST. `elseBranch` vazia permite reconstruir o caminho
+falso até a continuação, mas não autoriza afirmar se havia ELSE sintaticamente
+vazio ou se a cláusula estava ausente. O produto não publica edge,
+reachability, truth value ou branch probability.
 
 ### Disciplina de readiness por construct
 
@@ -198,7 +206,7 @@ publica edge, reachability, truth value ou branch probability.
 | DATA suportada | declaration, nome e atributos cobertos | `DataItemId` namespaced | parentage/hierarquia necessária ao slice | declaration/entity reconciliada | `NOT_APPLICABLE` isoladamente | partial até existir Storage Semantics para layout/alias; identity nominal disponível | PIC/clause/layout ausente localizado | declaration e atributos publicados | cada entry observada classificada |
 | `MOVE` literal → DATA | source literal e target tipados | statement, operand e DATA handles | program point e containment/branch | target com status/reason/candidates | suficiente para fallthrough estrutural, salvo gap explícito | suficiente para derivar source literal e `DEF` nominal do target; storage effect permanece partial | binding/shape/storage gaps localizados | statement, literal e target | cada MOVE observado modeled ou gap explícito |
 | `CALL` identifier/expression | syntax e operando DATA tipados | statement, operand e DATA handles | program point, containment e exception structure coberta | operando com status/reason/candidates; runtime target separado | suficiente apenas para sucessor local/fallthrough coberto; efeitos interprocedurais separados | suficiente para `USE` nominal do operando de target; efeitos da chamada continuam partial | runtime target `UNKNOWN`, policy/linkage/gaps localizados | statement e operando | cada CALL observado modeled ou gap explícito |
-| `IF/ELSE` estrutural | condition surface, then/else e termination | statement, condition, branch/child handles | ordem, branches, nesting e join reconstruíveis | references da condition usam binding canônico disponível | estruturalmente suficiente para dois successors conservadores e join/fallthrough; predicate pode ser partial | references/roles suficientes apenas onde condition surface/binding suportam `USE`; sem effects de branch | predicate/validation/branch knowledge parciais localizados | IF, condition e branches/children | cada IF observado e seus children classificados |
+| `IF/ELSE` estrutural | condition surface, then/else statements disponíveis e termination | statement, condition e child handles sustentados | ordem, ramo verdadeiro, ramo falso, nesting e continuação reconstruíveis; presença de ELSE vazio não é afirmada | references da condition usam binding canônico disponível | estruturalmente suficiente para dois successors conservadores e join/fallthrough; predicate pode ser partial | references/roles suficientes apenas onde condition surface/binding suportam `USE`; sem effects de branch | predicate/validation parciais e distinção ELSE ausente versus vazio não publicada | provenance de IF, condition e children publicada | cada IF observado e seus children classificados |
 | statement fora da capability | kind/surface preservável e anchor quando disponível | identity namespaced se estruturalmente produzida | containment conhecido ou gap | binding existente continua transportado; nada é fabricado | `PARTIAL/BLOCKED`, nunca fallthrough implícito | `PARTIAL/BLOCKED`, nunca efeito vazio | motivo específico | provenance disponível | observed + partial/unsupported/input-missing |
 
 Readiness é uma claim sobre a informação publicada, não sobre a fase futura já
@@ -265,7 +273,7 @@ boundaries posteriores.
 | CALL variável resolvido nominalmente | operando DATA, binding e runtime target `UNKNOWN` | usar literal/`VALUE`/MOVE anterior como target final |
 | ambiguity/unresolved/input missing | status, reason, todos os candidates aplicáveis, gaps e facts independentes | escolher candidate, fabricar handle ou empty success |
 | IF com predicate semanticamente parcial | branches/nesting e references sustentadas + predicate/readiness partial | apagar IF, escolher branch ou alegar reachability |
-| ELSE ausente | branch ausente explicitamente, com fallthrough estrutural reconstruível | tratar como unsupported ou inventar branch |
+| `elseBranch` tipada vazia | ramo falso continua conservadoramente até o successor estrutural; distinção ELSE ausente versus sintaticamente vazio permanece não afirmada ou vira gap se um consumer a exigir | reparsear texto/metadata, usar `explicitlyTerminated` como marcador ou inventar presença/ausência |
 | statement unsupported entre statements suportados | inventário/coverage localizado preserva sua posição/containment | fechar a sequência como se o statement não existisse |
 | report e facts individuais divergem | falha fechada identificando autoridade/unit/fact | reconciliar por heurística ou elevar claim global |
 | provenance aproximada ou COPY ausente | exactness/input gap e facts independentes preservados | inventar source span ou apagar a unit inteira |

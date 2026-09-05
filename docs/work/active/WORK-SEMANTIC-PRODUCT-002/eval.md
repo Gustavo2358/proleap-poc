@@ -53,8 +53,8 @@ slices revisáveis.
 | SP-P01 | N DATA suportadas | Todas as declarations cobertas têm `DataItemId` namespaced, atributos disponíveis, provenance e coverage; nenhuma é escolhida apenas por participar do primeiro MOVE/CALL. |
 | SP-P02 | N MOVE literal → DATA | Cada ocorrência tem statement identity, program point, literal/target, role de write, binding e provenance próprios. |
 | SP-P03 | N CALL identifier/expression | Cada ocorrência preserva operando/binding DATA e runtime target `UNKNOWN`; não precisa parear com MOVE específico. |
-| SP-P04 | IF com ELSE | Condition surface, THEN, ELSE, children, nesting, termination e join/fallthrough estrutural são reconstruíveis. |
-| SP-P05 | IF sem ELSE | A ausência de ELSE é explícita e o successor falso conservador pode ser reconstruído como fallthrough, sem branch inventada. |
+| SP-P04 | IF com ELSE não vazio | Condition surface, THEN, ELSE statements, children, nesting, termination e join/fallthrough estrutural são reconstruíveis. |
+| SP-P05 | IF sem statements no ramo falso | `elseBranch` vazia permite reconstruir o successor falso conservador até a continuação; não se afirma presença versus ausência sintática de ELSE. |
 | SP-P06 | Statements antes/dentro/depois de branches | Um inventário único preserva containment e ordem estrutural sem confundir com execution order. |
 | SP-P07 | Supported + partial coexistem | Facts suportados permanecem disponíveis e o statement parcial aparece no inventário/coverage com motivo. |
 | SP-P08 | Consumer boundary-only | Um fake lowerer produz uma representação equivalente do slice sem imports ou objetos do frontend. |
@@ -118,8 +118,11 @@ consistência da fixture, não limite global de cardinalidade.
    exigir cada occurrence uma vez e containment correto.
 3. Inserir statement unsupported entre `MOVE` e `CALL`; facts adjacentes
    continuam, mas coverage/readiness não alegam sequência completa.
-4. Usar IF sem ELSE e IF com ELSE vazio; distinguir as duas shapes sem inventar
-   reachability.
+4. Usar IF sem ELSE e IF com ELSE não vazio; reconstruir corretamente o ramo
+   falso e sua continuação sem inventar reachability. Um ELSE sintaticamente
+   vazio pode ser observacionalmente igual à ausência na AST atual; exigir a
+   distinção deve produzir gap/pré-requisito de frontend, nunca reparse textual,
+   uso indevido de `explicitlyTerminated` ou alteração de AST neste work item.
 5. Tornar uma condition reference ambiguous/unresolved; preservar candidates,
    status e structure do IF sem escolher branch nem apagar children.
 6. Usar MOVE fora da capability inicial antes de um MOVE suportado; o projector
@@ -172,8 +175,10 @@ consistência da fixture, não limite global de cardinalidade.
   únicos.
 - Mover um statement de top-level estrutural para THEN/ELSE conserva seus facts
   nominais e provenance, alterando somente containment/program point legítimos.
-- Expandir IF sem ELSE para ELSE explícito acrescenta a branch; não altera o
-  target de runtime dos CALLs nem cria CFG no produto.
+- Acrescentar statements a um ramo falso antes vazio acrescenta os respectivos
+  facts/relações estruturais; não altera o target de runtime dos CALLs nem cria
+  CFG no produto. Acrescentar apenas um marcador ELSE vazio não precisa produzir
+  diferença enquanto a fonte tipada não o preservar.
 - Trocar o literal de um MOVE altera apenas source/value/provenance dependente;
   o CALL variável continua runtime `UNKNOWN`.
 - Renomear consistentemente DATA e seus usos preserva relações e statuses; IDs

@@ -14,6 +14,9 @@ Os itens abaixo estão ordenados por dependência arquitetural, não por autoriz
 `WORK-EXT-001` foi concluído e permanece baseline; nenhum item desta seção está
 autorizado somente por constar deste backlog.
 
+Fluxo dos produtos em execução — não a ordem em que seus contratos precisam ser
+definidos:
+
 ```text
 BACKLOG-EXT-001 infraestrutura de composição
   ├── BACKLOG-EXT-002 contexto confiável de compilação
@@ -44,6 +47,27 @@ BACKLOG-DF-003 possible-values
 BACKLOG-SP-001/002/003/004 enrichments por construct
   └── entram na cadeia somente após sua própria lowering/CFG/effects readiness
 ```
+
+Ordem executável de contratação e implementação do primeiro slice:
+
+```text
+Semantic Product lowering-ready
+  ↓
+contrato mínimo da Analysis IR + oracles de consumo de CFG/effects
+  ↓
+primeiro lowering que produz essa IR
+  ↓
+primeiro consumer de CFG
+  ↓
+primeiro consumer de Statement Effects / Storage Semantics
+```
+
+Requisitos e oracles concretos dos consumers orientam o contrato da IR; os
+consumers não precisam existir em produção para que esse contrato seja definido.
+Inversamente, lowerer e consumers só são implementados depois que a versão
+mínima do contrato que consomem estiver explícita. O primeiro slice de
+BACKLOG-IR-001 e BACKLOG-LOWER-001 pode ser promovido no mesmo work item, desde
+que mantenha essa ordem interna e as fronteiras separadas.
 
 ### BACKLOG-EXT-001 — Infraestrutura mínima de extensibilidade do pipeline
 
@@ -583,19 +607,26 @@ traduz constructs lowering-ready para o contrato de entrada da Analysis IR. O
 primeiro slice pode cobrir DATA/MOVE/CALL/IF sem esperar todos os enrichments,
 mas nunca consulta AST, resolver, report, texto ou presentation para completar
 informação ausente. Constructs partial/unsupported geram representação/gap
-conservador conforme o contrato futuro, não omissão silenciosa. O work item de
-promoção deve fechar input/output e oracles sem colocar CFG ou dataflow dentro
-do lowerer.
+conservador conforme o contrato mínimo da IR já definido, não omissão
+silenciosa. A implementação do primeiro lowering pode ser coordenada com a
+definição desse contrato no mesmo work item, mas ocorre depois dos respectivos
+oracles e decisões de entrada/saída. CFG e dataflow não entram no lowerer.
 
 ### BACKLOG-IR-001 — Analysis IR
 
-Definir uma IR neutra quanto à linguagem somente depois de haver um slice real
-do `CobolLower` e consumers concretos de CFG/effects. Ela deve preservar os
-operands, roles, control structure, identities, program points, provenance e
-unknowns necessários, sem carregar tipos do frontend COBOL nem apagar a origem
-semântica. Node schema, SSA, forma flat/hierárquica e demais escolhas ficam em
-aberto até os oracles demonstrarem necessidade. Este item não autoriza uma IR
-universal nem a implementação de CFG.
+Definir o contrato mínimo de uma IR neutra quanto à linguagem a partir do
+Semantic Product lowering-ready disponível e de requisitos/oracles concretos de
+CFG e Statement Effects / Storage Semantics. Esses oracles descrevem o que os
+consumers precisarão observar; não exigem que lowerer, CFG builder ou effects
+analysis já estejam implementados.
+
+Depois do contrato mínimo, implementar coordenadamente o primeiro lowering que
+produz a IR e só então seus primeiros consumers. A IR deve preservar operands,
+roles, control structure, identities, program points, provenance e unknowns
+necessários, sem carregar tipos do frontend COBOL nem apagar a origem semântica.
+Node schema, SSA, forma flat/hierárquica e demais escolhas ficam em aberto até
+os oracles demonstrarem necessidade. Este item não autoriza uma IR universal
+nem a implementação antecipada de CFG/effects.
 
 ## CFG, storage e dataflow
 

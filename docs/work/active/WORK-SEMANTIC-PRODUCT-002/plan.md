@@ -32,10 +32,13 @@ ao risco e preservar facts conhecidos mesmo quando encontre gaps.
    das shapes fora da capability.
 4. **IF/ELSE facts.** Acrescentar a segunda família estrutural ao mesmo
    container, preservando condition surface, references/bindings disponíveis,
-   then/else, ausência explícita de ELSE, nesting, termination, program points,
-   provenance, coverage e readiness. Provar dois successors conservadores e
-   join reconstruível como informação de CFG-readiness, sem publicar edges,
-   truth, reachability ou predicate semantics inexistente.
+   statements de THEN/ELSE disponíveis, ramo falso, nesting, termination,
+   program points, provenance, coverage e readiness. Provar dois successors
+   conservadores e join reconstruível como informação de CFG-readiness, sem
+   publicar edges, truth, reachability ou predicate semantics inexistente. A
+   AST atual não distingue ELSE ausente de ELSE sintaticamente vazio; o
+   checkpoint não inventa essa distinção nem altera a AST. Se um consumer a
+   exigir, registra gap e precondição de frontend próprios.
 5. **Coverage e incompleteness da ProgramUnit.** Reconciliar inventário de
    statements com modeled/partial/unsupported/input-missing, localizar unknowns
    e impedir claim global acima dos facts individuais. Provar que statement
@@ -64,6 +67,20 @@ Esta task documental autoriza, depois de concluir sua migração, somente o
 Checkpoint 1 corretivo acima. Checkpoints 2–8 exigem que a evidência do anterior
 esteja disponível e a autorização aplicável; nenhum checkpoint autoriza
 implicitamente work de backlog.
+
+## Meta operacional
+
+15 de setembro de 2026 é a meta operacional que orienta priorização e recorte
+das capabilities em direção a um Semantic Product utilizável por lowering, CFG
+e dataflow. Ela favorece slices verticais que entreguem evidência downstream e
+evita prolongar preparação ou ampliar escopo sem necessidade demonstrada.
+
+A data não é promessa de entrega, decisão arquitetural nem autorização para
+pular checkpoints. Ela não permite limitar cardinalidade artificialmente,
+reduzir garantias semânticas, omitir lacunas, converter unknown/partial em
+sucesso ou anunciar completude falsa. Quando prazo e correção entrarem em
+tensão, o slice deve ser reduzido por capability e a incompletude deve continuar
+explícita.
 
 ## Dependências
 
