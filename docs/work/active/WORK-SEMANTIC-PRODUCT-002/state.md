@@ -2,13 +2,17 @@
 
 ## Onde estamos
 
-`WORK-SEMANTIC-PRODUCT-002` foi criado como work item ativo para a primeira
-implementação de produção do slice `MOVE` literal → `CALL` variável. Este PR
-executa somente o Checkpoint 2: o core A2 e a facade B foram materializados em
-tipos próprios, imutáveis e fechados, com testes que constroem o estado
-diretamente. Não há adapter frontend, integração no `ExplorerMain`, JSON output
-adapter, `semantic-product.json`, serializer genérico, consumer de produção,
-CFG ou dataflow.
+`WORK-SEMANTIC-PRODUCT-002` permanece ativo para a primeira implementação de
+produção do slice `MOVE` literal → `CALL` variável. Este PR executa somente o
+Checkpoint 3: `CobolMoveCallAdapter` projeta os produtos canônicos já fechados
+do frontend para `CobolSemanticProduct.State`, e `CobolSemanticPort` continua a
+ser a única superfície downstream.
+
+O adapter não altera `ExplorerMain`, não executa resolução, não usa
+`ResolutionAnalysisReport`, snapshots ou HTML como fonte semântica e não
+reparseia texto. O Checkpoint 4 continua reservado para publicação no
+composition root e consumer independente; JSON, lowering, IR, CFG e dataflow
+continuam fora deste checkpoint.
 
 A branch parte da `main` atualizada, que já contém o Discovery dos Checkpoints 2
 e 3A e o Checkpoint 3B, mergeado no `PR #26`. `WORK-SEMANTIC-PRODUCT-001` foi
@@ -49,21 +53,27 @@ decisão H já provada sem reabrir A2 versus B.
   trocar o trecho JSON por um adapter in-memory. Os cores do frontend e do
   lowerer permanecem independentes de JSON e podem viver em repositórios
   separados.
-- O frontend atual ainda não publica o Semantic Product: a composição continua
-  em `ExplorerMain` e os adapters de projeção permanecem fora deste checkpoint;
-  os tipos A2/B anteriores são exclusivamente test-only.
+- O adapter de produção consome `CompilationUnitBuildResult`,
+  `CompilationUnitSymbolTables`, occurrences e `ReferenceResolution`; os tipos
+  A2/B não carregam nenhuma dessas referências.
+- O adapter usa `CallSemantics.targetSyntax` para preservar
+  `DYNAMIC_CALL_TARGET_VALUE_UNKNOWN`, sem depender do report composto; policy,
+  binding nominal, partialidade e provenance são projetados dos produtos
+  canônicos correspondentes.
+- A composição continua em `ExplorerMain`; o adapter foi implementado como
+  ponto de tradução reutilizável, sem wiring ou consumer de produção.
 - Nenhum arquivo de grammar, AST, symbols, occurrences, resolver, fixture,
   baseline ou `ExplorerMain` foi alterado neste checkpoint.
-- `check-docs.sh`, `check-architecture.sh`, `check-fast.sh`,
-  `check-semantic.sh`, `check-performance.sh` e `check-full.sh` passaram após
-  a implementação; `git diff --check` também passou.
+- O teste focalizado do adapter, o Checkpoint 3B, o contrato A2/B,
+  `check-docs.sh`, `check-architecture.sh`, `check-fast.sh`,
+  `check-semantic.sh`, `check-performance.sh`, `check-full.sh` e
+  `git diff --check` passaram após a implementação.
 
 ## Restante
 
-- Review humano do Checkpoint 2 e deste PR.
-- Após aprovação explícita, executar separadamente o Checkpoint 3 — adapter de
-  projeção e joins do slice — e os demais checkpoints do `plan.md`, cada um com
-  seu próprio review e sem antecipar generalização.
+- Review humano do Checkpoint 3 e deste PR.
+- Após aprovação explícita, executar separadamente o Checkpoint 4 e os demais
+  checkpoints do `plan.md`, sem antecipar generalização.
 - O Checkpoint 5 produzirá `semantic-product.json` somente por JSON output
   adapter do frontend, consumindo `CobolSemanticState`/`CobolSemanticPort` e
   exigindo determinismo, suficiência, versionamento/documentação e preservação
@@ -82,14 +92,19 @@ decisão H já provada sem reabrir A2 versus B.
 ## Descobertas que afetam o plano
 
 - `ExplorerMain` é o composition root atual e mantém os produtos do frontend
-  separados até resolução/report/snapshots; a integração futura deve inserir a
-  projeção no menor ponto possível, sem entregar esse lifecycle ao port.
-- `Ast.Meta.id` é local ao pre-order da unit e não pode ser promovido a
-  identidade pública. A implementação precisa projetar handles próprios que
-  preservem `ProgramUnitId`.
-- `ReferenceResolution` já separa `CallTargetSyntax` de `CallLinkage`, e o
-  report já produz `DYNAMIC_CALL_TARGET_VALUE_UNKNOWN`; a boundary deve
-  transportar essa distinção, não rederivá-la por texto.
+  separados; a integração futura deve inserir a projeção no menor ponto
+  possível, sem entregar esse lifecycle ao port.
+- `Ast.Meta.id` permanece local ao pre-order da unit. O adapter usa esse ID
+  somente no join namespaced com occurrence/resolution e projeta
+  `DataItemId` a partir do `SemanticEntityId(DATA_SYMBOL, localId)` do
+  candidate resolvido.
+- `ReferenceResolution` separa `CallTargetSyntax` de `CallLinkage`. Para este
+  slice, `IDENTIFIER_OR_EXPRESSION` é suficiente para publicar runtime
+  `UNKNOWN`, a incerteza exigida e partialidade sem consultar report ou inferir
+  valor do `MOVE`.
+- O adapter publica somente o candidate DATA selecionado, sua declaração
+  tipada/PIC, o literal AST, os dois fatos e a relação de ordem; shapes fora do
+  slice ou joins inconsistentes falham de forma fechada.
 - A prova 3B demonstrou igualdade determinística de valores, mas não o contrato
   completo de reprodução dos IDs transportados, `analysisGeneration`, persistência
   ou identidade persistente. O primeiro produto usa uma publicação A2 única. O
