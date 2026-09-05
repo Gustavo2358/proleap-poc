@@ -25,6 +25,7 @@ Testes, corpus e artefatos gerados são evidência executável; não definem a s
 | fronteira que não pode regredir | [architecture/invariants.md](architecture/invariants.md) |
 | formato de fonte, preprocessing e provenance | [domain/](domain/index.md) |
 | AST, unidades, símbolos e resolução nominal | [domain/](domain/index.md) |
+| Semantic Product, lowering e readiness downstream | [pipeline arquitetural](architecture/pipeline.md), [ADR-0013](architecture/decisions/0013-cobol-semantic-product-precedes-language-neutral-lowering.md) e invariantes `INV-SP-*` |
 | política para mudança semântica, testes, desempenho ou observabilidade | [engineering/](engineering/index.md) |
 | oracle, teste, fixture ou cenário de regressão | [evals/](evals/index.md) |
 | trabalho ativo, histórico curto ou backlog | [work/](work/index.md) |

@@ -67,6 +67,21 @@ Fonte transitória inventariada:
 | KM-044 | A migração documental não altera produção; o primeiro trabalho autorizado depois dela é o oracle executável do target model. | `NOVO` | Estado ativo aponta review do Checkpoint 3 e antigo Checkpoint 4. | `plan.md`, `state.md`, `work-item.yaml` e índice ativo. | CP3 |
 | KM-045 | O documento temporário e este mapa só podem ser removidos após auditoria item a item e busca de referências/claims antigos. | `NOVO` | Regra existe apenas no documento temporário e na task autorizada. | Evidência transitória neste mapa; execução/auditoria CP5; remoção CP6. | CP5 + CP6 |
 
+## Destinos realizados no Checkpoint 2
+
+| IDs | Destino efetivo |
+| --- | --- |
+| KM-001–KM-004, KM-014, KM-016, KM-029–KM-032, KM-043 | ADR-0013 e `docs/architecture/pipeline.md` fixam a fronteira COBOL-specific, o início da neutralidade no lowering/IR, a cadeia downstream e sufficiency como driver, sem implementar as fases futuras. |
+| KM-005–KM-010, KM-017–KM-019 | INV-SP-001/002/003 fixam capability != cardinality, publicação de todas as ocorrências cobertas, no-silent-omission e readiness separada por construct. |
+| KM-011–KM-013, KM-037 | INV-SP-003/004 e ADR-0013 fixam isolamento A2+B, autoridades canônicas e projector sem nova análise; nomes/packages concretos continuam abertos. |
+| KM-015 | INV-SP-005 fixa que identidade nominal DATA não é storage identity. |
+| KM-035 | INV-SP-006 fixa determinismo de transporte sem identidade persistente. |
+| KM-008 | INV-SP-003 e o pipeline fixam program point/anchor estrutural sem claim de execução/CFG. |
+| Routing | `AGENTS.md`, `docs/index.md`, `docs/architecture/index.md` e `ARCHITECTURE.md` encaminham Semantic Product/lowering/readiness às fontes novas sem copiar o contrato detalhado. |
+
+Os itens cujo destino principal é o contrato do work item (CP3), backlog/handoff
+(CP4) ou auditoria/remoção (CP5–CP6) permanecem abertos neste mapa.
+
 ## Contexto histórico que não deve virar norma nova
 
 | ID | Contexto | Tratamento |

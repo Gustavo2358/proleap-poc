@@ -15,6 +15,29 @@ fonte COBOL físico
   → futuras análises CFG e dataflow
 ```
 
+O caminho downstream adotado pela ADR-0013 é incremental e ainda não está todo
+implementado:
+
+```text
+COBOL Frontend
+  → COBOL Semantic Product
+  → CobolLower
+  → Analysis IR
+  → CFG
+  → Statement Effects / Storage Semantics
+  → Reaching Definitions
+  → Possible Values
+  → Dependency Facts
+```
+
+O Semantic Product é a boundary COBOL-specific materializada entre os produtos
+do frontend e o lowering. Neutralidade entre COBOL e outras linguagens começa
+no lowerer/Analysis IR, não nessa boundary. A implementação inicial do produto
+e de seu projector cobre apenas a prova DATA/MOVE/CALL e ainda não está ligada
+ao composition root; `WORK-SEMANTIC-PRODUCT-002` governa sua remediation. As
+fases a partir de `CobolLower` continuam futuras e aparecem aqui como direção e
+dependências, não como produtos existentes.
+
 Cada seta produz um artefato para a fase seguinte; uma fase não deve gravar conclusões de análise posterior no artefato anterior.
 
 ## Limites atuais
@@ -25,7 +48,47 @@ Cada seta produz um artefato para a fase seguinte; uma fase não deve gravar con
 - Symbol tables modelam declarations, scopes, namespaces, entidades e relações declarativas, sem valores de runtime.
 - Occurrences identificam usos tipados sem fazer lookup.
 - `ReferenceResolution` é produto separado e imutável; preserva candidatos, status e diagnósticos para binding nominal.
-- CFG, reaching definitions, propagação de valores e análise de linguagens embarcadas ainda não são produtos do pipeline. A ausência deles deve continuar observável como boundary/incompletude, não como resultado vazio.
+- O Semantic Product preserva somente facts COBOL canônicos, materializados,
+  imutáveis e suficientes ao lowering declarado. Ele não é AST, IR, CFG,
+  serializer nem snapshot; sua coverage incremental não limita a quantidade de
+  ocorrências suportadas na `ProgramUnit`.
+- Projectors reconciliam AST tipada, units, symbols, occurrences, resolution,
+  report, policy e provenance segundo a autoridade de cada produto. Eles não
+  executam parsing, binding, gap analysis ou value inference novamente.
+- `CobolLower` traduz o contrato COBOL-specific para Analysis IR sem reabrir os
+  internals do frontend. A IR representa operações e controle necessários às
+  análises posteriores sem impor uma taxonomia universal ao frontend.
+- CFG, effects/storage, reaching definitions, possible-values e análise de
+  linguagens embarcadas ainda não são produtos do pipeline. A ausência deles
+  deve continuar observável como boundary/incompletude, não como resultado
+  vazio.
+
+## Readiness downstream
+
+Cada construct do Semantic Product é avaliado separadamente por `surface`,
+`identity`, `structure`, binding nominal, CFG readiness, effects/dataflow
+readiness, unknowns, provenance e coverage. Um construct pode ter structure
+suficiente e predicate parcial; essa combinação continua útil para lowering
+conservador, mas não pode receber claim de completude maior.
+
+- **Lowering readiness:** um consumer que conhece somente o port consegue
+  reconstruir os facts suportados sem AST, symbol table, occurrences, resolver
+  ou report.
+- **CFG readiness:** um construct marcado ready contém informação suficiente
+  para enumerar successors conservadoramente; unknown não vira fallthrough.
+- **Effects/dataflow readiness:** operands e roles permitem derivar os
+  reads/writes declarados sem voltar ao frontend; o Semantic Product não
+  publica `GEN/KILL`.
+
+Program points/anchors do produto representam ordem estrutural determinística,
+não execution order, reachability ou arestas de CFG. Binding nominal continua
+separado de valores de runtime conforme ADR-0004. Do mesmo modo, identidade
+nominal DATA não é storage físico: alias, overlap, `REDEFINES` e `RENAMES`
+dependem de Storage Semantics posterior.
+
+Execuções equivalentes podem reproduzir handles e ordem para transporte
+determinístico; isso não estabelece identidade persistente após edição ou
+mudança de analyzer/contract version.
 
 `ConditionSemantics` também ainda não existe em produção. ADR-0012 (`Accepted`) define esse produto imutável entre resolução nominal e consumidores de predicates para especializar condições cujo significado depende do binding, sem reescrever AST/occurrences/resolution e sem afirmar validade type-sensitive. A admissibilidade type-sensitive pertence a etapa conceitual posterior, `ConditionValidation`, que consumirá `ConditionSemantics`, informação de declaração/tipo e contratos IBM; ela também ainda não existe. O pipeline conceitual é `Surface AST → ReferenceOccurrences → ReferenceResolution → ConditionSemantics → ConditionValidation → CFG/predicate/dataflow`, com API/schema a decidir em slice futuro. Enquanto os slices executáveis não forem autorizados, o pipeline corrente permanece o diagrama acima e a lacuna continua explícita.
 
