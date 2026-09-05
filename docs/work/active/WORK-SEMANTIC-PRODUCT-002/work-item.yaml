@@ -1,0 +1,120 @@
+id: WORK-SEMANTIC-PRODUCT-002
+title: Semantic Product de produção para MOVE literal e CALL variável
+status: active
+risk: high
+goal: Materializar em memória um Semantic Product COBOL-specific, fechado e imutável, que publique o slice provado MOVE literal → CALL variável por uma facade tipada sem inferir target de runtime.
+must_read:
+  - docs/index.md
+  - docs/architecture/pipeline.md
+  - docs/architecture/invariants.md
+  - docs/architecture/decisions/0002-provenance-originates-in-physical-source.md
+  - docs/architecture/decisions/0003-separate-semantic-analysis-products.md
+  - docs/architecture/decisions/0004-nominal-binding-excludes-runtime-values.md
+  - docs/architecture/decisions/0005-program-unit-is-analysis-boundary.md
+  - docs/architecture/decisions/0008-incompleteness-is-first-class.md
+  - docs/architecture/decisions/0009-explicit-grammar-coverage.md
+  - docs/architecture/decisions/0010-observe-external-literal-dependencies-per-artifact.md
+  - docs/domain/semantic-ast.md
+  - docs/domain/compilation-units.md
+  - docs/domain/symbol-model.md
+  - docs/domain/reference-resolution.md
+  - docs/domain/provenance.md
+  - docs/engineering/work-item-protocol.md
+  - docs/engineering/semantic-analysis-policy.md
+  - docs/engineering/semantic-testing.md
+  - docs/engineering/downstream-impact-classification.md
+  - docs/engineering/gates.md
+  - docs/evals/semantic-eval-catalog.md
+  - docs/work/active/WORK-SEMANTIC-PRODUCT-001/work-item.yaml
+  - docs/work/active/WORK-SEMANTIC-PRODUCT-001/spec.md
+  - docs/work/active/WORK-SEMANTIC-PRODUCT-001/plan.md
+  - docs/work/active/WORK-SEMANTIC-PRODUCT-001/eval.md
+  - docs/work/active/WORK-SEMANTIC-PRODUCT-001/state.md
+  - docs/history/evidence/semantic-product-boundary-checkpoint-2.md
+  - docs/history/evidence/semantic-product-boundary-checkpoint-3a.md
+  - docs/history/evidence/semantic-product-boundary-checkpoint-3b.md
+  - src/main/java/io/github/gustavo2358/cobolexplorer/ExplorerMain.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/Ast.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/CompilationUnitModel.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/CompilationUnitBuildResult.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/CompilationUnitSymbolTables.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/SymbolTable.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/ReferenceOccurrences.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/ReferenceResolution.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/ResolutionContracts.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/ResolutionAnalysisReport.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/SourceMap.java
+  - src/test/java/io/github/gustavo2358/cobolexplorer/SemanticProductBoundaryCheckpoint3BTest.java
+  - src/test/java/io/github/gustavo2358/cobolexplorer/semanticproduct/boundary/ExperimentalCobolMoveCallBoundary.java
+  - src/test/java/io/github/gustavo2358/cobolexplorer/semanticproduct/consumer/ExperimentalCobolMoveCallConsumer.java
+related_domain_rules:
+  - docs/domain/semantic-ast.md
+  - docs/domain/compilation-units.md
+  - docs/domain/symbol-model.md
+  - docs/domain/reference-resolution.md
+  - docs/domain/provenance.md
+related_decisions:
+  - ADR-0002
+  - ADR-0003
+  - ADR-0004
+  - ADR-0005
+  - ADR-0008
+  - ADR-0009
+  - ADR-0010
+related_invariants:
+  - INV-AST-001
+  - INV-AST-002
+  - INV-AST-003
+  - INV-SYM-001
+  - INV-PROV-001
+  - INV-PROV-002
+  - INV-RES-001
+  - INV-RES-002
+  - INV-COV-001
+  - INV-COV-003
+  - INV-DET-001
+evals:
+  - EVAL-AST-001
+  - EVAL-AST-004
+  - EVAL-AST-005
+  - EVAL-PROV-001
+  - EVAL-PROV-002
+  - EVAL-UNIT-001
+  - EVAL-SYM-001
+  - EVAL-SYM-002
+  - EVAL-RES-DATA-001
+  - EVAL-RES-DATA-002
+  - EVAL-RES-DATA-003
+  - EVAL-RES-CALL-001
+  - EVAL-RES-CALL-002
+  - EVAL-RES-REPORT-001
+  - EVAL-RES-DET-001
+  - EVAL-COV-003
+  - EVAL-ARCH-001
+source_scope:
+  - src/main/java/io/github/gustavo2358/cobolexplorer/ExplorerMain.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/semanticproduct/
+  - planned:src/main/java/io/github/gustavo2358/cobolexplorer/semanticproduct/CobolSemanticProduct.java
+  - planned:src/main/java/io/github/gustavo2358/cobolexplorer/semanticproduct/CobolSemanticPort.java
+  - planned:src/main/java/io/github/gustavo2358/cobolexplorer/semanticproduct/CobolMoveCallAdapter.java
+test_scope:
+  - src/test/java/io/github/gustavo2358/cobolexplorer/SemanticProductBoundaryCheckpoint3BTest.java
+  - src/test/java/io/github/gustavo2358/cobolexplorer/semanticproduct/
+  - planned:src/test/java/io/github/gustavo2358/cobolexplorer/SemanticProductMoveCallContractTest.java
+  - planned:src/test/java/io/github/gustavo2358/cobolexplorer/SemanticProductMoveCallAdapterTest.java
+  - planned:src/test/java/io/github/gustavo2358/cobolexplorer/SemanticProductMoveCallIntegrationTest.java
+must_not_change:
+  - src/main/antlr4/**
+  - AST, grammar, symbol table, occurrence collector, nominal resolver and existing parser behavior
+  - WORK-AST-002, F-01, BACKLOG-RES-003 and any other active work item scope
+  - CobolLower, Canonical Analysis IR, CFG, dataflow, possible-values and dependency extraction
+  - JSON, serializer, schema, interchange, round-trip, persistence and HTML/snapshot contracts
+  - plugin framework, universal multi-language Semantic Product and external-language analyzers
+  - existing production fixtures, baselines and test-only experimental classes, except a new oracle explicitly authorized by a checkpoint
+gates:
+  - docs
+  - fast
+  - architecture
+  - semantic
+  - performance
+  - full
