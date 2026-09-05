@@ -293,6 +293,11 @@ public final class CobolSemanticProduct {
                     uncertainty.scope() == UncertaintyScope.RUNTIME_CALL_TARGET))
                 throw new IllegalArgumentException(
                         "unknown runtime target must have localized uncertainty");
+            if (nominalBinding == BindingStatus.COMPLETE
+                    && uncertainties.stream().anyMatch(uncertainty ->
+                    uncertainty.scope() == UncertaintyScope.NOMINAL_BINDING))
+                throw new IllegalArgumentException(
+                        "complete nominal binding cannot carry nominal binding uncertainty");
             if (dependencyReadiness != DependencyReadiness.READY && uncertainties.isEmpty())
                 throw new IllegalArgumentException(
                         "non-ready dependency state must explain uncertainty");

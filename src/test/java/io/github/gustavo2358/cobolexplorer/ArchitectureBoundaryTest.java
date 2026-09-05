@@ -1,25 +1,38 @@
 package io.github.gustavo2358.cobolexplorer;
 
+import io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticPort;
+import io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct;
 import org.junit.jupiter.api.Test;
 
+import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Enforces architectural dependencies while the project remains in one Java package.
- * It reads constant-pool class references, so imports alone cannot bypass the check.
+ * It reads type references from classfile metadata and the constant pool, so
+ * imports alone cannot bypass the check.
  */
 class ArchitectureBoundaryTest {
     private static final String PROJECT_PREFIX = "io.github.gustavo2358.cobolexplorer.";
+    private static final String PROJECT_PREFIX_INTERNAL = PROJECT_PREFIX.replace('.', '/');
+    private static final String SEMANTIC_PRODUCT_PREFIX =
+            (PROJECT_PREFIX + "semanticproduct.").replace('.', '/');
+    private static final String ANTLR_PREFIX = "org/antlr/v4/";
+    private static final Pattern DESCRIPTOR_CLASS =
+            Pattern.compile("L([A-Za-z0-9_$/]+)(?=[;<])");
 
     @Test
     void astConstructionDoesNotDependOnLaterSemanticProductsOrPresentation() throws Exception {
@@ -67,6 +80,44 @@ class ArchitectureBoundaryTest {
                 names(ExternalClassification.class, CicsIntrinsicClassifier.class));
     }
 
+    @Test
+    void semanticProductBoundaryDoesNotDependOnFrontendBytecode() throws Exception {
+        for (Class<?> component : semanticProductTypes()) {
+            Set<String> violations = new LinkedHashSet<>();
+            for (String reference : directDependencies(component)) {
+                if ((reference.startsWith(PROJECT_PREFIX_INTERNAL)
+                        && !reference.startsWith(SEMANTIC_PRODUCT_PREFIX))
+                        || reference.startsWith(ANTLR_PREFIX))
+                    violations.add(reference);
+            }
+            assertTrue(violations.isEmpty(), () -> "EVAL-ARCH-001: "
+                    + component.getName() + " depende diretamente de frontend: " + violations);
+        }
+    }
+
+    @Test
+    void bytecodeScannerSeesGenericAndRecordComponentTypeReferences() throws Exception {
+        Set<String> references = directDependencies(BytecodeLeakageProbe.class);
+
+        assertTrue(references.contains("io/github/gustavo2358/cobolexplorer/Ast"));
+        assertTrue(references.contains("io/github/gustavo2358/cobolexplorer/ReferenceResolution"));
+    }
+
+    private static List<Class<?>> semanticProductTypes() throws ClassNotFoundException {
+        List<Class<?>> types = new ArrayList<>();
+        addNestedTypes(CobolSemanticProduct.class, types);
+        types.add(CobolSemanticPort.class);
+        types.add(Class.forName(
+                "io.github.gustavo2358.cobolexplorer.semanticproduct.MaterializedCobolSemanticPort"));
+        return types;
+    }
+
+    private static void addNestedTypes(Class<?> type, List<Class<?>> types) {
+        if (types.contains(type)) return;
+        types.add(type);
+        for (Class<?> nested : type.getDeclaredClasses()) addNestedTypes(nested, types);
+    }
+
     private static void assertNoDirectDependencies(String boundary, List<Class<?>> components,
                                                    Set<String> forbidden) throws IOException {
         for (Class<?> component : components) {
@@ -98,6 +149,7 @@ class ArchitectureBoundaryTest {
         int count = input.readUnsignedShort();
         Map<Integer, String> utf8 = new HashMap<>();
         Map<Integer, Integer> classNameIndexes = new HashMap<>();
+        Set<Integer> descriptorIndexes = new LinkedHashSet<>();
         for (int index = 1; index < count; index++) {
             switch (input.readUnsignedByte()) {
                 case 1 -> utf8.put(index, input.readUTF());
@@ -107,10 +159,15 @@ class ArchitectureBoundaryTest {
                     index++;
                 }
                 case 7 -> classNameIndexes.put(index, input.readUnsignedShort());
-                case 8, 16, 19, 20 -> input.readUnsignedShort();
-                case 9, 10, 11, 12, 17, 18 -> {
+                case 8, 19, 20 -> input.readUnsignedShort();
+                case 16 -> descriptorIndexes.add(input.readUnsignedShort());
+                case 9, 10, 11, 17, 18 -> {
                     input.readUnsignedShort();
                     input.readUnsignedShort();
+                }
+                case 12 -> {
+                    input.readUnsignedShort();
+                    descriptorIndexes.add(input.readUnsignedShort());
                 }
                 case 15 -> {
                     input.readUnsignedByte();
@@ -121,10 +178,107 @@ class ArchitectureBoundaryTest {
         }
         Set<String> result = new LinkedHashSet<>();
         for (int nameIndex : classNameIndexes.values()) {
-            String name = utf8.get(nameIndex);
-            if (name != null && name.startsWith(PROJECT_PREFIX.replace('.', '/'))) result.add(name);
-            if (name != null && name.startsWith("org/antlr/v4/")) result.add(name);
+            addClassReference(utf8.get(nameIndex), result);
         }
+        for (int descriptorIndex : descriptorIndexes)
+            addDescriptorReferences(utf8.get(descriptorIndex), result);
+
+        readClassStructure(input, utf8, result);
         return result;
     }
+
+    private static void readClassStructure(DataInputStream input, Map<Integer, String> utf8,
+                                           Set<String> result) throws IOException {
+        input.readUnsignedShort();
+        input.readUnsignedShort();
+        input.readUnsignedShort();
+        skipIndexes(input, input.readUnsignedShort());
+        readMembers(input, utf8, result);
+        readMembers(input, utf8, result);
+        readAttributes(input, utf8, result);
+    }
+
+    private static void readMembers(DataInputStream input, Map<Integer, String> utf8,
+                                    Set<String> result) throws IOException {
+        int count = input.readUnsignedShort();
+        for (int index = 0; index < count; index++) {
+            input.readUnsignedShort();
+            input.readUnsignedShort();
+            addDescriptorReferences(utf8.get(input.readUnsignedShort()), result);
+            readAttributes(input, utf8, result);
+        }
+    }
+
+    private static void readAttributes(DataInputStream input, Map<Integer, String> utf8,
+                                       Set<String> result) throws IOException {
+        int count = input.readUnsignedShort();
+        for (int index = 0; index < count; index++) {
+            String name = utf8.get(input.readUnsignedShort());
+            int length = input.readInt();
+            if (length < 0) throw new IOException("tamanho de atributo inválido");
+            byte[] bytes = new byte[length];
+            input.readFully(bytes);
+            readAttribute(name, new DataInputStream(new ByteArrayInputStream(bytes)), utf8, result);
+        }
+    }
+
+    private static void readAttribute(String name, DataInputStream input,
+                                      Map<Integer, String> utf8, Set<String> result)
+            throws IOException {
+        if ("Signature".equals(name)) {
+            addDescriptorReferences(utf8.get(input.readUnsignedShort()), result);
+        } else if ("Record".equals(name)) {
+            int count = input.readUnsignedShort();
+            for (int index = 0; index < count; index++) {
+                input.readUnsignedShort();
+                addDescriptorReferences(utf8.get(input.readUnsignedShort()), result);
+                readAttributes(input, utf8, result);
+            }
+        } else if ("Code".equals(name)) {
+            input.readUnsignedShort();
+            input.readUnsignedShort();
+            int codeLength = input.readInt();
+            if (codeLength < 0) throw new IOException("tamanho de bytecode inválido");
+            input.skipNBytes(codeLength);
+            skipIndexes(input, input.readUnsignedShort() * 4);
+            readAttributes(input, utf8, result);
+        } else if ("LocalVariableTable".equals(name)) {
+            readLocalVariables(input, utf8, result);
+        } else if ("LocalVariableTypeTable".equals(name)) {
+            readLocalVariables(input, utf8, result);
+        }
+    }
+
+    private static void readLocalVariables(DataInputStream input, Map<Integer, String> utf8,
+                                           Set<String> result) throws IOException {
+        int count = input.readUnsignedShort();
+        for (int index = 0; index < count; index++) {
+            input.readUnsignedShort();
+            input.readUnsignedShort();
+            input.readUnsignedShort();
+            addDescriptorReferences(utf8.get(input.readUnsignedShort()), result);
+            input.readUnsignedShort();
+        }
+    }
+
+    private static void skipIndexes(DataInputStream input, int count) throws IOException {
+        for (int index = 0; index < count; index++) input.readUnsignedShort();
+    }
+
+    private static void addClassReference(String name, Set<String> result) {
+        if (name == null) return;
+        if (name.startsWith("[")) {
+            addDescriptorReferences(name, result);
+        } else if (name.startsWith(PROJECT_PREFIX_INTERNAL) || name.startsWith(ANTLR_PREFIX)) {
+            result.add(name);
+        }
+    }
+
+    private static void addDescriptorReferences(String descriptor, Set<String> result) {
+        if (descriptor == null) return;
+        Matcher matcher = DESCRIPTOR_CLASS.matcher(descriptor);
+        while (matcher.find()) addClassReference(matcher.group(1), result);
+    }
+
+    private record BytecodeLeakageProbe<T extends Ast>(List<ReferenceResolution> references) { }
 }

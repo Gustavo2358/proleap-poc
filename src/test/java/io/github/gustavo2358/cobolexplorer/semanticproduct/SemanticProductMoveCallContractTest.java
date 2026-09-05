@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -220,21 +219,6 @@ class SemanticProductMoveCallContractTest {
     }
 
     @Test
-    void boundaryTypesDoNotReferenceFrontendTypes() {
-        for (Class<?> type : List.of(CobolSemanticProduct.class, CobolSemanticPort.class,
-                CobolSemanticProduct.State.class, CobolSemanticProduct.MoveFact.class,
-                CobolSemanticProduct.CallFact.class)) {
-            for (var component : type.getDeclaredClasses())
-                assertFalse(component.getName().contains("antlr"));
-            for (var method : type.getDeclaredMethods()) {
-                assertFalse(method.getReturnType().getName().startsWith(
-                        "io.github.gustavo2358.cobolexplorer.Ast"));
-                assertFalse(method.getReturnType().getName().contains("ReferenceResolution"));
-            }
-        }
-    }
-
-    @Test
     void invalidCompleteOrOrderingClaimsFailClosed() {
         CobolSemanticProduct.ProgramPoint same = new CobolSemanticProduct.ProgramPoint(1);
         assertThrows(IllegalArgumentException.class,
@@ -248,6 +232,25 @@ class SemanticProductMoveCallContractTest {
                         List.of(new CobolSemanticProduct.Uncertainty(
                                 same, CobolSemanticProduct.UncertaintyScope.RUNTIME_CALL_TARGET,
                                 "DYNAMIC_CALL_TARGET_VALUE_UNKNOWN", "unknown", PROVENANCE))));
+    }
+
+    @Test
+    void completeNominalBindingCannotCarryNominalBindingUncertainty() {
+        CobolSemanticProduct.ProgramPoint point = new CobolSemanticProduct.ProgramPoint(1);
+        CobolSemanticProduct.Uncertainty runtimeUncertainty = new CobolSemanticProduct.Uncertainty(
+                point, CobolSemanticProduct.UncertaintyScope.RUNTIME_CALL_TARGET,
+                "DYNAMIC_CALL_TARGET_VALUE_UNKNOWN", "runtime target is unknown", PROVENANCE);
+        CobolSemanticProduct.Uncertainty nominalUncertainty = new CobolSemanticProduct.Uncertainty(
+                point, CobolSemanticProduct.UncertaintyScope.NOMINAL_BINDING,
+                "DATA_BINDING_UNKNOWN", "nominal binding is uncertain", PROVENANCE);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> new CobolSemanticProduct.AnalysisStatus(
+                        CobolSemanticProduct.BindingStatus.COMPLETE,
+                        CobolSemanticProduct.AnalysisClaim.PARTIAL,
+                        CobolSemanticProduct.DependencyReadiness.INCOMPLETE,
+                        CobolSemanticProduct.RuntimeTargetKnowledge.UNKNOWN,
+                        List.of(runtimeUncertainty, nominalUncertainty)));
     }
 
     private static CobolSemanticProduct.State completeSlice() {
