@@ -163,34 +163,35 @@ reassess_when:
 `F-01` de `BACKLOG-RES-003` é um bug confirmado na cadeia occurrence →
 resolution: em selectors combinados de `EVALUATE TRUE`, uma condition-name pode
 chegar como `DATA/{DATA}` e terminar `UNRESOLVED / INVALID_NAMESPACE_FOR_CONTEXT`.
-Isso confirma a incorreção nominal já registrada, mas não identifica sozinho a
-primeira fronteira downstream quebrada.
-
-O pipeline atual ainda não define o contrato do Semantic Product nem os
-requisitos da IR. Portanto, o registro de impacto de F-01 deve permanecer:
+O registro original era `UNASSESSED` enquanto faltava uma boundary downstream.
+O Discovery de `WORK-SEMANTIC-PRODUCT-001`, ADR-0013 e o contrato corrigido de
+`WORK-SEMANTIC-PRODUCT-002` agora tornam a primeira fronteira quebrada
+demonstrável. O registro canônico atual é:
 
 ```yaml
 downstream_impact:
-  class: UNASSESSED
+  class: BLOCKS_SEMANTIC_PRODUCT
   rationale: >
-    O defeito foi observado nos produtos de occurrences/resolution, mas a
-    fronteira do Semantic Product e os requisitos da IR ainda não estão
-    definidos. Não há evidência suficiente para dizer se a primeira fronteira
-    quebrada é Semantic Product, IR, CFG, dataflow ou somente precisão; essas
-    classes são rejeitadas por falta de contrato downstream, não por evidência
-    de que estejam corretas. CFG e dataflow também não podem ser classificados
-    como consequência presumida.
+    O Semantic Product precisa publicar binding nominal semanticamente correto
+    ou incerteza explícita. A occurrence/resolution incorreta chega antes dessa
+    boundary e impede o fact exigido sem transportar uma resposta falsa.
+    BLOCKS_IR, BLOCKS_CFG, BLOCKS_DATAFLOW e BLOCKS_DEPENDENCY_FACTS são
+    rejeitadas porque a primeira falha já está no produto anterior;
+    REDUCES_PRECISION é rejeitada porque kind/binding incorreto pode mudar a
+    interpretação, não apenas reduzir precisão.
   evidence:
     - BACKLOG-RES-003 e a caracterização de WORK-COND-007 reproduzem 34 ocorrências com a cadeia occurrence/resolution incorreta.
-    - docs/architecture/pipeline.md declara Semantic Product, IR, CFG, dataflow e Dependency Facts como fronteiras futuras ou ainda não materializadas.
+    - docs/history/evidence/semantic-product-boundary-checkpoint-2.md reavalia F-01 contra A2+B.
+    - ADR-0013, INV-SP-002/003 e WORK-SEMANTIC-PRODUCT-002 definem a boundary e seus requisitos de binding/incompletude.
   reassess_when:
-    - semantic-product-contract-defined
-    - ir-requirements-defined
+    - finding-remediated
+    - semantic-product-boundary-redefined
 ```
 
-Este bloco é um exemplo de impacto downstream e não altera a classificação de
-F-01 como `CONFIRMED_KNOWN_BUG`, sua disposição de remediação ou a autorização
-de qualquer implementação.
+O rationale anterior permanece preservado em
+`docs/work/history/WORK-HARNESS-IMPACT-001.md`; a reavaliação que mudou a classe
+está em `docs/history/evidence/semantic-product-boundary-checkpoint-2.md`. Este
+bloco não altera F-01 como `CONFIRMED_KNOWN_BUG` nem autoriza remediação.
 
 ## Casos positivos e adversariais
 

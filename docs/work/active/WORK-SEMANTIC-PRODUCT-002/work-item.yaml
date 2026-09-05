@@ -1,0 +1,135 @@
+id: WORK-SEMANTIC-PRODUCT-002
+title: Semantic Product extensível para DATA, MOVE, CALL e IF/ELSE
+status: active
+risk: high
+goal: Materializar por ProgramUnit um Semantic Product COBOL-specific A2+B que publique todas as ocorrências semanticamente cobertas de DATA, MOVE literal, CALL variável e IF/ELSE, preserve incompletude e seja suficiente para lowering independente antes do transporte JSON.
+must_read:
+  - docs/index.md
+  - docs/architecture/pipeline.md
+  - docs/architecture/invariants.md
+  - docs/architecture/decisions/0002-provenance-originates-in-physical-source.md
+  - docs/architecture/decisions/0003-separate-semantic-analysis-products.md
+  - docs/architecture/decisions/0004-nominal-binding-excludes-runtime-values.md
+  - docs/architecture/decisions/0005-program-unit-is-analysis-boundary.md
+  - docs/architecture/decisions/0008-incompleteness-is-first-class.md
+  - docs/architecture/decisions/0009-explicit-grammar-coverage.md
+  - docs/architecture/decisions/0010-observe-external-literal-dependencies-per-artifact.md
+  - docs/architecture/decisions/0012-contextual-conditions-use-post-binding-projection.md
+  - docs/architecture/decisions/0013-cobol-semantic-product-precedes-language-neutral-lowering.md
+  - docs/domain/semantic-ast.md
+  - docs/domain/compilation-units.md
+  - docs/domain/symbol-model.md
+  - docs/domain/reference-resolution.md
+  - docs/domain/provenance.md
+  - docs/domain/conditional-expressions.md
+  - docs/engineering/work-item-protocol.md
+  - docs/engineering/semantic-analysis-policy.md
+  - docs/engineering/semantic-testing.md
+  - docs/engineering/downstream-impact-classification.md
+  - docs/engineering/gates.md
+  - docs/evals/semantic-eval-catalog.md
+  - docs/evals/conditional-expression-oracles.md
+  - docs/work/backlog.md
+  - docs/work/history/WORK-SEMANTIC-PRODUCT-001.md
+  - docs/history/evidence/semantic-product-boundary-checkpoint-2.md
+  - docs/history/evidence/semantic-product-boundary-checkpoint-3a.md
+  - docs/history/evidence/semantic-product-boundary-checkpoint-3b.md
+  - src/main/java/io/github/gustavo2358/cobolexplorer/ExplorerMain.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/Ast.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/CompilationUnitModel.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/CompilationUnitBuildResult.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/CompilationUnitSymbolTables.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/SymbolTable.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/ReferenceOccurrences.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/ReferenceResolution.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/ResolutionContracts.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/ResolutionAnalysisReport.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/SourceMap.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/semanticproduct/CobolSemanticProduct.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/semanticproduct/CobolSemanticPort.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/semanticproduct/projection/CobolSemanticProductProjector.java
+  - src/test/java/io/github/gustavo2358/cobolexplorer/SemanticProductBoundaryCheckpoint3BTest.java
+  - src/test/java/io/github/gustavo2358/cobolexplorer/CobolSemanticProductProjectorTest.java
+  - src/test/java/io/github/gustavo2358/cobolexplorer/semanticproduct/SemanticProductMoveCallContractTest.java
+related_domain_rules:
+  - docs/domain/semantic-ast.md
+  - docs/domain/compilation-units.md
+  - docs/domain/symbol-model.md
+  - docs/domain/reference-resolution.md
+  - docs/domain/provenance.md
+  - docs/domain/conditional-expressions.md
+related_decisions:
+  - ADR-0002
+  - ADR-0003
+  - ADR-0004
+  - ADR-0005
+  - ADR-0008
+  - ADR-0009
+  - ADR-0010
+  - ADR-0012
+  - ADR-0013
+related_invariants:
+  - INV-AST-001
+  - INV-AST-002
+  - INV-AST-003
+  - INV-SYM-001
+  - INV-PROV-001
+  - INV-PROV-002
+  - INV-RES-001
+  - INV-RES-002
+  - INV-COV-001
+  - INV-COV-003
+  - INV-DET-001
+  - INV-SP-001
+  - INV-SP-002
+  - INV-SP-003
+  - INV-SP-004
+  - INV-SP-005
+  - INV-SP-006
+evals:
+  - EVAL-AST-001
+  - EVAL-AST-003
+  - EVAL-AST-004
+  - EVAL-AST-005
+  - EVAL-PROV-001
+  - EVAL-PROV-002
+  - EVAL-UNIT-001
+  - EVAL-SYM-001
+  - EVAL-SYM-002
+  - EVAL-RES-DATA-001
+  - EVAL-RES-DATA-002
+  - EVAL-RES-DATA-003
+  - EVAL-RES-CALL-001
+  - EVAL-RES-CALL-002
+  - EVAL-RES-COV-001
+  - EVAL-RES-REPORT-001
+  - EVAL-RES-DET-001
+  - EVAL-COV-002
+  - EVAL-COV-003
+  - EVAL-ARCH-001
+source_scope:
+  - src/main/java/io/github/gustavo2358/cobolexplorer/ExplorerMain.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/semanticproduct/
+test_scope:
+  - src/test/java/io/github/gustavo2358/cobolexplorer/SemanticProductBoundaryCheckpoint3BTest.java
+  - src/test/java/io/github/gustavo2358/cobolexplorer/CobolSemanticProductProjectorTest.java
+  - src/test/java/io/github/gustavo2358/cobolexplorer/semanticproduct/
+  - src/test/java/io/github/gustavo2358/cobolexplorer/SemanticProductTargetModelOracleTest.java
+  - src/test/resources/cobol/semantic/semantic-product-lowering-readiness.cbl
+must_not_change:
+  - src/main/antlr4/**
+  - AST, grammar, symbol table, occurrence collector, nominal resolver and existing parser behavior
+  - WORK-AST-002, F-01, BACKLOG-RES-003 and any other active work item scope
+  - EVALUATE, PERFORM, GO TO, terminal, ALTER and SEARCH frontend enrichment outside the IF/ELSE slice
+  - CobolLower, Analysis IR, CFG, Statement Effects, Storage Semantics, dataflow, Reaching Definitions, Possible Values and Dependency Facts
+  - semantic-product.json or its JSON output adapter before Checkpoint 7
+  - future CobolLower repository, JSON input adapter, LowererInputPort and in-memory integration adapter
+  - generic serializer/framework, public interchange schema, round-trip, persistence, persistent identity/migration and universal multi-language Semantic Product
+  - existing production fixtures, baselines and historical experimental classes except the new oracle explicitly authorized by Checkpoint 1
+gates:
+  - docs
+  - fast
+  - architecture
+  - semantic
+  - performance
+  - full

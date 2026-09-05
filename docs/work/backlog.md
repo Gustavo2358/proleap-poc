@@ -10,7 +10,12 @@ Refatorar o package único para componentes com dependências direcionais verifi
 
 ## Extensibilidade de plataforma
 
-Os itens abaixo estão ordenados por dependência arquitetural, não por autorização. `WORK-EXT-001` é o único slice ativo e cobre somente `DFHRESP`/`DFHVALUE`; nenhum item desta seção foi iniciado.
+Os itens abaixo estão ordenados por dependência arquitetural, não por autorização.
+`WORK-EXT-001` foi concluído e permanece baseline; nenhum item desta seção está
+autorizado somente por constar deste backlog.
+
+Fluxo dos produtos em execução — não a ordem em que seus contratos precisam ser
+definidos:
 
 ```text
 BACKLOG-EXT-001 infraestrutura de composição
@@ -20,15 +25,49 @@ BACKLOG-EXT-001 infraestrutura de composição
   │     └── BACKLOG-EXT-005 protocolo GRBE
   └── BACKLOG-EXT-006 control-flow semantics ── depende de BACKLOG-CFG-001
 
-BACKLOG-CFG-001
+COBOL Frontend
   ↓
-BACKLOG-DF-001 statement effects + reaching definitions
+WORK-SEMANTIC-PRODUCT-002 COBOL Semantic Product DATA/MOVE/CALL/IF
+  ↓ lowering-readiness por construct
+BACKLOG-LOWER-001 CobolLower incremental
   ↓
-BACKLOG-DF-003 constant/possible-values
+BACKLOG-IR-001 Analysis IR
+  ↓
+BACKLOG-CFG-001 CFG
+  ↓
+BACKLOG-DF-001 effects/storage
+  ↓
+BACKLOG-DF-004 reaching definitions
+  ↓
+BACKLOG-DF-003 possible-values
   ├── BACKLOG-DF-002 targets de CALL dinâmico
   ├── BACKLOG-EXT-004 extractors com operands dinâmicos
   └── BACKLOG-EXT-005 GRBE
+
+BACKLOG-SP-001/002/003/004 enrichments por construct
+  └── entram na cadeia somente após sua própria lowering/CFG/effects readiness
 ```
+
+Ordem executável de contratação e implementação do primeiro slice:
+
+```text
+Semantic Product lowering-ready
+  ↓
+contrato mínimo da Analysis IR + oracles de consumo de CFG/effects
+  ↓
+primeiro lowering que produz essa IR
+  ↓
+primeiro consumer de CFG
+  ↓
+primeiro consumer de Statement Effects / Storage Semantics
+```
+
+Requisitos e oracles concretos dos consumers orientam o contrato da IR; os
+consumers não precisam existir em produção para que esse contrato seja definido.
+Inversamente, lowerer e consumers só são implementados depois que a versão
+mínima do contrato que consomem estiver explícita. O primeiro slice de
+BACKLOG-IR-001 e BACKLOG-LOWER-001 pode ser promovido no mesmo work item, desde
+que mantenha essa ordem interna e as fronteiras separadas.
 
 ### BACKLOG-EXT-001 — Infraestrutura mínima de extensibilidade do pipeline
 
@@ -344,7 +383,11 @@ O hardening só pode ser considerado concluído quando todos os itens abaixo for
 
 Antes de implementar, promover este backlog para um novo work item de risco médio ou alto seguindo `docs/engineering/work-item-protocol.md`. O `source_scope` mínimo esperado inclui `AstBuilder`, `SemanticCoverage`, `GrammarCoverageManifest`, `ResolutionAnalysisReport` e apenas os modelos/validators cuja necessidade for demonstrada pelos testes vermelhos. `Ast`, symbol table e contratos de resolução não devem mudar sem uma lacuna concreta da matriz.
 
-`BACKLOG-CFG-001` e `BACKLOG-DF-001` podem iniciar somente após as garantias estruturais e de coverage relevantes estarem verdes. `BACKLOG-DF-001` continua responsável por storage regions e efeitos de memória; `BACKLOG-DF-002` continua responsável pela interpretação final de targets dinâmicos.
+`BACKLOG-CFG-001` pode iniciar somente após as garantias estruturais/coverage,
+lowering-readiness, CobolLower e Analysis IR do slice relevante estarem verdes.
+`BACKLOG-DF-001` depende também dos program points do CFG e continua responsável
+por storage regions e efeitos de memória; `BACKLOG-DF-002` continua responsável
+pela interpretação final de targets dinâmicos.
 
 ## Resolução nominal
 
@@ -352,7 +395,7 @@ Antes de implementar, promover este backlog para um novo work item de risco méd
 
 #### Evidência e defeito
 
-`F-01` é um bug conhecido confirmado, não um gap meramente esperado: a classificação do defeito é independente da autorização de sua remediação. Sua disposição atual é `REMEDIATION_REQUIRES_ARCHITECTURAL_DECISION`; este backlog preserva o achado, mas não autoriza implementação.
+`F-01` é um bug conhecido confirmado, não um gap meramente esperado: a classificação do defeito é independente da autorização de sua remediação. A disposição `REMEDIATION_REQUIRES_ARCHITECTURAL_DECISION` registrada pelo Discovery teve sua precondição downstream atendida por ADR-0013 e pelo contrato corrigido de `WORK-SEMANTIC-PRODUCT-002`; este backlog ainda não autoriza implementação, que exige work item próprio.
 
 Após `WORK-RES-003`, COACTUPC ainda possui um conjunto mais amplo de 108 occurrences `UNRESOLVED / INVALID_NAMESPACE_FOR_CONTEXT`. O Discovery de `WORK-COND-007` isolou, dentro desse universo, 34 occurrences do F-01 em produtos completos do CardDemo: 5 em `COACTUPC`, 1 em `COCRDSLC` e 28 em `COTRTUPC`. Todas têm `role=VALUE_READ`, `grammarRule=qualifiedDataName` e, no caso do F-01, ocorrem em selectors combinados de `WHEN` sob `EVALUATE TRUE`, por exemplo:
 
@@ -380,21 +423,24 @@ Na evidência do CardDemo, o source e a AST preservam os nominais escritos, as b
 
 ```yaml
 downstream_impact:
-  class: UNASSESSED
+  class: BLOCKS_SEMANTIC_PRODUCT
   rationale: >
-    O defeito foi observado nos produtos de occurrences/resolution, mas a
-    fronteira do Semantic Product e os requisitos da IR ainda não estão
-    definidos. Não há evidência suficiente para dizer se a primeira fronteira
-    quebrada é Semantic Product, IR, CFG, dataflow ou somente precisão; essas
-    classes são rejeitadas por falta de contrato downstream, não por evidência
-    de que estejam corretas. CFG e dataflow também não podem ser classificados
-    como consequência presumida.
+    O contrato COBOL-specific exige que facts nominais publicados estejam
+    corretos ou explicitamente incertos. No caso reproduzido, a cadeia
+    occurrence/resolution já entrega DATA/{DATA} e
+    UNRESOLVED/INVALID_NAMESPACE_FOR_CONTEXT para uma condition-name; o
+    Semantic Product não pode publicar o binding necessário sem carregar uma
+    resposta incorreta. Essa é a primeira fronteira downstream quebrada.
+    IR, CFG, dataflow e Dependency Facts são consequências posteriores, não
+    classes concorrentes; REDUCES_PRECISION é rejeitada porque o kind/binding
+    incorreto pode mudar a interpretação.
   evidence:
     - BACKLOG-RES-003 e a caracterização de WORK-COND-007 reproduzem 34 ocorrências com a cadeia occurrence/resolution incorreta.
-    - docs/architecture/pipeline.md declara Semantic Product, IR, CFG, dataflow e Dependency Facts como fronteiras futuras ou ainda não materializadas.
+    - docs/history/evidence/semantic-product-boundary-checkpoint-2.md reavalia F-01 contra A2+B e identifica a primeira falha no Semantic Product.
+    - ADR-0013, INV-SP-002/003 e WORK-SEMANTIC-PRODUCT-002 exigem binding, incompletude e lowering-readiness explícitos.
   reassess_when:
-    - semantic-product-contract-defined
-    - ir-requirements-defined
+    - finding-remediated
+    - semantic-product-boundary-redefined
 ```
 
 Selectors nominais diretos associados a subject booleano `TRUE`/`FALSE` já são tratados corretamente pelo contrato e pela cobertura atual, como em `EVALUATE TRUE WHEN FLAG-ON`. F-01 é mais específico: em determinadas expressions combinadas ou aninhadas, o contexto booleano não alcança corretamente os nominais internos durante a representação/propagação de contexto até o produto de occurrences. A evidência disponível ainda não prova o ponto exato da perda entre a representação AST e o traversal/context propagation do collector; essa localização deve ser confirmada antes de qualquer correção de produção.
@@ -418,7 +464,11 @@ Selectors de `EVALUATE` cujo subject correspondente não for booleano, ou cuja f
 5. Atualizar snapshot, catálogo de evals e baseline de COACTUPC somente para diferenças explicadas. A contagem de 108 é evidência de corpus, não especificação da regra.
 6. Rodar PIT focalizado sobre o lowering de `EVALUATE` e o collector. Os novos testes devem matar, no mínimo, mutações que removam a classificação CONDITION, ignorem o subject booleano, troquem a correspondência de `ALSO` ou classifiquem todo selector como CONDITION.
 
-Antes dessa implementação, um Discovery arquitetural deverá identificar a fronteira do produto semântico que alimentará consumidores downstream. A priorização futura pode então classificar o impacto de F-01 como `BLOCKS_IR`, `BLOCKS_CFG`, `BLOCKS_DATAFLOW`, `BLOCKS_DEPENDENCY_FACTS` ou `REDUCES_PRECISION`, conforme a evidência; esta anotação não cria Semantic Product, Cobol Lower ou IR.
+O Discovery arquitetural e ADR-0013 já identificaram a fronteira do produto
+semântico; a classificação acima não autoriza corrigir F-01 nem cria
+`CobolLower`, Analysis IR, CFG ou dataflow. A promoção deste backlog ainda deve
+delimitar a correção no produto de origem e manter como consequência, não como
+escopo presumido, qualquer camada posterior.
 
 #### Autoridade, restrições e gates
 
@@ -506,19 +556,120 @@ O slice arquitetural precede mudanças transversais de lowering/occurrence. Muda
 - Fora de escopo: inferir valores de runtime, CFG, dataflow, constant propagation ou targets dinâmicos; esses consumidores apenas motivam uma representação correta.
 - Proibido iniciar implementação a partir deste backlog. Criar work item de risco alto conforme `docs/engineering/work-item-protocol.md`; gates mínimos previstos: `fast`, `semantic`, `performance` quando houver nova propriedade algorítmica, e `full`.
 
-## CFG e efeitos semânticos
+## Semantic Product, lowering e Analysis IR
+
+Os itens desta seção são handoffs, não um design antecipado da IR. Cada
+construct só atravessa a cadeia quando sua matriz de surface, identity,
+structure, binding, CFG readiness, effects/dataflow readiness, unknowns,
+provenance e coverage estiver sustentada. Uma capability pode crescer em slice
+próprio; isso não autoriza truncar sua cardinalidade na `ProgramUnit`.
+
+### BACKLOG-SP-001 — Enriquecer o Semantic Product com EVALUATE
+
+Adicionar `EVALUATE` como próximo enrichment de control-flow depois de IF/ELSE.
+Preservar subjects, correspondência posicional de `ALSO`, ordered branches,
+selectors, `OTHER`, nesting, termination, bindings, provenance, coverage e
+incompletude. F-01 impede elevar conditions combinadas a completas; o slice
+deve projetar o status canônico e não reinterpretar texto. A promoção depende
+de `WORK-SEMANTIC-PRODUCT-002` verde e da remediação autorizada de
+`BACKLOG-RES-003` para as shapes que a exigirem.
+
+### BACKLOG-SP-002 — Enriquecer o Semantic Product com PERFORM
+
+Publicar as formas procedure, `THRU` e inline somente na medida em que targets,
+body, controls, roles e unknowns sejam reconstruíveis. O gap F-SP-007 precisa
+ser corrigido antes de declarar lowering/CFG/effects readiness para `TIMES`,
+test mode, `VARYING`, `FROM`, `BY`, `UNTIL` e níveis de `AFTER`. Ordem plana de
+children ou `writtenText` não recupera esses papéis. Cada forma entra como slice
+por capability, com todas as ocorrências cobertas.
+
+### BACKLOG-SP-003 — Transferências e terminal semantics
+
+Enriquecer incrementalmente `GO TO`, `GO TO DEPENDING ON`, targets múltiplos,
+selector, fallthrough admissível e statements terminais. Preservar targets e
+binding nominal sem publicar edges, reachability ou comportamento terminal
+quando a regra ainda for partial/unsupported. A readiness de cada forma é
+precondição do respectivo slice de lowering/CFG; ausência de fact não pode ser
+interpretada como fallthrough.
+
+### BACKLOG-SP-004 — ALTER e SEARCH
+
+Publicar facts estruturais separados para `ALTER` e `SEARCH`, inclusive
+targets/identities, variants, conditions/branches, `NEXT SENTENCE`, binding,
+unknowns e coverage disponíveis. Não tratar a preservação sintática atual como
+semântica completa. `SEARCH ALL` e demais shapes entram somente com regra e
+eval próprios; efeitos sobre fluxo dependem de readiness demonstrada.
+
+### BACKLOG-LOWER-001 — CobolLower incremental
+
+Criar o lowerer COBOL-specific que consome somente o port do Semantic Product e
+traduz constructs lowering-ready para o contrato de entrada da Analysis IR. O
+primeiro slice pode cobrir DATA/MOVE/CALL/IF sem esperar todos os enrichments,
+mas nunca consulta AST, resolver, report, texto ou presentation para completar
+informação ausente. Constructs partial/unsupported geram representação/gap
+conservador conforme o contrato mínimo da IR já definido, não omissão
+silenciosa. A implementação do primeiro lowering pode ser coordenada com a
+definição desse contrato no mesmo work item, mas ocorre depois dos respectivos
+oracles e decisões de entrada/saída. CFG e dataflow não entram no lowerer.
+
+### BACKLOG-IR-001 — Analysis IR
+
+Definir o contrato mínimo de uma IR neutra quanto à linguagem a partir do
+Semantic Product lowering-ready disponível e de requisitos/oracles concretos de
+CFG e Statement Effects / Storage Semantics. Esses oracles descrevem o que os
+consumers precisarão observar; não exigem que lowerer, CFG builder ou effects
+analysis já estejam implementados.
+
+Depois do contrato mínimo, implementar coordenadamente o primeiro lowering que
+produz a IR e só então seus primeiros consumers. A IR deve preservar operands,
+roles, control structure, identities, program points, provenance e unknowns
+necessários, sem carregar tipos do frontend COBOL nem apagar a origem semântica.
+Node schema, SSA, forma flat/hierárquica e demais escolhas ficam em aberto até
+os oracles demonstrarem necessidade. Este item não autoriza uma IR universal
+nem a implementação antecipada de CFG/effects.
+
+## CFG, storage e dataflow
 
 ### BACKLOG-CFG-001 — CFG estrutural incremental
 
-Introduzir produto CFG separado da AST e do binding nominal. Fatiar por fluxo linear, basic blocks, `IF`, `EVALUATE`, `GO TO`, `GO TO DEPENDING ON`, `PERFORM`, `PERFORM THRU`, `NEXT SENTENCE`, terminação e fallthrough. Cada slice precisa de oracle adversarial próprio.
+Introduzir produto CFG separado do Semantic Product, da Analysis IR e do
+binding nominal. Cada slice depende da IR e da `CFG readiness` demonstrada para
+o construct correspondente. Fatiar por fluxo linear/basic blocks e IF antes de
+EVALUATE, GO TO, GO TO DEPENDING ON, PERFORM, PERFORM THRU, NEXT SENTENCE,
+terminal semantics e fallthrough. Unknown/partial control não vira edge ou
+fallthrough presumido. Cada slice precisa de oracle adversarial próprio.
 
 ### BACKLOG-CFG-002 — Statements preservados com efeito de fluxo
 
-Modelar incrementalmente `ALTER`, `SEARCH`, `SORT`, `MERGE` e `ENTRY`, mantendo fallback conservador. Outros statements preservados (`CANCEL`, comunicação, report writer e display/exhibit) entram conforme necessidade de análise concreta.
+Modelar incrementalmente `ALTER`, `SEARCH`, `SORT`, `MERGE` e `ENTRY`, somente
+após os facts e a CFG readiness da forma correspondente. Manter fallback
+conservador para effects/targets desconhecidos. Outros statements preservados
+(`CANCEL`, comunicação, report writer e display/exhibit) entram conforme
+necessidade de análise concreta.
 
-### BACKLOG-DF-001 — StatementEffects e reaching definitions
+### BACKLOG-DF-001 — Statement Effects e Storage Semantics
 
-Criar produto separado com reads, writes, partial writes, kills e unknown memory effect. Cobrir `MOVE`, group/CORRESPONDING, reference modification, `SET`, `STRING`, `UNSTRING`, `INITIALIZE`, `ACCEPT`, aritmética, operações de arquivo e parâmetros de `CALL`. Modelar aliases de `REDEFINES`/`RENAMES` como regiões, não apenas nomes.
+Criar produtos separados da IR/CFG, sobre statements e program points do CFG,
+com reads, writes, partial writes, kills e unknown memory effect. Cobrir
+incrementalmente `MOVE`, group/CORRESPONDING, reference modification, `SET`,
+`STRING`, `UNSTRING`, `INITIALIZE`, `ACCEPT`, aritmética, operações de arquivo e
+parâmetros de `CALL`. Cada statement depende de sua effects/dataflow readiness e
+do operand/binding preservado na IR.
+
+O modelo de storage deve representar layout, overlap e aliases de `REDEFINES` e
+`RENAMES` quando necessários ao dataflow. `DataItemId` nominal pode localizar a
+declaration, mas não é assumido como região física definitiva. Unknown layout,
+external storage e writes por alias permanecem efeitos conservadores, não
+ausência de write.
+
+### BACKLOG-DF-004 — Reaching Definitions
+
+Calcular quais definitions alcançam cada program point somente depois que o
+slice de CFG e os Statement Effects/Storage Semantics correspondentes estiverem
+verdes. Joins, loops, kills, partial writes, aliases e unknown effects preservam
+incerteza explicitamente. O resultado é um produto consultável separado; não
+resolve valores, CALL dinâmico ou dependências finais e não pode procurar o
+último `MOVE` por ordem textual.
 
 ### BACKLOG-DF-003 — Propagação conservadora de valores possíveis
 
@@ -538,7 +689,9 @@ O resultado conserva simultaneamente o conjunto finito de valores estaticamente 
 
 #### Dependências e propriedades
 
-- Depende de BACKLOG-CFG-001 e BACKLOG-DF-001 para program points, regiões, statement effects e reaching definitions; não reimplementa binding nominal nem layout.
+- Depende de BACKLOG-DF-004, que por sua vez exige o slice aplicável de
+  BACKLOG-CFG-001 e BACKLOG-DF-001; não reimplementa binding nominal, CFG,
+  effects, reaching definitions nem layout.
 - Transfer functions entram incrementalmente por classe semântica comprovada. Efeito desconhecido acrescenta remainder incerto em vez de produzir conjunto vazio.
 - Joins unem valores conhecidos e propagam o unknown remainder. Loops exigem argumento explícito de fixpoint e terminação. Widening ou limites de cardinalidade só entram se o domínio abstrato escolhido os exigir; qualquer perda de precisão permanece observável e um conjunto truncado nunca é apresentado como completo.
 - Resultado, ordem, provenance das evidências e diagnostics são determinísticos. A claim deve distinguir conjunto completo, parcial e desconhecido.
@@ -551,11 +704,22 @@ O resultado conserva simultaneamente o conjunto finito de valores estaticamente 
 - Fora de escopo: resolver CALL, emitir facts finais de dependência, interpretar protocolos externos ou afirmar valores exatos de runtime.
 - Implementação ingênua rejeitada: procurar `MOVE` anterior por texto, escolher uma reaching definition, descartar valores conhecidos ao encontrar um caminho incerto ou confundir binding DATA com valor.
 
-Promover depois que CFG e o slice pertinente de StatementEffects/reaching definitions estiverem verdes. O work item deve começar por literals e `MOVE` simples, depois joins/loops e unknown effects, com oráculos para múltiplos valores, known-plus-unknown, aliases/partial writes, determinismo e terminação. Relações: ADR-0003, ADR-0004, ADR-0008, INV-RES-002, INV-COV-001, INV-DET-001, BACKLOG-CFG-001 e BACKLOG-DF-001.
+Promover depois que o slice pertinente de Reaching Definitions estiver verde.
+O work item deve começar por literals e `MOVE` simples, depois joins/loops e
+unknown effects, com oráculos para múltiplos valores, known-plus-unknown,
+aliases/partial writes, determinismo e terminação. Relações: ADR-0003,
+ADR-0004, ADR-0008, INV-RES-002, INV-COV-001, INV-DET-001,
+BACKLOG-CFG-001, BACKLOG-DF-001 e BACKLOG-DF-004.
 
 ### BACKLOG-DF-002 — Targets de CALL dinâmico
 
-Consumir BACKLOG-DF-003 para calcular conjuntos de programas possíveis sem confundir binding da variável com seu valor. Preservar targets conhecidos e remainder dinâmico. `CBSTM03D` é cenário didático, não especificação completa; este item resolve CALL, não fornece possible-values genérico aos demais consumidores.
+Consumir BACKLOG-DF-003 para calcular conjuntos de programas possíveis somente
+na camada posterior a binding, CFG, effects/storage, reaching definitions e
+possible-values. Não confundir a variável nominal com seu valor nem resolver o
+target dentro do Semantic Product/projector. Preservar targets conhecidos e
+remainder dinâmico. `CBSTM03D` é cenário didático, não especificação completa;
+este item resolve CALL, não fornece possible-values genérico aos demais
+consumidores.
 
 ## Linguagens embarcadas e built-ins
 
@@ -577,7 +741,12 @@ Criar runner por codebase, repositório de copybooks, catálogo externo persiste
 
 ### BACKLOG-DEPS-001 — Fatos finais de dependência
 
-Produzir fatos de subprogramas/arquivos somente depois de combinar binding, coverage, CALL semantics e dataflow necessários. ASSIGN/DDNAME final e call graph externo não podem derivar apenas de literal ou candidate nominal.
+Produzir Dependency Facts de subprogramas/arquivos somente depois de combinar
+os produtos realmente exigidos por cada classe de fato: binding, coverage,
+CALL semantics e, para targets dinâmicos, BACKLOG-DF-002. Fatos estáticos não
+precisam aguardar dataflow irrelevante, mas nenhuma dependência dinâmica pode
+ser resolvida antes dos possible-values apropriados. ASSIGN/DDNAME final e call
+graph externo não podem derivar apenas de literal ou candidate nominal.
 
 ## Observabilidade e apresentação
 

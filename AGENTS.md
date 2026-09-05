@@ -16,6 +16,9 @@ fonte físico → normalização/provenance → preprocessing/COPY → parse tre
 → snapshots e apresentação
 ```
 
+Direção downstream: `COBOL Frontend → COBOL Semantic Product → CobolLower →
+Analysis IR → CFG → effects/storage → dataflow → dependency facts`.
+
 O mapa curto está em [ARCHITECTURE.md](ARCHITECTURE.md). Fronteiras detalhadas ficam no [pipeline arquitetural](docs/architecture/pipeline.md).
 
 ## Regras universais
@@ -26,6 +29,8 @@ O mapa curto está em [ARCHITECTURE.md](ARCHITECTURE.md). Fronteiras detalhadas 
 - Falhe de forma fechada diante de input ausente, construção não suportada ou dependência desconhecida.
 - Preserve AST, símbolos, ocorrências, resolução, futuros CFG/dataflow e apresentação como produtos distintos.
 - Binding nominal não autoriza inferir valores de runtime ou targets dinâmicos finais.
+- No Semantic Product, vertical slice limita capability semântica, não a quantidade de ocorrências suportadas na `ProgramUnit`; partial/unsupported observado não pode desaparecer.
+- Projectors/adapters somente traduzem fatos canônicos e seus estados de readiness; não executam nova análise, reparsing ou resolução.
 - Não enfraqueça fixture, baseline, manifesto ou gramática apenas para fazer um teste passar.
 - Em mudança semântica não trivial, identifique antes a regra, o invariant/ADR e o eval aplicáveis.
 - Quando houver work item ativo, respeite `source_scope`, `must_not_change` e os gates declarados nele.
@@ -44,12 +49,13 @@ Comece no [índice de conhecimento](docs/index.md). Carregue somente o contexto 
 | compilation units | [compilation units](docs/domain/compilation-units.md) |
 | símbolos ou ocorrências | [modelo de símbolos](docs/domain/symbol-model.md) |
 | resolução ou CALL | [resolução de referências](docs/domain/reference-resolution.md) e política semântica |
+| Semantic Product, lowering ou readiness downstream | [pipeline](docs/architecture/pipeline.md), [ADR-0013](docs/architecture/decisions/0013-cobol-semantic-product-precedes-language-neutral-lowering.md) e invariantes `INV-SP-*` |
 | mudança semântica transversal | [análise semântica](docs/engineering/semantic-analysis-policy.md) e [testes semânticos](docs/engineering/semantic-testing.md) |
 | impacto downstream de finding semântico | [classificação de impacto](docs/engineering/downstream-impact-classification.md) |
 | desempenho | [política de desempenho](docs/engineering/performance-policy.md) e domínio afetado |
 | logging | [política de observabilidade](docs/engineering/observability-policy.md) |
 | gate, docs ou workflow | [gates](docs/engineering/gates.md) e [protocolo de work items](docs/engineering/work-item-protocol.md) |
-| CFG, dataflow ou domínio ainda inexistente | [backlog](docs/work/backlog.md); crie contrato somente quando o trabalho for autorizado |
+| CobolLower, IR, CFG, dataflow ou domínio ainda inexistente | [backlog](docs/work/backlog.md); crie contrato somente quando o trabalho for autorizado |
 
 ## Trabalho ativo
 
