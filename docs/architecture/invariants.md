@@ -40,6 +40,62 @@ IDs neste documento são estáveis. `AUTOMATED` indica proteção executável at
 - **Enforcement:** `AUTOMATED` — `ArchitectureBoundaryTest` bloqueia dependência direta de construção de símbolos para ANTLR/resolução; testes de symbol table, occurrences e compilation units completam o contrato comportamental.
 - **Known exceptions:** nenhuma.
 
+## Semantic Product e lowering
+
+### INV-SP-001 — Slice limita capability, não cardinalidade
+
+- **Statement:** para cada `ProgramUnit`, o Semantic Product publica todas as ocorrências observadas das capabilities que declara cobrir; fixture mínima, primeiro match ou quantidade fixa não podem limitar DATA, statements ou relações. Novas famílias entram por coleções/facts tipados, não por campos singleton no envelope.
+- **Rationale:** cobertura incremental define quais formas são compreendidas, enquanto cardinalidade pertence ao programa; confundi-las trunca silenciosamente código suportado e impede evolução aditiva.
+- **Scope:** tipos, ports, projectors, adapters de transporte e consumers do Semantic Product.
+- **Related ADRs:** ADR-0005, ADR-0008 e ADR-0013.
+- **Enforcement:** `AUTOMATED` — os testes de contrato do core e da projection exercitam cardinalidade plural, DATA independente, todas as ocorrências MOVE/CALL/IF do fixture estrutural, IF nested e ausência de seleção first/last/singleton.
+- **Known exceptions:** nenhuma para as capabilities DATA/MOVE/CALL/IF atualmente declaradas; novas famílias continuam obrigadas a acrescentar o oracle correspondente.
+
+### INV-SP-002 — Incompletude não vira omissão silenciosa
+
+- **Statement:** constructs observados que estejam `UNKNOWN`, `PARTIAL`, `UNSUPPORTED`, `AMBIGUOUS` ou `INPUT_MISSING` permanecem facts, coverage ou gaps localizados; sua ausência não pode ser interpretada como ausência de código, e uma claim agregada não pode exceder a completude de seus componentes.
+- **Rationale:** downstream precisa distinguir inexistência provada de incapacidade, falta de input ou suporte parcial para permanecer conservador.
+- **Scope:** Semantic Product, projeção, lowering-readiness, transporte e futuros consumers CFG/effects.
+- **Related ADRs:** ADR-0008 e ADR-0013.
+- **Enforcement:** `AUTOMATED` — o core reconcilia inventário, coverage e gaps; `SemanticProductStatementInventoryTest` exige bijeção com todo statement AST observado; o probe de EVAL-SP-002 rejeita gap ou `ObservedStatement` escondido; INV-COV-001/003 continua protegendo as entradas canônicas.
+- **Known exceptions:** nenhuma omissão silenciosa é aceita. Inventário global `PARTIAL`/`INPUT_MISSING` permanece uma saída válida somente com readiness agregada rebaixada e sem transformar ausência de input em zero comprovado.
+
+### INV-SP-003 — Boundary é suficiente para lowering sem frontend
+
+- **Statement:** cada construct marcado como suportado ou ready preserva surface, identity, structure, nominal binding, unknowns, provenance e coverage necessárias para que um consumer do port determine o lowering declarado sem consultar AST, symbols, occurrences, resolver, report ou presentation. CFG/effects readiness são dimensões separadas; anchor/program point estrutural não afirma execution order, reachability ou edge.
+- **Rationale:** retornar ao frontend duplicaria interpretação COBOL no downstream; confundir readiness estrutural, de controle e de efeitos criaria claims falsas.
+- **Scope:** Semantic Product, seu port, `CobolLower` futuro e contratos de readiness por construct.
+- **Related ADRs:** ADR-0003, ADR-0004 e ADR-0013.
+- **Enforcement:** `AUTOMATED` — o consumer do CP6 e o probe independente de EVAL-SP-002 consomem somente o port; `ArchitectureBoundaryTest` inspeciona source e bytecode; falsificações controladas rejeitam perda de structure, binding e unknown. A matriz durável está em `docs/domain/cobol-semantic-product.md`.
+- **Known exceptions:** DATA e o profile atual de CALL têm lowering readiness suficiente. MOVE e IF permanecem `PARTIAL`; `ObservedStatement` permanece `BLOCKED`. Essas limitações são claims explícitas, não exceções à boundary nem autorização para buscar o frontend.
+
+### INV-SP-004 — Projector não cria nova análise semântica
+
+- **Statement:** projectors/adapters do Semantic Product apenas traduzem e reconciliam fatos das autoridades canônicas; não reparseiam `writtenText`, resolvem por nome, recalculam gaps/readiness, escolhem candidates, inferem runtime values ou usam snapshot/HTML como fonte. Informação necessária ausente produz partial/unsupported/gap, nunca heurística escondida.
+- **Rationale:** uma segunda engine no adapter divergiria dos produtos canônicos e romperia a separação de fases.
+- **Scope:** projeção frontend → Semantic Product e adapters de transporte.
+- **Related ADRs:** ADR-0003, ADR-0004, ADR-0008, ADR-0009 e ADR-0013.
+- **Enforcement:** `PARTIALLY_AUTOMATED` — testes de boundary/leakage e review das autoridades; o work item ativo exige que report e demais produtos permaneçam autoridades dos fatos que publicam.
+- **Known exceptions:** nenhuma na projection atualmente declarada; ausência de autoridade canônica continua sendo publicada como incompletude localizada, sem análise substituta.
+
+### INV-SP-005 — Identidade nominal não é identidade de storage
+
+- **Statement:** handles nominais de DATA identificam declarations/bindings, não storage físico independente. Nenhum Semantic Product, lowerer, IR ou dataflow pode assumir `DataItemId == StorageId`; layout, aliases e overlap de `REDEFINES`/`RENAMES` exigem Storage Semantics explícita.
+- **Rationale:** nomes distintos podem compartilhar regiões de memória e uma análise por nome isolado produziria reads/writes, kills e reaching definitions incorretos.
+- **Scope:** Semantic Product, lowering, futura Analysis IR, Storage Semantics, effects e dataflow.
+- **Related ADRs:** ADR-0003, ADR-0004 e ADR-0013.
+- **Enforcement:** `REVIEW` — AST/symbol model preservam relações nominais sem alegar layout; o backlog downstream deve manter a dependência de Storage Semantics.
+- **Known exceptions:** Storage Semantics ainda não existe; sua ausência permanece explícita e não autoriza aliases ou regiões sintéticas.
+
+### INV-SP-006 — Determinismo de transporte não é identidade persistente
+
+- **Statement:** execuções equivalentes — mesma entrada normalizada/preprocessada, policy/configuração efetiva, analyzer version e contract version — reproduzem handles, facts e ordem transportáveis, sem timestamp, object identity ou map order incidental. Essa propriedade não preserva os mesmos IDs após edição estrutural ou mudança de versão e não constitui identidade persistente.
+- **Rationale:** transporte e evals precisam de reprodutibilidade, enquanto estabilidade longitudinal requer contrato de identidade/migração próprio.
+- **Scope:** Semantic Product, ports, projectors e adapters de transporte.
+- **Related ADRs:** ADR-0005 e ADR-0013.
+- **Enforcement:** `AUTOMATED` — EVAL-SP-003 compara bytes entre serializações repetidas e análises independentes, valida ordem/identidades/referências e prova que o composition root escreve o mesmo documento do adapter boundary-only; INV-DET-001 protege os produtos de origem.
+- **Known exceptions:** persistência, round-trip e migração de identity permanecem fora do contrato; o JSON v1 é transporte determinístico, não chave longitudinal.
+
 ## Condições contextuais
 
 ### INV-COND-001 — Significado dependente de binding permanece aberto até a resolução

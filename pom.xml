@@ -14,6 +14,7 @@
     <junit.version>5.12.2</junit.version>
     <slf4j.version>2.0.18</slf4j.version>
     <logback.version>1.6.3</logback.version>
+    <jackson.version>2.22.2</jackson.version>
     <pitest.version>1.21.0</pitest.version>
     <pitest.junit5.version>1.2.3</pitest.junit5.version>
   </properties>
@@ -40,6 +41,11 @@
       <artifactId>junit-jupiter</artifactId>
       <version>${junit.version}</version>
       <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <version>${jackson.version}</version>
     </dependency>
   </dependencies>
 

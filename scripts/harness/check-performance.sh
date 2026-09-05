@@ -6,5 +6,6 @@ harness_gate_start
 
 cd "$harness_project_dir"
 "$maven_bin" -q \
-  -Dtest=ResolutionAnalysisReportTest#scalesByIndexedCandidatesAndProducesDeterministicResults \
+  -Dtest=ResolutionAnalysisReportTest#scalesByIndexedCandidatesAndProducesDeterministicResults,\
+SemanticProductMoveCallContractTest#materializedPortIndexesScaleLinearly \
   test

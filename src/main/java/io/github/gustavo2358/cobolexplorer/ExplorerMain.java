@@ -1,5 +1,9 @@
 package io.github.gustavo2358.cobolexplorer;
 
+import io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticPort;
+import io.github.gustavo2358.cobolexplorer.semanticproduct.consumer.CobolLoweringReadinessConsumer;
+import io.github.gustavo2358.cobolexplorer.semanticproduct.projection.CobolSemanticProductProjector;
+import io.github.gustavo2358.cobolexplorer.semanticproduct.transport.SemanticProductJsonWriter;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.*;
 import org.slf4j.Logger;
@@ -200,6 +204,23 @@ public final class ExplorerMain {
                 unresolvedCopies > 0 ? "ANALYSIS_INCOMPLETE" : "NO_ADDITIONAL_IMPACT");
         ResolutionAnalysisReport resolutionReport = ResolutionAnalysisReport.compose(compilationBuild,
                 frontendState, occurrences, resolution, externalClassifications);
+        progress.phase = "SEMANTIC_PRODUCT";
+        long semanticProductStarted = System.nanoTime();
+        CobolSemanticPort semanticProduct = publishSemanticProduct(primaryUnit.id(), compilationBuild,
+                symbolTables, occurrences, resolution, resolutionReport);
+        SemanticProductJsonWriter.write(semanticProduct,
+                output.resolve("semantic-product.json"));
+        CobolLoweringReadinessConsumer.Audit loweringReadiness =
+                CobolLoweringReadinessConsumer.audit(semanticProduct);
+        LOG.debug("event=semantic_product_published phase=SEMANTIC_PRODUCT elapsedMs={} unit={} dataDeclarations={} statements={} gaps={} loweringReadiness={} cfgReadiness={} effectsDataflowReadiness={}",
+                elapsedMs(semanticProductStarted),
+                loweringReadiness.unit().canonicalProgramName(),
+                loweringReadiness.dataDeclarations().size(), loweringReadiness.statements().size(),
+                loweringReadiness.gaps().size(),
+                loweringReadiness.coverage().readiness().lowering().status(),
+                loweringReadiness.coverage().readiness().cfg().status(),
+                loweringReadiness.coverage().readiness().effectsDataflow().status());
+        progress.phase = "REFERENCE_RESOLUTION";
         ResolutionSnapshot.from(source.getFileName().toString(),
                         Arrays.asList(normalized.split("\\R", -1)), compilationUnit, resolution,
                         resolutionReport)
@@ -238,6 +259,19 @@ public final class ExplorerMain {
         LOG.info("event=analysis_completed phase=ANALYSIS elapsedMs={} programUnits={} references={} gaps={} dependencyAnalysisReady={} output={}",
                 elapsedMs(analysisStarted), compilationUnit.programUnits().size(), resolution.entries().size(),
                 resolutionReport.gaps().size(), resolutionReport.completeness().dependencyAnalysisReady(), output);
+    }
+
+    static CobolSemanticPort publishSemanticProduct(
+            ResolutionContracts.ProgramUnitId unitId,
+            CompilationUnitBuildResult frontend,
+            CompilationUnitSymbolTables symbolTables,
+            Map<ResolutionContracts.ProgramUnitId, ReferenceOccurrences> occurrences,
+            ReferenceResolution resolution,
+            ResolutionAnalysisReport report) {
+        return CobolSemanticProductProjector.open(
+                new CobolSemanticProductProjector.FrontendProducts(frontend, symbolTables,
+                        occurrences, resolution, report),
+                unitId);
     }
 
     private static long elapsedMs(long startedNanos) {
