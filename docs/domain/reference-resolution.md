@@ -15,6 +15,56 @@ Este documento descreve o binding nominal atual. A execução usa `CobolResoluti
 
 Resolução é nominal. Ela não faz CFG, reaching definitions, propagação de constantes ou inferência de valores de runtime. Assim, `CALL WS-CALL-TARGET` pode resolver a declaração de `WS-CALL-TARGET`, mas não os programas que a variável pode conter. Futuras análises devem preservar targets estáticos conhecidos e um remainder dinâmico/incerto quando ambos coexistirem.
 
+## Integridade cross-product
+
+Após `CobolReferenceResolver.resolve(...)`, a orquestração executa
+`SemanticProductIntegrityValidator.validate(model, tables, scopeIndexesByUnit,
+occurrencesByUnit, resolution)` antes da classificação externa, relatório e
+Semantic Product. Invariants autocontidos continuam nos produtos; este validator
+é o owner dos joins entre eles, sem lookup nominal, nova análise ou mutação.
+
+- Model, tables, scope indexes e occurrence containers possuem exatamente as
+  mesmas units; parentage das tables coincide com o model.
+- AST IDs seguem o pre-order local, sem duplicatas; anchors de scopes,
+  declarations e relations existem na AST da mesma unit. Scopes correspondem
+  ao containment; declarations preservam kind/namespace/scope estruturais.
+  O kind do scope corresponde ao tipo do anchor: PROGRAM, DIVISION, SECTION,
+  FILE_DESCRIPTION, DATA_ITEM ou PARAGRAPH. O owner nominal é a declaration
+  daquele AST ID; FILLER, root, divisions, DATA sections e paragraphs sem
+  declaration nominal mantêm owner `-1`. Condition-name 88 não cria scope próprio.
+  Em procedure sections, o nome do scope coincide com o payload do anchor AST,
+  pois o resolver o consome na qualification; a comparação ocorre após o join
+  por identidade, sem lookup textual.
+- Occurrences preservam o scope indexado e o `Meta` completo do node, incluindo
+  provenance. Occurrences/resolution e relations/relation-resolution formam
+  bijeções por `(ProgramUnitId, id local)`, com payload correspondente.
+  Todo candidate de uma resolution entry pertence a `occurrence.admissibleKinds`,
+  inclusive sob status incompleto; o primary kind da occurrence não restringe
+  sozinho as categorias de uma referência contextual.
+- `SemanticEntityId(unit, domain, localId)` seleciona o alvo do candidate.
+  DATA_SYMBOL representa DATA_ITEM/RENAMES como DATA ou CONDITION_NAME como
+  CONDITION; INDEX_SYMBOL representa INDEX_NAME; PROCEDURE_SYMBOL representa
+  seção/parágrafo; FILE_ENTITY representa a entity FILE. PROGRAM_UNIT usa o
+  ordinal determinístico da target unit no model.
+- `declarationSymbolIds` é exatamente `[symbol.id()]`, a lista da entity FILE
+  ou a lista vazia para PROGRAM_UNIT, respectivamente. Cada lista de candidates
+  possui identidades distintas. Candidates ancestrais/entre units são permitidos;
+  a validação não reexecuta visibilidade COBOL. Nomes e attributes são payload,
+  nunca chaves desses joins.
+
+Qualquer violação lança `SemanticProductIntegrityException`, com diagnóstico
+determinístico iniciado por `INTERNAL PRODUCT INTEGRITY FAILURE`, produto, unit,
+domínio e ID aplicável. Consumidores distinguem a exception por tipo, nunca por
+parsing da mensagem. Não há recuperação automática. `UNRESOLVED`, `AMBIGUOUS`,
+`UNSUPPORTED` e `EXTERNAL_OBSERVED`, assim como missing COPY/coverage unknown
+com produtos estruturalmente coerentes, não são falhas de integridade.
+
+O custo é linear nas cardinalidades agregadas de units, nodes, scopes, symbols,
+relations, occurrences, resolution entries, candidates e seus declaration IDs,
+com espaço auxiliar linear. Os índices de scopes existentes são reutilizados;
+o validator constrói índices de anchors e faz joins diretos por identidade.
+Coverage/frontend e backlinks de diagnostics mantêm seus owners próprios.
+
 ## Regras e limites atuais
 
 - Nomes COBOL são comparados pela forma canônica case-insensitive, preservando a grafia escrita para diagnóstico e navegação.

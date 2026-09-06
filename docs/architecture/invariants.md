@@ -40,6 +40,23 @@ IDs neste documento são estáveis. `AUTOMATED` indica proteção executável at
 - **Enforcement:** `AUTOMATED` — `ArchitectureBoundaryTest` bloqueia dependência direta de construção de símbolos para ANTLR/resolução; testes de symbol table, occurrences e compilation units completam o contrato comportamental.
 - **Known exceptions:** nenhuma.
 
+### INV-PROD-001 — Integridade precede consumo dos produtos resolvidos
+
+- **Statement:** antes do primeiro consumidor pós-resolution, AST, scopes,
+  symbols, declaration relations, occurrences, resolution e candidates devem
+  reconciliar por identidade composta; corrupção interna falha fechada, sem
+  resolver nomes, reparar produtos ou tratar incompletude legítima como erro.
+- **Rationale:** um join órfão ou contraditório não pode alimentar o Semantic
+  Product ou análises futuras com uma identidade aparentemente válida.
+- **Scope:** composição dos produtos do frontend, antes de classifier/report/projection.
+- **Related ADRs:** ADR-0003, ADR-0005 e ADR-0013.
+- **Enforcement:** `AUTOMATED` — `SemanticProductIntegrityValidator`,
+  `SemanticProductIntegrityValidatorTest` e os oracles F-02 promovidos em
+  `AstSemanticBoundaryRequiredOracleTest`; contrato em
+  `docs/domain/reference-resolution.md`.
+- **Known exceptions:** nenhuma para os joins declarados; coverage/frontend e
+  diagnostics mantêm invariants próprios, e binding nominal não prova runtime.
+
 ## Semantic Product e lowering
 
 ### INV-SP-001 — Slice limita capability, não cardinalidade

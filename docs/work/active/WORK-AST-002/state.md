@@ -2,32 +2,22 @@
 
 ## Onde estamos
 
-Slice 1 mergeado pelo PR #10. WORK-AST-003 e `BUG-AST-PREORDER-001` foram resolvidos nos PRs #11/#12. O Discovery arquitetural do Slice 2 partiu da `main` `9aba9a897cc7f45ba7da3a25079d66aee838ba55` e está no PR #13; nenhuma implementação de F-02 foi iniciada.
+Slice 1 mergeado no PR #10; pré-requisito de IDs/traversal concluído nos PRs #11/#12; Discovery de F-02 mergeado no PR #13. O PR #28 implementa o Slice 2 na branch `feat/semantic-product-integrity-validator`. A revisão de 2026-09-06 pediu dois refinamentos localizados: admissibilidade dos candidates e kind/owner dos scopes. As correções estão implementadas e validadas localmente; PR aberto, aguardando nova revisão, sem merge automático.
 
 ## Verde conhecido
 
-- Cardinalidade exata: 10/10 statements, 14/14 DATA entries, 20/20 clauses e 1/1 preserved expression possuem um finding concreto; metadata/provenance e ordem determinística são preservadas.
-- `VALUE` e `BLANK WHEN ZERO` sem occurrence nominal produzem gaps e bloqueiam readiness; preserved clause/expression sem referência continuam observáveis.
-- Manifesto separa estrutura de dependency knowledge; `MODELED + DEPENDENCY_UNKNOWN` permanece para VALUE/OCCURS/REDEFINES/RENAMES.
-- Os dois oráculos de F-01 integram o gate normal; 23 testes focais verdes e gates `fast`, `semantic` e `full` verdes.
-- AST→scope→symbols→occurrences→resolution, CALL literal/identifier e ausência de símbolo FILLER permanecem reconciliados e determinísticos.
-- A reprodução opt-in executa quatro required oracles: os dois F-01 passam e somente os dois F-02 falham por ausência de exception. A suíte focal sem opt-in fica verde com 14 testes e 2 F-02 skipped.
-- Neste refinamento, `fast`, `performance` e `full` passaram; o `full` incluiu `semantic`, regressão E2E estruturada e naming. A suíte focal normal permaneceu com 14 testes, 0 failures e 2 F-02 skipped; o opt-in falhou exatamente nos dois F-02 ainda não implementados.
+- Validator/exception dedicados implementam os joins do Discovery e a chamada precede classifier/report/Semantic Product, reutilizando os scope indexes.
+- Os dois oracles F-02 foram promovidos para execução normal. Os 78 casos focais passam; os testes da revisão reproduziram 14 aceitações indevidas antes da correção e preservaram o positivo contextual DATA/INDEX/CONDITION.
+- Gates locais fast, semantic, performance e full verdes: 523 testes, zero failures/errors e um skip preexistente de `semantic.condition.required`, fora de F-02; E2E estruturado e naming passaram. O PR não tinha checks remotos registrados na conferência desta revisão; não há claim de CI remoto verificado.
+- Candidates usam unit/domain/localId e declaration IDs exatos; nomes não governam joins. Estados incompletos e candidates ancestrais permanecem aceitos.
+- Contratos de produção e baselines anteriores permanecem preservados; nenhuma análise posterior foi introduzida.
+- Diff revisado e self-validation do harness: diretório ativo, índices, histórico, contratos documentais e escopo de source/tests coerentes. O gate performance inclui o probe de integridade até 512 units, sem threshold de hardware.
 
 ## Restante
 
-- Revisar o PR #13, exclusivo deste Discovery.
-- Implementação do Slice 2/F-02 continua dependente de autorização explícita posterior; os oráculos não foram promovidos.
+- Nova revisão do Slice 2; merge depende de ação posterior e não integra esta autorização.
+- Regressão documental final/Slice 3 continua posterior à revisão dos slices de produção; nenhum slice/backlog adjacente foi iniciado.
 
 ## Descobertas que afetam o plano
 
-- F-01 e F-03 foram fechados no Slice 1 pela produção, sem busca textual nem alteração de `ResolutionAnalysisReport`.
-- A taxonomia final do slice trata PICTURE/USAGE como não dependency-bearing para a capability nominal atual sem alegar layout; VALUE/OCCURS/REDEFINES/RENAMES preservam unknown.
-- F-02 permanece reproduzível: com opt-in, somente os dois oráculos cross-product falham. Isso é o limite esperado deste PR.
-- F-04 permanece decisão aberta e a shape SQL/FILLER não foi alterada.
-- O owner recomendado para F-02 é uma estratégia híbrida: invariants autocontidos permanecem nos produtos e um `SemanticProductIntegrityValidator` reconcilia model/AST, tables, scopes, occurrences, resolution, relation resolution e candidates.
-- O ponto exato de integração é imediatamente após `CobolReferenceResolver.resolve(...)` e antes de `CicsIntrinsicClassifier`; report e snapshots não recebem ownership de integridade.
-- A API proposta reutiliza os `AstScopeIndex` por unit e falha com uma única `SemanticProductIntegrityException` cujo diagnóstico começa por `INTERNAL PRODUCT INTEGRITY FAILURE`.
-- O custo previsto é linear no tamanho agregado dos produtos, com índices por unit/node/occurrence/relation e sem lookup textual.
-- O audit dos producers fechou o contrato de candidates: domínio/localId selecionam o alvo, `declarationSymbolIds` precisa corresponder exatamente a ele e `SemanticEntityId` repetido na mesma lista é corrupção; nomes continuam apenas payload/diagnóstico.
-- O `work-item.yaml` já inclui a superfície planejada e o gate de performance da futura implementação. O protocolo/harness agora representa arquivos novos por `planned:<caminho>` sem criar stubs; este PR continua sem autorização para alterar produção.
+API, ownership, ponto de integração e modelo de falha seguem o Discovery. ScopeKind/owner e nome de procedure section influenciam qualification; agora são reconciliados com seus anchors, sem nova análise. O índice de declarations por AST ID é construído uma vez por unit. SQL/FILLER e relação de FILLER REDEFINES permanecem fora do checkpoint.

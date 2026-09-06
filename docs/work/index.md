@@ -4,7 +4,7 @@ Work items delimitam a mudança em execução; o [backlog](backlog.md) registra 
 
 ## Ativo
 
-- [WORK-AST-002 — Hardening da fronteira AST para CFG e dataflow](active/WORK-AST-002/spec.md) — Slice 1 mergeado no PR #10; Slice 2 no checkpoint de Discovery do PR #13. Implementar F-02 depende de merge/review e autorização explícita posterior.
+- [WORK-AST-002 — Hardening da fronteira AST para CFG e dataflow](active/WORK-AST-002/spec.md) — Slice 1 mergeado no PR #10; Discovery do Slice 2 mergeado no PR #13. F-02 em checkpoint de implementação explicitamente autorizado; revisão/merge do novo PR permanecem pendentes e nenhum slice adjacente foi iniciado.
 
 ## Histórico
 

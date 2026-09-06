@@ -5,9 +5,9 @@
 1. Fase 0 concluída e revisada no PR #9: lowering, cardinalidades, joins, provenance e quatro oráculos foram caracterizados sem alteração de produção.
 2. Slice 1 concluído no PR #10: coverage concreto, manifesto coerente e promoção somente dos dois oráculos de F-01.
 3. WORK-AST-003 e `BUG-AST-PREORDER-001` concluídos nos PRs #11 e #12; `main` de origem deste Discovery é `9aba9a897cc7f45ba7da3a25079d66aee838ba55`.
-4. Discovery do Slice 2, nesta sessão: reproduzir F-02, auditar invariants e consumidores, comparar ownerships e versionar o contrato recomendado sem alterar produção.
-5. Futura Fase 2 de implementação, somente após review e autorização: validator linear dedicado, integração antes da classificação externa e promoção/refino dos dois oráculos F-02.
-6. Regressão documental final permanece posterior aos slices de produção revisados.
+4. Discovery do Slice 2 concluído e mergeado pelo PR #13: contrato, ownership, ponto de integração e matriz de regressão fechados.
+5. Fase 2 autorizada em 2026-09-05: validator linear dedicado, integração antes da classificação externa e promoção/refino dos dois oráculos F-02, em nova branch/PR contra `main`.
+6. Revisar o checkpoint de implementação sem merge automático; regressão documental final e outros slices não são iniciados por este trabalho.
 
 ## Dependências
 
@@ -17,20 +17,20 @@
 
 ## Superfície arquitetural provável
 
-Para a futura implementação do Slice 2, a incisão recomendada é um novo `SemanticProductIntegrityValidator`, seu teste focal e a retenção dos `AstScopeIndex` já construídos na orquestração para uma única chamada em `ExplorerMain` após `CobolReferenceResolver.resolve(...)`. `ResolutionAnalysisReport`, classifier, snapshots e modelos semânticos permanecem consumidores ou produtos separados, sem absorver ownership do validator. Os arquivos prováveis já constam do contrato de escopo do harness, mas este PR de Discovery não autoriza alterá-los; a implementação exige nova branch/PR após merge e instrução explícita.
+A implementação do Slice 2 usa `SemanticProductIntegrityValidator`, seu teste focal e a retenção dos `AstScopeIndex` já construídos para uma única chamada em `ExplorerMain` após `CobolReferenceResolver.resolve(...)`. `ResolutionAnalysisReport`, classifier, snapshots, projector e modelos semânticos permanecem separados. O gate de performance inclui o probe de escala do validator. O escopo reservado no Discovery foi materializado no checkpoint autorizado.
 
 ## Migrações requeridas
 
-Não há migração de AST, símbolos, occurrences, resolução, report, classifier, snapshot ou baseline de corpus no Discovery. A futura implementação deve preservar as shapes e apenas rejeitar combinações internamente impossíveis antes do primeiro consumo pós-resolution.
+Não há migração de AST, símbolos, occurrences, resolução, report, classifier, snapshot ou baseline de corpus. A implementação preserva as shapes e rejeita combinações internamente impossíveis antes do primeiro consumo pós-resolution.
 
 ## Artefatos esperados
 
-- Relatório versionado de F-02 em `eval.md`, com reprodução, inventário, matriz de joins, call sites, alternativas, API, erro, complexidade, riscos e aceite futuro.
-- `spec.md`, `plan.md`, `eval.md` e `state.md` atualizados somente com conhecimento do Discovery.
-- Dois oráculos F-02 ainda opt-in/vermelhos e nenhum teste de produção promovido.
-- Commit e PR exclusivos do Discovery, sem merge.
+- Validator/exception dedicados, integração e oracles F-02 no gate normal.
+- Testes negativos controlados, positivos de incompletude e escala sem threshold de hardware; gates fast, semantic, performance e full.
+- Contrato durável em reference resolution/pipeline, INV-PROD-001 e EVAL-PROD-001; estado do work item e índices coerentes.
+- Commit focalizado, push e novo PR de implementação, sem merge.
 
-## Slices de produção recomendados após revisão independente
+## Contrato dos slices aprovado no Discovery
 
 ### Slice 1 — Coverage concreto e taxonomia coerente
 
@@ -45,7 +45,7 @@ Não há migração de AST, símbolos, occurrences, resolução, report, classif
 ### Slice 2 — Integridade linear cross-product
 
 - **Problema:** F-02; produtos normais são coerentes, mas combinações corrompidas podem atravessar a composição sem fail-closed.
-- **Oracle atualmente falho:** `reportFailsClosedWhenResolutionContainsOccurrenceMissingFromCollectorProduct` e `crossProductValidationRejectsSymbolWhoseDeclarationAstNodeDoesNotExist`.
+- **Oracles promovidos:** `validationFailsClosedWhenResolutionContainsOccurrenceMissingFromCollectorProduct` (renomeado para o owner aprovado) e `crossProductValidationRejectsSymbolWhoseDeclarationAstNodeDoesNotExist`.
 - **Ownership recomendado:** estratégia híbrida. Invariants autocontidos permanecem nos construtores atuais; joins que exigem dois ou mais produtos ficam em um validator dedicado, testável isoladamente e chamado pela orquestração.
 - **API proposta:** `SemanticProductIntegrityValidator.validate(model, symbolTables, scopeIndexesByUnit, occurrencesByUnit, resolution)`; `ReferenceResolution` já contém candidates e `DeclarationRelationResolution`.
 - **Ponto exato:** depois de `CobolReferenceResolver.resolve(...)` e antes de `CicsIntrinsicClassifier.classify(...)`. Essa ordem protege classificação externa, report, snapshot e futuras análises com uma única validação.

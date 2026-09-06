@@ -11,6 +11,7 @@ fonte COBOL físico
   → compilation units e symbol tables
   → ocorrências de referência
   → resolução nominal
+  → validação de integridade cross-product
   → classificação externa pós-resolução focalizada
   → relatório canônico de análise
   → COBOL Semantic Product / CobolSemanticPort
@@ -53,6 +54,13 @@ Cada seta produz um artefato para a fase seguinte; uma fase não deve gravar con
 - Symbol tables modelam declarations, scopes, namespaces, entidades e relações declarativas, sem valores de runtime.
 - Occurrences identificam usos tipados sem fazer lookup.
 - `ReferenceResolution` é produto separado e imutável; preserva candidatos, status e diagnósticos para binding nominal.
+- `SemanticProductIntegrityValidator` reconcilia AST, tables/scopes, occurrences,
+  resolution, declaration relations e candidates imediatamente após a resolução,
+  reutilizando os scope indexes. Corrupção interna lança
+  `SemanticProductIntegrityException` antes do primeiro consumidor pós-resolution;
+  incompletude semântica válida permanece resultado normal. O validator não cria
+  produto, não resolve nomes e não repara fatos; o [contrato de integridade](../domain/reference-resolution.md#integridade-cross-product)
+  define seus joins. Novos orquestradores devem preservar essa ordem.
 - O Semantic Product preserva somente facts COBOL canônicos, materializados,
   imutáveis e suficientes ao lowering declarado. Ele não é AST, IR, CFG,
   serializer nem snapshot; sua coverage incremental não limita a quantidade de

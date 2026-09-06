@@ -73,6 +73,7 @@ final class AstBoundaryTestSupport {
         ReferenceResolution resolution = new CobolReferenceResolver(
                 ResolutionContracts.CobolResolutionPolicy.initial())
                 .resolve(model, tables, occurrences);
+        SemanticProductIntegrityValidator.validate(model, tables, scopes, occurrences, resolution);
         ResolutionAnalysisReport report = ResolutionAnalysisReport.compose(build,
                 ResolutionAnalysisReport.FrontendState.complete(), occurrences, resolution);
         return new Analysis(tree, build, model, tables, scopes, occurrences, resolution, report);
@@ -194,14 +195,15 @@ final class AstBoundaryTestSupport {
     }
 
     /**
-     * Exercises the current post-AST product composition without assigning validation ownership
-     * to a constructor, resolver, report or future dedicated validator.
+     * Exercises validation before post-resolution consumption, as in the composition root.
      */
     static ResolutionAnalysisReport composePostAstProducts(
             Analysis analysis, CompilationUnitSymbolTables tables) {
         ReferenceResolution resolution = new CobolReferenceResolver(
                 ResolutionContracts.CobolResolutionPolicy.initial())
                 .resolve(analysis.model(), tables, analysis.occurrences());
+        SemanticProductIntegrityValidator.validate(analysis.model(), tables, analysis.scopes(),
+                analysis.occurrences(), resolution);
         return ResolutionAnalysisReport.compose(analysis.build(),
                 ResolutionAnalysisReport.FrontendState.complete(), analysis.occurrences(), resolution);
     }
