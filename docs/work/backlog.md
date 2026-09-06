@@ -51,15 +51,15 @@ BACKLOG-SP-001/002/003/004 enrichments por construct
 Ordem executável de contratação e implementação do primeiro slice:
 
 ```text
-capabilities lowering-ready + partial/unknowns explícitos do Semantic Product
+contrato externo AIR 2.0.0 + TypeRef/provas/envelopes + oracles estruturais
   ↓
-contrato mínimo da Analysis IR + oracles de consumo de CFG/effects
+facts mínimos de entrada/terminal e controle do slice no Semantic Product
   ↓
-primeiro lowering que produz essa IR
+primeiro lowering somente pelo port, com fallback conservador para observados
   ↓
 primeiro consumer de CFG
   ↓
-primeiro consumer de Statement Effects / Storage Semantics
+fatos declarativos escalares no frontend → AIR → consumers de effects/storage
 ```
 
 Requisitos e oracles concretos dos consumers orientam o contrato da IR; os
@@ -68,6 +68,14 @@ Inversamente, lowerer e consumers só são implementados depois que a versão
 mínima do contrato que consomem estiver explícita. O primeiro slice de
 BACKLOG-IR-001 e BACKLOG-LOWER-001 pode ser promovido no mesmo work item, desde
 que mantenha essa ordem interna e as fronteiras separadas.
+
+O [audit bilateral AIR V2](../architecture/semantic-product-air-v2-audit.md)
+qualifica a ordem: inventário aberto já é representável; CFG fechado exige
+entrada/terminal antes de EVALUATE amplo, e scalar-flow exige fatos
+declarativos de storage antes de derivar suas consequências. F-02 está no PR
+#28 aberto na baseline auditada; merge/revalidação é prerequisite separado,
+não implementação concluída. Os itens SP-005 a SP-008 são handoffs deste
+Discovery, sem autorização automática para produção.
 
 ### BACKLOG-EXT-001 — Infraestrutura mínima de extensibilidade do pipeline
 
@@ -348,7 +356,7 @@ Objetivo: fechar a fronteira sem antecipar a fase seguinte.
 3. Provar que `FILLER` possui `DataEntry`, meta, scope e posição estrutural mesmo sem symbol.
 4. Provar que endpoints de `REDEFINES`/`RENAMES` possuem binding nominal quando válido, mantendo explícito que o semantic scope é apenas estrutural.
 5. Provar que `CALL` literal usa `ProgramReference` e identifier/expression usa `DataReference` ou expressão preservada, sem converter binding DATA em target PROGRAM.
-6. Documentar para `BACKLOG-DF-001` o contrato de entrada do futuro `StorageRegionModel`: percorrer `DataEntry`, usar símbolos apenas para nomes, e consumir declaration relations resolvidas sem tratá-las como layout.
+6. Estabelecer no frontend fatos declarativos a partir de `DataEntry` e relações resolvidas, sem tratá-las automaticamente como layout. Publicá-los pelo Semantic Product e AIR antes de `BACKLOG-DF-001`; o consumer de storage não consulta DataEntry/symbols. Ver BACKLOG-SP-008 e o audit AIR V2.
 7. Documentar que definições iniciais de `VALUE`, writes, partial writes e unknown effects serão produtos posteriores; sua ausência atual não deve virar valor vazio.
 
 Gate da fase: `check-fast.sh` e `check-semantic.sh` verdes; nenhuma nova dependência arquitetural reversa.
@@ -566,7 +574,8 @@ próprio; isso não autoriza truncar sua cardinalidade na `ProgramUnit`.
 
 ### BACKLOG-SP-001 — Enriquecer o Semantic Product com EVALUATE
 
-Adicionar `EVALUATE` como próximo enrichment de control-flow depois de IF/ELSE.
+Adicionar `EVALUATE` depois do slice de entrada/terminal e transferências
+básicas necessário ao CFG inicial, conforme o audit AIR V2.
 Preservar subjects, correspondência posicional de `ALSO`, ordered branches,
 selectors, `OTHER`, nesting, termination, bindings, provenance, coverage e
 incompletude. F-01 impede elevar conditions combinadas a completas; o slice
@@ -583,6 +592,12 @@ test mode, `VARYING`, `FROM`, `BY`, `UNTIL` e níveis de `AFTER`. Ordem plana de
 children ou `writtenText` não recupera esses papéis. Cada forma entra como slice
 por capability, com todas as ocorrências cobertas.
 
+Confrontar procedure/THRU com `control.local@1` / `AIR-LOCAL-CONTROL@2`:
+publicar entrada, portas de conclusão, default, resume e disciplina de contexts.
+Nesting/saídas comuns IBM precisam corresponder à regra do topo; não inferir
+unwind nem equiparar PERFORM inline a invocação local. O-56–O-60 acompanham o
+slice preciso; o fallback continua aberto quando não houver prova.
+
 ### BACKLOG-SP-003 — Transferências e terminal semantics
 
 Enriquecer incrementalmente `GO TO`, `GO TO DEPENDING ON`, targets múltiplos,
@@ -590,7 +605,9 @@ selector, fallthrough admissível e statements terminais. Preservar targets e
 binding nominal sem publicar edges, reachability ou comportamento terminal
 quando a regra ainda for partial/unsupported. A readiness de cada forma é
 precondição do respectivo slice de lowering/CFG; ausência de fact não pode ser
-interpretada como fallthrough.
+interpretada como fallthrough. Priorizar uma forma terminal com contrato de
+entrada/saída e contexto antes de GO TO direto, GO TO DEPENDING ON e seleções
+complexas. Não confundir GOBACK, EXIT PROGRAM, STOP RUN e STOP literal.
 
 ### BACKLOG-SP-004 — ALTER e SEARCH
 
@@ -600,51 +617,105 @@ unknowns e coverage disponíveis. Não tratar a preservação sintática atual c
 semântica completa. `SEARCH ALL` e demais shapes entram somente com regra e
 eval próprios; efeitos sobre fluxo dependem de readiness demonstrada.
 
+ALTER/altered GO TO pode usar `control.indirect@1` somente com estado inicial,
+universo finito de labels e atualização estabelecidos. CFG inicial admite todo
+o universo antes de PV; não fechar targets a partir do corpus. SEARCH requer
+seu próprio controle/avaliação, sem inferência pela ordem de children.
+
+### BACKLOG-SP-005 — Entradas e continuidade executável do Semantic Product
+
+Publicar inventário/disponibilidade de entradas, assinatura/posições quando
+conhecidas, início e conclusão da unit, ownership de procedure regions e
+relações de sequência estabelecidas semanticamente. ProgramPoint ordinal e
+ROOT não são entry/next executável. O primeiro sub-slice, coordenado com
+BACKLOG-SP-003, habilita uma unit com GOBACK e saída de escopo correto; unknown
+signature não vira lista vazia e EOF não vira return. Depois fechar a avaliação
+e as alternativas do IF com domínio booleano/pureza/limites explícitos; isso
+pode preceder ConditionSemantics completa. Owners A/frontend para fatos,
+B/lowerer para labels; CFG continua consumer C. Findings F-AIR-04/05/07.
+
+### BACKLOG-SP-006 — Preservar acesso e qualificar readiness de MOVE e CALL
+
+O audit reproduziu SUBSCRIPT IX presente no frontend e ausente do port em
+CALL/MOVE WS-X(IX), inclusive CALL lowering/CFG SUFFICIENT. Publicar shape,
+occurrences de índices/offsets, papéis de endereço, seleção, disponibilidade e
+limites de avaliação ou rebaixar explicitamente a capability afetada. Não
+tratar binding nominal como prova de acesso escalar simples. Cobrir reference
+modification e bare/qualified como controles. Rever claims/inventários de
+CALL sob AIR V2 sem fabricar tipo textual ou outcomes. Findings F-AIR-02/03;
+menor enrichment deve preceder a precisão do acesso no lowerer.
+
+### BACKLOG-SP-007 — Observação de CALL literal e contrato de interação
+
+Publicar a observação nominal já canônica de CALL literal com identity/site,
+literal, namespace/política, target interno/externo e origem, preservando
+remainder e coverage. Alto valor para AIR-DEPENDENCY-OBSERVATION@2 sem RD/PV.
+Não converter nome externo em artefato resolvido. Para invoke calculado,
+estabelecer interpretação do nome, avaliação, inventários de argumentos e
+resultados com modos/ordem, outcomes e bounds; ausência de cláusula de exceção
+não prova normal-only. Contrato parcial pode usar unknown/opaque. A publica
+fatos, B traduz ResourceRef/invoke/envelopes, C observa/enumera dependências e
+resolve catálogo. Findings F-AIR-02/10; runtime target final continua DF-002.
+
+### BACKLOG-SP-008 — Fatos declarativos para precisão escalar AIR V2
+
+Fatiar literal/domain canônico, regra de conversão/captura/escrita e fatos de
+associação/duração/alias/EntryState necessários ao primeiro caso escalar.
+LiteralKind sozinho não valida assign; sameDomain requer prova independente
+e não prova ausência de padding/conversão. Não criar Cell por DataItemId ou
+assumir disjunção sem evidência. Fatos COBOL vêm de A antes do lowerer; B
+normaliza; C calcula efeitos/storage/RD/PV. Domínios/provas/aliases desconhecidos
+continuam abertos; layout de regiões completo pode esperar. Incluir escopo de
+gaps DATA/unit e identidade de declarações compartilhadas quando necessários
+ao slice. Findings F-AIR-06/08/09; AIR-SCALAR-FLOW@2 precede precisão de regiões.
+
 ### BACKLOG-LOWER-001 — CobolLower incremental
 
 Criar o lowerer COBOL-specific que consome somente o port do Semantic Product e
-traduz constructs lowering-ready para o contrato de entrada da Analysis IR. O
-primeiro slice pode cobrir DATA e o profile atual de CALL como `SUFFICIENT`.
-MOVE literal e IF estrutural só podem entrar como partial-preserving enquanto
-`LITERAL_KIND_NOT_PUBLISHED` e `CONDITION_SEMANTICS_NOT_AVAILABLE` permanecerem;
-`ObservedStatement` continua inventário bloqueado, não operação vazia. O
+traduz facts para Analysis IR 2.0.0. DATA pode usar unknown_type e associação
+de storage aberta. CALL nominal SUFFICIENT no código não certifica invoke;
+ausência de interpretação textual/avaliação/outcomes exige opaque. MOVE
+literal UNKNOWN não é literal AIR e assign sem prova é inválido. IF admite
+unknown bool somente com pureza/domínio estabelecidos; senão conserva envelope.
+ObservedStatement admite opaque com envelopes máximos, nunca operação vazia. O
 lowerer nunca consulta AST, resolver, report, texto ou presentation para
 completar informação ausente. Constructs partial/unsupported geram
 representação/gap conservador conforme o contrato mínimo da IR já definido,
 não omissão silenciosa.
 
-Antes de promover MOVE a lowering-ready, um work item específico de frontend
-deve publicar literal kind canônico derivado da estrutura reconhecida, sem
-inferência por `rawLexeme`, `PICTURE` ou spelling. Isso não bloqueia iniciar a
-infraestrutura partial-aware. Antes de promover o predicate de IF, um work item
-de `ConditionSemantics` conforme ADR-0012/BACKLOG-COND-001 deve materializar a
-semântica pós-binding; branch structure e CFG readiness já provadas não dependem
-dessa promoção. A implementação do primeiro lowering pode ser coordenada com a
+O primeiro CFG útil depende de BACKLOG-SP-005/SP-003, com entrada/terminal
+publicados. BACKLOG-SP-006 precede claims precisas de acesso; SP-007 habilita
+observação/interação; SP-008 habilita assign/fluxo escalar. Literal kind e
+ConditionSemantics precisa podem esperar no controle conservador, mas não se
+inventa compatibilidade, pureza ou continuation. A implementação pode ser coordenada com a
 definição do contrato mínimo da IR no mesmo work item, mas ocorre depois dos
 respectivos oracles e decisões de entrada/saída. CFG e dataflow não entram no
 lowerer.
 
 ### BACKLOG-IR-001 — Analysis IR
 
-Definir o contrato mínimo de uma IR neutra quanto à linguagem a partir do
-Semantic Product lowering-ready disponível e de requisitos/oracles concretos de
-CFG e Statement Effects / Storage Semantics. Esses oracles descrevem o que os
+Adotar a especificação externa Analysis IR **2.0.0**, fixada pelo
+[audit](../architecture/semantic-product-air-v2-audit.md), começando por modelo,
+validação e oracles de AIR-STRUCTURE@2 no escopo implementado. O contrato não
+muda para acomodar campos ausentes do Semantic Product. Esses oracles descrevem o que os
 consumers precisarão observar; não exigem que lowerer, CFG builder ou effects
 analysis já estejam implementados.
 
-O contrato mínimo precisa representar explicitamente literal kind `UNKNOWN`,
-condition/predicate parcial, runtime CALL target desconhecido,
-`ObservedStatement` bloqueado, provenance e coverage; nenhuma dessas dimensões
-pode virar valor default, no-op ou ausência. DATA nominal não pode virar storage
-identity. Esses são constraints de entrada derivados do CP8, não uma escolha de
-classes, opcodes, SSA ou schema.
+TypeRef, unknown_type/TYPE_UNKNOWN, sameDomain/DomainProofScope e envelopes
+conservadores fazem parte do contrato V2. Não existe literal unknown_type;
+literal UNKNOWN do port é abstração executável mais evidência de origem.
+Preservar condition parcial, CALL unknown, observado, coverage/provenance e
+IDs correlacionados sem inventar tipo/storage. Validadores verificam I-49–I-54
+e os sub-requisitos STRUCT de O-69–O-85, além do fechamento. Domínio de extensão
+identificado não vira tipo desconhecido. Um fixture pequeno não prova todos
+os oracles do perfil nem autoriza claim PRECISE_FOR_PROFILE global.
 
 Depois do contrato mínimo, implementar coordenadamente o primeiro lowering que
 produz a IR e só então seus primeiros consumers. A IR deve preservar operands,
 roles, control structure, identities, program points, provenance e unknowns
 necessários, sem carregar tipos do frontend COBOL nem apagar a origem semântica.
-Node schema, SSA, forma flat/hierárquica e demais escolhas ficam em aberto até
-os oracles demonstrarem necessidade. Este item não autoriza uma IR universal
+Binding Java/transporte e algoritmos ficam em aberto; a semântica de sequences,
+terminadores e pontos before/after já é normativa na V2. Este item não autoriza uma IR universal
 nem a implementação antecipada de CFG/effects.
 
 ## CFG, storage e dataflow
@@ -653,10 +724,11 @@ nem a implementação antecipada de CFG/effects.
 
 Introduzir produto CFG separado do Semantic Product, da Analysis IR e do
 binding nominal. Cada slice depende da IR e da `CFG readiness` demonstrada para
-o construct correspondente. Fatiar por fluxo linear/basic blocks e IF antes de
-EVALUATE, GO TO, GO TO DEPENDING ON, PERFORM, PERFORM THRU, NEXT SENTENCE,
-terminal semantics e fallthrough. Unknown/partial control não vira edge ou
-fallthrough presumido. Cada slice precisa de oracle adversarial próprio.
+o construct correspondente. Começar por entrada/terminal e fronteiras abertas,
+depois linear/IF e GO TO direto/DEPENDING ON, antes de EVALUATE e PERFORM/THRU
+mais amplos. Unknown/partial control exige fronteira que afete todos os destinos
+admissíveis, inclusive internos; não vira fallthrough ou apenas aresta ao fim.
+CFG deriva AIR e não consulta frontend. Cada slice exige oracle adversarial.
 
 ### BACKLOG-CFG-002 — Statements preservados com efeito de fluxo
 
@@ -675,9 +747,11 @@ incrementalmente `MOVE`, group/CORRESPONDING, reference modification, `SET`,
 parâmetros de `CALL`. Cada statement depende de sua effects/dataflow readiness e
 do operand/binding preservado na IR.
 
-O modelo de storage deve representar layout, overlap e aliases de `REDEFINES` e
-`RENAMES` quando necessários ao dataflow. `DataItemId` nominal pode localizar a
-declaration, mas não é assumido como região física definitiva. Unknown layout,
+O modelo de storage deriva consequências dos fatos declarativos normalizados
+na AIR; fatos COBOL de layout/associação/duração precisam vir pelo Semantic
+Product (BACKLOG-SP-008), sem consulta downstream a DataEntry/symbol tables.
+Representar overlap e aliases de `REDEFINES` e `RENAMES` quando necessários ao
+dataflow. DataItemId nominal não é região física definitiva. Unknown layout,
 external storage e writes por alias permanecem efeitos conservadores, não
 ausência de write.
 
