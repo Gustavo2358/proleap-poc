@@ -113,6 +113,15 @@ IDs neste documento são estáveis. `AUTOMATED` indica proteção executável at
 - **Enforcement:** `AUTOMATED` — EVAL-SP-003 compara bytes entre serializações repetidas e análises independentes, valida ordem/identidades/referências e prova que o composition root escreve o mesmo documento do adapter boundary-only; INV-DET-001 protege os produtos de origem.
 - **Known exceptions:** persistência, round-trip e migração de identity permanecem fora do contrato; o JSON v1 é transporte determinístico, não chave longitudinal.
 
+### INV-SP-007 — Entry e saída local têm fatos próprios e fechados
+
+- **Statement:** início executável conhecido pertence à entry/unit da publicação e referencia um statement publicado; não deriva de ROOT, ordinal ou ausência de continuation. GOBACK permanece distinguível, sem successor local e sem duplicação como observado quando sua capability está ativa. Inventário de entries e assinatura incompletos conservam disponibilidade/gaps, nunca zero fabricado; remover um fact não preserva sua contagem MODELED.
+- **Rationale:** um consumer externo precisa observar entrada e conclusão da invocação somente pelo contrato público, sem reinterpretação COBOL nem fallthrough por ordem física.
+- **Scope:** frontend canônico, Semantic Product/port, JSON e oracles de suficiência.
+- **Related ADRs:** ADR-0013, ADR-0005.
+- **Enforcement:** `AUTOMATED` — validação de referências no frontend/core, EVAL-SP-004 e probe EVAL-SP-002 cobrem target ausente, namespace, inventário, terminais distintos e GOBACK seguido de outro statement.
+- **Known exceptions:** somente entry primária e saída local GOBACK estão cobertas; assinatura com cláusulas, entries alternativas, runtime/lifecycle/effects e sequenciamento universal permanecem explicitamente abertos.
+
 ## Condições contextuais
 
 ### INV-COND-001 — Significado dependente de binding permanece aberto até a resolução

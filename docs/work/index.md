@@ -6,10 +6,10 @@ Work items delimitam a mudança em execução; o [backlog](backlog.md) registra 
 
 - [WORK-AST-002 — Hardening da fronteira AST para CFG e dataflow](active/WORK-AST-002/spec.md) — Slice 1 mergeado no PR #10; Discovery do Slice 2 no PR #13 e implementação de F-02 integrada pelo PR #28. Nenhum slice adjacente foi iniciado.
 
-Não há novo work item ativo para o Semantic Product. Os próximos candidatos
-locais do frontend são `BACKLOG-SP-005` com `BACKLOG-SP-003`, limitados a
-Entry, início executável e saída/terminal do primeiro slice GOBACK; nenhum foi
-iniciado. `BACKLOG-IR-001`, `BACKLOG-LOWER-001` e `BACKLOG-CFG-001` permanecem
+- [WORK-SEMANTIC-PRODUCT-004 — Entry primária e saída local GOBACK](active/WORK-SEMANTIC-PRODUCT-004/spec.md) — somente os sub-slices Entry/início de `BACKLOG-SP-005` e GOBACK de `BACKLOG-SP-003`, risco high; implementação/gates concluídos, aguardando review humano sem merge.
+
+O restante de SP-005/SP-003 não foi promovido. `BACKLOG-IR-001`,
+`BACKLOG-LOWER-001` e `BACKLOG-CFG-001` permanecem
 como registros/handoffs cross-repo para `air-java`, `cobol-lower` e
 `analysis-cfg`, não como implementação futura deste repositório.
 

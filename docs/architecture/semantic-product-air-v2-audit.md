@@ -7,6 +7,13 @@
 > `cobol-lower` será o tradutor separado; e `analysis-cfg` é o consumer separado
 > responsável pelo CFG. Consulte o [pipeline atual](pipeline.md).
 
+> **Evolução local posterior:** WORK-SEMANTIC-PRODUCT-004 promove somente
+> entry primária/início canônico e saída local GOBACK de F-AIR-04/05. O
+> [contrato atual](../domain/cobol-semantic-product.md#entry-primária-e-goback)
+> e EVAL-SP-004 registram a surface Java/JSON 1.1.0. As observações abaixo
+> descrevem a baseline auditada; sequenciamento universal, contexto de runtime,
+> AIR/lowering/CFG e os demais findings não são implementados por esse slice.
+
 ## Executive summary
 
 **O port atual permite uma publicação AIR V2 válida e conservadora de

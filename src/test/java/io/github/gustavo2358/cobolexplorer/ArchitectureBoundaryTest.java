@@ -53,6 +53,29 @@ class ArchitectureBoundaryTest {
             Pattern.compile("(?m)^import\\s+(?:static\\s+)?([^;]+);");
 
     @Test
+    void frontendPublicationHasNoAirJavaDependency() throws Exception {
+        var factory = javax.xml.parsers.DocumentBuilderFactory.newInstance();
+        factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+        var pom = factory.newDocumentBuilder().parse(Path.of("pom.xml").toFile());
+        var dependencies = pom.getElementsByTagName("dependency");
+        for (int index = 0; index < dependencies.getLength(); index++) {
+            var dependency = (org.w3c.dom.Element) dependencies.item(index);
+            String artifact = dependency.getElementsByTagName("artifactId").item(0).getTextContent();
+            assertTrue(!artifact.equals("air-java"), "ADR-0013: air-java belongs to the external lowerer");
+        }
+        List<Class<?>> components = semanticProductTypes();
+        addNestedTypes(CobolSemanticProductProjector.class, components);
+        addNestedTypes(SemanticProductJsonWriter.class, components);
+        for (Class<?> component : components) {
+            assertTrue(directDependencies(component).stream().allMatch(reference ->
+                            reference.startsWith("java/") || reference.startsWith("javax/")
+                                    || reference.startsWith(PROJECT_PREFIX_INTERNAL)
+                                    || reference.startsWith("com/fasterxml/jackson/")),
+                    () -> "Semantic Product depends on an external implementation: " + component.getName());
+        }
+    }
+
+    @Test
     void astConstructionDoesNotDependOnLaterSemanticProductsOrPresentation() throws Exception {
         assertNoDirectDependencies("INV-AST-001", List.of(Ast.class, AstBuildResult.class, AstBuilder.class),
                 names(SymbolTable.class, SymbolTableBuilder.class, CompilationUnitSymbolTables.class,

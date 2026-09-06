@@ -37,6 +37,18 @@ Desde `WORK-COND-004` (Slice 4), uma condition-name reference verdadeira produz 
 
 Occurrences de condition surface seguem a shape tipada: standalone `CONDITION/{CONDITION}`; relation/distributed bare `INDEX/{DATA, INDEX}`; relation/distributed qualified, subscripted ou reference-modified `DATA/{DATA}`; contextual tail `CONDITION/{DATA, INDEX, CONDITION}` somente para a shape index-admissible e `CONDITION/{DATA, CONDITION}` nos demais casos. A policy não é propagada aos children e cada nominal escrito gera uma única occurrence. `PerformControl(expression, VALUE|CONDITION)` é metadata não-node, sem ID e sem efeito no pre-order ou em `Ast.children`; `UNTIL` é CONDITION e `TIMES`, `VARYING`, `FROM` e `BY` são VALUE.
 
+### Entry primária e GOBACK
+
+`GobackStatement` preserva GOBACK como variante tipada, com Meta e finding
+canônicos. `Division.procedureEntry` é metadata não-node opcional: aponta por
+ID para o início do corpo não declarativo estabelecido pelos contextos tipados
+de PROCEDURE DIVISION e registra presença de cláusulas de assinatura e de
+declaratives. Não altera children/pre-order nem adiciona uma segunda ocorrência
+do target. Divisions construídas sem essa metadata não provam entrada ou
+assinatura vazia. O validator cross-product verifica o target na mesma unit.
+Semântica pública, regra IBM, disponibilidade e limites ficam no
+[contrato do Semantic Product](cobol-semantic-product.md#entry-primária-e-goback).
+
 ### SEARCH WHEN
 
 `SearchStatement` é uma fronteira AST tipada com `all`, `searchedReference`, `varying` opcional, `atEnd` opcional e uma lista ordenada de `SearchWhen`. Cada `SearchWhen` é um `Ast.Node` que possui exatamente uma `condition` e suas `statements`, preservando a identidade e o ownership da branch. `SearchWhen.condition` reutiliza a mesma condition surface de `IF`/`EVALUATE`; sua interpretação nominal continua dependente do binding e não cria `ConditionSemantics` antecipadamente.
