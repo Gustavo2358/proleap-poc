@@ -1,10 +1,11 @@
 # COBOL Semantic Product
 
 O COBOL Semantic Product é a boundary COBOL-specific, materializada e imutável
-entre o frontend e o futuro `CobolLower`. Cada publicação pertence a uma
-`ProgramUnit`, expõe somente o `CobolSemanticPort` e permanece fechada depois
-da projeção. O contrato atual é regido pela ADR-0013 e pelos invariantes
-`INV-SP-001` a `INV-SP-006`.
+entre o frontend e o futuro repositório externo `cobol-lower`. Cada publicação
+pertence a uma `ProgramUnit`, expõe somente o `CobolSemanticPort`, possui
+transporte `cobol-semantic-product.json` e permanece fechada depois da projeção.
+Essa é a fronteira pública deste repositório; o contrato atual é regido pela
+ADR-0013 e pelos invariantes `INV-SP-001` a `INV-SP-006`.
 
 O [audit bilateral contra Analysis IR 2.0.0](../architecture/semantic-product-air-v2-audit.md)
 qualifica as claims abaixo: estados publicados pelo código atual não são
@@ -249,9 +250,15 @@ somente estes requisitos para `BACKLOG-IR-001`:
 
 O contrato externo adotado como alvo é AIR 2.0.0; sua semântica não é redesenhada
 para acomodar o port. Antes de um CFG fechado: contrato/validator AIR, facts
-de entrada/terminal e sequenciamento do slice, lowerer somente pelo port e
-consumer estrutural. O primeiro fixture recomendado é uma unit com GOBACK;
-MOVE/IF/CALL crescem depois, com seus prerequisites e fallback conservador.
+de entrada/terminal e sequenciamento do slice, lowerer externo somente pelo
+transporte JSON dos facts do port e consumer estrutural. O primeiro fixture
+recomendado é uma unit com GOBACK; MOVE/IF/CALL crescem depois, com seus
+prerequisites e fallback conservador.
+
+A ownership física é cross-repo: `air-java` já possui o modelo/validator AIR;
+`cobol-lower` consumirá o JSON deste produto e publicará AIR; `analysis-cfg`
+consumirá essa Publication e construirá CFG. Somente os facts COBOL e seu JSON
+pertencem a este repositório.
 
 Antes de fluxo escalar preciso, o frontend publica fatos declarativos de
 tipo/conversão/associação de storage. O lowerer traduz esses fatos; consumers

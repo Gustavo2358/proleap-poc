@@ -13,6 +13,10 @@ Domínios disponíveis, na ordem do pipeline:
 7. [modelo de símbolos](symbol-model.md);
 8. [resolução de referências](reference-resolution.md);
 9. [COBOL Semantic Product e lowering readiness](cobol-semantic-product.md),
-   boundary materializada antes do futuro `CobolLower`.
+   boundary local materializada e transportada por JSON antes do `cobol-lower`
+   externo.
 
-CFG, dataflow, interpretação de linguagens embarcadas e descoberta final de dependências ainda não possuem contrato implementado; seu trabalho permanece no backlog. Não criar documentação especulativa para apresentá-los como domínio atual.
+CFG e dataflow não são domínios locais deste repositório: a ownership cross-repo
+está no [pipeline](../architecture/pipeline.md). Interpretação de linguagens
+embarcadas e descoberta final de dependências também não devem ser apresentadas
+como domínio atual sem contrato materializado.

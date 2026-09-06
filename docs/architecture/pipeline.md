@@ -18,20 +18,28 @@ fonte COBOL físico
   → adapters JSON, snapshots e apresentação
 ```
 
-O caminho downstream adotado pela ADR-0013 é incremental e ainda não está todo
-implementado:
+O caminho downstream adotado pela ADR-0013 é incremental e atravessa fronteiras
+de repositório:
 
 ```text
-COBOL Frontend
+este repositório: COBOL Frontend
   → COBOL Semantic Product
-  → CobolLower
-  → Analysis IR
-  → CFG
+  → cobol-semantic-product.json
+  ── fronteira de repositório ──
+cobol-lower: JSON → AIR 2.0.0 Publication (depende de air-java)
+  ── fronteira de repositório ──
+analysis-cfg: AIR Publication → CFG
   → Statement Effects / Storage Semantics
   → Reaching Definitions
   → Possible Values
   → Dependency Facts
 ```
+
+`air-java` já existe como repositório separado e possui o modelo/validator Java
+da AIR 2.0.0. `cobol-lower` será uma aplicação/repositório separado.
+`analysis-cfg` também já existe separadamente. Portanto este repositório não
+implementa AIR, não contém `CobolLower`, não produz AIR diretamente e não
+constrói CFG; sua boundary pública termina no Semantic Product JSON.
 
 O Semantic Product é a boundary COBOL-specific materializada entre os produtos
 do frontend e o lowering. Neutralidade entre COBOL e outras linguagens começa
@@ -43,9 +51,9 @@ atual de CALL recebem readiness suficiente no código; isso não certifica AIR
 entrada/controle, avaliação/interação e perda de endereçamento. MOVE/IF são
 parciais; `ObservedStatement` bloqueado no port admite `opaque` conservador
 AIR com fronteiras abertas. A [matriz canônica](../domain/cobol-semantic-product.md)
-distingue estados do código e suficiência externa. As fases
-a partir de `CobolLower` continuam futuras e aparecem aqui como direção e
-dependências, não como produtos existentes.
+distingue estados do código e suficiência externa. As fases a partir de
+`cobol-lower` aparecem aqui como direção e dependências cross-repo, não como
+produtos a implementar neste repositório.
 
 Cada seta produz um artefato para a fase seguinte; uma fase não deve gravar conclusões de análise posterior no artefato anterior.
 
@@ -71,13 +79,13 @@ Cada seta produz um artefato para a fase seguinte; uma fase não deve gravar con
 - Projectors reconciliam AST tipada, units, symbols, occurrences, resolution,
   report, policy e provenance segundo a autoridade de cada produto. Eles não
   executam parsing, binding, gap analysis ou value inference novamente.
-- `CobolLower` traduz o contrato COBOL-specific para Analysis IR sem reabrir os
-  internals do frontend. A IR representa operações e controle necessários às
-  análises posteriores sem impor uma taxonomia universal ao frontend.
-- CFG, effects/storage, reaching definitions, possible-values e análise de
-  linguagens embarcadas ainda não são produtos do pipeline. A ausência deles
-  deve continuar observável como boundary/incompletude, não como resultado
-  vazio.
+- O `cobol-lower` externo consumirá `cobol-semantic-product.json`, dependerá de
+  `air-java` e traduzirá o contrato COBOL-specific para AIR sem reabrir os
+  internals do frontend.
+- O `analysis-cfg` externo consome AIR Publication e é responsável pela construção de CFG.
+  Effects/storage, reaching definitions e possible-values permanecem produtos
+  downstream separados; ausência de readiness deve continuar observável como
+  boundary/incompletude, não como resultado vazio.
 
 ## Readiness downstream
 
@@ -87,9 +95,9 @@ readiness, unknowns, provenance e coverage. Um construct pode ter structure
 suficiente e predicate parcial; essa combinação continua útil para lowering
 conservador, mas não pode receber claim de completude maior.
 
-- **Lowering readiness:** um consumer que conhece somente o port consegue
+- **Lowering readiness:** o probe local que conhece somente o port consegue
   reconstruir os facts suportados sem AST, symbol table, occurrences, resolver
-  ou report.
+  ou report; a fronteira cross-repo transporta esses facts pelo JSON.
 - **CFG readiness:** um construct marcado ready contém informação suficiente
   para enumerar successors conservadoramente; unknown não vira fallthrough.
 - **Effects/dataflow readiness:** operands e roles permitem derivar os

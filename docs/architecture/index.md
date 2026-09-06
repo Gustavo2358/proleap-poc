@@ -8,8 +8,8 @@ O [pipeline atual](pipeline.md) registra as fronteiras confirmadas. O mapa curto
 
 - [Decisões arquiteturais](decisions/index.md): ADRs aceitos, retrospectivos ou futuros quando houver evidência suficiente.
 - [Invariantes](invariants.md): fronteiras atuais, enforcement e exceções conhecidas.
-- [Pipeline e readiness downstream](pipeline.md): separação entre frontend,
-  Semantic Product COBOL-specific, lowering, IR, CFG, effects e dataflow.
+- [Pipeline e readiness downstream](pipeline.md): fronteira local no Semantic
+  Product JSON e ownership cross-repo de AIR, lowering e CFG.
 - [Audit bilateral Semantic Product / AIR 2.0.0](semantic-product-air-v2-audit.md):
   evidências, matriz de suficiência, blockers e próximos slices.
 

@@ -81,7 +81,7 @@ IDs neste documento são estáveis. `AUTOMATED` indica proteção executável at
 
 - **Statement:** cada construct marcado como suportado ou ready preserva surface, identity, structure, nominal binding, unknowns, provenance e coverage necessárias para que um consumer do port determine o lowering declarado sem consultar AST, symbols, occurrences, resolver, report ou presentation. CFG/effects readiness são dimensões separadas; anchor/program point estrutural não afirma execution order, reachability ou edge.
 - **Rationale:** retornar ao frontend duplicaria interpretação COBOL no downstream; confundir readiness estrutural, de controle e de efeitos criaria claims falsas.
-- **Scope:** Semantic Product, seu port, `CobolLower` futuro e contratos de readiness por construct.
+- **Scope:** Semantic Product, seu port/transporte JSON, `cobol-lower` externo e contratos de readiness por construct.
 - **Related ADRs:** ADR-0003, ADR-0004 e ADR-0013.
 - **Enforcement:** `AUTOMATED` — o consumer do CP6 e o probe independente de EVAL-SP-002 consomem somente o port; `ArchitectureBoundaryTest` inspeciona source e bytecode; falsificações controladas rejeitam perda de structure, binding e unknown. A matriz durável está em `docs/domain/cobol-semantic-product.md`.
 - **Known exceptions:** o código publica DATA/CALL como suficientes no escopo do CP8, mas o [audit AIR V2](semantic-product-air-v2-audit.md) refuta que isso certifique `invoke` ou CFG e reproduz perda de endereçamento em CALL/MOVE. Remediação permanece futura. MOVE/IF parciais e observado bloqueado admitem fallback AIR conservador; o probe atual verifica reconstrução, não conformidade AIR. Nenhuma lacuna autoriza buscar o frontend.
@@ -99,7 +99,7 @@ IDs neste documento são estáveis. `AUTOMATED` indica proteção executável at
 
 - **Statement:** handles nominais de DATA identificam declarations/bindings, não storage físico independente. Nenhum Semantic Product, lowerer, IR ou dataflow pode assumir `DataItemId == StorageId`; layout, aliases e overlap de `REDEFINES`/`RENAMES` exigem Storage Semantics explícita.
 - **Rationale:** nomes distintos podem compartilhar regiões de memória e uma análise por nome isolado produziria reads/writes, kills e reaching definitions incorretos.
-- **Scope:** Semantic Product, lowering, futura Analysis IR, Storage Semantics, effects e dataflow.
+- **Scope:** Semantic Product local, lowering/AIR cross-repo, Storage Semantics, effects e dataflow downstream.
 - **Related ADRs:** ADR-0003, ADR-0004 e ADR-0013.
 - **Enforcement:** `REVIEW` — AST/symbol model preservam relações nominais sem alegar layout; o backlog downstream deve manter a dependência de Storage Semantics.
 - **Known exceptions:** Storage Semantics ainda não existe; sua ausência permanece explícita e não autoriza aliases ou regiões sintéticas.

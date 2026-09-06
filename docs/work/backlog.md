@@ -14,6 +14,14 @@ Os itens abaixo estão ordenados por dependência arquitetural, não por autoriz
 `WORK-EXT-001` foi concluído e permanece baseline; nenhum item desta seção está
 autorizado somente por constar deste backlog.
 
+Este backlog preserva tanto candidatos locais quanto handoffs conceituais
+cross-repo. A ownership física consolidada é: este repositório produz
+`cobol-semantic-product.json`; `air-java` já implementa o modelo/validator AIR
+2.0.0; o futuro repositório `cobol-lower` consumirá o JSON, dependerá de
+`air-java` e produzirá a AIR Publication; `analysis-cfg` já existe como
+repositório consumidor da Publication e é responsável pelo CFG. Itens IR,
+lowering e CFG abaixo não autorizam implementação neste repositório.
+
 Fluxo dos produtos em execução — não a ordem em que seus contratos precisam ser
 definidos:
 
@@ -28,12 +36,13 @@ BACKLOG-EXT-001 infraestrutura de composição
 COBOL Frontend
   ↓
 COBOL Semantic Product DATA/MOVE/CALL/IF (WORK-SEMANTIC-PRODUCT-002 concluído)
-  ↓ lowering-readiness por construct
-BACKLOG-LOWER-001 CobolLower incremental
+  ↓ cobol-semantic-product.json — fronteira do frontend COBOL
+cobol-lower — repo separado; BACKLOG-LOWER-001 é handoff cross-repo
+  ├── depende de air-java — modelo/validator AIR; BACKLOG-IR-001 mapeado fora deste repo
+  └── produz AIR 2.0.0 Publication
   ↓
-BACKLOG-IR-001 Analysis IR
-  ↓
-BACKLOG-CFG-001 CFG
+analysis-cfg — repo separado; BACKLOG-CFG-001 é handoff cross-repo
+  ↓ CFG
   ↓
 BACKLOG-DF-001 effects/storage
   ↓
@@ -48,34 +57,36 @@ BACKLOG-SP-001/002/003/004 enrichments por construct
   └── entram na cadeia somente após sua própria lowering/CFG/effects readiness
 ```
 
-Ordem executável de contratação e implementação do primeiro slice:
+Ordem cross-repo do primeiro slice end-to-end:
 
 ```text
-contrato externo AIR 2.0.0 + TypeRef/provas/envelopes + oracles estruturais
+air-java existente: contrato/modelo/validator AIR 2.0.0
+frontend COBOL: facts mínimos de Entry/início/terminal para GOBACK
   ↓
-facts mínimos de entrada/terminal e controle do slice no Semantic Product
+cobol-semantic-product.json
   ↓
-primeiro lowering somente pelo port, com fallback conservador para observados
+cobol-lower separado: primeiro lowering com dependência em air-java
   ↓
-primeiro consumer de CFG
+AIR Publication
   ↓
-fatos declarativos escalares no frontend → AIR → consumers de effects/storage
+analysis-cfg separado: primeiro consumer de CFG
 ```
 
-Requisitos e oracles concretos dos consumers orientam o contrato da IR; os
-consumers não precisam existir em produção para que esse contrato seja definido.
-Inversamente, lowerer e consumers só são implementados depois que a versão
-mínima do contrato que consomem estiver explícita. O primeiro slice de
-BACKLOG-IR-001 e BACKLOG-LOWER-001 pode ser promovido no mesmo work item, desde
-que mantenha essa ordem interna e as fronteiras separadas.
+Requisitos e oracles concretos dos consumers orientam os contratos entre
+repositórios. No momento do audit, `BACKLOG-IR-001` e `BACKLOG-LOWER-001`
+podiam ser promovidos no mesmo work item mantendo fronteiras separadas; essa é
+uma recomendação histórica, não a ownership atual. `air-java` agora possui o
+modelo/validator AIR, e `cobol-lower` terá ciclo de trabalho próprio fora deste
+repositório.
 
 O [audit bilateral AIR V2](../architecture/semantic-product-air-v2-audit.md)
 qualifica a ordem: inventário aberto já é representável; CFG fechado exige
 entrada/terminal antes de EVALUATE amplo, e scalar-flow exige fatos
-declarativos de storage antes de derivar suas consequências. F-02 está no PR
-#28 aberto na baseline auditada; merge/revalidação é prerequisite separado,
-não implementação concluída. Os itens SP-005 a SP-008 são handoffs deste
-Discovery, sem autorização automática para produção.
+declarativos de storage antes de derivar suas consequências. Na partida do
+audit, F-02 estava aberto no PR #28 e ausente da main; sua integração e a
+revalidação pós-merge foram concluídas antes do merge do audit pelo PR #29.
+Os itens SP-005 a SP-008 são handoffs desse Discovery, sem autorização
+automática para produção.
 
 ### BACKLOG-EXT-001 — Infraestrutura mínima de extensibilidade do pipeline
 
@@ -180,7 +191,7 @@ Relações: ADR-0007, ADR-0008, ADR-0011, INV-EMB-001, INV-EXT-001, INV-COV-001,
 
 #### Problema e resultado esperado
 
-Modelar o protocolo organizacional exemplificado por `CALL MONITOR USING PARM1` sem contaminar a semântica COBOL. O core continua responsável pelo `CALL`, binding do target/argumento, layout futuro, CFG e dataflow; o extractor GRBE reconhece somente o protocolo autorizado e transforma valores possíveis dos campos/bytes relevantes em facts de negócio/dependência auditáveis.
+Modelar o protocolo organizacional exemplificado por `CALL MONITOR USING PARM1` sem contaminar a semântica COBOL. O frontend continua responsável pelo `CALL`, binding do target/argumento e facts declarativos COBOL; CFG e dataflow pertencem aos produtos downstream e seus repositórios. O extractor GRBE reconhece somente o protocolo autorizado e transforma valores possíveis dos campos/bytes relevantes em facts de negócio/dependência auditáveis.
 
 #### Dependências e fronteiras
 
@@ -197,7 +208,7 @@ Promover com especificação organizacional autorizada, fixture mínima e um cas
 
 Permitir que constructs externos informem ao CFG efeitos como `RETURNING_TRANSFER`, `NON_RETURNING_TRANSFER`, `PROGRAM_EXIT`, `CONDITIONAL_TRANSFER` e `UNKNOWN_EXTERNAL_EFFECT`. Casos iniciais candidatos: `EXEC CICS XCTL` sem fallthrough e `EXEC CICS RETURN` como saída do programa; IMS entra somente quando houver comando e fonte oficial concretos.
 
-Essa capability afeta topologia/semântica do CFG e permanece distinta de Semantic Extractor. O futuro CFG builder ou uma fase explícita de enriquecimento consulta contratos genéricos compostos por BACKLOG-EXT-001; adicionar tecnologia deve ser implementação mais registro, não branch no builder ou no `main`.
+Essa capability afeta topologia/semântica do CFG e permanece distinta de Semantic Extractor. O CFG builder de `analysis-cfg` ou uma fase explícita de enriquecimento consulta contratos genéricos compostos por BACKLOG-EXT-001; adicionar tecnologia deve ser implementação mais registro, não branch no builder ou no `ExplorerMain` deste repositório.
 
 #### Dependências, fronteiras e promoção
 
@@ -391,8 +402,9 @@ O hardening só pode ser considerado concluído quando todos os itens abaixo for
 
 Antes de implementar, promover este backlog para um novo work item de risco médio ou alto seguindo `docs/engineering/work-item-protocol.md`. O `source_scope` mínimo esperado inclui `AstBuilder`, `SemanticCoverage`, `GrammarCoverageManifest`, `ResolutionAnalysisReport` e apenas os modelos/validators cuja necessidade for demonstrada pelos testes vermelhos. `Ast`, symbol table e contratos de resolução não devem mudar sem uma lacuna concreta da matriz.
 
-`BACKLOG-CFG-001` pode iniciar somente após as garantias estruturais/coverage,
-lowering-readiness, CobolLower e Analysis IR do slice relevante estarem verdes.
+O handoff `BACKLOG-CFG-001` só pode iniciar em `analysis-cfg` após as garantias
+estruturais/coverage, lowering-readiness, `cobol-lower` e AIR do slice relevante
+estarem verdes.
 `BACKLOG-DF-001` depende também dos program points do CFG e continua responsável
 por storage regions e efeitos de memória; `BACKLOG-DF-002` continua responsável
 pela interpretação final de targets dinâmicos.
@@ -564,7 +576,7 @@ O slice arquitetural precede mudanças transversais de lowering/occurrence. Muda
 - Fora de escopo: inferir valores de runtime, CFG, dataflow, constant propagation ou targets dinâmicos; esses consumidores apenas motivam uma representação correta.
 - Proibido iniciar implementação a partir deste backlog. Criar work item de risco alto conforme `docs/engineering/work-item-protocol.md`; gates mínimos previstos: `fast`, `semantic`, `performance` quando houver nova propriedade algorítmica, e `full`.
 
-## Semantic Product, lowering e Analysis IR
+## Semantic Product local e handoffs downstream
 
 Os itens desta seção são handoffs, não um design antecipado da IR. Cada
 construct só atravessa a cadeia quando sua matriz de surface, identity,
@@ -600,6 +612,8 @@ slice preciso; o fallback continua aberto quando não houver prova.
 
 ### BACKLOG-SP-003 — Transferências e terminal semantics
 
+Ownership local: frontend COBOL / COBOL Semantic Product.
+
 Enriquecer incrementalmente `GO TO`, `GO TO DEPENDING ON`, targets múltiplos,
 selector, fallthrough admissível e statements terminais. Preservar targets e
 binding nominal sem publicar edges, reachability ou comportamento terminal
@@ -623,6 +637,10 @@ o universo antes de PV; não fechar targets a partir do corpus. SEARCH requer
 seu próprio controle/avaliação, sem inferência pela ordem de children.
 
 ### BACKLOG-SP-005 — Entradas e continuidade executável do Semantic Product
+
+Ownership local: frontend COBOL / COBOL Semantic Product. Este item, coordenado
+com `BACKLOG-SP-003`, é o próximo candidato local para o primeiro slice GOBACK;
+continua sem autorização de início.
 
 Publicar inventário/disponibilidade de entradas, assinatura/posições quando
 conhecidas, início e conclusão da unit, ownership de procedure regions e
@@ -671,8 +689,12 @@ ao slice. Findings F-AIR-06/08/09; AIR-SCALAR-FLOW@2 precede precisão de regiõ
 
 ### BACKLOG-LOWER-001 — CobolLower incremental
 
-Criar o lowerer COBOL-specific que consome somente o port do Semantic Product e
-traduz facts para Analysis IR 2.0.0. DATA pode usar unknown_type e associação
+Ownership: handoff cross-repo. A implementação pertence ao futuro repositório
+separado `cobol-lower`, não a este repositório.
+
+Criar o lowerer COBOL-specific que consome somente
+`cobol-semantic-product.json`, transporte do contrato do Semantic Product, e
+traduz seus facts para Analysis IR 2.0.0. DATA pode usar unknown_type e associação
 de storage aberta. CALL nominal SUFFICIENT no código não certifica invoke;
 ausência de interpretação textual/avaliação/outcomes exige opaque. MOVE
 literal UNKNOWN não é literal AIR e assign sem prova é inválido. IF admite
@@ -693,6 +715,10 @@ respectivos oracles e decisões de entrada/saída. CFG e dataflow não entram no
 lowerer.
 
 ### BACKLOG-IR-001 — Analysis IR
+
+Ownership: handoff cross-repo. O modelo/validator Java da AIR 2.0.0 já pertence
+ao repositório separado `air-java`; este texto preserva os requisitos derivados
+pelo audit e não descreve trabalho local pendente neste repositório.
 
 Adotar a especificação externa Analysis IR **2.0.0**, fixada pelo
 [audit](../architecture/semantic-product-air-v2-audit.md), começando por modelo,
@@ -721,6 +747,9 @@ nem a implementação antecipada de CFG/effects.
 ## CFG, storage e dataflow
 
 ### BACKLOG-CFG-001 — CFG estrutural incremental
+
+Ownership: handoff cross-repo. A implementação pertence ao repositório separado
+`analysis-cfg`, consumidor de AIR Publication, não a este repositório.
 
 Introduzir produto CFG separado do Semantic Product, da Analysis IR e do
 binding nominal. Cada slice depende da IR e da `CFG readiness` demonstrada para
