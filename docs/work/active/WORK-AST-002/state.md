@@ -2,7 +2,7 @@
 
 ## Onde estamos
 
-Slice 1 mergeado no PR #10; pré-requisito de IDs/traversal concluído nos PRs #11/#12; Discovery de F-02 mergeado no PR #13. O PR #28 implementa o Slice 2 na branch `feat/semantic-product-integrity-validator`. A revisão de 2026-09-06 pediu dois refinamentos localizados: admissibilidade dos candidates e kind/owner dos scopes. As correções estão implementadas e validadas localmente; PR aberto, aguardando nova revisão, sem merge automático.
+Slice 1 mergeado no PR #10; pré-requisito de IDs/traversal concluído nos PRs #11/#12; Discovery de F-02 mergeado no PR #13. O PR #28 integrou a implementação do Slice 2 na main em `2026-09-06T10:05:04Z`, merge commit `6d3400e`. Os dois refinamentos localizados pedidos na revisão — admissibilidade dos candidates e kind/owner dos scopes — fazem parte desse merge.
 
 ## Verde conhecido
 
@@ -15,8 +15,7 @@ Slice 1 mergeado no PR #10; pré-requisito de IDs/traversal concluído nos PRs #
 
 ## Restante
 
-- Nova revisão do Slice 2; merge depende de ação posterior e não integra esta autorização.
-- Regressão documental final/Slice 3 continua posterior à revisão dos slices de produção; nenhum slice/backlog adjacente foi iniciado.
+- Regressão documental final/Slice 3 continua posterior à integração dos slices de produção; nenhum slice/backlog adjacente foi iniciado.
 
 ## Descobertas que afetam o plano
 

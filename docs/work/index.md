@@ -5,7 +5,11 @@ Work items delimitam a mudança em execução; o [backlog](backlog.md) registra 
 ## Ativo
 
 - [WORK-AST-002 — Hardening da fronteira AST para CFG e dataflow](active/WORK-AST-002/spec.md) — Slice 1 mergeado no PR #10; Discovery do Slice 2 no PR #13 e implementação de F-02 integrada pelo PR #28. Nenhum slice adjacente foi iniciado.
-- [WORK-SEMANTIC-PRODUCT-003 — Discovery bilateral Semantic Product / AIR V2](active/WORK-SEMANTIC-PRODUCT-003/spec.md) — audit exclusivamente documental; [matriz e findings](../architecture/semantic-product-air-v2-audit.md), [oracles futuros](../evals/semantic-product-air-v2-oracles.md) e revisão pendente. Nenhum slice de produção iniciado.
+
+Não há work item ativo para AIR, CobolLower, enrichments do Semantic Product ou
+CFG. `BACKLOG-IR-001`, `BACKLOG-LOWER-001`, `BACKLOG-SP-005` a
+`BACKLOG-SP-008` e `BACKLOG-CFG-001` permanecem futuros e sem autorização de
+início.
 
 ## Histórico
 
@@ -32,3 +36,4 @@ Work items delimitam a mudança em execução; o [backlog](backlog.md) registra 
 - [WORK-COV-001 — Preservar análise parcial diante de COPY ausente](history/WORK-COV-001.md)
 - [WORK-SEMANTIC-PRODUCT-001 — Semantic Product Boundary Discovery](history/WORK-SEMANTIC-PRODUCT-001.md) — Discovery concluído pelo PR #26; evidências dos Checkpoints 2, 3A e 3B preservadas.
 - [WORK-SEMANTIC-PRODUCT-002 — Semantic Product extensível e readiness final](history/WORK-SEMANTIC-PRODUCT-002.md) — CP1–CP8 concluídos no PR #27; boundary materializada, consumer/JSON independentes e handoff lowering/IR falsificado.
+- [WORK-SEMANTIC-PRODUCT-003 — Discovery bilateral Semantic Product / AIR V2](history/WORK-SEMANTIC-PRODUCT-003.md) — audit exclusivamente documental concluído pelo PR #29; matriz, findings e oracles futuros permanecem canônicos, sem início de produção.

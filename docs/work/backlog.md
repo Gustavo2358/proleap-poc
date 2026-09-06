@@ -72,10 +72,11 @@ que mantenha essa ordem interna e as fronteiras separadas.
 O [audit bilateral AIR V2](../architecture/semantic-product-air-v2-audit.md)
 qualifica a ordem: inventário aberto já é representável; CFG fechado exige
 entrada/terminal antes de EVALUATE amplo, e scalar-flow exige fatos
-declarativos de storage antes de derivar suas consequências. F-02 está no PR
-#28 aberto na baseline auditada; merge/revalidação é prerequisite separado,
-não implementação concluída. Os itens SP-005 a SP-008 são handoffs deste
-Discovery, sem autorização automática para produção.
+declarativos de storage antes de derivar suas consequências. Na partida do
+audit, F-02 estava aberto no PR #28 e ausente da main; sua integração e a
+revalidação pós-merge foram concluídas antes do merge do audit pelo PR #29.
+Os itens SP-005 a SP-008 são handoffs desse Discovery, sem autorização
+automática para produção.
 
 ### BACKLOG-EXT-001 — Infraestrutura mínima de extensibilidade do pipeline
 

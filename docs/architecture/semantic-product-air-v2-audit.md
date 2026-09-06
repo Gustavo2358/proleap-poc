@@ -664,8 +664,9 @@ de cada consumer. Não promover readiness agregada além do menor escopo provado
 [Oracles futuros] vincula cada falsificação a checkpoint, owner e obrigação
 AIR. EVAL-SP-001/002/003 continuam evidência da boundary e transporte atuais;
 não são certificados AIR. Testes semânticos existentes devem permanecer
-verdes mesmo com as limitações documentadas. O estado operacional de gates,
-commit e PR pertence ao [work item], não a este contrato durável.
+verdes mesmo com as limitações documentadas. O estado operacional final de
+gates, merge e arquivamento pertence ao [resumo histórico do work item], não a
+este contrato durável.
 
 Decisão recomendada para o próximo PR: contrato AIR estrutural/validação e
 oracles, seguido do enrichment mínimo entry/terminal e de lowerer/CFG em
@@ -700,7 +701,7 @@ de cada claim. Nenhuma questão em aberto impede concluir este Discovery.
 [WORK-SEMANTIC-PRODUCT-002]: ../work/history/WORK-SEMANTIC-PRODUCT-002.md
 [classificação de impacto]: ../engineering/downstream-impact-classification.md
 [Oracles futuros]: ../evals/semantic-product-air-v2-oracles.md
-[work item]: ../work/active/WORK-SEMANTIC-PRODUCT-003/state.md
+[resumo histórico do work item]: ../work/history/WORK-SEMANTIC-PRODUCT-003.md
 [MOVE IBM]: https://www.ibm.com/docs/en/cobol-zos/6.4.0?topic=items-assigning-values-elementary-data-move
 [CALL IBM]: https://www.ibm.com/docs/en/cobol-zos/6.4.0?topic=statements-call-statement
 [PERFORM IBM]: https://www.ibm.com/docs/en/cobol-zos/6.4.0?topic=statements-perform-statement
