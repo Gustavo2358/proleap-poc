@@ -29,9 +29,11 @@ related_decisions:
   - ADR-0008
   - ADR-0009
   - ADR-0010
+  - ADR-0013
 related_invariants:
   - INV-AST-001
   - INV-AST-002
+  - INV-AST-003
   - INV-SYM-001
   - INV-PROV-002
   - INV-COV-001
@@ -40,6 +42,7 @@ related_invariants:
   - INV-RES-002
   - INV-DET-001
   - INV-PERF-001
+  - INV-PROD-001
 evals:
   - EVAL-AST-001
   - EVAL-AST-002
@@ -54,6 +57,7 @@ evals:
   - EVAL-RES-REPORT-001
   - EVAL-RES-DET-001
   - EVAL-RES-PERF-001
+  - EVAL-PROD-001
 source_scope:
   - src/main/java/io/github/gustavo2358/cobolexplorer/AstBuilder.java
   - src/main/java/io/github/gustavo2358/cobolexplorer/Ast.java
@@ -65,7 +69,7 @@ source_scope:
   - src/main/java/io/github/gustavo2358/cobolexplorer/ReferenceOccurrences.java
   - src/main/java/io/github/gustavo2358/cobolexplorer/ReferenceResolution.java
   - src/main/java/io/github/gustavo2358/cobolexplorer/ResolutionAnalysisReport.java
-  - planned:src/main/java/io/github/gustavo2358/cobolexplorer/SemanticProductIntegrityValidator.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/SemanticProductIntegrityValidator.java
   - src/main/java/io/github/gustavo2358/cobolexplorer/ExplorerMain.java
 test_scope:
   - src/test/java/io/github/gustavo2358/cobolexplorer/AstBuildCoverageTest.java
@@ -76,12 +80,12 @@ test_scope:
   - src/test/java/io/github/gustavo2358/cobolexplorer/CoverageSnapshotTest.java
   - src/test/java/io/github/gustavo2358/cobolexplorer/GrammarCoverageManifestTest.java
   - src/test/java/io/github/gustavo2358/cobolexplorer/SemanticCoverageTest.java
-  - planned:src/test/java/io/github/gustavo2358/cobolexplorer/SemanticProductIntegrityValidatorTest.java
+  - src/test/java/io/github/gustavo2358/cobolexplorer/SemanticProductIntegrityValidatorTest.java
   - src/test/resources/cobol/semantic/ast-cfg-boundary.cbl
 must_not_change:
   - Gramática ou comportamento do parser
   - Shape e cardinalidade da AST símbolos occurrences binding nominal ou candidates
-  - Implementação de F-02 neste PR de Discovery; somente uma nova branch e PR após merge e instrução explícita poderão implementá-la
+  - Slices adjacentes a F-02 sem autorização; Discovery mergeado no PR 13 e implementação deste slice explicitamente autorizada
   - Baselines para acomodar novos testes
   - CFG dataflow storage layout aliases effects reaching definitions possible values runtime values kills ou targets dinâmicos
   - Semântica opaca de SQL CICS e SQLIMS

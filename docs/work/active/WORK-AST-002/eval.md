@@ -40,7 +40,55 @@ EVAL-AST-001 a 004, EVAL-COV-001/002, EVAL-SYM-001/002, EVAL-RES-REL-001, EVAL-R
 
 ## Expectativas de escala
 
-O reconciliador de joins do teste percorre nodes, scopes, symbols, relations, occurrences, entries e candidates em `O(n)` no tamanho agregado dos produtos, usando índices auxiliares lineares. Nenhum oracle varre todas as declarações para cada referência. `performance` passa a ser gate obrigatório da futura implementação; este Discovery apenas fecha o contrato que o gate deverá proteger.
+O validator percorre nodes, scopes, symbols, relations, occurrences, entries e candidates em `O(n)` no tamanho agregado dos produtos, incluindo candidate declaration IDs, usando índices auxiliares lineares. Não há scan de declarações por referência/candidate. `performance` é gate obrigatório deste checkpoint; seu probe de escala complementa a revisão da complexidade dos joins.
+
+## Checkpoint de implementação de F-02 — 2026-09-05
+
+O contrato do PR #13 foi confirmado contra a `main` `107ce08`, incluindo os
+producers de candidates e o novo consumidor Semantic Product. O validator segue
+a API, ownership e ponto de integração descobertos. Os dois required oracles
+foram promovidos; o oracle de resolution extra agora chama o validator e foi
+renomeado para `validationFailsClosedWhenResolutionContainsOccurrenceMissingFromCollectorProduct`.
+Os asserts independentes de caracterização foram preservados.
+
+`SemanticProductIntegrityValidatorTest` materializa a matriz de corrupção abaixo:
+inventários/parentage, AST/scope/declaration, provenance, bijeções, os cinco domínios
+de candidate, declaration IDs exatos e duplicatas tanto em resolution quanto em
+relation resolution. Inclui identidades locais repetidas, candidate ancestral,
+payload nominal divergente, ambiguidade com nomes iguais e identidades distintas,
+todos os status válidos e fixtures de coverage/relations/FILLER. A ordem da chamada
+incondicional em `ExplorerMain` é protegida por oracle estrutural do composition
+root; os testes negativos exercitam diretamente o validator. Missing COPY continua
+coberto pelo E2E de `PartialAnalysisMissingCopyTest`, agora atravessando o validator.
+
+O probe de escala integra o gate performance, cresce até 512 units com IDs/nomes
+locais repetidos e detecta corrupção na última unit. Ele não mede tempo nem prova
+sozinho a complexidade: a garantia algorítmica vem dos passes únicos, maps por unit
+e AST ID, acesso direto às listas contíguas e sets por lista de candidates, revisados
+no diff. Não há scan nominal ou de declarations por candidate. Kind/namespace/scope
+de symbol são reconciliados com fatos tipados da AST, e IDs respeitam INV-AST-003;
+isso não adiciona binding, type checking COBOL ou inferência de runtime.
+
+Os resultados finais dos gates e o handoff ficam no `state.md`. O contrato durável
+foi promovido para reference resolution/pipeline, INV-PROD-001 e EVAL-PROD-001.
+Os resultados abaixo registram a evidência original do Discovery, não o estado
+atual da implementação.
+
+O bloco registra o impacto da lacuna F-02, remediada por este checkpoint:
+
+```yaml
+downstream_impact:
+  class: BLOCKS_SEMANTIC_PRODUCT
+  rationale: >
+    Combinações corrompidas de declarations, occurrences e candidates já perdem
+    coerência no frontend, antes da boundary materializada exigida pela ADR-0013.
+    Não há camada anterior na taxonomia; IR/CFG/dataflow não são a primeira
+    fronteira quebrada e REDUCES_PRECISION não se aplica a identidades falsas.
+  evidence:
+    - Os dois required oracles F-02 reproduzem resolution extra e declaration AST órfã.
+    - SemanticProductIntegrityValidatorTest rejeita corrupção controlada antes de classifier/report/projection.
+    - ADR-0013 e INV-SP-003/004 exigem fatos canônicos coerentes sem reparação no projector.
+```
 
 ## Resultado do discovery
 

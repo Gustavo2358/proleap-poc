@@ -162,10 +162,13 @@ public final class ExplorerMain {
         progress.phase = "REFERENCE_COLLECTION";
         phaseStarted = System.nanoTime();
         Map<ResolutionContracts.ProgramUnitId, ReferenceOccurrences> occurrences = new LinkedHashMap<>();
+        Map<ResolutionContracts.ProgramUnitId, AstScopeIndex> scopeIndexesByUnit = new LinkedHashMap<>();
         for (CompilationUnitModel.ProgramUnit unit : compilationUnit.programUnits()) {
             SymbolTable unitTable = symbolTables.forProgramUnit(unit.id()).orElseThrow().symbolTable();
+            AstScopeIndex scopeIndex = AstScopeIndex.build(unit.program(), unitTable);
+            scopeIndexesByUnit.put(unit.id(), scopeIndex);
             occurrences.put(unit.id(), new ReferenceOccurrenceCollector().collect(unit.id(), unit.program(),
-                    AstScopeIndex.build(unit.program(), unitTable)));
+                    scopeIndex));
         }
         if (LOG.isDebugEnabled()) {
             long referenceCount = occurrences.values().stream()
@@ -182,6 +185,9 @@ public final class ExplorerMain {
                 .withDllMode(preprocessed.dllMode());
         ReferenceResolution resolution = new CobolReferenceResolver(policy)
                 .resolve(compilationUnit, symbolTables, occurrences);
+
+        SemanticProductIntegrityValidator.validate(compilationUnit, symbolTables,
+                scopeIndexesByUnit, occurrences, resolution);
 
         progress.phase = "EXTERNAL_CLASSIFICATION";
         ResolutionAnalysisReport.FrontendState frontendState =

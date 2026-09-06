@@ -2,11 +2,11 @@
 
 ## Problema
 
-O discovery revisado no PR #9 provou que `BACKLOG-AST-001` exige duas mudanças de produção localizadas: coverage concreto/taxonomia nas fronteiras AST (F-01/F-03) e integridade cross-product fail-closed (F-02). O Slice 1 fechou F-01/F-03 no PR #10. O PR #12 corrigiu separadamente `BUG-AST-PREORDER-001`, removendo o bloqueio de identidade/traversal levantado por WORK-AST-003. Resta decidir e implementar F-02 sem misturar produtos, report ou análises futuras.
+O discovery revisado no PR #9 provou que `BACKLOG-AST-001` exige duas mudanças de produção localizadas: coverage concreto/taxonomia nas fronteiras AST (F-01/F-03) e integridade cross-product fail-closed (F-02). O Slice 1 fechou F-01/F-03 no PR #10. O PR #12 corrigiu separadamente `BUG-AST-PREORDER-001`, removendo o bloqueio de identidade/traversal levantado por WORK-AST-003. O PR #13 fechou o Discovery arquitetural de F-02, agora em implementação autorizada sem misturar produtos, report ou análises futuras.
 
 ## Objetivo
 
-Implementar as lacunas comprovadas em PRs independentes. A autorização vigente cobre exclusivamente o Discovery arquitetural do Slice 2: fechar contrato, ownership, ponto de integração, modelo de erro e matriz de regressão da integridade cross-product. Nenhuma alteração de produção ou promoção dos oráculos F-02 está autorizada nesta sessão.
+Implementar o Slice 2/F-02 conforme o Discovery mergeado no PR #13: validator dedicado linear, integração imediatamente após resolução e promoção dos oracles. A autorização explícita de 2026-09-05 exige uma nova branch/PR, gates completos e nenhum merge. Slices adjacentes permanecem fora do checkpoint.
 
 ## Domínio de entrada suportado
 
@@ -55,7 +55,7 @@ Uma construção válida porém não interpretada deve permanecer como node pres
 
 ## Fora de escopo
 
-- Implementação do validator, alteração de `ResolutionAnalysisReport.compose`, alteração de `ExplorerMain` e promoção dos dois oráculos de F-02; todos permanecem fora desta sessão de Discovery.
+- Alteração de `ResolutionAnalysisReport.compose`, classifier, snapshots ou projector para assumir integridade, reparar fatos ou executar nova análise.
 - Gramática, parser behavior, shape/cardinalidade da AST, symbols, occurrences, binding nominal ou baselines não explicados.
 - CFG, statement effects, reaching definitions, possible/runtime values, storage regions/layout/aliases, kills e targets dinâmicos finais.
 - Parsers ou interpretação semântica de SQL, CICS e SQLIMS.

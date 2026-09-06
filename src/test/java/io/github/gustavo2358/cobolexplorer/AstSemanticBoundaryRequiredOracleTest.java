@@ -1,7 +1,6 @@
 package io.github.gustavo2358.cobolexplorer;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -65,8 +64,7 @@ class AstSemanticBoundaryRequiredOracleTest {
     }
 
     @Test
-    @EnabledIfSystemProperty(named = "ast.boundary.required", matches = "true")
-    void reportFailsClosedWhenResolutionContainsOccurrenceMissingFromCollectorProduct() {
+    void validationFailsClosedWhenResolutionContainsOccurrenceMissingFromCollectorProduct() {
         String source = """
                 IDENTIFICATION DIVISION.
                 PROGRAM-ID. CORRUPT-JOIN.
@@ -85,14 +83,13 @@ class AstSemanticBoundaryRequiredOracleTest {
         Map<ResolutionContracts.ProgramUnitId, ReferenceOccurrences> corrupted =
                 Map.of(unitId, new ReferenceOccurrences(List.of()));
 
-        assertThrows(IllegalStateException.class, () -> ResolutionAnalysisReport.compose(
-                analysis.build(), ResolutionAnalysisReport.FrontendState.complete(), corrupted,
+        assertThrows(SemanticProductIntegrityException.class, () -> SemanticProductIntegrityValidator.validate(
+                analysis.model(), analysis.tables(), analysis.scopes(), corrupted,
                 analysis.resolution()),
                 "an extra resolution entry without its occurrence product must be rejected");
     }
 
     @Test
-    @EnabledIfSystemProperty(named = "ast.boundary.required", matches = "true")
     void crossProductValidationRejectsSymbolWhoseDeclarationAstNodeDoesNotExist() {
         AstBoundaryTestSupport.Analysis analysis = AstBoundaryTestSupport.analyze("""
                 IDENTIFICATION DIVISION.
@@ -118,7 +115,7 @@ class AstSemanticBoundaryRequiredOracleTest {
                 new CompilationUnitSymbolTables.UnitSymbols(originalUnit.id(), originalUnit.parentId(),
                         corruptedTable)));
 
-        assertThrows(RuntimeException.class,
+        assertThrows(SemanticProductIntegrityException.class,
                 () -> AstBoundaryTestSupport.composePostAstProducts(analysis, corruptedTables),
                 "post-AST product composition must reject a symbol whose declaration node is absent");
     }
