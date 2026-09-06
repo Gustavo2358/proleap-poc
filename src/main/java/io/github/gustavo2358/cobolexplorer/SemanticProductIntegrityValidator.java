@@ -94,6 +94,9 @@ final class SemanticProductIntegrityValidator {
                     "resolution", id, "OCCURRENCE", key, "collected occurrence payload mismatch");
             unit.resolvedOccurrences()[occurrence.id()] = true;
             validateCandidates(entry.candidates(), indexes, "resolution " + key);
+            for (var candidate : entry.candidates())
+                require(occurrence.admissibleKinds().contains(candidate.kind()), "resolution", id,
+                        "OCCURRENCE", key, "candidate kind not admissible entityId=" + candidate.entityId());
         }
         for (var entry : resolution.declarationRelations().entries()) {
             ProgramUnitId id = entry.programUnitId();
@@ -137,11 +140,17 @@ final class SemanticProductIntegrityValidator {
     private static Map<Integer, Ast.Node> indexAst(CompilationUnitModel.ProgramUnit unit,
                                                   SymbolTable table, AstScopeIndex scopes) {
         ProgramUnitId id = unit.id();
+        Map<Integer, SymbolTable.Symbol> declarations = new HashMap<>();
+        for (var symbol : table.symbols())
+            require(declarations.putIfAbsent(symbol.declarationAstNodeId(), symbol) == null, "symbols", id,
+                    "SYMBOL", "symbolId=" + symbol.id(), "duplicate declaration AST identity");
         Map<Integer, SymbolTable.Scope> anchors = new HashMap<>();
         for (var scope : table.scopes()) {
             if (scope.kind() == SymbolTable.ScopeKind.ROOT) {
                 require(scope.astNodeId() == -1, "scopes", id, "SCOPE", "scopeId=" + scope.id(),
                         "root must not have an AST anchor");
+                require(scope.ownerSymbolId() == -1, "scopes", id, "SCOPE", "scopeId=" + scope.id(),
+                        "root must not have a nominal owner");
             } else {
                 require(scope.astNodeId() >= 0 && anchors.putIfAbsent(scope.astNodeId(), scope) == null,
                         "scopes", id, "SCOPE", "scopeId=" + scope.id(), "missing or duplicate AST anchor");
@@ -161,9 +170,12 @@ final class SemanticProductIntegrityValidator {
                     "identity is not canonical preorder");
             SymbolTable.Scope anchor = anchors.get(nodeId);
             int expectedScope = anchor == null ? visit.inheritedScope() : anchor.id();
-            if (anchor != null)
+            if (anchor != null) {
                 require(anchor.parentId() == visit.inheritedScope(), "scopes", id, "SCOPE",
                         "scopeId=" + anchor.id(), "AST containment/parent mismatch");
+                Ast.Node parent = nodes.get(table.scopes().get(visit.inheritedScope()).astNodeId());
+                validateScopeAnchor(id, anchor, node, parent, declarations.get(nodeId));
+            }
             int actualScope;
             try {
                 actualScope = scopes.scopeIdForAstNodeId(nodeId);
@@ -182,6 +194,43 @@ final class SemanticProductIntegrityValidator {
         require(scopes.mappedNodeCount() == nodes.size(), "scopes", id, "AST_NODE", "inventory",
                 "extra scope mappings");
         return nodes;
+    }
+
+    private static void validateScopeAnchor(ProgramUnitId unit, SymbolTable.Scope scope, Ast.Node node,
+                                           Ast.Node parent, SymbolTable.Symbol declaration) {
+        String key = "scopeId=" + scope.id();
+        SymbolTable.ScopeKind kind = scopeKind(node);
+        require(kind != null && scope.kind() == kind, "scopes", unit, "SCOPE", key,
+                "scope kind/AST anchor mismatch astNodeId=" + scope.astNodeId());
+        boolean procedureSection = node instanceof Ast.Section
+                && parent instanceof Ast.Division division && division.divisionKind() == Ast.DivisionKind.PROCEDURE;
+        // Owners are declarations at this exact anchor, never names found in another scope.
+        // Unnamed paragraphs have no declaration in the symbol product; FILLER and
+        // structural division/DATA-section scopes cannot acquire a nominal owner.
+        boolean nominal = node instanceof Ast.Program || node instanceof Ast.FileDescription
+                || node instanceof Ast.DataEntry entry && !entry.filler()
+                || procedureSection || node instanceof Ast.Paragraph && declaration != null;
+        require(!nominal || declaration != null, "scopes", unit, "SCOPE", key,
+                "missing nominal owner declaration astNodeId=" + scope.astNodeId());
+        int expectedOwner = nominal ? declaration.id() : -1;
+        require(scope.ownerSymbolId() == expectedOwner, "scopes", unit, "SCOPE", key,
+                "nominal owner mismatch ownerSymbolId=" + scope.ownerSymbolId());
+        // The resolver consumes this payload for procedure qualification. Compare it
+        // only after the identity join; it is not a name lookup or candidate selection.
+        if (procedureSection)
+            require(Objects.equals(scope.name(), ((Ast.Section) node).name()), "scopes", unit, "SCOPE", key,
+                    "procedure section name/AST payload mismatch");
+    }
+
+    private static SymbolTable.ScopeKind scopeKind(Ast.Node node) {
+        if (node instanceof Ast.Program) return SymbolTable.ScopeKind.PROGRAM;
+        if (node instanceof Ast.Division) return SymbolTable.ScopeKind.DIVISION;
+        if (node instanceof Ast.Section) return SymbolTable.ScopeKind.SECTION;
+        if (node instanceof Ast.FileDescription) return SymbolTable.ScopeKind.FILE_DESCRIPTION;
+        if (node instanceof Ast.DataEntry entry && entry.levelKind() != Ast.DataLevelKind.CONDITION_88)
+            return SymbolTable.ScopeKind.DATA_ITEM;
+        if (node instanceof Ast.Paragraph) return SymbolTable.ScopeKind.PARAGRAPH;
+        return null;
     }
 
     /** Checks typed declaration facts, without comparing names or parsing DATA levels. */

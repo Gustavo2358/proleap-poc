@@ -28,9 +28,19 @@ Semantic Product. Invariants autocontidos continuam nos produtos; este validator
 - AST IDs seguem o pre-order local, sem duplicatas; anchors de scopes,
   declarations e relations existem na AST da mesma unit. Scopes correspondem
   ao containment; declarations preservam kind/namespace/scope estruturais.
+  O kind do scope corresponde ao tipo do anchor: PROGRAM, DIVISION, SECTION,
+  FILE_DESCRIPTION, DATA_ITEM ou PARAGRAPH. O owner nominal é a declaration
+  daquele AST ID; FILLER, root, divisions, DATA sections e paragraphs sem
+  declaration nominal mantêm owner `-1`. Condition-name 88 não cria scope próprio.
+  Em procedure sections, o nome do scope coincide com o payload do anchor AST,
+  pois o resolver o consome na qualification; a comparação ocorre após o join
+  por identidade, sem lookup textual.
 - Occurrences preservam o scope indexado e o `Meta` completo do node, incluindo
   provenance. Occurrences/resolution e relations/relation-resolution formam
   bijeções por `(ProgramUnitId, id local)`, com payload correspondente.
+  Todo candidate de uma resolution entry pertence a `occurrence.admissibleKinds`,
+  inclusive sob status incompleto; o primary kind da occurrence não restringe
+  sozinho as categorias de uma referência contextual.
 - `SemanticEntityId(unit, domain, localId)` seleciona o alvo do candidate.
   DATA_SYMBOL representa DATA_ITEM/RENAMES como DATA ou CONDITION_NAME como
   CONDITION; INDEX_SYMBOL representa INDEX_NAME; PROCEDURE_SYMBOL representa

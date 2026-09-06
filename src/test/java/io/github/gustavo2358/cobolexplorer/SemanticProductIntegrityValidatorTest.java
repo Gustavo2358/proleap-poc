@@ -131,6 +131,154 @@ class SemanticProductIntegrityValidatorTest {
         products.validate();
     }
 
+    @ParameterizedTest
+    @EnumSource(value = SemanticEntityDomain.class, names = {"PROGRAM_UNIT", "FILE_ENTITY"})
+    void rejectsValidCandidatesOutsideTheOccurrenceAdmissibleKinds(SemanticEntityDomain domain) {
+        var original = baseline.resolution().entries().stream()
+                .filter(e -> e.occurrence().admissibleKinds().equals(Set.of(ReferenceKind.DATA))
+                        && e.status() == ResolutionStatus.RESOLVED).findFirst().orElseThrow();
+        var incompatible = candidate(domain);
+        for (var status : List.of(ResolutionStatus.RESOLVED, ResolutionStatus.AMBIGUOUS, ResolutionStatus.UNSUPPORTED)) {
+            Products products = new Products(baseline);
+            // The second candidate must also be checked, including under incomplete statuses.
+            var candidates = status == ResolutionStatus.RESOLVED ? List.of(incompatible)
+                    : List.of(original.candidates().get(0), incompatible);
+            products.entry(original.id(), new ReferenceResolution.Entry(original.id(), original.occurrence(),
+                    status, status == ResolutionStatus.RESOLVED ? ResolutionReason.UNIQUE_VISIBLE_DECLARATION
+                    : ResolutionReason.MULTIPLE_VALID_CANDIDATES, candidates, List.of()));
+            rejects(products);
+        }
+    }
+
+    @Test
+    void contextualOccurrencesAcceptDataIndexAndConditionCandidates() {
+        var analysis = AstBoundaryTestSupport.analyze("""
+                IDENTIFICATION DIVISION.
+                PROGRAM-ID. CONTEXTUAL-INTEGRITY.
+                DATA DIVISION.
+                WORKING-STORAGE SECTION.
+                01 SUBJECT-A PIC 9.
+                01 DATA-A PIC 9.
+                01 FLAG-A PIC 9.
+                   88 CONDITION-A VALUE 1.
+                01 TABLE-A OCCURS 2 INDEXED BY INDEX-A PIC 9.
+                PROCEDURE DIVISION.
+                    IF SUBJECT-A = 1 OR DATA-A OR INDEX-A OR CONDITION-A
+                        CONTINUE
+                    END-IF.
+                END PROGRAM CONTEXTUAL-INTEGRITY.
+                """, "contextual-integrity.cbl");
+        Set<ReferenceKind> admissible = Set.of(ReferenceKind.DATA, ReferenceKind.INDEX, ReferenceKind.CONDITION);
+        var contextual = analysis.resolution().entries().stream()
+                .filter(e -> e.occurrence().admissibleKinds().equals(admissible)).toList();
+        assertEquals(3, contextual.size());
+        assertTrue(contextual.stream().allMatch(e -> e.occurrence().kind() == ReferenceKind.CONDITION
+                && e.status() == ResolutionStatus.RESOLVED));
+        assertEquals(admissible, contextual.stream().map(e -> e.selectedCandidate().orElseThrow().kind())
+                .collect(java.util.stream.Collectors.toSet()));
+        new Products(analysis).validate();
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = SymbolTable.ScopeKind.class, mode = EnumSource.Mode.EXCLUDE, names = "ROOT")
+    void rejectsScopeKindCorruptedBeforeResolution(SymbolTable.ScopeKind kind) {
+        Products products = new Products(baseline);
+        var scope = products.tables.units().get(0).symbolTable().scopes().stream()
+                .filter(s -> s.kind() == kind).findFirst().orElseThrow();
+        products.scope(new SymbolTable.Scope(scope.id(), scope.parentId(),
+                kind == SymbolTable.ScopeKind.SECTION ? SymbolTable.ScopeKind.DATA_ITEM : SymbolTable.ScopeKind.SECTION,
+                scope.name(), scope.ownerSymbolId(), scope.astNodeId()));
+        products.resolveAgain();
+        rejects(products);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = SymbolTable.ScopeKind.class, names = {"ROOT", "DIVISION", "SECTION", "PARAGRAPH"})
+    void scopesWithoutNominalDeclarationsCannotAcquireAnOwner(SymbolTable.ScopeKind kind) {
+        Products products = new Products(baseline);
+        var scope = products.tables.units().get(0).symbolTable().scopes().stream()
+                .filter(s -> s.kind() == kind && s.ownerSymbolId() == -1).findFirst().orElseThrow();
+        products.scope(new SymbolTable.Scope(scope.id(), scope.parentId(), scope.kind(),
+                scope.name(), 0, scope.astNodeId()));
+        products.resolveAgain();
+        rejects(products);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = SymbolTable.ScopeKind.class, names = {"PROGRAM", "FILE_DESCRIPTION", "DATA_ITEM", "PARAGRAPH"})
+    void nominalScopeOwnerMustBeTheDeclarationAtItsAnchor(SymbolTable.ScopeKind kind) {
+        Products products = new Products(baseline);
+        var original = products.tables.units().get(0).symbolTable();
+        var scope = original.scopes().stream().filter(s -> s.kind() == kind && s.ownerSymbolId() >= 0)
+                .findFirst().orElseThrow();
+        var symbols = new ArrayList<>(original.symbols());
+        var owner = symbols.get(scope.ownerSymbolId());
+        // Keep the old declaration-scope check coherent with the false owner, so
+        // only the new scope -> exact declaration identity join rejects this state.
+        symbols.set(owner.id(), new SymbolTable.Symbol(owner.id(), owner.kind(), owner.namespace(),
+                owner.writtenName(), owner.canonicalName(), scope.id(), owner.declarationAstNodeId(),
+                owner.span(), owner.attributes()));
+        products.table(new SymbolTable(original.scopes(), symbols, original.diagnostics(), original.entities(),
+                original.declarationRelations()));
+        int falseOwner = owner.id() == 0 ? 1 : 0;
+        products.scope(new SymbolTable.Scope(scope.id(), scope.parentId(), scope.kind(), scope.name(),
+                falseOwner, scope.astNodeId()));
+        rejects(products);
+    }
+
+    @Test
+    void fillerOwnerCannotInventQualificationEvenWhenAllCandidatesExist() {
+        var analysis = AstBoundaryTestSupport.analyze("""
+                IDENTIFICATION DIVISION.
+                PROGRAM-ID. FILLER-OWNER.
+                DATA DIVISION.
+                WORKING-STORAGE SECTION.
+                01 NAMED-GROUP.
+                   05 VALUE-A PIC X.
+                01 FILLER.
+                   05 VALUE-A PIC X.
+                01 RESULT-A PIC X.
+                PROCEDURE DIVISION.
+                    MOVE VALUE-A OF NAMED-GROUP TO RESULT-A.
+                END PROGRAM FILLER-OWNER.
+                """, "filler-owner.cbl");
+        Products products = new Products(analysis);
+        var table = products.tables.units().get(0).symbolTable();
+        var filler = AstBoundaryTestSupport.nodes(analysis, Ast.DataEntry.class).stream()
+                .filter(Ast.DataEntry::filler).findFirst().orElseThrow();
+        var scope = table.scopes().get(products.scopes.get(products.model.programUnits().get(0).id()).scopeId(filler));
+        var nominalOwner = table.symbols().stream().filter(s -> s.writtenName().equals("NAMED-GROUP"))
+                .findFirst().orElseThrow();
+        var before = products.resolution.entries().stream()
+                .filter(e -> e.occurrence().writtenText().equals("VALUE-A OF NAMED-GROUP")).findFirst().orElseThrow();
+        assertEquals(ResolutionStatus.RESOLVED, before.status());
+        products.scope(new SymbolTable.Scope(scope.id(), scope.parentId(), scope.kind(), scope.name(),
+                nominalOwner.id(), scope.astNodeId()));
+        products.resolveAgain();
+        var after = products.resolution.entries().get(before.id());
+        assertEquals(ResolutionStatus.AMBIGUOUS, after.status(), "the false owner changes qualification");
+        assertEquals(2, after.candidates().size());
+        rejects(products);
+    }
+
+    @Test
+    void procedureSectionPayloadCannotChangeQualifiedBinding() throws Exception {
+        var analysis = AstBoundaryTestSupport.analyze(Files.readString(
+                Path.of("src/test/resources/cobol/resolution/procedure-binding.cbl")), "procedure-binding.cbl");
+        Products products = new Products(analysis);
+        var scope = products.tables.units().get(0).symbolTable().scopes().stream()
+                .filter(s -> s.kind() == SymbolTable.ScopeKind.SECTION && s.name().equals("SECTION-A"))
+                .findFirst().orElseThrow();
+        var before = products.resolution.entries().stream()
+                .filter(e -> e.occurrence().writtenText().equals("DUPLICATE-PARA OF SECTION-A")).findFirst().orElseThrow();
+        assertEquals(ResolutionStatus.RESOLVED, before.status());
+        products.scope(new SymbolTable.Scope(scope.id(), scope.parentId(), scope.kind(),
+                "CORRUPTED-SECTION", scope.ownerSymbolId(), scope.astNodeId()));
+        products.resolveAgain();
+        assertEquals(ResolutionStatus.UNRESOLVED, products.resolution.entries().get(before.id()).status());
+        rejects(products);
+    }
+
     enum InventoryCorruption { MISSING_TABLE, EXTRA_TABLE, PARENT, MISSING_SCOPES, EXTRA_SCOPES,
         MISSING_OCCURRENCES, EXTRA_OCCURRENCES, NULL_SCOPES, NULL_OCCURRENCES, CONTAINER_UNIT }
 
@@ -506,6 +654,18 @@ class SemanticProductIntegrityValidatorTest {
             var first = units.get(0);
             units.set(0, new CompilationUnitSymbolTables.UnitSymbols(first.id(), first.parentId(), table));
             tables = new CompilationUnitSymbolTables(units);
+        }
+
+        void scope(SymbolTable.Scope replacement) {
+            var original = tables.units().get(0).symbolTable();
+            var changed = new ArrayList<>(original.scopes());
+            changed.set(replacement.id(), replacement);
+            table(new SymbolTable(changed, original.symbols(), original.diagnostics(), original.entities(),
+                    original.declarationRelations()));
+        }
+
+        void resolveAgain() {
+            resolution = new CobolReferenceResolver(resolution.policy()).resolve(model, tables, occurrences);
         }
 
         void program(Ast.Program program) {

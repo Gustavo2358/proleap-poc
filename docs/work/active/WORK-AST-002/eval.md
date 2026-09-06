@@ -44,6 +44,32 @@ O validator percorre nodes, scopes, symbols, relations, occurrences, entries e c
 
 ## Checkpoint de implementação de F-02 — 2026-09-05
 
+### Refinamentos da revisão do PR #28 — 2026-09-06
+
+A revisão encontrou dois joins incompletos: candidate internamente válido fora
+de `occurrence.admissibleKinds` e ScopeKind/owner incompatíveis com o anchor AST.
+Antes da correção, 14 casos negativos foram aceitos indevidamente pelo validator;
+o caso contextual positivo DATA/INDEX/CONDITION já passava. Os probes de FILLER
+e nome de procedure section também reproduziram mudanças nos bindings ao corromper
+scopes antes de executar o resolver.
+
+Os oracles agora cobrem DATA → PROGRAM/FILE em RESOLVED, AMBIGUOUS e UNSUPPORTED,
+os seis kinds de scopes ancorados, owner nominal de outro anchor e scopes sem
+owner que adquirem indevidamente um símbolo existente. A produção reconcilia
+admissibilidade e scopes com os produtos canônicos, incluindo o payload de nome
+usado para qualification de procedure section. Um único índice por declaration
+AST ID mantém o custo linear; não há reconstrução de scopes ou lookup nominal.
+O impacto continua BLOCKS_SEMANTIC_PRODUCT, conforme o bloco F-02 abaixo.
+
+Os 78 casos focais passam. Gates fast, semantic, performance e full verdes,
+com 523 testes Maven, zero failures/errors e um skip preexistente fora de F-02;
+E2E estruturado, naming e self-validation do harness passaram.
+Os gates reportados são execuções locais. O PR #28, no SHA `0762efe`, estava
+aberto e sem status/check remoto registrado durante a conferência inicial desta
+revisão; não há claim de GitHub Actions verificado.
+
+### Implementação inicial
+
 O contrato do PR #13 foi confirmado contra a `main` `107ce08`, incluindo os
 producers de candidates e o novo consumidor Semantic Product. O validator segue
 a API, ownership e ponto de integração descobertos. Os dois required oracles
