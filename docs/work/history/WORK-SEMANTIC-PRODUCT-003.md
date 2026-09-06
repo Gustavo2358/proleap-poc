@@ -38,7 +38,20 @@ verdes. O diretório ativo foi removido conforme o protocolo do harness.
 
 Nenhuma classe/schema AIR, `CobolLower`, enrichment do Semantic Product, CFG,
 storage, effects ou dataflow foi implementado neste Discovery ou em seu
-arquivamento. `BACKLOG-IR-001` permanece o próximo trabalho recomendado,
-começando pelo contrato/validator e oracles AIR, mas não foi iniciado.
-`BACKLOG-LOWER-001`, `BACKLOG-SP-005` a `BACKLOG-SP-008` e
-`BACKLOG-CFG-001` também continuam apenas no backlog.
+arquivamento.
+
+No momento do audit, `BACKLOG-IR-001` e `BACKLOG-LOWER-001` representavam os
+próximos handoffs conceituais da progressão IR → lowering → CFG. A ownership
+física foi consolidada posteriormente: o repositório separado `air-java` já
+implementa o modelo/validator Java da AIR 2.0.0; `cobol-lower` será o tradutor
+separado de `cobol-semantic-product.json` para uma AIR Publication; e o
+repositório separado `analysis-cfg` consome essa Publication para construir o
+CFG. Esses IDs permanecem como rastreabilidade histórica/cross-repo, não como
+implementação futura deste repositório.
+
+Neste frontend, o próximo trabalho local recomendado é promover, sob nova
+autorização, o enrichment mínimo de `BACKLOG-SP-005` coordenado com
+`BACKLOG-SP-003`: Entry, início executável e semântica de saída/terminal para o
+primeiro caso GOBACK. O objetivo downstream é permitir que o futuro
+`cobol-lower` produza `Publication → Unit → Entry → Sequence → Return` a partir
+desse programa mínimo. Nenhum desses itens foi iniciado neste checkpoint.

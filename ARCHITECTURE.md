@@ -33,10 +33,11 @@ fonte físico
 ## Direção downstream
 
 ```text
-COBOL Semantic Product
-  → CobolLower
-  → Analysis IR
-  → CFG
+este repositório: COBOL Semantic Product → cobol-semantic-product.json
+  ── fronteira de repositório ──
+cobol-lower: JSON → AIR 2.0.0 Publication (depende de air-java)
+  ── fronteira de repositório ──
+analysis-cfg: AIR Publication → CFG
   → Statement Effects / Storage Semantics
   → Reaching Definitions
   → Possible Values
@@ -55,8 +56,8 @@ O detalhamento do pipeline está em [docs/architecture/pipeline.md](docs/archite
 O Semantic Product está integrado ao composition root, possui consumer
 boundary-only e transporte JSON determinístico. DATA e o profile atual de CALL
 estão lowering-ready; MOVE e IF continuam parciais e statements apenas
-observados permanecem bloqueados. `CobolLower`, Analysis IR, CFG,
-effects/storage, reaching definitions, value propagation e parsers dedicados
-para linguagens embarcadas não existem no pipeline integrado atual. Quando
-forem introduzidos, devem consumir produtos anteriores sem retroalimentar a AST
-ou o binding nominal.
+observados permanecem bloqueados. A fronteira pública deste repositório termina
+nesse JSON: `air-java` já possui o modelo/validator AIR 2.0.0; `cobol-lower`
+será o tradutor separado; e `analysis-cfg` já existe como consumer separado da
+AIR Publication. Nenhum deles é implementação local. As fronteiras cross-repo
+preservam a regra de não retroalimentar AST ou binding nominal.

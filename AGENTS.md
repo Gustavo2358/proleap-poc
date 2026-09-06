@@ -16,8 +16,18 @@ fonte físico → normalização/provenance → preprocessing/COPY → parse tre
 → snapshots e apresentação
 ```
 
-Direção downstream: `COBOL Frontend → COBOL Semantic Product → CobolLower →
-Analysis IR → CFG → effects/storage → dataflow → dependency facts`.
+A fronteira física deste repositório termina no COBOL Semantic Product,
+materializado também como `cobol-semantic-product.json`. A direção downstream é
+cross-repo:
+
+```text
+frontend COBOL deste repositório → cobol-semantic-product.json
+cobol-lower (repo separado; depende de air-java) → AIR 2.0.0 Publication
+analysis-cfg (repo separado) → CFG
+```
+
+`air-java` já possui o modelo/validator Java da AIR 2.0.0. Este repositório não
+implementa AIR, `CobolLower` ou CFG.
 
 O mapa curto está em [ARCHITECTURE.md](ARCHITECTURE.md). Fronteiras detalhadas ficam no [pipeline arquitetural](docs/architecture/pipeline.md).
 
@@ -27,7 +37,7 @@ O mapa curto está em [ARCHITECTURE.md](ARCHITECTURE.md). Fronteiras detalhadas 
 - Para regra COBOL, use a fonte oficial do dialeto configurado e registre como o projeto a representa no documento de domínio.
 - Prefira algoritmos derivados da semântica a regex, busca textual ou heurística de corpus.
 - Falhe de forma fechada diante de input ausente, construção não suportada ou dependência desconhecida.
-- Preserve AST, símbolos, ocorrências, resolução, futuros CFG/dataflow e apresentação como produtos distintos.
+- Preserve AST, símbolos, ocorrências, resolução, apresentação e os produtos downstream de CFG/dataflow como fronteiras distintas.
 - Binding nominal não autoriza inferir valores de runtime ou targets dinâmicos finais.
 - No Semantic Product, vertical slice limita capability semântica, não a quantidade de ocorrências suportadas na `ProgramUnit`; partial/unsupported observado não pode desaparecer.
 - Projectors/adapters somente traduzem fatos canônicos e seus estados de readiness; não executam nova análise, reparsing ou resolução.
@@ -49,17 +59,17 @@ Comece no [índice de conhecimento](docs/index.md). Carregue somente o contexto 
 | compilation units | [compilation units](docs/domain/compilation-units.md) |
 | símbolos ou ocorrências | [modelo de símbolos](docs/domain/symbol-model.md) |
 | resolução ou CALL | [resolução de referências](docs/domain/reference-resolution.md) e política semântica |
-| Semantic Product, lowering ou readiness downstream | [pipeline](docs/architecture/pipeline.md), [ADR-0013](docs/architecture/decisions/0013-cobol-semantic-product-precedes-language-neutral-lowering.md) e invariantes `INV-SP-*` |
+| Semantic Product ou readiness local do frontend | [pipeline](docs/architecture/pipeline.md), [contrato do Semantic Product](docs/domain/cobol-semantic-product.md), [ADR-0013](docs/architecture/decisions/0013-cobol-semantic-product-precedes-language-neutral-lowering.md) e invariantes `INV-SP-*` |
 | mudança semântica transversal | [análise semântica](docs/engineering/semantic-analysis-policy.md) e [testes semânticos](docs/engineering/semantic-testing.md) |
 | impacto downstream de finding semântico | [classificação de impacto](docs/engineering/downstream-impact-classification.md) |
 | desempenho | [política de desempenho](docs/engineering/performance-policy.md) e domínio afetado |
 | logging | [política de observabilidade](docs/engineering/observability-policy.md) |
 | gate, docs ou workflow | [gates](docs/engineering/gates.md) e [protocolo de work items](docs/engineering/work-item-protocol.md) |
-| CobolLower, IR, CFG, dataflow ou domínio ainda inexistente | [backlog](docs/work/backlog.md); crie contrato somente quando o trabalho for autorizado |
+| AIR, lowering, CFG ou dataflow downstream | [pipeline cross-repo](docs/architecture/pipeline.md) e [backlog/handoffs](docs/work/backlog.md); não implemente esses sistemas neste repositório |
 
 ## Trabalho ativo
 
-O índice de trabalho está em [docs/work/index.md](docs/work/index.md). `WORK-AST-002` permanece ativo: Slice 1 mergeado no PR #10, Discovery do Slice 2 no PR #13 e implementação F-02 integrada pelo PR #28. `WORK-SEMANTIC-PRODUCT-003` concluiu o audit bilateral contra AIR 2.0.0 no PR #29 e está arquivado; a [matriz e os findings](docs/architecture/semantic-product-air-v2-audit.md) e os [oracles futuros](docs/evals/semantic-product-air-v2-oracles.md) permanecem canônicos, sem autorizar produção. `BACKLOG-IR-001`, `BACKLOG-LOWER-001`, `BACKLOG-SP-005` a `BACKLOG-SP-008` e `BACKLOG-CFG-001` continuam futuros; nenhuma implementação posterior foi iniciada. `WORK-COND-004` concluiu o Slice 4 pelo PR #18 e `WORK-COND-005` concluiu o Slice 5 pelo PR #19; ambos estão arquivados com resumos históricos. Os Slices 1–3 foram concluídos pelos PRs #15–#17 e arquivados como `WORK-COND-001` a `WORK-COND-003`. `WORK-AST-003` foi concluído: o PR #11 fechou o Discovery de IDs/traversal e o PR #12 implementou a correção, removendo aquele bloqueio de `WORK-AST-002`. As conclusões de WORK-EXT-001 e WORK-COV-001 são baselines válidas, mas não autorizam iniciar taint localizado, itens `BACKLOG-EXT`, CFG, dataflow ou outras tecnologias.
+O índice de trabalho está em [docs/work/index.md](docs/work/index.md). `WORK-AST-002` permanece ativo: Slice 1 mergeado no PR #10, Discovery do Slice 2 no PR #13 e implementação F-02 integrada pelo PR #28. `WORK-SEMANTIC-PRODUCT-003` concluiu o audit bilateral contra AIR 2.0.0 no PR #29 e está arquivado; a [matriz e os findings](docs/architecture/semantic-product-air-v2-audit.md) e os [oracles futuros](docs/evals/semantic-product-air-v2-oracles.md) permanecem canônicos, sem autorizar produção. No frontend, os próximos candidatos locais são `BACKLOG-SP-005` com `BACKLOG-SP-003`, para Entry, início executável e saída/terminal do primeiro slice GOBACK; nenhum foi iniciado. `BACKLOG-IR-001`, `BACKLOG-LOWER-001` e `BACKLOG-CFG-001` permanecem somente como registros/handoffs cross-repo para `air-java`, `cobol-lower` e `analysis-cfg`. `WORK-COND-004` concluiu o Slice 4 pelo PR #18 e `WORK-COND-005` concluiu o Slice 5 pelo PR #19; ambos estão arquivados com resumos históricos. Os Slices 1–3 foram concluídos pelos PRs #15–#17 e arquivados como `WORK-COND-001` a `WORK-COND-003`. `WORK-AST-003` foi concluído: o PR #11 fechou o Discovery de IDs/traversal e o PR #12 implementou a correção, removendo aquele bloqueio de `WORK-AST-002`. As conclusões de WORK-EXT-001 e WORK-COV-001 são baselines válidas, mas não autorizam iniciar taint localizado, itens `BACKLOG-EXT`, CFG, dataflow ou outras tecnologias.
 
 Ao trabalhar em um item:
 

@@ -16,6 +16,15 @@ Quando fontes divergem, aplicar a seguinte ordem para a pergunta em questão:
 
 Testes, corpus e artefatos gerados são evidência executável; não definem a semântica isoladamente. Uma regra normativa possui um único texto canônico. Outros documentos devem apontar para ele em vez de repeti-lo.
 
+## Fronteira do repositório
+
+Este repositório é o frontend COBOL e termina no COBOL Semantic Product,
+materializado também como `cobol-semantic-product.json`. Downstream,
+`cobol-lower` será um repositório separado que consumirá esse JSON e dependerá
+de `air-java`, já responsável pelo modelo/validator AIR 2.0.0. A AIR publicada
+será consumida pelo repositório separado `analysis-cfg`, responsável pelo CFG.
+Nenhum desses componentes downstream é implementação local deste repositório.
+
 ## Roteamento
 
 | Pergunta ou tarefa | Contexto canônico |
@@ -32,7 +41,7 @@ Testes, corpus e artefatos gerados são evidência executável; não definem a s
 | impacto downstream de finding semântico | [classificação de impacto downstream](engineering/downstream-impact-classification.md) |
 | decisão antiga, relatório, baseline ou matriz de migração | [history/](history/index.md), somente quando necessário |
 
-Os work items ativos estão no [índice de trabalho](work/index.md). `WORK-AST-002` possui implementação de F-02 integrada pelo PR #28. `WORK-SEMANTIC-PRODUCT-003` concluiu no PR #29 o audit da boundary contra AIR 2.0.0 e possui apenas um [resumo histórico](work/history/WORK-SEMANTIC-PRODUCT-003.md); a [matriz bilateral](architecture/semantic-product-air-v2-audit.md) e os [oracles futuros](evals/semantic-product-air-v2-oracles.md) continuam canônicos. AIR, CobolLower, enrichments do Semantic Product e CFG permanecem no backlog e não foram iniciados. `WORK-SEMANTIC-PRODUCT-002` foi concluído no PR #27 e promoveu o [contrato atual](domain/cobol-semantic-product.md). `WORK-COND-001` foi concluído pelo PR #15, `WORK-COND-002` pelo PR #16, `WORK-COND-003` pelo PR #17, `WORK-COND-004` pelo PR #18 e `WORK-COND-005` pelo PR #19; todos possuem apenas [resumos históricos](work/history/WORK-COND-001.md). `WORK-AST-003` foi concluído pelos PRs #11/#12 e possui apenas um [resumo histórico](work/history/WORK-AST-003.md).
+Os work items ativos estão no [índice de trabalho](work/index.md). `WORK-AST-002` possui implementação de F-02 integrada pelo PR #28. `WORK-SEMANTIC-PRODUCT-003` concluiu no PR #29 o audit da boundary contra AIR 2.0.0 e possui apenas um [resumo histórico](work/history/WORK-SEMANTIC-PRODUCT-003.md); a [matriz bilateral](architecture/semantic-product-air-v2-audit.md) e os [oracles futuros](evals/semantic-product-air-v2-oracles.md) continuam canônicos. Os próximos candidatos locais do frontend são `BACKLOG-SP-005` com `BACKLOG-SP-003`, para Entry/início/terminal do primeiro slice GOBACK; nenhum foi iniciado. AIR, lowering e CFG são handoffs cross-repo, não próximos trabalhos locais. `WORK-SEMANTIC-PRODUCT-002` foi concluído no PR #27 e promoveu o [contrato atual](domain/cobol-semantic-product.md). `WORK-COND-001` foi concluído pelo PR #15, `WORK-COND-002` pelo PR #16, `WORK-COND-003` pelo PR #17, `WORK-COND-004` pelo PR #18 e `WORK-COND-005` pelo PR #19; todos possuem apenas [resumos históricos](work/history/WORK-COND-001.md). `WORK-AST-003` foi concluído pelos PRs #11/#12 e possui apenas um [resumo histórico](work/history/WORK-AST-003.md).
 
 ## Fronteira entre famílias documentais
 

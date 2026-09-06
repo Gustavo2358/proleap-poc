@@ -1,5 +1,12 @@
 # Discovery bilateral — Semantic Product e Analysis IR 2.0.0
 
+> **Nota de ownership posterior ao audit:** este relatório preserva a ordem e
+> os IDs de backlog usados no PR #29 como conclusão histórica. A arquitetura
+> física foi consolidada depois: este repositório termina em
+> `cobol-semantic-product.json`; `air-java` possui o modelo/validator AIR 2.0.0;
+> `cobol-lower` será o tradutor separado; e `analysis-cfg` é o consumer separado
+> responsável pelo CFG. Consulte o [pipeline atual](pipeline.md).
+
 ## Executive summary
 
 **O port atual permite uma publicação AIR V2 válida e conservadora de
@@ -668,9 +675,9 @@ verdes mesmo com as limitações documentadas. O estado operacional final de
 gates, merge e arquivamento pertence ao [resumo histórico do work item], não a
 este contrato durável.
 
-Decisão recomendada para o próximo PR: contrato AIR estrutural/validação e
-oracles, seguido do enrichment mínimo entry/terminal e de lowerer/CFG em
-checkpoints revisáveis. Se a prioridade humana for resultado imediato de
+Decisão recomendada pelo audit naquele momento: contrato AIR
+estrutural/validação e oracles, seguido do enrichment mínimo entry/terminal e
+de lowerer/CFG em checkpoints revisáveis. Se a prioridade humana for resultado imediato de
 dependências nominais, CALL literal pode preceder diamond/controle complexo,
 preservando frontier aberta. Isso altera prioridade, não elimina prerequisites
 de cada claim. Nenhuma questão em aberto impede concluir este Discovery.
