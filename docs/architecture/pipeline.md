@@ -38,9 +38,12 @@ do frontend e o lowering. Neutralidade entre COBOL e outras linguagens começa
 no lowerer/Analysis IR, não nessa boundary. O produto está ligado ao
 composition root e publica DATA, MOVE literal, CALL por identifier/expression,
 IF estrutural e um inventário positivo dos demais statements. DATA e o profile
-atual de CALL possuem lowering readiness suficiente; MOVE e IF permanecem
-parciais e `ObservedStatement` permanece bloqueado. A [matriz
-canônica](../domain/cobol-semantic-product.md) registra o limite exato. As fases
+atual de CALL recebem readiness suficiente no código; isso não certifica AIR
+2.0.0. O [audit bilateral](semantic-product-air-v2-audit.md) encontrou gaps de
+entrada/controle, avaliação/interação e perda de endereçamento. MOVE/IF são
+parciais; `ObservedStatement` bloqueado no port admite `opaque` conservador
+AIR com fronteiras abertas. A [matriz canônica](../domain/cobol-semantic-product.md)
+distingue estados do código e suficiência externa. As fases
 a partir de `CobolLower` continuam futuras e aparecem aqui como direção e
 dependências, não como produtos existentes.
 
@@ -98,6 +101,13 @@ não execution order, reachability ou arestas de CFG. Binding nominal continua
 separado de valores de runtime conforme ADR-0004. Do mesmo modo, identidade
 nominal DATA não é storage físico: alias, overlap, `REDEFINES` e `RENAMES`
 dependem de Storage Semantics posterior.
+
+Na AIR V2, fatos declarativos de associação, duração, codec e alias precisam
+estar disponíveis antes do lowering preciso que os usa; Storage Semantics
+deriva suas consequências depois. Esse consumer não recupera fatos COBOL
+ausentes pela AST. `unknown_type` e associação aberta permitem iniciar
+representação conservadora sem inventar células. O primeiro CFG fechado exige
+entrada e saída executáveis além dos anchors estruturais atuais.
 
 Execuções equivalentes podem reproduzir handles e ordem para transporte
 determinístico; isso não estabelece identidade persistente após edição ou

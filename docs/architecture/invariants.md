@@ -84,7 +84,7 @@ IDs neste documento são estáveis. `AUTOMATED` indica proteção executável at
 - **Scope:** Semantic Product, seu port, `CobolLower` futuro e contratos de readiness por construct.
 - **Related ADRs:** ADR-0003, ADR-0004 e ADR-0013.
 - **Enforcement:** `AUTOMATED` — o consumer do CP6 e o probe independente de EVAL-SP-002 consomem somente o port; `ArchitectureBoundaryTest` inspeciona source e bytecode; falsificações controladas rejeitam perda de structure, binding e unknown. A matriz durável está em `docs/domain/cobol-semantic-product.md`.
-- **Known exceptions:** DATA e o profile atual de CALL têm lowering readiness suficiente. MOVE e IF permanecem `PARTIAL`; `ObservedStatement` permanece `BLOCKED`. Essas limitações são claims explícitas, não exceções à boundary nem autorização para buscar o frontend.
+- **Known exceptions:** o código publica DATA/CALL como suficientes no escopo do CP8, mas o [audit AIR V2](semantic-product-air-v2-audit.md) refuta que isso certifique `invoke` ou CFG e reproduz perda de endereçamento em CALL/MOVE. Remediação permanece futura. MOVE/IF parciais e observado bloqueado admitem fallback AIR conservador; o probe atual verifica reconstrução, não conformidade AIR. Nenhuma lacuna autoriza buscar o frontend.
 
 ### INV-SP-004 — Projector não cria nova análise semântica
 

@@ -6,6 +6,13 @@ entre o frontend e o futuro `CobolLower`. Cada publicação pertence a uma
 da projeção. O contrato atual é regido pela ADR-0013 e pelos invariantes
 `INV-SP-001` a `INV-SP-006`.
 
+O [audit bilateral contra Analysis IR 2.0.0](../architecture/semantic-product-air-v2-audit.md)
+qualifica as claims abaixo: estados publicados pelo código atual não são
+certificação AIR. O port sustenta representação nominal/inventário conservadora;
+entrada, controle, avaliação, interação e storage precisos têm prerequisites
+explícitos. Divergências de readiness permanecem documentadas até remediação
+autorizada, sem alteração de produção neste Discovery.
+
 ## Superfície atual
 
 O projector publica:
@@ -102,52 +109,57 @@ profile atualmente materializado, não toda forma COBOL com o mesmo keyword.
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | DATA | nome canônico e `PICTURE` opcional explícito | `DataItemId(unit, localId)` | `NOT_APPLICABLE` | hierarquia/storage não publicados | `NOT_APPLICABLE` | `NOT_APPLICABLE` | `NOT_APPLICABLE` | identidade de declaration, sem lookup downstream | layout/alias permanecem desconhecidos | declaration completa, inclusive include chain/exatidão | por declaration; fixture atual `MODELED` |
 | MOVE literal → DATA | valor normalizado e `LiteralKind`; kind atual é `UNKNOWN` | statement, literal operand e target operand distintos | disponível, estrutural | disponível quando o parent é suportado; caso contrário `CONTAINMENT_NOT_PROJECTED` | sequência estrutural deriva da coleção ordenada e do enclosing IF; não é edge | literal source + DATA target | target `WRITE` | status, reason, candidates e `selected` quando resolved | tipo/conversão do literal e storage não conhecidos | statement, source e target | `PARTIAL` enquanto kind for desconhecido |
-| CALL identifier/expression | syntax discriminada; o profile ready não inclui arguments/returning/exception flow não projetados | statement e target operand distintos | disponível, estrutural | disponível ou gap localizado | sequência estrutural disponível no profile sem exception flow | DATA operand | `CALL_TARGET` | variável nominal resolved no profile ready | target de programa é sempre `UNKNOWN` com gap próprio | statement e operand | `MODELED` no profile ready; runtime unknown não é omissão |
-| IF/ELSE estrutural | condition `shape` e referências DATA conhecidas; predicate não publicado | statement e condition operands distintos | disponível, estrutural | membership ordenado `THEN`/`ELSE`, inclusive nesting | `IfFact.continuation` quando existe e é conhecida; terminal legítimo usa ausência | referências DATA conhecidas da condition | `READ` | preserva status/reason/candidates/selected por referência | truth value, operator/object normalizados e branch tomada não publicados | statement, condition e referências | `PARTIAL` por ausência de predicate semantics |
+| CALL identifier/expression | syntax discriminada; arguments/returning não publicados; exception flow rebaixa CFG mas não lowering no código | statement e target operand distintos | disponível, estrutural | disponível ou gap localizado | sequência estrutural disponível no profile sem exception flow | DATA operand | `CALL_TARGET` | variável nominal resolved no profile ready | target de programa é sempre `UNKNOWN` com gap próprio | statement e operand | `MODELED` no profile ready; runtime unknown não é omissão |
+| IF/ELSE estrutural | condition `shape` e referências DATA conhecidas; predicate não publicado | statement e condition operands distintos | disponível, estrutural | membership ordenado `THEN`/`ELSE`, inclusive nesting | `IfFact.continuation` quando existe; ausência pode marcar fim estrutural, não prova saída executável | referências DATA conhecidas da condition | `READ` | preserva status/reason/candidates/selected por referência | truth value, operator/object normalizados e branch tomada não publicados | statement, condition e referências | `PARTIAL` por ausência de predicate semantics |
 | `ObservedStatement` | kind/shape/gap genéricos; inclui PERFORM, EVALUATE, GO TO, SEARCH, DISPLAY/GOBACK e outras shapes | statement identity positiva | disponível | posição conhecida quando o parent é suportado; senão gap | nenhuma continuation semântica própria é inferida | não publicados para a família | não publicados | não publicado como semântica da família | qualquer efeito/transferência permanece desconhecido | statement | `PARTIAL`, `UNSUPPORTED` ou `INPUT_MISSING`, nunca ausência |
 
-## Matriz de readiness
+## Estados de readiness publicados pelo código
 
 As três dimensões não são intercambiáveis.
 
 | Família | Lowering readiness | CFG readiness | Effects/dataflow readiness | Conclusão |
 | --- | --- | --- | --- | --- |
 | DATA | `READY` | `NOT_APPLICABLE` | `PARTIAL` | declaração nominal pode atravessar lowering; storage/layout não |
-| MOVE literal → DATA | `PARTIAL` | `READY` no profile estrutural conhecido | `PARTIAL` | estrutura e DEF nominal existem, mas literal kind e storage impedem precisão semântica completa |
-| CALL identifier/expression | `READY` no profile atual | `READY` sem exception flow não projetado | `PARTIAL` | lowerer pode representar chamada por variável e runtime target desconhecido; não pode resolver o programa chamado |
-| IF/ELSE estrutural | `PARTIAL` | `READY` quando branches/continuation/containment são exatos | `PARTIAL` | estrutura de branch está pronta; predicate semantics não está |
+| MOVE literal → DATA | `PARTIAL` | `READY` no profile estrutural conhecido | `PARTIAL` | estrutura e role WRITE nominal existem; domínio/conversão/acesso/storage ainda não provam assign preciso |
+| CALL identifier/expression | `READY` no profile atual | `READY` sem exception flow não projetado | `PARTIAL` | esses estados não provam `invoke` AIR V2: faltam interpretação do target, contrato de avaliação/outcomes e endereçamento completo |
+| IF/ELSE estrutural | `PARTIAL` | `READY` quando branches/continuation/containment são exatos | `PARTIAL` | membership disponível não certifica branch AIR; avaliação/predicate e controle executável têm lacunas |
 | `ObservedStatement` | `BLOCKED` | `BLOCKED` | `BLOCKED` | inventário está disponível; lowering semântico da família não está |
 | Publicação completa do fixture | `BLOCKED` | `BLOCKED` | `BLOCKED` | o agregado é limitado pelo `ObservedStatement`; isso não rebaixa facts independentes |
 
-Portanto, a resposta à hipótese H é positiva somente para as claims atuais de
-DATA e do profile de CALL. Não há dependência escondida do frontend para essas
-claims. Isso não torna MOVE, IF, o fixture completo ou a linguagem inteira
-lowering-ready.
+O CP8 provou reconstrução desses facts sem frontend. Não validou operações,
+TypeRef, entradas, envelopes ou perfis AIR. Contra V2, DATA nominal permanece
+representável com tipo/storage abertos; CALL precisa de fallback opaco e suas
+claims `READY` não certificam a interação. O audit também reproduziu perda de
+SUBSCRIPT em CALL/MOVE suportados. A matriz bilateral e os findings F-AIR-02/03
+registram a divergência de suficiência, sem promover ou mudar estados em código.
 
 ## Destino dos gaps e unknowns
 
 | Gap / incerteza | Antes de `CobolLower`? | Pode atravessar lowering? | Dependência posterior |
 | --- | --- | --- | --- |
-| `LITERAL_KIND_NOT_PUBLISHED` | sim, antes de promover MOVE a `READY`; não bloqueia iniciar lowering partial-aware | sim, como kind `UNKNOWN` mais coverage/gap, se a IR admitir incerteza explícita | enrichment canônico de frontend; depois conversões/effects |
+| `LITERAL_KIND_NOT_PUBLISHED` | antes de literal/assign precisos; não bloqueia inventário/controle conservador | AIR V2 exige expressão abstrata em `opaque`, não literal com `unknown_type` | frontend publica domínio/conversão e condições de escrita; kind sozinho não basta |
 | `CONDITION_SEMANTICS_NOT_AVAILABLE` | sim, antes de promover lowering semântico de IF | sim, somente como condition parcial/opaque; branches continuam materiais | `ConditionSemantics`; `ConditionValidation` quando validade type-sensitive for necessária |
 | `CONDITION_REFERENCE_KIND_NOT_PROJECTED` | sim para a referência/predicate afetada | pode atravessar como condition incompleta, nunca como ausência de read | enrichment de capability e produtos de condição; não bloqueia a estrutura já provada |
 | `CONTAINMENT_NOT_PROJECTED` | sim para lowering estrutural exato do fact afetado | apenas como containment desconhecido e claim rebaixada | enrichment do Semantic Product antes do slice correspondente de CFG |
-| `DYNAMIC_CALL_TARGET_VALUE_UNKNOWN` | não | sim; é parte correta do `CALL` lowering-ready | Reaching Definitions → Possible Values → dynamic CALL resolution |
-| gaps de `ObservedStatement` | sim antes do lowering semântico daquela família | o inventário e o blocker atravessam; a semântica da família não | `BACKLOG-SP-001` a `BACKLOG-SP-004` e slices adicionais por capability |
-| storage/layout/alias uncertainty | não para lowering nominal/estrutural | sim como ausência explícita de storage identity | Statement Effects / Storage Semantics; depois Reaching Definitions e Possible Values |
-| inventory/input incompleto | sim para qualquer claim agregada suficiente | somente como publication bloqueada/partial, nunca como zero comprovado | corrigir input/preprocessing na primeira camada quebrada |
+| `DYNAMIC_CALL_TARGET_VALUE_UNKNOWN` | não para fallback; não substitui contrato de target/outcomes | sim, em interação conservadora; não prova precondições de `invoke` | Reaching Definitions → Possible Values → dynamic CALL resolution |
+| gaps de `ObservedStatement` | antes de precisão da família | sim, `opaque` com envelopes máximos de memória/controle/recursos é válido | `BACKLOG-SP-001` a `BACKLOG-SP-004` e slices adicionais por capability |
+| storage/layout/alias uncertainty | não para lowering nominal/estrutural; sim para precisão física | sim como associação AIR aberta e incertezas explícitas | fatos declarativos no frontend; depois normalização AIR, Effects / Storage Semantics, RD e PV |
+| inventory/input incompleto | sim para claim de inventário completo | publicação AIR pode ser válida com coverage parcial e fronteiras abertas; nunca zero comprovado | corrigir input/preprocessing na primeira camada quebrada |
 
 ### Literal kind
 
-O primeiro lowerer pode transportar o valor do literal, `LiteralKind.UNKNOWN`,
-provenance, coverage e gap sem interpretar texto. Para isso, o contrato mínimo
-da IR precisa preservar uma fonte literal de kind desconhecido e não escolher
-conversão/tipo por `rawLexeme`, `PICTURE` ou spelling.
+AIR 2.0.0 exige domínio conhecido para literal. Com `LiteralKind.UNKNOWN`, o
+lowerer conserva a occurrence, value como evidência de origem, provenance e
+gap; a representação executável usa `unknown(unknown_type(u),...)` em `opaque`,
+com razões distintas de tipo e valor. Não escolhe tipo/conversão por
+`rawLexeme`, `PICTURE` ou spelling. O consumer AIR não interpreta esse metadado
+como literal tipado.
 
-Tipagem canônica de literal é prerequisite de frontend antes de elevar MOVE a
-`READY` ou implementar effects/conversões que dependam dela. Esse enrichment
-deve ser promovido em work item próprio quando necessário; não é condição para
-iniciar a infraestrutura de lowering partial-aware.
+MOVE preciso exige valor/domínio, conversão aplicável, compatibilidade
+`sameDomain` e condições de escrita. Binding nominal ou MOVE escrito não
+provam domínio comum, cópia sem conversão ou storage. O enrichment é próprio
+do frontend; unknown_type não bloqueia por si só uma cópia comprovada, mas o
+port atual não publica essa prova. Literal typing pode esperar no CFG inicial.
 
 ### Condition semantics
 
@@ -158,9 +170,12 @@ um predicate normalizado. `ConditionSemantics`, seguido de
 `ConditionValidation` quando houver pergunta type-sensitive, é prerequisite
 antes de declarar IF semanticamente lowering-ready.
 
-Essa lacuna não invalida a `CFG readiness` estrutural do IF: duas alternatives
-e a continuation são reconstruíveis sem decidir truth value nem interpretar o
-predicate.
+As relações de branch/continuation continuam reconstruíveis. Para `branch`
+AIR, porém, a abstração precisa de resultado `known(bool)` puro e total; o
+port não publica essa garantia para toda ConditionSurface. Sem ela, usar
+`opaque` com reads disponíveis e avaliação/controle abertos. O enrichment
+mínimo de avaliação pode preceder ConditionSemantics completa. Ordem de
+children e ausência de continuation não autorizam execution order ou retorno.
 
 ### Statements observados
 
@@ -170,6 +185,30 @@ facts positivos. O contrato garante inventário, identity, anchor, provenance,
 coverage e o motivo de incompletude que estiver disponível. Ele não garante
 targets, controls, operands, terminal behavior, successors ou effects da
 família. Nenhum consumer pode tratar esses facts como no-op ou fallthrough.
+
+AIR V2 permite `opaque` com memória máxima, `any_control` e `any_resource`.
+Isso é tradução conservadora válida, embora o código atual mantenha BLOCKED
+para a semântica da família. O primeiro CFG fechado exige terminal e entrada
+publicados: GOBACK, STOP RUN e CONTINUE têm a mesma shape genérica no port.
+
+## Entradas, acesso e provenance
+
+O port de uma unit não publica entry inventory/assinaturas, procedure regions,
+início/fim executável nem sequência semântica universal. ROOT é containment,
+não entrada. Unidades/entradas indisponíveis requerem coverage/uncertainty;
+uma entrada abstrata não pode se apresentar como entrada real identificada.
+
+DataReference conserva binding nominal, mas não subscripts/reference
+modification presentes na AST. A perda foi reproduzida em CALL/MOVE com IX;
+precisão de acesso exige enrichment de shape/occurrences/roles/limites e
+readiness adequada, sem fazer o lowerer reabrir AST. Declarações ancestrais
+fecham sobre IDs locais da publicação; isso não prova alias entre ports.
+
+Provenance usa linhas base 1, colunas base 0 em code points Unicode e fim
+inclusivo, conforme SourceMap/UnicodeText. B deve declarar essas convenções
+na origem AIR, conservar include chain/exatidão e usar DERIVED/UNAVAILABLE
+onde pertinente. Gap não ter ID próprio não impede criar UncertaintyId AIR;
+gaps de DATA/unit ausentes limitam a granularidade da explicação.
 
 ## Evolução aditiva
 
@@ -196,8 +235,8 @@ somente estes requisitos para `BACKLOG-IR-001`:
 - todo statement traduzido precisa conservar identity/origin, program point
   estrutural, provenance, coverage e unknowns relevantes;
 - DATA precisa manter identidade nominal sem ser promovida a storage region;
-- MOVE precisa representar literal source, inclusive kind `UNKNOWN`, target
-  DATA nominal e role de escrita;
+- MOVE precisa conservar source e target nominais; kind `UNKNOWN` exige
+  abstração executável compatível com V2, não literal AIR de tipo desconhecido;
 - CALL precisa representar syntax/operand nominal e runtime target desconhecido
   sem convertê-lo em target vazio ou programa escolhido;
 - IF precisa representar branch structure, nesting, condition surface parcial,
@@ -208,20 +247,48 @@ somente estes requisitos para `BACKLOG-IR-001`:
 
 ## Dependências downstream
 
-A ordem canônica permanece: contrato mínimo de `BACKLOG-IR-001`, primeiro
-`BACKLOG-LOWER-001` boundary-only, `BACKLOG-CFG-001`, `BACKLOG-DF-001`
-(Statement Effects / Storage Semantics), `BACKLOG-DF-004` (Reaching
-Definitions), `BACKLOG-DF-003` (Possible Values), `BACKLOG-DF-002` (dynamic
-CALL resolution) e `BACKLOG-DEPS-001`. IR e lowerer podem compartilhar um work
-item, desde que o contrato consumido seja fechado antes da implementação que o
-produz. O [backlog](../work/backlog.md) mantém a ordem, os critérios de promoção
-e os enrichments `BACKLOG-SP-001` a `BACKLOG-SP-004` para EVALUATE, PERFORM,
-GO TO/terminal, ALTER e SEARCH.
+O contrato externo adotado como alvo é AIR 2.0.0; sua semântica não é redesenhada
+para acomodar o port. Antes de um CFG fechado: contrato/validator AIR, facts
+de entrada/terminal e sequenciamento do slice, lowerer somente pelo port e
+consumer estrutural. O primeiro fixture recomendado é uma unit com GOBACK;
+MOVE/IF/CALL crescem depois, com seus prerequisites e fallback conservador.
 
-Não existe blocker oculto para começar o primeiro vertical slice conservador.
-Existem blockers explícitos para anunciar MOVE, predicate de IF,
-`ObservedStatement`, storage/effects, dataflow, target dinâmico ou a linguagem
-inteira como completos.
+Antes de fluxo escalar preciso, o frontend publica fatos declarativos de
+tipo/conversão/associação de storage. O lowerer traduz esses fatos; consumers
+derivam Storage Semantics/Effects → RD → PV → targets dinâmicos. Consumers
+não voltam a DataEntry para obter layout ausente. CALL literal é enrichment
+prioritário de observação nominal que pode preceder dataflow.
+
+A [ordem detalhada e o contrato do primeiro slice](../architecture/semantic-product-air-v2-audit.md)
+e o [backlog](../work/backlog.md) separam A/frontend, B/lowering e C/consumers.
+Readiness de uma dimensão não certifica outra nem conformidade com todos os
+oracles de um perfil AIR @2.
+
+## Regras COBOL relevantes ao handoff V2
+
+A autoridade consultada é Enterprise COBOL for z/OS 6.4, sob as opções
+efetivamente configuradas; Policy UNSPECIFIED não seleciona opções implícitas.
+Estas regras delimitam enrichments futuros, sem declarar suporte atual:
+
+- [MOVE](https://www.ibm.com/docs/en/cobol-zos/6.4.0?topic=items-assigning-values-elementary-data-move)
+  inclui conversão, padding e truncamento conforme os operandos. O produto
+  ainda não publica essa regra normalizada: LiteralKind conhecido sozinho
+  não prova cópia de valor nem valida assign AIR.
+- [Conclusão de programas](https://www.ibm.com/docs/en/cobol-zos/6.4.0?topic=subprograms-ending-reentering-main-programs)
+  depende do contexto de entrada; [STOP](https://www.ibm.com/docs/en/cobol-zos/6.4.0?topic=statements-stop-statement)
+  distingue término de suspensão. GOBACK/EXIT PROGRAM/STOP não podem ganhar
+  uma regra de saída única. O produto atual só publica inventário genérico
+  dessas formas; o próximo slice precisa estabelecer o escopo da saída.
+- [PERFORM básico](https://www.ibm.com/docs/en/cobol-zos/6.4?topic=statement-basic-perform)
+  possui disciplina de ranges, admite saída comum e distingue conclusão de
+  PERFORM de passagem ordinária. O futuro fact procedure/THRU deve preservar
+  essas distinções antes de alegar equivalência a control.local@1; PERFORM
+  inline não exige essa extensão apenas por compartilhar a keyword.
+
+O [audit](../architecture/semantic-product-air-v2-audit.md) detalha as
+correspondências e contracasos de GO TO/DEPENDING ON/ALTER. Targets, seleção,
+estado de controle e opções pertinentes continuam facts de frontend antes
+da tradução AIR; nenhum consumer infere essas regras de texto ou shape.
 
 ## Evals relacionados
 

@@ -10,5 +10,7 @@ O [pipeline atual](pipeline.md) registra as fronteiras confirmadas. O mapa curto
 - [Invariantes](invariants.md): fronteiras atuais, enforcement e exceções conhecidas.
 - [Pipeline e readiness downstream](pipeline.md): separação entre frontend,
   Semantic Product COBOL-specific, lowering, IR, CFG, effects e dataflow.
+- [Audit bilateral Semantic Product / AIR 2.0.0](semantic-product-air-v2-audit.md):
+  evidências, matriz de suficiência, blockers e próximos slices.
 
 Um ADR registra por que uma alternativa arquitetural foi escolhida. Um invariante registra o que não pode ser violado, seu enforcement e exceções conhecidas. Regras COBOL pertencem a `../domain/`.
