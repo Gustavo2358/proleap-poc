@@ -17,7 +17,7 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
     private static final Set<String> MODELED_GENERIC_STATEMENTS = Set.of(
             "acceptStatement", "addStatement", "closeStatement", "computeStatement",
             "continueStatement", "deleteStatement", "divideStatement", "exitStatement",
-            "gobackStatement", "initializeStatement", "inspectStatement", "multiplyStatement",
+            "initializeStatement", "inspectStatement", "multiplyStatement",
             "openStatement", "readStatement", "releaseStatement", "returnStatement",
             "rewriteStatement", "setStatement", "startStatement", "stopStatement",
             "stringStatement", "subtractStatement", "unstringStatement", "writeStatement");
@@ -33,6 +33,8 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
     private final IdentityHashMap<ParseTree, Integer> parseSubtreeSizes;
     private final List<CoverageDraft> coverageDrafts = new ArrayList<>();
     private final List<SemanticCoverage.Diagnostic> semanticDiagnostics = new ArrayList<>();
+    private final IdentityHashMap<CobolParser.StatementContext, Ast.Statement> builtStatements =
+            new IdentityHashMap<>();
     private int nextId;
 
     private record CoverageDraft(String grammarRule, Ast.Meta meta, String writtenText,
@@ -113,6 +115,7 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
         nextId = 0;
         coverageDrafts.clear();
         semanticDiagnostics.clear();
+        builtStatements.clear();
         Ast.Program program = (Ast.Program) visit(unit);
         AstBuildResult result = new AstBuildResult(program, buildCoverageReport(), semanticDiagnostics);
         if (LOG.isDebugEnabled()) {
@@ -448,7 +451,43 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
                 children.add(buildProcedureSection(section));
             }
         }
-        return new Ast.Division(meta, Ast.DivisionKind.PROCEDURE, children);
+        // IBM's primary entry is in the nondeclarative body. Resolve the typed
+        // grammar relation while building, never from flattened AST roots/IDs.
+        ParserRuleContext first = firstProcedureStatement(body);
+        Ast.Statement start = first instanceof CobolParser.StatementContext statement
+                && statement.entryStatement() == null ? builtStatements.get(statement) : null;
+        return new Ast.Division(meta, Ast.DivisionKind.PROCEDURE, children,
+                Optional.of(new Ast.ProcedureEntry(
+                        start == null ? Optional.empty() : Optional.of(start.meta().id()),
+                        context.procedureDivisionUsingClause() != null
+                                || context.procedureDivisionGivingClause() != null,
+                        context.procedureDeclaratives() != null)));
+    }
+
+    private static ParserRuleContext firstProcedureStatement(
+            CobolParser.ProcedureDivisionBodyContext body) {
+        if (body == null) return null;
+        ParserRuleContext first = firstParagraphStatement(body.paragraphs());
+        if (first != null) return first;
+        for (var section : body.procedureSection()) {
+            first = firstParagraphStatement(section.paragraphs());
+            if (first != null) return first;
+        }
+        return null;
+    }
+
+    private static ParserRuleContext firstParagraphStatement(CobolParser.ParagraphsContext group) {
+        if (group == null) return null;
+        for (var sentence : group.sentence())
+            if (!sentence.statement().isEmpty()) return sentence.statement(0);
+        for (var paragraph : group.paragraph()) {
+            // This grammar form has no statement node today. Do not skip it to
+            // fabricate an entry at a later, already-materialized statement.
+            if (paragraph.alteredGoTo() != null) return paragraph.alteredGoTo();
+            for (var sentence : paragraph.sentence())
+                if (!sentence.statement().isEmpty()) return sentence.statement(0);
+        }
+        return null;
     }
 
     private Ast.ProcedureSignature buildProcedureSignature(CobolParser.ProcedureDivisionContext context) {
@@ -529,6 +568,7 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
         }
         String grammarRule = statement.meta().origin().grammarRule();
         recordCoverage(statement, sourceText(wrapper));
+        builtStatements.put(statementContext, statement);
         if (LOG.isTraceEnabled()) {
             String sourceFile = statement.meta().provenance().original().file();
             if (statement instanceof Ast.PreservedStatement) {
@@ -571,7 +611,9 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
     @Override public Ast.Node visitExecSqlImsStatement(CobolParser.ExecSqlImsStatementContext ctx) { return buildEmbedded(ctx, Ast.EmbeddedLanguage.SQLIMS); }
     @Override public Ast.Node visitExitStatement(CobolParser.ExitStatementContext ctx) { return modeled(ctx); }
     @Override public Ast.Node visitGenerateStatement(CobolParser.GenerateStatementContext ctx) { return preserved(ctx); }
-    @Override public Ast.Node visitGobackStatement(CobolParser.GobackStatementContext ctx) { return modeled(ctx); }
+    @Override public Ast.Node visitGobackStatement(CobolParser.GobackStatementContext ctx) {
+        return new Ast.GobackStatement(meta(ctx));
+    }
     @Override public Ast.Node visitGoToStatement(CobolParser.GoToStatementContext ctx) { return buildGoTo(ctx); }
     @Override public Ast.Node visitIfStatement(CobolParser.IfStatementContext ctx) { return buildIf(ctx); }
     @Override public Ast.Node visitInitializeStatement(CobolParser.InitializeStatementContext ctx) { return modeled(ctx); }
@@ -803,7 +845,7 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
         result.addAll(PRESERVED_STATEMENTS);
         result.addAll(Set.of("callStatement", "ifStatement", "evaluateStatement", "performStatement",
                 "goToStatement", "moveStatement", "execSqlStatement", "execCicsStatement",
-                "execSqlImsStatement", "nextSentenceStatement"));
+                "execSqlImsStatement", "nextSentenceStatement", "gobackStatement"));
         return Set.copyOf(result);
     }
 

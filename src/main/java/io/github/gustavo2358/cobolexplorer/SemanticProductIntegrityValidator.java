@@ -47,6 +47,13 @@ final class SemanticProductIntegrityValidator {
             require(scopes != null, "scopes", id, "SCOPE", "inventory", "missing product");
             require(occurrences != null, "occurrences", id, "OCCURRENCE", "inventory", "missing product");
             Map<Integer, Ast.Node> nodes = indexAst(unit, table, scopes);
+            for (var division : unit.program().divisions()) {
+                division.procedureEntry().ifPresent(entry -> entry.startStatementId().ifPresent(target -> {
+                    Ast.Node start = nodes.get(target);
+                    require(start instanceof Ast.Statement, "AST", id, "ENTRY_START",
+                            "astNodeId=" + target, "entry start must reference a statement in its unit");
+                }));
+            }
             for (var symbol : table.symbols()) {
                 Ast.Node declaration = nodes.get(symbol.declarationAstNodeId());
                 require(declaration != null, "symbols", id, "SYMBOL", "symbolId=" + symbol.id(),

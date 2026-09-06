@@ -26,7 +26,7 @@ import java.util.Objects;
  */
 public final class SemanticProductJsonWriter {
     public static final String SCHEMA = "cobol-semantic-product";
-    public static final String CONTRACT_VERSION = "1.0.0";
+    public static final String CONTRACT_VERSION = "1.1.0";
 
     private static final ObjectMapper JSON = JsonMapper.builder()
             .enable(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY)
@@ -65,7 +65,21 @@ public final class SemanticProductJsonWriter {
                 unit(port.unit()), policy(port.policy()), declarations, statements,
                 new StructureDocument(port.rootStatements().stream()
                         .map(SemanticProductJsonWriter::statementHandle).toList(),
-                        List.copyOf(branches)), gaps, coverage(port.coverage()));
+                        List.copyOf(branches)), gaps, coverage(port.coverage()),
+                entryInventory(port.entryInventory()));
+    }
+
+    private static EntryInventoryDocument entryInventory(CobolSemanticProduct.EntryInventory inventory) {
+        return new EntryInventoryDocument(inventory.status(), inventory.scope(),
+                inventory.entries().stream().map(entry -> new EntryDocument(
+                        "entry:" + entry.id().localId(), entry.role(), entry.availability(),
+                        new ExecutableStartDocument(entry.start().availability(), entry.start().statement()
+                                .map(SemanticProductJsonWriter::statementHandle).orElse(null)),
+                        new EntrySignatureDocument(entry.signature().availability(),
+                                entry.signature().parameterCount().orElse(null), entry.signature().returningClause()),
+                        provenance(entry.provenance()), entry.coverage(), readiness(entry.readiness()),
+                        entry.gaps().stream().map(gap -> new EntryGapDocument(gap.scope(), gap.code(),
+                                gap.detail(), provenance(gap.provenance()))).toList())).toList(), inventory.gapCodes());
     }
 
     private static void addBranch(CobolSemanticPort port,
@@ -96,6 +110,8 @@ public final class SemanticProductJsonWriter {
     }
 
     private static StatementDocument statement(CobolSemanticProduct.StatementFact fact) {
+        if (fact instanceof CobolSemanticProduct.GobackFact goback)
+            return new GobackDocument(header(goback.header()), goback.exit(), goback.localContinuation());
         if (fact instanceof CobolSemanticProduct.MoveFact move) {
             return new MoveDocument(header(move.header()), literal(move.source()),
                     dataReference(move.target()));
@@ -207,7 +223,7 @@ public final class SemanticProductJsonWriter {
     }
 
     @JsonPropertyOrder({"schema", "contractVersion", "unit", "policy",
-            "dataDeclarations", "statements", "structure", "gaps", "coverage"})
+            "dataDeclarations", "statements", "structure", "gaps", "coverage", "entryInventory"})
     private record SemanticProductDocument(
             String schema,
             String contractVersion,
@@ -217,7 +233,28 @@ public final class SemanticProductJsonWriter {
             List<StatementDocument> statements,
             StructureDocument structure,
             List<GapDocument> gaps,
-            CoverageDocument coverage) { }
+            CoverageDocument coverage,
+            EntryInventoryDocument entryInventory) { }
+
+    private record EntryInventoryDocument(CobolSemanticProduct.InventoryStatus status,
+                                          CobolSemanticProduct.EntryInventoryScope scope,
+                                          List<EntryDocument> entries, List<String> gapCodes) { }
+
+    private record EntryDocument(String id, CobolSemanticProduct.EntryRole role,
+                                  CobolSemanticProduct.Availability availability,
+                                  ExecutableStartDocument start, EntrySignatureDocument signature,
+                                  ProvenanceDocument provenance, CobolSemanticProduct.CoverageStatus coverage,
+                                  ReadinessDocument readiness, List<EntryGapDocument> gaps) { }
+
+    private record ExecutableStartDocument(CobolSemanticProduct.Availability availability,
+                                           String statement) { }
+
+    private record EntrySignatureDocument(CobolSemanticProduct.Availability availability,
+                                          Integer parameterCount,
+                                          CobolSemanticProduct.ReturningClause returningClause) { }
+
+    private record EntryGapDocument(CobolSemanticProduct.GapScope scope, String code,
+                                    String detail, ProvenanceDocument provenance) { }
 
     private record UnitDocument(String compilationUnitId, List<Integer> structuralPath,
                                 String canonicalProgramName) { }
@@ -247,10 +284,16 @@ public final class SemanticProductJsonWriter {
             @JsonSubTypes.Type(value = MoveDocument.class, name = "MOVE"),
             @JsonSubTypes.Type(value = CallDocument.class, name = "CALL"),
             @JsonSubTypes.Type(value = IfDocument.class, name = "IF"),
+            @JsonSubTypes.Type(value = GobackDocument.class, name = "GOBACK"),
             @JsonSubTypes.Type(value = ObservedDocument.class, name = "OBSERVED")
     })
     private sealed interface StatementDocument permits MoveDocument, CallDocument,
-            IfDocument, ObservedDocument { }
+            IfDocument, ObservedDocument, GobackDocument { }
+
+    @JsonPropertyOrder({"variant", "header", "exit", "localContinuation"})
+    private record GobackDocument(StatementHeaderDocument header, CobolSemanticProduct.GobackExit exit,
+                                   CobolSemanticProduct.LocalContinuation localContinuation)
+            implements StatementDocument { }
 
     @JsonPropertyOrder({"variant", "header", "source", "target"})
     private record MoveDocument(StatementHeaderDocument header, LiteralDocument source,

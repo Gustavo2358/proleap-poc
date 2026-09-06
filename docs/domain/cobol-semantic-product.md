@@ -4,15 +4,18 @@ O COBOL Semantic Product é a boundary COBOL-specific, materializada e imutável
 entre o frontend e o futuro repositório externo `cobol-lower`. Cada publicação
 pertence a uma `ProgramUnit`, expõe somente o `CobolSemanticPort`, possui
 transporte `cobol-semantic-product.json` e permanece fechada depois da projeção.
+O runner mantém `semantic-product.json` como alias compatível com bytes idênticos;
+ele publica a unit primária selecionada, sem prometer inventário JSON multi-unit.
 Essa é a fronteira pública deste repositório; o contrato atual é regido pela
-ADR-0013 e pelos invariantes `INV-SP-001` a `INV-SP-006`.
+ADR-0013 e pelos invariantes `INV-SP-001` a `INV-SP-007`.
 
 O [audit bilateral contra Analysis IR 2.0.0](../architecture/semantic-product-air-v2-audit.md)
 qualifica as claims abaixo: estados publicados pelo código atual não são
 certificação AIR. O port sustenta representação nominal/inventário conservadora;
-entrada, controle, avaliação, interação e storage precisos têm prerequisites
+avaliação, interação e storage precisos têm prerequisites
 explícitos. Divergências de readiness permanecem documentadas até remediação
-autorizada, sem alteração de produção neste Discovery.
+autorizada. O slice de entry primária/GOBACK descrito abaixo fecha somente o
+prerequisite local de entrada e saída; não certifica um perfil AIR.
 
 ## Superfície atual
 
@@ -24,6 +27,9 @@ O projector publica:
 - todas as ocorrências suportadas de `CALL` por identifier/expression;
 - todos os `IF` como facts estruturais com condition surface, membership
   `THEN`/`ELSE` e continuation quando conhecida;
+- a entry primária com disponibilidade de início executável e assinatura;
+- todo GOBACK tipado como `GobackFact`, com saída da invocação corrente e
+  `LocalContinuation.NONE`, inclusive quando há statements físicos posteriores;
 - todo statement tipado restante como `ObservedStatement`, sem transformá-lo
   em ausência ou em semântica inventada.
 
@@ -112,7 +118,9 @@ profile atualmente materializado, não toda forma COBOL com o mesmo keyword.
 | MOVE literal → DATA | valor normalizado e `LiteralKind`; kind atual é `UNKNOWN` | statement, literal operand e target operand distintos | disponível, estrutural | disponível quando o parent é suportado; caso contrário `CONTAINMENT_NOT_PROJECTED` | sequência estrutural deriva da coleção ordenada e do enclosing IF; não é edge | literal source + DATA target | target `WRITE` | status, reason, candidates e `selected` quando resolved | tipo/conversão do literal e storage não conhecidos | statement, source e target | `PARTIAL` enquanto kind for desconhecido |
 | CALL identifier/expression | syntax discriminada; arguments/returning não publicados; exception flow rebaixa CFG mas não lowering no código | statement e target operand distintos | disponível, estrutural | disponível ou gap localizado | sequência estrutural disponível no profile sem exception flow | DATA operand | `CALL_TARGET` | variável nominal resolved no profile ready | target de programa é sempre `UNKNOWN` com gap próprio | statement e operand | `MODELED` no profile ready; runtime unknown não é omissão |
 | IF/ELSE estrutural | condition `shape` e referências DATA conhecidas; predicate não publicado | statement e condition operands distintos | disponível, estrutural | membership ordenado `THEN`/`ELSE`, inclusive nesting | `IfFact.continuation` quando existe; ausência pode marcar fim estrutural, não prova saída executável | referências DATA conhecidas da condition | `READ` | preserva status/reason/candidates/selected por referência | truth value, operator/object normalizados e branch tomada não publicados | statement, condition e referências | `PARTIAL` por ausência de predicate semantics |
-| `ObservedStatement` | kind/shape/gap genéricos; inclui PERFORM, EVALUATE, GO TO, SEARCH, DISPLAY/GOBACK e outras shapes | statement identity positiva | disponível | posição conhecida quando o parent é suportado; senão gap | nenhuma continuation semântica própria é inferida | não publicados para a família | não publicados | não publicado como semântica da família | qualquer efeito/transferência permanece desconhecido | statement | `PARTIAL`, `UNSUPPORTED` ou `INPUT_MISSING`, nunca ausência |
+| Entry primária | disponibilidade de start e assinatura escrita | `EntryId(unit, localId)` | referência explícita ao statement quando conhecida | unit proprietária | não publica sequência | count conhecido ou indisponível | `PRIMARY` | assinatura completa não projetada | contexto runtime não inferido | PROCEDURE DIVISION ou unit quando ausente | entry individual; inventário alternativo aberto |
+| GOBACK | variante tipada e saída da invocação corrente | `StatementId(unit, localId)` | disponível, estrutural | disponível ou gap localizado | `NONE`, sem successor local | valores de retorno não publicados | terminal COBOL GOBACK | não aplicável à saída local | destino externo e lifecycle não modelados | statement completo | `MODELED` para saída local com containment conhecido |
+| `ObservedStatement` | kind/shape/gap genéricos; inclui PERFORM, EVALUATE, GO TO, SEARCH, DISPLAY e demais terminais/shapes | statement identity positiva | disponível | posição conhecida quando o parent é suportado; senão gap | nenhuma continuation semântica própria é inferida | não publicados para a família | não publicados | não publicado como semântica da família | qualquer efeito/transferência permanece desconhecido | statement | `PARTIAL`, `UNSUPPORTED` ou `INPUT_MISSING`, nunca ausência |
 
 ## Estados de readiness publicados pelo código
 
@@ -125,6 +133,8 @@ As três dimensões não são intercambiáveis.
 | CALL identifier/expression | `READY` no profile atual | `READY` sem exception flow não projetado | `PARTIAL` | esses estados não provam `invoke` AIR V2: faltam interpretação do target, contrato de avaliação/outcomes e endereçamento completo |
 | IF/ELSE estrutural | `PARTIAL` | `READY` quando branches/continuation/containment são exatos | `PARTIAL` | membership disponível não certifica branch AIR; avaliação/predicate e controle executável têm lacunas |
 | `ObservedStatement` | `BLOCKED` | `BLOCKED` | `BLOCKED` | inventário está disponível; lowering semântico da família não está |
+| Entry primária/start | `READY` com start e assinatura sem cláusulas conhecidos; senão rebaixado | `READY` somente para start conhecido | `BLOCKED` | inventário de entradas alternativas permanece `PARTIAL` |
+| GOBACK | `READY` para saída da invocação corrente | `READY` para ausência de successor local com containment conhecido | `BLOCKED` | nenhum outro terminal, runtime/lifecycle ou perfil AIR é promovido |
 | Publicação completa do fixture | `BLOCKED` | `BLOCKED` | `BLOCKED` | o agregado é limitado pelo `ObservedStatement`; isso não rebaixa facts independentes |
 
 O CP8 provou reconstrução desses facts sem frontend. Não validou operações,
@@ -180,8 +190,8 @@ children e ausência de continuation não autorizam execution order ou retorno.
 
 ### Statements observados
 
-`PERFORM`, `EVALUATE`, `GO TO`, `SEARCH`, statements terminais,
-`DISPLAY`/`GOBACK` genéricos e demais families fora da capability continuam
+`PERFORM`, `EVALUATE`, `GO TO`, `SEARCH`, os demais statements terminais,
+`DISPLAY` e demais families fora da capability continuam
 facts positivos. O contrato garante inventário, identity, anchor, provenance,
 coverage e o motivo de incompletude que estiver disponível. Ele não garante
 targets, controls, operands, terminal behavior, successors ou effects da
@@ -189,15 +199,75 @@ família. Nenhum consumer pode tratar esses facts como no-op ou fallthrough.
 
 AIR V2 permite `opaque` com memória máxima, `any_control` e `any_resource`.
 Isso é tradução conservadora válida, embora o código atual mantenha BLOCKED
-para a semântica da família. O primeiro CFG fechado exige terminal e entrada
-publicados: GOBACK, STOP RUN e CONTINUE têm a mesma shape genérica no port.
+para a semântica da família. STOP RUN, EXIT PROGRAM e CONTINUE continuam
+observados; somente GOBACK possui a capacidade terminal precisa deste slice.
 
 ## Entradas, acesso e provenance
 
-O port de uma unit não publica entry inventory/assinaturas, procedure regions,
-início/fim executável nem sequência semântica universal. ROOT é containment,
-não entrada. Unidades/entradas indisponíveis requerem coverage/uncertainty;
-uma entrada abstrata não pode se apresentar como entrada real identificada.
+O port publica `EntryInventory` com scope de capacidade `PRIMARY_ONLY` no
+JSON e status `PARTIAL` (ou `INPUT_MISSING`). `ALTERNATE_ENTRIES_NOT_PROJECTED`
+mantém o inventário de entradas aberto, inclusive quando nenhum ENTRY foi
+observado. ENTRY alternativo conserva seu `ObservedStatement`; não se deduz
+que a entrada primária seja a única. Procedure regions e sequência semântica
+universal permanecem indisponíveis. ROOT continua containment, não entrada.
+
+### Entry primária e GOBACK
+
+`EntryFact` possui `EntryId(unit, localId)`, role `PRIMARY`, disponibilidade,
+`ExecutableStart`, `EntrySignature`, provenance, coverage, readiness e gaps.
+O namespace é o da publicação, também para seu target. Quando conhecido,
+`start.statement` deve existir no inventário de statements da mesma unit.
+O core rejeita target ausente/cruzado e identidades duplicadas antes do port.
+
+O frontend materializa `Ast.Division.procedureEntry`, metadata não-node com
+referência ao statement do corpo não declarativo. AstBuilder seleciona essa
+relação pelos contextos tipados de sentences/paragraphs/sections, sem consultar
+IDs ou roots projetados; o projector traduz a referência canônica por identidade.
+Primeiro ENTRY, corpo vazio, altered GO TO sem nó, metadata ausente ou input
+incompleto não autorizam fabricar start em um statement posterior. Declaratives
+ainda não materializados mantêm gap `DECLARATIVES_NOT_PROJECTED`, start
+indisponível e inventário de statements `PARTIAL`; não há nova modelagem dessas
+regiões neste slice.
+
+Assinatura descreve somente a interface escrita da PROCEDURE DIVISION:
+`availability=KNOWN`, `parameterCount=0`, `returningClause=ABSENT` são publicados
+quando o builder estabeleceu ausência de cláusulas. Isso não afirma ausência
+de RETURN-CODE, effects ou valores de runtime. Havendo cláusulas, o count e a
+presença de RETURNING/GIVING conhecidos são conservados, mas a assinatura é
+`PARTIAL` com `ENTRY_SIGNATURE_NOT_PROJECTED`: posições/modos/tipos/bindings
+não foram projetados. `UNAVAILABLE`/`INPUT_MISSING` exigem count ausente
+(`null` no JSON), returning `UNKNOWN` e gap. Nenhuma lista vazia substitui
+desconhecimento. A entry rebaixa lowering readiness se assinatura/start forem
+incompletos; o CFG da entry afirma somente o início quando conhecido.
+
+`Ast.GobackStatement` é a autoridade tipada para `GobackFact(StatementHeader)`.
+O fact fixa `exit=CURRENT_PROGRAM_INVOCATION` e `localContinuation=NONE`:
+conclui a invocação da ProgramUnit proprietária, independentemente de qual
+entry a ativou, e não retoma statement local. Não há campo que aceite um next
+espúrio. Com CALL ativo, a conclusão devolve controle ao chamador; a conclusão
+da invocação primária de runtime é entregue ao ambiente. Unit top-level não
+prova main program em runtime; o caminho estrutural da unit conserva nesting
+sem inventar contexto de chamada. O slice não modela cleanup/INITIAL, valores
+de retorno, thread/enclave ou efeitos de término do run unit.
+
+No profile de input e containment conhecidos, GOBACK publica coverage `MODELED`,
+lowering `SUFFICIENT` para saída da invocação e CFG `SUFFICIENT` para ausência
+de successor local. Effects/dataflow é `BLOCKED`; storage e certificação AIR
+não são claims. Containment desconhecido preserva gap e rebaixa CFG. A summary
+`coverage` continua agregando statements e o relatório; o inventário e os gaps
+de entries são uma superfície separada e devem ser consultados para entrada.
+`GOBACK; CONTINUE` mantém ambos os facts; a ordem não cria fallthrough, e nenhum
+deles é removido por suposta reachability. EXIT PROGRAM, STOP RUN, STOP literal
+e EXEC CICS RETURN conservam suas capacidades anteriores.
+
+Esses fatos derivam de IBM Enterprise COBOL for z/OS 6.4,
+[Language Reference, GOBACK, p. 346](https://publibfp.dhe.ibm.com/epubs/pdf/igy6lr40.pdf),
+[procedures e início não declarativo](https://www.ibm.com/docs/en/cobol-zos/6.4.0?topic=structure-procedures),
+[transferência de controle](https://www.ibm.com/docs/en/cobol-zos/6.4.0?topic=structure-transfer-control)
+e [interface da PROCEDURE DIVISION](https://www.ibm.com/docs/en/cobol-zos/6.4?topic=program-processing-data).
+O início é uma relação semântica da entrada primária, não sequenciamento universal.
+O algoritmo termina por percursos finitos de contextos, com tempo/espaço O(N)
+e tradução por joins indexados, sem enumeração de caminhos ou successors.
 
 DataReference conserva binding nominal, mas não subscripts/reference
 modification presentes na AST. A perda foi reproduzida em CALL/MOVE com IX;
@@ -227,6 +297,15 @@ Não foi encontrado blocker de extensibilidade do envelope fundamental:
 Consumers/adapters precisarem reconhecer uma nova variante é comportamento
 intencional. Redesenhar `State`, trocar o port por bags dinâmicos ou quebrar o
 envelope para cada construct não é necessário.
+
+O JSON publica `schema=cobol-semantic-product`, `contractVersion=1.1.0`.
+A decisão minor segue a evolução aditiva acima: acrescenta `entryInventory`
+(entries/start/signature/gaps/provenance/readiness) e variante `GOBACK`, mantendo
+o significado dos campos existentes. Consumers que fechavam o conjunto de
+variantes em 1.0.0 precisam reconhecer 1.1.0 ou rejeitá-lo explicitamente;
+não podem ignorar a nova variante. Não há codec AIR nem dependência air-java.
+Handles `entry:n` e `statement:n` são locais ao objeto `unit` do documento;
+a identidade global é o par (unit, handle), não a string isolada.
 
 ## Constraints para Analysis IR
 
@@ -275,7 +354,7 @@ oracles de um perfil AIR @2.
 
 A autoridade consultada é Enterprise COBOL for z/OS 6.4, sob as opções
 efetivamente configuradas; Policy UNSPECIFIED não seleciona opções implícitas.
-Estas regras delimitam enrichments futuros, sem declarar suporte atual:
+Estas regras delimitam as capabilities descritas acima e os enrichments futuros:
 
 - [MOVE](https://www.ibm.com/docs/en/cobol-zos/6.4.0?topic=items-assigning-values-elementary-data-move)
   inclui conversão, padding e truncamento conforme os operandos. O produto
@@ -284,8 +363,8 @@ Estas regras delimitam enrichments futuros, sem declarar suporte atual:
 - [Conclusão de programas](https://www.ibm.com/docs/en/cobol-zos/6.4.0?topic=subprograms-ending-reentering-main-programs)
   depende do contexto de entrada; [STOP](https://www.ibm.com/docs/en/cobol-zos/6.4.0?topic=statements-stop-statement)
   distingue término de suspensão. GOBACK/EXIT PROGRAM/STOP não podem ganhar
-  uma regra de saída única. O produto atual só publica inventário genérico
-  dessas formas; o próximo slice precisa estabelecer o escopo da saída.
+  uma regra de saída única. O produto publica a saída local de GOBACK no
+  escopo delimitado acima; os demais terminais continuam observados.
 - [PERFORM básico](https://www.ibm.com/docs/en/cobol-zos/6.4?topic=statement-basic-perform)
   possui disciplina de ranges, admite saída comum e distingue conclusão de
   PERFORM de passagem ordinária. O futuro fact procedure/THRU deve preservar
@@ -302,5 +381,6 @@ da tradução AIR; nenhum consumer infere essas regras de texto ou shape.
 - `EVAL-SP-001`: contrato materializado, cobertura plural e consumer CP6;
 - `EVAL-SP-002`: probe independente, falsificações e gate arquitetural;
 - `EVAL-SP-003`: transporte JSON determinístico e sem recomputação;
+- `EVAL-SP-004`: entry primária/start/GOBACK, assinatura explícita e adversariais;
 - `EVAL-ARCH-001`: direção de dependências;
 - `EVAL-RES-CALL-002`: binding nominal não resolve valor de CALL dinâmico.

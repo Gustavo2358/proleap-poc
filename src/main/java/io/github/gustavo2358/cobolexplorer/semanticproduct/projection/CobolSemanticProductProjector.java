@@ -26,6 +26,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
+import static io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.*;
+
 /**
  * Production projection seam from closed canonical frontend products to the
  * boundary-owned Semantic Product.
@@ -146,11 +148,85 @@ public final class CobolSemanticProductProjector {
                         gap.category() == ResolutionAnalysisReport.GapCategory.INPUT)
                         ? CobolSemanticProduct.InventoryStatus.INPUT_MISSING
                         : CobolSemanticProduct.InventoryStatus.COMPLETE;
+        EntryInventory entries = entries(inputs, statementIds, inventoryStatus);
+        if (entries.gapCodes().contains("DECLARATIVES_NOT_PROJECTED")
+                && inventoryStatus == InventoryStatus.COMPLETE)
+            inventoryStatus = InventoryStatus.PARTIAL;
         CobolSemanticProduct.CoverageSummary coverage = coverage(
                 inventoryStatus, statements, inputs.unitSummary());
         return new CobolSemanticProduct.State(inputs.boundaryUnit(),
                 policy(inputs.report().policy()), declarations.facts(),
-                statements, gaps, coverage);
+                statements, gaps, coverage, entries);
+    }
+
+    private static EntryInventory entries(ProjectionInputs inputs,
+            Map<Ast.Statement, StatementId> statementIds, InventoryStatus inventoryStatus) {
+        Ast.Program program = inputs.selectedSource().unit().program();
+        Ast.Division procedure = null;
+        for (Ast.Division division : program.divisions()) {
+            if (division.divisionKind() != Ast.DivisionKind.PROCEDURE) continue;
+            require(procedure == null, "unit has duplicate PROCEDURE DIVISION");
+            procedure = division;
+        }
+        Ast.ProcedureEntry origin = procedure == null ? null : procedure.procedureEntry().orElse(null);
+        Provenance provenance = provenance(procedure == null
+                ? program.meta().provenance() : procedure.meta().provenance());
+        boolean inputMissing = inventoryStatus == InventoryStatus.INPUT_MISSING;
+        boolean declaratives = origin != null && origin.declarativesPresent();
+        Availability unavailable = inputMissing ? Availability.INPUT_MISSING : Availability.UNAVAILABLE;
+        Optional<StatementId> start = Optional.empty();
+        if (origin != null && !inputMissing && !declaratives && origin.startStatementId().isPresent()) {
+            Ast.Node target = inputs.selectedSource().nodes().get(origin.startStatementId().get());
+            require(target instanceof Ast.Statement, "canonical entry target is not a unit statement");
+            StatementId id = statementIds.get((Ast.Statement) target);
+            require(id != null, "canonical entry target must be published");
+            start = Optional.of(id);
+        }
+        EntrySignature signature;
+        if (origin == null || inputMissing) {
+            signature = new EntrySignature(unavailable, Optional.empty(), ReturningClause.UNKNOWN);
+        } else if (!origin.signatureClausesPresent()) {
+            signature = new EntrySignature(Availability.KNOWN, Optional.of(0), ReturningClause.ABSENT);
+        } else {
+            Ast.ProcedureSignature surface = null;
+            for (Ast.Node child : procedure.children()) {
+                if (!(child instanceof Ast.ProcedureSignature candidate)) continue;
+                require(surface == null, "procedure has duplicate signature surface");
+                surface = candidate;
+            }
+            signature = surface == null
+                    ? new EntrySignature(Availability.UNAVAILABLE, Optional.empty(), ReturningClause.UNKNOWN)
+                    : new EntrySignature(Availability.PARTIAL, Optional.of(surface.parameters().size()),
+                            surface.returning() == null ? ReturningClause.ABSENT : ReturningClause.PRESENT);
+        }
+        List<EntryGap> gaps = new ArrayList<>();
+        if (start.isEmpty())
+            gaps.add(new EntryGap(GapScope.ENTRY_START, "EXECUTABLE_START_NOT_AVAILABLE",
+                    "primary nondeclarative start is unavailable for this input/surface", provenance));
+        if (signature.availability() != Availability.KNOWN)
+            gaps.add(new EntryGap(GapScope.ENTRY_SIGNATURE, "ENTRY_SIGNATURE_NOT_PROJECTED",
+                    "parameter contracts and explicit result contract are not fully available", provenance));
+        if (inputMissing)
+            gaps.add(new EntryGap(GapScope.ANALYSIS_INPUT, "ENTRY_INPUT_INCOMPLETE",
+                    "canonical input gaps prevent proving the executable entry", provenance));
+        ReadinessStatus lowering = start.isEmpty() ? ReadinessStatus.BLOCKED
+                : signature.availability() == Availability.KNOWN
+                ? ReadinessStatus.SUFFICIENT : ReadinessStatus.PARTIAL;
+        EntryFact entry = new EntryFact(new EntryId(inputs.boundaryUnit(), 0), EntryRole.PRIMARY,
+                origin == null || inputMissing ? unavailable : Availability.KNOWN,
+                new ExecutableStart(start.isPresent() ? Availability.KNOWN : unavailable, start),
+                signature, provenance,
+                inputMissing ? CoverageStatus.INPUT_MISSING : gaps.isEmpty()
+                        ? CoverageStatus.MODELED : CoverageStatus.PARTIAL,
+                readiness(lowering, "primary entry, canonical executable start and published signature availability",
+                        start.isPresent() ? ReadinessStatus.SUFFICIENT : ReadinessStatus.BLOCKED,
+                        "primary entry start only; no sequence or reachability claim",
+                        ReadinessStatus.BLOCKED, "entry state, storage and effects are not published"), gaps);
+        List<String> inventoryGaps = new ArrayList<>(List.of("ALTERNATE_ENTRIES_NOT_PROJECTED"));
+        if (declaratives) inventoryGaps.add("DECLARATIVES_NOT_PROJECTED");
+        if (inputMissing) inventoryGaps.add("ENTRY_INPUT_INCOMPLETE");
+        return new EntryInventory(inputMissing ? InventoryStatus.INPUT_MISSING : InventoryStatus.PARTIAL,
+                List.of(entry), inventoryGaps);
     }
 
     /** Opens the read-only port over the materialized projection. */
@@ -160,6 +236,8 @@ public final class CobolSemanticProductProjector {
     }
 
     private static StatementPlan plan(StatementPosition position, ProjectionInputs inputs) {
+        if (position.statement() instanceof Ast.GobackStatement)
+            return new StatementPlan(position, Capability.supported("GOBACK", "GOBACK_LOCAL_EXIT"), List.of());
         if (position.statement() instanceof Ast.MoveStatement move) {
             Capability capability = moveCapability(move);
             ReferenceResolution.Entry entry = null;
@@ -423,6 +501,18 @@ public final class CobolSemanticProductProjector {
                 provenance(plan.position().statement().meta().provenance());
         CobolSemanticProduct.Containment containment = containment(
                 plan.position(), statementIds);
+
+        if (plan.position().statement() instanceof Ast.GobackStatement goback) {
+            statements.add(new GobackFact(header(statementId, plan.position().ordinal(), containment,
+                    statementProvenance, weakest(coverage(inputs.finding(goback.meta().id())),
+                            containmentCoverage(containment)),
+                    containmentReadiness(containment, readiness(
+                            ReadinessStatus.SUFFICIENT, "GOBACK concludes the current program invocation",
+                            ReadinessStatus.SUFFICIENT, "GOBACK has no local successor",
+                            ReadinessStatus.BLOCKED, "GOBACK runtime result and lifecycle effects are not published")))));
+            addContainmentGap(containment, statementId, statementProvenance, gaps);
+            return;
+        }
 
         if (!plan.capability().supported()) {
             boolean typedCapabilityFamily = plan.position().statement() instanceof Ast.MoveStatement

@@ -614,6 +614,10 @@ slice preciso; o fallback continua aberto quando não houver prova.
 
 Ownership local: frontend COBOL / COBOL Semantic Product.
 
+Somente a saída local GOBACK foi promovida para
+[WORK-SEMANTIC-PRODUCT-004](active/WORK-SEMANTIC-PRODUCT-004/spec.md).
+O restante deste item continua backlog sem autorização de início.
+
 Enriquecer incrementalmente `GO TO`, `GO TO DEPENDING ON`, targets múltiplos,
 selector, fallthrough admissível e statements terminais. Preservar targets e
 binding nominal sem publicar edges, reachability ou comportamento terminal
@@ -638,9 +642,10 @@ seu próprio controle/avaliação, sem inferência pela ordem de children.
 
 ### BACKLOG-SP-005 — Entradas e continuidade executável do Semantic Product
 
-Ownership local: frontend COBOL / COBOL Semantic Product. Este item, coordenado
-com `BACKLOG-SP-003`, é o próximo candidato local para o primeiro slice GOBACK;
-continua sem autorização de início.
+Ownership local: frontend COBOL / COBOL Semantic Product. Somente entry primária
+e início executável, coordenados com GOBACK de `BACKLOG-SP-003`, foram promovidos
+para [WORK-SEMANTIC-PRODUCT-004](active/WORK-SEMANTIC-PRODUCT-004/spec.md).
+O restante deste item continua backlog sem autorização de início.
 
 Publicar inventário/disponibilidade de entradas, assinatura/posições quando
 conhecidas, início e conclusão da unit, ownership de procedure regions e

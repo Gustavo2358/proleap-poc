@@ -36,6 +36,14 @@ public final class SemanticPortLoweringProbe {
         validateRoots(port, statements, violations);
         validateStructure(port, statements, gaps, violations);
         validateCoverage(port.coverage(), statements.values(), violations);
+        for (var entry : port.entries()) {
+            if (!entry.id().unit().equals(unit))
+                global(violations, "ENTRY_CROSSES_UNIT", "entry does not belong to the publication");
+            entry.start().statement().ifPresent(target -> {
+                if (!target.unit().equals(unit) || !statements.containsKey(target))
+                    global(violations, "ENTRY_START_TARGET_MISSING", "entry start has no published statement in its unit");
+            });
+        }
 
         List<DataNode> dataNodes = port.dataDeclarations().stream()
                 .map(data -> new DataNode(data.id(), data.canonicalName(), data.picture(),
@@ -49,7 +57,12 @@ public final class SemanticPortLoweringProbe {
         }
 
         return new Reconstruction(unit, dataNodes, statementNodes, port.rootStatements(),
-                port.gaps(), port.coverage(), violations);
+                port.gaps(), port.coverage(), violations, port.entries().stream().map(entry ->
+                        new EntryNode(entry.id(), entry.role(), entry.availability(), entry.start(),
+                                entry.signature(), entry.provenance(), entry.coverage(), entry.readiness(),
+                                entry.gaps())).toList(),
+                new EntryInventoryNode(port.entryInventory().scope(), port.entryInventory().status(),
+                        port.entryInventory().gapCodes()));
     }
 
     private static Map<CobolSemanticProduct.DataItemId,
@@ -294,6 +307,8 @@ public final class SemanticPortLoweringProbe {
             List<CobolSemanticProduct.Gap> gaps,
             List<Violation> violations) {
         Anchor anchor = anchor(fact.header());
+        if (fact instanceof CobolSemanticProduct.GobackFact goback)
+            return new GobackNode(anchor, goback.exit(), goback.localContinuation());
         if (fact instanceof CobolSemanticProduct.MoveFact move) {
             ReferenceNode target = reference(move.target(), declarations);
             validateOperandOwner(anchor, move.source().id(), violations);
@@ -441,13 +456,16 @@ public final class SemanticPortLoweringProbe {
             List<CobolSemanticProduct.StatementId> roots,
             List<CobolSemanticProduct.Gap> gaps,
             CobolSemanticProduct.CoverageSummary coverage,
-            List<Violation> violations) {
+            List<Violation> violations,
+            List<EntryNode> entries,
+            EntryInventoryNode entryInventory) {
         public Reconstruction {
             data = List.copyOf(data);
             statements = List.copyOf(statements);
             roots = List.copyOf(roots);
             gaps = List.copyOf(gaps);
             violations = List.copyOf(violations);
+            entries = List.copyOf(entries);
         }
 
         public boolean valid() {
@@ -457,6 +475,22 @@ public final class SemanticPortLoweringProbe {
         public <T extends StatementNode> List<T> statements(Class<T> type) {
             return statements.stream().filter(type::isInstance).map(type::cast).toList();
         }
+    }
+
+    public record EntryNode(CobolSemanticProduct.EntryId id, CobolSemanticProduct.EntryRole role,
+                             CobolSemanticProduct.Availability availability,
+                             CobolSemanticProduct.ExecutableStart start,
+                             CobolSemanticProduct.EntrySignature signature,
+                             CobolSemanticProduct.Provenance provenance,
+                             CobolSemanticProduct.CoverageStatus coverage,
+                             CobolSemanticProduct.Readiness readiness,
+                             List<CobolSemanticProduct.EntryGap> gaps) {
+        public EntryNode { gaps = List.copyOf(gaps); }
+    }
+
+    public record EntryInventoryNode(CobolSemanticProduct.EntryInventoryScope scope,
+                                     CobolSemanticProduct.InventoryStatus status, List<String> gapCodes) {
+        public EntryInventoryNode { gapCodes = List.copyOf(gapCodes); }
     }
 
     public record DataNode(
@@ -505,9 +539,12 @@ public final class SemanticPortLoweringProbe {
         }
     }
 
-    public sealed interface StatementNode permits MoveNode, CallNode, IfNode, ObservedNode {
+    public sealed interface StatementNode permits MoveNode, CallNode, IfNode, ObservedNode, GobackNode {
         Anchor anchor();
     }
+
+    public record GobackNode(Anchor anchor, CobolSemanticProduct.GobackExit exit,
+                             CobolSemanticProduct.LocalContinuation localContinuation) implements StatementNode { }
 
     public record MoveNode(Anchor anchor, LiteralNode source,
                            ReferenceNode target) implements StatementNode { }

@@ -54,6 +54,15 @@ public final class CobolSemanticProduct {
     /** Runtime values are outside nominal binding and this checkpoint. */
     public enum RuntimeTargetKnowledge { UNKNOWN }
 
+    public enum Availability { KNOWN, PARTIAL, UNAVAILABLE, INPUT_MISSING }
+    public enum EntryRole { PRIMARY }
+    public enum EntryInventoryScope { PRIMARY_ONLY }
+    /** Availability of the explicit PROCEDURE DIVISION RETURNING/GIVING clause only. */
+    public enum ReturningClause { ABSENT, PRESENT, UNKNOWN }
+    public enum LocalContinuation { NONE }
+    /** Does not classify a top-level unit as the runtime main program. */
+    public enum GobackExit { CURRENT_PROGRAM_INVOCATION }
+
     public enum GapScope {
         RUNTIME_CALL_TARGET,
         LITERAL_KIND,
@@ -61,7 +70,9 @@ public final class CobolSemanticProduct {
         CONDITION_SEMANTICS,
         STRUCTURE,
         CAPABILITY,
-        ANALYSIS_INPUT
+        ANALYSIS_INPUT,
+        ENTRY_START,
+        ENTRY_SIGNATURE
     }
 
     public enum QualifyMode { STANDARD, EXTEND, UNSPECIFIED }
@@ -104,6 +115,108 @@ public final class CobolSemanticProduct {
             if (localId < 0)
                 throw new IllegalArgumentException("localId must be non-negative");
         }
+    }
+
+    public record EntryId(UnitId unit, int localId) {
+        public EntryId {
+            unit = Objects.requireNonNull(unit, "unit");
+            require(localId >= 0, "entry localId must be non-negative");
+        }
+    }
+
+    public record ExecutableStart(Availability availability, Optional<StatementId> statement) {
+        public ExecutableStart {
+            availability = Objects.requireNonNull(availability, "availability");
+            statement = Objects.requireNonNull(statement, "statement");
+            require((availability == Availability.KNOWN) == statement.isPresent(),
+                    "known executable start requires exactly one statement identity");
+        }
+    }
+
+    /** Known count is not a complete parameter contract; unknown count is never zero.
+     * RETURNING describes the written clause, not runtime RETURN-CODE or effects. */
+    public record EntrySignature(Availability availability, Optional<Integer> parameterCount,
+                                 ReturningClause returningClause) {
+        public EntrySignature {
+            availability = Objects.requireNonNull(availability, "availability");
+            parameterCount = Objects.requireNonNull(parameterCount, "parameterCount");
+            returningClause = Objects.requireNonNull(returningClause, "returningClause");
+            parameterCount.ifPresent(count -> require(count >= 0, "negative parameter count"));
+            if (availability == Availability.UNAVAILABLE || availability == Availability.INPUT_MISSING)
+                require(parameterCount.isEmpty() && returningClause == ReturningClause.UNKNOWN,
+                        "unavailable signature cannot claim zero parameters or absent RETURNING");
+            if (availability == Availability.KNOWN)
+                require(parameterCount.equals(Optional.of(0)) && returningClause == ReturningClause.ABSENT,
+                        "known signature capability covers only a header without clauses");
+        }
+    }
+
+    public record EntryGap(GapScope scope, String code, String detail, Provenance provenance) {
+        public EntryGap {
+            scope = Objects.requireNonNull(scope, "scope");
+            code = requireText(code, "code");
+            detail = requireText(detail, "detail");
+            provenance = Objects.requireNonNull(provenance, "provenance");
+        }
+    }
+
+    public record EntryFact(EntryId id, EntryRole role, Availability availability,
+                            ExecutableStart start, EntrySignature signature,
+                            Provenance provenance, CoverageStatus coverage,
+                            Readiness readiness, List<EntryGap> gaps) {
+        public EntryFact {
+            id = Objects.requireNonNull(id, "id");
+            role = Objects.requireNonNull(role, "role");
+            availability = Objects.requireNonNull(availability, "availability");
+            start = Objects.requireNonNull(start, "start");
+            signature = Objects.requireNonNull(signature, "signature");
+            provenance = Objects.requireNonNull(provenance, "provenance");
+            coverage = Objects.requireNonNull(coverage, "coverage");
+            readiness = Objects.requireNonNull(readiness, "readiness");
+            gaps = List.copyOf(gaps);
+            if (availability != Availability.KNOWN)
+                require(start.statement().isEmpty(), "unavailable entry cannot have a known start");
+            boolean complete = availability == Availability.KNOWN
+                    && start.availability() == Availability.KNOWN
+                    && signature.availability() == Availability.KNOWN;
+            if (!complete) {
+                require(coverage != CoverageStatus.MODELED && !gaps.isEmpty(),
+                        "incomplete entry requires coverage and localized gaps");
+                require(readiness.lowering().status() != ReadinessStatus.SUFFICIENT,
+                        "incomplete entry cannot claim sufficient lowering readiness");
+            }
+            if (start.availability() != Availability.KNOWN) {
+                require(gaps.stream().anyMatch(g -> g.scope() == GapScope.ENTRY_START),
+                        "unknown entry start needs its gap");
+                require(readiness.cfg().status() != ReadinessStatus.SUFFICIENT,
+                        "unknown entry start cannot claim sufficient CFG readiness");
+            }
+            if (signature.availability() != Availability.KNOWN)
+                require(gaps.stream().anyMatch(g -> g.scope() == GapScope.ENTRY_SIGNATURE),
+                        "incomplete signature needs its gap");
+            require(readiness.effectsDataflow().status() != ReadinessStatus.SUFFICIENT,
+                    "entry capability does not publish effects/dataflow");
+        }
+    }
+
+    /** Inventory scope is primary entries only; alternatives are explicitly open. */
+    public record EntryInventory(InventoryStatus status, List<EntryFact> entries,
+                                 List<String> gapCodes) {
+        public EntryInventory {
+            status = Objects.requireNonNull(status, "status");
+            entries = List.copyOf(entries);
+            gapCodes = List.copyOf(gapCodes);
+            require(status != InventoryStatus.COMPLETE && !gapCodes.isEmpty(),
+                    "primary-only capability cannot close the entry inventory");
+            gapCodes.forEach(code -> requireText(code, "entry inventory gap"));
+        }
+
+        public static EntryInventory unavailable() {
+            return new EntryInventory(InventoryStatus.PARTIAL, List.of(),
+                    List.of("PRIMARY_ENTRY_NOT_AVAILABLE", "ALTERNATE_ENTRIES_NOT_PROJECTED"));
+        }
+
+        public EntryInventoryScope scope() { return EntryInventoryScope.PRIMARY_ONLY; }
     }
 
     /** Operand occurrence identity remains distinct from a selected DATA id. */
@@ -342,8 +455,21 @@ public final class CobolSemanticProduct {
 
     /** Adding a fact type extends this inventory without changing the State envelope. */
     public sealed interface StatementFact permits MoveFact, CallFact, IfFact,
-            ObservedStatement {
+            ObservedStatement, GobackFact {
         StatementHeader header();
+    }
+
+    /** GOBACK concludes this program invocation. On a called invocation it returns
+     * to the caller; otherwise the runtime handles completion. Neither runtime
+     * role, return value nor INITIAL/lifecycle effects are inferred here. */
+    public record GobackFact(StatementHeader header) implements StatementFact {
+        public GobackFact {
+            header = Objects.requireNonNull(header, "header");
+            require(header.readiness().effectsDataflow().status() != ReadinessStatus.SUFFICIENT,
+                    "GOBACK local-exit capability does not publish effects/dataflow");
+        }
+        public GobackExit exit() { return GobackExit.CURRENT_PROGRAM_INVOCATION; }
+        public LocalContinuation localContinuation() { return LocalContinuation.NONE; }
     }
 
     public record MoveFact(StatementHeader header, LiteralSource source,
@@ -438,7 +564,7 @@ public final class CobolSemanticProduct {
     public record State(UnitId unit, Policy policy,
                         List<DataDeclaration> dataDeclarations,
                         List<StatementFact> statements,
-                        List<Gap> gaps, CoverageSummary coverage) {
+                        List<Gap> gaps, CoverageSummary coverage, EntryInventory entryInventory) {
         public State {
             unit = Objects.requireNonNull(unit, "unit");
             policy = Objects.requireNonNull(policy, "policy");
@@ -446,7 +572,32 @@ public final class CobolSemanticProduct {
             statements = List.copyOf(statements);
             gaps = List.copyOf(gaps);
             coverage = Objects.requireNonNull(coverage, "coverage");
+            entryInventory = Objects.requireNonNull(entryInventory, "entryInventory");
             validateState(unit, dataDeclarations, statements, gaps, coverage);
+            validateEntries(unit, statements, entryInventory);
+        }
+
+        /** Older manual publications explicitly lack entry knowledge. */
+        public State(UnitId unit, Policy policy, List<DataDeclaration> dataDeclarations,
+                     List<StatementFact> statements, List<Gap> gaps, CoverageSummary coverage) {
+            this(unit, policy, dataDeclarations, statements, gaps, coverage, EntryInventory.unavailable());
+        }
+    }
+
+    private static void validateEntries(UnitId unit, List<StatementFact> statements,
+                                        EntryInventory inventory) {
+        Set<StatementId> statementIds = new HashSet<>();
+        for (StatementFact fact : statements) statementIds.add(fact.header().id());
+        Set<EntryId> entries = new HashSet<>();
+        Set<EntryRole> roles = new HashSet<>();
+        for (EntryFact entry : inventory.entries()) {
+            require(entry.id().unit().equals(unit), "entry crossed the unit namespace");
+            require(entries.add(entry.id()), "duplicate entry identity");
+            require(roles.add(entry.role()), "duplicate primary entry");
+            entry.start().statement().ifPresent(target -> {
+                require(target.unit().equals(unit), "entry start crossed the unit namespace");
+                require(statementIds.contains(target), "entry start must reference a published statement");
+            });
         }
     }
 

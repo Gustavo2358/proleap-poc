@@ -45,7 +45,9 @@ O Semantic Product é a boundary COBOL-specific materializada entre os produtos
 do frontend e o lowering. Neutralidade entre COBOL e outras linguagens começa
 no lowerer/Analysis IR, não nessa boundary. O produto está ligado ao
 composition root e publica DATA, MOVE literal, CALL por identifier/expression,
-IF estrutural e um inventário positivo dos demais statements. DATA e o profile
+IF estrutural, entry primária/início canônico, saída local GOBACK e um inventário
+positivo dos demais statements. Entry inventory alternativo e assinatura não
+projetada preservam disponibilidade/gaps. DATA e o profile
 atual de CALL recebem readiness suficiente no código; isso não certifica AIR
 2.0.0. O [audit bilateral](semantic-product-air-v2-audit.md) encontrou gaps de
 entrada/controle, avaliação/interação e perda de endereçamento. MOVE/IF são

@@ -74,9 +74,8 @@ class CobolSemanticProductProjectorTest {
         assertEquals(7, port.statements().size());
         assertEquals(3, port.moves().size());
         assertEquals(3, port.calls().size());
-        assertEquals(1, port.observedStatements().size());
-        assertEquals("MODELED_STATEMENT",
-                port.observedStatements().get(0).observedKind());
+        assertTrue(port.observedStatements().isEmpty());
+        assertInstanceOf(CobolSemanticProduct.GobackFact.class, port.statements().get(6));
 
         Map<CobolSemanticProduct.DataItemId, String> names = new LinkedHashMap<>();
         port.dataDeclarations().forEach(declaration ->
@@ -110,12 +109,12 @@ class CobolSemanticProductProjectorTest {
         assertEquals(CobolSemanticProduct.InventoryStatus.COMPLETE,
                 state.coverage().inventoryStatus());
         assertEquals(7, state.coverage().observedStatements());
-        assertEquals(3, state.coverage().modeledStatements());
+        assertEquals(4, state.coverage().modeledStatements());
         assertEquals(3, state.coverage().partialStatements());
-        assertEquals(1, state.coverage().unsupportedStatements());
-        assertEquals(CobolSemanticProduct.ReadinessStatus.BLOCKED,
+        assertEquals(0, state.coverage().unsupportedStatements());
+        assertEquals(CobolSemanticProduct.ReadinessStatus.PARTIAL,
                 state.coverage().readiness().lowering().status());
-        assertEquals(CobolSemanticProduct.ReadinessStatus.BLOCKED,
+        assertEquals(CobolSemanticProduct.ReadinessStatus.SUFFICIENT,
                 state.coverage().readiness().cfg().status());
         assertEquals(CobolSemanticProduct.ReadinessStatus.BLOCKED,
                 state.coverage().readiness().effectsDataflow().status());
@@ -542,13 +541,11 @@ class CobolSemanticProductProjectorTest {
 
         assertTrue(port.moves().isEmpty());
         assertTrue(port.calls().isEmpty());
-        assertEquals(List.of("MOVE_NON_LITERAL_SOURCE", "CALL_LITERAL_TARGET",
-                        "GENERIC_MODELED_STATEMENT"),
+        assertEquals(List.of("MOVE_NON_LITERAL_SOURCE", "CALL_LITERAL_TARGET"),
                 port.observedStatements().stream()
                         .map(CobolSemanticProduct.ObservedStatement::observedShape).toList());
         assertEquals(List.of("MOVE_NON_LITERAL_SOURCE_OUTSIDE_CAPABILITY",
-                        "CALL_LITERAL_TARGET_OUTSIDE_CAPABILITY",
-                        "OBSERVED_STATEMENT_UNSUPPORTED"),
+                        "CALL_LITERAL_TARGET_OUTSIDE_CAPABILITY"),
                 port.observedStatements().stream()
                         .map(CobolSemanticProduct.ObservedStatement::gapCode).toList());
         assertTrue(port.observedStatements().stream().allMatch(observed ->
@@ -706,7 +703,7 @@ class CobolSemanticProductProjectorTest {
 
     private static CobolSemanticProduct.State portState(CobolSemanticPort port) {
         return new CobolSemanticProduct.State(port.unit(), port.policy(),
-                port.dataDeclarations(), port.statements(), port.gaps(), port.coverage());
+                port.dataDeclarations(), port.statements(), port.gaps(), port.coverage(), port.entryInventory());
     }
 
     private static CobolSemanticProduct.StatementId statementId(

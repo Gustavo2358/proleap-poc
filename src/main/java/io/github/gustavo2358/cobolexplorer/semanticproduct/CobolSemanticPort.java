@@ -17,6 +17,14 @@ public interface CobolSemanticPort {
 
     CobolSemanticProduct.Policy policy();
 
+    default CobolSemanticProduct.EntryInventory entryInventory() {
+        return CobolSemanticProduct.EntryInventory.unavailable();
+    }
+
+    default List<CobolSemanticProduct.EntryFact> entries() {
+        return entryInventory().entries();
+    }
+
     List<CobolSemanticProduct.DataDeclaration> dataDeclarations();
 
     List<CobolSemanticProduct.StatementFact> statements();
@@ -112,6 +120,11 @@ final class MaterializedCobolSemanticPort implements CobolSemanticPort {
     @Override
     public CobolSemanticProduct.Policy policy() {
         return state.policy();
+    }
+
+    @Override
+    public CobolSemanticProduct.EntryInventory entryInventory() {
+        return state.entryInventory();
     }
 
     @Override

@@ -215,7 +215,10 @@ public final class ExplorerMain {
         CobolSemanticPort semanticProduct = publishSemanticProduct(primaryUnit.id(), compilationBuild,
                 symbolTables, occurrences, resolution, resolutionReport);
         SemanticProductJsonWriter.write(semanticProduct,
-                output.resolve("semantic-product.json"));
+                output.resolve("cobol-semantic-product.json"));
+        // Preserve the original filename as a byte-identical compatibility alias.
+        Files.copy(output.resolve("cobol-semantic-product.json"),
+                output.resolve("semantic-product.json"), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
         CobolLoweringReadinessConsumer.Audit loweringReadiness =
                 CobolLoweringReadinessConsumer.audit(semanticProduct);
         LOG.debug("event=semantic_product_published phase=SEMANTIC_PRODUCT elapsedMs={} unit={} dataDeclarations={} statements={} gaps={} loweringReadiness={} cfgReadiness={} effectsDataflowReadiness={}",

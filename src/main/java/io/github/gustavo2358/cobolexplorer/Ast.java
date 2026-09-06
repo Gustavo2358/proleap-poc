@@ -90,8 +90,26 @@ public final class Ast {
         }
     }
 
-    public record Division(Meta meta, DivisionKind divisionKind, List<Node> children) implements Node {
-        public Division { children = List.copyOf(children); }
+    /** Non-node relation: the primary entry of the nondeclarative procedure body.
+     * It neither adds a traversal edge nor duplicates the target statement. */
+    public record ProcedureEntry(Optional<Integer> startStatementId,
+                                 boolean signatureClausesPresent, boolean declarativesPresent) {
+        public ProcedureEntry {
+            startStatementId = Objects.requireNonNull(startStatementId, "startStatementId");
+        }
+    }
+
+    public record Division(Meta meta, DivisionKind divisionKind, List<Node> children,
+                           Optional<ProcedureEntry> procedureEntry) implements Node {
+        public Division {
+            children = List.copyOf(children);
+            procedureEntry = Objects.requireNonNull(procedureEntry, "procedureEntry");
+            if (procedureEntry.isPresent() && divisionKind != DivisionKind.PROCEDURE)
+                throw new IllegalArgumentException("only PROCEDURE DIVISION has an executable entry");
+        }
+        public Division(Meta meta, DivisionKind divisionKind, List<Node> children) {
+            this(meta, divisionKind, children, Optional.empty());
+        }
     }
 
     public record Section(Meta meta, String name, DataSectionKind dataSectionKind, List<Node> children) implements Node {
@@ -163,7 +181,11 @@ public final class Ast {
     public sealed interface Statement extends Node permits CallStatement, IfStatement, EvaluateStatement,
             PerformStatement, GoToStatement, MoveStatement, EmbeddedLanguageStatement,
             NextSentenceStatement, ModeledStatement, PreservedStatement, SearchStatement,
-            UnsupportedStatement {}
+            UnsupportedStatement, GobackStatement {}
+
+    /** Logical end of the current program invocation; no local continuation.
+     * Caller/runtime disposition and lifecycle effects are separate concerns. */
+    public record GobackStatement(Meta meta) implements Statement {}
 
     public sealed interface Expression extends Node permits LiteralExpression, DataReference,
             OperationExpression, FunctionExpression, SpecialRegisterExpression,

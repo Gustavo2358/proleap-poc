@@ -6,6 +6,11 @@ provam somente seus contratos atuais. Cada checkpoint deve promover os casos
 pertinentes para testes e catálogo, sem alterar baselines para acomodar erro.
 IDs `AIR-AUDIT-*` são locais deste plano, não EVALs implementados.
 
+O prerequisite frontend de AIR-AUDIT-07 foi promovido parcialmente para
+EVAL-SP-004 em WORK-SEMANTIC-PRODUCT-004: entry primária/start e saída local
+GOBACK pelo Semantic Product/JSON. Oracles AIR/lowering/CFG continuam futuros;
+esse teste local não certifica retorno/halt de runtime nem perfis AIR.
+
 Fontes fixadas: [invariantes I-01–I-54](https://github.com/Gustavo2358/analysis-ir/blob/0b2fbce7046010b22b32efa8cbc3e75ccba09442/conformidade/01-invariantes.md),
 [oracles O-01–O-85](https://github.com/Gustavo2358/analysis-ir/blob/0b2fbce7046010b22b32efa8cbc3e75ccba09442/conformidade/02-oraculos.md)
 e [perfis @2](https://github.com/Gustavo2358/analysis-ir/blob/0b2fbce7046010b22b32efa8cbc3e75ccba09442/especificacao/10-perfis-de-conformidade.md).

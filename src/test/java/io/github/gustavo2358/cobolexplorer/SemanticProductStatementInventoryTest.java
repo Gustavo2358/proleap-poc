@@ -80,7 +80,8 @@ class SemanticProductStatementInventoryTest {
         long expectedObserved = expected.stream()
                 .filter(item -> !(item.statement() instanceof Ast.MoveStatement)
                         && !(item.statement() instanceof Ast.CallStatement)
-                        && !(item.statement() instanceof Ast.IfStatement))
+                        && !(item.statement() instanceof Ast.IfStatement)
+                        && !(item.statement() instanceof Ast.GobackStatement))
                 .count();
         CobolSemanticProduct.IfFact actualIf = port.ifs().get(0);
 
@@ -89,7 +90,7 @@ class SemanticProductStatementInventoryTest {
                 () -> assertEquals(2, port.calls().size()),
                 () -> assertEquals(1, port.ifs().size()),
                 () -> assertEquals(expectedObserved, port.observedStatements().size(),
-                        "DISPLAY/PERFORM/GOBACK/CONTINUE must remain positive facts"),
+                        "DISPLAY/PERFORM/CONTINUE remain observed; GOBACK has a dedicated fact"),
                 () -> assertEquals(3, port.children(actualIf.header().id(),
                         CobolSemanticProduct.Branch.THEN).size(),
                         "unsupported direct IF children are still known branch members"),
@@ -208,7 +209,8 @@ class SemanticProductStatementInventoryTest {
             List<ObservedAstStatement> expected = inventory(projection.program());
             CobolSemanticProduct.State state = projection.state();
             CobolSemanticPort port = projection.port();
-            int typed = scenario.moves() + scenario.calls() + scenario.ifs();
+            long typed = scenario.moves() + scenario.calls() + scenario.ifs()
+                    + expected.stream().filter(item -> item.statement() instanceof Ast.GobackStatement).count();
 
             assertAll(scenario.label(),
                     () -> assertEquals(expected.size(), state.statements().size()),
@@ -501,6 +503,8 @@ class SemanticProductStatementInventoryTest {
                 assertInstanceOf(CobolSemanticProduct.CallFact.class, fact);
             } else if (statement instanceof Ast.IfStatement) {
                 assertInstanceOf(CobolSemanticProduct.IfFact.class, fact);
+            } else if (statement instanceof Ast.GobackStatement) {
+                assertInstanceOf(CobolSemanticProduct.GobackFact.class, fact);
             } else {
                 assertInstanceOf(CobolSemanticProduct.ObservedStatement.class, fact);
             }
