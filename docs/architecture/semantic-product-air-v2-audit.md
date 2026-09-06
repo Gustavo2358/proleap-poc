@@ -37,9 +37,10 @@ controle; não se pode preencher as lacunas com tipos ou operadores escolhidos.
 adotar o contrato externo e seus validadores/oracles. `BACKLOG-LOWER-001` pode
 começar por tradução nominal/inventário com fronteiras abertas. A recomendação
 para valor observável é fechar antes o pequeno enrichment de entrada/terminal,
-depois implementar lowerer e CFG em checkpoints separados. F-02 ainda precisa
-ser mergeado e revalidado antes de apoiar a nova cadeia na garantia de
-integridade. Este audit não concede autorização para nenhum desses trabalhos.
+depois implementar lowerer e CFG em checkpoints separados. F-02 foi integrado
+pelo PR #28 e revalidado após o rebase deste audit; sua garantia cross-product
+agora compõe a baseline, mas não fecha os gaps AIR abaixo. Este audit não
+concede autorização para nenhum desses trabalhos.
 
 ## Fontes, método e prerequisite
 
@@ -55,16 +56,21 @@ main` confirmaram sincronização. O ZIP já estava fora do Git, em
 | AIR | README e todos os documentos normativos declaram **2.0.0** |
 | ZIP | 101117 bytes; SHA-256 `6d89854f6cd4abf5d0f2e20dcbd6b003cc700d617dd2483c0e28244fa3fbb7e6` |
 | Metadata real | Comentário do ZIP: `0b2fbce7046010b22b32efa8cbc3e75ccba09442`; API GitHub confirmou esse [commit](https://github.com/Gustavo2358/analysis-ir/commit/0b2fbce7046010b22b32efa8cbc3e75ccba09442), de 2026-09-06T01:41:23Z. Não há diretório `.git` extraído. |
-| F-02 | PR #28 **OPEN**, `mergedAt=null`; head `52ee4ebfb9f10f6d3d4467bf20377b6f2df9e4ef`, fora da main auditada |
+| F-02 na partida do audit | PR #28 **OPEN**, `mergedAt=null`; head `52ee4ebfb9f10f6d3d4467bf20377b6f2df9e4ef`, fora da main `107ce08` originalmente auditada |
+| F-02 na revalidação | PR #28 **MERGED** em `2026-09-06T10:05:04Z`; merge commit `6d3400ed6247f20effb49c4547378437096a1457`, usado como base do rebase |
 
 O histórico de [WORK-SEMANTIC-PRODUCT-002] e o YAML/state de
-WORK-AST-002 foram consultados conforme solicitado. O state da branch de
-F-02 registra implementação e refinamentos de candidates/scopes; o state da
-main ainda descreve seu Discovery. Nenhum deles prova merge. A inspeção da
-implementação pendente limita-se ao validator e ao seu estado de trabalho;
-não foi usada como produção da main. `git diff main...origin/feat/semantic-product-integrity-validator`
-mostra que o port/projector não muda nesse PR: mesmo após F-02, os gaps de
-suficiência listados aqui permanecem.
+WORK-AST-002 foram consultados conforme solicitado. Na partida do audit, o
+state da branch de F-02 registrava implementação e refinamentos de
+candidates/scopes, enquanto a main ainda descrevia seu Discovery; essa
+evidência isolada não provava merge. Após a integração, o metadata do PR e o
+merge commit acima satisfazem o prerequisite. A comparação da implementação
+mostrou que o port/projector não mudou no PR #28: mesmo com F-02 na baseline,
+os gaps de suficiência listados aqui permanecem.
+
+Após o rebase sobre `6d3400e`, os gates `fast`, `semantic` e `full` passaram;
+o agregado incluiu E2E estruturado e naming. Essa revalidação certifica a
+composição deste diff documental com F-02, não uma implementação AIR.
 
 Foram lidos integralmente README, especificação 00–11,
 [invariantes AIR] e [oracles AIR] do ZIP. Exemplos não substituem norma.
@@ -95,10 +101,11 @@ para recuperar os fatos perdidos.
 | [S7] | Composition root `publishSemanticProduct` e chamada da unit primária: publicação por unit não é inventário AIR de todas as units/entradas |
 | [S8] | `SourceMap.location` 260–267 e `UnicodeText.lineColumn` 78–83: linhas base 1, colunas base 0 em code points, extremidade final inclusiva |
 
-Experimento descartável, após `mvn -q clean test-compile`, usando
+Experimento descartável original, após `mvn -q clean test-compile`, usando
 `AstBoundaryTestSupport.analyze` e `ExplorerMain.publishSemanticProduct` da
-baseline. A compilação limpa evita herdar classes de F-02 da branch anterior.
-Driver e classes ficaram em /tmp. Não são testes novos nem um lowerer.
+baseline `107ce08`. A compilação limpa evitou herdar classes de F-02 da branch
+então separada. Driver e classes ficaram em /tmp. Não são testes novos nem um
+lowerer.
 
 Entrada comum: `PROGRAM-ID. AUDIT-PROBE`, WORKING-STORAGE com
 `01 TAB. 05 WS-X PIC X(8) OCCURS 2 TIMES. 01 IX PIC 9.`, PROCEDURE DIVISION,
@@ -323,20 +330,26 @@ downstream abaixo segue [classificação de impacto]; não se rotula BLOCKS_CFG
 um consumidor que ainda não foi implementado. BLOCKED na matriz qualifica a
 representação precisa; REDUCES_PRECISION é sustentado pelo fallback máximo.
 
-### F-AIR-01 — prerequisite remoto não satisfeito — P0
+### F-AIR-01 — prerequisite remoto satisfeito — P0 concluído
 
-Evidência: main 107ce08 e PR #28 OPEN; primeira boundary pendente: validação
-cross-product antes da publicação. Owner **A**, no trabalho de F-02 existente.
-Menor ação: review/merge separado e revalidar a nova baseline; não cherry-pick
-neste audit. Impacto: não alegar integridade integrada nem tests F-02 normais
-na main. Risco de overclaim: usar o verde de outra branch como garantia atual.
+Estado inicial: main `107ce08` e PR #28 OPEN; a validação cross-product antes
+da publicação ainda não integrava a baseline. A menor ação registrada era
+review/merge separado e revalidação, sem cherry-pick neste audit.
+
+Reavaliação em 2026-09-06: o PR #28 foi mergeado em `6d3400e`, este audit foi
+rebaseado sobre essa main e os gates `fast`, `semantic` e `full` passaram. A
+ação do owner **A** está concluída e a baseline agora inclui a garantia de
+integridade F-02. O fechamento deste prerequisite de workflow não altera os
+demais findings AIR: F-02 valida joins entre produtos existentes, mas não
+publica os fatos de entrada, controle, valor, storage ou interação ausentes.
 
 ```yaml
 downstream_impact:
   class: NOT_APPLICABLE
   rationale: Este registro verifica o prerequisite de workflow e snapshot; não atribui um novo defeito semântico a uma execução válida nem reclassifica o finding F-02 original.
   evidence:
-    - main 107ce08 e PR 28 OPEN com head 52ee4eb e mergedAt null em 2026-09-06.
+    - Estado inicial preservado: main 107ce08 e PR 28 OPEN com head 52ee4eb e mergedAt null em 2026-09-06.
+    - Estado atual: PR 28 MERGED em 2026-09-06T10:05:04Z, merge commit 6d3400e; branch do audit rebaseada e gates fast, semantic e full verdes.
 ```
 
 ### F-AIR-02 — readiness nominal não certifica invoke/CFG V2 — P0
@@ -614,8 +627,8 @@ domínios/conversões/alias e ausência de outros caminhos influentes provados.
 
 ## Ordem proposta de próximos checkpoints
 
-1. **Prerequisite externo:** review/merge de F-02 e revalidação da main; não
-   integra este PR. Não esperar F-02 para ler/fechar o contrato AIR.
+1. **Prerequisite externo concluído:** F-02 foi integrado pelo PR #28 e a main
+   revalidada antes deste update; não reabrir seu escopo no trabalho AIR.
 2. **Contrato AIR/validator e oracles do slice** (`BACKLOG-IR-001`, B): fixar
    2.0.0, invariantes, TypeRef, scopes, origens, envelopes máximos e negociação.
    Definir o limite de conformidade do papel, sem criar nova semântica AIR.

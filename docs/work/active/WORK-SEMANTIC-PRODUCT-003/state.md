@@ -2,23 +2,25 @@
 
 ## Onde estamos
 
-Checkpoint documental concluído em discovery/semantic-product-air-v2-audit,
-desde main 107ce08; revisão pendente. F-02 permanece no PR #28 aberto, head
-52ee4eb, conferido em 2026-09-06. AIR 2.0.0 fixada pelo ZIP e commit verificado.
+Checkpoint documental rebaseado sobre a main `6d3400e`; revisão/merge do PR
+#29 permanecem pendentes. F-02 foi integrado pelo PR #28 em
+`2026-09-06T10:05:04Z`, com head `52ee4eb` e merge commit `6d3400e`. AIR 2.0.0
+continua fixada pelo ZIP e commit verificado.
 
 ## Verde conhecido
 
-Fast/self-validation e full passaram, incluindo semantic, E2E e naming.
-Maven: 433 testes, zero failures/errors, três skipped opt-in (dois F-02 e um
-de conditions); não são prova da implementação F-02. Build limpo e probe
-descartável confirmam perda de SUBSCRIPT e shapes genéricas de terminais.
-Diff restrito a documentação; ZIP/extração/experimento preservados em /tmp.
+Após o rebase, os gates fast, semantic e full passaram; o full incluiu semantic,
+E2E estruturado e naming. O snapshot Surefire final registrou 511 testes, zero
+failures/errors e um skip preexistente de conditions; os dois oracles F-02
+integram a execução normal. O probe descartável original continua evidenciando
+perda de SUBSCRIPT e shapes genéricas de terminais. Diff restrito a
+documentação; ZIP/extração/experimento preservados em /tmp.
 
 ## Restante
 
-Review/merge deste Discovery em PR novo; F-02 em fluxo separado. Próxima
-implementação requer autorização própria: contrato/validator AIR, depois
-entrada/terminal do Semantic Product, lowerer e CFG. Nenhum slice iniciado.
+Review/merge deste Discovery no PR #29. Próxima implementação requer
+autorização própria: contrato/validator AIR, depois entrada/terminal do
+Semantic Product, lowerer e CFG. Nenhum slice foi iniciado.
 
 ## Descobertas que afetam o plano
 
