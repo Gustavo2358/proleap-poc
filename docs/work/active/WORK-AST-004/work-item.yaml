@@ -1,0 +1,63 @@
+id: WORK-AST-004
+title: Discovery de canonical coverage para NEXT SENTENCE
+status: blocked
+type: discovery
+risk: high
+goal: Comprovar o crash e submeter o desenho do fix à revisão humana preservando NEXT SENTENCE e a boundary semântica.
+must_read:
+  - docs/domain/semantic-ast.md
+  - docs/domain/cobol-semantic-product.md
+  - docs/architecture/pipeline.md
+  - docs/architecture/invariants.md
+  - docs/engineering/work-item-protocol.md
+  - docs/engineering/semantic-analysis-policy.md
+  - docs/engineering/semantic-testing.md
+  - docs/engineering/downstream-impact-classification.md
+  - docs/engineering/gates.md
+related_domain_rules:
+  - docs/domain/semantic-ast.md
+  - docs/domain/cobol-semantic-product.md
+  - docs/domain/conditional-expressions.md
+related_decisions:
+  - ADR-0002
+  - ADR-0008
+  - ADR-0009
+  - ADR-0013
+related_invariants:
+  - INV-AST-001
+  - INV-AST-002
+  - INV-AST-003
+  - INV-PROV-002
+  - INV-COV-001
+  - INV-COV-002
+  - INV-SP-001
+  - INV-SP-002
+  - INV-SP-003
+  - INV-SP-004
+  - INV-DET-001
+evals:
+  - EVAL-AST-003
+  - EVAL-AST-006
+  - EVAL-COV-001
+  - EVAL-SP-001
+  - EVAL-SP-003
+source_scope:
+  - src/main/java/io/github/gustavo2358/cobolexplorer/AstBuilder.java
+test_scope:
+  - src/test/java/io/github/gustavo2358/cobolexplorer/NextSentenceCoverageDiscoveryTest.java
+  - src/test/java/io/github/gustavo2358/cobolexplorer/AstSemanticBoundaryRequiredOracleTest.java
+  - src/test/java/io/github/gustavo2358/cobolexplorer/AstBuildCoverageTest.java
+  - src/test/java/io/github/gustavo2358/cobolexplorer/SemanticProductStatementInventoryTest.java
+  - src/test/resources/cobol/semantic/next-sentence-if.cbl
+  - src/test/resources/cobol/semantic/next-sentence-search.cbl
+must_not_change:
+  - Produção durante Discovery; source_scope somente delimita a proposta futura, sem autorização de implementação.
+  - Gramática, manifestos e políticas de coverage; não promover wrappers inteiros para MODELED.
+  - Identidade NextSentenceStatement, Meta, provenance, IDs e ownership da AST.
+  - Projector fail-fast, contrato público 1.2.0, resolver, scalar MOVE, entry e GOBACK.
+  - AIR, cobol-lower, CFG, dataflow, targets de controle, runtime e repositórios irmãos.
+  - WORK-AST-002 e backlog não promovido; nenhuma implementação ou PR paralelo para este bug.
+gates:
+  - fast
+  - semantic
+  - full

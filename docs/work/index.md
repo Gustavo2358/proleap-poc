@@ -6,7 +6,7 @@ Work items delimitam a mudança em execução; o [backlog](backlog.md) registra 
 
 - [WORK-AST-002 — Hardening da fronteira AST para CFG e dataflow](active/WORK-AST-002/spec.md) — Slice 1 mergeado no PR #10; Discovery do Slice 2 no PR #13 e implementação de F-02 integrada pelo PR #28. Nenhum slice adjacente foi iniciado.
 
-- [WORK-SEMANTIC-PRODUCT-005 — Checkpoint 4A scalar textual MOVE](active/WORK-SEMANTIC-PRODUCT-005/spec.md) — implementation E1–E4, risco high; PR para review humano sem merge.
+- [WORK-AST-004 — Discovery de canonical coverage para NEXT SENTENCE](active/WORK-AST-004/spec.md) — discovery concluído, status blocked no gate **DISCOVERY COMPLETE — HUMAN REVIEW REQUIRED BEFORE IMPLEMENTATION**; implementação não autorizada. Continuação na mesma branch/work item/PR Draft.
 
 O restante de SP-005/SP-003 não foi promovido. `BACKLOG-IR-001`,
 `BACKLOG-LOWER-001` e `BACKLOG-CFG-001` permanecem
@@ -41,3 +41,5 @@ como registros/handoffs cross-repo para `air-java`, `cobol-lower` e
 - [WORK-SEMANTIC-PRODUCT-003 — Discovery bilateral Semantic Product / AIR V2](history/WORK-SEMANTIC-PRODUCT-003.md) — audit exclusivamente documental concluído pelo PR #29; matriz, findings e oracles futuros permanecem canônicos, sem início de produção.
 
 - [WORK-SEMANTIC-PRODUCT-004 — Entry primária e saída local GOBACK](history/WORK-SEMANTIC-PRODUCT-004.md) — concluído pelo PR #31.
+
+- [WORK-SEMANTIC-PRODUCT-005 — Checkpoint 4A scalar textual MOVE](history/WORK-SEMANTIC-PRODUCT-005.md) — concluído pelo PR #32; E1–E4 e remediação de escrita preservados nos evals canônicos.

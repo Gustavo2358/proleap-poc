@@ -1,0 +1,15 @@
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID. NEXT-SEARCH.
+       DATA DIVISION.
+       WORKING-STORAGE SECTION.
+       01 TABLE-DATA.
+          05 TABLE-ITEM PIC 9 OCCURS 2 INDEXED BY IDX.
+       PROCEDURE DIVISION.
+           SET IDX TO 1
+           SEARCH TABLE-ITEM
+               WHEN TABLE-ITEM(IDX) = 1
+                   NEXT SENTENCE
+           END-SEARCH
+           CONTINUE.
+           GOBACK.
+       END PROGRAM NEXT-SEARCH.

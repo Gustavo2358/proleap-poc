@@ -57,6 +57,22 @@ relações MOVE → próximo statement por IDs existentes, sem novos traversal e
 O [contrato do profile](scalar-text-move.md) define exclusões, disponibilidade,
 regra COBOL, custos e ownership pós-binding de ScalarMoveSemantics.
 
+### NEXT SENTENCE
+
+Para IBM Enterprise COBOL for z/OS 6.4, NEXT SENTENCE transfere controle para
+depois do próximo período separador; END-IF/END-SEARCH não são esse destino.
+CONTINUE é no-op. Fonte: [Language Reference 6.4](https://publibfp.dhe.ibm.com/epubs/pdf/igy6lr40.pdf),
+capítulo 28, páginas impressas 331 (CONTINUE), 348 (IF) e 435 (SEARCH).
+
+A representação é `Ast.NextSentenceStatement`, semanticamente distinta de
+CONTINUE. `Ast.Sentence` retém `PERIOD` e `terminatorSpan`; sua fronteira não
+pode ser descartada em favor de sucessão textual ou ordem de IDs. Alternativas
+gramaticais diretas de IF/SEARCH também são Statements materializados e estão
+sujeitas ao contrato de exatamente um finding com a mesma Meta. A origem real
+pode ser o wrapper gramatical; ela não pode ser substituída por um context fictício.
+Identidade preservada não afirma que o destino de controle já foi calculado.
+Os limites públicos ficam no [Semantic Product](cobol-semantic-product.md#next-sentence-observado).
+
 ### SEARCH WHEN
 
 `SearchStatement` é uma fronteira AST tipada com `all`, `searchedReference`, `varying` opcional, `atEnd` opcional e uma lista ordenada de `SearchWhen`. Cada `SearchWhen` é um `Ast.Node` que possui exatamente uma `condition` e suas `statements`, preservando a identidade e o ownership da branch. `SearchWhen.condition` reutiliza a mesma condition surface de `IF`/`EVALUATE`; sua interpretação nominal continua dependente do binding e não cria `ConditionSemantics` antecipadamente.
