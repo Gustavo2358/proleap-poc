@@ -5,6 +5,9 @@ Work item: WORK-SEMANTIC-PRODUCT-005, implementation; branch
 `feat/semantic-product-scalar-move`. Escopo físico: somente este frontend COBOL.
 Discovery externo foi usado read-only; CP3/PR #31 foi arquivado após confirmação
 de merge no GitHub, por exigência de lifecycle do harness.
+PR #32 aberto para revisão humana, com branch publicada por push normal. O CI
+associado ao head executa full, performance e challenges; consultar os checks
+remotos para o resultado do commit mais recente. Nenhum merge/auto-merge realizado.
 
 Contrato final: **cobol-semantic-product 1.2.0**, minor aditiva.
 [Regra, tipos públicos, exclusões e complexidade](../domain/scalar-text-move.md).

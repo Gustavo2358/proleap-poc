@@ -18,8 +18,10 @@ Diff integral revisado; git diff --check verde; sem alterações de grammar/reso
 
 ## Restante
 
-Handoff remoto por PR e CI do head, seguido de revisão humana. Sem merge,
-auto-merge ou início de 4C. O item permanece ativo até closure autorizado.
+PR #32 aberto para revisão humana; branch publicada por push normal. O workflow
+do PR executa full/performance/challenges em cada head; o resultado remoto deve
+ser conferido no commit mais recente. Sem merge, auto-merge ou início de 4C.
+O item permanece ativo até closure autorizado.
 
 ## Descobertas que afetam o plano
 
