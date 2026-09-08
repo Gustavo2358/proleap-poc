@@ -2,34 +2,34 @@
 
 ## Onde estamos
 
-Discovery concluído na branch `codex/discovery-next-sentence-coverage`, base
-main/origin/main limpa `2815e805fd3a9ef4762a39ab9435260fc76da0e8`.
-**DISCOVERY COMPLETE — HUMAN REVIEW REQUIRED BEFORE IMPLEMENTATION**.
-Implementação não autorizada; status blocked representa esse gate humano.
+**IMPLEMENTATION COMPLETE — GATES GREEN — HUMAN REVIEW REQUIRED**.
+Discovery aprovado explicitamente em 2026-09-08; fix focal implementado na mesma
+branch `codex/discovery-next-sentence-coverage` e PR #33 Draft, a partir do head
+remoto limpo `64454e2b6db8040e8eee2fd2178fe92dfb8d8d00`. Status blocked é o
+novo gate de revisão humana; o item não foi concluído/arquivado.
 
 ## Verde conhecido
 
-Fast e full passaram (full inclui semantic, E2E e naming). Suíte: 566 testes,
-0 failures/errors e 2 skips: um preexistente e o oracle requerido deste discovery.
-Caracterização: 15 testes, 0 failures/errors, um skip; oracle requerido executado
-separadamente: RED com nove contracasos. CLI NEXT: exit 1 na fase SEMANTIC_PRODUCT;
-controle CONTINUE: exit 0 e JSON 1.2.0. A primeira falha de naming foi corrigida
-somente no resumo documental e o full repetido passou; detalhes no eval.
-Diff integral revisado, diff check limpo, source/gramática/manifestos intocados.
-Self-validation local de active/index/history, links, IDs, contratos e escopo
-aprovada pelo harness; lifecycle remoto confirmado para os PRs #31/#32.
+Nove contracasos RED → GREEN; suíte focal obrigatória: 17 testes, zero
+failures/errors/skips. Matriz de 12 cenários e controles CONTINUE, policy real,
+coverage único, Meta/IDs/ownership, port/JSON e fail-fast negativo preservados.
+AST completa antes/depois byte-identical. Fast, semantic, full (E2E/naming) e
+performance passaram; semantic/full: 568 testes, zero failures/errors, um skip
+preexistente de condições. Dois mutantes focais e 13 challenges 4A rejeitados,
+restauração exata e segundo GREEN. CLI IF/SEARCH exit 0, NEXT tipado publicável,
+lowering/CFG/effects-dataflow BLOCKED. Logs/hashes/resultados no [eval](eval.md).
+Checkout principal e worktree 4E: mesmos HEADs, branches, status limpos e hashes
+dos 468 arquivos rastreados de cada um. Somente AstBuilder muda em produção.
 
 ## Restante
 
-Review e decisão humanas do discovery. Handoff em PR Draft associado à branch
-acima; implementação e promoção dos oracles exigem aprovação explícita e
-continuarão na mesma branch, no mesmo work item e no mesmo PR. Não fazer merge
-ou retirar Draft. Este checkpoint não conclui o item de implementação.
+Review humano da implementação no PR #33 Draft. Sem merge, auto-merge,
+retirada de Draft, hardening, sentence target ou avanço downstream. O lifecycle
+permanece ativo até decisão humana; nenhum roadmap E2E foi alterado.
 
 ## Descobertas que afetam o plano
 
-Causa confirmada em ifThen/ifElse/searchWhen. INV-COV-001 já existe; finalização
-comum reutiliza o registro canônico. Policies por origem permanecem conservadoras.
-AST preserva períodos; SP ainda não publica destino/boundary de sentence, portanto
-CFG/effects/dataflow continuam bloqueados. PR #32 mergeado confirmado no GitHub;
-archive de WORK-SEMANTIC-PRODUCT-005 é higiene obrigatória, sem iniciar trabalho adjacente.
+Nenhuma nova descoberta exige rever o desenho. Policies por origem preservadas.
+Sentence/target públicos e ownership público preciso de WHEN continuam lacunas
+conhecidas; não se inferiu controle por IDs, source order, provenance ou
+IfFact.continuation. Execução 4E permaneceu independente e intocada.

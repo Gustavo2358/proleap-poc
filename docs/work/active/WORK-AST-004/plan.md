@@ -4,18 +4,21 @@
 
 1. **Concluído — Discovery:** higiene Git/lifecycle, fonte normativa, inventário
    de caminhos, reprodução AST/coverage/port/CLI e oracle requerido RED.
-2. **Gate humano atual:** revisar root cause, desenho e critérios; sem produção.
-3. **NÃO autorizado — Fix focal:** somente após aprovação explícita, continuar
-   na mesma branch/work item/PR; finalização comum de Statement no AstBuilder,
-   promoção dos testes e gates. Não implica autorização para merge.
+2. **Concluído — Gate humano do discovery:** desenho e critérios aprovados
+   explicitamente em 2026-09-08.
+3. **Implementado — Fix focal, novo human review pendente:** na mesma
+   branch/work item/PR #33 Draft e em
+   worktree isolada do Checkpoint 4E; finalização comum de Statement no AstBuilder,
+   promoção dos testes e gates, commit/push e novo human review. Sem merge.
 4. **Separado e não autorizado — Hardening:** validação geral antecipada de
    AST↔coverage, novas políticas de origem semântica, sentence/target públicos
    ou qualquer etapa downstream exigem decisão e escopo próprios.
 
 ## Dependências
 
-Não há bloqueio de implementação por tecnologia externa. O bloqueio atual é a
-aprovação humana do discovery. WORK-AST-002 já fornece a invariante e o oracle
+Não há bloqueio de implementação por tecnologia externa; a aprovação humana
+do discovery foi recebida. O próximo bloqueio é review da implementação antes
+de qualquer merge. WORK-AST-002 já fornece a invariante e o oracle
 de unicidade em uma fixture; seu Slice 3 não foi iniciado. Work items e backlog
 adjacentes não autorizam ampliar este bug. A higiene exigida pelo protocolo
 arquiva WORK-SEMANTIC-PRODUCT-005 após confirmar PR #32 mergeado em
@@ -23,7 +26,7 @@ arquiva WORK-SEMANTIC-PRODUCT-005 após confirmar PR #32 mergeado em
 
 ## Superfície arquitetural provável
 
-**Decisão recomendada:** extrair de `buildStatement` uma finalização interna de
+**Decisão aprovada:** extrair de `buildStatement` uma finalização interna de
 `Ast.Statement` que recebe o nó já tipado e o contexto/texto real, registra uma
 vez pelo `recordCoverage` existente e retorna o mesmo nó. O caminho normal
 continua `visit(StatementContext) → finalização`; `statementsInside` encaminha
@@ -75,8 +78,8 @@ autorizado pelo discovery.
 
 ## Migrações requeridas
 
-Neste checkpoint: somente hygiene documental e adição de evidência. No fix
-futuro: promover o oracle requerido e migrar os asserts de bug explicitamente;
+Neste checkpoint: promover o oracle requerido para execução normal e migrar
+os asserts de bug para regressão positiva explicitamente;
 nenhuma alteração de versão pública é prevista. Finding IDs subsequentes podem
 mudar porque faltavam findings; são determinísticos por execução, não IDs
 persistentes. AST IDs e Meta permanecem iguais. Coverage/report/JSON poderão
@@ -85,8 +88,11 @@ baseline, sem atribuir runtime ou controle conhecido.
 
 ## Artefatos esperados
 
-Dois fixtures mínimos, `NextSentenceCoverageDiscoveryTest`, [eval](eval.md),
-regra de domínio com fonte oficial, EVAL-AST-006 e os cinco arquivos deste item.
+Finalização comum no AstBuilder, regressões obrigatórias em
+`NextSentenceCoverageDiscoveryTest`, [eval](eval.md), EVAL-AST-006 promovido
+e os cinco arquivos deste item. Preservar os dois fixtures e a documentação
+canônica do discovery. Capturar RED anterior, GREEN, logs/hashes e comparação
+de AST e dos checkouts ocupados em outputs locais ignorados.
 Commit focalizado, push normal e Draft PR com o gate exato. Pedir review humano
 e parar. A especificação de sentence/target necessária a lowering preciso é
 uma lacuna documentada, sem criar automaticamente outro trabalho.

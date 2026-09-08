@@ -1,9 +1,9 @@
 id: WORK-AST-004
-title: Discovery de canonical coverage para NEXT SENTENCE
+title: Fix de canonical coverage para NEXT SENTENCE
 status: blocked
-type: discovery
+type: implementation
 risk: high
-goal: Comprovar o crash e submeter o desenho do fix à revisão humana preservando NEXT SENTENCE e a boundary semântica.
+goal: Restaurar canonical coverage único para NEXT SENTENCE e publicação íntegra, preservando identidade, origem e readiness conservadora.
 must_read:
   - docs/domain/semantic-ast.md
   - docs/domain/cobol-semantic-product.md
@@ -51,7 +51,7 @@ test_scope:
   - src/test/resources/cobol/semantic/next-sentence-if.cbl
   - src/test/resources/cobol/semantic/next-sentence-search.cbl
 must_not_change:
-  - Produção durante Discovery; source_scope somente delimita a proposta futura, sem autorização de implementação.
+  - Hardening geral AST↔coverage; somente o fix focal aprovado está autorizado.
   - Gramática, manifestos e políticas de coverage; não promover wrappers inteiros para MODELED.
   - Identidade NextSentenceStatement, Meta, provenance, IDs e ownership da AST.
   - Projector fail-fast, contrato público 1.2.0, resolver, scalar MOVE, entry e GOBACK.

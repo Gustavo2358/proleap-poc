@@ -1,4 +1,4 @@
-# Discovery de NEXT SENTENCE
+# Integridade de canonical coverage para NEXT SENTENCE
 
 ## Problema
 
@@ -9,14 +9,11 @@ canonical coverage finding`. O mesmo defeito afeta alternativas diretas de
 
 ## Objetivo
 
-Discovery concluído; implementação **NÃO autorizada**.
-
-**DISCOVERY COMPLETE — HUMAN REVIEW REQUIRED BEFORE IMPLEMENTATION**
-
-A decisão técnica é recomendar o reparo do registro canônico no AstBuilder,
-compartilhando a finalização de statements. O reviewer deve aprovar este desenho
-antes de qualquer alteração de produção. A continuação usará esta mesma branch
-`codex/discovery-next-sentence-coverage`, este work item e o mesmo PR Draft.
+Discovery aprovado por autorização humana explícita em 2026-09-08. O slice
+atual implementa o reparo focal do registro canônico no AstBuilder, compartilhando
+a finalização de statements. A continuação permanece na branch
+`codex/discovery-next-sentence-coverage`, neste work item e no PR #33 Draft.
+Após implementação, gates e commit/push, exigir novo review humano sem merge.
 
 ## Domínio de entrada suportado
 
@@ -41,8 +38,8 @@ Nenhum compilador IBM foi executado; a autoridade normativa é a documentação.
   [AST semântica](../../../domain/semantic-ast.md#next-sentence).
 - `ARCHITECTURE_GUARANTEED`: INV-COV-001 exige exatamente um finding por boundary;
   INV-SP-004 proíbe recuperar coverage por nova análise no projector.
-- `SPECIFICATION_GUARANTEED`: este pedido autoriza somente discovery/testes/docs,
-  commit/push/Draft PR e exige review humano antes de implementação.
+- `SPECIFICATION_GUARANTEED`: a aprovação humana autoriza o fix focal, testes/docs e
+  commit/push no PR #33 Draft; exige novo review humano antes de merge.
 - `OBSERVED_IN_CURRENT_CORPUS_ONLY`: os resultados da matriz são evidência da
   base identificada, não especificação isolada da linguagem.
 - `UNCERTAIN`: representação futura de sentence/target na boundary ainda não
@@ -50,7 +47,7 @@ Nenhum compilador IBM foi executado; a autoridade normativa é a documentação.
 
 ## Comportamento esperado
 
-Acceptance criteria do futuro fix, ainda pendentes:
+Acceptance criteria do fix aprovado:
 
 1. Toda ocorrência NEXT SENTENCE das três alternativas diretas e do caminho
    normal permanece `Ast.NextSentenceStatement`; cardinalidade/ownership/IDs,
@@ -78,7 +75,7 @@ Acceptance criteria do futuro fix, ainda pendentes:
 ## Comportamento diante de incerteza
 
 Coverage ausente é corrupção interna, distinta de capability unsupported. A
-falha do projector permanece. O reparo deverá produzir um finding pela policy
+falha do projector permanece. O reparo produz um finding pela policy
 canônica já existente; não poderá promover a semântica de transferência para
 READY. A AST retém informação para evolução futura, mas o port 1.2.0 ainda não
 é suficiente para calcular o destino preciso de NEXT SENTENCE sem evoluir seu
@@ -86,11 +83,11 @@ contrato; essa limitação deve permanecer explícita.
 
 ## Fora de escopo
 
-Implementação neste checkpoint; mudança de gramática/manifestos; estreitamento
+Hardening geral AST↔coverage; mudança de gramática/manifestos; estreitamento
 de span de wrappers; factory global de todos os Ast.Nodes; validator novo em
 produção; publicação de sentence IDs/targets; interpretação de condições/SEARCH
 ALL; AIR/IR, CobolLower, CFG, dataflow, runtime e efeitos. Nenhum merge, retirada
-de Draft ou segundo PR para implementação. A única higiene adjacente é o archive
+de Draft ou segundo PR para implementação. A higiene adjacente já concluída no discovery foi o archive
 documental obrigatório de WORK-SEMANTIC-PRODUCT-005, cujo PR #32 já foi mergeado.
 
 ## Regras de domínio relacionadas

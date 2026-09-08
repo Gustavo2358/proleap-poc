@@ -6,7 +6,7 @@ Work items delimitam a mudança em execução; o [backlog](backlog.md) registra 
 
 - [WORK-AST-002 — Hardening da fronteira AST para CFG e dataflow](active/WORK-AST-002/spec.md) — Slice 1 mergeado no PR #10; Discovery do Slice 2 no PR #13 e implementação de F-02 integrada pelo PR #28. Nenhum slice adjacente foi iniciado.
 
-- [WORK-AST-004 — Discovery de canonical coverage para NEXT SENTENCE](active/WORK-AST-004/spec.md) — discovery concluído, status blocked no gate **DISCOVERY COMPLETE — HUMAN REVIEW REQUIRED BEFORE IMPLEMENTATION**; implementação não autorizada. Continuação na mesma branch/work item/PR Draft.
+- [WORK-AST-004 — Fix de canonical coverage para NEXT SENTENCE](active/WORK-AST-004/spec.md) — discovery aprovado; **IMPLEMENTATION COMPLETE — GATES GREEN — HUMAN REVIEW REQUIRED**, status blocked na mesma branch/work item/PR #33 Draft. Sem merge; hardening não autorizado.
 
 O restante de SP-005/SP-003 não foi promovido. `BACKLOG-IR-001`,
 `BACKLOG-LOWER-001` e `BACKLOG-CFG-001` permanecem

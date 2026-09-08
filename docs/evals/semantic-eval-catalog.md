@@ -38,7 +38,7 @@ Este catálogo dá IDs estáveis às capacidades críticas do harness. Ele não 
 
 | ID | Tipo / tier | Contrato observado | Oracle executável e fixtures | Regras relacionadas | Rejeita implementação ingênua |
 | --- | --- | --- | --- | --- | --- |
-| EVAL-AST-006 | characterization / semantic | Caminhos diretos IF THEN/ELSE e SEARCH WHEN preservam NextSentence mas perdem finding na base do discovery; caminho normal e controles CONTINUE projetam. Oracle requerido opt-in permanece RED até implementação aprovada. | `NextSentenceCoverageDiscoveryTest`; `semantic/next-sentence-if.cbl`, `semantic/next-sentence-search.cbl`; [comandos e resultados](../work/active/WORK-AST-004/eval.md) | semantic AST e Semantic Product; INV-COV-001, INV-AST-002, INV-SP-001/002/004 | Transformar NEXT em CONTINUE, omitir ocorrência, confundir finding do WHEN com o filho, enfraquecer fail-fast ou anunciar CFG pronto. |
+| EVAL-AST-006 | regression / semantic | Caminhos diretos IF THEN/ELSE e SEARCH WHEN e caminho normal preservam NextSentence com exatamente um finding, Meta/origem/policy reais e JSON tipado com readiness bloqueada. Oracle requerido promovido para execução normal; controles CONTINUE, determinismo, units/containment e negativo de coverage removido. | `NextSentenceCoverageDiscoveryTest`; `semantic/next-sentence-if.cbl`, `semantic/next-sentence-search.cbl`; [comandos e resultados](../work/active/WORK-AST-004/eval.md) | semantic AST e Semantic Product; INV-COV-001, INV-AST-002, INV-SP-001/002/004 | Transformar NEXT em CONTINUE, omitir ocorrência, confundir finding do WHEN com o filho, enfraquecer fail-fast ou anunciar CFG pronto. |
 
 ## Compilation units, símbolos e ocorrências
 

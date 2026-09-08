@@ -629,9 +629,13 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
         if (!(visited instanceof Ast.Statement statement)) {
             throw new IllegalStateException("Statement visitor produced no AST node for " + sourceText(wrapper));
         }
-        String grammarRule = statement.meta().origin().grammarRule();
-        recordCoverage(statement, sourceText(wrapper));
         builtStatements.put(statementContext, statement);
+        return finishStatement(statement, wrapper);
+    }
+
+    private Ast.Statement finishStatement(Ast.Statement statement, ParserRuleContext context) {
+        String grammarRule = statement.meta().origin().grammarRule();
+        recordCoverage(statement, sourceText(context));
         if (LOG.isTraceEnabled()) {
             String sourceFile = statement.meta().provenance().original().file();
             if (statement instanceof Ast.PreservedStatement) {
@@ -1906,7 +1910,7 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
         List<CobolParser.StatementContext> statements = directChildren(context, CobolParser.StatementContext.class);
         if (statements.isEmpty() && context.getToken(CobolParser.NEXT, 0) != null
                 && context.getToken(CobolParser.SENTENCE, 0) != null)
-            return List.of(new Ast.NextSentenceStatement(meta(context)));
+            return List.of(finishStatement(new Ast.NextSentenceStatement(meta(context)), context));
         return statements.stream().map(this::buildStatement).toList();
     }
 

@@ -2,11 +2,64 @@
 
 ## O que prova corretude
 
-Este checkpoint prova o **defeito e seu desenho**, não a correção. Base limpa e
-sincronizada em 2026-09-08: main = origin/main = HEAD
-`2815e805fd3a9ef4762a39ab9435260fc76da0e8`, após fetch e fast-forward.
-Branch criada antes do discovery: `codex/discovery-next-sentence-coverage`.
-Nenhum arquivo de produção mudou.
+O fix focal foi autorizado explicitamente em 2026-09-08 após aprovação humana
+do discovery. A implementação parte do head remoto/PR #33
+`64454e2b6db8040e8eee2fd2178fe92dfb8d8d00`, em worktree irmã limpa e isolada,
+na mesma branch `codex/discovery-next-sentence-coverage`. Somente AstBuilder
+muda em produção: `buildStatement` e a alternativa direta em `statementsInside`
+terminam em `finishStatement`. O helper registra uma vez, pelo `recordCoverage`
+existente, preserva logging e retorna o mesmo statement. `builtStatements`
+continua restrito a StatementContexts reais; `buildCoverageReport` e manifesto
+permanecem inalterados.
+
+### Implementação e oracles promovidos
+
+`NextSentenceCoverageDiscoveryTest` mantém o nome histórico, mas agora é
+regressão obrigatória (EVAL-AST-006): removeu-se `EnabledIfSystemProperty` e
+substituíram-se os asserts de crash/ausência por bijeção AST↔coverage↔inventário.
+O oracle requerido original está GREEN sem opt-in. A suíte focal tem **17 testes,
+zero failures/errors/skips**: matriz original de 12 cenários com 12 controles
+CONTINUE, oracle agregado, boundary de período, corrupção negativa, segundo WHEN
+com NEXT e duas units com namespaces independentes. Nenhum teste aceita o crash
+antigo como comportamento normal.
+
+A regressão verifica toda a matriz, não apenas os NextSentence: exatamente um
+finding por Statement, mesma Meta/origem/writtenText, finding de SearchWhen
+separado do filho, pre-order contíguo sem compartilhamento de instância, joins
+canônicos, identidade e containment publicados, policy dos quatro contexts,
+AST/coverage/JSON determinísticos e identidade JSON
+`NEXT_SENTENCE` / `TYPED_NEXT_SENTENCE`. Lowering, CFG e effects-dataflow
+permanecem BLOCKED tanto no port quanto no JSON. IF direto mantém PARTIAL;
+normal e SEARCH mantêm UNSUPPORTED. CONTINUE permanece apenas controle de pipeline.
+
+A captura da AST completa dos 12 cenários antes/depois foi byte-identical:
+SHA-256 `657d5bca5fa15e8d3a5effb3d11e21d6a787d5894e3113dac1dab0613fdfa766`.
+Isso inclui IDs/Meta, provenance, ownership, sentences/períodos e metadata de
+entry/continuation. O código que materializa esses elementos não mudou.
+
+Dois desafios semânticos focais foram executados isoladamente em AstBuilder:
+remover a chamada comum da alternativa direta e duplicar coverage no caminho
+normal. Ambos ficaram RED pelos contratos esperados, sem erro de compilação;
+restauração byte-identical e segundo GREEN confirmados. O negativo permanente
+de finding removido continua exigindo o fail-fast original do projector;
+`SemanticCoverageTest` continua rejeitando duplicações.
+
+Logs brutos, XMLs, snapshots e hashes locais estão em `target/work-ast-004/`:
+`discovery-required-red.log`, `focal-green.log`, `focal-green.xml`,
+`ast-before.txt`, `ast-after.txt`, `challenge-results.json` e logs dos mutantes.
+As duas primeiras tentativas da ampliação do teste estão preservadas em
+`focal-first.log` (helper sem declarar IOException) e `focal-second.log`
+(comparação de instâncias de CompilationUnitModel em vez dos records de units).
+Esses erros de teste foram corrigidos; não contam como mutantes mortos nem como
+evidência do bug de produção. Não exigiram mudança no desenho aprovado.
+
+### Evidência histórica preservada
+
+O discovery abaixo foi executado sobre a base limpa
+`2815e805fd3a9ef4762a39ab9435260fc76da0e8`, sem alteração de produção.
+As referências de linhas da causa descrevem essa base. Seus resultados RED
+foram reproduzidos antes do fix nesta worktree; não são mais comportamento
+esperado da suíte normal.
 
 Oracle executável: [NextSentenceCoverageDiscoveryTest](../../../../src/test/java/io/github/gustavo2358/cobolexplorer/NextSentenceCoverageDiscoveryTest.java).
 O helper existente percorre normalização FIXED, preprocessing, parse sem erros,
@@ -15,6 +68,9 @@ O teste então chama o projector real e o writer JSON. Não fabrica finding para
 tornar o caso positivo; o único produto adulterado pertence ao teste negativo.
 
 ### Root cause comprovada: F-01
+
+F-01 foi remediado pelo fix focal. A classificação abaixo descreve o defeito
+comprovado antes da correção; a capability de CFG continua indisponível.
 
 | Elo da hipótese | Veredito e evidência na base |
 | --- | --- |
@@ -60,30 +116,34 @@ outro bypass alcançável foi identificado. `UnsupportedStatement` é permitido
 pelo modelo, mas não possui construtor em produção nesta base. Visitors públicos
 podem produzir nodes isolados sem report; esse uso não é o contrato build/buildCompilationUnit.
 
-O teste reconcilia **todos** os Statements das 12 árvores: os únicos nodes sem
-finding são NextSentence diretos. Isso complementa a inspeção de chamadas; não
+Na base do discovery, o teste reconciliou **todos** os Statements das 12 árvores:
+os únicos nodes sem finding eram NextSentence diretos. Isso complementa a inspeção de chamadas; não
 certifica todo o universo COBOL. Casos anteriores de SEARCH testavam shape e
 ownership, sem projetar o produto ou exigir finding para o filho.
 
 ## Classes positivas
 
-Na caracterização, positivo significa reproduzir a observação conhecida:
+A matriz conserva os resultados do discovery para comparação. Após o fix,
+todas as doze entradas devem publicar NEXT_SENTENCE / TYPED_NEXT_SENTENCE,
+com zero findings ausentes e exatamente um por Statement. As policies reais
+são verificadas explicitamente: IF direto publica PARTIAL; normal/SEARCH
+publicam UNSUPPORTED. Lowering/CFG/effects-dataflow continuam BLOCKED.
 
-| Cenário | NEXT nodes / findings ausentes | AST → SP na base |
-| --- | --- | --- |
-| IF THEN, sem THEN escrito | 1 / 1 | Exceção canônica |
-| IF THEN, com THEN escrito | 1 / 1 | Exceção canônica |
-| IF ELSE | 1 / 1 | Exceção canônica |
-| IF ambos os ramos | 2 / 2 | Exceção canônica |
-| IF terminado por período, sem END-IF | 1 / 1 | Exceção canônica |
-| IF aninhado | 1 / 1 | Exceção canônica |
-| SEARCH WHEN sequencial | 1 / 1 | Exceção canônica |
-| SEARCH ALL WHEN (probe estrutural) | 1 / 1 | Exceção canônica |
-| SEARCH com segundo WHEN independente | 1 / 1 | Exceção canônica |
-| statement genérico NEXT SENTENCE | 1 / 0 | NEXT_SENTENCE / TYPED_NEXT_SENTENCE, blocked |
-| IF com CONTINUE antes de NEXT na lista | 1 / 0 | NEXT_SENTENCE / TYPED_NEXT_SENTENCE, blocked |
-| EVALUATE WHEN com lista de statements | 1 / 0 | NEXT_SENTENCE / TYPED_NEXT_SENTENCE, blocked |
-| Cada cenário substituindo NEXT SENTENCE por CONTINUE | 0 / 0 | 12 controles publicam inventário completo |
+| Cenário | NEXT nodes / findings ausentes na base | AST → SP na base | Após o fix |
+| --- | --- | --- | --- |
+| IF THEN, sem THEN escrito | 1 / 1 | Exceção canônica | 0 ausentes; NEXT tipado, BLOCKED |
+| IF THEN, com THEN escrito | 1 / 1 | Exceção canônica | 0 ausentes; NEXT tipado, BLOCKED |
+| IF ELSE | 1 / 1 | Exceção canônica | 0 ausentes; NEXT tipado, BLOCKED |
+| IF ambos os ramos | 2 / 2 | Exceção canônica | 0 ausentes; NEXT tipado, BLOCKED |
+| IF terminado por período, sem END-IF | 1 / 1 | Exceção canônica | 0 ausentes; NEXT tipado, BLOCKED |
+| IF aninhado | 1 / 1 | Exceção canônica | 0 ausentes; NEXT tipado, BLOCKED |
+| SEARCH WHEN sequencial | 1 / 1 | Exceção canônica | 0 ausentes; NEXT tipado, BLOCKED |
+| SEARCH ALL WHEN (probe estrutural) | 1 / 1 | Exceção canônica | 0 ausentes; NEXT tipado, BLOCKED |
+| SEARCH com segundo WHEN independente | 1 / 1 | Exceção canônica | 0 ausentes; NEXT tipado, BLOCKED |
+| statement genérico NEXT SENTENCE | 1 / 0 | NEXT_SENTENCE / TYPED_NEXT_SENTENCE, blocked | 0 ausentes; NEXT tipado, BLOCKED |
+| IF com CONTINUE antes de NEXT na lista | 1 / 0 | NEXT_SENTENCE / TYPED_NEXT_SENTENCE, blocked | 0 ausentes; NEXT tipado, BLOCKED |
+| EVALUATE WHEN com lista de statements | 1 / 0 | NEXT_SENTENCE / TYPED_NEXT_SENTENCE, blocked | 0 ausentes; NEXT tipado, BLOCKED |
+| Cada cenário substituindo NEXT SENTENCE por CONTINUE | 0 / 0 | 12 controles publicam inventário completo | 0 NEXT; inventário completo |
 
 Fixtures: [IF](../../../../src/test/resources/cobol/semantic/next-sentence-if.cbl)
 e [SEARCH](../../../../src/test/resources/cobol/semantic/next-sentence-search.cbl).
@@ -99,11 +159,12 @@ do NEXT SENTENCE normal, preserva a AST e exige a mesma exceção. `SemanticCove
 já rejeita duplicações e IDs de finding não contíguos; não consegue detectar
 ausência sem receber a AST. `CompilationUnitBuildResult` verifica as keys de
 units, mas não a bijeção. `SemanticProductIntegrityValidator` não recebe coverage
-e valida outros joins. A pipeline de teste passa por ele antes do crash.
+e valida outros joins. A pipeline de teste já passava por ele antes do crash histórico.
 
 `AstSemanticBoundaryRequiredOracleTest.everyMaterializedSemanticBoundaryHasExactlyOneFinding`
-já codifica INV-COV-001 para uma fixture. Falta incluir as alternativas diretas
-nessa cobertura de entradas; o defeito é de enforcement, não ausência de contrato.
+já codifica INV-COV-001 para uma fixture. A matriz de EVAL-AST-006 agora estende
+essa proteção às alternativas diretas; o defeito era de enforcement, não ausência
+de contrato. A corrupção negativa continua isolada em teste, sem fallback novo.
 
 ## Classes ambíguas
 
@@ -124,11 +185,11 @@ o sucessor lexical imediato como destino já provado de NEXT SENTENCE.
 
 ### Testes mínimos do fix versus hardening separado
 
-**Necessários para este fix:** promover a matriz (AST/parse route, exatamente um
+**Implementados neste fix:** promoção da matriz (AST/parse route, exatamente um
 finding por Statement, mesma Meta, SearchWhen distinto, integração e JSON),
-manter negativo de finding removido e duplicação existente, e preservar o oracle
-de sentence e os controles CONTINUE. Acrescentar asserts da policy real dos quatro
-contexts, determinismo de build/JSON e identity/containment por unit. Reutilizar
+negativo de finding removido e duplicação existente, preservação do oracle
+de sentence e controles CONTINUE. Asserts da policy real dos quatro
+contexts, determinismo de build/JSON e identity/containment por unit. Reutilizam-se
 os gates existentes para pre-order/provenance/compilation units e regressões
 GOBACK/MOVE. Esses oracles não exigem implementar semântica de transferência.
 
@@ -142,7 +203,82 @@ para implementação agora ou requisito oculto do reparo focal.
 
 ## Casos de regressão
 
-Comandos reproduzíveis a partir da raiz:
+### Validação da implementação — 2026-09-08
+
+| Execução | Resultado real |
+| --- | --- |
+| Oracle requerido antes do fix | RED: 15 testes, uma failure agregando nove contracasos, zero errors/skips |
+| Regressão focal promovida, sem opt-in | GREEN: 17 testes, zero failures/errors/skips |
+| `check-fast.sh` | PASS (docs/lifecycle local e arquitetura) |
+| `check-semantic.sh` | PASS: 568 testes, zero failures/errors, um skip preexistente |
+| `check-full.sh` | PASS: fast + semantic + regressão E2E + naming |
+| `check-performance.sh` | PASS: probes estruturais e de escala 4A |
+| Dois desafios focais de coverage | Ambos semanticamente RED; restauração byte-identical e GREEN |
+| `challenge-scalar-move.py` do workflow | 13 mutantes semanticamente RED; restauração exata e segundo GREEN |
+| CLI IF e SEARCH | exit 0, JSON 1.2.0 com NEXT_SENTENCE / TYPED_NEXT_SENTENCE e três dimensões BLOCKED |
+
+O único skip da suíte é `SemanticConditionContextDiscoveryTest`, dependente de
+`semantic.condition.required`, já existente. Nenhum gate ou fixture foi
+relaxado. O full preservou inclusive sua repetição interna da suíte Maven.
+Performance/challenges adicionais reproduzem os entrypoints do workflow atual;
+PIT permanece sob demanda, fora dos gates estáveis, conforme a política.
+
+Comandos nesta worktree (Maven 3.9.16, JDK 25.0.4, Node 24.19.0):
+
+```bash
+mvn -o -q -Dtest=NextSentenceCoverageDiscoveryTest test
+./scripts/harness/check-fast.sh
+./scripts/harness/check-semantic.sh
+./scripts/harness/check-full.sh
+./scripts/harness/check-performance.sh
+python3 scripts/harness/challenge-scalar-move.py
+mvn -o -q exec:java -Dexec.args='--source src/test/resources/cobol/semantic/next-sentence-if.cbl --copybooks src/test/resources/cobol/provenance/cpy --output target/work-ast-004/cli-if'
+mvn -o -q exec:java -Dexec.args='--source src/test/resources/cobol/semantic/next-sentence-search.cbl --copybooks src/test/resources/cobol/provenance/cpy --output target/work-ast-004/cli-search'
+```
+
+Foi usado o parâmetro já suportado `MAVEN_BIN` com um adapter local ignorado que
+somente acrescenta `-o`: cache de dependências disponível usado offline, sem
+limpeza compartilhada ou alteração do harness. Gates sequenciais, nunca dois
+Maven simultâneos nesta worktree. `gate-results.json` e XMLs em
+`semantic-surefire/`/`full-surefire/` preservam resultados; os challenges 4A
+mantêm seus logs/hashes originais em `target/checkpoint-4a/challenges/`.
+O E2E preservou outputs brutos em `/tmp/cobol-source-normalizer-full.nHoSBf`.
+
+Os JSONs públicos do CLI são byte-identical ao alias `semantic-product.json`.
+SHA-256 IF: `cdcdea5d9c430ec67db92f12a41f9f17ade6dc0477bb7aa3728df5a30101ddcb`;
+SEARCH: `519ab497c9359f6bbea86c31b2727e6dedc91c550bfa092b1888ea051c819a0f`.
+`cli-results.json` registra coverage PARTIAL/UNSUPPORTED respectivamente,
+identidade e as três dimensões bloqueadas.
+
+### Isolamento operacional e challenge pass
+
+Antes de implementar: instruções do workspace/repositório lidas; worktrees
+inventariadas; fetch remoto; branch local criada rastreando diretamente o head
+remoto do PR #33 na worktree irmã isolada. Checkout principal ocupado:
+`4345bc18917b8df56be1acd7e44118469ec3f3d3`, branch
+`feat/semantic-product-scalar-move`; worktree 4E ocupada: detached
+`2815e805fd3a9ef4762a39ab9435260fc76da0e8`. Ambos permaneceram somente leitura:
+HEAD, branch, status limpo e os 468 hashes de arquivos rastreados de cada um
+foram comparados antes/depois, sem diferenças. Inventário com paths absolutos
+e hashes preservado em `occupied-before.json`/`occupied-after.json` locais.
+A nova worktree usa seu próprio source/index/HEAD/target/fixtures; temporários
+do harness e JUnit usam nomes únicos. Não há porta, container ou banco fixo
+nos gates executados; nenhum processo global foi parado/reiniciado, nenhum
+arquivo do 4E ou roadmap foi alterado. Metadados Git de registro de worktrees e
+refs remotas são compartilhados por definição, sem modificar os working trees.
+
+A revisão por falsificação cobriu bypass direto, duplicação normal, perda de
+ramo/WHEN, namespaces locais repetidos, troca indevida por CONTINUE e promoção
+de capability. Somente AstBuilder permanece no diff de produção; projector,
+gramática, manifestos, contrato público e repositórios downstream permanecem
+intocados. Nenhum novo finding exige rever o desenho aprovado. Hardening geral
+e sentence target continuam não autorizados. Após commit/push, parar para
+human review no PR #33 Draft; sem merge/auto-merge.
+
+### Execução histórica do discovery
+
+Comandos abaixo descrevem o checkpoint anterior e seu RED conhecido. O opt-in
+foi removido: na implementação, o oracle requerido roda em toda suíte normal.
 
 ```bash
 ./scripts/harness/check-fast.sh
@@ -173,7 +309,7 @@ mvn -q exec:java -Dexec.args='--source target/next-sentence-discovery/if-continu
 
 O controle termina com exit 0 e publica JSON 1.2.0. O opt-in segue a convenção
 de `SemanticConditionContextDiscoveryTest` (`semantic.condition.required`),
-preserva um RED explícito sem deixar os gates normais vermelhos e será removido
+preserva um RED explícito sem deixar os gates normais vermelhos e foi removido
 na implementação aprovada. Não é exceção ao contrato de produção.
 
 Primeira execução de full: fast/semantic e E2E passaram; naming rejeitou o
@@ -195,7 +331,7 @@ AST/coverage/JSON determinísticos; IDs são locais à unit, sem promessa após 
 | Camada | Informação preservada / limite |
 | --- | --- |
 | AST | NextSentenceStatement distinto, membership e Sentence(PERIOD, terminatorSpan). A fixture diferencia next lexical e after-period. Não contém CFG. |
-| Semantic Product | O caminho normal já expõe NEXT_SENTENCE / TYPED_NEXT_SENTENCE, id, provenance, gap e readiness bloqueada. O fix habilitará o mesmo inventário conservador para os caminhos diretos. |
+| Semantic Product | O caminho normal já expõe NEXT_SENTENCE / TYPED_NEXT_SENTENCE, id, provenance, gap e readiness bloqueada. O fix habilita o mesmo inventário conservador para os caminhos diretos. |
 | Lowering / AIR 2.0.0 | Identidade impede confusão com CONTINUE. Ainda faltam sentence boundary/target e, em SEARCH, ownership público preciso de WHEN. `collectDirectStatements` achata containers de procedure; `Branch.UNKNOWN` não identifica o WHEN. A interface atual não autoriza resolver destino por source/IDs/ordem. |
 | CFG | Não pode criar fallthrough para NEXT_SENTENCE nem usar IfFact.continuation como destino. Precisa de evolução canônica no frontend/SP antes de lowering preciso; controle conservador permanece bloqueado. |
 | Futuro dataflow | Successor falso propagaria valores e reachability incorretos. Gaps e readiness bloqueada impedem alegar transferências/valores conhecidos neste checkpoint. |
@@ -210,6 +346,6 @@ sentence handles versus target explícito; essa decisão permanece aberta.
 ## Expectativas de escala
 
 Doze fontes pequenas e contagens derivadas de seus inventários, sem baseline
-de corpus ou threshold de hardware. A proposta adiciona um registro por
+de corpus ou threshold de hardware. A implementação adiciona um registro por
 ocorrência direta e preserva ordenação/complexidade existentes. Guard geral
 linear e probes extensivos só se autorizados no hardening separado.
