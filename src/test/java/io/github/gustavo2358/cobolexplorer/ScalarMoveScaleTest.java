@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class ScalarMoveScaleTest {
     record Observation(String probe, long physicalLines, int declarations, int moves,
-                       ScalarMoveSemantics.Metrics metrics, int jsonBytes, long elapsedMillis) { }
+                       ScalarMoveSemantics.Metrics metrics, long jsonBytes, long elapsedMillis) { }
     @Test void physicalLinesDoNotExpandSemanticIdentitiesOrPublication() throws Exception {
         String small = Files.readString(ScalarMoveCheckpoint4ATest.FIXTURE);
         String source = small.replace("       PROCEDURE DIVISION.",
@@ -70,13 +70,13 @@ class ScalarMoveScaleTest {
             referenced.add(move.target().wholeItemAccess().orElseThrow().data());
         }
         assertEquals(dataCount, referenced.size());
-        byte[] json = SemanticProductJsonWriter.serialize(port);
-        assertEquals(moveCount, new ObjectMapper().readTree(json).path("statements").size() - 1);
-        var observation = new Observation(label, source.lines().count(), dataCount, moveCount,
-                products.scalarMoves().metrics(), json.length, (System.nanoTime() - started) / 1_000_000);
         Path output = Path.of("target/checkpoint-4a"); Files.createDirectories(output);
+        Path json = output.resolve(label + ".semantic-product.json");
+        SemanticProductJsonWriter.write(port, json);
+        assertEquals(moveCount, new ObjectMapper().readTree(json.toFile()).path("statements").size() - 1);
+        var observation = new Observation(label, source.lines().count(), dataCount, moveCount,
+                products.scalarMoves().metrics(), Files.size(json), (System.nanoTime() - started) / 1_000_000);
         new ObjectMapper().writerWithDefaultPrettyPrinter().writeValue(output.resolve(label + ".metrics.json").toFile(), observation);
-        Files.write(output.resolve(label + ".semantic-product.json"), json);
         System.out.println("CP4A scale " + new ObjectMapper().writeValueAsString(observation));
         return observation;
     }

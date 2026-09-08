@@ -9,6 +9,14 @@ ele publica a unit primária selecionada, sem prometer inventário JSON multi-un
 Essa é a fronteira pública deste repositório; o contrato atual é regido pela
 ADR-0013 e pelos invariantes `INV-SP-001` a `INV-SP-008`.
 
+O caminho de produção `SemanticProductJsonWriter.write(port, path)` serializa
+diretamente para um OutputStream fechado pelo adapter. Ele mantém os DTOs de
+transporte, mas não materializa o JSON integral em byte[] ou String. `serialize`
+permanece disponível para consumers que precisam de bytes, testes e goldens
+pequenos; ambos os caminhos têm o mesmo output determinístico. Os probes de
+escala exercitam a escrita em arquivo. Isso não constitui um writer incremental
+de facts nem remove a árvore DTO ou a verbosidade preexistente do contrato.
+
 O [audit bilateral contra Analysis IR 2.0.0](../architecture/semantic-product-air-v2-audit.md)
 qualifica as claims abaixo: estados publicados pelo código atual não são
 certificação AIR. O port sustenta representação nominal/inventário conservadora;

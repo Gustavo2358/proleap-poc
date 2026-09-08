@@ -41,9 +41,15 @@ public final class SemanticProductJsonWriter {
         return JSON.writeValueAsBytes(document(Objects.requireNonNull(port, "port")));
     }
 
-    /** Writes exactly the bytes returned by {@link #serialize(CobolSemanticPort)}. */
+    /** Writes the same deterministic UTF-8 bytes as {@link #serialize(CobolSemanticPort)}
+     * directly to the destination, without materializing the complete JSON byte array.
+     * The transport DTO graph is still materialized. */
     public static void write(CobolSemanticPort port, Path destination) throws IOException {
-        Files.write(Objects.requireNonNull(destination, "destination"), serialize(port));
+        Objects.requireNonNull(destination, "destination");
+        var publication = document(Objects.requireNonNull(port, "port"));
+        try (var output = Files.newOutputStream(destination)) {
+            JSON.writeValue(output, publication);
+        }
     }
 
     private static SemanticProductDocument document(CobolSemanticPort port) {

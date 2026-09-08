@@ -9,6 +9,11 @@ PR #32 aberto para revisão humana, com branch publicada por push normal. O CI
 associado ao head executa full, performance e challenges; consultar os checks
 remotos para o resultado do commit mais recente. Nenhum merge/auto-merge realizado.
 
+O review do head 6de80966b6d275e6398280964e45f7b672cfb5e5 confirmou E1–E4 e
+identificou um finding de memória na escrita. A [remediação focalizada](checkpoint-4a-memory-remediation.md)
+preserva o shape 1.2.0 e os bytes abaixo; os números desta página são a evidência
+original, preservada. A evidência subsequente registra o caminho de arquivo.
+
 Contrato final: **cobol-semantic-product 1.2.0**, minor aditiva.
 [Regra, tipos públicos, exclusões e complexidade](../domain/scalar-text-move.md).
 Fixture: [AIR-MOVE.cbl](../../src/test/resources/cobol/semantic/AIR-MOVE.cbl).

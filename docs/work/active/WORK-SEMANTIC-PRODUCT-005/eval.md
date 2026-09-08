@@ -27,6 +27,10 @@ CP3 integral, oracles anteriores, gates fast/semantic/performance/full.
 ## Propriedades/relações metamórficas
 
 Renaming preserva propriedades; ordem física não substitui relação canônica; 10.000 refs não duplicam DATA; determinismo de JSON.
+Remediação de memória: write(port, file) é byte-idêntico a serialize(port) em
+fixtures pequenos positivos, negativos e CP3, inclusive reescrita/truncamento.
+Guard arquitetural rejeita a chamada de materialização integral no caminho de
+arquivo; o caminho anterior deve ficar RED. Probes usam write, sem byte[] total.
 
 ## Expectativas de escala
 

@@ -192,6 +192,19 @@ class ArchitectureBoundaryTest {
     }
 
     @Test
+    void semanticProductFileWriteDoesNotMaterializeTheCompleteJsonBytes() throws Exception {
+        String source = Files.readString(Path.of("src/main/java/io/github/gustavo2358/cobolexplorer/"
+                + "semanticproduct/transport/SemanticProductJsonWriter.java"));
+        int start = source.indexOf("public static void write(");
+        int end = source.indexOf("private static SemanticProductDocument document(", start);
+        assertTrue(start >= 0 && end > start, "file publication path must be reviewed when moved");
+        String fileWrite = source.substring(start, end);
+        assertTrue(List.of("serialize(", "writeValueAsBytes(", "writeValueAsString(",
+                        "ByteArrayOutputStream", "readAllBytes(").stream().noneMatch(fileWrite::contains),
+                "file publication must not retain the entire JSON in a byte array or String");
+    }
+
+    @Test
     void semanticProductJsonAdapterDependsOnlyOnTheClosedBoundaryAndJsonLibrary()
             throws Exception {
         List<Class<?>> adapterTypes = new ArrayList<>();

@@ -1,0 +1,408 @@
+{
+  "reviewedHead": "6de80966b6d275e6398280964e45f7b672cfb5e5",
+  "baselineSha": "c8a891e0827ae1dc1140246f625fd16c2ac9bd97",
+  "workItem": "WORK-SEMANTIC-PRODUCT-005",
+  "contractVersion": "1.2.0",
+  "originalEvidenceSha256": "c99fed3f585d79a795e3042993a5153a4b55a83eae31506133a349be84b6e4e4",
+  "productionChangedFiles": [
+    "src/main/java/io/github/gustavo2358/cobolexplorer/semanticproduct/transport/SemanticProductJsonWriter.java"
+  ],
+  "productionSourceSha256": {
+    "src/main/java/io/github/gustavo2358/cobolexplorer/semanticproduct/transport/SemanticProductJsonWriter.java": "415c058c07334b73f3a54525fbdc57883a64bb2fa68a0b0f0c40dd0927dea679"
+  },
+  "otherProductionSourceHashesMatchOriginalEvidence": true,
+  "semanticMutationScriptUnchanged": true,
+  "finding": {
+    "before": "full JSON byte[] retained by file write",
+    "after": "direct OutputStream serialization; DTO graph retained"
+  },
+  "transportCompatibility": "same contract version, shape and byte-identical controlled outputs",
+  "focusedOracles": {
+    "oldWriter": "byte equality PASS; allocation guard RED (1 assertion failure, 0 errors)",
+    "correctedWriter": "byte equality, repeated write, truncation and allocation guard PASS"
+  },
+  "gates": {
+    "full": "PASS",
+    "performance": "PASS",
+    "semanticChallenges": "13 RED; exact restore; second GREEN",
+    "finalFast": "PASS"
+  },
+  "scale": [
+    {
+      "probe": "facts-1500",
+      "physicalLines": 3008,
+      "declarations": 1500,
+      "moves": 1500,
+      "metrics": {
+        "nodeVisits": 13508,
+        "declarationVisits": 1501,
+        "referenceVisits": 1500,
+        "scalarLookups": 1500,
+        "moveVisits": 1500
+      },
+      "jsonBytes": 3962925,
+      "elapsedMillis": 1494
+    },
+    {
+      "probe": "facts-3000",
+      "physicalLines": 6008,
+      "declarations": 3000,
+      "moves": 3000,
+      "metrics": {
+        "nodeVisits": 27008,
+        "declarationVisits": 3001,
+        "referenceVisits": 3000,
+        "scalarLookups": 3000,
+        "moveVisits": 3000
+      },
+      "jsonBytes": 7940925,
+      "elapsedMillis": 2021
+    },
+    {
+      "probe": "physical",
+      "physicalLines": 60012,
+      "declarations": 1,
+      "moves": 1,
+      "metrics": {
+        "nodeVisits": 17,
+        "declarationVisits": 2,
+        "referenceVisits": 1,
+        "scalarLookups": 1,
+        "moveVisits": 1
+      },
+      "jsonBytes": 5243,
+      "elapsedMillis": 197
+    },
+    {
+      "probe": "shared-data",
+      "physicalLines": 10008,
+      "declarations": 1,
+      "moves": 10000,
+      "metrics": {
+        "nodeVisits": 40013,
+        "declarationVisits": 2,
+        "referenceVisits": 10000,
+        "scalarLookups": 10000,
+        "moveVisits": 10000
+      },
+      "jsonBytes": 18809400,
+      "elapsedMillis": 2164
+    }
+  ],
+  "cli": {
+    "bytes": 5177,
+    "sha256": "468e3207f578e428ace89a311eadbd6e27c670331b739675b761479352adc7af",
+    "aliasByteIdentical": true,
+    "elapsedMillis": 414
+  },
+  "continuationProvenanceDecision": {
+    "action": "preserved",
+    "duplicateMembers": 10000,
+    "duplicateJsonBytes": 2405672,
+    "totalJsonBytes": 18809400,
+    "sharePercent": 12.79,
+    "reason": "preserve reviewed public record and provenance oracle; separate transport debt"
+  },
+  "artifacts": [
+    {
+      "path": "target/checkpoint-4a/AIR-MOVE.semantic-product.json",
+      "bytes": 5161,
+      "sha256": "e88c928abeff2729b971e9f0c1b2d7feda130b8a54a88e8bcf696c510865237f",
+      "matchesReviewedOutput": true
+    },
+    {
+      "path": "target/checkpoint-4a/facts-1500.semantic-product.json",
+      "bytes": 3962925,
+      "sha256": "0c174964001b1242f0f8deb0dcbff4f2f0e9af9163ab606ccbe7e3239f0b2a75",
+      "matchesReviewedOutput": true
+    },
+    {
+      "path": "target/checkpoint-4a/facts-3000.semantic-product.json",
+      "bytes": 7940925,
+      "sha256": "feb33e9b639d55ad544c734276afb3d56e0a07217161765107cda19c9a20c6a5",
+      "matchesReviewedOutput": true
+    },
+    {
+      "path": "target/checkpoint-4a/physical.semantic-product.json",
+      "bytes": 5243,
+      "sha256": "3c9f0c1d7e2a6e62a560c9cec75a9da3ffd1fc02b62001a5edf5efde365c19e6",
+      "matchesReviewedOutput": true
+    },
+    {
+      "path": "target/checkpoint-4a/shared-data.semantic-product.json",
+      "bytes": 18809400,
+      "sha256": "fe6178078abe4269676e08602df3a50773f53971a4b35234dc29606ef656ab72",
+      "matchesReviewedOutput": true
+    },
+    {
+      "path": "docs/evals/evidence/checkpoint-4a/AIR-MOVE.semantic-product.json",
+      "bytes": 5177,
+      "sha256": "468e3207f578e428ace89a311eadbd6e27c670331b739675b761479352adc7af",
+      "matchesReviewedOutput": true
+    },
+    {
+      "path": "src/test/resources/cobol/semantic/entry-goback-sp-1.1.0.json",
+      "bytes": 2663,
+      "sha256": "7ebce874bb98262598b908b176290368f738a21561c35a6ac342fc72e66d04ed",
+      "matchesReviewedOutput": true
+    }
+  ],
+  "challenges": [
+    {
+      "label": "green-before",
+      "exitCode": 0,
+      "logSha256": "f249b44ecc580869ae20cf5a12ad4ddacc31162dac468008079c87eff86f8b88",
+      "semanticRed": false
+    },
+    {
+      "label": "01-any-string-literal",
+      "exitCode": 1,
+      "logSha256": "bd4219538a6db751345343e3d12cca5c4afbaa920ca6780b110f68111abb8520",
+      "semanticRed": true
+    },
+    {
+      "label": "02-ignore-length",
+      "exitCode": 1,
+      "logSha256": "7b7dc5ebb64f888d26801edc02793dc686b58e2239e60dd34594629319015e8f",
+      "semanticRed": true
+    },
+    {
+      "label": "03a-ignore-occurs",
+      "exitCode": 1,
+      "logSha256": "5d0bd8da8bf581908a580beac2de76314ecabf87f8c018d032834dbf6f2a0e98",
+      "semanticRed": true
+    },
+    {
+      "label": "03b-ignore-overlay",
+      "exitCode": 1,
+      "logSha256": "f691e29a8d3ac1d3d9ce20808feea3dedb6e5d93e6a75b452ff6eb4149b9e1ab",
+      "semanticRed": true
+    },
+    {
+      "label": "03c-ignore-refmod",
+      "exitCode": 1,
+      "logSha256": "9a71a0a41cf31456ea22a382d8f6be13311984e824937f2612d023f8717fe6c8",
+      "semanticRed": true
+    },
+    {
+      "label": "04-wrong-selected",
+      "exitCode": 1,
+      "logSha256": "038c9ce5b84730814227e7a1a5bae9e10be1738342c59d736fb3a5ce387bf330",
+      "semanticRed": true
+    },
+    {
+      "label": "05-nominal-implies-whole",
+      "exitCode": 1,
+      "logSha256": "05193d9b5592d83d948ec990cb6e710705b92edae8d94eb85193559fe9947c0c",
+      "semanticRed": true
+    },
+    {
+      "label": "06-array-order-continuation",
+      "exitCode": 1,
+      "logSha256": "3d28cd00c1d84b1c5c1d7436d27eedcf381a9b89308fc0f6aadcef488361feac",
+      "semanticRed": true
+    },
+    {
+      "label": "07-remove-continuation",
+      "exitCode": 1,
+      "logSha256": "9fda9a2c3acb50e7e5329c42c8f12aa83b34c31abedb4382c7f94566e5ae3bd5",
+      "semanticRed": true
+    },
+    {
+      "label": "08-goback-fallthrough",
+      "exitCode": 1,
+      "logSha256": "d179a00d7b6b1ad3e824e3babb3df8a0192b2738aabea1a75ac962141e437056",
+      "semanticRed": true
+    },
+    {
+      "label": "09a-remove-literal-origin",
+      "exitCode": 1,
+      "logSha256": "aa59b3c185dcd5eab5579436e471528711c43726e8ce663540e19ee1984d1be1",
+      "semanticRed": true
+    },
+    {
+      "label": "09b-remove-target-origin",
+      "exitCode": 1,
+      "logSha256": "fff0805e334278c5ebcdd2d1ac8592fee1126ec76799b90a6d06f77c4ee7617a",
+      "semanticRed": true
+    },
+    {
+      "label": "10-duplicate-declaration",
+      "exitCode": 1,
+      "logSha256": "caeba43bfaf255dbff04a513db88edfebab227a7e40ce718fff76d029407d8e8",
+      "semanticRed": true
+    },
+    {
+      "label": "green-restored",
+      "exitCode": 0,
+      "logSha256": "a3470d1ba37c598355fe24c1d6547b8b0c9d6e3aba081356e88123e181d5932b",
+      "semanticRed": false
+    }
+  ],
+  "logs": [
+    {
+      "file": "logs/4a-memory-challenges.log.gz",
+      "rawBytes": 2050,
+      "rawSha256": "6a09a27d13378677176c65bfadc93d11c6ce0c2c50a1e37a912f56ff1a968dcb",
+      "gzipSha256": "a8a846f291b4cb3f8664231da4e000bcd42d01073146140ce9b8901557eaa664"
+    },
+    {
+      "file": "logs/4a-memory-cli.log.gz",
+      "rawBytes": 1428,
+      "rawSha256": "2c6e936c7c0397f2139834c8a3a700fc25409b76d50e7a0b450c88efbc4737a8",
+      "gzipSha256": "5cfe0f38624f762f8c2ff1084d23b1edb56cc7f01c4565747032f92f00b9671d"
+    },
+    {
+      "file": "logs/4a-memory-fast.log.gz",
+      "rawBytes": 223,
+      "rawSha256": "5e3e63330ff9fa14b49b32454301ab207b485938a236ae6130a78956214686d5",
+      "gzipSha256": "3821190ad4936dd4ad0a48766c28dc0df7c2358d700b18595c0784c50fe06c26"
+    },
+    {
+      "file": "logs/4a-memory-full.log.gz",
+      "rawBytes": 84569,
+      "rawSha256": "53b6f342801c3a020f6394f661475d71abf31394009a485f9313a22754c3fb31",
+      "gzipSha256": "baab39527746601825f6eb7f368e8d432da06ec959afc62dbcdd4b0ca6041583"
+    },
+    {
+      "file": "logs/4a-memory-green.log.gz",
+      "rawBytes": 1741,
+      "rawSha256": "409712df6ad3634b485185e6ef945a15542d26625e1d66a1d87820ac1ad49ebf",
+      "gzipSha256": "787fd5aac546510aeb59cf6e4ed57a0e0c107acd506c1f1ae2af7185be8ae4c8"
+    },
+    {
+      "file": "logs/4a-memory-performance.log.gz",
+      "rawBytes": 1046,
+      "rawSha256": "b8ab33762d00f6981e2a893dbaa0772dc95bca01b8c86534e06346d464792da7",
+      "gzipSha256": "2bf1a70282a6f72ab5844288c40f71c1d32ec3d15f1a77bd0d6e0cbf9ae7f621"
+    },
+    {
+      "file": "logs/4a-memory-red.log.gz",
+      "rawBytes": 2291,
+      "rawSha256": "b54cdc5f49b87063f67ea0d5fe54ad5fc395e2dfae1f8580be3ad1d8ab34b492",
+      "gzipSha256": "fc31a30cd0161a122d67a467906d724efeeb8c9cfaa5ff5e19b403312f8ef73f"
+    },
+    {
+      "file": "logs/01-any-string-literal.log.gz",
+      "rawBytes": 3310,
+      "rawSha256": "bd4219538a6db751345343e3d12cca5c4afbaa920ca6780b110f68111abb8520",
+      "gzipSha256": "39c94810df4eef6aec2d45013fb8fa593932adb7aebf92d0260d50f1fa2fdeaf"
+    },
+    {
+      "file": "logs/02-ignore-length.log.gz",
+      "rawBytes": 3722,
+      "rawSha256": "7b7dc5ebb64f888d26801edc02793dc686b58e2239e60dd34594629319015e8f",
+      "gzipSha256": "b299afbfd97f8753633061c505ee30e460c5a17a0dccdad16483e97fc765e910"
+    },
+    {
+      "file": "logs/03a-ignore-occurs.log.gz",
+      "rawBytes": 3331,
+      "rawSha256": "5d0bd8da8bf581908a580beac2de76314ecabf87f8c018d032834dbf6f2a0e98",
+      "gzipSha256": "432bbb85474638ee7a9900fdbdf79afd1e9d5c3718f25701e2d3f6583a14bfb9"
+    },
+    {
+      "file": "logs/03b-ignore-overlay.log.gz",
+      "rawBytes": 3388,
+      "rawSha256": "f691e29a8d3ac1d3d9ce20808feea3dedb6e5d93e6a75b452ff6eb4149b9e1ab",
+      "gzipSha256": "3064f8f09f29c70341c56cb8effc49f179b88322d2dd874a3c458f3eb5e50881"
+    },
+    {
+      "file": "logs/03c-ignore-refmod.log.gz",
+      "rawBytes": 3329,
+      "rawSha256": "9a71a0a41cf31456ea22a382d8f6be13311984e824937f2612d023f8717fe6c8",
+      "gzipSha256": "6cbe564f5cb918d84c03b99bb62eab07fab6907478290fe25ba6667a84de2c80"
+    },
+    {
+      "file": "logs/04-wrong-selected.log.gz",
+      "rawBytes": 20964,
+      "rawSha256": "038c9ce5b84730814227e7a1a5bae9e10be1738342c59d736fb3a5ce387bf330",
+      "gzipSha256": "0a19e4b1c76ff0a9b23b015bf6cc50e0dd4d43559bb9f8908620e888c396c42c"
+    },
+    {
+      "file": "logs/05-nominal-implies-whole.log.gz",
+      "rawBytes": 3323,
+      "rawSha256": "05193d9b5592d83d948ec990cb6e710705b92edae8d94eb85193559fe9947c0c",
+      "gzipSha256": "b8f503c3fba007e8a8c55592e126240a1d67cf2db8202564ed3be08dbaec9822"
+    },
+    {
+      "file": "logs/06-array-order-continuation.log.gz",
+      "rawBytes": 5781,
+      "rawSha256": "3d28cd00c1d84b1c5c1d7436d27eedcf381a9b89308fc0f6aadcef488361feac",
+      "gzipSha256": "a5c3402e5b64cda77e0fce5c5dcb6d710cdae774516f45070ca62c451bb3f86c"
+    },
+    {
+      "file": "logs/07-remove-continuation.log.gz",
+      "rawBytes": 5540,
+      "rawSha256": "9fda9a2c3acb50e7e5329c42c8f12aa83b34c31abedb4382c7f94566e5ae3bd5",
+      "gzipSha256": "d69b52405f5697df0414c941640fc1cfc14f44b84a23928b4684a30db1524648"
+    },
+    {
+      "file": "logs/08-goback-fallthrough.log.gz",
+      "rawBytes": 22800,
+      "rawSha256": "d179a00d7b6b1ad3e824e3babb3df8a0192b2738aabea1a75ac962141e437056",
+      "gzipSha256": "8e1142b4470e755b223f05cb709032d0cde64b7c20f3bc385f83219ecae3a943"
+    },
+    {
+      "file": "logs/09a-remove-literal-origin.log.gz",
+      "rawBytes": 4672,
+      "rawSha256": "aa59b3c185dcd5eab5579436e471528711c43726e8ce663540e19ee1984d1be1",
+      "gzipSha256": "78933712a373b8eaba21e760c4d95efe0608d0b914d1a5b74ee0f48208febbea"
+    },
+    {
+      "file": "logs/09b-remove-target-origin.log.gz",
+      "rawBytes": 4672,
+      "rawSha256": "fff0805e334278c5ebcdd2d1ac8592fee1126ec76799b90a6d06f77c4ee7617a",
+      "gzipSha256": "a2c2a561846da81e9b3625e60b656461254047e42871f5d9addf89de8dcb0c09"
+    },
+    {
+      "file": "logs/10-duplicate-declaration.log.gz",
+      "rawBytes": 2366,
+      "rawSha256": "caeba43bfaf255dbff04a513db88edfebab227a7e40ce718fff76d029407d8e8",
+      "gzipSha256": "a52a720a275954e5ba70d30d9df0608a95e63825994e1903b0dc32f75cf16559"
+    },
+    {
+      "file": "logs/green-before.log.gz",
+      "rawBytes": 1162,
+      "rawSha256": "f249b44ecc580869ae20cf5a12ad4ddacc31162dac468008079c87eff86f8b88",
+      "gzipSha256": "97c17448d90f55962e083a715d1c6d8de674b0f2bdabce96ad9e3995c66571db"
+    },
+    {
+      "file": "logs/green-restored.log.gz",
+      "rawBytes": 2125,
+      "rawSha256": "a3470d1ba37c598355fe24c1d6547b8b0c9d6e3aba081356e88123e181d5932b",
+      "gzipSha256": "9f929e38a4187be8a85f16992b7658479f6b2e58a205e96ffb7a7395aaa023fe"
+    }
+  ],
+  "logArchive": {
+    "file": "logs.tar.gz",
+    "sha256": "bb6c0cc06796e0d031611550acc36b60a624024068c95dd4c0912a49b7864447"
+  },
+  "readOnlyState": {
+    "cobol-lower": {
+      "head": "f9e74ec3404efe830992d9535becca847ace80e8",
+      "status": ""
+    },
+    "air-java": {
+      "head": "b78f4068d8a479f48eb048b8d76fa60a0997dc4a",
+      "status": ""
+    },
+    "analysis-ir": {
+      "head": "51b4d9a8ae0364232bd97103cd73a77e1a34996c",
+      "status": ""
+    },
+    "analysis-cfg": {
+      "head": "2b4df46d53ce5b21a5c315d3f691b183cb6bd124",
+      "status": ""
+    },
+    "artefatos-e2e": {
+      "head": "2484b76f9174a79ea702f17453f04955cd46a755",
+      "status": ""
+    },
+    "discoverySha256": "52af04d0adbe0535d5bff491d206f43054c31e5503e2eca19e19f1574d5a06f0"
+  },
+  "measurementLimits": [
+    "no heap measurement or production SLA",
+    "scale oracle materializes a test-only JSON tree",
+    "production transport DTO graph is still materialized"
+  ]
+}
