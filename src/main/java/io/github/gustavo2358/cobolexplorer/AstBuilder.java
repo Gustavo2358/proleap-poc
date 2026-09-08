@@ -352,11 +352,14 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
         Ast.Meta meta = meta(context);
         if (context instanceof CobolParser.DataPictureClauseContext) {
             ParserRuleContext picture = ((CobolParser.DataPictureClauseContext) context).pictureString();
-            return new Ast.PictureClause(meta, picture == null ? "" : sourceText(picture).strip(), writtenText);
+            String spelling = picture == null ? "" : picture.getText();
+            return new Ast.PictureClause(meta, picture == null ? "" : sourceText(picture).strip(),
+                    writtenText, elementaryTextExtent(spelling));
         }
         if (context instanceof CobolParser.DataUsageClauseContext) {
             String usage = writtenText.replaceFirst("(?i)^USAGE\\s+(IS\\s+)?", "");
-            return new Ast.UsageClause(meta, usage, writtenText);
+            return new Ast.UsageClause(meta, usage, writtenText,
+                    ((CobolParser.DataUsageClauseContext) context).DISPLAY() != null);
         }
         if (context instanceof CobolParser.DataValueClauseContext) {
             List<String> values = ((CobolParser.DataValueClauseContext) context).dataValueInterval().stream()
@@ -461,7 +464,67 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
                         start == null ? Optional.empty() : Optional.of(start.meta().id()),
                         context.procedureDivisionUsingClause() != null
                                 || context.procedureDivisionGivingClause() != null,
-                        context.procedureDeclaratives() != null)));
+                        context.procedureDeclaratives() != null)),
+                normalContinuations(context));
+    }
+
+    /** Sequential MOVE completion within a single sentence region. Paragraph/section
+     * ends and declaratives are deliberately not assigned executable successors. */
+    private Map<Integer, Integer> normalContinuations(CobolParser.ProcedureDivisionContext context) {
+        Map<Integer, Integer> result = new LinkedHashMap<>();
+        if (context.procedureDeclaratives() != null || context.procedureDivisionBody() == null)
+            return result;
+        var body = context.procedureDivisionBody();
+        addParagraphContinuations(body.paragraphs(), result);
+        for (var section : body.procedureSection()) addParagraphContinuations(section.paragraphs(), result);
+        return result;
+    }
+
+    private void addParagraphContinuations(CobolParser.ParagraphsContext paragraphs,
+                                          Map<Integer, Integer> result) {
+        if (paragraphs == null) return;
+        addSentenceContinuations(paragraphs.sentence(), result);
+        for (var paragraph : paragraphs.paragraph()) addSentenceContinuations(paragraph.sentence(), result);
+    }
+
+    private void addSentenceContinuations(List<CobolParser.SentenceContext> sentences,
+                                         Map<Integer, Integer> result) {
+        Ast.Statement previous = null;
+        for (var sentence : sentences) {
+            for (var context : sentence.statement()) {
+                Ast.Statement current = context.entryStatement() == null ? builtStatements.get(context) : null;
+                if (previous instanceof Ast.MoveStatement && current != null)
+                    result.put(previous.meta().id(), current.meta().id());
+                // Even an unmaterialized statement breaks the relation. Never skip it.
+                previous = current;
+            }
+        }
+    }
+
+    /** Interpret only the PIC X repetition language, in the canonical frontend.
+     * This grammar uses generic pictureChars tokens, so repetition is decoded here
+     * without expansion; every other category/edited symbol fails closed. */
+    private static Optional<Integer> elementaryTextExtent(String picture) {
+        long extent = 0;
+        for (int i = 0; i < picture.length();) {
+            char symbol = picture.charAt(i++);
+            if (symbol != 'X' && symbol != 'x') return Optional.empty();
+            long count = 1;
+            if (i < picture.length() && picture.charAt(i) == '(') {
+                i++;
+                count = 0;
+                int firstDigit = i;
+                while (i < picture.length() && picture.charAt(i) >= '0' && picture.charAt(i) <= '9') {
+                    count = count * 10 + picture.charAt(i++) - '0';
+                    if (count > Integer.MAX_VALUE) return Optional.empty();
+                }
+                if (i == firstDigit || count == 0 || i >= picture.length() || picture.charAt(i++) != ')')
+                    return Optional.empty();
+            }
+            extent += count;
+            if (extent > Integer.MAX_VALUE) return Optional.empty();
+        }
+        return extent > 0 ? Optional.of((int) extent) : Optional.empty();
     }
 
     private static ParserRuleContext firstProcedureStatement(
@@ -1180,7 +1243,31 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
 
     private Ast.LiteralExpression literalExpression(ParserRuleContext context) {
         String raw = sourceText(context).strip();
-        return new Ast.LiteralExpression(meta(context), unquote(raw), raw);
+        Optional<Ast.LogicalText> logical = Optional.empty();
+        if (context instanceof CobolParser.LiteralContext literal && literal.NONNUMERICLITERAL() != null) {
+            // NONNUMERICLITERAL also includes national, hex and null-terminated
+            // formats. Decode only its basic quoted alternative, with doubled delimiters.
+            String token = literal.NONNUMERICLITERAL().getText();
+            if (token.length() >= 2 && (token.charAt(0) == '\'' || token.charAt(0) == '"')) {
+                char delimiter = token.charAt(0);
+                StringBuilder value = new StringBuilder(token.length() - 2);
+                boolean supported = token.charAt(token.length() - 1) == delimiter;
+                for (int i = 1; supported && i < token.length() - 1; i++) {
+                    char c = token.charAt(i);
+                    // Portable basic characters only; no CODEPAGE/DBCS codec claim.
+                    if (c < 0x20 || c > 0x7e) { supported = false; break; }
+                    if (c == delimiter) {
+                        if (i + 1 >= token.length() - 1 || token.charAt(++i) != delimiter) {
+                            supported = false; break;
+                        }
+                    }
+                    value.append(c);
+                }
+                if (supported && !value.isEmpty()) logical = Optional.of(new Ast.LogicalText(value.toString()));
+            }
+        }
+        return new Ast.LiteralExpression(meta(context), logical.map(Ast.LogicalText::value)
+                .orElseGet(() -> unquote(raw)), raw, logical);
     }
 
     private Ast.Expression arithmeticExpression(ParserRuleContext context) {

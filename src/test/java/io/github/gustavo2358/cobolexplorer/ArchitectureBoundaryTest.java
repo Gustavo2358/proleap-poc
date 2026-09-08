@@ -229,6 +229,25 @@ class ArchitectureBoundaryTest {
     }
 
     @Test
+    void scalarOracleUsesOnlyPublicFactsAndProjectorDoesNotAnalyze() throws Exception {
+        Class<?> oracle = io.github.gustavo2358.cobolexplorer.semanticproduct.scalar.ScalarMoveOracle.class;
+        List<Class<?>> types = new ArrayList<>(); addNestedTypes(oracle, types);
+        String own = oracle.getName().replace('.', '/');
+        for (var type : types) for (String reference : directDependencies(type)) {
+            assertTrue(!reference.startsWith(ANTLR_PREFIX), reference);
+            if (reference.startsWith(PROJECT_PREFIX_INTERNAL)) assertTrue(
+                    reference.startsWith(own) || reference.startsWith(SEMANTIC_PRODUCT_INTERNAL)
+                            || reference.equals(SEMANTIC_PORT_INTERNAL), reference);
+        }
+        String oracleSource = Files.readString(Path.of("src/test/java/io/github/gustavo2358/cobolexplorer/semanticproduct/scalar/ScalarMoveOracle.java"));
+        for (String forbidden : List.of("readiness()", "picture()", "canonicalName()", "rawLexeme", "programPoint"))
+            assertTrue(!oracleSource.contains(forbidden), forbidden);
+        String projection = Files.readString(Path.of("src/main/java/io/github/gustavo2358/cobolexplorer/semanticproduct/projection/CobolSemanticProductProjector.java"));
+        for (String forbidden : List.of("ScalarMoveSemantics.analyze", "rawLexeme()", "logicalExtent()", "extent() =="))
+            assertTrue(!projection.contains(forbidden), forbidden);
+    }
+
+    @Test
     void checkpoint8ProbeDependsOnlyOnTheSemanticPortBoundary() throws Exception {
         List<Class<?>> probeTypes = new ArrayList<>();
         addNestedTypes(SemanticPortLoweringProbe.class, probeTypes);

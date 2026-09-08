@@ -6,7 +6,7 @@ Work items delimitam a mudança em execução; o [backlog](backlog.md) registra 
 
 - [WORK-AST-002 — Hardening da fronteira AST para CFG e dataflow](active/WORK-AST-002/spec.md) — Slice 1 mergeado no PR #10; Discovery do Slice 2 no PR #13 e implementação de F-02 integrada pelo PR #28. Nenhum slice adjacente foi iniciado.
 
-- [WORK-SEMANTIC-PRODUCT-004 — Entry primária e saída local GOBACK](active/WORK-SEMANTIC-PRODUCT-004/spec.md) — somente os sub-slices Entry/início de `BACKLOG-SP-005` e GOBACK de `BACKLOG-SP-003`, risco high; implementação/gates concluídos, aguardando review humano sem merge.
+- [WORK-SEMANTIC-PRODUCT-005 — Checkpoint 4A scalar textual MOVE](active/WORK-SEMANTIC-PRODUCT-005/spec.md) — implementation E1–E4, risco high; PR para review humano sem merge.
 
 O restante de SP-005/SP-003 não foi promovido. `BACKLOG-IR-001`,
 `BACKLOG-LOWER-001` e `BACKLOG-CFG-001` permanecem
@@ -39,3 +39,5 @@ como registros/handoffs cross-repo para `air-java`, `cobol-lower` e
 - [WORK-SEMANTIC-PRODUCT-001 — Semantic Product Boundary Discovery](history/WORK-SEMANTIC-PRODUCT-001.md) — Discovery concluído pelo PR #26; evidências dos Checkpoints 2, 3A e 3B preservadas.
 - [WORK-SEMANTIC-PRODUCT-002 — Semantic Product extensível e readiness final](history/WORK-SEMANTIC-PRODUCT-002.md) — CP1–CP8 concluídos no PR #27; boundary materializada, consumer/JSON independentes e handoff lowering/IR falsificado.
 - [WORK-SEMANTIC-PRODUCT-003 — Discovery bilateral Semantic Product / AIR V2](history/WORK-SEMANTIC-PRODUCT-003.md) — audit exclusivamente documental concluído pelo PR #29; matriz, findings e oracles futuros permanecem canônicos, sem início de produção.
+
+- [WORK-SEMANTIC-PRODUCT-004 — Entry primária e saída local GOBACK](history/WORK-SEMANTIC-PRODUCT-004.md) — concluído pelo PR #31.

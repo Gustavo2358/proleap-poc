@@ -294,10 +294,49 @@ public final class CobolSemanticProduct {
         }
     }
 
+    public enum LogicalDomain { TEXT }
+    public enum StorageClass { WORKING_STORAGE }
+    public enum DeclarationScope { LOCAL }
+    /** Positive COBOL guarantee: standalone elementary textual DISPLAY value,
+     * local ordinary WORKING-STORAGE, no relevant table/overlay/unknown clause. */
+    public record ScalarText(int logicalExtent) {
+        public ScalarText { require(logicalExtent > 0, "scalar extent must be positive"); }
+        public LogicalDomain logicalDomain() { return LogicalDomain.TEXT; }
+        public StorageClass storageClass() { return StorageClass.WORKING_STORAGE; }
+        public DeclarationScope declarationScope() { return DeclarationScope.LOCAL; }
+    }
+    public record TextValue(String value) {
+        public TextValue { value = Objects.requireNonNull(value, "logical text value"); }
+        public LogicalDomain logicalDomain() { return LogicalDomain.TEXT; }
+        public int logicalExtent() { return value.codePointCount(0, value.length()); }
+    }
+    /** This occurrence directly accesses the complete scalar value of data. */
+    public record WholeItemAccess(DataItemId data) {
+        public WholeItemAccess { data = Objects.requireNonNull(data, "whole item"); }
+    }
+    /** FULL_IDENTITY guarantees mandatory whole receiving-item overwrite without
+     * conversion, padding or truncation. UNAVAILABLE makes no copy claim. */
+    public enum CopySemantics { FULL_IDENTITY, UNAVAILABLE }
+    public enum ContinuationAvailability { KNOWN, UNAVAILABLE, NONE }
+    public record NormalContinuation(ContinuationAvailability availability,
+                                     Optional<StatementId> statement, Provenance provenance) {
+        public NormalContinuation {
+            availability = Objects.requireNonNull(availability);
+            statement = Objects.requireNonNull(statement);
+            provenance = Objects.requireNonNull(provenance);
+            require((availability == ContinuationAvailability.KNOWN) == statement.isPresent(),
+                    "only known continuation has a statement");
+        }
+        public static NormalContinuation unavailable(Provenance provenance) {
+            return new NormalContinuation(ContinuationAvailability.UNAVAILABLE, Optional.empty(), provenance);
+        }
+    }
+
     public record DataDeclaration(DataItemId id, String canonicalName,
                                   Optional<String> picture, Provenance provenance,
-                                  CoverageStatus coverage, Readiness readiness) {
+                                  CoverageStatus coverage, Readiness readiness, Optional<ScalarText> scalarText) {
         public DataDeclaration {
+            scalarText = Objects.requireNonNull(scalarText);
             id = Objects.requireNonNull(id, "id");
             canonicalName = requireText(canonicalName, "canonicalName");
             picture = Objects.requireNonNull(picture, "picture");
@@ -305,6 +344,10 @@ public final class CobolSemanticProduct {
             provenance = Objects.requireNonNull(provenance, "provenance");
             coverage = Objects.requireNonNull(coverage, "coverage");
             readiness = Objects.requireNonNull(readiness, "readiness");
+        }
+        public DataDeclaration(DataItemId id, String canonicalName, Optional<String> picture,
+                               Provenance provenance, CoverageStatus coverage, Readiness readiness) {
+            this(id, canonicalName, picture, provenance, coverage, readiness, Optional.empty());
         }
     }
 
@@ -419,22 +462,34 @@ public final class CobolSemanticProduct {
     }
 
     public record LiteralSource(OperandId id, LiteralKind kind, String value,
-                                Provenance provenance) {
+                                Provenance provenance, Optional<TextValue> logicalValue) {
         public LiteralSource {
+            logicalValue = Objects.requireNonNull(logicalValue);
+            if (logicalValue.isPresent()) require(kind == LiteralKind.ALPHANUMERIC && logicalValue.get().value().equals(value),
+                    "logical text requires alphanumeric kind and normalized value");
             id = Objects.requireNonNull(id, "id");
             kind = Objects.requireNonNull(kind, "kind");
             value = Objects.requireNonNull(value, "value");
             provenance = Objects.requireNonNull(provenance, "provenance");
         }
+        public LiteralSource(OperandId id, LiteralKind kind, String value, Provenance provenance) {
+            this(id, kind, value, provenance, Optional.empty());
+        }
     }
 
     public record DataReference(OperandId id, OperandRole role,
-                                NominalBinding binding, Provenance provenance) {
+                                NominalBinding binding, Provenance provenance, Optional<WholeItemAccess> wholeItemAccess) {
         public DataReference {
+            wholeItemAccess = Objects.requireNonNull(wholeItemAccess);
+            if (wholeItemAccess.isPresent()) require(binding.selected().equals(Optional.of(wholeItemAccess.get().data())),
+                    "whole item access must agree with nominal selection");
             id = Objects.requireNonNull(id, "id");
             role = Objects.requireNonNull(role, "role");
             binding = Objects.requireNonNull(binding, "binding");
             provenance = Objects.requireNonNull(provenance, "provenance");
+        }
+        public DataReference(OperandId id, OperandRole role, NominalBinding binding, Provenance provenance) {
+            this(id, role, binding, provenance, Optional.empty());
         }
     }
 
@@ -473,13 +528,23 @@ public final class CobolSemanticProduct {
     }
 
     public record MoveFact(StatementHeader header, LiteralSource source,
-                           DataReference target) implements StatementFact {
+                           DataReference target, CopySemantics copySemantics,
+                           NormalContinuation normalContinuation) implements StatementFact {
         public MoveFact {
+            copySemantics = Objects.requireNonNull(copySemantics);
+            normalContinuation = Objects.requireNonNull(normalContinuation);
+            if (copySemantics == CopySemantics.FULL_IDENTITY)
+                require(source.logicalValue().isPresent() && target.wholeItemAccess().isPresent(),
+                        "full identity copy requires logical source and whole scalar target");
             header = Objects.requireNonNull(header, "header");
             source = Objects.requireNonNull(source, "source");
             target = Objects.requireNonNull(target, "target");
             if (target.role() != OperandRole.WRITE)
                 throw new IllegalArgumentException("MOVE target must have WRITE role");
+        }
+        public MoveFact(StatementHeader header, LiteralSource source, DataReference target) {
+            this(header, source, target, CopySemantics.UNAVAILABLE,
+                    NormalContinuation.unavailable(header.provenance()));
         }
     }
 
@@ -645,7 +710,17 @@ public final class CobolSemanticProduct {
 
     private static void validateReferences(StatementFact statement,
                                            Map<DataItemId, DataDeclaration> declarations) {
+        if (statement instanceof MoveFact move && move.copySemantics() == CopySemantics.FULL_IDENTITY) {
+            var declaration = declarations.get(move.target().wholeItemAccess().orElseThrow().data());
+            require(declaration != null && declaration.scalarText().isPresent(), "copy requires scalar declaration");
+            require(declaration.scalarText().orElseThrow().logicalExtent()
+                    == move.source().logicalValue().orElseThrow().logicalExtent(), "identity copy requires equal extents");
+        }
         for (DataReference reference : references(statement)) {
+            reference.wholeItemAccess().ifPresent(access -> {
+                var declaration = declarations.get(access.data());
+                require(declaration != null && declaration.scalarText().isPresent(), "whole item requires scalar declaration");
+            });
             for (DataCandidate candidate : reference.binding().candidates()) {
                 require(candidate.id().unit().equals(statement.header().id().unit()),
                         "binding candidate crossed the statement unit namespace");
@@ -689,6 +764,11 @@ public final class CobolSemanticProduct {
 
     private static void validateStructure(Map<StatementId, StatementFact> statements) {
         for (StatementFact statement : statements.values()) {
+            if (statement instanceof MoveFact move) move.normalContinuation().statement().ifPresent(next -> {
+                require(next.unit().equals(move.header().id().unit()) && statements.containsKey(next),
+                        "MOVE continuation must reference a published statement in the same unit");
+                require(!next.equals(move.header().id()), "MOVE cannot continue to itself");
+            });
             StatementHeader header = statement.header();
             header.containment().parent().ifPresent(parentId -> {
                 StatementFact parent = statements.get(parentId);

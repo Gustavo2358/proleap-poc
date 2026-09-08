@@ -102,7 +102,7 @@ IDs neste documento são estáveis. `AUTOMATED` indica proteção executável at
 - **Scope:** Semantic Product local, lowering/AIR cross-repo, Storage Semantics, effects e dataflow downstream.
 - **Related ADRs:** ADR-0003, ADR-0004 e ADR-0013.
 - **Enforcement:** `REVIEW` — AST/symbol model preservam relações nominais sem alegar layout; o backlog downstream deve manter a dependência de Storage Semantics.
-- **Known exceptions:** Storage Semantics ainda não existe; sua ausência permanece explícita e não autoriza aliases ou regiões sintéticas.
+- **Known exceptions:** Storage Semantics geral ainda não existe; o profile 4A publica somente prova escalar lógica explícita, separada do handle nominal. A ausência da prova não autoriza aliases ou regiões sintéticas.
 
 ### INV-SP-006 — Determinismo de transporte não é identidade persistente
 
@@ -121,6 +121,15 @@ IDs neste documento são estáveis. `AUTOMATED` indica proteção executável at
 - **Related ADRs:** ADR-0013, ADR-0005.
 - **Enforcement:** `AUTOMATED` — validação de referências no frontend/core, EVAL-SP-004 e probe EVAL-SP-002 cobrem target ausente, namespace, inventário, terminais distintos e GOBACK seguido de outro statement.
 - **Known exceptions:** somente entry primária e saída local GOBACK estão cobertas; assinatura com cláusulas, entries alternativas, runtime/lifecycle/effects e sequenciamento universal permanecem explicitamente abertos.
+
+### INV-SP-008 — MOVE escalar preciso exige prova positiva canônica
+
+- **Statement:** domínio/valor textual, declaração escalar, acesso inteiro, cópia obrigatória de identidade e continuação explícita são fatos tipados independentes de readiness. O projector não os fabrica por binding nominal, metadados textuais ou ordem das coleções.
+- **Rationale:** o consumidor público precisa decidir sem reinterpretar COBOL; ausência de informações no transporte anterior não prova ausência de overlay/modificadores.
+- **Scope:** AstBuilder, ScalarMoveSemantics, fronteira pública, writer e oracles 4A.
+- **Related ADRs:** ADR-0013.
+- **Enforcement:** `AUTOMATED` — EVAL-SP-005/006, oracle port-only, validação construtiva/cross-fact, challenges controlados e contadores de escala.
+- **Known exceptions:** somente o [profile elementar textual](../domain/scalar-text-move.md) é provado; storage/controle universais permanecem indisponíveis. O frontend não emite NONE para MOVE no fim físico.
 
 ## Condições contextuais
 

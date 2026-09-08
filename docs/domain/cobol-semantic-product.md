@@ -7,7 +7,7 @@ transporte `cobol-semantic-product.json` e permanece fechada depois da projeçã
 O runner mantém `semantic-product.json` como alias compatível com bytes idênticos;
 ele publica a unit primária selecionada, sem prometer inventário JSON multi-unit.
 Essa é a fronteira pública deste repositório; o contrato atual é regido pela
-ADR-0013 e pelos invariantes `INV-SP-001` a `INV-SP-007`.
+ADR-0013 e pelos invariantes `INV-SP-001` a `INV-SP-008`.
 
 O [audit bilateral contra Analysis IR 2.0.0](../architecture/semantic-product-air-v2-audit.md)
 qualifica as claims abaixo: estados publicados pelo código atual não são
@@ -16,6 +16,13 @@ avaliação, interação e storage precisos têm prerequisites
 explícitos. Divergências de readiness permanecem documentadas até remediação
 autorizada. O slice de entry primária/GOBACK descrito abaixo fecha somente o
 prerequisite local de entrada e saída; não certifica um perfil AIR.
+
+## Profile escalar 4A
+
+O [contrato elementar textual](scalar-text-move.md) define E1–E4 em 1.2.0: DATA
+ScalarText, literal TextValue, WholeItemAccess, FULL_IDENTITY e normalContinuation.
+As limitações gerais/storage/CALL/IF deste documento continuam vigentes fora
+desse profile positivo; as matrizes históricas do audit não ampliam suas claims.
 
 ## Superfície atual
 
@@ -83,13 +90,13 @@ Somente pelo port, o probe localiza no fixture principal esta espinha
 estrutural:
 
 ```text
-MOVE UNKNOWN("A") → DATA WS-X
+MOVE ALPHANUMERIC("A") → DATA WS-X
 
 IF RELATION; READ DATA FLAG; predicate NOT_PUBLISHED
 ├── THEN
-│   └── MOVE UNKNOWN("B") → DATA WS-X
+│   └── MOVE ALPHANUMERIC("B") → DATA WS-X
 └── ELSE
-    └── MOVE UNKNOWN("C") → DATA WS-X
+    └── MOVE ALPHANUMERIC("C") → DATA WS-X
 
 continuation
 └── CALL DATA WS-X; runtime target UNKNOWN
@@ -114,8 +121,8 @@ profile atualmente materializado, não toda forma COBOL com o mesmo keyword.
 
 | Família | Surface | Identity | Program point | Containment / nesting | Continuation | Operands | Roles | Nominal binding | Runtime unknowns | Provenance | Coverage |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| DATA | nome canônico e `PICTURE` opcional explícito | `DataItemId(unit, localId)` | `NOT_APPLICABLE` | hierarquia/storage não publicados | `NOT_APPLICABLE` | `NOT_APPLICABLE` | `NOT_APPLICABLE` | identidade de declaration, sem lookup downstream | layout/alias permanecem desconhecidos | declaration completa, inclusive include chain/exatidão | por declaration; fixture atual `MODELED` |
-| MOVE literal → DATA | valor normalizado e `LiteralKind`; kind atual é `UNKNOWN` | statement, literal operand e target operand distintos | disponível, estrutural | disponível quando o parent é suportado; caso contrário `CONTAINMENT_NOT_PROJECTED` | sequência estrutural deriva da coleção ordenada e do enclosing IF; não é edge | literal source + DATA target | target `WRITE` | status, reason, candidates e `selected` quando resolved | tipo/conversão do literal e storage não conhecidos | statement, source e target | `PARTIAL` enquanto kind for desconhecido |
+| DATA | nome canônico e `PICTURE` opcional explícito | `DataItemId(unit, localId)` | `NOT_APPLICABLE` | hierarquia/storage gerais não publicados; scalarText é prova local opcional | `NOT_APPLICABLE` | `NOT_APPLICABLE` | `NOT_APPLICABLE` | identidade de declaration, sem lookup downstream | layout/alias permanecem desconhecidos | declaration completa, inclusive include chain/exatidão | por declaration; fixture atual `MODELED` |
+| MOVE literal → DATA | valor normalizado e `LiteralKind`; kind `ALPHANUMERIC` somente para literal básico provado | statement, literal operand e target operand distintos | disponível, estrutural | disponível quando o parent é suportado; caso contrário `CONTAINMENT_NOT_PROJECTED` | `normalContinuation` explícita com disponibilidade; ordem estrutural não é successor | literal source + DATA target | target `WRITE` | status, reason, candidates e `selected` quando resolved | cópia/acesso provados somente no profile FULL_IDENTITY; restante aberto | statement, source e target | `PARTIAL` enquanto kind for desconhecido |
 | CALL identifier/expression | syntax discriminada; arguments/returning não publicados; exception flow rebaixa CFG mas não lowering no código | statement e target operand distintos | disponível, estrutural | disponível ou gap localizado | sequência estrutural disponível no profile sem exception flow | DATA operand | `CALL_TARGET` | variável nominal resolved no profile ready | target de programa é sempre `UNKNOWN` com gap próprio | statement e operand | `MODELED` no profile ready; runtime unknown não é omissão |
 | IF/ELSE estrutural | condition `shape` e referências DATA conhecidas; predicate não publicado | statement e condition operands distintos | disponível, estrutural | membership ordenado `THEN`/`ELSE`, inclusive nesting | `IfFact.continuation` quando existe; ausência pode marcar fim estrutural, não prova saída executável | referências DATA conhecidas da condition | `READ` | preserva status/reason/candidates/selected por referência | truth value, operator/object normalizados e branch tomada não publicados | statement, condition e referências | `PARTIAL` por ausência de predicate semantics |
 | Entry primária | disponibilidade de start e assinatura escrita | `EntryId(unit, localId)` | referência explícita ao statement quando conhecida | unit proprietária | não publica sequência | count conhecido ou indisponível | `PRIMARY` | assinatura completa não projetada | contexto runtime não inferido | PROCEDURE DIVISION ou unit quando ausente | entry individual; inventário alternativo aberto |
@@ -128,8 +135,8 @@ As três dimensões não são intercambiáveis.
 
 | Família | Lowering readiness | CFG readiness | Effects/dataflow readiness | Conclusão |
 | --- | --- | --- | --- | --- |
-| DATA | `READY` | `NOT_APPLICABLE` | `PARTIAL` | declaração nominal pode atravessar lowering; storage/layout não |
-| MOVE literal → DATA | `PARTIAL` | `READY` no profile estrutural conhecido | `PARTIAL` | estrutura e role WRITE nominal existem; domínio/conversão/acesso/storage ainda não provam assign preciso |
+| DATA | `READY` | `NOT_APPLICABLE` | `PARTIAL` | declaração nominal disponível; scalarText prova profile local quando presente; layout geral aberto |
+| MOVE literal → DATA | `READY` somente para FULL_IDENTITY; senão `PARTIAL`/`BLOCKED` | `READY` somente para continuação canônica conhecida; senão `PARTIAL` | `PARTIAL` | profile escalar provado em 1.2.0; demais casos preservam gaps |
 | CALL identifier/expression | `READY` no profile atual | `READY` sem exception flow não projetado | `PARTIAL` | esses estados não provam `invoke` AIR V2: faltam interpretação do target, contrato de avaliação/outcomes e endereçamento completo |
 | IF/ELSE estrutural | `PARTIAL` | `READY` quando branches/continuation/containment são exatos | `PARTIAL` | membership disponível não certifica branch AIR; avaliação/predicate e controle executável têm lacunas |
 | `ObservedStatement` | `BLOCKED` | `BLOCKED` | `BLOCKED` | inventário está disponível; lowering semântico da família não está |
@@ -170,7 +177,8 @@ MOVE preciso exige valor/domínio, conversão aplicável, compatibilidade
 `sameDomain` e condições de escrita. Binding nominal ou MOVE escrito não
 provam domínio comum, cópia sem conversão ou storage. O enrichment é próprio
 do frontend; unknown_type não bloqueia por si só uma cópia comprovada, mas o
-port atual não publica essa prova. Literal typing pode esperar no CFG inicial.
+profile 4A publica essa prova em tipos próprios. Fora dele, a semântica de
+cópia e storage continua indisponível; a categoria conhecida sozinha não basta.
 
 ### Condition semantics
 
@@ -298,8 +306,9 @@ Consumers/adapters precisarem reconhecer uma nova variante é comportamento
 intencional. Redesenhar `State`, trocar o port por bags dinâmicos ou quebrar o
 envelope para cada construct não é necessário.
 
-O JSON publica `schema=cobol-semantic-product`, `contractVersion=1.1.0`.
-A decisão minor segue a evolução aditiva acima: acrescenta `entryInventory`
+O JSON publica `schema=cobol-semantic-product`, `contractVersion=1.2.0`.
+A evolução 1.2.0 acrescenta os fatos tipados do [profile escalar MOVE](scalar-text-move.md)
+com compatibilidade/limites explícitos. A evolução anterior 1.1.0 acrescentou `entryInventory`
 (entries/start/signature/gaps/provenance/readiness) e variante `GOBACK`, mantendo
 o significado dos campos existentes. Consumers que fechavam o conjunto de
 variantes em 1.0.0 precisam reconhecer 1.1.0 ou rejeitá-lo explicitamente;
@@ -357,8 +366,7 @@ efetivamente configuradas; Policy UNSPECIFIED não seleciona opções implícita
 Estas regras delimitam as capabilities descritas acima e os enrichments futuros:
 
 - [MOVE](https://www.ibm.com/docs/en/cobol-zos/6.4.0?topic=items-assigning-values-elementary-data-move)
-  inclui conversão, padding e truncamento conforme os operandos. O produto
-  ainda não publica essa regra normalizada: LiteralKind conhecido sozinho
+  inclui conversão, padding e truncamento conforme os operandos. O [profile 4A](scalar-text-move.md) publica a cópia textual de extensão igual; LiteralKind conhecido sozinho
   não prova cópia de valor nem valida assign AIR.
 - [Conclusão de programas](https://www.ibm.com/docs/en/cobol-zos/6.4.0?topic=subprograms-ending-reentering-main-programs)
   depende do contexto de entrada; [STOP](https://www.ibm.com/docs/en/cobol-zos/6.4.0?topic=statements-stop-statement)

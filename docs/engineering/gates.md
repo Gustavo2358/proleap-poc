@@ -8,7 +8,7 @@ Os entrypoints em `scripts/harness/` são a interface operacional estável do Ha
 | `check-docs.sh` | integridade do sistema de conhecimento | executa somente `HarnessDocsTest`: links internos, índice/IDs de ADRs e definições/referências de invariants, evals e backlog |
 | `check-architecture.sh` | fronteiras arquiteturais | executa somente `ArchitectureBoundaryTest` sobre referências diretas de bytecode |
 | `check-semantic.sh` | contratos semânticos | executa a suíte Maven completa, incluindo manifestos, fixtures, determinismo e provenance |
-| `check-performance.sh` | propriedade algorítmica | executa o cenário focalizado EVAL-RES-PERF-001; não impõe threshold de hardware |
+| `check-performance.sh` | propriedade algorítmica | executa os cenários EVAL-RES-PERF-001 e EVAL-SP-006 (escala física/fatos 4A); não impõe threshold de hardware |
 | `check-full.sh` | saúde geral antes de encerrar trabalho | agrega fast, semantic, regressão E2E do normalizador e verificação de naming |
 
 Exemplos:
@@ -27,3 +27,9 @@ O E2E executa o runner estruturado dos artefatos gerados com o módulo nativo
 17+ e Maven 3.9+.
 
 Em falha, começar pelo nome do gate emitido e usar o [catálogo de evals](../evals/semantic-eval-catalog.md) para localizar capability, fixture, regra e invariant relacionados.
+
+O challenge focalizado 4A usa `python3 scripts/harness/challenge-scalar-move.py`: GREEN, mutações semânticas RED, restauração byte-identical e segundo GREEN. Logs/hashes ficam em target/checkpoint-4a/challenges; erro de compilação não conta como mutante morto.
+
+O workflow Semantic Product gates executa full, performance e os challenges no PR,
+com JDK 17 e Node 22. Foi adicionado no 4A porque o baseline não tinha workflows
+GitHub Actions. Actions são fixadas por SHA; permissões apenas contents:read.

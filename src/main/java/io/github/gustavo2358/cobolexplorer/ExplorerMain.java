@@ -279,7 +279,8 @@ public final class ExplorerMain {
             ResolutionAnalysisReport report) {
         return CobolSemanticProductProjector.open(
                 new CobolSemanticProductProjector.FrontendProducts(frontend, symbolTables,
-                        occurrences, resolution, report),
+                        occurrences, resolution, report,
+                        ScalarMoveSemantics.analyze(frontend, symbolTables, resolution, report)),
                 unitId);
     }
 

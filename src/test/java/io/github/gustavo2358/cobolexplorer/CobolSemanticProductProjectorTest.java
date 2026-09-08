@@ -472,7 +472,8 @@ class CobolSemanticProductProjectorTest {
                 statement.header().containment().equals(
                         CobolSemanticProduct.Containment.unknown())));
         assertEquals(3, port.gaps().stream().filter(gap ->
-                gap.scope() == CobolSemanticProduct.GapScope.STRUCTURE).count());
+                gap.scope() == CobolSemanticProduct.GapScope.STRUCTURE
+                        && gap.code().equals("CONTAINMENT_NOT_PROJECTED")).count());
     }
 
     @Test
@@ -511,13 +512,14 @@ class CobolSemanticProductProjectorTest {
     }
 
     @Test
-    void missingLiteralKindAuthorityStaysUnknownForEveryLiteralSpelling() {
+    void onlyCanonicalBasicTextLiteralsGainCategory() {
         CobolSemanticPort port = CobolSemanticPort.open(project(
                 analyze(MULTIPLE_SOURCE, SOURCE_NAME)));
 
-        assertTrue(port.moves().stream().allMatch(move ->
-                move.source().kind() == CobolSemanticProduct.LiteralKind.UNKNOWN));
-        assertEquals(3, port.gaps().stream().filter(gap ->
+        assertEquals(List.of(CobolSemanticProduct.LiteralKind.ALPHANUMERIC,
+                CobolSemanticProduct.LiteralKind.ALPHANUMERIC, CobolSemanticProduct.LiteralKind.UNKNOWN),
+                port.moves().stream().map(move -> move.source().kind()).toList());
+        assertEquals(1, port.gaps().stream().filter(gap ->
                 gap.scope() == CobolSemanticProduct.GapScope.LITERAL_KIND
                         && gap.code().equals("LITERAL_KIND_NOT_PUBLISHED")).count());
     }
@@ -612,7 +614,8 @@ class CobolSemanticProductProjectorTest {
         CobolSemanticProductProjector.FrontendProducts mismatched =
                 new CobolSemanticProductProjector.FrontendProducts(
                         frontend.build(), frontend.tables(), frontend.occurrences(),
-                        frontend.resolution(), other.report());
+                        frontend.resolution(), other.report(),
+                ScalarMoveSemantics.analyze(frontend.build(), frontend.tables(), frontend.resolution(), other.report()));
 
         assertThrows(IllegalArgumentException.class,
                 () -> CobolSemanticProductProjector.project(mismatched, unit(frontend)));
@@ -652,7 +655,8 @@ class CobolSemanticProductProjectorTest {
         CobolSemanticProductProjector.FrontendProducts forged =
                 new CobolSemanticProductProjector.FrontendProducts(
                         frontend.build(), frontend.tables(), frontend.occurrences(),
-                        forgedResolution, frontend.report());
+                        forgedResolution, frontend.report(),
+                ScalarMoveSemantics.analyze(frontend.build(), frontend.tables(), forgedResolution, frontend.report()));
 
         assertThrows(IllegalArgumentException.class,
                 () -> CobolSemanticProductProjector.project(forged, unit(frontend)));
@@ -698,7 +702,8 @@ class CobolSemanticProductProjectorTest {
             AstBoundaryTestSupport.Analysis frontend) {
         return new CobolSemanticProductProjector.FrontendProducts(
                 frontend.build(), frontend.tables(), frontend.occurrences(),
-                frontend.resolution(), frontend.report());
+                frontend.resolution(), frontend.report(),
+                ScalarMoveSemantics.analyze(frontend.build(), frontend.tables(), frontend.resolution(), frontend.report()));
     }
 
     private static CobolSemanticProduct.State portState(CobolSemanticPort port) {
