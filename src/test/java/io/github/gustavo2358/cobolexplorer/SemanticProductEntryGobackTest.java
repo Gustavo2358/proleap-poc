@@ -71,7 +71,7 @@ class SemanticProductEntryGobackTest {
         assertArrayEquals(bytes, SemanticProductJsonWriter.serialize(publish(source)));
         JsonNode json = new ObjectMapper().readTree(bytes);
         assertEquals("cobol-semantic-product", json.path("schema").asText());
-        assertEquals("1.1.0", json.path("contractVersion").asText());
+        assertEquals("1.2.0", json.path("contractVersion").asText());
         assertEquals("AIR-FIRST", json.path("unit").path("canonicalProgramName").asText());
         var entry = json.path("entryInventory").path("entries").get(0);
         var terminal = json.path("statements").get(0);
@@ -253,7 +253,8 @@ class SemanticProductEntryGobackTest {
         var build = new CompilationUnitBuildResult(model, analysis.build().coverageByProgramUnit(),
                 analysis.build().diagnosticsByProgramUnit());
         var port = CobolSemanticProductProjector.open(new CobolSemanticProductProjector.FrontendProducts(
-                build, analysis.tables(), analysis.occurrences(), analysis.resolution(), analysis.report()), unit.id());
+                build, analysis.tables(), analysis.occurrences(), analysis.resolution(), analysis.report(),
+                ScalarMoveSemantics.analyze(build, analysis.tables(), analysis.resolution(), analysis.report())), unit.id());
         assertEquals(1, port.rootStatements().size());
         assertTrue(port.entries().get(0).start().statement().isEmpty());
         assertTrue(port.entries().get(0).signature().parameterCount().isEmpty());
@@ -270,7 +271,8 @@ class SemanticProductEntryGobackTest {
         var report = ResolutionAnalysisReport.compose(analysis.build(), incomplete,
                 analysis.occurrences(), analysis.resolution());
         var port = CobolSemanticProductProjector.open(new CobolSemanticProductProjector.FrontendProducts(
-                analysis.build(), analysis.tables(), analysis.occurrences(), analysis.resolution(), report),
+                analysis.build(), analysis.tables(), analysis.occurrences(), analysis.resolution(), report,
+                ScalarMoveSemantics.analyze(analysis.build(), analysis.tables(), analysis.resolution(), report)),
                 analysis.model().programUnits().get(0).id());
         assertInstanceOf(GobackFact.class, port.statements().get(0));
         assertEquals(InventoryStatus.INPUT_MISSING, port.coverage().inventoryStatus());
@@ -382,6 +384,7 @@ class SemanticProductEntryGobackTest {
     private static CobolSemanticProductProjector.FrontendProducts products(
             AstBoundaryTestSupport.Analysis analysis) {
         return new CobolSemanticProductProjector.FrontendProducts(analysis.build(),
-                analysis.tables(), analysis.occurrences(), analysis.resolution(), analysis.report());
+                analysis.tables(), analysis.occurrences(), analysis.resolution(), analysis.report(),
+                ScalarMoveSemantics.analyze(analysis.build(), analysis.tables(), analysis.resolution(), analysis.report()));
     }
 }

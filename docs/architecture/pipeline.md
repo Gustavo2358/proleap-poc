@@ -14,6 +14,7 @@ fonte COBOL físico
   → validação de integridade cross-product
   → classificação externa pós-resolução focalizada
   → relatório canônico de análise
+  → fatos canônicos ScalarMoveSemantics (profile textual delimitado)
   → COBOL Semantic Product / CobolSemanticPort
   → adapters JSON, snapshots e apresentação
 ```

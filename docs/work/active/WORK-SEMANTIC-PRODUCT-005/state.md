@@ -1,0 +1,39 @@
+# Estado
+
+## Onde estamos
+
+4A implementado na branch feat/semantic-product-scalar-move. Baseline main limpa
+e atualizada: c8a891e0827ae1dc1140246f625fd16c2ac9bd97. Contrato SP 1.2.0.
+Somente este frontend mudou; discovery e repos irmãos permaneceram read-only.
+Review humano do head 6de80966b6d275e6398280964e45f7b672cfb5e5 aprovou E1–E4 e
+encontrou materialização integral de bytes em write. Remediado no mesmo PR:
+escrita direta em OutputStream e oracles de equivalência, sem alteração semântica.
+
+## Verde conhecido
+
+E1–E4, fixture AIR-MOVE e contracasos passam pelo oracle público e JSON.
+CP3 preserva payload integral 1.1.0 (exceto versão). Full/fast/architecture/semantic,
+performance e naming verdes. A remediação adiciona dois oracles; comparação de
+bytes passa, guard de alocação fica RED no caminho antigo e GREEN na correção.
+13 challenges RED, restauração exata e segundo GREEN no código final.
+Probes: 60.012 linhas; 1.500/3.000 DATA+MOVE; 10.000 MOVEs/1 DATA. Consultas
+lineares, 1 por MOVE. SP CLI: 5.177 bytes. Evidência em docs/evals/checkpoint-4a.md.
+Diff integral revisado; git diff --check verde; sem alterações de grammar/resolver.
+CLI, alias e todos os outputs de escala mantêm os hashes anteriores. Limites:
+DTOs ainda materializados; provenance repetida da continuação mantida (12,79%
+do JSON de 10k MOVEs). Evidência: docs/evals/checkpoint-4a-memory-remediation.md.
+
+## Restante
+
+PR #32 aberto para revisão humana; branch publicada por push normal. O workflow
+do PR executa full/performance/challenges em cada head; o resultado remoto deve
+ser conferido no commit mais recente. Sem merge, auto-merge ou início de 4C.
+O item permanece ativo até closure autorizado.
+
+## Descobertas que afetam o plano
+
+Registry é docs/work/index.md/active/history; 005 era o próximo ID. O lifecycle
+004 foi arquivado após confirmação remota de merge do PR #31. Baseline não tinha
+GitHub Actions: workflow novo executa full/performance/challenges com actions pinadas.
+Overlays são excluídos conservadoramente por seção; sequência entre regiões e
+storage geral permanecem abertos. Logs preservam tentativas e resultados finais.

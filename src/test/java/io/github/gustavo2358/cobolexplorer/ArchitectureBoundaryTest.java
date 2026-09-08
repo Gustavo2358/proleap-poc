@@ -192,6 +192,19 @@ class ArchitectureBoundaryTest {
     }
 
     @Test
+    void semanticProductFileWriteDoesNotMaterializeTheCompleteJsonBytes() throws Exception {
+        String source = Files.readString(Path.of("src/main/java/io/github/gustavo2358/cobolexplorer/"
+                + "semanticproduct/transport/SemanticProductJsonWriter.java"));
+        int start = source.indexOf("public static void write(");
+        int end = source.indexOf("private static SemanticProductDocument document(", start);
+        assertTrue(start >= 0 && end > start, "file publication path must be reviewed when moved");
+        String fileWrite = source.substring(start, end);
+        assertTrue(List.of("serialize(", "writeValueAsBytes(", "writeValueAsString(",
+                        "ByteArrayOutputStream", "readAllBytes(").stream().noneMatch(fileWrite::contains),
+                "file publication must not retain the entire JSON in a byte array or String");
+    }
+
+    @Test
     void semanticProductJsonAdapterDependsOnlyOnTheClosedBoundaryAndJsonLibrary()
             throws Exception {
         List<Class<?>> adapterTypes = new ArrayList<>();
@@ -226,6 +239,25 @@ class ArchitectureBoundaryTest {
         assertTrue(List.of("writtenText(", "grammarRule(", "Map<String, Object>",
                         "Map<String,Object>", "org.antlr.v4").stream().noneMatch(source::contains),
                 "INV-SP-004: JSON adapter reinterpreta frontend ou usa bag semântico genérico");
+    }
+
+    @Test
+    void scalarOracleUsesOnlyPublicFactsAndProjectorDoesNotAnalyze() throws Exception {
+        Class<?> oracle = io.github.gustavo2358.cobolexplorer.semanticproduct.scalar.ScalarMoveOracle.class;
+        List<Class<?>> types = new ArrayList<>(); addNestedTypes(oracle, types);
+        String own = oracle.getName().replace('.', '/');
+        for (var type : types) for (String reference : directDependencies(type)) {
+            assertTrue(!reference.startsWith(ANTLR_PREFIX), reference);
+            if (reference.startsWith(PROJECT_PREFIX_INTERNAL)) assertTrue(
+                    reference.startsWith(own) || reference.startsWith(SEMANTIC_PRODUCT_INTERNAL)
+                            || reference.equals(SEMANTIC_PORT_INTERNAL), reference);
+        }
+        String oracleSource = Files.readString(Path.of("src/test/java/io/github/gustavo2358/cobolexplorer/semanticproduct/scalar/ScalarMoveOracle.java"));
+        for (String forbidden : List.of("readiness()", "picture()", "canonicalName()", "rawLexeme", "programPoint"))
+            assertTrue(!oracleSource.contains(forbidden), forbidden);
+        String projection = Files.readString(Path.of("src/main/java/io/github/gustavo2358/cobolexplorer/semanticproduct/projection/CobolSemanticProductProjector.java"));
+        for (String forbidden : List.of("ScalarMoveSemantics.analyze", "rawLexeme()", "logicalExtent()", "extent() =="))
+            assertTrue(!projection.contains(forbidden), forbidden);
     }
 
     @Test

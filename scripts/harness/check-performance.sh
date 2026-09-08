@@ -8,5 +8,6 @@ cd "$harness_project_dir"
 "$maven_bin" -q \
   -Dtest=ResolutionAnalysisReportTest#scalesByIndexedCandidatesAndProducesDeterministicResults,\
 SemanticProductMoveCallContractTest#materializedPortIndexesScaleLinearly,\
-SemanticProductIntegrityValidatorTest#scalesAcrossUnitsNodesDeclarationsAndCandidatesWithoutTextualJoins \
+SemanticProductIntegrityValidatorTest#scalesAcrossUnitsNodesDeclarationsAndCandidatesWithoutTextualJoins,\
+ScalarMoveScaleTest \
   test

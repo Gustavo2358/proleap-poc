@@ -26,7 +26,7 @@ import java.util.Objects;
  */
 public final class SemanticProductJsonWriter {
     public static final String SCHEMA = "cobol-semantic-product";
-    public static final String CONTRACT_VERSION = "1.1.0";
+    public static final String CONTRACT_VERSION = "1.2.0";
 
     private static final ObjectMapper JSON = JsonMapper.builder()
             .enable(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY)
@@ -41,9 +41,15 @@ public final class SemanticProductJsonWriter {
         return JSON.writeValueAsBytes(document(Objects.requireNonNull(port, "port")));
     }
 
-    /** Writes exactly the bytes returned by {@link #serialize(CobolSemanticPort)}. */
+    /** Writes the same deterministic UTF-8 bytes as {@link #serialize(CobolSemanticPort)}
+     * directly to the destination, without materializing the complete JSON byte array.
+     * The transport DTO graph is still materialized. */
     public static void write(CobolSemanticPort port, Path destination) throws IOException {
-        Files.write(Objects.requireNonNull(destination, "destination"), serialize(port));
+        Objects.requireNonNull(destination, "destination");
+        var publication = document(Objects.requireNonNull(port, "port"));
+        try (var output = Files.newOutputStream(destination)) {
+            JSON.writeValue(output, publication);
+        }
     }
 
     private static SemanticProductDocument document(CobolSemanticPort port) {
@@ -106,7 +112,8 @@ public final class SemanticProductJsonWriter {
         return new DataDeclarationDocument(dataHandle(declaration.id()),
                 declaration.canonicalName(), declaration.picture().orElse(null),
                 provenance(declaration.provenance()), declaration.coverage(),
-                readiness(declaration.readiness()));
+                readiness(declaration.readiness()), declaration.scalarText().map(shape -> new ScalarTextDocument(
+                        shape.logicalDomain(), shape.logicalExtent(), shape.storageClass(), shape.declarationScope())).orElse(null));
     }
 
     private static StatementDocument statement(CobolSemanticProduct.StatementFact fact) {
@@ -114,7 +121,10 @@ public final class SemanticProductJsonWriter {
             return new GobackDocument(header(goback.header()), goback.exit(), goback.localContinuation());
         if (fact instanceof CobolSemanticProduct.MoveFact move) {
             return new MoveDocument(header(move.header()), literal(move.source()),
-                    dataReference(move.target()));
+                    dataReference(move.target()), move.copySemantics(), new ContinuationDocument(
+                            move.normalContinuation().availability(), move.normalContinuation().statement()
+                            .map(SemanticProductJsonWriter::statementHandle).orElse(null),
+                            provenance(move.normalContinuation().provenance())));
         }
         if (fact instanceof CobolSemanticProduct.CallFact call) {
             return new CallDocument(header(call.header()), call.syntax(),
@@ -150,13 +160,15 @@ public final class SemanticProductJsonWriter {
 
     private static LiteralDocument literal(CobolSemanticProduct.LiteralSource source) {
         return new LiteralDocument(operandHandle(source.id()), source.kind(), source.value(),
-                provenance(source.provenance()));
+                provenance(source.provenance()), source.logicalValue().map(value -> new TextValueDocument(
+                        value.logicalDomain(), value.value(), value.logicalExtent())).orElse(null));
     }
 
     private static DataReferenceDocument dataReference(
             CobolSemanticProduct.DataReference reference) {
         return new DataReferenceDocument(operandHandle(reference.id()), reference.role(),
-                binding(reference.binding()), provenance(reference.provenance()));
+                binding(reference.binding()), provenance(reference.provenance()), reference.wholeItemAccess()
+                        .map(access -> new WholeItemDocument(dataHandle(access.data()))).orElse(null));
     }
 
     private static BindingDocument binding(CobolSemanticProduct.NominalBinding binding) {
@@ -271,7 +283,7 @@ public final class SemanticProductJsonWriter {
             String picture,
             ProvenanceDocument provenance,
             CobolSemanticProduct.CoverageStatus coverage,
-            ReadinessDocument readiness) { }
+            ReadinessDocument readiness, ScalarTextDocument scalarText) { }
 
     private record StructureDocument(List<String> roots,
                                      List<BranchChildrenDocument> branches) { }
@@ -295,9 +307,10 @@ public final class SemanticProductJsonWriter {
                                    CobolSemanticProduct.LocalContinuation localContinuation)
             implements StatementDocument { }
 
-    @JsonPropertyOrder({"variant", "header", "source", "target"})
+    @JsonPropertyOrder({"variant", "header", "source", "target", "copySemantics", "normalContinuation"})
     private record MoveDocument(StatementHeaderDocument header, LiteralDocument source,
-                                DataReferenceDocument target) implements StatementDocument { }
+                                DataReferenceDocument target, CobolSemanticProduct.CopySemantics copySemantics,
+                                ContinuationDocument normalContinuation) implements StatementDocument { }
 
     @JsonPropertyOrder({"variant", "header", "syntax", "operand", "runtimeTarget",
             "runtimeUncertaintyCode"})
@@ -328,12 +341,21 @@ public final class SemanticProductJsonWriter {
 
     private record ContainmentDocument(String parent, CobolSemanticProduct.Branch branch) { }
 
+    private record ScalarTextDocument(CobolSemanticProduct.LogicalDomain logicalDomain, int logicalExtent,
+                                      CobolSemanticProduct.StorageClass storageClass,
+                                      CobolSemanticProduct.DeclarationScope declarationScope) { }
+    private record TextValueDocument(CobolSemanticProduct.LogicalDomain logicalDomain, String value,
+                                     int logicalExtent) { }
+    private record WholeItemDocument(String data) { }
+    private record ContinuationDocument(CobolSemanticProduct.ContinuationAvailability availability,
+                                        String statement, ProvenanceDocument provenance) { }
+
     private record LiteralDocument(String id, CobolSemanticProduct.LiteralKind kind,
-                                   String value, ProvenanceDocument provenance) { }
+                                   String value, ProvenanceDocument provenance, TextValueDocument logicalValue) { }
 
     private record DataReferenceDocument(String id, CobolSemanticProduct.OperandRole role,
                                          BindingDocument binding,
-                                         ProvenanceDocument provenance) { }
+                                         ProvenanceDocument provenance, WholeItemDocument wholeItemAccess) { }
 
     private record BindingDocument(
             CobolSemanticProduct.ResolutionStatus status,

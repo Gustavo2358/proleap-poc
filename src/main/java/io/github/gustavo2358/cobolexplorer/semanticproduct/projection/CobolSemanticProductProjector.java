@@ -1,6 +1,7 @@
 package io.github.gustavo2358.cobolexplorer.semanticproduct.projection;
 
 import io.github.gustavo2358.cobolexplorer.Ast;
+import io.github.gustavo2358.cobolexplorer.ScalarMoveSemantics;
 import io.github.gustavo2358.cobolexplorer.CompilationUnitBuildResult;
 import io.github.gustavo2358.cobolexplorer.CompilationUnitModel;
 import io.github.gustavo2358.cobolexplorer.CompilationUnitSymbolTables;
@@ -65,13 +66,14 @@ public final class CobolSemanticProductProjector {
             CompilationUnitSymbolTables symbolTables,
             Map<ResolutionContracts.ProgramUnitId, ReferenceOccurrences> occurrencesByUnit,
             ReferenceResolution resolution,
-            ResolutionAnalysisReport report) {
+            ResolutionAnalysisReport report, ScalarMoveSemantics scalarMoves) {
         public FrontendProducts {
             frontend = Objects.requireNonNull(frontend, "frontend");
             symbolTables = Objects.requireNonNull(symbolTables, "symbolTables");
             occurrencesByUnit = immutableOccurrences(occurrencesByUnit);
             resolution = Objects.requireNonNull(resolution, "resolution");
             report = Objects.requireNonNull(report, "report");
+            scalarMoves = Objects.requireNonNull(scalarMoves, "scalarMoves");
         }
 
         private static Map<ResolutionContracts.ProgramUnitId, ReferenceOccurrences>
@@ -451,13 +453,14 @@ public final class CobolSemanticProductProjector {
             CobolSemanticProduct.DataItemId id = new CobolSemanticProduct.DataItemId(
                     inputs.boundaryUnit(), localId++);
             ids.put(item.getKey(), id);
-            facts.add(dataDeclaration(id, item.getValue()));
+            facts.add(dataDeclaration(id, item.getValue(), inputs.products().scalarMoves()
+                    .declaration(item.getKey()).map(shape -> new ScalarText(shape.extent()))));
         }
         return new DeclarationProjection(Collections.unmodifiableMap(ids), List.copyOf(facts));
     }
 
     private static CobolSemanticProduct.DataDeclaration dataDeclaration(
-            CobolSemanticProduct.DataItemId id, DeclarationSource source) {
+            CobolSemanticProduct.DataItemId id, DeclarationSource source, Optional<ScalarText> scalarText) {
         Optional<String> picture = Optional.empty();
         int pictureCount = 0;
         for (Ast.DataClause clause : source.entry().clauses()) {
@@ -483,7 +486,7 @@ public final class CobolSemanticProductProjector {
                         CobolSemanticProduct.ReadinessStatus.NOT_APPLICABLE,
                         "declaration alone has no control successor",
                         CobolSemanticProduct.ReadinessStatus.PARTIAL,
-                        "nominal identity available; storage layout and aliases unknown"));
+                        "nominal identity available; general storage layout and aliases unknown"), scalarText);
     }
 
     private static void projectStatement(
@@ -555,28 +558,44 @@ public final class CobolSemanticProductProjector {
             CobolSemanticProduct.NominalBinding binding = nominalBinding(entry, dataIds);
             CobolSemanticProduct.CoverageStatus bindingCoverage = bindingCoverage(entry);
             Ast.LiteralExpression literal = (Ast.LiteralExpression) move.source();
-            CobolSemanticProduct.CoverageStatus coverage =
-                    weakest(CobolSemanticProduct.CoverageStatus.PARTIAL,
-                            containmentCoverage(containment),
-                            coverage(inputs.finding(move.meta().id())), bindingCoverage);
+            ScalarMoveSemantics.Move semantic = inputs.products().scalarMoves().move(inputs.unitId(), move.meta().id());
+            CopySemantics copy = CopySemantics.valueOf(semantic.copy().name());
+            Optional<StatementId> next = semantic.nextStatement().map(nodeId -> {
+                Ast.Node node = inputs.selectedSource().nodes().get(nodeId);
+                require(node instanceof Ast.Statement, "canonical MOVE continuation is not a statement");
+                return Objects.requireNonNull(statementIds.get((Ast.Statement) node), "continuation must be published");
+            });
+            NormalContinuation continuation = new NormalContinuation(next.isPresent()
+                    ? ContinuationAvailability.KNOWN : ContinuationAvailability.UNAVAILABLE, next, statementProvenance);
+            Optional<WholeItemAccess> access = semantic.wholeItem().map(entity ->
+                    new WholeItemAccess(Objects.requireNonNull(dataIds.get(entity), "whole item must be published")));
+            CobolSemanticProduct.CoverageStatus coverage = weakest(
+                    semantic.gaps().isEmpty() ? CoverageStatus.MODELED : CoverageStatus.PARTIAL,
+                    containmentCoverage(containment), coverage(inputs.finding(move.meta().id())), bindingCoverage);
             CobolSemanticProduct.MoveFact fact = new CobolSemanticProduct.MoveFact(
-                    header(statementId, plan.position().ordinal(), containment,
-                            statementProvenance, coverage,
-                            containmentReadiness(containment, moveReadiness(entry))),
-                    new CobolSemanticProduct.LiteralSource(
-                            new CobolSemanticProduct.OperandId(statementId, 0),
-                            CobolSemanticProduct.LiteralKind.UNKNOWN, literal.value(),
-                            provenance(literal.meta().provenance())),
-                    new CobolSemanticProduct.DataReference(
-                            new CobolSemanticProduct.OperandId(statementId, 1),
-                            CobolSemanticProduct.OperandRole.WRITE, binding,
-                            provenance(((Ast.DataReference) move.targets().get(0))
-                                    .meta().provenance())));
+                    header(statementId, plan.position().ordinal(), containment, statementProvenance, coverage,
+                            containmentReadiness(containment, readiness(
+                                    copy == CopySemantics.FULL_IDENTITY ? ReadinessStatus.SUFFICIENT
+                                            : entry.status() == ResolutionContracts.ResolutionStatus.UNSUPPORTED
+                                            ? ReadinessStatus.BLOCKED : ReadinessStatus.PARTIAL,
+                                    "canonical elementary MOVE copy capability",
+                                    next.isPresent() ? ReadinessStatus.SUFFICIENT : ReadinessStatus.PARTIAL,
+                                    "canonical normal continuation availability",
+                                    ReadinessStatus.PARTIAL, "general effects and dataflow are not published"))),
+                    new LiteralSource(new OperandId(statementId, 0),
+                            literal.logicalText().isPresent() ? LiteralKind.ALPHANUMERIC : LiteralKind.UNKNOWN,
+                            literal.value(), provenance(literal.meta().provenance()),
+                            literal.logicalText().map(text -> new TextValue(text.value()))),
+                    new DataReference(new OperandId(statementId, 1), OperandRole.WRITE, binding,
+                            provenance(((Ast.DataReference) move.targets().get(0)).meta().provenance()), access),
+                    copy, continuation);
             statements.add(fact);
-            gaps.add(new CobolSemanticProduct.Gap(statementId,
-                    CobolSemanticProduct.GapScope.LITERAL_KIND, LITERAL_KIND_GAP,
-                    "the canonical frontend AST does not publish a typed literal kind",
+            if (literal.logicalText().isEmpty()) gaps.add(new Gap(statementId, GapScope.LITERAL_KIND,
+                    LITERAL_KIND_GAP, "literal category is outside the canonical basic text capability",
                     provenance(literal.meta().provenance())));
+            for (var gap : semantic.gaps()) gaps.add(new Gap(statementId,
+                    gap == ScalarMoveSemantics.Gap.NORMAL_CONTINUATION_NOT_AVAILABLE ? GapScope.STRUCTURE : GapScope.CAPABILITY,
+                    gap.name(), "canonical elementary MOVE proof unavailable", statementProvenance));
             addContainmentGap(containment, statementId, statementProvenance, gaps);
             addReportGaps(statementId, entry.occurrence(), inputs,
                     provenance(entry.occurrence().meta().provenance()), gaps);
@@ -982,22 +1001,6 @@ public final class CobolSemanticProductProjector {
         return new CobolSemanticProduct.StatementHeader(id,
                 new CobolSemanticProduct.ProgramPoint(ordinal),
                 containment, provenance, coverage, readiness);
-    }
-
-    private static CobolSemanticProduct.Readiness moveReadiness(
-            ReferenceResolution.Entry entry) {
-        CobolSemanticProduct.ReadinessStatus lowering =
-                entry.status() == ResolutionContracts.ResolutionStatus.RESOLVED
-                        ? CobolSemanticProduct.ReadinessStatus.PARTIAL
-                        : entry.status() == ResolutionContracts.ResolutionStatus.UNSUPPORTED
-                        ? CobolSemanticProduct.ReadinessStatus.BLOCKED
-                        : CobolSemanticProduct.ReadinessStatus.PARTIAL;
-        return readiness(lowering,
-                "literal value and nominal target available; canonical literal kind missing",
-                CobolSemanticProduct.ReadinessStatus.SUFFICIENT,
-                "structural fallthrough available",
-                CobolSemanticProduct.ReadinessStatus.PARTIAL,
-                "nominal DEF available only to binding precision; literal kind and storage unknown");
     }
 
     private static CobolSemanticProduct.Readiness callReadiness(

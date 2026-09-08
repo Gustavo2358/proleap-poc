@@ -375,7 +375,8 @@ class SemanticProductStatementInventoryTest {
         CobolSemanticProduct.State state = CobolSemanticProductProjector.project(
                 new CobolSemanticProductProjector.FrontendProducts(
                         analysis.build(), analysis.tables(), analysis.occurrences(),
-                        analysis.resolution(), report),
+                        analysis.resolution(), report,
+                ScalarMoveSemantics.analyze(analysis.build(), analysis.tables(), analysis.resolution(), report)),
                 unit.id());
 
         assertAll(
@@ -409,7 +410,8 @@ class SemanticProductStatementInventoryTest {
         CobolSemanticProductProjector.FrontendProducts products =
                 new CobolSemanticProductProjector.FrontendProducts(
                         analysis.build(), analysis.tables(), analysis.occurrences(),
-                        analysis.resolution(), analysis.report());
+                        analysis.resolution(), analysis.report(),
+                ScalarMoveSemantics.analyze(analysis.build(), analysis.tables(), analysis.resolution(), analysis.report()));
         CobolSemanticProduct.State state =
                 CobolSemanticProductProjector.project(products, unit.id());
         return new Projection(unit.program(), state, CobolSemanticPort.open(state));

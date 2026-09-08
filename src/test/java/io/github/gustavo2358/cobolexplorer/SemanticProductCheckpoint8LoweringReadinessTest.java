@@ -64,7 +64,7 @@ class SemanticProductCheckpoint8LoweringReadinessTest {
                 .filter(move -> move.source().value().equals("C"))
                 .filter(move -> move.target().selectedName().equals(Optional.of("WS-X")))
                 .toList());
-        assertEquals(CobolSemanticProduct.LiteralKind.UNKNOWN, initialMove.source().kind());
+        assertEquals(CobolSemanticProduct.LiteralKind.ALPHANUMERIC, initialMove.source().kind());
         assertEquals(CobolSemanticProduct.OperandRole.WRITE, initialMove.target().role());
         assertEquals(CobolSemanticProduct.ReadinessStatus.PARTIAL,
                 initialMove.anchor().readiness().lowering().status());

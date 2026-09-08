@@ -49,6 +49,14 @@ assinatura vazia. O validator cross-product verifica o target na mesma unit.
 Semântica pública, regra IBM, disponibilidade e limites ficam no
 [contrato do Semantic Product](cobol-semantic-product.md#entry-primária-e-goback).
 
+### Fatos locais do profile textual 4A
+
+LiteralExpression.logicalText, PictureClause.textExtent e UsageClause.display
+são interpretação canônica delimitada. Division.normalContinuations preserva
+relações MOVE → próximo statement por IDs existentes, sem novos traversal edges.
+O [contrato do profile](scalar-text-move.md) define exclusões, disponibilidade,
+regra COBOL, custos e ownership pós-binding de ScalarMoveSemantics.
+
 ### SEARCH WHEN
 
 `SearchStatement` é uma fronteira AST tipada com `all`, `searchedReference`, `varying` opcional, `atEnd` opcional e uma lista ordenada de `SearchWhen`. Cada `SearchWhen` é um `Ast.Node` que possui exatamente uma `condition` e suas `statements`, preservando a identidade e o ownership da branch. `SearchWhen.condition` reutiliza a mesma condition surface de `IF`/`EVALUATE`; sua interpretação nominal continua dependente do binding e não cria `ConditionSemantics` antecipadamente.

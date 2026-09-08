@@ -100,15 +100,20 @@ public final class Ast {
     }
 
     public record Division(Meta meta, DivisionKind divisionKind, List<Node> children,
-                           Optional<ProcedureEntry> procedureEntry) implements Node {
+                           Optional<ProcedureEntry> procedureEntry, Map<Integer, Integer> normalContinuations) implements Node {
         public Division {
             children = List.copyOf(children);
             procedureEntry = Objects.requireNonNull(procedureEntry, "procedureEntry");
+            normalContinuations = Map.copyOf(normalContinuations);
             if (procedureEntry.isPresent() && divisionKind != DivisionKind.PROCEDURE)
                 throw new IllegalArgumentException("only PROCEDURE DIVISION has an executable entry");
         }
+        public Division(Meta meta, DivisionKind divisionKind, List<Node> children,
+                        Optional<ProcedureEntry> procedureEntry) {
+            this(meta, divisionKind, children, procedureEntry, Map.of());
+        }
         public Division(Meta meta, DivisionKind divisionKind, List<Node> children) {
-            this(meta, divisionKind, children, Optional.empty());
+            this(meta, divisionKind, children, Optional.empty(), Map.of());
         }
     }
 
@@ -142,8 +147,16 @@ public final class Ast {
     }
     public sealed interface DataClause extends Node permits PictureClause, UsageClause, ValueClause,
             RedefinesClause, RenamesClause, OccursClause, PreservedDataClause {}
-    public record PictureClause(Meta meta, String picture, String writtenText) implements DataClause {}
-    public record UsageClause(Meta meta, String usage, String writtenText) implements DataClause {}
+    public record PictureClause(Meta meta, String picture, String writtenText,
+                                Optional<Integer> textExtent) implements DataClause {
+        public PictureClause { textExtent = Objects.requireNonNull(textExtent); }
+        public PictureClause(Meta meta, String picture, String writtenText) {
+            this(meta, picture, writtenText, Optional.empty());
+        }
+    }
+    public record UsageClause(Meta meta, String usage, String writtenText, boolean display) implements DataClause {
+        public UsageClause(Meta meta, String usage, String writtenText) { this(meta, usage, writtenText, false); }
+    }
     public record ValueClause(Meta meta, List<String> values, String writtenText) implements DataClause {
         public ValueClause { values = List.copyOf(values); }
     }
@@ -347,7 +360,18 @@ public final class Ast {
         }
     }
 
-    public record LiteralExpression(Meta meta, String value, String rawLexeme) implements Expression {}
+    /** Logical text is established only by the basic literal production, never by Java value type. */
+    public record LogicalText(String value) {
+        public LogicalText { value = Objects.requireNonNull(value); }
+        public int extent() { return value.codePointCount(0, value.length()); }
+    }
+    public record LiteralExpression(Meta meta, String value, String rawLexeme,
+                                    Optional<LogicalText> logicalText) implements Expression {
+        public LiteralExpression { logicalText = Objects.requireNonNull(logicalText); }
+        public LiteralExpression(Meta meta, String value, String rawLexeme) {
+            this(meta, value, rawLexeme, Optional.empty());
+        }
+    }
     public record DataQualifier(Meta meta, QualifierConnector connector, QualifierTarget target,
                                 DataReference reference,
                                 String writtenText) implements Node {
