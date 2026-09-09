@@ -58,6 +58,25 @@ dataflow.
 não afirmam execution order, reachability nem CFG edges. `DataItemId` é
 identidade nominal de declaração, não identidade de storage.
 
+## NEXT SENTENCE observado
+
+Quando recebe AST e coverage íntegros, o projector preserva NextSentence como
+`ObservedStatement` com `observedKind=NEXT_SENTENCE` e
+`observedShape=TYPED_NEXT_SENTENCE`, identidade/provenance, gap e readiness de
+lowering/CFG/effects-dataflow bloqueada. Não publica CONTINUE, no-op ou
+fallthrough para essa variante. A regra COBOL e a representação de origem
+estão na [AST semântica](semantic-ast.md#next-sentence).
+
+O contrato 1.2.0 não publica sentence boundaries ou o target after-period.
+Procedure containers são achatados no inventário; em SEARCH, o child possui
+parent SEARCH com branch UNKNOWN, sem identidade pública de SearchWhen.
+Logo, identidade tipada é necessária, mas insuficiente para lowering preciso
+de NEXT SENTENCE. Uma futura capability precisa de fatos canônicos adicionais
+no frontend/SP antes de ser traduzida por cobol-lower; consumers não podem
+reabrir fonte/AST nem inferir o destino por ProgramPoint, provenance ou
+IfFact.continuation. Coverage ausente continua sendo corrupção rejeitada pelo
+projector, não um substituto para a incompletude explícita desse controle.
+
 ## Hipótese de lowering e falsificação
 
 A hipótese auditada no fechamento de `WORK-SEMANTIC-PRODUCT-002` foi:
