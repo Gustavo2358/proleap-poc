@@ -1,0 +1,3 @@
+cp5 => Rejected[diagnostic=Diagnostic[code=UNSUPPORTED_CONTRACT, phase=physical, location=$/contractVersion]]
+dynamic-x8-1 => Rejected[diagnostic=Diagnostic[code=UNSUPPORTED_CONTRACT, phase=physical, location=$/contractVersion]]
+literal-1 => Rejected[diagnostic=Diagnostic[code=UNSUPPORTED_CONTRACT, phase=physical, location=$/contractVersion]]

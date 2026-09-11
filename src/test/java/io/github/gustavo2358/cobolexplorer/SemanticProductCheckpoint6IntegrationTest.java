@@ -89,11 +89,11 @@ class SemanticProductCheckpoint6IntegrationTest {
         List<CobolLoweringReadinessConsumer.CallAudit> calls = statements(
                 audit, CobolLoweringReadinessConsumer.CallAudit.class);
         assertEquals(List.of("AUX-PGM", "WS-X", "AUX-PGM"), calls.stream()
-                .map(call -> dataNames.get(call.operand().binding().selected().orElseThrow()))
+                .map(call -> dataNames.get(((CobolSemanticProduct.DataReference) call.target()).binding().selected().orElseThrow()))
                 .toList());
         assertTrue(calls.stream().allMatch(call ->
                 call.syntax() == CobolSemanticProduct.CallSyntax.IDENTIFIER_OR_EXPRESSION
-                        && call.operand().role() == CobolSemanticProduct.OperandRole.CALL_TARGET
+                        && ((CobolSemanticProduct.DataReference) call.target()).role() == CobolSemanticProduct.OperandRole.CALL_TARGET
                         && call.runtimeTarget()
                         == CobolSemanticProduct.RuntimeTargetKnowledge.UNKNOWN
                         && call.runtimeUncertaintyCode()
@@ -184,7 +184,7 @@ class SemanticProductCheckpoint6IntegrationTest {
                         == CobolSemanticProduct.ReadinessStatus.NOT_APPLICABLE
                         && data.readiness().effectsDataflow().status()
                         == CobolSemanticProduct.ReadinessStatus.PARTIAL));
-        assertEquals(CobolSemanticProduct.ReadinessStatus.PARTIAL,
+        assertEquals(CobolSemanticProduct.ReadinessStatus.SUFFICIENT,
                 move.header().readiness().lowering().status());
         assertEquals(CobolSemanticProduct.ReadinessStatus.SUFFICIENT,
                 move.header().readiness().cfg().status());
@@ -206,8 +206,8 @@ class SemanticProductCheckpoint6IntegrationTest {
         assertEquals(CobolSemanticProduct.InventoryStatus.COMPLETE,
                 audit.coverage().inventoryStatus());
         assertEquals(14, audit.coverage().observedStatements());
-        assertEquals(3, audit.coverage().modeledStatements());
-        assertEquals(11, audit.coverage().partialStatements());
+        assertEquals(4, audit.coverage().modeledStatements());
+        assertEquals(10, audit.coverage().partialStatements());
         assertEquals(0, audit.coverage().unsupportedStatements());
         assertEquals(0, audit.coverage().inputMissingStatements());
         assertEquals(CobolSemanticProduct.ReadinessStatus.BLOCKED,

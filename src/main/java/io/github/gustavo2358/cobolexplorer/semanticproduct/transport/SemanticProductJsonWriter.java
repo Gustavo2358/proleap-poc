@@ -26,7 +26,7 @@ import java.util.Objects;
  */
 public final class SemanticProductJsonWriter {
     public static final String SCHEMA = "cobol-semantic-product";
-    public static final String CONTRACT_VERSION = "1.2.0";
+    public static final String CONTRACT_VERSION = "1.3.0";
 
     private static final ObjectMapper JSON = JsonMapper.builder()
             .enable(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY)
@@ -116,6 +116,15 @@ public final class SemanticProductJsonWriter {
                         shape.logicalDomain(), shape.logicalExtent(), shape.storageClass(), shape.declarationScope())).orElse(null));
     }
 
+    private static CallTargetDocument callTarget(CobolSemanticProduct.CallTarget target) {
+        if (target instanceof CobolSemanticProduct.DataReference data)
+            return new DataCallTargetDocument(dataReference(data));
+        var literal = (CobolSemanticProduct.LiteralCallTarget) target;
+        return new LiteralCallTargetDocument(operandHandle(literal.id()), literal.text(), literal.writtenText(),
+                literal.logicalValue().map(t -> new TextValueDocument(t.logicalDomain(), t.value(), t.logicalExtent())).orElse(null),
+                provenance(literal.provenance()));
+    }
+
     private static StatementDocument statement(CobolSemanticProduct.StatementFact fact) {
         if (fact instanceof CobolSemanticProduct.GobackFact goback)
             return new GobackDocument(header(goback.header()), goback.exit(), goback.localContinuation());
@@ -124,12 +133,19 @@ public final class SemanticProductJsonWriter {
                     dataReference(move.target()), move.copySemantics(), new ContinuationDocument(
                             move.normalContinuation().availability(), move.normalContinuation().statement()
                             .map(SemanticProductJsonWriter::statementHandle).orElse(null),
-                            provenance(move.normalContinuation().provenance())));
+                            provenance(move.normalContinuation().provenance())), move.textAdjustment().map(a ->
+                            new TextAdjustmentDocument(a.rule(), a.receiverExtent(),
+                                    new TextValueDocument(a.result().logicalDomain(), a.result().value(), a.result().logicalExtent()),
+                                    provenance(a.provenance()))).orElse(null));
         }
         if (fact instanceof CobolSemanticProduct.CallFact call) {
             return new CallDocument(header(call.header()), call.syntax(),
-                    dataReference(call.operand()), call.runtimeTarget(),
-                    call.runtimeUncertaintyCode());
+                    callTarget(call.target()), call.runtimeTarget(), call.runtimeUncertaintyCode(),
+                    new ContinuationDocument(call.normalContinuation().availability(), call.normalContinuation().statement()
+                            .map(SemanticProductJsonWriter::statementHandle).orElse(null), provenance(call.normalContinuation().provenance())),
+                    new CallSurfaceDocument(call.surface().using(), call.surface().argumentCount().orElse(null),
+                            call.surface().returning(), call.surface().onException(), call.surface().notOnException(),
+                            call.surface().onOverflow()), call.effects(), call.outcomes());
         }
         if (fact instanceof CobolSemanticProduct.IfFact branch) {
             return new IfDocument(header(branch.header()), condition(branch.condition()),
@@ -307,18 +323,29 @@ public final class SemanticProductJsonWriter {
                                    CobolSemanticProduct.LocalContinuation localContinuation)
             implements StatementDocument { }
 
-    @JsonPropertyOrder({"variant", "header", "source", "target", "copySemantics", "normalContinuation"})
+    @JsonPropertyOrder({"variant", "header", "source", "target", "copySemantics", "normalContinuation", "textAdjustment"})
     private record MoveDocument(StatementHeaderDocument header, LiteralDocument source,
                                 DataReferenceDocument target, CobolSemanticProduct.CopySemantics copySemantics,
-                                ContinuationDocument normalContinuation) implements StatementDocument { }
+                                ContinuationDocument normalContinuation, TextAdjustmentDocument textAdjustment) implements StatementDocument { }
 
-    @JsonPropertyOrder({"variant", "header", "syntax", "operand", "runtimeTarget",
-            "runtimeUncertaintyCode"})
-    private record CallDocument(StatementHeaderDocument header,
-                                CobolSemanticProduct.CallSyntax syntax,
-                                DataReferenceDocument operand,
-                                CobolSemanticProduct.RuntimeTargetKnowledge runtimeTarget,
-                                String runtimeUncertaintyCode) implements StatementDocument { }
+    private record TextAdjustmentDocument(CobolSemanticProduct.TextAdjustmentRule rule, int receiverExtent,
+                                            TextValueDocument result, ProvenanceDocument provenance) { }
+    @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind")
+    @JsonSubTypes({@JsonSubTypes.Type(value = DataCallTargetDocument.class, name = "DATA"),
+            @JsonSubTypes.Type(value = LiteralCallTargetDocument.class, name = "LITERAL")})
+    private sealed interface CallTargetDocument permits DataCallTargetDocument, LiteralCallTargetDocument { }
+    private record DataCallTargetDocument(DataReferenceDocument reference) implements CallTargetDocument { }
+    private record LiteralCallTargetDocument(String id, String text, String writtenText, TextValueDocument logicalValue,
+                                              ProvenanceDocument provenance) implements CallTargetDocument { }
+    private record CallSurfaceDocument(CobolSemanticProduct.ClausePresence using, Integer argumentCount,
+                                      CobolSemanticProduct.ClausePresence returning, CobolSemanticProduct.ClausePresence onException,
+                                      CobolSemanticProduct.ClausePresence notOnException, CobolSemanticProduct.ClausePresence onOverflow) { }
+    @JsonPropertyOrder({"variant", "header", "syntax", "target", "runtimeTarget", "runtimeUncertaintyCode",
+            "normalContinuation", "surface", "effects", "outcomes"})
+    private record CallDocument(StatementHeaderDocument header, CobolSemanticProduct.CallSyntax syntax,
+                                CallTargetDocument target, CobolSemanticProduct.RuntimeTargetKnowledge runtimeTarget,
+                                String runtimeUncertaintyCode, ContinuationDocument normalContinuation, CallSurfaceDocument surface,
+                                CobolSemanticProduct.CallEffects effects, CobolSemanticProduct.CallOutcomes outcomes) implements StatementDocument { }
 
     @JsonPropertyOrder({"variant", "header", "condition", "explicitlyTerminated",
             "continuation"})

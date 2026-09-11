@@ -33,3 +33,8 @@ O challenge focalizado 4A usa `python3 scripts/harness/challenge-scalar-move.py`
 O workflow Semantic Product gates executa full, performance e os challenges no PR,
 com JDK 17 e Node 22. Foi adicionado no 4A porque o baseline não tinha workflows
 GitHub Actions. Actions são fixadas por SHA; permissões apenas contents:read.
+
+O challenge CP6 W1A usa `python3 scripts/harness/challenge-call-w1a.py`: oito mutações
+focais de CALL/fitting, restauração byte-exact e segundo GREEN. Logs/hashes ficam
+em target/cp6-w1a/challenges; o script recusa sobrescrever evidência existente.
+O [handoff W1A](../work/evidence/WORK-AST-005/README.md) preserva os recibos locais.

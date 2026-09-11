@@ -49,7 +49,7 @@ public final class CobolSemanticProduct {
     /** Literal category is semantic input; consumers must not recover it from value text. */
     public enum LiteralKind { ALPHANUMERIC, NUMERIC, UNKNOWN }
 
-    public enum CallSyntax { IDENTIFIER_OR_EXPRESSION }
+    public enum CallSyntax { IDENTIFIER_OR_EXPRESSION, LITERAL_PROGRAM_NAME }
 
     /** Runtime values are outside nominal binding and this checkpoint. */
     public enum RuntimeTargetKnowledge { UNKNOWN }
@@ -316,7 +316,16 @@ public final class CobolSemanticProduct {
     }
     /** FULL_IDENTITY guarantees mandatory whole receiving-item overwrite without
      * conversion, padding or truncation. UNAVAILABLE makes no copy claim. */
-    public enum CopySemantics { FULL_IDENTITY, UNAVAILABLE }
+    public enum CopySemantics { FULL_IDENTITY, FITTED_TEXT, UNAVAILABLE }
+    public enum TextAdjustmentRule { RIGHT_PAD_SPACE }
+    public record TextAdjustment(TextAdjustmentRule rule, int receiverExtent,
+                                 TextValue result, Provenance provenance) {
+        public TextAdjustment {
+            Objects.requireNonNull(rule); Objects.requireNonNull(result); Objects.requireNonNull(provenance);
+            require(receiverExtent > 0 && result.logicalExtent() == receiverExtent,
+                    "adjusted text must fill receiver extent");
+        }
+    }
     public enum ContinuationAvailability { KNOWN, UNAVAILABLE, NONE }
     public record NormalContinuation(ContinuationAvailability availability,
                                      Optional<StatementId> statement, Provenance provenance) {
@@ -478,7 +487,7 @@ public final class CobolSemanticProduct {
     }
 
     public record DataReference(OperandId id, OperandRole role,
-                                NominalBinding binding, Provenance provenance, Optional<WholeItemAccess> wholeItemAccess) {
+                                NominalBinding binding, Provenance provenance, Optional<WholeItemAccess> wholeItemAccess) implements CallTarget {
         public DataReference {
             wholeItemAccess = Objects.requireNonNull(wholeItemAccess);
             if (wholeItemAccess.isPresent()) require(binding.selected().equals(Optional.of(wholeItemAccess.get().data())),
@@ -529,9 +538,15 @@ public final class CobolSemanticProduct {
 
     public record MoveFact(StatementHeader header, LiteralSource source,
                            DataReference target, CopySemantics copySemantics,
-                           NormalContinuation normalContinuation) implements StatementFact {
+                           NormalContinuation normalContinuation, Optional<TextAdjustment> textAdjustment) implements StatementFact {
         public MoveFact {
             copySemantics = Objects.requireNonNull(copySemantics);
+            textAdjustment = Objects.requireNonNull(textAdjustment);
+            require((copySemantics == CopySemantics.FITTED_TEXT) == textAdjustment.isPresent(),
+                    "fitted copy requires adjustment; identity/unavailable omit it");
+            if (copySemantics == CopySemantics.FITTED_TEXT)
+                require(source.logicalValue().isPresent() && target.wholeItemAccess().isPresent(),
+                        "fitting requires logical source and whole scalar target");
             normalContinuation = Objects.requireNonNull(normalContinuation);
             if (copySemantics == CopySemantics.FULL_IDENTITY)
                 require(source.logicalValue().isPresent() && target.wholeItemAccess().isPresent(),
@@ -542,30 +557,81 @@ public final class CobolSemanticProduct {
             if (target.role() != OperandRole.WRITE)
                 throw new IllegalArgumentException("MOVE target must have WRITE role");
         }
+        public MoveFact(StatementHeader header, LiteralSource source, DataReference target,
+                        CopySemantics copySemantics, NormalContinuation normalContinuation) {
+            this(header, source, target, copySemantics, normalContinuation, Optional.empty());
+        }
         public MoveFact(StatementHeader header, LiteralSource source, DataReference target) {
             this(header, source, target, CopySemantics.UNAVAILABLE,
-                    NormalContinuation.unavailable(header.provenance()));
+                    NormalContinuation.unavailable(header.provenance()), Optional.empty());
         }
     }
 
-    public record CallFact(StatementHeader header, CallSyntax syntax,
-                           DataReference operand,
-                           RuntimeTargetKnowledge runtimeTarget,
-                           String runtimeUncertaintyCode) implements StatementFact {
-        public CallFact {
-            header = Objects.requireNonNull(header, "header");
-            syntax = Objects.requireNonNull(syntax, "syntax");
-            operand = Objects.requireNonNull(operand, "operand");
-            runtimeTarget = Objects.requireNonNull(runtimeTarget, "runtimeTarget");
-            runtimeUncertaintyCode = requireText(runtimeUncertaintyCode,
-                    "runtimeUncertaintyCode");
-            if (syntax != CallSyntax.IDENTIFIER_OR_EXPRESSION)
-                throw new IllegalArgumentException(
-                        "typed CallFact covers identifier/expression syntax only");
-            if (operand.role() != OperandRole.CALL_TARGET)
-                throw new IllegalArgumentException(
-                        "CALL operand must have CALL_TARGET role");
+    public sealed interface CallTarget permits DataReference, LiteralCallTarget {
+        OperandId id();
+        Provenance provenance();
+    }
+    public record LiteralCallTarget(OperandId id, String text, String writtenText,
+                                    Optional<TextValue> logicalValue, Provenance provenance) implements CallTarget {
+        public LiteralCallTarget {
+            Objects.requireNonNull(id); Objects.requireNonNull(text); Objects.requireNonNull(writtenText);
+            Objects.requireNonNull(logicalValue); Objects.requireNonNull(provenance);
+            require(logicalValue.isEmpty() || logicalValue.get().value().equals(text),
+                    "literal target logical value must agree with semantic text");
         }
+    }
+    public enum ClausePresence { ABSENT, PRESENT, UNKNOWN }
+    public enum CallEffects { UNKNOWN }
+    public enum CallOutcomes { OPEN }
+    public record CallSurface(ClausePresence using, Optional<Integer> argumentCount,
+                              ClausePresence returning, ClausePresence onException,
+                              ClausePresence notOnException, ClausePresence onOverflow) {
+        public CallSurface {
+            Objects.requireNonNull(using); Objects.requireNonNull(argumentCount); Objects.requireNonNull(returning);
+            Objects.requireNonNull(onException); Objects.requireNonNull(notOnException); Objects.requireNonNull(onOverflow);
+            require(using != ClausePresence.ABSENT || argumentCount.equals(Optional.of(0)),
+                    "absent USING requires known empty inventory");
+            require(using != ClausePresence.UNKNOWN || argumentCount.isEmpty(),
+                    "unknown USING must not manufacture inventory");
+            require(using != ClausePresence.PRESENT || argumentCount.isPresent() && argumentCount.get() > 0,
+                    "present USING requires arguments");
+        }
+        public boolean firstSlice() {
+            return using == ClausePresence.ABSENT && returning == ClausePresence.ABSENT
+                    && onException == ClausePresence.ABSENT && notOnException == ClausePresence.ABSENT
+                    && onOverflow == ClausePresence.ABSENT;
+        }
+        public static CallSurface unknown() {
+            return new CallSurface(ClausePresence.UNKNOWN, Optional.empty(), ClausePresence.UNKNOWN,
+                    ClausePresence.UNKNOWN, ClausePresence.UNKNOWN, ClausePresence.UNKNOWN);
+        }
+    }
+    /** Continuation only describes normal return; effects and other outcomes remain open. */
+    public record CallFact(StatementHeader header, CallTarget target,
+                           RuntimeTargetKnowledge runtimeTarget, String runtimeUncertaintyCode,
+                           NormalContinuation normalContinuation, CallSurface surface) implements StatementFact {
+        public CallFact {
+            Objects.requireNonNull(header); Objects.requireNonNull(target); Objects.requireNonNull(runtimeTarget);
+            runtimeUncertaintyCode = requireText(runtimeUncertaintyCode, "runtimeUncertaintyCode");
+            Objects.requireNonNull(normalContinuation); Objects.requireNonNull(surface);
+            if (target instanceof DataReference data)
+                require(data.role() == OperandRole.CALL_TARGET, "CALL data target requires CALL_TARGET role");
+            require(normalContinuation.availability() != ContinuationAvailability.NONE,
+                    "CALL does not prove absence of normal return");
+            require(header.readiness().effectsDataflow().status() != ReadinessStatus.SUFFICIENT,
+                    "CALL effects and outcomes are not proven");
+            if (header.readiness().lowering().status() == ReadinessStatus.SUFFICIENT)
+                require(surface.firstSlice() && normalContinuation.availability() == ContinuationAvailability.KNOWN
+                        && target.provenance().exact() && header.provenance().exact()
+                        && (target instanceof DataReference data && data.wholeItemAccess().isPresent()
+                            || target instanceof LiteralCallTarget literal && literal.logicalValue().isPresent()),
+                        "CALL readiness requires proven target, continuation, origin and clause absence");
+        }
+        public CallSyntax syntax() {
+            return target instanceof LiteralCallTarget ? CallSyntax.LITERAL_PROGRAM_NAME : CallSyntax.IDENTIFIER_OR_EXPRESSION;
+        }
+        public CallEffects effects() { return CallEffects.UNKNOWN; }
+        public CallOutcomes outcomes() { return CallOutcomes.OPEN; }
     }
 
     /**
@@ -716,6 +782,16 @@ public final class CobolSemanticProduct {
             require(declaration.scalarText().orElseThrow().logicalExtent()
                     == move.source().logicalValue().orElseThrow().logicalExtent(), "identity copy requires equal extents");
         }
+        if (statement instanceof MoveFact move && move.textAdjustment().isPresent()) {
+            var adjustment = move.textAdjustment().orElseThrow();
+            var declaration = declarations.get(move.target().wholeItemAccess().orElseThrow().data());
+            require(declaration != null && declaration.scalarText().isPresent(), "fitting requires scalar declaration");
+            var source = move.source().logicalValue().orElseThrow();
+            require(adjustment.receiverExtent() == declaration.scalarText().orElseThrow().logicalExtent()
+                    && source.logicalExtent() < adjustment.receiverExtent(), "padding requires larger scalar receiver");
+            require(adjustment.result().value().equals(source.value()
+                    + " ".repeat(adjustment.receiverExtent() - source.logicalExtent())), "padding must preserve source and append spaces");
+        }
         for (DataReference reference : references(statement)) {
             reference.wholeItemAccess().ifPresent(access -> {
                 var declaration = declarations.get(access.data());
@@ -735,7 +811,7 @@ public final class CobolSemanticProduct {
 
     private static List<DataReference> references(StatementFact statement) {
         if (statement instanceof MoveFact move) return List.of(move.target());
-        if (statement instanceof CallFact call) return List.of(call.operand());
+        if (statement instanceof CallFact call) return call.target() instanceof DataReference data ? List.of(data) : List.of();
         if (statement instanceof IfFact branch) return branch.condition().references();
         return List.of();
     }
@@ -747,7 +823,7 @@ public final class CobolSemanticProduct {
             if (statement instanceof MoveFact move) {
                 operands = List.of(move.source().id(), move.target().id());
             } else if (statement instanceof CallFact call) {
-                operands = List.of(call.operand().id());
+                operands = List.of(call.target().id());
             } else if (statement instanceof IfFact branch) {
                 operands = branch.condition().references().stream()
                         .map(DataReference::id).toList();
@@ -768,6 +844,11 @@ public final class CobolSemanticProduct {
                 require(next.unit().equals(move.header().id().unit()) && statements.containsKey(next),
                         "MOVE continuation must reference a published statement in the same unit");
                 require(!next.equals(move.header().id()), "MOVE cannot continue to itself");
+            });
+            if (statement instanceof CallFact call) call.normalContinuation().statement().ifPresent(next -> {
+                require(next.unit().equals(call.header().id().unit()) && statements.containsKey(next),
+                        "CALL continuation must reference a published statement in the same unit");
+                require(!next.equals(call.header().id()), "CALL cannot continue to itself");
             });
             StatementHeader header = statement.header();
             header.containment().parent().ifPresent(parentId -> {

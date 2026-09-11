@@ -10,10 +10,13 @@ public final class ScalarMoveSemantics {
     public record ScalarText(int extent) {
         public ScalarText { if (extent <= 0) throw new IllegalArgumentException("positive extent required"); }
     }
-    public enum Copy { FULL_IDENTITY, UNAVAILABLE }
+    public enum Copy { FULL_IDENTITY, FITTED_TEXT, UNAVAILABLE }
+    public record TextAdjustment(int receiverExtent, String result) { }
+    public record Call(Optional<ResolutionContracts.SemanticEntityId> wholeItem,
+                       Optional<Integer> nextStatement, boolean inputComplete) { }
     public enum Gap { SCALAR_WHOLE_ITEM_NOT_PROVEN, MOVE_IDENTITY_NOT_PROVEN, NORMAL_CONTINUATION_NOT_AVAILABLE }
     public record Move(Optional<ResolutionContracts.SemanticEntityId> wholeItem,
-                       Copy copy, Optional<Integer> nextStatement, List<Gap> gaps) {
+                       Copy copy, Optional<Integer> nextStatement, List<Gap> gaps, Optional<TextAdjustment> adjustment) {
         public Move {
             wholeItem = Objects.requireNonNull(wholeItem);
             copy = Objects.requireNonNull(copy);
@@ -28,12 +31,17 @@ public final class ScalarMoveSemantics {
     private final Map<ResolutionContracts.SemanticEntityId, ScalarText> declarations;
     private final Map<NodeKey, Move> moves;
     private final Metrics metrics;
+    private final Map<NodeKey, Call> calls;
+    public Call call(ResolutionContracts.ProgramUnitId unit, int node) {
+        return calls.getOrDefault(new NodeKey(unit, node), new Call(Optional.empty(), Optional.empty(), false));
+    }
 
     private ScalarMoveSemantics(Map<ResolutionContracts.SemanticEntityId, ScalarText> declarations,
-                                Map<NodeKey, Move> moves, Metrics metrics) {
+                                Map<NodeKey, Move> moves, Map<NodeKey, Call> calls, Metrics metrics) {
         this.declarations = Map.copyOf(declarations);
         this.moves = Map.copyOf(moves);
         this.metrics = metrics;
+        this.calls = Map.copyOf(calls);
     }
     public Optional<ScalarText> declaration(ResolutionContracts.SemanticEntityId id) {
         return Optional.ofNullable(declarations.get(id));
@@ -52,6 +60,8 @@ public final class ScalarMoveSemantics {
         Map<ResolutionContracts.SemanticEntityId, ScalarText> declarations = new HashMap<>();
         Map<NodeKey, Ast.MoveStatement> targets = new HashMap<>();
         Map<NodeKey, Move> moves = new HashMap<>();
+        Map<NodeKey, Ast.CallStatement> callTargets = new HashMap<>();
+        Map<NodeKey, Call> calls = new HashMap<>();
         long[] counts = new long[5];
         boolean inputComplete = report.gaps().stream()
                 .noneMatch(g -> g.category() == ResolutionAnalysisReport.GapCategory.INPUT);
@@ -84,6 +94,13 @@ public final class ScalarMoveSemantics {
                                 .ifPresent(shape -> eligible.put(entry.meta().id(), shape));
                     }
                 }
+                if (node instanceof Ast.CallStatement call) {
+                    var key = new NodeKey(unit.id(), call.meta().id());
+                    calls.put(key, new Call(Optional.empty(), inputComplete
+                            ? Optional.ofNullable(next.get(call.meta().id())) : Optional.empty(), inputComplete));
+                    if (call.target() instanceof Ast.DataReference target)
+                        callTargets.put(new NodeKey(unit.id(), target.meta().id()), call);
+                }
                 if (node instanceof Ast.MoveStatement move) {
                     counts[4]++;
                     var key = new NodeKey(unit.id(), move.meta().id());
@@ -107,11 +124,29 @@ public final class ScalarMoveSemantics {
         for (var entry : resolution.entries()) {
             counts[2]++;
             var occurrence = entry.occurrence();
-            var move = targets.get(new NodeKey(occurrence.programUnitId(), occurrence.referenceAstNodeId()));
+            var occurrenceKey = new NodeKey(occurrence.programUnitId(), occurrence.referenceAstNodeId());
+            var call = callTargets.get(occurrenceKey);
+            if (call != null) {
+                var target = (Ast.DataReference) call.target();
+                Optional<ResolutionContracts.SemanticEntityId> whole = Optional.empty();
+                if (inputComplete && entry.status() == ResolutionContracts.ResolutionStatus.RESOLVED
+                        && occurrence.role() == ResolutionContracts.ReferenceRole.CALL_TARGET
+                        && target.understanding() == Ast.ReferenceUnderstanding.STRUCTURED
+                        && target.subscriptGroups().isEmpty() && target.referenceModification() == null
+                        && target.qualifiers().isEmpty()) {
+                    var selected = entry.selectedCandidate().orElseThrow();
+                    counts[3]++;
+                    if (declarations.containsKey(selected.entityId())) whole = Optional.of(selected.entityId());
+                }
+                var key = new NodeKey(occurrence.programUnitId(), call.meta().id());
+                calls.put(key, new Call(whole, calls.get(key).nextStatement(), inputComplete));
+            }
+            var move = targets.get(occurrenceKey);
             if (move == null) continue;
             var target = (Ast.DataReference) move.targets().get(0);
             Optional<ResolutionContracts.SemanticEntityId> whole = Optional.empty();
             Copy copy = Copy.UNAVAILABLE;
+            Optional<TextAdjustment> adjustment = Optional.empty();
             if (inputComplete && entry.status() == ResolutionContracts.ResolutionStatus.RESOLVED
                     && occurrence.role() == ResolutionContracts.ReferenceRole.VALUE_WRITE
                     && target.understanding() == Ast.ReferenceUnderstanding.STRUCTURED
@@ -127,12 +162,22 @@ public final class ScalarMoveSemantics {
                     // mandatory complete receiving-item write, no conversion or fitting.
                     if (literal.logicalText().isPresent()
                             && literal.logicalText().get().extent() == shape.extent()) copy = Copy.FULL_IDENTITY;
+                    else if (literal.logicalText().isPresent()
+                            && literal.logicalText().get().extent() < shape.extent()) {
+                        // IBM 6.4 elementary alphanumeric MOVE, non-JUSTIFIED DISPLAY receiver:
+                        // left alignment fills the remaining logical positions with spaces.
+                        var text = literal.logicalText().get();
+                        copy = Copy.FITTED_TEXT;
+                        adjustment = Optional.of(new TextAdjustment(shape.extent(),
+                                text.value() + " ".repeat(shape.extent() - text.extent())));
+                    }
                 }
             }
             NodeKey key = new NodeKey(occurrence.programUnitId(), move.meta().id());
-            moves.put(key, fact(whole, copy, moves.get(key).nextStatement()));
+            var basic = fact(whole, copy, moves.get(key).nextStatement());
+            moves.put(key, new Move(whole, copy, basic.nextStatement(), basic.gaps(), adjustment));
         }
-        return new ScalarMoveSemantics(declarations, moves,
+        return new ScalarMoveSemantics(declarations, moves, calls,
                 new Metrics(counts[0], counts[1], counts[2], counts[3], counts[4]));
     }
 
@@ -142,7 +187,7 @@ public final class ScalarMoveSemantics {
         if (whole.isEmpty()) gaps.add(Gap.SCALAR_WHOLE_ITEM_NOT_PROVEN);
         if (copy == Copy.UNAVAILABLE) gaps.add(Gap.MOVE_IDENTITY_NOT_PROVEN);
         if (next.isEmpty()) gaps.add(Gap.NORMAL_CONTINUATION_NOT_AVAILABLE);
-        return new Move(whole, copy, next, gaps);
+        return new Move(whole, copy, next, gaps, Optional.empty());
     }
 
     private static boolean hasOverlay(Ast.Section section, long[] counts) {

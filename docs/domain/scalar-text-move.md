@@ -1,7 +1,7 @@
 # Profile elementar textual de MOVE — Checkpoint 4A
 
 Este contrato COBOL-specific complementa o [Semantic Product](cobol-semantic-product.md).
-A versão pública é **1.2.0**. Não define AIR, lowering, CFG, efeitos globais ou dataflow.
+A versão corrente é **1.3.0**; 1.2.0 introduziu o profile 4A. Não define AIR, lowering, CFG, efeitos globais ou dataflow.
 
 ## Regra e autoridade
 
@@ -46,7 +46,7 @@ lógico não define encoding físico EBCDIC, ASCII ou UTF-8.
 
 `DataReference.wholeItemAccess` é opcional. Presença prova que **essa ocorrência**
 acessa diretamente o valor escalar completo do `data` referenciado. Exige
-resolução única VALUE_WRITE, referência STRUCTURED, sem qualifiers, subscripts
+resolução única VALUE_WRITE (MOVE) ou CALL_TARGET (CALL), referência STRUCTURED, sem qualifiers, subscripts
 ou reference modification, e declaração elegível. O core exige concordância
 entre `wholeItemAccess.data`, `binding.selected` e a declaração com scalarText.
 Binding sozinho e construtores legados não criam essa prova.
@@ -56,6 +56,9 @@ do receptor inteiro por cópia lógica de identidade, sem conversão, padding ou
 truncation. Exige MOVE não CORRESPONDING, uma origem literal provada, exatamente
 um destino elegível e extensões lógicas iguais. `UNAVAILABLE` não faz essa claim.
 O core rejeita prova sem literal lógico, acesso inteiro ou extensão compatível.
+W1A acrescenta FITTED_TEXT/RIGHT_PAD_SPACE para origem menor que receptor
+provado, com resultado ajustado; igualdade continua FULL_IDENTITY, truncation
+permanece UNAVAILABLE. [Contrato W1A](call-semantic-product.md).
 Remover readiness/scope textual não remove nenhum desses fatos.
 
 `MoveFact.normalContinuation` possui availability KNOWN, UNAVAILABLE ou NONE,
@@ -67,7 +70,7 @@ Fim de paragraph/section/procedure, contexto aninhado, declaratives ou metadata
 não fornecida ficam UNAVAILABLE. Este profile nunca emite NONE para MOVE.
 Ausência física não prova término. A relação não é reachability: um MOVE
 fisicamente posterior a GOBACK pode ter continuação própria, mas GOBACK mantém
-CURRENT_PROGRAM_INVOCATION/NONE. Nenhum outro controle foi implementado.
+CURRENT_PROGRAM_INVOCATION/NONE. W1A estende a mesma relação ao CALL sem handlers; sem sequenciamento universal.
 
 ## Autoridades, complexidade e integridade
 
@@ -106,6 +109,9 @@ precisa local não é publicação globalmente completa nem certificação AIR.
 
 ## Transporte e compatibilidade
 
+A versão corrente única 1.3.0 e o handoff W1C estão no [contrato CALL](call-semantic-product.md).
+O registro abaixo descreve a introdução histórica do profile 4A.
+
 1.2.0 é evolução minor aditiva: `scalarText`, `logicalValue`, `wholeItemAccess`,
 `copySemantics`, `normalContinuation` são explícitos no JSON; opcionais não provados
 são null. Fields antigos mantêm significado. ALPHANUMERIC só substitui UNKNOWN
@@ -119,7 +125,8 @@ Os construtores Java anteriores preservam ausência das novas provas. O golden
 [CP3 1.1.0](../../src/test/resources/cobol/semantic/entry-goback-sp-1.1.0.json)
 foi produzido do baseline c8a891e0827ae1dc1140246f625fd16c2ac9bd97, sem mudanças.
 Seu payload Entry/GOBACK permanece idêntico sob 1.2.0 (exceto contractVersion).
-Nenhuma migração foi feita em cobol-lower; o próximo 4C deve admitir a nova versão.
+Naquele checkpoint 4A não houve migração do lower; sua atualização ficou para 4C.
+Em W1A o consumer congelado já consome 1.2.0, mas rejeita 1.3.0 de forma esperada.
 
 ## Evals
 

@@ -328,7 +328,7 @@ public final class SemanticPortLoweringProbe {
                             move.source().value(), move.source().provenance()), target);
         }
         if (fact instanceof CobolSemanticProduct.CallFact call) {
-            ReferenceNode operand = reference(call.operand(), declarations);
+            ReferenceNode operand = reference(((CobolSemanticProduct.DataReference) call.target()), declarations);
             validateOperandOwner(anchor, operand.id(), violations);
             validateReadyBinding(anchor, operand, violations);
             if (!hasGap(gaps, CobolSemanticProduct.GapScope.RUNTIME_CALL_TARGET,

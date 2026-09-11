@@ -196,13 +196,13 @@ public final class CobolLoweringReadinessConsumer {
 
     public record CallAudit(StatementHeaderAudit header,
                             CobolSemanticProduct.CallSyntax syntax,
-                            DataReferenceAudit operand,
+                            CobolSemanticProduct.CallTarget target,
                             CobolSemanticProduct.RuntimeTargetKnowledge runtimeTarget,
                             String runtimeUncertaintyCode) implements StatementAudit {
         public CallAudit {
             header = Objects.requireNonNull(header, "header");
             syntax = Objects.requireNonNull(syntax, "syntax");
-            operand = Objects.requireNonNull(operand, "operand");
+            target = Objects.requireNonNull(target, "target");
             runtimeTarget = Objects.requireNonNull(runtimeTarget, "runtimeTarget");
             runtimeUncertaintyCode = requireText(runtimeUncertaintyCode,
                     "runtimeUncertaintyCode");
@@ -310,7 +310,7 @@ public final class CobolLoweringReadinessConsumer {
             return new MoveAudit(header, literal(move.source()), reference(move.target()));
         }
         if (fact instanceof CobolSemanticProduct.CallFact call) {
-            return new CallAudit(header, call.syntax(), reference(call.operand()),
+            return new CallAudit(header, call.syntax(), call.target(),
                     call.runtimeTarget(), call.runtimeUncertaintyCode());
         }
         if (fact instanceof CobolSemanticProduct.IfFact branch) {

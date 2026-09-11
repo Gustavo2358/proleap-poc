@@ -1,0 +1,92 @@
+[
+  {
+    "label": "green-before",
+    "exitCode": 0,
+    "logSha256": "4a4938b82759e72fed0a036adfb2d1fbf273dcc6e426a636ab939952337a3a8a",
+    "semanticRed": false
+  },
+  {
+    "label": "01-any-string-literal",
+    "exitCode": 1,
+    "logSha256": "c6da0a1e32df3d860dd47cd442baa614ebe6f32860b6e35d682fa7ddeb1ddc20",
+    "semanticRed": true
+  },
+  {
+    "label": "02-ignore-length",
+    "exitCode": 1,
+    "logSha256": "f0897aababc1a7e24982aed82ca03f9ac0256f4cd638b22955bd901d45123269",
+    "semanticRed": true
+  },
+  {
+    "label": "03a-ignore-occurs",
+    "exitCode": 1,
+    "logSha256": "f926ce2510deb6517f43a5edd533f12db024352a28b25428e8ac08b2f468c6f4",
+    "semanticRed": true
+  },
+  {
+    "label": "03b-ignore-overlay",
+    "exitCode": 1,
+    "logSha256": "9b0aa72ab7441ba863efdb48aaf25bde0411523c90153be00b308385d34112c8",
+    "semanticRed": true
+  },
+  {
+    "label": "03c-ignore-refmod",
+    "exitCode": 1,
+    "logSha256": "852af0365fc2eac06d2e3381182b3656b02eb8d031c5660575545efb7a39334b",
+    "semanticRed": true
+  },
+  {
+    "label": "04-wrong-selected",
+    "exitCode": 1,
+    "logSha256": "36cbb8dcfb3aca43423912c32b7a62a60df796cd5209a0ed0e10bfe3e438bb9d",
+    "semanticRed": true
+  },
+  {
+    "label": "05-nominal-implies-whole",
+    "exitCode": 1,
+    "logSha256": "6f85ccc60b52819fba072c7f9a317917a9004a3f24a8f11f6cf07c9eadb58b9a",
+    "semanticRed": true
+  },
+  {
+    "label": "06-array-order-continuation",
+    "exitCode": 1,
+    "logSha256": "05deb27d4b4339f30cf907b308b3672d3a9f10e51529e7b6e0c6dd63959ef9fc",
+    "semanticRed": true
+  },
+  {
+    "label": "07-remove-continuation",
+    "exitCode": 1,
+    "logSha256": "fcf9604cb8d894fd7999326b60d46ecc7295f3de06f77ecaa52e9cc1e20a091f",
+    "semanticRed": true
+  },
+  {
+    "label": "08-goback-fallthrough",
+    "exitCode": 1,
+    "logSha256": "21c3eed969f597b23f9413bd9fa3f4b9b86877408cc9af5994422874231784a5",
+    "semanticRed": true
+  },
+  {
+    "label": "09a-remove-literal-origin",
+    "exitCode": 1,
+    "logSha256": "85cbf54d1b46f37f0e9c7235753800fbef20495e40aa6a08fba812c97cad47cf",
+    "semanticRed": true
+  },
+  {
+    "label": "09b-remove-target-origin",
+    "exitCode": 1,
+    "logSha256": "c90e67a68f849a0ffe95a2fafb078ad7d7a483aacce6f9deb2c028f93187a841",
+    "semanticRed": true
+  },
+  {
+    "label": "10-duplicate-declaration",
+    "exitCode": 1,
+    "logSha256": "f1f1757024e38703f4e4330e17042133e8644cd84b32b4023298816af5fe6e5a",
+    "semanticRed": true
+  },
+  {
+    "label": "green-restored",
+    "exitCode": 0,
+    "logSha256": "0eb985125980352f199aaf098a04c4d699363bc167aa2ae0575feb12d0ac948c",
+    "semanticRed": false
+  }
+]

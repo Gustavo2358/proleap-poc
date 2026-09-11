@@ -493,7 +493,8 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
         for (var sentence : sentences) {
             for (var context : sentence.statement()) {
                 Ast.Statement current = context.entryStatement() == null ? builtStatements.get(context) : null;
-                if (previous instanceof Ast.MoveStatement && current != null)
+                if ((previous instanceof Ast.MoveStatement || previous instanceof Ast.CallStatement call
+                        && !call.surface().hasHandlers()) && current != null)
                     result.put(previous.meta().id(), current.meta().id());
                 // Even an unmaterialized statement breaks the relation. Never skip it.
                 previous = current;
@@ -800,7 +801,11 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
         Ast.CallTargetSyntax kind = target instanceof Ast.ProgramReference
                 ? Ast.CallTargetSyntax.LITERAL_PROGRAM_NAME : Ast.CallTargetSyntax.IDENTIFIER_OR_EXPRESSION;
         List<Ast.CallArgument> arguments = new ArrayList<>();
-        for (ParserRuleContext arg : nearestDescendants(context, AstBuilder::isCallArgumentContext)) {
+        // Only this CALL's USING phrase owns these arguments. Handler bodies can
+        // contain independent CALL statements with their own argument inventories.
+        List<ParserRuleContext> writtenArguments = context.callUsingPhrase() == null ? List.of()
+                : nearestDescendants(context.callUsingPhrase(), AstBuilder::isCallArgumentContext);
+        for (ParserRuleContext arg : writtenArguments) {
             Ast.PassingMode mode = arg instanceof CobolParser.CallByValueContext ? Ast.PassingMode.VALUE
                     : arg instanceof CobolParser.CallByContentContext ? Ast.PassingMode.CONTENT
                     : Ast.PassingMode.REFERENCE;
@@ -817,7 +822,11 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
         CobolParser.CallGivingPhraseContext giving = context.callGivingPhrase();
         Ast.Expression returning = giving == null ? null
                 : expression(giving.identifier(), "call returning");
-        return new Ast.CallStatement(meta, kind, target, arguments, returning, directNestedStatements(context));
+        return new Ast.CallStatement(meta, kind, target, arguments, returning, directNestedStatements(context),
+                new Ast.CallSurface(context.callUsingPhrase() != null, giving != null,
+                        context.onExceptionClause() != null, context.notOnExceptionClause() != null,
+                        context.onOverflowPhrase() != null),
+                context.literal() == null ? Optional.empty() : basicLogicalText(context.literal()));
     }
 
     private Ast.Statement buildStructuredStatement(ParserRuleContext context, boolean preserved) {
@@ -1247,8 +1256,15 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
 
     private Ast.LiteralExpression literalExpression(ParserRuleContext context) {
         String raw = sourceText(context).strip();
+        Optional<Ast.LogicalText> logical = context instanceof CobolParser.LiteralContext literal
+                ? basicLogicalText(literal) : Optional.empty();
+        return new Ast.LiteralExpression(meta(context), logical.map(Ast.LogicalText::value)
+                .orElseGet(() -> unquote(raw)), raw, logical);
+    }
+
+    private static Optional<Ast.LogicalText> basicLogicalText(CobolParser.LiteralContext literal) {
         Optional<Ast.LogicalText> logical = Optional.empty();
-        if (context instanceof CobolParser.LiteralContext literal && literal.NONNUMERICLITERAL() != null) {
+        if (literal.NONNUMERICLITERAL() != null) {
             // NONNUMERICLITERAL also includes national, hex and null-terminated
             // formats. Decode only its basic quoted alternative, with doubled delimiters.
             String token = literal.NONNUMERICLITERAL().getText();
@@ -1270,8 +1286,7 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
                 if (supported && !value.isEmpty()) logical = Optional.of(new Ast.LogicalText(value.toString()));
             }
         }
-        return new Ast.LiteralExpression(meta(context), logical.map(Ast.LogicalText::value)
-                .orElseGet(() -> unquote(raw)), raw, logical);
+        return logical;
     }
 
     private Ast.Expression arithmeticExpression(ParserRuleContext context) {

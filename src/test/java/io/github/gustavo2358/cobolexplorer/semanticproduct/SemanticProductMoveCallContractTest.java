@@ -49,7 +49,7 @@ class SemanticProductMoveCallContractTest {
         assertEquals(List.of(WS_PGM, FLAG, AUX_PGM), port.dataDeclarations().stream()
                 .map(CobolSemanticProduct.DataDeclaration::id).toList());
         assertEquals(List.of(AUX_PGM, WS_PGM), port.calls().stream()
-                .map(call -> call.operand().binding().selected().orElseThrow()).toList(),
+                .map(call -> ((CobolSemanticProduct.DataReference) call.target()).binding().selected().orElseThrow()).toList(),
                 "CALL facts do not depend on a MOVE pair or common DATA identity");
     }
 
@@ -372,7 +372,7 @@ class SemanticProductMoveCallContractTest {
         assertEquals(1, port.calls().size());
         assertEquals("PGMA", move.source().value());
         assertEquals(Optional.of(WS_PGM), move.target().binding().selected());
-        assertEquals(Optional.of(WS_PGM), call.operand().binding().selected());
+        assertEquals(Optional.of(WS_PGM), ((CobolSemanticProduct.DataReference) call.target()).binding().selected());
         assertEquals(CobolSemanticProduct.RuntimeTargetKnowledge.UNKNOWN,
                 call.runtimeTarget());
         assertTrue(port.gaps().stream().anyMatch(gap ->
@@ -699,7 +699,8 @@ class SemanticProductMoveCallContractTest {
                 List.of(gap(call, CobolSemanticProduct.GapScope.RUNTIME_CALL_TARGET,
                         "DYNAMIC_CALL_TARGET_VALUE_UNKNOWN")),
                 coverage(CobolSemanticProduct.InventoryStatus.COMPLETE,
-                        2, 2, 0, 0, 0, modeledReadiness()));
+                        2, 2, 0, 0, 0, readiness(CobolSemanticProduct.ReadinessStatus.PARTIAL,
+                                CobolSemanticProduct.ReadinessStatus.PARTIAL, CobolSemanticProduct.ReadinessStatus.PARTIAL)));
     }
 
     private static CobolSemanticProduct.MoveFact move(
@@ -737,11 +738,12 @@ class SemanticProductMoveCallContractTest {
             CobolSemanticProduct.Containment containment) {
         return new CobolSemanticProduct.CallFact(
                 header(id, containment, CobolSemanticProduct.CoverageStatus.MODELED,
-                        modeledReadiness()),
-                CobolSemanticProduct.CallSyntax.IDENTIFIER_OR_EXPRESSION,
+                        readiness(CobolSemanticProduct.ReadinessStatus.PARTIAL,
+                                CobolSemanticProduct.ReadinessStatus.PARTIAL, CobolSemanticProduct.ReadinessStatus.PARTIAL)),
                 reference(id, 0, operand, CobolSemanticProduct.OperandRole.CALL_TARGET),
                 CobolSemanticProduct.RuntimeTargetKnowledge.UNKNOWN,
-                "DYNAMIC_CALL_TARGET_VALUE_UNKNOWN");
+                "DYNAMIC_CALL_TARGET_VALUE_UNKNOWN", CobolSemanticProduct.NormalContinuation.unavailable(PROVENANCE),
+                CobolSemanticProduct.CallSurface.unknown());
     }
 
     private static CobolSemanticProduct.IfFact branch(

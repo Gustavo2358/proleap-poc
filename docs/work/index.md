@@ -4,9 +4,10 @@ Work items delimitam a mudança em execução; o [backlog](backlog.md) registra 
 
 ## Ativo
 
+- [WORK-AST-005 — CP6 W1A CALL Semantic Product](active/WORK-AST-005/spec.md) — IMPLEMENTED / AWAITING_HUMAN_REVIEW; SP 1.3.0; somente frontend.
+
 - [WORK-AST-002 — Hardening da fronteira AST para CFG e dataflow](active/WORK-AST-002/spec.md) — Slice 1 mergeado no PR #10; Discovery do Slice 2 no PR #13 e implementação de F-02 integrada pelo PR #28. Nenhum slice adjacente foi iniciado.
 
-- [WORK-AST-004 — Fix de canonical coverage para NEXT SENTENCE](active/WORK-AST-004/spec.md) — discovery aprovado; **IMPLEMENTATION COMPLETE — GATES GREEN — HUMAN REVIEW REQUIRED**, status blocked na mesma branch/work item/PR #33 Draft. Sem merge; hardening não autorizado.
 
 O restante de SP-005/SP-003 não foi promovido. `BACKLOG-IR-001`,
 `BACKLOG-LOWER-001` e `BACKLOG-CFG-001` permanecem
@@ -14,6 +15,8 @@ como registros/handoffs cross-repo para `air-java`, `cobol-lower` e
 `analysis-cfg`, não como implementação futura deste repositório.
 
 ## Histórico
+
+- [WORK-AST-004 — NEXT SENTENCE canonical coverage](history/WORK-AST-004.md) — PR #33 mergeado.
 
 `history/` recebe somente resumos de work items concluídos que ainda ajudem a explicar uma decisão ou migração.
 

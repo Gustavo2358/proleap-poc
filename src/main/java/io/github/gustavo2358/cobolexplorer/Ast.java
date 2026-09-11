@@ -209,11 +209,18 @@ public final class Ast {
 
     public record CallStatement(Meta meta, CallTargetSyntax targetSyntax, Expression target,
                                 List<CallArgument> arguments, Expression returning,
-                                List<Statement> exceptionFlow) implements Statement {
+                                List<Statement> exceptionFlow, CallSurface surface,
+                                Optional<LogicalText> literalText) implements Statement {
         public CallStatement {
             arguments = List.copyOf(arguments);
             exceptionFlow = List.copyOf(exceptionFlow);
         }
+    }
+
+    /** Written clause presence, obtained from direct CALL parser contexts. */
+    public record CallSurface(boolean using, boolean returning, boolean onException,
+                              boolean notOnException, boolean onOverflow) {
+        public boolean hasHandlers() { return onException || notOnException || onOverflow; }
     }
 
     public record CallArgument(Meta meta, PassingMode passingMode, CallArgumentKind argumentKind,
