@@ -1,0 +1,51 @@
+{
+  "mavenCleanVerify": {
+    "status": "PASS",
+    "tests": 579,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 1,
+    "log": "maven-clean-verify-online.log.gz"
+  },
+  "checkFull": {
+    "status": "PASS",
+    "includes": [
+      "docs",
+      "architecture",
+      "fast",
+      "semantic",
+      "source-normalizer-regression full",
+      "naming"
+    ],
+    "log": "check-full.log.gz"
+  },
+  "checkPerformance": {
+    "status": "PASS",
+    "log": "check-performance.log.gz"
+  },
+  "w1aChallenges": {
+    "status": "PASS",
+    "semanticMutantsDetected": 8,
+    "byteExactRestoration": true,
+    "secondGreen": true
+  },
+  "scalarMoveChallenges": {
+    "status": "PASS",
+    "semanticMutantsDetected": 13,
+    "byteExactRestoration": true,
+    "secondGreen": true
+  },
+  "scopeReview": {
+    "status": "PASS",
+    "receipt": "scope.json"
+  },
+  "manifest": "PASS via HarnessDocsTest in full",
+  "integration": "No separate gate; full includes Maven integration tests and source normalizer E2E",
+  "diffCheck": "PASS",
+  "remote": "Pending final committed HEAD; separate post-commit receipt",
+  "checkFastFinal": {
+    "status": "PASS",
+    "log": "check-fast-final.log.gz",
+    "purpose": "Revalidate final documentation, active lifecycle and architecture after final handoff edits"
+  }
+}

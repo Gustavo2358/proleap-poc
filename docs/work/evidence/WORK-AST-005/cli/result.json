@@ -1,0 +1,37 @@
+[
+  {
+    "fixture": "dynamic-x8",
+    "run": 1,
+    "exit": 0,
+    "sha256": "e45c6fe191c6e9be4b35da793663fc908b0b600c848a236d797170e286614010"
+  },
+  {
+    "fixture": "dynamic-x8",
+    "run": 2,
+    "exit": 0,
+    "sha256": "e45c6fe191c6e9be4b35da793663fc908b0b600c848a236d797170e286614010"
+  },
+  {
+    "fixture": "literal",
+    "run": 1,
+    "exit": 0,
+    "sha256": "e88bb1029fd184e3dabefd28bf37cdea99193630a9f5caeeebc1bd00e56870a1"
+  },
+  {
+    "fixture": "literal",
+    "run": 2,
+    "exit": 0,
+    "sha256": "e88bb1029fd184e3dabefd28bf37cdea99193630a9f5caeeebc1bd00e56870a1"
+  },
+  {
+    "fixture": "CP5 AIR-MOVE",
+    "exit": 0,
+    "oldSha256": "468e3207f578e428ace89a311eadbd6e27c670331b739675b761479352adc7af",
+    "newSha256": "a0cb9191fc515cd8605fc50132273bb97e93b92772016fdb1435e506f7a1fcf4",
+    "oldFactsEquivalent": true,
+    "delta": [
+      "contractVersion 1.2.0 -> 1.3.0",
+      "MOVE.textAdjustment=null"
+    ]
+  }
+]

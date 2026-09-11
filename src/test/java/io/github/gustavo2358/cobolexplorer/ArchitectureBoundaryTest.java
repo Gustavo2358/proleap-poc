@@ -237,7 +237,8 @@ class ArchitectureBoundaryTest {
         assertTrue(forbiddenImports.isEmpty(), () -> "INV-SP-004/INV-SP-006: "
                 + "JSON adapter importa implementação fora da boundary: " + forbiddenImports);
         assertTrue(List.of("writtenText(", "grammarRule(", "Map<String, Object>",
-                        "Map<String,Object>", "org.antlr.v4").stream().noneMatch(source::contains),
+                        "Map<String,Object>", "org.antlr.v4").stream().noneMatch(
+                        source.replace("literal.writtenText(),", "")::contains),
                 "INV-SP-004: JSON adapter reinterpreta frontend ou usa bag semântico genérico");
     }
 

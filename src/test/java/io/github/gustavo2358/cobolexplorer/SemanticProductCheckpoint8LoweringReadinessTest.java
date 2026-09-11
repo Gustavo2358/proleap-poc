@@ -4,6 +4,7 @@ import io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticPort;
 import io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct;
 import io.github.gustavo2358.cobolexplorer.semanticproduct.loweringreadiness.SemanticPortLoweringProbe;
 import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -66,7 +67,7 @@ class SemanticProductCheckpoint8LoweringReadinessTest {
                 .toList());
         assertEquals(CobolSemanticProduct.LiteralKind.ALPHANUMERIC, initialMove.source().kind());
         assertEquals(CobolSemanticProduct.OperandRole.WRITE, initialMove.target().role());
-        assertEquals(CobolSemanticProduct.ReadinessStatus.PARTIAL,
+        assertEquals(CobolSemanticProduct.ReadinessStatus.SUFFICIENT,
                 initialMove.anchor().readiness().lowering().status());
         assertEquals(CobolSemanticProduct.ReadinessStatus.SUFFICIENT,
                 initialMove.anchor().readiness().cfg().status());
@@ -106,8 +107,9 @@ class SemanticProductCheckpoint8LoweringReadinessTest {
         assertTrue(result.statements().stream()
                 .filter(statement -> statement.anchor().readiness().lowering().status()
                         == CobolSemanticProduct.ReadinessStatus.SUFFICIENT)
-                .allMatch(SemanticPortLoweringProbe.CallNode.class::isInstance),
-                "only CALL statements in the current fixture claim complete lowering input");
+                .allMatch(statement -> statement instanceof SemanticPortLoweringProbe.CallNode
+                        || statement instanceof SemanticPortLoweringProbe.MoveNode),
+                "only proven CALL and scalar MOVE source facts claim sufficient lowering input");
         assertEquals(1, result.statements(
                 SemanticPortLoweringProbe.ObservedNode.class).size());
         assertEquals(CobolSemanticProduct.ReadinessStatus.BLOCKED,
@@ -152,14 +154,10 @@ class SemanticProductCheckpoint8LoweringReadinessTest {
                         == CobolSemanticProduct.ReadinessStatus.SUFFICIENT)
                 .findFirst().orElseThrow();
         assertEquals(CobolSemanticProduct.ResolutionStatus.RESOLVED,
-                call.operand().binding().status());
-        CobolSemanticPort mutated = MutatedPort.degradeCallBinding(
-                port, call.header().id());
-
-        SemanticPortLoweringProbe.Reconstruction result =
-                SemanticPortLoweringProbe.reconstruct(mutated);
-
-        assertViolation(result, "LOWERING_READY_BINDING_INCOMPLETE");
+                ((CobolSemanticProduct.DataReference) call.target()).binding().status());
+        // The strengthened boundary constructor now rejects the mutation before the port probe.
+        assertThrows(IllegalArgumentException.class,
+                () -> MutatedPort.degradeCallBinding(port, call.header().id()));
     }
 
     @Test
@@ -278,14 +276,14 @@ class SemanticProductCheckpoint8LoweringReadinessTest {
         private static CobolSemanticProduct.CallFact degradedCall(
                 CobolSemanticProduct.CallFact call) {
             CobolSemanticProduct.DataReference operand = new CobolSemanticProduct.DataReference(
-                    call.operand().id(), call.operand().role(),
+                    ((CobolSemanticProduct.DataReference) call.target()).id(), ((CobolSemanticProduct.DataReference) call.target()).role(),
                     CobolSemanticProduct.NominalBinding.incomplete(
                             CobolSemanticProduct.ResolutionStatus.UNRESOLVED,
                             CobolSemanticProduct.ResolutionReason.DECLARATION_NOT_FOUND,
                             List.of()),
-                    call.operand().provenance());
-            return new CobolSemanticProduct.CallFact(call.header(), call.syntax(), operand,
-                    call.runtimeTarget(), call.runtimeUncertaintyCode());
+                    ((CobolSemanticProduct.DataReference) call.target()).provenance());
+            return new CobolSemanticProduct.CallFact(call.header(), operand,
+                    call.runtimeTarget(), call.runtimeUncertaintyCode(), call.normalContinuation(), call.surface());
         }
 
         @Override

@@ -264,9 +264,9 @@ class SemanticProductStatementInventoryTest {
                 () -> assertEquals(baselineMove.target().binding(),
                         mutatedMove.target().binding()),
                 () -> assertEquals(baselineCall.syntax(), mutatedCall.syntax()),
-                () -> assertEquals(baselineCall.operand().role(), mutatedCall.operand().role()),
-                () -> assertEquals(baselineCall.operand().binding(),
-                        mutatedCall.operand().binding()),
+                () -> assertEquals(((CobolSemanticProduct.DataReference) baselineCall.target()).role(), ((CobolSemanticProduct.DataReference) mutatedCall.target()).role()),
+                () -> assertEquals(((CobolSemanticProduct.DataReference) baselineCall.target()).binding(),
+                        ((CobolSemanticProduct.DataReference) mutatedCall.target()).binding()),
                 () -> assertEquals(baselineCall.runtimeTarget(), mutatedCall.runtimeTarget()),
                 () -> assertSummaryMatchesFacts(withUnsupported.state()));
     }

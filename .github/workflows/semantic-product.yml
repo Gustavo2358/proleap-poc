@@ -2,7 +2,7 @@ name: Semantic Product gates
 on:
   pull_request:
   push:
-    branches: [main, feat/semantic-product-scalar-move]
+    branches: [main, feat/semantic-product-scalar-move, feat/cp6-w1a-call-semantic-product]
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -28,3 +28,5 @@ jobs:
         run: ./scripts/harness/check-performance.sh
       - name: Semantic mutation challenges and restored GREEN
         run: python3 scripts/harness/challenge-scalar-move.py
+      - name: CP6 W1A semantic challenges and restored GREEN
+        run: python3 scripts/harness/challenge-call-w1a.py

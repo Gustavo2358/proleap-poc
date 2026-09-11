@@ -261,8 +261,7 @@ public final class CobolSemanticProductProjector {
         if (position.statement() instanceof Ast.CallStatement call) {
             Capability capability = callCapability(call);
             ReferenceResolution.Entry entry = null;
-            if (capability.supported()) {
-                Ast.DataReference operand = (Ast.DataReference) call.target();
+            if (capability.supported() && call.target() instanceof Ast.DataReference operand) {
                 entry = inputs.entryFor(operand);
                 require(entry.occurrence().role()
                                 == ResolutionContracts.ReferenceRole.CALL_TARGET,
@@ -274,7 +273,7 @@ public final class CobolSemanticProductProjector {
                                 == Ast.CallTargetSyntax.IDENTIFIER_OR_EXPRESSION,
                         "CALL resolution must preserve identifier/expression syntax");
                 capability = bindingCapability(capability, entry, "CALL");
-            } else if (call.target() != null) {
+            } else if (!capability.supported() && call.target() != null) {
                 entry = inputs.optionalEntryFor(call.target());
             }
             return new StatementPlan(position, capability,
@@ -306,9 +305,9 @@ public final class CobolSemanticProductProjector {
     }
 
     private static Capability callCapability(Ast.CallStatement call) {
-        if (call.targetSyntax() != Ast.CallTargetSyntax.IDENTIFIER_OR_EXPRESSION)
-            return Capability.unsupported("CALL", "CALL_LITERAL_TARGET",
-                    "CALL_LITERAL_TARGET_OUTSIDE_CAPABILITY");
+        if (call.targetSyntax() == Ast.CallTargetSyntax.LITERAL_PROGRAM_NAME
+                && call.target() instanceof Ast.ProgramReference)
+            return Capability.supported("CALL", "CALL_LITERAL_TARGET");
         if (!(call.target() instanceof Ast.DataReference))
             return Capability.unsupported("CALL", "CALL_NON_DATA_TARGET",
                     "CALL_NON_DATA_TARGET_OUTSIDE_CAPABILITY");
@@ -575,7 +574,7 @@ public final class CobolSemanticProductProjector {
             CobolSemanticProduct.MoveFact fact = new CobolSemanticProduct.MoveFact(
                     header(statementId, plan.position().ordinal(), containment, statementProvenance, coverage,
                             containmentReadiness(containment, readiness(
-                                    copy == CopySemantics.FULL_IDENTITY ? ReadinessStatus.SUFFICIENT
+                                    copy != CopySemantics.UNAVAILABLE ? ReadinessStatus.SUFFICIENT
                                             : entry.status() == ResolutionContracts.ResolutionStatus.UNSUPPORTED
                                             ? ReadinessStatus.BLOCKED : ReadinessStatus.PARTIAL,
                                     "canonical elementary MOVE copy capability",
@@ -588,7 +587,9 @@ public final class CobolSemanticProductProjector {
                             literal.logicalText().map(text -> new TextValue(text.value()))),
                     new DataReference(new OperandId(statementId, 1), OperandRole.WRITE, binding,
                             provenance(((Ast.DataReference) move.targets().get(0)).meta().provenance()), access),
-                    copy, continuation);
+                    copy, continuation, semantic.adjustment().map(adjustment -> new TextAdjustment(
+                            TextAdjustmentRule.RIGHT_PAD_SPACE, adjustment.receiverExtent(),
+                            new TextValue(adjustment.result()), statementProvenance)));
             statements.add(fact);
             if (literal.logicalText().isEmpty()) gaps.add(new Gap(statementId, GapScope.LITERAL_KIND,
                     LITERAL_KIND_GAP, "literal category is outside the canonical basic text capability",
@@ -604,35 +605,65 @@ public final class CobolSemanticProductProjector {
         }
 
         if (plan.position().statement() instanceof Ast.CallStatement call) {
-            ReferenceResolution.Entry entry = onlyEntry(plan);
-            CobolSemanticProduct.NominalBinding binding = nominalBinding(entry, dataIds);
-            CobolSemanticProduct.CoverageStatus bindingCoverage = bindingCoverage(entry);
-            ResolutionAnalysisReport.Gap runtimeGap = inputs.requiredReportGap(
-                    entry.occurrence(), ResolutionAnalysisReport.GapCategory.CALL_SEMANTICS,
-                    DYNAMIC_TARGET_GAP);
-            CobolSemanticProduct.CoverageStatus coverage = weakest(
-                    containmentCoverage(containment),
-                    coverage(inputs.finding(call.meta().id())), bindingCoverage);
-            if (!call.arguments().isEmpty() || call.returning() != null
-                    || !call.exceptionFlow().isEmpty())
-                coverage = weakest(coverage, CobolSemanticProduct.CoverageStatus.PARTIAL);
-            CobolSemanticProduct.CallFact fact = new CobolSemanticProduct.CallFact(
-                    header(statementId, plan.position().ordinal(), containment,
-                            statementProvenance, coverage,
-                            containmentReadiness(containment, callReadiness(entry, call))),
-                    CobolSemanticProduct.CallSyntax.IDENTIFIER_OR_EXPRESSION,
-                    new CobolSemanticProduct.DataReference(
-                            new CobolSemanticProduct.OperandId(statementId, 0),
-                            CobolSemanticProduct.OperandRole.CALL_TARGET, binding,
-                            provenance(((Ast.DataReference) call.target()).meta().provenance())),
-                    CobolSemanticProduct.RuntimeTargetKnowledge.UNKNOWN,
-                    runtimeGap.code());
+            var semantic = inputs.products().scalarMoves().call(inputs.unitId(), call.meta().id());
+            Optional<StatementId> next = semantic.nextStatement().map(nodeId -> {
+                Ast.Node node = inputs.selectedSource().nodes().get(nodeId);
+                require(node instanceof Ast.Statement, "canonical CALL continuation is not a statement");
+                return Objects.requireNonNull(statementIds.get((Ast.Statement) node), "continuation must be published");
+            });
+            var continuation = new NormalContinuation(next.isPresent() ? ContinuationAvailability.KNOWN
+                    : ContinuationAvailability.UNAVAILABLE, next, statementProvenance);
+            var written = call.surface();
+            CallSurface surface = semantic.inputComplete() ? new CallSurface(presence(written.using()),
+                    Optional.of(call.arguments().size()), presence(written.returning()), presence(written.onException()),
+                    presence(written.notOnException()), presence(written.onOverflow())) : CallSurface.unknown();
+            CallTarget target;
+            ReferenceResolution.Entry entry = null;
+            String uncertainty;
+            CoverageStatus bindingCoverage = CoverageStatus.MODELED;
+            if (call.target() instanceof Ast.DataReference reference) {
+                entry = onlyEntry(plan);
+                var binding = nominalBinding(entry, dataIds);
+                bindingCoverage = bindingCoverage(entry);
+                uncertainty = inputs.requiredReportGap(entry.occurrence(),
+                        ResolutionAnalysisReport.GapCategory.CALL_SEMANTICS, DYNAMIC_TARGET_GAP).code();
+                var access = semantic.wholeItem().map(entity -> new WholeItemAccess(
+                        Objects.requireNonNull(dataIds.get(entity), "whole CALL target must be published")));
+                target = new DataReference(new OperandId(statementId, 0), OperandRole.CALL_TARGET, binding,
+                        provenance(reference.meta().provenance()), access);
+                if (access.isEmpty()) gaps.add(capabilityGap(statementId, "CALL_WHOLE_ITEM_NOT_PROVEN",
+                        "nominal binding does not prove whole scalar access", target.provenance()));
+            } else {
+                var literal = (Ast.ProgramReference) call.target();
+                var logical = call.literalText().map(text -> new TextValue(text.value()));
+                target = new LiteralCallTarget(new OperandId(statementId, 0),
+                        logical.map(TextValue::value).orElse(literal.programName()), literal.writtenText(), logical,
+                        provenance(literal.meta().provenance()));
+                uncertainty = "CALL_RUNTIME_NOT_RESOLVED";
+                if (logical.isEmpty()) gaps.add(capabilityGap(statementId, "CALL_LITERAL_TEXT_NOT_PROVEN",
+                        "literal syntax preserved outside the basic text capability", target.provenance()));
+                gaps.add(new Gap(statementId, GapScope.RUNTIME_CALL_TARGET, uncertainty,
+                        "literal source reference does not resolve the runtime callee", target.provenance()));
+            }
+            var readiness = callReadiness(target, surface, continuation, statementProvenance);
+            var coverage = weakest(containmentCoverage(containment), coverage(inputs.finding(call.meta().id())),
+                    bindingCoverage, readiness.lowering().status() == ReadinessStatus.SUFFICIENT
+                            ? CoverageStatus.MODELED : CoverageStatus.PARTIAL);
+            var fact = new CallFact(header(statementId, plan.position().ordinal(), containment, statementProvenance,
+                    coverage, containmentReadiness(containment, readiness)), target, RuntimeTargetKnowledge.UNKNOWN,
+                    uncertainty, continuation, surface);
             statements.add(fact);
+            if (next.isEmpty()) gaps.add(new Gap(statementId, GapScope.STRUCTURE, "CALL_NORMAL_CONTINUATION_NOT_AVAILABLE",
+                    "normal return successor is unavailable in this canonical region", statementProvenance));
+            if (!surface.firstSlice()) gaps.add(capabilityGap(statementId, "CALL_SURFACE_OUTSIDE_FIRST_SLICE",
+                    "USING, result or handler clause absence is not established", statementProvenance));
             addUnprojectedCallSurfaceGaps(statementId, call, statementProvenance, gaps);
             addContainmentGap(containment, statementId, statementProvenance, gaps);
-            addReportGaps(statementId, entry.occurrence(), inputs,
-                    provenance(entry.occurrence().meta().provenance()), gaps);
-            requireBindingGapWhenNeeded(fact.header(), entry, gaps);
+            if (entry != null) {
+                addReportGaps(statementId, entry.occurrence(), inputs,
+                        provenance(entry.occurrence().meta().provenance()), gaps);
+                requireBindingGapWhenNeeded(fact.header(), entry, gaps);
+            }
             return;
         }
 
@@ -833,7 +864,7 @@ public final class CobolSemanticProductProjector {
             gaps.add(capabilityGap(statementId, "CALL_RETURNING_NOT_PROJECTED",
                     "CALL returning operand is not published by the current boundary fact",
                     provenance));
-        if (!call.exceptionFlow().isEmpty())
+        if (call.surface().hasHandlers())
             gaps.add(capabilityGap(statementId, "CALL_EXCEPTION_FLOW_NOT_PROJECTED",
                     "CALL exception flow awaits structural statement projection",
                     provenance));
@@ -1003,27 +1034,22 @@ public final class CobolSemanticProductProjector {
                 containment, provenance, coverage, readiness);
     }
 
-    private static CobolSemanticProduct.Readiness callReadiness(
-            ReferenceResolution.Entry entry, Ast.CallStatement call) {
-        CobolSemanticProduct.ReadinessStatus lowering =
-                entry.status() == ResolutionContracts.ResolutionStatus.RESOLVED
-                        ? CobolSemanticProduct.ReadinessStatus.SUFFICIENT
-                        : entry.status() == ResolutionContracts.ResolutionStatus.UNSUPPORTED
-                        ? CobolSemanticProduct.ReadinessStatus.BLOCKED
-                        : CobolSemanticProduct.ReadinessStatus.PARTIAL;
-        if (!call.arguments().isEmpty() || call.returning() != null)
-            lowering = CobolSemanticProduct.ReadinessStatus.PARTIAL;
-        CobolSemanticProduct.ReadinessStatus cfg = call.exceptionFlow().isEmpty()
-                ? CobolSemanticProduct.ReadinessStatus.SUFFICIENT
-                : CobolSemanticProduct.ReadinessStatus.PARTIAL;
-        return readiness(lowering,
-                "variable CALL surface and canonical nominal binding projected",
-                cfg,
-                call.exceptionFlow().isEmpty()
-                        ? "local structural fallthrough available"
-                        : "exception flow is not yet structurally projected",
-                CobolSemanticProduct.ReadinessStatus.PARTIAL,
-                "nominal USE available only to binding precision; report keeps call uncertainty");
+    private static ClausePresence presence(boolean present) {
+        return present ? ClausePresence.PRESENT : ClausePresence.ABSENT;
+    }
+
+    private static Readiness callReadiness(CallTarget target, CallSurface surface,
+                                           NormalContinuation continuation, Provenance statementOrigin) {
+        boolean targetProven = target instanceof DataReference data && data.wholeItemAccess().isPresent()
+                || target instanceof LiteralCallTarget literal && literal.logicalValue().isPresent();
+        boolean normal = continuation.availability() == ContinuationAvailability.KNOWN;
+        return readiness(targetProven && surface.firstSlice() && normal
+                        && target.provenance().exact() && statementOrigin.exact()
+                        ? ReadinessStatus.SUFFICIENT : ReadinessStatus.PARTIAL,
+                "CALL source facts for the parameterless whole-text/literal slice; no AIR certification",
+                normal ? ReadinessStatus.SUFFICIENT : ReadinessStatus.PARTIAL,
+                "conditional local successor after normal return only; other outcomes remain open",
+                ReadinessStatus.PARTIAL, "CALL external effects UNKNOWN; outcome knowledge OPEN");
     }
 
     private static CobolSemanticProduct.Readiness ifReadiness(

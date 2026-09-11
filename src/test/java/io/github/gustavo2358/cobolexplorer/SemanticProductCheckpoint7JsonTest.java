@@ -63,7 +63,7 @@ class SemanticProductCheckpoint7JsonTest {
         assertEquals(ROOT_FIELDS, fieldSet(document));
         assertEquals(ROOT_FIELD_ORDER, fieldList(document));
         assertEquals("cobol-semantic-product", document.path("schema").asText());
-        assertEquals("1.2.0", document.path("contractVersion").asText());
+        assertEquals("1.3.0", document.path("contractVersion").asText());
         assertEquals("SEMANTIC-TARGET",
                 document.path("unit").path("canonicalProgramName").asText());
         assertEquals(List.of(0), integerValues(document.path("unit").path("structuralPath")));
@@ -126,7 +126,7 @@ class SemanticProductCheckpoint7JsonTest {
                 .allMatch(value -> value.path("runtimeTarget").asText().equals("UNKNOWN")
                         && value.path("runtimeUncertaintyCode").asText()
                         .equals("DYNAMIC_CALL_TARGET_VALUE_UNKNOWN")
-                        && value.path("operand").path("role").asText()
+                        && value.path("target").path("reference").path("role").asText()
                         .equals("CALL_TARGET")));
         JsonNode outerIf = statement(document, "statement:10");
         assertEquals("RELATION", outerIf.path("condition").path("shape").asText());
@@ -145,8 +145,8 @@ class SemanticProductCheckpoint7JsonTest {
         JsonNode coverage = document.path("coverage");
         assertEquals("COMPLETE", coverage.path("inventoryStatus").asText());
         assertEquals(14, coverage.path("observedStatements").asInt());
-        assertEquals(3, coverage.path("modeledStatements").asInt());
-        assertEquals(11, coverage.path("partialStatements").asInt());
+        assertEquals(4, coverage.path("modeledStatements").asInt());
+        assertEquals(10, coverage.path("partialStatements").asInt());
         assertEquals(0, coverage.path("unsupportedStatements").asInt());
         assertEquals(0, coverage.path("inputMissingStatements").asInt());
         assertEquals("BLOCKED", coverage.path("readiness").path("lowering")
@@ -155,12 +155,13 @@ class SemanticProductCheckpoint7JsonTest {
                 .path("status").asText());
         assertEquals("BLOCKED", coverage.path("readiness").path("effectsDataflow")
                 .path("status").asText());
-        assertEquals("PARTIAL", moves.get(0).path("header").path("readiness")
+        assertEquals("SUFFICIENT", moves.get(0).path("header").path("readiness")
                 .path("lowering").path("status").asText());
         assertEquals("SUFFICIENT", moves.get(0).path("header").path("readiness")
                 .path("cfg").path("status").asText());
-        assertEquals("SUFFICIENT", calls.get(0).path("header").path("readiness")
+        assertEquals("PARTIAL", calls.get(0).path("header").path("readiness")
                 .path("lowering").path("status").asText());
+        assertEquals("UNAVAILABLE", calls.get(0).path("normalContinuation").path("availability").asText());
         assertEquals("PARTIAL", outerIf.path("header").path("readiness")
                 .path("lowering").path("status").asText());
         assertEquals("BLOCKED", observed.path("header").path("readiness")
@@ -206,7 +207,7 @@ class SemanticProductCheckpoint7JsonTest {
                 .findFirst().orElseThrow().path("target").path("binding");
         JsonNode callBinding = elements(qualified.path("statements")).stream()
                 .filter(statement -> statement.path("variant").asText().equals("CALL"))
-                .findFirst().orElseThrow().path("operand").path("binding");
+                .findFirst().orElseThrow().path("target").path("reference").path("binding");
         assertEquals("QUALIFIED_HIERARCHY_MATCH", moveBinding.path("reason").asText());
         assertEquals("QUALIFIED_HIERARCHY_MATCH", callBinding.path("reason").asText());
 
@@ -400,8 +401,8 @@ class SemanticProductCheckpoint7JsonTest {
                     assertBindingReferences(statement.path("target").path("binding"), dataIds);
                 }
                 case "CALL" -> {
-                    assertOperandOwner(statement.path("operand"), statementId);
-                    assertBindingReferences(statement.path("operand").path("binding"), dataIds);
+                    assertOperandOwner(statement.path("target").path("reference"), statementId);
+                    assertBindingReferences(statement.path("target").path("reference").path("binding"), dataIds);
                 }
                 case "IF" -> {
                     for (JsonNode reference : statement.path("condition").path("references")) {
@@ -447,9 +448,9 @@ class SemanticProductCheckpoint7JsonTest {
 
     private static Set<String> expectedStatementFields(String variant) {
         return switch (variant) {
-            case "MOVE" -> Set.of("variant", "header", "source", "target", "copySemantics", "normalContinuation");
-            case "CALL" -> Set.of("variant", "header", "syntax", "operand",
-                    "runtimeTarget", "runtimeUncertaintyCode");
+            case "MOVE" -> Set.of("variant", "header", "source", "target", "copySemantics", "normalContinuation", "textAdjustment");
+            case "CALL" -> Set.of("variant", "header", "syntax", "target",
+                    "runtimeTarget", "runtimeUncertaintyCode", "normalContinuation", "surface", "effects", "outcomes");
             case "IF" -> Set.of("variant", "header", "condition",
                     "explicitlyTerminated", "continuation");
             case "OBSERVED" -> Set.of("variant", "header", "observedKind",

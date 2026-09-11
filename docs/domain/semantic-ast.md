@@ -53,7 +53,10 @@ Semântica pública, regra IBM, disponibilidade e limites ficam no
 
 LiteralExpression.logicalText, PictureClause.textExtent e UsageClause.display
 são interpretação canônica delimitada. Division.normalContinuations preserva
-relações MOVE → próximo statement por IDs existentes, sem novos traversal edges.
+relações MOVE/CALL sem handlers → próximo statement por IDs existentes, sem novos traversal edges.
+CallStatement.surface conserva USING, RETURNING/GIVING e presença separada de
+ON/NOT ON EXCEPTION e ON OVERFLOW. O corpo exceptionFlow continua achatado;
+CallStatement.literalText reutiliza a interpretação de literal básico, sem binding.
 O [contrato do profile](scalar-text-move.md) define exclusões, disponibilidade,
 regra COBOL, custos e ownership pós-binding de ScalarMoveSemantics.
 

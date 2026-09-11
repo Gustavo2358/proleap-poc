@@ -84,7 +84,7 @@ IDs neste documento são estáveis. `AUTOMATED` indica proteção executável at
 - **Scope:** Semantic Product, seu port/transporte JSON, `cobol-lower` externo e contratos de readiness por construct.
 - **Related ADRs:** ADR-0003, ADR-0004 e ADR-0013.
 - **Enforcement:** `AUTOMATED` — o consumer do CP6 e o probe independente de EVAL-SP-002 consomem somente o port; `ArchitectureBoundaryTest` inspeciona source e bytecode; falsificações controladas rejeitam perda de structure, binding e unknown. A matriz durável está em `docs/domain/cobol-semantic-product.md`.
-- **Known exceptions:** o código publica DATA/CALL como suficientes no escopo do CP8, mas o [audit AIR V2](semantic-product-air-v2-audit.md) refuta que isso certifique `invoke` ou CFG e reproduz perda de endereçamento em CALL/MOVE. Remediação permanece futura. MOVE/IF parciais e observado bloqueado admitem fallback AIR conservador; o probe atual verifica reconstrução, não conformidade AIR. Nenhuma lacuna autoriza buscar o frontend.
+- **Known exceptions:** o código publica DATA/CALL como suficientes no escopo do CP8, mas o [audit AIR V2](semantic-product-air-v2-audit.md) refuta que isso certifique `invoke` ou CFG e reproduziu perda de endereçamento em CALL/MOVE no baseline auditado. O profile 4A e W1A publicam acesso inteiro no subconjunto provado; acesso parcial e certificação AIR permanecem fora dessa capability. MOVE/IF parciais e observado bloqueado admitem fallback AIR conservador; o probe atual verifica reconstrução, não conformidade AIR. Nenhuma lacuna autoriza buscar o frontend.
 
 ### INV-SP-004 — Projector não cria nova análise semântica
 
@@ -124,12 +124,21 @@ IDs neste documento são estáveis. `AUTOMATED` indica proteção executável at
 
 ### INV-SP-008 — MOVE escalar preciso exige prova positiva canônica
 
-- **Statement:** domínio/valor textual, declaração escalar, acesso inteiro, cópia obrigatória de identidade e continuação explícita são fatos tipados independentes de readiness. O projector não os fabrica por binding nominal, metadados textuais ou ordem das coleções.
+- **Statement:** domínio/valor textual, declaração escalar, acesso inteiro, cópia obrigatória de identidade ou fitting explícito e continuação explícita são fatos tipados independentes de readiness. O projector não os fabrica por binding nominal, metadados textuais ou ordem das coleções.
 - **Rationale:** o consumidor público precisa decidir sem reinterpretar COBOL; ausência de informações no transporte anterior não prova ausência de overlay/modificadores.
 - **Scope:** AstBuilder, ScalarMoveSemantics, fronteira pública, writer e oracles 4A.
 - **Related ADRs:** ADR-0013.
 - **Enforcement:** `AUTOMATED` — EVAL-SP-005/006, oracle port-only, validação construtiva/cross-fact, challenges controlados e contadores de escala.
 - **Known exceptions:** somente o [profile elementar textual](../domain/scalar-text-move.md) é provado; storage/controle universais permanecem indisponíveis. O frontend não emite NONE para MOVE no fim físico.
+
+### INV-SP-009 — CALL e fitting preservam fatos sem fechar runtime
+
+- **Statement:** CALL literal/data é uma soma tipada; DATA conserva seleção/candidates/status/reason e recebe acesso inteiro somente sob prova canônica. Continuação significa retorno normal condicional. Ausência de USING/RETURNING/handlers é distinta de desconhecido. Efeitos UNKNOWN e outcomes OPEN nunca viram NONE. MOVE fitting é fato fonte com resultado ajustado e evidence; não interpreta PIC downstream nem nome runtime. Provenance de statement, operandos e derivação permanece separada.
+- **Rationale:** preservar informação necessária à vertical sem antecipar AIR, dataflow ou resolução dinâmica.
+- **Scope:** CP6 W1A, frontend canônico, Semantic Product 1.3.0 e writer.
+- **Related ADRs:** ADR-0013.
+- **Enforcement:** `AUTOMATED` — EVAL-SP-007, oracles X8/literal/negativos, invariantes construtivos e oito mutações semânticas com restauração exata.
+- **Known exceptions:** [domínio CALL](../domain/call-semantic-product.md); nested/handler control, truncation, aliases e interpretação de nomes runtime não são promovidos.
 
 ## Condições contextuais
 

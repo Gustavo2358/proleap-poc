@@ -28,19 +28,20 @@ CHALLENGES = [
  ('03a-ignore-occurs', [(ENGINE,
   'else return Optional.empty();', 'else if (!(clause instanceof Ast.OccursClause)) return Optional.empty();')], TESTS),
  ('03b-ignore-overlay', [(ENGINE, 'boolean overlay = hasOverlay(section, counts);', 'boolean overlay = false;')], TESTS),
- ('03c-ignore-refmod', [(ENGINE, '&& target.referenceModification() == null', '')], TESTS),
+ ('03c-ignore-refmod', [(ENGINE, '\n                    && target.subscriptGroups().isEmpty() && target.referenceModification() == null', '\n                    && target.subscriptGroups().isEmpty()')], TESTS),
  ('04-wrong-selected', [(PROJECTOR,
   'CobolSemanticProduct.DataItemId selectedId = dataIds.get(selected.entityId());',
   'CobolSemanticProduct.DataItemId selectedId = new DataItemId(dataIds.get(selected.entityId()).unit(), 999);')], TESTS),
  ('05-nominal-implies-whole', [(ENGINE,
-  '&& target.subscriptGroups().isEmpty() && target.referenceModification() == null', '')], TESTS),
+  '\n                    && target.subscriptGroups().isEmpty() && target.referenceModification() == null', '')], TESTS),
  ('06-array-order-continuation', [(PROJECTOR,
-  'Optional<StatementId> next = semantic.nextStatement().map(nodeId -> {',
-  '''Optional<StatementId> next = Optional.ofNullable(inputs.statementPositions().indexOf(plan.position()) + 1
+  'CopySemantics copy = CopySemantics.valueOf(semantic.copy().name());\n            Optional<StatementId> next = semantic.nextStatement().map(nodeId -> {',
+  '''CopySemantics copy = CopySemantics.valueOf(semantic.copy().name());
+            Optional<StatementId> next = Optional.ofNullable(inputs.statementPositions().indexOf(plan.position()) + 1
                     < inputs.statementPositions().size() ? inputs.statementPositions().get(
                     inputs.statementPositions().indexOf(plan.position()) + 1).statement().meta().id() : null).map(nodeId -> {''')], TESTS),
  ('07-remove-continuation', [(PROJECTOR,
-  'copy, continuation);', 'copy, NormalContinuation.unavailable(statementProvenance));')], TESTS),
+  'copy, continuation, semantic.adjustment()', 'copy, NormalContinuation.unavailable(statementProvenance), semantic.adjustment()')], TESTS),
  ('08-goback-fallthrough', [(MODEL,
   'public enum LocalContinuation { NONE }', 'public enum LocalContinuation { NONE, FALLTHROUGH }'),
   (MODEL, 'public LocalContinuation localContinuation() { return LocalContinuation.NONE; }',

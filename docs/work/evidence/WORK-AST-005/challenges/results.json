@@ -1,0 +1,94 @@
+[
+  {
+    "label": "green-before",
+    "exitCode": 0,
+    "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "semanticRed": false
+  },
+  {
+    "label": "literal-lost",
+    "exitCode": 1,
+    "logSha256": "b46a7335512db508780647394fc8831ba3b84f7680d69f198e53ab5e0a9d11bc",
+    "semanticRed": true,
+    "restoredByteExact": true,
+    "sourceSha256": {
+      "semanticproduct/transport/SemanticProductJsonWriter.java": "d51e1d56e55445448d642e4a8aaa616a45bca25f4a9436536d6dc97e30a98f20"
+    }
+  },
+  {
+    "label": "whole-item-erased",
+    "exitCode": 1,
+    "logSha256": "cd58f467e71c12a4fd96aa83e3bf156c610c4901cb55d6e9cababd7db2b1557d",
+    "semanticRed": true,
+    "restoredByteExact": true,
+    "sourceSha256": {
+      "ScalarMoveSemantics.java": "938d34c11b29cb29a5f99a26651fd20994dd1ea3b0d2496c24d61144ceacb27e"
+    }
+  },
+  {
+    "label": "wrong-continuation",
+    "exitCode": 1,
+    "logSha256": "eedf9a97ed0ef0ae719bd33e8d70ceea6614ba1fbf916713d10c958d5d2707f9",
+    "semanticRed": true,
+    "restoredByteExact": true,
+    "sourceSha256": {
+      "semanticproduct/projection/CobolSemanticProductProjector.java": "6a07214dc9dc4100580445ef410b5d6089a75240fa766c3b20fdfdff177957d3"
+    }
+  },
+  {
+    "label": "using-hidden",
+    "exitCode": 1,
+    "logSha256": "a60384e6b2b967e605b919a8c6897f114cbe8d47805b7755d56fe12afa120233",
+    "semanticRed": true,
+    "restoredByteExact": true,
+    "sourceSha256": {
+      "AstBuilder.java": "7c195f616455b0624e2ea1991226ed2ea02bc5bb13bf5ff71e6b8362cf163509"
+    }
+  },
+  {
+    "label": "returning-hidden",
+    "exitCode": 1,
+    "logSha256": "4b1b02856f61752a60ce0d2c33641eba5f9f46c8f4cff77d223ace5bc5358b93",
+    "semanticRed": true,
+    "restoredByteExact": true,
+    "sourceSha256": {
+      "AstBuilder.java": "7c195f616455b0624e2ea1991226ed2ea02bc5bb13bf5ff71e6b8362cf163509"
+    }
+  },
+  {
+    "label": "effects-none",
+    "exitCode": 1,
+    "logSha256": "45b8166a4fa8826ca9208ecf18397a472fe2aa8782fee3e10cf1c4f0abc086f2",
+    "semanticRed": true,
+    "restoredByteExact": true,
+    "sourceSha256": {
+      "semanticproduct/CobolSemanticProduct.java": "8106df44ff25126c6b2128196fd0c3baef0174321593e356779b848ddd46716b"
+    }
+  },
+  {
+    "label": "padding-erased",
+    "exitCode": 1,
+    "logSha256": "7bf6976de3813c1c17100563880a3756b1ea4a7dcfd7eddb5312e2d0626af620",
+    "semanticRed": true,
+    "restoredByteExact": true,
+    "sourceSha256": {
+      "ScalarMoveSemantics.java": "938d34c11b29cb29a5f99a26651fd20994dd1ea3b0d2496c24d61144ceacb27e"
+    }
+  },
+  {
+    "label": "nonwhole-promoted",
+    "exitCode": 1,
+    "logSha256": "48e46b03faf028d4bf8f7abbc27c15a6bebf8def70bd9c5aaaf4c0cafa47cad9",
+    "semanticRed": true,
+    "restoredByteExact": true,
+    "sourceSha256": {
+      "ScalarMoveSemantics.java": "938d34c11b29cb29a5f99a26651fd20994dd1ea3b0d2496c24d61144ceacb27e"
+    }
+  },
+  {
+    "label": "green-restored",
+    "exitCode": 0,
+    "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "semanticRed": false
+  }
+]

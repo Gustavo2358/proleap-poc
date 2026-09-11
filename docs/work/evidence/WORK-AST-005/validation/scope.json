@@ -1,0 +1,29 @@
+{
+  "baseline": "8722945cc4cd2052c6091533f6ee6989278aa2f8",
+  "baselineTree": "63eba137162aa47e38d4858ff522058a8678a8dd",
+  "sourceScopeCheck": "PASS",
+  "productionPaths": [
+    "src/main/java/io/github/gustavo2358/cobolexplorer/Ast.java",
+    "src/main/java/io/github/gustavo2358/cobolexplorer/AstBuilder.java",
+    "src/main/java/io/github/gustavo2358/cobolexplorer/ScalarMoveSemantics.java",
+    "src/main/java/io/github/gustavo2358/cobolexplorer/semanticproduct/CobolSemanticProduct.java",
+    "src/main/java/io/github/gustavo2358/cobolexplorer/semanticproduct/consumer/CobolLoweringReadinessConsumer.java",
+    "src/main/java/io/github/gustavo2358/cobolexplorer/semanticproduct/projection/CobolSemanticProductProjector.java",
+    "src/main/java/io/github/gustavo2358/cobolexplorer/semanticproduct/transport/SemanticProductJsonWriter.java"
+  ],
+  "productionSha256": {
+    "src/main/java/io/github/gustavo2358/cobolexplorer/Ast.java": "da1f256a5bf22b9402ae553849b60c38e6cbaea8f16227bd4bd95787e290a5c4",
+    "src/main/java/io/github/gustavo2358/cobolexplorer/AstBuilder.java": "7c195f616455b0624e2ea1991226ed2ea02bc5bb13bf5ff71e6b8362cf163509",
+    "src/main/java/io/github/gustavo2358/cobolexplorer/ScalarMoveSemantics.java": "938d34c11b29cb29a5f99a26651fd20994dd1ea3b0d2496c24d61144ceacb27e",
+    "src/main/java/io/github/gustavo2358/cobolexplorer/semanticproduct/CobolSemanticProduct.java": "8106df44ff25126c6b2128196fd0c3baef0174321593e356779b848ddd46716b",
+    "src/main/java/io/github/gustavo2358/cobolexplorer/semanticproduct/consumer/CobolLoweringReadinessConsumer.java": "7d127c42637b9c1b9c516672c6f35e8c2e142270293b9dd116f5a5bc84dd59b4",
+    "src/main/java/io/github/gustavo2358/cobolexplorer/semanticproduct/projection/CobolSemanticProductProjector.java": "6a07214dc9dc4100580445ef410b5d6089a75240fa766c3b20fdfdff177957d3",
+    "src/main/java/io/github/gustavo2358/cobolexplorer/semanticproduct/transport/SemanticProductJsonWriter.java": "d51e1d56e55445448d642e4a8aaa616a45bca25f4a9436536d6dc97e30a98f20"
+  },
+  "grammarVendorDelta": 0,
+  "unrelatedParserDelta": 0,
+  "unrelatedIfSemanticsDelta": 0,
+  "unrelatedNextSentenceDelta": 0,
+  "method": "Explicit baseline diff review: AstBuilder changes limited to CALL surface/argument ownership, conditional continuation and reuse of existing literal decoder; no grammar, parser vendor or IF/NEXT SENTENCE algorithm change.",
+  "siblingsStatus": "lower, AIR model, CFG and AIR specification clean; E2E artifacts retain only preexisting untracked checkpoint-4e and cp5 directories."
+}

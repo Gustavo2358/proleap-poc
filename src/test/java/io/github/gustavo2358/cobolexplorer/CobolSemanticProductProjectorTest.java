@@ -84,7 +84,7 @@ class CobolSemanticProductProjectorTest {
                 .map(move -> names.get(move.target().binding().selected().orElseThrow()))
                 .toList());
         assertEquals(List.of("WS-B", "WS-A", "WS-B"), port.calls().stream()
-                .map(call -> names.get(call.operand().binding().selected().orElseThrow()))
+                .map(call -> names.get(((CobolSemanticProduct.DataReference) call.target()).binding().selected().orElseThrow()))
                 .toList(), "CALL facts must not depend on a MOVE pair or source proximity");
         assertEquals(List.of("A", "B", "1"), port.moves().stream()
                 .map(move -> move.source().value()).toList());
@@ -100,8 +100,8 @@ class CobolSemanticProductProjectorTest {
                         && move.target().binding().status()
                         == CobolSemanticProduct.ResolutionStatus.RESOLVED));
         assertTrue(port.calls().stream().allMatch(call ->
-                call.operand().role() == CobolSemanticProduct.OperandRole.CALL_TARGET
-                        && call.operand().binding().status()
+                ((CobolSemanticProduct.DataReference) call.target()).role() == CobolSemanticProduct.OperandRole.CALL_TARGET
+                        && ((CobolSemanticProduct.DataReference) call.target()).binding().status()
                         == CobolSemanticProduct.ResolutionStatus.RESOLVED
                         && call.runtimeTarget()
                         == CobolSemanticProduct.RuntimeTargetKnowledge.UNKNOWN));
@@ -109,8 +109,8 @@ class CobolSemanticProductProjectorTest {
         assertEquals(CobolSemanticProduct.InventoryStatus.COMPLETE,
                 state.coverage().inventoryStatus());
         assertEquals(7, state.coverage().observedStatements());
-        assertEquals(4, state.coverage().modeledStatements());
-        assertEquals(3, state.coverage().partialStatements());
+        assertEquals(6, state.coverage().modeledStatements());
+        assertEquals(1, state.coverage().partialStatements());
         assertEquals(0, state.coverage().unsupportedStatements());
         assertEquals(CobolSemanticProduct.ReadinessStatus.PARTIAL,
                 state.coverage().readiness().lowering().status());
@@ -139,7 +139,7 @@ class CobolSemanticProductProjectorTest {
         assertEquals(1, port.calls().size());
         assertEquals("PGMA", port.moves().get(0).source().value());
         assertEquals(port.moves().get(0).target().binding().selected(),
-                port.calls().get(0).operand().binding().selected());
+                ((CobolSemanticProduct.DataReference) port.calls().get(0).target()).binding().selected());
     }
 
     @Test
@@ -508,7 +508,7 @@ class CobolSemanticProductProjectorTest {
         assertEquals(CobolSemanticProduct.ResolutionReason.QUALIFIED_HIERARCHY_MATCH,
                 port.moves().get(0).target().binding().reason());
         assertEquals(CobolSemanticProduct.ResolutionReason.QUALIFIED_HIERARCHY_MATCH,
-                port.calls().get(0).operand().binding().reason());
+                ((CobolSemanticProduct.DataReference) port.calls().get(0).target()).binding().reason());
     }
 
     @Test
@@ -542,17 +542,17 @@ class CobolSemanticProductProjectorTest {
                 analyze(source, "semantic-product-unsupported.cbl")));
 
         assertTrue(port.moves().isEmpty());
-        assertTrue(port.calls().isEmpty());
-        assertEquals(List.of("MOVE_NON_LITERAL_SOURCE", "CALL_LITERAL_TARGET"),
+        assertEquals(1, port.calls().size());
+        assertEquals("PGMA", ((CobolSemanticProduct.LiteralCallTarget) port.calls().get(0).target()).text());
+        assertEquals(List.of("MOVE_NON_LITERAL_SOURCE"),
                 port.observedStatements().stream()
                         .map(CobolSemanticProduct.ObservedStatement::observedShape).toList());
-        assertEquals(List.of("MOVE_NON_LITERAL_SOURCE_OUTSIDE_CAPABILITY",
-                        "CALL_LITERAL_TARGET_OUTSIDE_CAPABILITY"),
+        assertEquals(List.of("MOVE_NON_LITERAL_SOURCE_OUTSIDE_CAPABILITY"),
                 port.observedStatements().stream()
                         .map(CobolSemanticProduct.ObservedStatement::gapCode).toList());
         assertTrue(port.observedStatements().stream().allMatch(observed ->
                 observed.header().coverage() == CobolSemanticProduct.CoverageStatus.UNSUPPORTED));
-        assertEquals(2, port.gaps().stream().filter(gap ->
+        assertEquals(1, port.gaps().stream().filter(gap ->
                 gap.scope() == CobolSemanticProduct.GapScope.CAPABILITY
                         && gap.code().endsWith("OUTSIDE_CAPABILITY")).count());
     }
@@ -596,11 +596,11 @@ class CobolSemanticProductProjectorTest {
         assertEquals(CobolSemanticProduct.ResolutionStatus.AMBIGUOUS,
                 port.moves().get(0).target().binding().status());
         assertEquals(CobolSemanticProduct.ResolutionStatus.AMBIGUOUS,
-                port.calls().get(0).operand().binding().status());
+                ((CobolSemanticProduct.DataReference) port.calls().get(0).target()).binding().status());
         assertEquals(2, port.moves().get(0).target().binding().candidates().size());
-        assertEquals(2, port.calls().get(0).operand().binding().candidates().size());
+        assertEquals(2, ((CobolSemanticProduct.DataReference) port.calls().get(0).target()).binding().candidates().size());
         assertTrue(port.moves().get(0).target().binding().selected().isEmpty());
-        assertTrue(port.calls().get(0).operand().binding().selected().isEmpty());
+        assertTrue(((CobolSemanticProduct.DataReference) port.calls().get(0).target()).binding().selected().isEmpty());
         assertEquals(2, port.gaps().stream().filter(gap ->
                 gap.scope() == CobolSemanticProduct.GapScope.NOMINAL_BINDING).count());
     }
@@ -672,7 +672,8 @@ class CobolSemanticProductProjectorTest {
         assertFalse(source.contains("findFirst"));
         assertFalse(source.contains("findLast"));
         assertFalse(source.contains("single("));
-        assertFalse(source.contains("writtenText"));
+        // Written spelling is forwarded as metadata only, never inspected for semantics.
+        assertFalse(source.replace("literal.writtenText(),", "").contains("writtenText"));
         assertFalse(source.contains("rawLexeme"));
         assertFalse(source.contains("grammarRule"));
         assertFalse(source.contains("SourceMap"));

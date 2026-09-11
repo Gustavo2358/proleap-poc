@@ -62,3 +62,17 @@ Comentários em produção devem explicar regra, invariante ou motivo da postura
 ## Guardas do repositório
 
 As gramáticas vendorizadas preservam autoria, copyright e atribuições. Alterá-las só é correto quando a gramática é a origem comprovada do defeito ou quando a superfície suportada muda deliberadamente; fixtures e grammar não são ajustadas apenas para satisfazer produção. `scripts/verify-naming.sh` protege a identidade atual sem remover referências exigidas pelas atribuições das gramáticas e notices, nem reescrever fontes históricas em `docs/history/`. O gate inspeciona somente arquivos rastreados ou novos não ignorados; metadados locais não fazem parte da identidade do projeto.
+
+## INTERNAL-CONTRACT-DEV-001 — contratos internos em desenvolvimento
+
+Contrato interno controlado no mesmo produto pode evoluir por bump explícito,
+producer primeiro e atualização do consumer em checkpoint posterior. Emitir uma
+única versão corrente; não criar dual writers, downgrade ou negociação apenas
+para satisfazer um sibling pinado antigo. Sua recusa UNSUPPORTED_CONTRACT é
+esperada/documentada e não é STOP isoladamente; integração/E2E não é verde até
+atualizar consumer/pin. Compatibilidade volta a ser requisito com consumidores
+externos, versão estável suportada, implantação independente, atualização não
+coordenável, dados persistidos irrefazíveis ou autorização explícita. Semântica
+ambígua, perda de informação, nova responsabilidade cross-repo, norma AIR,
+migração irreversível ou ownership incerto ainda exigem review. Esta regra não
+amplia o escopo autorizado de implementação em siblings.

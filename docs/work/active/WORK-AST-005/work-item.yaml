@@ -1,0 +1,59 @@
+id: WORK-AST-005
+title: CP6 W1A — preserve COBOL CALL semantics in Semantic Product
+status: blocked
+type: implementation
+authorization: implementation
+risk: high
+goal: Publicar CALL literal/data, acesso, continuação e superfícies conservadoras com fitting MOVE textual provado.
+must_read:
+  - docs/domain/cobol-semantic-product.md
+  - docs/domain/call-semantic-product.md
+  - docs/domain/scalar-text-move.md
+  - docs/domain/semantic-ast.md
+  - docs/domain/reference-resolution.md
+  - docs/architecture/pipeline.md
+  - docs/architecture/decisions/0013-cobol-semantic-product-precedes-language-neutral-lowering.md
+  - docs/architecture/invariants.md
+  - docs/engineering/semantic-analysis-policy.md
+  - docs/engineering/semantic-testing.md
+  - docs/engineering/work-item-protocol.md
+  - docs/engineering/gates.md
+related_domain_rules:
+  - docs/domain/cobol-semantic-product.md
+  - docs/domain/scalar-text-move.md
+related_decisions:
+  - ADR-0013
+related_invariants:
+  - INV-SP-001
+  - INV-SP-002
+  - INV-SP-006
+  - INV-SP-008
+  - INV-SP-009
+  - INV-RES-002
+evals:
+  - EVAL-SP-001
+  - EVAL-SP-003
+  - EVAL-SP-005
+  - EVAL-SP-007
+source_scope:
+  - src/main/java/io/github/gustavo2358/cobolexplorer/Ast.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/AstBuilder.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/ScalarMoveSemantics.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/semanticproduct/CobolSemanticProduct.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/semanticproduct/projection/CobolSemanticProductProjector.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/semanticproduct/transport/SemanticProductJsonWriter.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/semanticproduct/consumer/CobolLoweringReadinessConsumer.java
+test_scope:
+  - src/test/java/io/github/gustavo2358/cobolexplorer
+  - src/test/resources/cobol/semantic
+must_not_change:
+  - Gramática e vendor; semântica IF/NEXT SENTENCE não relacionada.
+  - AIR, lowering, CFG, solver, dataflow, dependency resolver e siblings.
+  - Runtime target values e interpretação de nomes de programas.
+  - W1B, W1C, W1D e W2 não autorizadas; sem merge ou auto-merge.
+gates:
+  - docs
+  - fast
+  - semantic
+  - performance
+  - full

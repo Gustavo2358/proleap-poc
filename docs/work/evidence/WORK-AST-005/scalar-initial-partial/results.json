@@ -1,0 +1,50 @@
+[
+  {
+    "label": "green-before",
+    "exitCode": 0,
+    "logSha256": "be83f29d0bde17e28352c5008f9a2cc76bd289feec57d96d619cc7b268a41a4c",
+    "semanticRed": false
+  },
+  {
+    "label": "01-any-string-literal",
+    "exitCode": 1,
+    "logSha256": "0e75cb2d7bfdfe5abc6c96a9fadeec94335842d6067e76b1c7c362a64e80634c",
+    "semanticRed": true
+  },
+  {
+    "label": "02-ignore-length",
+    "exitCode": 1,
+    "logSha256": "8c735aec51c3462f2ff9dd325755241b49e6399b3eb53f801165946c279cce64",
+    "semanticRed": true
+  },
+  {
+    "label": "03a-ignore-occurs",
+    "exitCode": 1,
+    "logSha256": "6cd5a0be8c42789dacc220acc539e6b14e247dfdfcbf7292f6fb36fa9738fe28",
+    "semanticRed": true
+  },
+  {
+    "label": "03b-ignore-overlay",
+    "exitCode": 1,
+    "logSha256": "4cae551827f2d4c03cff4261d18d0be7e519180ccf6229c2a82f1255b8be0fe3",
+    "semanticRed": true
+  },
+  {
+    "label": "03c-ignore-refmod",
+    "exitCode": 1,
+    "logSha256": "0de92d1b1016088bc5e387aadf5bb224d50651b7c5967675cc0462d943c0b397",
+    "semanticRed": true
+  },
+  {
+    "label": "04-wrong-selected",
+    "exitCode": 1,
+    "logSha256": "7c4b1afe251b8588462732819ca9de6dcad7574a4e4649e8e60d6a92f5ec3297",
+    "semanticRed": true
+  },
+  {
+    "label": "05-nominal-implies-whole",
+    "exitCode": 1,
+    "logSha256": "0d0cd017c4832d2f73679d2e9f23c1308901a5ed5ac42a99c4091fa2a6f8e3f0",
+    "semanticRed": true
+  }
+]
