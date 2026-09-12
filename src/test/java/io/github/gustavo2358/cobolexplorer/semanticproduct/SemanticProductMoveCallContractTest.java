@@ -1,5 +1,6 @@
 package io.github.gustavo2358.cobolexplorer.semanticproduct;
 
+import io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.LiteralSource;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Field;
@@ -70,7 +71,7 @@ class SemanticProductMoveCallContractTest {
                         2, 2, 0, 0, 0, modeledReadiness()));
 
         List<CobolSemanticProduct.LiteralSource> sources = CobolSemanticPort.open(state)
-                .moves().stream().map(CobolSemanticProduct.MoveFact::source).toList();
+                .moves().stream().map(CobolSemanticProduct.MoveFact::source).map(CobolSemanticProduct.LiteralSource.class::cast).toList();
 
         assertEquals(List.of("1", "1"), sources.stream()
                 .map(CobolSemanticProduct.LiteralSource::value).toList());
@@ -370,7 +371,7 @@ class SemanticProductMoveCallContractTest {
         assertEquals(2, port.statements().size());
         assertEquals(1, port.moves().size());
         assertEquals(1, port.calls().size());
-        assertEquals("PGMA", move.source().value());
+        assertEquals("PGMA", ((LiteralSource) move.source()).value());
         assertEquals(Optional.of(WS_PGM), move.target().binding().selected());
         assertEquals(Optional.of(WS_PGM), ((CobolSemanticProduct.DataReference) call.target()).binding().selected());
         assertEquals(CobolSemanticProduct.RuntimeTargetKnowledge.UNKNOWN,

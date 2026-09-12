@@ -26,7 +26,7 @@ import java.util.Objects;
  */
 public final class SemanticProductJsonWriter {
     public static final String SCHEMA = "cobol-semantic-product";
-    public static final String CONTRACT_VERSION = "1.4.0";
+    public static final String CONTRACT_VERSION = "1.5.0";
 
     private static final ObjectMapper JSON = JsonMapper.builder()
             .enable(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY)
@@ -129,7 +129,7 @@ public final class SemanticProductJsonWriter {
         if (fact instanceof CobolSemanticProduct.GobackFact goback)
             return new GobackDocument(header(goback.header()), goback.exit(), goback.localContinuation());
         if (fact instanceof CobolSemanticProduct.MoveFact move) {
-            return new MoveDocument(header(move.header()), literal(move.source()),
+            return new MoveDocument(header(move.header()), moveSource(move.source()),
                     dataReference(move.target()), move.copySemantics(), new ContinuationDocument(
                             move.normalContinuation().availability(), move.normalContinuation().statement()
                             .map(SemanticProductJsonWriter::statementHandle).orElse(null),
@@ -173,6 +173,11 @@ public final class SemanticProductJsonWriter {
         return new ContainmentDocument(containment.parent()
                 .map(SemanticProductJsonWriter::statementHandle).orElse(null),
                 containment.branch());
+    }
+
+    private static MoveSourceDocument moveSource(CobolSemanticProduct.MoveSource source) {
+        if (source instanceof CobolSemanticProduct.LiteralSource literal) return literal(literal);
+        return new DataMoveSourceDocument(dataReference((CobolSemanticProduct.DataReference) source));
     }
 
     private static LiteralDocument literal(CobolSemanticProduct.LiteralSource source) {
@@ -344,7 +349,7 @@ public final class SemanticProductJsonWriter {
             implements StatementDocument { }
 
     @JsonPropertyOrder({"variant", "header", "source", "target", "copySemantics", "normalContinuation", "textAdjustment"})
-    private record MoveDocument(StatementHeaderDocument header, LiteralDocument source,
+    private record MoveDocument(StatementHeaderDocument header, MoveSourceDocument source,
                                 DataReferenceDocument target, CobolSemanticProduct.CopySemantics copySemantics,
                                 ContinuationDocument normalContinuation, TextAdjustmentDocument textAdjustment) implements StatementDocument { }
 
@@ -398,8 +403,14 @@ public final class SemanticProductJsonWriter {
     private record ContinuationDocument(CobolSemanticProduct.ContinuationAvailability availability,
                                         String statement, ProvenanceDocument provenance) { }
 
+    @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "variant")
+    @JsonSubTypes({@JsonSubTypes.Type(value = LiteralDocument.class, name = "LITERAL"),
+            @JsonSubTypes.Type(value = DataMoveSourceDocument.class, name = "DATA")})
+    private sealed interface MoveSourceDocument permits LiteralDocument, DataMoveSourceDocument { }
+    private record DataMoveSourceDocument(DataReferenceDocument reference) implements MoveSourceDocument { }
+
     private record LiteralDocument(String id, CobolSemanticProduct.LiteralKind kind,
-                                   String value, ProvenanceDocument provenance, TextValueDocument logicalValue) { }
+                                   String value, ProvenanceDocument provenance, TextValueDocument logicalValue) implements MoveSourceDocument { }
 
     private record DataReferenceDocument(String id, CobolSemanticProduct.OperandRole role,
                                          BindingDocument binding,

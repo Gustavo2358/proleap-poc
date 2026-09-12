@@ -1,5 +1,6 @@
 package io.github.gustavo2358.cobolexplorer;
 
+import io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.LiteralSource;
 import io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticPort;
 import io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct;
 import io.github.gustavo2358.cobolexplorer.semanticproduct.projection.CobolSemanticProductProjector;
@@ -258,8 +259,8 @@ class SemanticProductStatementInventoryTest {
         assertAll(
                 () -> assertEquals(baseline.state().statements().size() + 2,
                         withUnsupported.state().statements().size()),
-                () -> assertEquals(baselineMove.source().value(), mutatedMove.source().value()),
-                () -> assertEquals(baselineMove.source().kind(), mutatedMove.source().kind()),
+                () -> assertEquals(((LiteralSource) baselineMove.source()).value(), ((LiteralSource) mutatedMove.source()).value()),
+                () -> assertEquals(((LiteralSource) baselineMove.source()).kind(), ((LiteralSource) mutatedMove.source()).kind()),
                 () -> assertEquals(baselineMove.target().role(), mutatedMove.target().role()),
                 () -> assertEquals(baselineMove.target().binding(),
                         mutatedMove.target().binding()),

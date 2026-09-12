@@ -1,0 +1,6 @@
+id: WORK-SEMANTIC-PRODUCT-006
+title: Publish scalar data sources for MOVE
+status: IN_PROGRESS
+scope:
+  - SP 1.5.0 typed literal/data MOVE source and canonical VALUE_READ
+  - Equal-extent scalar FULL_IDENTITY and existing storage evidence

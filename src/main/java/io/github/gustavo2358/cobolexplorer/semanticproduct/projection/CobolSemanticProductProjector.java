@@ -270,16 +270,22 @@ public final class CobolSemanticProductProjector {
             return new StatementPlan(position, Capability.supported("GOBACK", "GOBACK_LOCAL_EXIT"), List.of());
         if (position.statement() instanceof Ast.MoveStatement move) {
             Capability capability = moveCapability(move);
-            ReferenceResolution.Entry entry = null;
+            List<ReferenceResolution.Entry> entries = new ArrayList<>();
             if (capability.supported()) {
-                Ast.DataReference target = (Ast.DataReference) move.targets().get(0);
-                entry = inputs.entryFor(target);
-                require(entry.occurrence().role() == ResolutionContracts.ReferenceRole.VALUE_WRITE,
+                var target = inputs.entryFor((Ast.DataReference) move.targets().get(0));
+                require(target.occurrence().role() == ResolutionContracts.ReferenceRole.VALUE_WRITE,
                         "MOVE target role must come from the canonical occurrence");
-                capability = bindingCapability(capability, entry, "MOVE");
+                entries.add(target);
+                capability = bindingCapability(capability, target, "MOVE");
+                if (move.source() instanceof Ast.DataReference source) {
+                    var read = inputs.entryFor(source);
+                    require(read.occurrence().role() == ResolutionContracts.ReferenceRole.VALUE_READ,
+                            "MOVE source role must come from the canonical occurrence");
+                    entries.add(read);
+                    capability = bindingCapability(capability, read, "MOVE");
+                }
             }
-            return new StatementPlan(position, capability,
-                    entry == null ? List.of() : List.of(entry));
+            return new StatementPlan(position, capability, entries);
         }
 
         if (position.statement() instanceof Ast.IfStatement branch)
@@ -320,7 +326,7 @@ public final class CobolSemanticProductProjector {
         if (move.corresponding())
             return Capability.unsupported("MOVE", "MOVE_CORRESPONDING",
                     "MOVE_CORRESPONDING_OUTSIDE_CAPABILITY");
-        if (!(move.source() instanceof Ast.LiteralExpression))
+        if (!(move.source() instanceof Ast.LiteralExpression) && !(move.source() instanceof Ast.DataReference))
             return Capability.unsupported("MOVE", "MOVE_NON_LITERAL_SOURCE",
                     "MOVE_NON_LITERAL_SOURCE_OUTSIDE_CAPABILITY");
         if (move.targets().size() != 1)
@@ -329,7 +335,7 @@ public final class CobolSemanticProductProjector {
         if (!(move.targets().get(0) instanceof Ast.DataReference))
             return Capability.unsupported("MOVE", "MOVE_NON_DATA_TARGET",
                     "MOVE_NON_DATA_TARGET_OUTSIDE_CAPABILITY");
-        return Capability.supported("MOVE", "MOVE_LITERAL_TO_DATA");
+        return Capability.supported("MOVE", move.source() instanceof Ast.LiteralExpression ? "MOVE_LITERAL_TO_DATA" : "MOVE_DATA_TO_DATA");
     }
 
     private static Capability callCapability(Ast.CallStatement call) {
@@ -581,10 +587,9 @@ public final class CobolSemanticProductProjector {
         }
 
         if (plan.position().statement() instanceof Ast.MoveStatement move) {
-            ReferenceResolution.Entry entry = onlyEntry(plan);
+            ReferenceResolution.Entry entry = plan.entries().get(0);
             CobolSemanticProduct.NominalBinding binding = nominalBinding(entry, dataIds);
             CobolSemanticProduct.CoverageStatus bindingCoverage = bindingCoverage(entry);
-            Ast.LiteralExpression literal = (Ast.LiteralExpression) move.source();
             ScalarMoveSemantics.Move semantic = inputs.products().scalarMoves().move(inputs.unitId(), move.meta().id());
             CopySemantics copy = CopySemantics.valueOf(semantic.copy().name());
             Optional<StatementId> next = semantic.nextStatement().map(nodeId -> {
@@ -596,6 +601,20 @@ public final class CobolSemanticProductProjector {
                     ? ContinuationAvailability.KNOWN : ContinuationAvailability.UNAVAILABLE, next, statementProvenance);
             Optional<WholeItemAccess> access = semantic.wholeItem().map(entity ->
                     new WholeItemAccess(Objects.requireNonNull(dataIds.get(entity), "whole item must be published")));
+            MoveSource source;
+            if (move.source() instanceof Ast.LiteralExpression literal) {
+                source = new LiteralSource(new OperandId(statementId, 0),
+                        literal.logicalText().isPresent() ? LiteralKind.ALPHANUMERIC : LiteralKind.UNKNOWN,
+                        literal.value(), provenance(literal.meta().provenance()),
+                        literal.logicalText().map(text -> new TextValue(text.value())));
+            } else {
+                var read = plan.entries().get(1);
+                source = new DataReference(new OperandId(statementId, 0), OperandRole.READ,
+                        nominalBinding(read, dataIds), provenance(move.source().meta().provenance()),
+                        semantic.sourceWholeItem().map(entity -> new WholeItemAccess(
+                                Objects.requireNonNull(dataIds.get(entity), "source whole item must be published"))));
+                bindingCoverage = weakest(bindingCoverage, bindingCoverage(read));
+            }
             CobolSemanticProduct.CoverageStatus coverage = weakest(
                     semantic.gaps().isEmpty() ? CoverageStatus.MODELED : CoverageStatus.PARTIAL,
                     containmentCoverage(containment), coverage(inputs.finding(move.meta().id())), bindingCoverage);
@@ -609,26 +628,25 @@ public final class CobolSemanticProductProjector {
                                     next.isPresent() ? ReadinessStatus.SUFFICIENT : ReadinessStatus.PARTIAL,
                                     "canonical normal continuation availability",
                                     ReadinessStatus.PARTIAL, "general effects and dataflow are not published"))),
-                    new LiteralSource(new OperandId(statementId, 0),
-                            literal.logicalText().isPresent() ? LiteralKind.ALPHANUMERIC : LiteralKind.UNKNOWN,
-                            literal.value(), provenance(literal.meta().provenance()),
-                            literal.logicalText().map(text -> new TextValue(text.value()))),
+                    source,
                     new DataReference(new OperandId(statementId, 1), OperandRole.WRITE, binding,
                             provenance(((Ast.DataReference) move.targets().get(0)).meta().provenance()), access),
                     copy, continuation, semantic.adjustment().map(adjustment -> new TextAdjustment(
                             TextAdjustmentRule.RIGHT_PAD_SPACE, adjustment.receiverExtent(),
                             new TextValue(adjustment.result()), statementProvenance)));
             statements.add(fact);
-            if (literal.logicalText().isEmpty()) gaps.add(new Gap(statementId, GapScope.LITERAL_KIND,
+            if (move.source() instanceof Ast.LiteralExpression literal && literal.logicalText().isEmpty()) gaps.add(new Gap(statementId, GapScope.LITERAL_KIND,
                     LITERAL_KIND_GAP, "literal category is outside the canonical basic text capability",
                     provenance(literal.meta().provenance())));
             for (var gap : semantic.gaps()) gaps.add(new Gap(statementId,
                     gap == ScalarMoveSemantics.Gap.NORMAL_CONTINUATION_NOT_AVAILABLE ? GapScope.STRUCTURE : GapScope.CAPABILITY,
                     gap.name(), "canonical elementary MOVE proof unavailable", statementProvenance));
             addContainmentGap(containment, statementId, statementProvenance, gaps);
-            addReportGaps(statementId, entry.occurrence(), inputs,
-                    provenance(entry.occurrence().meta().provenance()), gaps);
-            requireBindingGapWhenNeeded(fact.header(), entry, gaps);
+            for (var operand : plan.entries()) {
+                addReportGaps(statementId, operand.occurrence(), inputs,
+                        provenance(operand.occurrence().meta().provenance()), gaps);
+                requireBindingGapWhenNeeded(fact.header(), operand, gaps);
+            }
             return;
         }
 

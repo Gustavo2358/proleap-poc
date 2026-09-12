@@ -1,5 +1,6 @@
 package io.github.gustavo2358.cobolexplorer;
 
+import io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.LiteralSource;
 import io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticPort;
 import io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct;
 import io.github.gustavo2358.cobolexplorer.semanticproduct.projection.CobolSemanticProductProjector;
@@ -87,7 +88,7 @@ class CobolSemanticProductProjectorTest {
                 .map(call -> names.get(((CobolSemanticProduct.DataReference) call.target()).binding().selected().orElseThrow()))
                 .toList(), "CALL facts must not depend on a MOVE pair or source proximity");
         assertEquals(List.of("A", "B", "1"), port.moves().stream()
-                .map(move -> move.source().value()).toList());
+                .map(move -> ((LiteralSource) move.source()).value()).toList());
 
         assertEquals(7, new HashSet<>(port.statements().stream()
                 .map(statement -> statement.header().id()).toList()).size());
@@ -137,7 +138,7 @@ class CobolSemanticProductProjectorTest {
         assertEquals(1, port.dataDeclarations().size());
         assertEquals(1, port.moves().size());
         assertEquals(1, port.calls().size());
-        assertEquals("PGMA", port.moves().get(0).source().value());
+        assertEquals("PGMA", ((LiteralSource) port.moves().get(0).source()).value());
         assertEquals(port.moves().get(0).target().binding().selected(),
                 ((CobolSemanticProduct.DataReference) port.calls().get(0).target()).binding().selected());
     }
@@ -518,14 +519,14 @@ class CobolSemanticProductProjectorTest {
 
         assertEquals(List.of(CobolSemanticProduct.LiteralKind.ALPHANUMERIC,
                 CobolSemanticProduct.LiteralKind.ALPHANUMERIC, CobolSemanticProduct.LiteralKind.UNKNOWN),
-                port.moves().stream().map(move -> move.source().kind()).toList());
+                port.moves().stream().map(move -> ((LiteralSource) move.source()).kind()).toList());
         assertEquals(1, port.gaps().stream().filter(gap ->
                 gap.scope() == CobolSemanticProduct.GapScope.LITERAL_KIND
                         && gap.code().equals("LITERAL_KIND_NOT_PUBLISHED")).count());
     }
 
     @Test
-    void shapesOutsideTheCapabilityRemainObservedInsteadOfDisappearing() {
+    void dataMoveCapabilityPublishesItsReadInsteadOfObservedPlaceholder() {
         String source = String.join("\n",
                 "       IDENTIFICATION DIVISION.",
                 "       PROGRAM-ID. SEMANTIC-UNSUPPORTED.",
@@ -541,20 +542,15 @@ class CobolSemanticProductProjectorTest {
         CobolSemanticPort port = CobolSemanticPort.open(project(
                 analyze(source, "semantic-product-unsupported.cbl")));
 
-        assertTrue(port.moves().isEmpty());
+        assertEquals(1, port.moves().size());
+        var move = port.moves().get(0);
+        var read = assertInstanceOf(CobolSemanticProduct.DataReference.class, move.source());
+        assertEquals(CobolSemanticProduct.OperandRole.READ, read.role());
+        assertEquals(CobolSemanticProduct.CopySemantics.FULL_IDENTITY, move.copySemantics());
         assertEquals(1, port.calls().size());
         assertEquals("PGMA", ((CobolSemanticProduct.LiteralCallTarget) port.calls().get(0).target()).text());
-        assertEquals(List.of("MOVE_NON_LITERAL_SOURCE"),
-                port.observedStatements().stream()
-                        .map(CobolSemanticProduct.ObservedStatement::observedShape).toList());
-        assertEquals(List.of("MOVE_NON_LITERAL_SOURCE_OUTSIDE_CAPABILITY"),
-                port.observedStatements().stream()
-                        .map(CobolSemanticProduct.ObservedStatement::gapCode).toList());
-        assertTrue(port.observedStatements().stream().allMatch(observed ->
-                observed.header().coverage() == CobolSemanticProduct.CoverageStatus.UNSUPPORTED));
-        assertEquals(1, port.gaps().stream().filter(gap ->
-                gap.scope() == CobolSemanticProduct.GapScope.CAPABILITY
-                        && gap.code().endsWith("OUTSIDE_CAPABILITY")).count());
+        assertTrue(port.observedStatements().isEmpty());
+        assertFalse(port.gaps().stream().anyMatch(gap -> gap.code().endsWith("OUTSIDE_CAPABILITY")));
     }
 
     @Test

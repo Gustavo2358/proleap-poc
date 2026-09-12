@@ -1,7 +1,7 @@
 # Profile elementar textual de MOVE — Checkpoint 4A
 
 Este contrato COBOL-specific complementa o [Semantic Product](cobol-semantic-product.md).
-A versão corrente é [**1.4.0**](if-semantic-product.md); 1.2.0 introduziu o profile 4A. Não define AIR, lowering, CFG, efeitos globais ou dataflow.
+A versão corrente é [**1.5.0**](move-data-source.md); 1.2.0 introduziu o profile 4A. Não define AIR, lowering, CFG, efeitos globais ou dataflow.
 
 ## Regra e autoridade
 
@@ -46,16 +46,16 @@ lógico não define encoding físico EBCDIC, ASCII ou UTF-8.
 
 `DataReference.wholeItemAccess` é opcional. Presença prova que **essa ocorrência**
 acessa diretamente o valor escalar completo do `data` referenciado. Exige
-resolução única VALUE_WRITE (MOVE), CALL_TARGET (CALL) ou VALUE_READ no predicate W2A, referência STRUCTURED, sem qualifiers, subscripts
+resolução única VALUE_WRITE (MOVE), CALL_TARGET (CALL) ou VALUE_READ no predicate W2A ou source MOVE, referência STRUCTURED, sem qualifiers, subscripts
 ou reference modification, e declaração elegível. O core exige concordância
 entre `wholeItemAccess.data`, `binding.selected` e a declaração com scalarText.
 Binding sozinho e construtores legados não criam essa prova.
 
 `MoveFact.copySemantics=FULL_IDENTITY` é contrato tipado: escrita obrigatória
 do receptor inteiro por cópia lógica de identidade, sem conversão, padding ou
-truncation. Exige MOVE não CORRESPONDING, uma origem literal provada, exatamente
+truncation. Exige MOVE não CORRESPONDING, uma origem literal provada ou DATA escalar inteiro ([1.5.0](move-data-source.md)), exatamente
 um destino elegível e extensões lógicas iguais. `UNAVAILABLE` não faz essa claim.
-O core rejeita prova sem literal lógico, acesso inteiro ou extensão compatível.
+O core rejeita prova sem source tipada e elegível, acesso inteiro ou extensão compatível.
 W1A acrescenta FITTED_TEXT/RIGHT_PAD_SPACE para origem menor que receptor
 provado, com resultado ajustado; igualdade continua FULL_IDENTITY, truncation
 permanece UNAVAILABLE. [Contrato W1A](call-semantic-product.md).
@@ -110,7 +110,7 @@ precisa local não é publicação globalmente completa nem certificação AIR.
 
 ## Transporte e compatibilidade
 
-A versão corrente única 1.4.0 está no [contrato IF](if-semantic-product.md); o histórico W1C está no [contrato CALL](call-semantic-product.md).
+A versão corrente única 1.5.0 está no [contrato MOVE](move-data-source.md); o histórico W1C está no [contrato CALL](call-semantic-product.md).
 O registro abaixo descreve a introdução histórica do profile 4A.
 
 1.2.0 é evolução minor aditiva: `scalarText`, `logicalValue`, `wholeItemAccess`,

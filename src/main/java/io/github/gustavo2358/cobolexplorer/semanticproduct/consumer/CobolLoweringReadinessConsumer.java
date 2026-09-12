@@ -111,9 +111,11 @@ public final class CobolLoweringReadinessConsumer {
         }
     }
 
+    public sealed interface MoveSourceAudit permits LiteralAudit, DataReferenceAudit { }
+
     public record LiteralAudit(CobolSemanticProduct.OperandId id,
                                CobolSemanticProduct.LiteralKind kind,
-                               String value, ProvenanceAudit provenance) {
+                               String value, ProvenanceAudit provenance) implements MoveSourceAudit {
         public LiteralAudit {
             id = Objects.requireNonNull(id, "id");
             kind = Objects.requireNonNull(kind, "kind");
@@ -125,7 +127,7 @@ public final class CobolLoweringReadinessConsumer {
     public record DataReferenceAudit(CobolSemanticProduct.OperandId id,
                                      CobolSemanticProduct.OperandRole role,
                                      BindingAudit binding,
-                                     ProvenanceAudit provenance) {
+                                     ProvenanceAudit provenance) implements MoveSourceAudit {
         public DataReferenceAudit {
             id = Objects.requireNonNull(id, "id");
             role = Objects.requireNonNull(role, "role");
@@ -183,7 +185,7 @@ public final class CobolLoweringReadinessConsumer {
         StatementFamily family();
     }
 
-    public record MoveAudit(StatementHeaderAudit header, LiteralAudit source,
+    public record MoveAudit(StatementHeaderAudit header, MoveSourceAudit source,
                             DataReferenceAudit target) implements StatementAudit {
         public MoveAudit {
             header = Objects.requireNonNull(header, "header");
@@ -307,7 +309,8 @@ public final class CobolLoweringReadinessConsumer {
         if (fact instanceof CobolSemanticProduct.GobackFact goback)
             return new GobackAudit(header, goback.exit(), goback.localContinuation());
         if (fact instanceof CobolSemanticProduct.MoveFact move) {
-            return new MoveAudit(header, literal(move.source()), reference(move.target()));
+            return new MoveAudit(header, move.source() instanceof CobolSemanticProduct.LiteralSource literal
+                    ? literal(literal) : reference((CobolSemanticProduct.DataReference) move.source()), reference(move.target()));
         }
         if (fact instanceof CobolSemanticProduct.CallFact call) {
             return new CallAudit(header, call.syntax(), call.target(),

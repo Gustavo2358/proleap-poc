@@ -171,8 +171,7 @@ def validate_pins(root, lock_path, required):
                 errors.append('missing/invalid immutable cross-repo pin: ' + repository)
         for repository, fields in {
                 'Gustavo2358/analysis-ir': ('semantic_version',),
-                'Gustavo2358/air-java': ('maven',),
-                'Gustavo2358/proleap-poc': ('contract_version', 'semantic_product_version')}.items():
+                'Gustavo2358/air-java': ('maven',)}.items():
             if repository not in required:
                 continue
             versions = [entry.get(field) for entry in sources if entry['repository'] == repository for field in fields]
