@@ -4,8 +4,6 @@ Work items delimitam a mudança em execução; o [backlog](backlog.md) registra 
 
 ## Ativo
 
-- [WORK-AST-006 — CP6 W2A IF semantic facts](active/WORK-AST-006/spec.md) — implementado e qualificado localmente somente no frontend; aguardando revisão humana.
-
 - [WORK-AST-002 — Hardening da fronteira AST para CFG e dataflow](active/WORK-AST-002/spec.md) — Slice 1 mergeado no PR #10; Discovery do Slice 2 no PR #13 e implementação de F-02 integrada pelo PR #28. Nenhum slice adjacente foi iniciado.
 
 
@@ -15,6 +13,8 @@ como registros/handoffs cross-repo para `air-java`, `cobol-lower` e
 `analysis-cfg`, não como implementação futura deste repositório.
 
 ## Histórico
+
+- [WORK-AST-006 — CP6 W2A IF semantic facts](history/WORK-AST-006.md) — APPROVED / MERGED / CLOSED; PR #35; [baseline W2A congelado](evidence/WORK-AST-006/closeout/baseline.json). W2C/B/D NOT_STARTED / NOT_AUTHORIZED.
 
 - [WORK-AST-005 — CP6 W1A CALL Semantic Product](history/WORK-AST-005.md) — PR #34 mergeado.
 

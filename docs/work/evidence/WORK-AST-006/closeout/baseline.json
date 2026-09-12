@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "workItem": "WORK-AST-006",
+  "status": "completed",
+  "lifecycle": "APPROVED / MERGED / CLOSED",
+  "baselineStatus": "FROZEN",
+  "semanticProductVersion": "1.4.0",
+  "sourceHead": "a86be664bf099ab7d8b9fc02794369391702f000",
+  "sourceTree": "5880e174b33c85ba3f3cdbc70bd2d8dc7b1d567b",
+  "pr": 35,
+  "mergeMethod": "merge commit",
+  "mergeSha": "4ffabded1aad39316b8a6f337f732976fdb3ca3e",
+  "mergedAt": "2026-09-12T12:39:11Z",
+  "mainSha": "4ffabded1aad39316b8a6f337f732976fdb3ca3e",
+  "mainTree": "5880e174b33c85ba3f3cdbc70bd2d8dc7b1d567b",
+  "treeComparison": "QUALIFIED_TREE_PRESERVED",
+  "activeUpstreamPin": "4ffabded1aad39316b8a6f337f732976fdb3ca3e",
+  "pinScope": "Immutable W2A product integration in main; subsequent administrative documentation is separate from the product qualification.",
+  "qualification": {
+    "sourceHead": "a86be664bf099ab7d8b9fc02794369391702f000",
+    "sourceTree": "5880e174b33c85ba3f3cdbc70bd2d8dc7b1d567b",
+    "localResult": "PASS",
+    "receipts": [
+      "../red/receipt.json",
+      "../green-1/receipt.json",
+      "../qualification/full-final.json.gz",
+      "../qualification/performance-final.json.gz",
+      "../qualification/challenge-w2a-final.json.gz",
+      "../challenges-final/w2a/results.json.gz"
+    ],
+    "ciRun": 34692974921,
+    "ciSourceHead": "a86be664bf099ab7d8b9fc02794369391702f000",
+    "ciResult": "SUCCESS"
+  },
+  "historicalW1A": {
+    "active": false,
+    "commit": "53d774026a1e4bcd969c7783a1d277aaa87b5f2f",
+    "tree": "a43f0fc4ef8a227d47f012b9fcb4e410842ffcc0"
+  },
+  "nextSlices": {
+    "W2C": "NOT_STARTED / NOT_AUTHORIZED",
+    "W2B": "NOT_STARTED / NOT_AUTHORIZED",
+    "W2D": "NOT_STARTED / NOT_AUTHORIZED"
+  },
+  "administrativeCloseout": {
+    "separateCommit": true,
+    "qualificationScope": "documentation/lifecycle only; no retroactive reassignment of product qualification",
+    "finalMainIdentity": "Recorded after the administrative commit in the closeout handoff, without a self-referential Git hash."
+  }
+}

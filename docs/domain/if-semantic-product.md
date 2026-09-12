@@ -170,4 +170,4 @@ downgrade ou reader produtivo local. Consumers fechados em 1.3 devem rejeitar
 Goldens e receipts 1.1/1.2/1.3 não são reescritos. Nenhum pin ou consumer sibling
 foi alterado e nenhum E2E downstream W2 é reivindicado.
 
-INV-SP-010 e EVAL-SP-008 protegem o contrato. [Work item](../work/active/WORK-AST-006/spec.md).
+INV-SP-010 e EVAL-SP-008 protegem o contrato. [Work item](../work/history/WORK-AST-006.md).

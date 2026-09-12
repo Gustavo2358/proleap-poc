@@ -1,6 +1,6 @@
 # CP6 W2A — evidência e handoff
 
-Somente frontend. [Work item](../../history/WORK-AST-006.md), branch
+Somente frontend. [Work item](../../active/WORK-AST-006/spec.md), branch
 `feat/cp6-w2a-if-semantic-facts`. [Contrato](../../../domain/if-semantic-product.md).
 
 ## Autoridade
