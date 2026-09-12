@@ -228,7 +228,8 @@ public final class SemanticPortLoweringProbe {
             at(violations, "CFG_READY_WITH_STRUCTURE_GAP", id,
                     "CFG-ready IF still carries missing structure");
         if (branch.header().readiness().lowering().status()
-                == CobolSemanticProduct.ReadinessStatus.SUFFICIENT)
+                == CobolSemanticProduct.ReadinessStatus.SUFFICIENT
+                && branch.profile() != CobolSemanticProduct.IfProfile.SIMPLE_TEXT_EQUALITY)
             at(violations, "IF_LOWERING_READY_WITHOUT_PREDICATE_SEMANTICS", id,
                     "ConditionSurface does not publish a normalized predicate");
     }

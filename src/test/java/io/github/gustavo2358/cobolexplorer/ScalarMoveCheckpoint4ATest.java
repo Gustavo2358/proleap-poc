@@ -52,7 +52,7 @@ class ScalarMoveCheckpoint4ATest {
     }
     // JSON-only assertions have no frontend joins and deliberately erase textual readiness.
     static void assertJson(JsonNode doc) {
-        assertEquals("1.3.0", doc.path("contractVersion").asText());
+        assertEquals("1.4.0", doc.path("contractVersion").asText());
         var data = doc.path("dataDeclarations").get(0);
         var statements = doc.path("statements");
         JsonNode move = null, goback = null;
@@ -150,13 +150,15 @@ class ScalarMoveCheckpoint4ATest {
     }
     @Test void unavailableContinuationNeverUsesPhysicalOrArrayOrder() {
         for (String body : List.of("MOVE 'PROGA' TO WS-X.",
-                "MOVE 'PROGA' TO WS-X.\nNEXT-PARAGRAPH.\nGOBACK.",
-                "IF WS-X = 'PROGA' MOVE 'PROGA' TO WS-X END-IF.\nGOBACK.")) {
+                "MOVE 'PROGA' TO WS-X.\nNEXT-PARAGRAPH.\nGOBACK.")) {
             var port = publish(program("01 WS-X PIC X(5).", body));
             var next = port.moves().get(0).normalContinuation();
             assertEquals(ContinuationAvailability.UNAVAILABLE, next.availability());
             assertTrue(next.statement().isEmpty());
         }
+        // SP 1.4 explicitly closes the formerly unavailable direct IF arm completion.
+        var nested = publish(program("01 WS-X PIC X(5).", "IF WS-X = 'PROGA' MOVE 'PROGA' TO WS-X END-IF.\nGOBACK."));
+        assertEquals(nested.statements().get(2).header().id(), nested.moves().get(0).normalContinuation().statement().orElseThrow());
         var port = publish(program("01 WS-X PIC X(5).", "GOBACK.\nMOVE 'PROGA' TO WS-X.\nGOBACK."));
         assertEquals(LocalContinuation.NONE, ((GobackFact) port.statements().get(0)).localContinuation());
         assertEquals(port.statements().get(2).header().id(), port.moves().get(0).normalContinuation().statement().orElseThrow());
@@ -256,10 +258,12 @@ class ScalarMoveCheckpoint4ATest {
         var a = AstBoundaryTestSupport.analyze(Files.readString(fixture), fixture.getFileName().toString());
         var port = CobolSemanticProductProjector.open(products(a), a.model().programUnits().get(0).id());
         var current = mapper.readTree(SemanticProductJsonWriter.serialize(port));
-        assertEquals("1.3.0", current.path("contractVersion").asText());
+        assertEquals("1.4.0", current.path("contractVersion").asText());
         assertEquals("GOBACK", previous.path("statements").get(0).path("variant").asText());
         assertEquals("NONE", previous.path("statements").get(0).path("localContinuation").asText());
         ((com.fasterxml.jackson.databind.node.ObjectNode) previous).remove("contractVersion");
+        assertEquals("UNAVAILABLE", current.path("storageIndependence").path("availability").asText());
+        ((com.fasterxml.jackson.databind.node.ObjectNode) current).remove("storageIndependence");
         ((com.fasterxml.jackson.databind.node.ObjectNode) current).remove("contractVersion");
         assertEquals(previous, current, "all CP3 facts, provenance, coverage and gaps must be unchanged");
     }

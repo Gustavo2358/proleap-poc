@@ -1,0 +1,51 @@
+id: WORK-AST-006
+title: CP6 W2A — IF semantic facts
+status: active
+risk: high
+goal: Publicar completion, presença dos braços, predicate puro total desconhecido e prova limitada de independência.
+must_read:
+  - docs/domain/cobol-semantic-product.md
+  - docs/domain/call-semantic-product.md
+  - docs/domain/scalar-text-move.md
+  - docs/domain/semantic-ast.md
+  - docs/architecture/pipeline.md
+  - docs/architecture/invariants.md
+  - docs/engineering/gates.md
+  - docs/engineering/work-item-protocol.md
+related_domain_rules:
+  - docs/domain/cobol-semantic-product.md
+related_decisions:
+  - ADR-0013
+related_invariants:
+  - INV-SP-010
+  - INV-SP-001
+  - INV-SP-002
+  - INV-SP-006
+  - INV-SP-008
+  - INV-SP-009
+  - INV-RES-002
+evals:
+  - EVAL-SP-008
+  - EVAL-SP-001
+  - EVAL-SP-003
+  - EVAL-SP-005
+  - EVAL-SP-007
+source_scope:
+  - src/main/java/io/github/gustavo2358/cobolexplorer/IfSemantics.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/Ast.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/AstBuilder.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/ScalarMoveSemantics.java
+  - src/main/java/io/github/gustavo2358/cobolexplorer/semanticproduct
+test_scope:
+  - src/test/java/io/github/gustavo2358/cobolexplorer
+  - src/test/resources/cobol/semantic
+must_not_change:
+  - Grammar, vendor, AIR, lowering, CFG, solver, lattice, runtime values e siblings.
+  - W2C, W2B, W2D; sem merge ou auto-merge.
+gates:
+  - docs
+  - architecture
+  - fast
+  - semantic
+  - performance
+  - full

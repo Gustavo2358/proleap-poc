@@ -55,8 +55,9 @@ O detalhamento do pipeline está em [docs/architecture/pipeline.md](docs/archite
 
 O Semantic Product está integrado ao composition root, possui consumer
 boundary-only e transporte JSON determinístico. DATA e o profile atual de CALL
-estão lowering-ready; MOVE e IF continuam parciais e statements apenas
-observados permanecem bloqueados. A fronteira pública deste repositório termina
+estão lowering-ready nos profiles publicados; MOVE e IF possuem provas delimitadas
+([IF W2A](docs/domain/if-semantic-product.md)), e demais formas permanecem parciais.
+Statements apenas observados permanecem bloqueados. A fronteira pública deste repositório termina
 nesse JSON: `air-java` já possui o modelo/validator AIR 2.0.0; `cobol-lower`
 será o tradutor separado; e `analysis-cfg` já existe como consumer separado da
 AIR Publication. Nenhum deles é implementação local. As fronteiras cross-repo

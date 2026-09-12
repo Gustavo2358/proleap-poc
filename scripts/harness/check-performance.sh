@@ -9,5 +9,5 @@ cd "$harness_project_dir"
   -Dtest=ResolutionAnalysisReportTest#scalesByIndexedCandidatesAndProducesDeterministicResults,\
 SemanticProductMoveCallContractTest#materializedPortIndexesScaleLinearly,\
 SemanticProductIntegrityValidatorTest#scalesAcrossUnitsNodesDeclarationsAndCandidatesWithoutTextualJoins,\
-ScalarMoveScaleTest \
+ScalarMoveScaleTest,IfSemanticsScaleTest \
   test

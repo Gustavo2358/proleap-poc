@@ -106,3 +106,12 @@ A construção cria o inventário semântico em ordem determinística. Metadados
 ## Relações
 
 Evals: EVAL-AST-001 a EVAL-AST-005, EVAL-COV-001, EVAL-COV-002 e EVAL-ARCH-001. Invariantes: INV-AST-001 a INV-AST-003, INV-COND-001, INV-COND-002, INV-PROV-002, INV-COV-001, INV-COV-002 e INV-EMB-001. ADRs: ADR-0002, ADR-0003, ADR-0005, ADR-0007, ADR-0008, ADR-0009 e ADR-0012.
+
+## Extensão canônica IF W2A
+
+[SP 1.4.0](if-semantic-product.md) preserva `IfStatement.elsePresence` e provenance
+separada dos braços como relações não-node; construtores legados usam UNKNOWN.
+`RelationCondition.operatorKind` distingue igualdade positiva por tokens tipados,
+sem avaliar condição ou normalizar relações abreviadas. IDs/traversal existentes
+não mudam. `Division.normalContinuations` visita listas diretas de IF/THEN/ELSE
+com successor herdado e stack; nested ownership permanece hierárquico.

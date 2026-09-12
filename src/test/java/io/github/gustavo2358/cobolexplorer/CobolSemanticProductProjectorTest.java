@@ -709,7 +709,7 @@ class CobolSemanticProductProjectorTest {
 
     private static CobolSemanticProduct.State portState(CobolSemanticPort port) {
         return new CobolSemanticProduct.State(port.unit(), port.policy(),
-                port.dataDeclarations(), port.statements(), port.gaps(), port.coverage(), port.entryInventory());
+                port.dataDeclarations(), port.statements(), port.gaps(), port.coverage(), port.entryInventory(), port.storageIndependence());
     }
 
     private static CobolSemanticProduct.StatementId statementId(

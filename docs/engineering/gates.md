@@ -38,3 +38,13 @@ O challenge CP6 W1A usa `python3 scripts/harness/challenge-call-w1a.py`: oito mu
 focais de CALL/fitting, restauração byte-exact e segundo GREEN. Logs/hashes ficam
 em target/cp6-w1a/challenges; o script recusa sobrescrever evidência existente.
 O [handoff W1A](../work/evidence/WORK-AST-005/README.md) preserva os recibos locais.
+
+O challenge CP6 W2A usa `python3 scripts/harness/challenge-if-w2a.py`: treze
+mutações de completion, arms, predicate/reads/access, independência e origem,
+restauração byte-exact de toda produção e segundo GREEN. O runner recusa
+sobrescrever o diretório; `W2A_CHALLENGE_OUT` seleciona uma execução nova.
+`IfSemanticsScaleTest` integra o performance gate com contadores N/2N,
+incluindo visitas reais do builder às regiões de completion.
+O workflow existente continua sem refatoração; executa full/performance e os
+challenges W1. W2A tem campanha focal de qualificação local com recibo próprio;
+ela não é reivindicada como execução remota do workflow.

@@ -1,0 +1,21 @@
+from pathlib import Path
+import json,gzip,subprocess,hashlib
+root=Path.cwd();out=Path('target/cp6-w2a')
+def git(repo,*args):return subprocess.check_output(['git','-C',str(repo),*args],text=True).strip()
+baseline=json.loads(gzip.decompress(Path('docs/work/evidence/WORK-AST-006/baseline.json.gz').read_bytes()))
+siblings={}
+for name,old in baseline['repositories'].items():
+ repo=root.parent/name
+ if repo==root:continue
+ now={'head':git(repo,'rev-parse','HEAD'),'tree':git(repo,'rev-parse','HEAD^{tree}'),'branch':git(repo,'branch','--show-current'),'status':git(repo,'status','--short')}
+ assert now==old,(name,now,old);siblings[name]=now
+sources=json.loads(Path('target/cp6-w2a/challenges-final/results.json').read_text())[-1]['sourceFiles']
+assert all(hashlib.sha256(Path(p).read_bytes()).hexdigest()==digest for p,digest in sources.items())
+changed=set(git(root,'diff','--name-only',baseline['productBaseline'],'--','src/main').splitlines())|set(git(root,'ls-files','--others','--exclude-standard','src/main').splitlines())
+expected=['Ast.java','AstBuilder.java','ScalarMoveSemantics.java','IfSemantics.java','semanticproduct/CobolSemanticPort.java','semanticproduct/CobolSemanticProduct.java','semanticproduct/projection/CobolSemanticProductProjector.java','semanticproduct/transport/SemanticProductJsonWriter.java']
+assert changed=={'src/main/java/io/github/gustavo2358/cobolexplorer/'+p for p in expected},changed
+subprocess.run(['git','-C',str(root),'diff','--check'],check=True)
+subprocess.run(['git','-C',str(root),'diff','--exit-code',baseline['productBaseline'],'--','src/main/antlr4','src/main/resources','.github','docs/work/evidence',':(exclude)docs/work/evidence/WORK-AST-006'],check=True)
+result={'productBaseline':baseline['productBaseline'],'productBaselineTree':git(root,'rev-parse',baseline['productBaseline']+'^{tree}'),'inheritedHead':baseline['inheritedHead'],'inheritedTree':git(root,'rev-parse',baseline['inheritedHead']+'^{tree}'),'branch':git(root,'branch','--show-current'),'productionFiles':sorted(changed),'qualifiedSourceFiles':len(sources),'exactQualifiedSourceMatch':True,'historicalEvidenceGrammarResourcesWorkflowUnchanged':True,'siblingsUnchanged':siblings}
+assert result['productBaselineTree']==result['inheritedTree']
+(out/'scope.json').write_text(json.dumps(result,indent=2)+'\n');print(json.dumps(result,indent=2))

@@ -1,0 +1,41 @@
+[
+  {
+    "fixture": "closed",
+    "processes": 2,
+    "exitCodes": [
+      0,
+      0
+    ],
+    "aliasesByteEqual": true,
+    "processesByteEqual": true,
+    "semanticAssertions": "PASS",
+    "sha256": "12d7aa24f16daf4d901a4e0df76904d0a2d525c86acc5ddd122d9e8001c5d827",
+    "bytes": 14520
+  },
+  {
+    "fixture": "open",
+    "processes": 2,
+    "exitCodes": [
+      0,
+      0
+    ],
+    "aliasesByteEqual": true,
+    "processesByteEqual": true,
+    "semanticAssertions": "PASS",
+    "sha256": "25b7a0abddc56169ff1d7329bd7e2be500245a546d08fd61ce81ebd04e32d6b1",
+    "bytes": 12213
+  },
+  {
+    "fixture": "empty",
+    "processes": 2,
+    "exitCodes": [
+      0,
+      0
+    ],
+    "aliasesByteEqual": true,
+    "processesByteEqual": true,
+    "semanticAssertions": "PASS",
+    "sha256": "b615225b893e7d9b6c3db045f8a07eaadbfde5e3ff9cdb2de42da98a9ec8e8c4",
+    "bytes": 12744
+  }
+]

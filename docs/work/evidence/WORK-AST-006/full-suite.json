@@ -1,0 +1,514 @@
+{
+  "suites": [
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.ArchitectureBoundaryTest",
+      "tests": "14",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.AstBuildCoverageTest",
+      "tests": "1",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.AstBuilderTest",
+      "tests": "1",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.AstBuilderTypedTraversalTest",
+      "tests": "11",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.AstPreorderInvariantTest",
+      "tests": "5",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.AstSemanticBoundaryCharacterizationTest",
+      "tests": "10",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.AstSemanticBoundaryRequiredOracleTest",
+      "tests": "4",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.CallCheckpointW1ATest",
+      "tests": "11",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.CallSemanticsTest",
+      "tests": "7",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.CicsIntrinsicClassifierTest",
+      "tests": "12",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.CobolSemanticProductProjectorTest",
+      "tests": "17",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.CompilationUnitModelTest",
+      "tests": "3",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.ConditionNameSurfaceAstTest",
+      "tests": "15",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.ConditionNameSurfaceDiscoveryTest",
+      "tests": "14",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.ConditionSurfaceAstTest",
+      "tests": "30",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.ContextualConditionOccurrenceDiscoveryTest",
+      "tests": "16",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.ContextualConditionOccurrenceTest",
+      "tests": "14",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.CopybookDirectoriesTest",
+      "tests": "2",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.CoverageSnapshotTest",
+      "tests": "2",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.DataAndIndexReferenceResolverTest",
+      "tests": "23",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.DeclarationModelAstTest",
+      "tests": "2",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.DynamicCallVariantTest",
+      "tests": "1",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.EntityScopeAndOccurrenceTest",
+      "tests": "4",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.ExplorerMainLoggingTest",
+      "tests": "3",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.ExternalCicsCharacterizationTest",
+      "tests": "3",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.ExternalClassificationProductTest",
+      "tests": "1",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.ExternalClassificationProjectionTest",
+      "tests": "11",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.FrontendLoggingTest",
+      "tests": "6",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.GrammarCoverageManifestTest",
+      "tests": "3",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.HarnessDocsTest",
+      "tests": "10",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.IfCanonicalProofTest",
+      "tests": "3",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.IfCheckpointW2ATest",
+      "tests": "13",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.IfSemanticsScaleTest",
+      "tests": "1",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.LoggingInfrastructureTest",
+      "tests": "4",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.NextSentenceCoverageDiscoveryTest",
+      "tests": "17",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.NominalReferenceAstTest",
+      "tests": "2",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.PartialAnalysisMissingCopyTest",
+      "tests": "6",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.PreprocessorEnginePolicyTest",
+      "tests": "3",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.ProcedureFileProgramReferenceResolverTest",
+      "tests": "16",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.ProgramNameCanonicalizerTest",
+      "tests": "1",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.ReferenceResolutionBaselineCharacterizationTest",
+      "tests": "3",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.ReferenceResolutionManifestTest",
+      "tests": "3",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.ResolutionAnalysisReportTest",
+      "tests": "9",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.ResolutionLoggingTest",
+      "tests": "2",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.ResolutionSnapshotTest",
+      "tests": "3",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.ScalarMoveCheckpoint4ATest",
+      "tests": "13",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.ScalarMoveScaleTest",
+      "tests": "3",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.SearchWhenConditionDiscoveryTest",
+      "tests": "20",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.SearchWhenMaterializationAdversarialTest",
+      "tests": "10",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.SemanticConditionContextDiscoveryTest",
+      "tests": "8",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "1"
+    },
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.SemanticCoverageTest",
+      "tests": "3",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.SemanticModelBaselineCharacterizationTest",
+      "tests": "2",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.SemanticModelLoggingTest",
+      "tests": "2",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.SemanticProductBoundaryCheckpoint3ATest",
+      "tests": "7",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.SemanticProductBoundaryCheckpoint3BTest",
+      "tests": "5",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.SemanticProductCheckpoint6IntegrationTest",
+      "tests": "4",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.SemanticProductCheckpoint7JsonTest",
+      "tests": "5",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.SemanticProductCheckpoint8LoweringReadinessTest",
+      "tests": "6",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.SemanticProductEntryGobackTest",
+      "tests": "20",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.SemanticProductFileWriteTest",
+      "tests": "1",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.SemanticProductIntegrityValidatorTest",
+      "tests": "78",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.SemanticProductStatementInventoryTest",
+      "tests": "9",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.SemanticProductTargetModelOracleTest",
+      "tests": "7",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.SourceMapUnicodePerformanceTest",
+      "tests": "5",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.SourceNormalizationPreprocessingIntegrationTest",
+      "tests": "4",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.SourceNormalizerTest",
+      "tests": "17",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.SourceProvenanceTest",
+      "tests": "2",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.StatementModelAstTest",
+      "tests": "3",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.StructuredExpressionAstTest",
+      "tests": "2",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.SymbolTableBuilderTest",
+      "tests": "2",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.W1CompatibilityW2ATest",
+      "tests": "1",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "io.github.gustavo2358.cobolexplorer.semanticproduct.SemanticProductMoveCallContractTest",
+      "tests": "17",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    }
+  ],
+  "totals": {
+    "tests": 598,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 1
+  }
+}

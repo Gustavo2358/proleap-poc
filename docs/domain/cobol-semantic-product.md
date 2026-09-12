@@ -1,6 +1,6 @@
 # COBOL Semantic Product
 
-Contrato corrente: [CALL e fitting W1A / SP 1.3.0](call-semantic-product.md).
+Contrato corrente: [IF W2A / SP 1.4.0](if-semantic-product.md), preservando [CALL e fitting W1A](call-semantic-product.md).
 
 O COBOL Semantic Product é a boundary COBOL-specific, materializada e imutável
 entre o frontend e o futuro repositório externo `cobol-lower`. Cada publicação
@@ -9,7 +9,7 @@ transporte `cobol-semantic-product.json` e permanece fechada depois da projeçã
 O runner mantém `semantic-product.json` como alias compatível com bytes idênticos;
 ele publica a unit primária selecionada, sem prometer inventário JSON multi-unit.
 Essa é a fronteira pública deste repositório; o contrato atual é regido pela
-ADR-0013 e pelos invariantes `INV-SP-001` a `INV-SP-009`.
+ADR-0013 e pelos invariantes `INV-SP-001` a `INV-SP-010`.
 
 O caminho de produção `SemanticProductJsonWriter.write(port, path)` serializa
 diretamente para um OutputStream fechado pelo adapter. Ele mantém os DTOs de
@@ -34,6 +34,14 @@ ScalarText, literal TextValue, WholeItemAccess, FULL_IDENTITY e normalContinuati
 As limitações gerais/storage/CALL/IF deste documento continuam vigentes fora
 desse profile positivo; as matrizes históricas do audit não ampliam suas claims.
 
+## Profile IF W2A
+
+O [contrato IF 1.4.0](if-semantic-product.md) acrescenta predicate BOOLEAN/PURE/TOTAL,
+truth UNKNOWN, reads completos com acesso inteiro no profile admitido, presença e
+conteúdo dos braços, completion executável de IF/MOVE interno e prova separada de
+independência de storage. As limitações gerais e as observações do audit abaixo
+continuam válidas fora desse profile. Não se publica um predicate normalizado.
+
 ## Superfície atual
 
 O projector publica:
@@ -42,8 +50,9 @@ O projector publica:
   necessário aos candidates nominais;
 - todas as ocorrências suportadas de `MOVE` literal para DATA;
 - todas as ocorrências suportadas de `CALL` literal ou por identifier/expression;
-- todos os `IF` como facts estruturais com condition surface, membership
-  `THEN`/`ELSE` e continuation quando conhecida;
+- todos os `IF` com condition surface, membership `THEN`/`ELSE`,
+  presença/conteúdo/entry dos arms e continuation; o profile W2A acrescenta
+  garantias explícitas de avaliação/completion sem calcular truth;
 - a entry primária com disponibilidade de início executável e assinatura;
 - todo GOBACK tipado como `GobackFact`, com saída da invocação corrente e
   `LocalContinuation.NONE`, inclusive quando há statements físicos posteriores;
@@ -69,7 +78,7 @@ lowering/CFG/effects-dataflow bloqueada. Não publica CONTINUE, no-op ou
 fallthrough para essa variante. A regra COBOL e a representação de origem
 estão na [AST semântica](semantic-ast.md#next-sentence).
 
-O contrato 1.3.0 não publica sentence boundaries ou o target after-period.
+O contrato 1.4.0 não publica sentence boundaries ou o target after-period.
 Procedure containers são achatados no inventário; em SEARCH, o child possui
 parent SEARCH com branch UNKNOWN, sem identidade pública de SearchWhen.
 Logo, identidade tipada é necessária, mas insuficiente para lowering preciso
@@ -153,7 +162,7 @@ profile atualmente materializado, não toda forma COBOL com o mesmo keyword.
 | DATA | nome canônico e `PICTURE` opcional explícito | `DataItemId(unit, localId)` | `NOT_APPLICABLE` | hierarquia/storage gerais não publicados; scalarText é prova local opcional | `NOT_APPLICABLE` | `NOT_APPLICABLE` | `NOT_APPLICABLE` | identidade de declaration, sem lookup downstream | layout/alias permanecem desconhecidos | declaration completa, inclusive include chain/exatidão | por declaration; fixture atual `MODELED` |
 | MOVE literal → DATA | valor normalizado e `LiteralKind`; kind `ALPHANUMERIC` somente para literal básico provado | statement, literal operand e target operand distintos | disponível, estrutural | disponível quando o parent é suportado; caso contrário `CONTAINMENT_NOT_PROJECTED` | `normalContinuation` explícita com disponibilidade; ordem estrutural não é successor | literal source + DATA target | target `WRITE` | status, reason, candidates e `selected` quando resolved | cópia/acesso provados no profile FULL_IDENTITY/FITTED_TEXT; restante aberto | statement, source e target | `PARTIAL` enquanto kind for desconhecido |
 | CALL literal/data | soma tipada, superfície explícita de cláusulas | statement/target distintos | estrutural | disponível ou gap | normalContinuation condicional explícita | literal lógico ou DATA | CALL_TARGET para DATA | status/reason/candidates/selected conservados | runtime UNKNOWN, effects UNKNOWN, outcomes OPEN | statement/target separados | MODELED somente com prova da primeira slice |
-| IF/ELSE estrutural | condition `shape` e referências DATA conhecidas; predicate não publicado | statement e condition operands distintos | disponível, estrutural | membership ordenado `THEN`/`ELSE`, inclusive nesting | `IfFact.continuation` quando existe; ausência pode marcar fim estrutural, não prova saída executável | referências DATA conhecidas da condition | `READ` | preserva status/reason/candidates/selected por referência | truth value, operator/object normalizados e branch tomada não publicados | statement, condition e referências | `PARTIAL` por ausência de predicate semantics |
+| IF/ELSE | condition surface e referências DATA; predicate guarantee/arms explícitos no profile W2A | statement e condition operands distintos | disponível, estrutural | membership ordenado `THEN`/`ELSE`, inclusive nesting | `continuation` estrutural e `normalContinuation` executável com disponibilidade separada; ausência não prova saída | referências DATA conhecidas da condition | `READ` | preserva status/reason/candidates/selected por referência | truth UNKNOWN; operator/object normalizados e branch tomada não publicados | statement, condition e referências | `MODELED` no profile W2A simples; senão `PARTIAL` com gaps |
 | Entry primária | disponibilidade de start e assinatura escrita | `EntryId(unit, localId)` | referência explícita ao statement quando conhecida | unit proprietária | não publica sequência | count conhecido ou indisponível | `PRIMARY` | assinatura completa não projetada | contexto runtime não inferido | PROCEDURE DIVISION ou unit quando ausente | entry individual; inventário alternativo aberto |
 | GOBACK | variante tipada e saída da invocação corrente | `StatementId(unit, localId)` | disponível, estrutural | disponível ou gap localizado | `NONE`, sem successor local | valores de retorno não publicados | terminal COBOL GOBACK | não aplicável à saída local | destino externo e lifecycle não modelados | statement completo | `MODELED` para saída local com containment conhecido |
 | `ObservedStatement` | kind/shape/gap genéricos; inclui PERFORM, EVALUATE, GO TO, SEARCH, DISPLAY e demais terminais/shapes | statement identity positiva | disponível | posição conhecida quando o parent é suportado; senão gap | nenhuma continuation semântica própria é inferida | não publicados para a família | não publicados | não publicado como semântica da família | qualquer efeito/transferência permanece desconhecido | statement | `PARTIAL`, `UNSUPPORTED` ou `INPUT_MISSING`, nunca ausência |
@@ -167,7 +176,7 @@ As três dimensões não são intercambiáveis.
 | DATA | `READY` | `NOT_APPLICABLE` | `PARTIAL` | declaração nominal disponível; scalarText prova profile local quando presente; layout geral aberto |
 | MOVE literal → DATA | `READY` para FULL_IDENTITY ou FITTED_TEXT; senão `PARTIAL`/`BLOCKED` | `READY` somente para continuação canônica conhecida; senão `PARTIAL` | `PARTIAL` | profile escalar 4A e fitting W1A; demais casos preservam gaps |
 | CALL literal/data | `READY` sob as provas W1A de target, origem, acesso e cláusulas ausentes | `READY` para successor canônico conhecido | `PARTIAL` | não certifica AIR; interpretação de nome, efeitos/outcomes AIR e lowering pertencem a checkpoints posteriores |
-| IF/ELSE estrutural | `PARTIAL` | `READY` quando branches/continuation/containment são exatos | `PARTIAL` | membership disponível não certifica branch AIR; avaliação/predicate e controle executável têm lacunas |
+| IF/ELSE estrutural | `READY` no profile W2A; senão `PARTIAL` | `READY` quando branches/continuation/containment são exatos | `PARTIAL` | membership isolado não certifica branch AIR; as provas W2A são explícitas, com gaps fora da slice |
 | `ObservedStatement` | `BLOCKED` | `BLOCKED` | `BLOCKED` | inventário está disponível; lowering semântico da família não está |
 | Entry primária/start | `READY` com start e assinatura sem cláusulas conhecidos; senão rebaixado | `READY` somente para start conhecido | `BLOCKED` | inventário de entradas alternativas permanece `PARTIAL` |
 | GOBACK | `READY` para saída da invocação corrente | `READY` para ausência de successor local com containment conhecido | `BLOCKED` | nenhum outro terminal, runtime/lifecycle ou perfil AIR é promovido |
@@ -337,7 +346,8 @@ Consumers/adapters precisarem reconhecer uma nova variante é comportamento
 intencional. Redesenhar `State`, trocar o port por bags dinâmicos ou quebrar o
 envelope para cada construct não é necessário.
 
-O JSON publica `schema=cobol-semantic-product`, `contractVersion=1.3.0`.
+O JSON publica `schema=cobol-semantic-product`, `contractVersion=1.4.0`.
+A evolução W2A está no [contrato IF](if-semantic-product.md).
 A evolução W1A está no [contrato CALL e fitting](call-semantic-product.md): target
 literal/data, superfície/continuação explícitas e resultado ajustado, com consumer
 interno atualizado posteriormente em W1C conforme INTERNAL-CONTRACT-DEV-001.
@@ -423,5 +433,6 @@ da tradução AIR; nenhum consumer infere essas regras de texto ou shape.
 - `EVAL-SP-002`: probe independente, falsificações e gate arquitetural;
 - `EVAL-SP-003`: transporte JSON determinístico e sem recomputação;
 - `EVAL-SP-004`: entry primária/start/GOBACK, assinatura explícita e adversariais;
+- `EVAL-SP-008`: IF W2A, predicate, arms/completion e independência limitada;
 - `EVAL-ARCH-001`: direção de dependências;
 - `EVAL-RES-CALL-002`: binding nominal não resolve valor de CALL dinâmico.

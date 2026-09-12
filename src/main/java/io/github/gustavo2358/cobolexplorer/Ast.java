@@ -226,11 +226,24 @@ public final class Ast {
     public record CallArgument(Meta meta, PassingMode passingMode, CallArgumentKind argumentKind,
                                Expression value, String writtenText) implements Node {}
 
+    public enum BranchPresence { ABSENT, PRESENT, UNKNOWN }
+
     public record IfStatement(Meta meta, Expression condition, List<Statement> thenBranch,
-                              List<Statement> elseBranch, boolean explicitlyTerminated) implements Statement {
+                              List<Statement> elseBranch, boolean explicitlyTerminated,
+                              BranchPresence elsePresence, SourceProvenance thenProvenance,
+                              SourceProvenance elseProvenance) implements Statement {
         public IfStatement {
             thenBranch = List.copyOf(thenBranch);
             elseBranch = List.copyOf(elseBranch);
+            Objects.requireNonNull(elsePresence);
+            Objects.requireNonNull(thenProvenance);
+            Objects.requireNonNull(elseProvenance);
+        }
+        /** Legacy/manual ASTs cannot prove lexical absence from an empty list. */
+        public IfStatement(Meta meta, Expression condition, List<Statement> thenBranch,
+                           List<Statement> elseBranch, boolean explicitlyTerminated) {
+            this(meta, condition, thenBranch, elseBranch, explicitlyTerminated,
+                    BranchPresence.UNKNOWN, meta.provenance(), meta.provenance());
         }
     }
 
@@ -477,10 +490,17 @@ public final class Ast {
      * created for omitted parts. A relational NOT is part of {@code relationalOperator}
      * canonical text; a logical NOT is a separate {@link NegatedCondition}.
      */
+    public enum RelationOperator { EQUAL, OTHER, UNAVAILABLE }
+
     public record RelationCondition(Meta meta, Expression subject, String relationalOperator,
-                                    Expression object, String writtenText) implements Expression {
+                                    Expression object, String writtenText, RelationOperator operatorKind) implements Expression {
         public RelationCondition {
             object = Objects.requireNonNull(object, "object");
+            Objects.requireNonNull(operatorKind);
+        }
+        public RelationCondition(Meta meta, Expression subject, String relationalOperator,
+                                 Expression object, String writtenText) {
+            this(meta, subject, relationalOperator, object, writtenText, RelationOperator.UNAVAILABLE);
         }
     }
 

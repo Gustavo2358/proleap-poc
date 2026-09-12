@@ -1,6 +1,6 @@
 # CALL no Semantic Product — CP6 W1A
 
-Contrato corrente SP **1.3.0**. Esta capability publica fatos COBOL, não AIR,
+Introduzido em SP **1.3.0**, preservado no contrato corrente [SP 1.4.0](if-semantic-product.md). Esta capability publica fatos COBOL, não AIR,
 lowering, CFG, resolução de dependências ou valores de runtime.
 
 ## Autoridade e algoritmo
@@ -14,8 +14,8 @@ o receptor é maior. Essas regras não provam que uma chamada retorne nem pureza
 O builder conserva presença das cinco cláusulas pelos contextos diretos CALL.
 Sua relação `Division.normalContinuations` cobre MOVE e CALL sem handlers nas
 listas canônicas de statements diretos da mesma região de sentences. Não atravessa
-fim de paragraph/section, declaratives, statement não materializado nem controle
-aninhado. Handler presente torna essa relação indisponível: não se confunde a
+fim de paragraph/section, declaratives ou statement não materializado. W2A estende
+completion a MOVE/IF dos braços; CALL aninhado continua fora desta prova. Handler presente torna essa relação indisponível: não se confunde a
 continuação externa da chamada com o corpo de NOT ON EXCEPTION.
 
 `ScalarMoveSemantics` indexa os targets CALL durante o mesmo walk que já identifica
