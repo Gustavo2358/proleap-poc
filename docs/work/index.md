@@ -52,3 +52,5 @@ como registros/handoffs cross-repo para `air-java`, `cobol-lower` e
 - [WORK-SEMANTIC-PRODUCT-004 — Entry primária e saída local GOBACK](history/WORK-SEMANTIC-PRODUCT-004.md) — concluído pelo PR #31.
 
 - [WORK-SEMANTIC-PRODUCT-005 — Checkpoint 4A scalar textual MOVE](history/WORK-SEMANTIC-PRODUCT-005.md) — concluído pelo PR #32; E1–E4 e remediação de escrita preservados nos evals canônicos.
+
+- [WORK-SEMANTIC-PRODUCT-008](active/WORK-SEMANTIC-PRODUCT-008.yaml): CP6 multi-CALL composition, IN_PROGRESS. Baseline #38 `a14147106f329cce2f0006aa94194b47db96f367`.

@@ -34,7 +34,7 @@ public final class PerformSemantics {
     }
     static PerformSemantics analyze(CompilationUnitBuildResult frontend, CompilationUnitSymbolTables tables,
             ReferenceResolution resolution, ResolutionAnalysisReport report,
-            Map<ScalarMoveSemantics.NodeKey, ScalarMoveSemantics.Move> moves) {
+            Map<ScalarMoveSemantics.NodeKey, ScalarMoveSemantics.Move> moves, IfSemantics ifs) {
         boolean complete = report.gaps().stream().noneMatch(g -> g.category() == ResolutionAnalysisReport.GapCategory.INPUT);
         var references = new HashMap<ScalarMoveSemantics.NodeKey, ReferenceResolution.Entry>();
         for (var entry : resolution.entries()) references.put(new ScalarMoveSemantics.NodeKey(
@@ -98,16 +98,19 @@ public final class PerformSemantics {
                 var body = target == null ? List.<Ast.Statement>of() : direct(target);
                 boolean isolated = primary != null && target != null && primary != target && procedure.children().contains(target);
                 int index = main.indexOf(perform);
-                // Whole primary flow: optional MOVE prefix, PERFORM, CALL, GOBACK.
-                isolated &= index >= 0 && main.size() == index + 3;
+                // SP1.7: direct supported primary statements with one constant PERFORM resume.
+                isolated &= index >= 0 && index + 1 < main.size()
+                    && main.get(main.size() - 1) instanceof Ast.GobackStatement;
                 if (isolated) {
-                    isolated = main.get(index + 1) instanceof Ast.CallStatement call && !call.surface().hasHandlers()
-                        && main.get(index + 2) instanceof Ast.GobackStatement;
-                    for (int i = 0; i < index; i++) isolated &= supportedMove(main.get(i), unit.id(), moves);
-                    for (var statement : main) isolated &= modeled(statement, findings);
-                    for (int i = 0; i < main.size() - 1; i++) {
+                    for (int i = 0; i < main.size(); i++) {
                         var statement = main.get(i);
-                        if (statement != perform) isolated &= Objects.equals(procedure.normalContinuations().get(statement.meta().id()), main.get(i + 1).meta().id());
+                        isolated &= modeled(statement, findings);
+                        if (i == main.size() - 1) continue;
+                        if (statement == perform) continue;
+                        boolean supported = supportedMove(statement, unit.id(), moves)
+                            || statement instanceof Ast.CallStatement call && !call.surface().hasHandlers()
+                            || statement instanceof Ast.IfStatement branch && ifs.fact(unit.id(), branch.meta().id()).simpleProfile();
+                        isolated &= supported && Objects.equals(procedure.normalContinuations().get(statement.meta().id()), main.get(i + 1).meta().id());
                     }
                 }
                 if (!isolated) gaps.add("PERFORM_ISOLATED_PRIMARY_FLOW_NOT_PROVEN");
