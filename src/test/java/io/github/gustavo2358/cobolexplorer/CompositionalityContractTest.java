@@ -18,6 +18,15 @@ class CompositionalityContractTest {
         return b.toString();
     }
     @Test void everySupportedFamilyAcceptsOneTwoFiveAndFortyOccurrences() throws Exception {
+        // A new typed semantic family cannot be added without a multiplicity generator.
+        // ObservedStatement is fallback; GOBACK terminates each generated primary path.
+        var families = java.util.Arrays.stream(StatementFact.class.getPermittedSubclasses())
+                .filter(f -> f != ObservedStatement.class && f != GobackFact.class).toList();
+        for (int n : List.of(1, 2, 5, 40)) {
+            var mixed = ScalarMoveCheckpoint4ATest.publish(program(n, n, n));
+            for (var family : families) assertTrue(mixed.statements().stream().filter(family::isInstance).count() >= n,
+                    "Missing compositional generator for " + family.getSimpleName() + " at N=" + n);
+        }
         for (int n : List.of(1, 2, 5, 40)) for (var counts : List.of(new int[]{n,0,0}, new int[]{1,n,0}, new int[]{0,0,n})) {
             var source = program(counts[0], counts[1], counts[2]);
             var p = ScalarMoveCheckpoint4ATest.publish(source);

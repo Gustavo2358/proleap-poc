@@ -16,7 +16,12 @@ implementation: >-
 validation: >-
   FAST PASS: 111 tests, /tmp/partial-front-fast-4.log.
   qualification-local PASS: 608 tests, zero failures, one pre-existing skipped test;
-  source-normalizer full and naming PASS, /tmp/partial-front-full-3.log.
+  source-normalizer full and naming PASS, /tmp/partial-front-full-5.log.
   Earlier qualification attempts exposed historical SP1.7 continuation/field oracles;
   these were updated and verified focally before the successful final run.
 review_state: IMPLEMENTED / AWAITING HUMAN REVIEW; coordinated integrated gate in WORK-CFG-038.
+final_contract_guard: >-
+  The sealed semantic-family inventory requires a generator with 1/2/5/40 occurrences
+  for every typed nonterminal fact. Adding a future fact without composition cases
+  fails the test. Test-only guard PASS, /tmp/partial-front-contract-final.log; productive
+  source unchanged since final Full, so Full was not repeated.
