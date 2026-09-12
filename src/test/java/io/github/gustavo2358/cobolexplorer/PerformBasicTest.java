@@ -16,14 +16,14 @@ class PerformBasicTest {
             if (name.equals("literal") || name.equals("overwrite")) source = source.replace("01 WS-A PIC X(8).\n", "");
             var port = ScalarMoveCheckpoint4ATest.publish(source);
             assertEquals(1, port.performs().size()); var perform = port.performs().get(0);
-            assertEquals(PerformProfile.SIMPLE_SINGLE_CALLSITE_PROCEDURE_PERFORM, perform.profile());
+            assertEquals(PerformProfile.BASIC_PROCEDURE_PERFORM, perform.profile());
             assertEquals(port.calls().get(0).header().id(), perform.normalContinuation().statement().orElseThrow());
             var bodyFacts = perform.targetStatements().stream().map(id -> (MoveFact) port.statement(id).orElseThrow()).toList();
             assertEquals(name.equals("copy") ? 2 : 1, bodyFacts.size());
             assertEquals(Optional.of(bodyFacts.get(0).header().id()), perform.targetEntry());
             assertEquals(Optional.of(bodyFacts.get(bodyFacts.size()-1).header().id()), perform.targetExit());
-            assertEquals(perform.normalContinuation().statement(), bodyFacts.get(bodyFacts.size()-1).normalContinuation().statement());
-            assertEquals(perform.primaryStatements().get(0), port.entries().get(0).start().statement().orElseThrow());
+            assertEquals(Optional.empty(), bodyFacts.get(bodyFacts.size()-1).normalContinuation().statement());
+            assertTrue(perform.primaryStatements().isEmpty(), "SP1.8 does not duplicate the primary inventory per activation");
             assertFalse(perform.targetStatements().contains(port.entries().get(0).start().statement().orElseThrow()));
             assertEquals(perform.header().provenance().original().startLine(), perform.target().orElseThrow().referenceOrigin().original().startLine());
             assertTrue(perform.target().orElseThrow().referenceOrigin().exact()); assertTrue(perform.target().orElseThrow().paragraphOrigin().exact());
@@ -33,7 +33,7 @@ class PerformBasicTest {
             if (name.equals("copy")) { assertInstanceOf(DataReference.class, bodyFacts.get(1).source()); assertEquals(Availability.KNOWN, port.storageIndependence().availability()); }
             var json = SemanticProductJsonWriter.serialize(port);
             assertArrayEquals(json, SemanticProductJsonWriter.serialize(ScalarMoveCheckpoint4ATest.publish(source)));
-            var tree = new ObjectMapper().readTree(json); assertEquals("1.7.0", tree.path("contractVersion").asText());
+            var tree = new ObjectMapper().readTree(json); assertEquals("1.8.0", tree.path("contractVersion").asText());
             Path out = Path.of("target/perform-basic"); Files.createDirectories(out);
             Files.write(out.resolve(name + ".json"), json); Files.writeString(out.resolve(name + ".cbl"), source);
         }
@@ -45,7 +45,6 @@ class PerformBasicTest {
                 "DEFINE-PGM WITH TEST AFTER UNTIL WS-A = 'X'", "DEFINE-PGM VARYING WS-A FROM 1 BY 1 UNTIL WS-A = 5",
                 "MOVE 'PROGA' TO WS-PGM END-PERFORM", "MISSING"))
             sources.put(form, base.replace("PERFORM DEFINE-PGM.", "PERFORM " + form + "."));
-        sources.put("two callsites", base.replace("CALL WS-PGM.", "PERFORM DEFINE-PGM.\nCALL WS-PGM."));
         sources.put("ordinary fallthrough", base.replace("GOBACK.\nDEFINE-PGM.", "DEFINE-PGM."));
         sources.put("GO TO target", base.replace("GOBACK.", "GO TO DEFINE-PGM."));
         sources.put("ENTRY", base.replace("CALL WS-PGM.", "ENTRY 'ALT'.\nCALL WS-PGM."));

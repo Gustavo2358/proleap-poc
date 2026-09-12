@@ -27,7 +27,7 @@ class MoveDataSourceTest {
         assertEquals(Availability.KNOWN, p.storageIndependence().availability());
         assertEquals(2, p.storageIndependence().members().size());
         var json = new ObjectMapper().readTree(SemanticProductJsonWriter.serialize(p));
-        assertEquals("1.7.0", json.path("contractVersion").asText());
+        assertEquals("1.8.0", json.path("contractVersion").asText());
         assertEquals("LITERAL", json.path("statements").get(0).path("source").path("variant").asText());
         var source = json.path("statements").get(1).path("source");
         assertEquals("DATA", source.path("variant").asText());

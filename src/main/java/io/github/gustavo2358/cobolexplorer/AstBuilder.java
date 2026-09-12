@@ -504,7 +504,9 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
                 var context = region.statements().get(i);
                 Ast.Statement current = context.entryStatement() == null ? builtStatements.get(context) : null;
                 if (next != null && (current instanceof Ast.MoveStatement || current instanceof Ast.IfStatement
-                        || region.topLevel() && current instanceof Ast.CallStatement call && !call.surface().hasHandlers()))
+                        || current instanceof Ast.PerformStatement
+                        || current instanceof Ast.CallStatement call && !call.surface().hasHandlers()
+                        || sequentialOpaque(context)))
                     result.put(current.meta().id(), next.meta().id());
                 if (context.ifStatement() != null && current instanceof Ast.IfStatement) {
                     var branch = context.ifStatement();
@@ -516,6 +518,15 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
                 next = current;
             }
         }
+    }
+
+    /** Only normal completion is asserted; no values, file or arithmetic semantics.
+     * Handler bodies are barriers until their control is independently published. */
+    private static boolean sequentialOpaque(CobolParser.StatementContext c) {
+        return c.continueStatement() != null || c.displayStatement() != null
+            || c.readStatement() != null && c.readStatement().atEndPhrase() == null
+                && c.readStatement().notAtEndPhrase() == null && c.readStatement().invalidKeyPhrase() == null
+                && c.readStatement().notInvalidKeyPhrase() == null;
     }
 
     private record CompletionRegion(List<CobolParser.StatementContext> statements,

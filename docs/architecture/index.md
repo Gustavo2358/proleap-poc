@@ -14,3 +14,5 @@ O [pipeline atual](pipeline.md) registra as fronteiras confirmadas. O mapa curto
   evidências, matriz de suficiência, blockers e próximos slices.
 
 Um ADR registra por que uma alternativa arquitetural foi escolhida. Um invariante registra o que não pode ser violado, seu enforcement e exceções conhecidas. Regras COBOL pertencem a `../domain/`.
+
+- [Compositionality and conservative partial lowering](compositional-partial-lowering.md): permanent invariants and future construction completion contract.

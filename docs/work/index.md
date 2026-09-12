@@ -53,4 +53,6 @@ como registros/handoffs cross-repo para `air-java`, `cobol-lower` e
 
 - [WORK-SEMANTIC-PRODUCT-005 — Checkpoint 4A scalar textual MOVE](history/WORK-SEMANTIC-PRODUCT-005.md) — concluído pelo PR #32; E1–E4 e remediação de escrita preservados nos evals canônicos.
 
-- [WORK-SEMANTIC-PRODUCT-008](active/WORK-SEMANTIC-PRODUCT-008.yaml): CP6 multi-CALL composition, IN_PROGRESS. Baseline #38 `a14147106f329cce2f0006aa94194b47db96f367`.
+- [WORK-SEMANTIC-PRODUCT-008](active/WORK-SEMANTIC-PRODUCT-008.yaml): CP6 multi-CALL composition, DONE / MERGED #39, `ff3704911e53b3d8b337fc610cf84343cdc5fe90`.
+
+- [WORK-SEMANTIC-PRODUCT-009](active/WORK-SEMANTIC-PRODUCT-009.yaml): SP1.8 compositionality and partial publication; coordinated with WORK-CFG-038.

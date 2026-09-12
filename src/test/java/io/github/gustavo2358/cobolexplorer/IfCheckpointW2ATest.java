@@ -98,7 +98,7 @@ class IfCheckpointW2ATest {
             assertEquals(2, result.independent().size());
             var bytes = SemanticProductJsonWriter.serialize(port);
             assertArrayEquals(bytes, SemanticProductJsonWriter.serialize(ScalarMoveCheckpoint4ATest.publish(fixture(name))));
-            assertEquals("1.7.0", new ObjectMapper().readTree(bytes).path("contractVersion").asText());
+            assertEquals("1.8.0", new ObjectMapper().readTree(bytes).path("contractVersion").asText());
         }
     }
     @Test void multipleStatementsInEachArmFollowDirectRelations() throws Exception {
@@ -156,7 +156,7 @@ class IfCheckpointW2ATest {
         for (String declaration : List.of("01 FLAG PIC X.\n01 OVERLAY REDEFINES FLAG PIC X.",
                 "01 FLAG PIC X EXTERNAL.", "01 FLAG PIC X OCCURS 2.", "01 FLAG PIC 9.",
                 "01 GROUP-ITEM.\n 05 FLAG PIC X.", "01 FLAG PIC X VALUE 'N'.",
-                "01 FLAG PIC X.\n66 ALIAS-FLAG RENAMES FLAG.", "01 FLAG PIC X.\n01 WS-OTHER PIC 9.")) {
+                "01 FLAG PIC X.\n66 ALIAS-FLAG RENAMES FLAG.")) {
             var d = publish(fixture("closed").replace("01 FLAG PIC X.", declaration), "storage-negative-" + Integer.toUnsignedString(declaration.hashCode()));
             assertTrue(d.path("dataDeclarations").size() >= 2);
             assertEquals("UNAVAILABLE", d.path("storageIndependence").path("availability").asText());
@@ -165,6 +165,13 @@ class IfCheckpointW2ATest {
         }
         var linkage = publish(fixture("closed").replace("WORKING-STORAGE", "LINKAGE"), "linkage");
         assertEquals("UNAVAILABLE", linkage.path("storageIndependence").path("availability").asText());
+    }
+    @Test void unrelatedUnmodeledDeclarationDoesNotEraseIndependentRoots() throws Exception {
+        var d=publish(fixture("closed").replace("01 FLAG PIC X.","01 FLAG PIC X.\n01 WS-OTHER PIC 9."),"partial-storage");
+        assertEquals("KNOWN",d.path("storageIndependence").path("availability").asText());
+        var unsupported=java.util.stream.StreamSupport.stream(d.path("dataDeclarations").spliterator(),false)
+            .filter(x->x.path("canonicalName").asText().equals("WS-OTHER")).findFirst().orElseThrow().path("id");
+        assertTrue(java.util.stream.StreamSupport.stream(d.path("storageIndependence").path("members").spliterator(),false).noneMatch(unsupported::equals));
     }
     @Test void inputMissingAndRecoveryDoNotCertifyAbsenceOrReads() throws Exception {
         var a = AstBoundaryTestSupport.analyze(fixture("open"), "input.cbl");

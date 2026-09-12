@@ -1,6 +1,6 @@
 id: WORK-SEMANTIC-PRODUCT-008
 title: Generalize supported program facts for multi-call flow
-status: IN_PROGRESS
+status: DONE
 scope:
   - SP1.7 explicit evolution of isolated PERFORM primary composition
   - Seven multi-CALL source contract fixtures; no new COBOL construction
@@ -12,3 +12,6 @@ notes: >-
   (602 tests, one pre-existing skipped test, normalizer full and naming PASS).
   Raw logs /tmp/multicall-frontend-fast-2.log and /tmp/multicall-frontend-full.log.
   IMPLEMENTED / AWAITING HUMAN REVIEW; no merge or auto-merge.
+
+merge_commit: ff3704911e53b3d8b337fc610cf84343cdc5fe90
+closeout: DONE / MERGED; merge verified after fetch on 2026-09-12. Earlier review wording above is historical.

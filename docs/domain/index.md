@@ -20,3 +20,5 @@ CFG e dataflow não são domínios locais deste repositório: a ownership cross-
 está no [pipeline](../architecture/pipeline.md). Interpretação de linguagens
 embarcadas e descoberta final de dependências também não devem ser apresentadas
 como domínio atual sem contrato materializado.
+
+- Current [SP1.8 compositional/partial boundary](../architecture/compositional-partial-lowering.md) and [BASIC PERFORM](perform-basic.md).

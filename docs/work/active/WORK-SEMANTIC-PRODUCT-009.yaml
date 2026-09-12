@@ -1,0 +1,22 @@
+id: WORK-SEMANTIC-PRODUCT-009
+title: Publish compositional and partial program facts
+status: IN_PROGRESS
+scope:
+  - CP6 compositionality and conservative partial lowering
+  - Permanent multiplicity and partial publication contracts
+  - SP1.8 explicit semantics with backward-compatible decoding
+notes: Coordinated with WORK-CFG-038. Draft review only; no merge or auto-merge.
+baseline_merge: ff3704911e53b3d8b337fc610cf84343cdc5fe90
+implementation: >-
+  SP1.8 separates intrinsic BASIC body structure from each activation resume,
+  preserves observed statements with nominal references and proven normal continuation,
+  and keeps qualified storage roots independent of unrelated unmodeled declarations.
+  Remote FAST includes compositionality 1/2/5/40 and real partial fixtures.
+  Discovery and integrated qualification are tracked in WORK-CFG-038.
+validation: >-
+  FAST PASS: 111 tests, /tmp/partial-front-fast-4.log.
+  qualification-local PASS: 608 tests, zero failures, one pre-existing skipped test;
+  source-normalizer full and naming PASS, /tmp/partial-front-full-3.log.
+  Earlier qualification attempts exposed historical SP1.7 continuation/field oracles;
+  these were updated and verified focally before the successful final run.
+review_state: IMPLEMENTED / AWAITING HUMAN REVIEW; coordinated integrated gate in WORK-CFG-038.

@@ -62,3 +62,5 @@ nesse JSON: `air-java` já possui o modelo/validator AIR 2.0.0; `cobol-lower`
 será o tradutor separado; e `analysis-cfg` já existe como consumer separado da
 AIR Publication. Nenhum deles é implementação local. As fronteiras cross-repo
 preservam a regra de não retroalimentar AST ou binding nominal.
+
+Current pipeline policy: [compositionality and conservative partial lowering](docs/architecture/compositional-partial-lowering.md).

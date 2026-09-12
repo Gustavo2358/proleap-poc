@@ -162,6 +162,16 @@ public final class CobolSemanticProductProjector {
                 statements, gaps, coverage, entries, storageIndependence(inputs, declarations.ids()));
     }
 
+    private static NormalContinuation observedContinuation(Ast.Statement source, ProjectionInputs inputs,
+            Map<Ast.Statement, StatementId> ids) {
+        for (var division : inputs.selectedSource().unit().program().divisions()) {
+            if (division.divisionKind() != Ast.DivisionKind.PROCEDURE) continue;
+            var next = canonicalStatement(Optional.ofNullable(division.normalContinuations().get(source.meta().id())), inputs, ids);
+            if (next.isPresent()) return new NormalContinuation(ContinuationAvailability.KNOWN, next, provenance(source.meta().provenance()));
+        }
+        return NormalContinuation.unavailable(provenance(source.meta().provenance()));
+    }
+
     private static EntryInventory entries(ProjectionInputs inputs,
             Map<Ast.Statement, StatementId> statementIds, InventoryStatus inventoryStatus) {
         Ast.Program program = inputs.selectedSource().unit().program();
@@ -547,12 +557,12 @@ public final class CobolSemanticProductProjector {
                 provenance(t.referenceOrigin()), provenance(t.paragraphOrigin())));
             var body = proof.target().map(t -> t.statements().stream().map(id -> canonicalStatement(Optional.of(id), inputs, statementIds).orElseThrow()).toList()).orElse(List.of());
             var resume = canonicalStatement(proof.resume(), inputs, statementIds);
-            var primary = proof.primaryStatements().stream().map(id -> canonicalStatement(Optional.of(id), inputs, statementIds).orElseThrow()).toList();
+            List<StatementId> primary = List.of(); // SP1.8 primary flow is the shared explicit continuation graph.
             var status = proof.simpleProfile() ? ReadinessStatus.SUFFICIENT : ReadinessStatus.BLOCKED;
             statements.add(new PerformFact(header(statementId, plan.position().ordinal(), containment, statementProvenance,
                 proof.simpleProfile() ? CoverageStatus.MODELED : CoverageStatus.UNSUPPORTED,
-                readiness(status, "isolated single-callsite paragraph profile", status, "explicit body and unique resume", ReadinessStatus.PARTIAL, "general effects not published")),
-                proof.simpleProfile() ? PerformProfile.SIMPLE_SINGLE_CALLSITE_PROCEDURE_PERFORM : PerformProfile.OUTSIDE_SLICE,
+                readiness(status, "isolated BASIC paragraph activation", status, "explicit body and unique resume", ReadinessStatus.PARTIAL, "general effects not published")),
+                proof.simpleProfile() ? PerformProfile.BASIC_PROCEDURE_PERFORM : PerformProfile.OUTSIDE_SLICE,
                 target, body.isEmpty() ? Optional.empty() : Optional.of(body.get(0)), body,
                 body.isEmpty() ? Optional.empty() : Optional.of(body.get(body.size()-1)),
                 new NormalContinuation(resume.isPresent() ? ContinuationAvailability.KNOWN : ContinuationAvailability.UNAVAILABLE,
@@ -587,9 +597,17 @@ public final class CobolSemanticProductProjector {
                     plan.position().ordinal(), containment, statementProvenance,
                     statementCoverage,
                     blockedReadiness("statement shape is outside the current projection capability"));
+            var references=new ArrayList<CobolSemanticProduct.DataReference>();
+            for(var entry:plan.entries()) {
+                var role=entry.occurrence().role();
+                if(projectableDataBinding(entry,inputs) && (role==ResolutionContracts.ReferenceRole.VALUE_READ || role==ResolutionContracts.ReferenceRole.VALUE_WRITE))
+                    references.add(new CobolSemanticProduct.DataReference(new OperandId(statementId,references.size()),
+                        role==ResolutionContracts.ReferenceRole.VALUE_READ?OperandRole.READ:OperandRole.WRITE,
+                        nominalBinding(entry,dataIds),provenance(entry.occurrence().meta().provenance()),Optional.empty()));
+            }
             statements.add(new CobolSemanticProduct.ObservedStatement(header,
                     plan.capability().kind(),
-                    plan.capability().shape(), plan.capability().gapCode()));
+                    plan.capability().shape(), plan.capability().gapCode(), observedContinuation(plan.position().statement(), inputs, statementIds), references));
             gaps.add(new CobolSemanticProduct.Gap(statementId,
                     CobolSemanticProduct.GapScope.CAPABILITY,
                     plan.capability().gapCode(),
@@ -615,13 +633,15 @@ public final class CobolSemanticProductProjector {
             CobolSemanticProduct.CoverageStatus bindingCoverage = bindingCoverage(entry);
             ScalarMoveSemantics.Move semantic = inputs.products().scalarMoves().move(inputs.unitId(), move.meta().id());
             CopySemantics copy = CopySemantics.valueOf(semantic.copy().name());
+            boolean intrinsicEnd=inputs.products().scalarMoves().performs().intrinsicExit(inputs.unitId(),move.meta().id());
+            var moveGaps=semantic.gaps().stream().filter(g -> !intrinsicEnd || g != ScalarMoveSemantics.Gap.NORMAL_CONTINUATION_NOT_AVAILABLE).toList();
             Optional<StatementId> next = semantic.nextStatement().map(nodeId -> {
                 Ast.Node node = inputs.selectedSource().nodes().get(nodeId);
                 require(node instanceof Ast.Statement, "canonical MOVE continuation is not a statement");
                 return Objects.requireNonNull(statementIds.get((Ast.Statement) node), "continuation must be published");
             });
             NormalContinuation continuation = new NormalContinuation(next.isPresent()
-                    ? ContinuationAvailability.KNOWN : ContinuationAvailability.UNAVAILABLE, next, statementProvenance);
+                    ? ContinuationAvailability.KNOWN : intrinsicEnd ? ContinuationAvailability.NONE : ContinuationAvailability.UNAVAILABLE, next, statementProvenance);
             Optional<WholeItemAccess> access = semantic.wholeItem().map(entity ->
                     new WholeItemAccess(Objects.requireNonNull(dataIds.get(entity), "whole item must be published")));
             MoveSource source;
@@ -639,7 +659,7 @@ public final class CobolSemanticProductProjector {
                 bindingCoverage = weakest(bindingCoverage, bindingCoverage(read));
             }
             CobolSemanticProduct.CoverageStatus coverage = weakest(
-                    semantic.gaps().isEmpty() ? CoverageStatus.MODELED : CoverageStatus.PARTIAL,
+                    moveGaps.isEmpty() ? CoverageStatus.MODELED : CoverageStatus.PARTIAL,
                     containmentCoverage(containment), coverage(inputs.finding(move.meta().id())), bindingCoverage);
             CobolSemanticProduct.MoveFact fact = new CobolSemanticProduct.MoveFact(
                     header(statementId, plan.position().ordinal(), containment, statementProvenance, coverage,
@@ -648,7 +668,7 @@ public final class CobolSemanticProductProjector {
                                             : entry.status() == ResolutionContracts.ResolutionStatus.UNSUPPORTED
                                             ? ReadinessStatus.BLOCKED : ReadinessStatus.PARTIAL,
                                     "canonical elementary MOVE copy capability",
-                                    next.isPresent() ? ReadinessStatus.SUFFICIENT : ReadinessStatus.PARTIAL,
+                                    next.isPresent() || intrinsicEnd ? ReadinessStatus.SUFFICIENT : ReadinessStatus.PARTIAL,
                                     "canonical normal continuation availability",
                                     ReadinessStatus.PARTIAL, "general effects and dataflow are not published"))),
                     source,
@@ -661,7 +681,7 @@ public final class CobolSemanticProductProjector {
             if (move.source() instanceof Ast.LiteralExpression literal && literal.logicalText().isEmpty()) gaps.add(new Gap(statementId, GapScope.LITERAL_KIND,
                     LITERAL_KIND_GAP, "literal category is outside the canonical basic text capability",
                     provenance(literal.meta().provenance())));
-            for (var gap : semantic.gaps()) gaps.add(new Gap(statementId,
+            for (var gap : moveGaps) gaps.add(new Gap(statementId,
                     gap == ScalarMoveSemantics.Gap.NORMAL_CONTINUATION_NOT_AVAILABLE ? GapScope.STRUCTURE : GapScope.CAPABILITY,
                     gap.name(), "canonical elementary MOVE proof unavailable", statementProvenance));
             addContainmentGap(containment, statementId, statementProvenance, gaps);

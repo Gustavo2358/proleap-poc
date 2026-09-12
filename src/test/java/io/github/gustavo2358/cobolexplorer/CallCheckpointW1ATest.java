@@ -145,13 +145,18 @@ class CallCheckpointW1ATest {
     }
     @Test void continuationIsCanonicalAndDoesNotCrossRegions() throws Exception {
         for (String source : List.of(DYNAMIC.replace("    GOBACK.", "NEXT-PARA.\n    GOBACK."),
-                DYNAMIC.replace("    CALL WS-PGM.", "    IF WS-PGM = 'PROGA' CALL WS-PGM END-IF."),
                 DYNAMIC.replace("    GOBACK.\n", ""))) {
             var call = statement(publish(source, "continuation-unavailable"), "CALL");
             assertEquals("UNAVAILABLE", call.path("normalContinuation").path("availability").asText());
             assertTrue(call.path("normalContinuation").path("statement").isNull());
             outsideSlice(call);
         }
+    }
+    @Test void nestedCallHasItsProvenArmCompletion() throws Exception {
+        var sp=publish(DYNAMIC.replace("    CALL WS-PGM.", "    IF WS-PGM = 'PROGA' CALL WS-PGM END-IF."),"nested-call");
+        var call=statement(sp,"CALL");var end=statement(sp,"GOBACK");
+        assertEquals("KNOWN",call.path("normalContinuation").path("availability").asText());
+        assertEquals(end.path("header").path("id"),call.path("normalContinuation").path("statement"));
     }
     @Test void literalValuePreservesCaseSpacesAndEscapes() throws Exception {
         for (var c : List.of(new String[]{"'proGa   '", "proGa   "}, new String[]{"'AB''CD'", "AB'CD"})) {
