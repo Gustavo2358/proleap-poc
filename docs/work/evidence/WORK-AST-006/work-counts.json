@@ -1,0 +1,17 @@
+[ {
+  "n" : 64,
+  "nodes" : 1235,
+  "declarations" : 196,
+  "references" : 193,
+  "armMembers" : 128,
+  "lookups" : 194,
+  "completionVisits" : 194
+}, {
+  "n" : 128,
+  "nodes" : 2451,
+  "declarations" : 388,
+  "references" : 385,
+  "armMembers" : 256,
+  "lookups" : 386,
+  "completionVisits" : 386
+} ]

@@ -1,0 +1,52 @@
+{
+  "productBaseline": "53d774026a1e4bcd969c7783a1d277aaa87b5f2f",
+  "productBaselineTree": "a43f0fc4ef8a227d47f012b9fcb4e410842ffcc0",
+  "inheritedHead": "bd6dd1c49bd724899a599beeff7dd3cb66d0f879",
+  "inheritedTree": "a43f0fc4ef8a227d47f012b9fcb4e410842ffcc0",
+  "branch": "feat/cp6-w2a-if-semantic-facts",
+  "productionFiles": [
+    "src/main/java/io/github/gustavo2358/cobolexplorer/Ast.java",
+    "src/main/java/io/github/gustavo2358/cobolexplorer/AstBuilder.java",
+    "src/main/java/io/github/gustavo2358/cobolexplorer/IfSemantics.java",
+    "src/main/java/io/github/gustavo2358/cobolexplorer/ScalarMoveSemantics.java",
+    "src/main/java/io/github/gustavo2358/cobolexplorer/semanticproduct/CobolSemanticPort.java",
+    "src/main/java/io/github/gustavo2358/cobolexplorer/semanticproduct/CobolSemanticProduct.java",
+    "src/main/java/io/github/gustavo2358/cobolexplorer/semanticproduct/projection/CobolSemanticProductProjector.java",
+    "src/main/java/io/github/gustavo2358/cobolexplorer/semanticproduct/transport/SemanticProductJsonWriter.java"
+  ],
+  "qualifiedSourceFiles": 222,
+  "exactQualifiedSourceMatch": true,
+  "historicalEvidenceGrammarResourcesWorkflowUnchanged": true,
+  "siblingsUnchanged": {
+    "air-java": {
+      "head": "09560ee9bf288ea4a3e8464f9dcac952dace6506",
+      "tree": "8d248f4ccf207eb7b609aa9ff0cdbcd512e526c8",
+      "branch": "feat/cp6-w1b-invoke-air-json",
+      "status": ""
+    },
+    "cobol-lower": {
+      "head": "7df2989d8d02c13552645386bbd963de00c7b4b4",
+      "tree": "2e3027df2fc4f9e550df8df9518e7e80f89324f1",
+      "branch": "feat/cp6-w1c-call-lowering",
+      "status": ""
+    },
+    "analysis-cfg": {
+      "head": "0f94618cf326b1e18220122b04d359c73f104163",
+      "tree": "24ec2dfbe6183cd2f7c8ed7cad8bac9fb5e68796",
+      "branch": "main",
+      "status": ""
+    },
+    "analysis-ir": {
+      "head": "51b4d9a8ae0364232bd97103cd73a77e1a34996c",
+      "tree": "11b2361a40cb5ae9b6c201f0157f30ef2387d1b8",
+      "branch": "main",
+      "status": ""
+    },
+    "artefatos-e2e": {
+      "head": "2ae760d54f84fddb315e9c4742afb47f7ba6fc19",
+      "tree": "bdba3c079bd301eec20ba34c5047f41e9e80f8c7",
+      "branch": "docs/cp6-w2-discovery",
+      "status": "?? checkpoint-4e/\n?? cp5/"
+    }
+  }
+}

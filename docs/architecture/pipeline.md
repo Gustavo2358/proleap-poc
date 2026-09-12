@@ -131,3 +131,8 @@ mudança de analyzer/contract version.
 COPY COBOL não resolvido é input externo ausente, não corrupção automática dos produtos posteriores. O preprocessor publica sua identidade por `Diagnostic.Code.UNRESOLVED_COPY`, sem reinterpretar mensagem humana. Quando o placeholder permite construir parse tree, AST, símbolos, occurrences e resolução de forma coerente, esses produtos e a classificação externa focalizada continuam sendo compostos. Cada COPY ausente permanece gap enumerável, a análise global fica incompleta e a classificação registra `CopyInputCompleteness.INCOMPLETE_UNRESOLVED_COPY`; nessa condição a projeção preserva também os gaps nominais cobertos, pois o universo de declarations COBOL não estava completo. `CopyInputCompleteness.COMPLETE` afirma somente disponibilidade dos COPYs solicitados; erros de preprocessor, lexer/parser recovery e incoerência interna continuam num eixo estrutural separado, fora desse fallback e com o fail-closed anterior.
 
 Este documento descreve a fronteira consolidada. Consulte os [invariantes com IDs](invariants.md), os [ADRs](decisions/index.md) e o [mapa curto de componentes](../../ARCHITECTURE.md).
+
+A garantia restrita de [IF W2A](../domain/if-semantic-product.md) é materializada
+por `IfSemantics`, pós-binding, junto ao snapshot escalar antes da projeção.
+Não substitui ConditionSemantics/ConditionValidation gerais nem implementa
+expansão contextual, avaliação de truth, AIR ou CFG.

@@ -1,0 +1,482 @@
+[
+  {
+    "source": "target/cp6-w2a/challenges/01-inner-move-completion-erased.log",
+    "artifact": "challenges-first/w2a/01-inner-move-completion-erased.log.gz",
+    "rawSha256": "0194b4ecba07c39368078df8a97afd164f7c107712d20bdf0f137dbe9a989f2d",
+    "artifactSha256": "d8f333d66b7ca14f0bfa8a342d88a1af3da3512031d8b3b5eed7bd020fe118b1",
+    "rawBytes": 31752,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/challenges/02-then-else-swapped.log",
+    "artifact": "challenges-first/w2a/02-then-else-swapped.log.gz",
+    "rawSha256": "4e6053e471c2656ac5e6355b7e3c725dfde5fdc716215c208395a5ef17871e74",
+    "artifactSha256": "eac6eb040416fe96a67bee232b9220d65bd7cc2936c0b44fc67261fcf1f587f2",
+    "rawBytes": 6597,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/challenges/03-absent-else-made-present.log",
+    "artifact": "challenges-first/w2a/03-absent-else-made-present.log.gz",
+    "rawSha256": "76b215872f6e2562ad9c952fb9b7aba8ebc53a5703031b527c10b2ac89374616",
+    "artifactSha256": "7589c65ed5b593c320db3079986aced1755904ad3920ab0cb14cf2cec4274bb1",
+    "rawBytes": 6304,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/challenges/04-known-flag-read-erased.log",
+    "artifact": "challenges-first/w2a/04-known-flag-read-erased.log.gz",
+    "rawSha256": "41233f0b99a4a3255ff0d59300cf6e5ec9479cacbe9805505a656a455ed1c91a",
+    "artifactSha256": "efe82c6cf7a78acc96fb1d204ee030b78d6a1b7d8a6619587e5bf97a1c168f05",
+    "rawBytes": 7452,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/challenges/05-incomplete-reads-falsely-complete.log",
+    "artifact": "challenges-first/w2a/05-incomplete-reads-falsely-complete.log.gz",
+    "rawSha256": "9d532571034c2d2640bb8c59b6a7c2e0c112df45ac91054a99d330bdac9d3d49",
+    "artifactSha256": "f249592b1fc0faec05fdd4fca11629b239f0d8f019f65f5266389468bbeacb28",
+    "rawBytes": 7533,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/challenges/06-whole-item-read-erased.log",
+    "artifact": "challenges-first/w2a/06-whole-item-read-erased.log.gz",
+    "rawSha256": "77a77d23e6a942fa9bff96279b4ed1d42bcfa12b25ef19b9804dce70ab81843f",
+    "artifactSha256": "11a2f3abedf1cc4817ecafbb3067842de871c0bfd72dcba40abda19acf8ade32",
+    "rawBytes": 2316,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/challenges/07-predicate-outside-slice-promoted.log",
+    "artifact": "challenges-first/w2a/07-predicate-outside-slice-promoted.log.gz",
+    "rawSha256": "5d42ce1ea58326e7706700ee8db7ddb13e54da9d39fa0b69a12fc87555cea89b",
+    "artifactSha256": "5d460d0877f9e31e82aa4a932d34b8c3e7463b9a914b05765d47fa4babb0096d",
+    "rawBytes": 2526,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/challenges/08-distinct-identities-used-as-proof.log",
+    "artifact": "challenges-first/w2a/08-distinct-identities-used-as-proof.log.gz",
+    "rawSha256": "db15ba0020920040c486b9fa0824c3c6941d6504417f0ba0ed64e406b696b92a",
+    "artifactSha256": "e93c61bb80cb5aba7d2be41a514f586da4759ab41d532a1e30d49bed5316e29f",
+    "rawBytes": 2433,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/challenges/09-redefines-ignored.log",
+    "artifact": "challenges-first/w2a/09-redefines-ignored.log.gz",
+    "rawSha256": "97342508a216d302a29cb5a6843dce66a91f867af4f236c933c54ccc25643199",
+    "artifactSha256": "03709ec5587d891ea0e467817f5b12bad652353203e1843219413520bb769124",
+    "rawBytes": 2433,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/challenges/10-nested-ownership-flattened.log",
+    "artifact": "challenges-first/w2a/10-nested-ownership-flattened.log.gz",
+    "rawSha256": "509a49e3092d9f40de49e1c77c5b99af38dd5b4425603625a05379dc68d3aab8",
+    "artifactSha256": "033c4f927ca93e3076cc0849d3303278ff4c2afc1d87a8fed139a3e36505401b",
+    "rawBytes": 3226,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/challenges/11-control-derived-from-node-id.log",
+    "artifact": "challenges-first/w2a/11-control-derived-from-node-id.log.gz",
+    "rawSha256": "e58d8d8086b64bded00b0b608aeccd8447329518b3d66d516f928b71e77ddba9",
+    "artifactSha256": "a3f0129eca9fc4d9c5b1391c823fd3b4a323a8a15c36b21baf050b1caa7a9d0e",
+    "rawBytes": 23756,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/challenges/12-control-derived-from-program-point.log",
+    "artifact": "challenges-first/w2a/12-control-derived-from-program-point.log.gz",
+    "rawSha256": "f8be2417ee787736ab7d74d7ddac614486d5080548ab5cb157c06f55be34073b",
+    "artifactSha256": "574e45e2bf10392d684e9efc7f0630ff324afb6b19c1c08d2420dc00cf4dadc5",
+    "rawBytes": 19514,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/challenges/13-predicate-provenance-lost.log",
+    "artifact": "challenges-first/w2a/13-predicate-provenance-lost.log.gz",
+    "rawSha256": "66abae1be4a5ba68ea33acfc9c21264448119e00520a6e163754b78b90e1847e",
+    "artifactSha256": "98c439672485466d853b1daabf2932cd2e5f2f68d593f0ee3c066c65f1691829",
+    "rawBytes": 2295,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/challenges/green-before.log",
+    "artifact": "challenges-first/w2a/green-before.log.gz",
+    "rawSha256": "e3b716b9fd1dd64ed7ff24b43e74ea734c5acffef11c2835ef9b8a2e6dd6990b",
+    "artifactSha256": "eda56417d4f10f2f2c38c878849de5387aeb1fa0143a551137d23d24b422dff8",
+    "rawBytes": 239,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/challenges/green-restored.log",
+    "artifact": "challenges-first/w2a/green-restored.log.gz",
+    "rawSha256": "e3b716b9fd1dd64ed7ff24b43e74ea734c5acffef11c2835ef9b8a2e6dd6990b",
+    "artifactSha256": "eda56417d4f10f2f2c38c878849de5387aeb1fa0143a551137d23d24b422dff8",
+    "rawBytes": 239,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/challenges/results.json",
+    "artifact": "challenges-first/w2a/results.json.gz",
+    "rawSha256": "31b772a02bac44ec99093d08e3a08b0135e67f46f30609ee503d42fd7ca4aaae",
+    "artifactSha256": "ff73c7ee650425261088f0647663d0233d61b07543e4e301eaf4cbcae4eadf5a",
+    "rawBytes": 505459,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w1a/challenges/effects-none.log",
+    "artifact": "challenges-first/w1a/effects-none.log.gz",
+    "rawSha256": "7e18ba46b5779034b3a166718f703c5672cc265fe33a03bd64401bd717153e17",
+    "artifactSha256": "ffdfddd89be8733a59c3deffa8dfa59bb25047c2d5b1b2856fe186ca5b937348",
+    "rawBytes": 15226,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w1a/challenges/green-before.log",
+    "artifact": "challenges-first/w1a/green-before.log.gz",
+    "rawSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "artifactSha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "rawBytes": 0,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w1a/challenges/green-restored.log",
+    "artifact": "challenges-first/w1a/green-restored.log.gz",
+    "rawSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "artifactSha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "rawBytes": 0,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w1a/challenges/literal-lost.log",
+    "artifact": "challenges-first/w1a/literal-lost.log.gz",
+    "rawSha256": "7dc0a296b4db628656271735f7d1fa2832b9cc7b85839756d0ccc6db278ea24d",
+    "artifactSha256": "fa2e216466c35bb6c8886e2389a21133549a2c5a580b19d373bd073c2932e269",
+    "rawBytes": 3186,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w1a/challenges/nonwhole-promoted.log",
+    "artifact": "challenges-first/w1a/nonwhole-promoted.log.gz",
+    "rawSha256": "8c17320dbb64d1cd0e6a678943d9ad5b9edbbea67b8911e8680668b88773428f",
+    "artifactSha256": "6119919534d5a8e05d5b5ea490836e80f321dfd48eac4e98affdd2648b2864b5",
+    "rawBytes": 2101,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w1a/challenges/padding-erased.log",
+    "artifact": "challenges-first/w1a/padding-erased.log.gz",
+    "rawSha256": "0a6fcad1adda3a4da5432239e9f000f30f6833f22e019a11e2b96bda44adfeed",
+    "artifactSha256": "45d22ae2ee8db7cea77f9f1334303932161b910ff9d76afee5c0c3a91b0e19b2",
+    "rawBytes": 13504,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w1a/challenges/results.json",
+    "artifact": "challenges-first/w1a/results.json.gz",
+    "rawSha256": "dd96729d7958f85e1cc1bb7ac99768bbfe63ade749622e122588ce1c3d6db718",
+    "artifactSha256": "041554bc4e26c20ec93b9fddbc444d7999aff9f03507df7b815335604b477617",
+    "rawBytes": 3045,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w1a/challenges/returning-hidden.log",
+    "artifact": "challenges-first/w1a/returning-hidden.log.gz",
+    "rawSha256": "be3fd7353fe03a0923f1d56d16144e8320bc8619f3cbe29c7005024b43c41fed",
+    "artifactSha256": "9039b67b3cdead50f1c633631c82ab7bcb254827aadcc71a8d34c71ec060b8f7",
+    "rawBytes": 2063,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w1a/challenges/using-hidden.log",
+    "artifact": "challenges-first/w1a/using-hidden.log.gz",
+    "rawSha256": "3f40583c59c5b9b83f4b0702b41e14cf47356a93f7ee872c20927b58982ea47b",
+    "artifactSha256": "3ed0d35da628d4dd570445085bd70d244b2ed4ff0cae2cd76fe7821987f8d817",
+    "rawBytes": 4146,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w1a/challenges/whole-item-erased.log",
+    "artifact": "challenges-first/w1a/whole-item-erased.log.gz",
+    "rawSha256": "c0f9fe046db1b86577416cc382d8d998104ab8d4d62b53c79916248fbdcc6b0a",
+    "artifactSha256": "fca7c7954863417aa5438671b91077f6dea06d4e00ade7a098be2004ed6e78bb",
+    "rawBytes": 6718,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w1a/challenges/wrong-continuation.log",
+    "artifact": "challenges-first/w1a/wrong-continuation.log.gz",
+    "rawSha256": "6fe2367f3dfd8d2f6e8b37a33c1f218040d6443ee958035bd5581678a114ba59",
+    "artifactSha256": "631f2deb8eb0054131e6d61e06f625c75b91ed7215e4082ea3cc12913fb4e72c",
+    "rawBytes": 12473,
+    "lossless": true
+  },
+  {
+    "source": "target/checkpoint-4a/challenges/01-any-string-literal.log",
+    "artifact": "challenges-first/scalar/01-any-string-literal.log.gz",
+    "rawSha256": "16757ab101ca27f084212b0d7042edf6dee8c982acaef03c5f69c96e3c899941",
+    "artifactSha256": "39e02c494a3c1de124d18c0a3c62ed5f78f0afb2e13f62ef033f1f11b887dc49",
+    "rawBytes": 3300,
+    "lossless": true
+  },
+  {
+    "source": "target/checkpoint-4a/challenges/02-ignore-length.log",
+    "artifact": "challenges-first/scalar/02-ignore-length.log.gz",
+    "rawSha256": "ff2daee5704ee6cecb2c8b0d47e6c0a18a8ddda31232da03848d4a39889cce1a",
+    "artifactSha256": "cfa983d34f1f496a3b3be7d78d03e681fb3c934cbaf8dd1570e075e010af6300",
+    "rawBytes": 3729,
+    "lossless": true
+  },
+  {
+    "source": "target/checkpoint-4a/challenges/03a-ignore-occurs.log",
+    "artifact": "challenges-first/scalar/03a-ignore-occurs.log.gz",
+    "rawSha256": "38c46d1b2b67d18b9f6ba0d55655f14c85d5807c8852d5ebee23087129d00b33",
+    "artifactSha256": "5968f71fe29a602d2b05b2bd34b760384fd03fc4d19e58f1d02ad6019c1ec103",
+    "rawBytes": 3331,
+    "lossless": true
+  },
+  {
+    "source": "target/checkpoint-4a/challenges/03b-ignore-overlay.log",
+    "artifact": "challenges-first/scalar/03b-ignore-overlay.log.gz",
+    "rawSha256": "5f1504c2c71502d8c0d5fcbbce98d1c34ea75a8ffc70731d0408bed8b885c303",
+    "artifactSha256": "f167333ae1e255737856e94b132f1267ef6fecde95343243d6a0ce0bd15709cb",
+    "rawBytes": 3388,
+    "lossless": true
+  },
+  {
+    "source": "target/checkpoint-4a/challenges/03c-ignore-refmod.log",
+    "artifact": "challenges-first/scalar/03c-ignore-refmod.log.gz",
+    "rawSha256": "0f5702693fe33532bc73e00833a8f915cef37b499cfa08df915f79163b102394",
+    "artifactSha256": "fb544e5e6d593ddf3249027aba0007fa52bf8690f052b73b578309d40c02a8a2",
+    "rawBytes": 3323,
+    "lossless": true
+  },
+  {
+    "source": "target/checkpoint-4a/challenges/04-wrong-selected.log",
+    "artifact": "challenges-first/scalar/04-wrong-selected.log.gz",
+    "rawSha256": "8b7fb9265a9c34db0dc2f73aa36c5b972feecbaef125f45bdfdd75e7fd7eaace",
+    "artifactSha256": "17ac3abecc6071be5bd1fb295b432a8bcd937f7e223fa8ce61012cd674104a24",
+    "rawBytes": 20966,
+    "lossless": true
+  },
+  {
+    "source": "target/checkpoint-4a/challenges/05-nominal-implies-whole.log",
+    "artifact": "challenges-first/scalar/05-nominal-implies-whole.log.gz",
+    "rawSha256": "9cb821edd41e31b251ed9213575af75968e87c589c50d501ae95a37c05d1770c",
+    "artifactSha256": "46cc7f79478104d49a8073bb783908521dc20470b1c64b939beb2a8a5e2c0f9d",
+    "rawBytes": 3323,
+    "lossless": true
+  },
+  {
+    "source": "target/checkpoint-4a/challenges/06-array-order-continuation.log",
+    "artifact": "challenges-first/scalar/06-array-order-continuation.log.gz",
+    "rawSha256": "6a539dd88f85d76916b7f425ea493884a9cfe4ce739336632eacbd096d1a6b1b",
+    "artifactSha256": "8d72a76bdbe46a98563606f055d30cef109217511b28d1f291703ee1f6759232",
+    "rawBytes": 5781,
+    "lossless": true
+  },
+  {
+    "source": "target/checkpoint-4a/challenges/07-remove-continuation.log",
+    "artifact": "challenges-first/scalar/07-remove-continuation.log.gz",
+    "rawSha256": "c101d244116154d7fdba15395cb89329dea43f266715935f9b412bdae6591552",
+    "artifactSha256": "23109799b71aaeb17a88f3136b68eaf4ce696b011bc616cd7243509361057ae5",
+    "rawBytes": 6591,
+    "lossless": true
+  },
+  {
+    "source": "target/checkpoint-4a/challenges/08-goback-fallthrough.log",
+    "artifact": "challenges-first/scalar/08-goback-fallthrough.log.gz",
+    "rawSha256": "cab7913d73d970bfd891e27df2f34918bfa7516a270fe3ccd4c49f685b38d81e",
+    "artifactSha256": "d007f3dfec6fc33e38dd93d2ace75a1c08bda660af513282a5d0878b282f3f1a",
+    "rawBytes": 22806,
+    "lossless": true
+  },
+  {
+    "source": "target/checkpoint-4a/challenges/09a-remove-literal-origin.log",
+    "artifact": "challenges-first/scalar/09a-remove-literal-origin.log.gz",
+    "rawSha256": "b5e465f06a3e89e2aa4c0c69a13cea1a12d364d0eec22389fbe6f68a0b48184c",
+    "artifactSha256": "ec755be9d4d791fb1b1d6388c9133502b3320bbdc1dfc6dfd5e245db4533923c",
+    "rawBytes": 4666,
+    "lossless": true
+  },
+  {
+    "source": "target/checkpoint-4a/challenges/09b-remove-target-origin.log",
+    "artifact": "challenges-first/scalar/09b-remove-target-origin.log.gz",
+    "rawSha256": "7cdea200db6e35344822f135925beeaea19966cf31a00f7d3b87cdef0aaa6292",
+    "artifactSha256": "6c4e73f8bdbefc04d3ffe3e207f0370ade9cd9dffd80eb5649f3c7efabb716cb",
+    "rawBytes": 4666,
+    "lossless": true
+  },
+  {
+    "source": "target/checkpoint-4a/challenges/10-duplicate-declaration.log",
+    "artifact": "challenges-first/scalar/10-duplicate-declaration.log.gz",
+    "rawSha256": "43ed1d6ff4a361b0bc5a17566b144ef7d37c59b4845f5d16d8a11506f1980f5f",
+    "artifactSha256": "9df3505750cb889aeaa165abb8fd98326a1e33ebe9c154d3c79dcd6538bd8c0b",
+    "rawBytes": 2367,
+    "lossless": true
+  },
+  {
+    "source": "target/checkpoint-4a/challenges/green-before.log",
+    "artifact": "challenges-first/scalar/green-before.log.gz",
+    "rawSha256": "47f4e7f4e070129ccfd17504ac66be6abe350d557902be4df0c3295ff0d4f095",
+    "artifactSha256": "8862359b267da2e3a373bc0a46576958411f40bcf0040efd8740130fa76f317d",
+    "rawBytes": 1156,
+    "lossless": true
+  },
+  {
+    "source": "target/checkpoint-4a/challenges/green-restored.log",
+    "artifact": "challenges-first/scalar/green-restored.log.gz",
+    "rawSha256": "0541425decbe17ba032fc131691059c5932f0e2d59ac7be1ec8d73a58df59a11",
+    "artifactSha256": "2a2f63d67e1765b08730008f57552a6a2575c6423c5bb004111803ad7eff1b1e",
+    "rawBytes": 2125,
+    "lossless": true
+  },
+  {
+    "source": "target/checkpoint-4a/challenges/results.json",
+    "artifact": "challenges-first/scalar/results.json.gz",
+    "rawSha256": "376ef8b0d97d10996a552392aa20859a57dfaaeceb7ecef5bf5e446e48626bac",
+    "artifactSha256": "ddef14160a4db90e5fc37fd72d4a3627abfa16e00e7303be5d0578fdd7b62929",
+    "rawBytes": 2614,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/canonical-inputs.log",
+    "artifact": "attempts/canonical-inputs.log.gz",
+    "rawSha256": "9e633401c37d847a026878c47dca8407e38151a1aa0f607ec3a0a20d5c91abdd",
+    "artifactSha256": "a19bca7c939f0e2a063cd17ac1e6b40f6a94e8466fd2824b3f4fcf0b95b60b11",
+    "rawBytes": 1383,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/challenge-runner-1.log",
+    "artifact": "attempts/challenge-runner-1.log.gz",
+    "rawSha256": "5952e019a5579942573dc58a39918b3d7a4a4b6b2e80c0d3cef17f12222f795c",
+    "artifactSha256": "6cc8a6e2ea7ac07d384ba2c1a1c585e131b0461fa02cecf418d35c3b92bd469b",
+    "rawBytes": 955,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/compile-1.log",
+    "artifact": "attempts/compile-1.log.gz",
+    "rawSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "artifactSha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "rawBytes": 0,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/expanded-1.log",
+    "artifact": "attempts/expanded-1.log.gz",
+    "rawSha256": "bbdffbc9a594963f1d7cce38538172713e15ef5371602baaccf4251302aacbc2",
+    "artifactSha256": "fdd458881bd584473f8e1aeea364ce3903e35f2625fa73a829fd348bb4f07393",
+    "rawBytes": 7386,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/focal-green-attempt-1.log",
+    "artifact": "attempts/focal-green-attempt-1.log.gz",
+    "rawSha256": "5692d3feb11f6145ed12e6b3097fa7867e40a4c435be3cad0233c73ef7980d69",
+    "artifactSha256": "aa468e4fdbe5db49a8e0abfb2e183a020bc8b90fcac7eced38048c1e5bcfcc59",
+    "rawBytes": 1213,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/focal-green-attempt-2.log",
+    "artifact": "attempts/focal-green-attempt-2.log.gz",
+    "rawSha256": "180d61340ff8cb0c6720c70d468c4bcb365fa61d33bb85208b6a5a15e5c72d57",
+    "artifactSha256": "b9878e463bd2157182e4017eefbdf066459631d229f1e3f2ee3edb0530630ed1",
+    "rawBytes": 8304,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/green-1.log",
+    "artifact": "attempts/green-1.log.gz",
+    "rawSha256": "9e633401c37d847a026878c47dca8407e38151a1aa0f607ec3a0a20d5c91abdd",
+    "artifactSha256": "a19bca7c939f0e2a063cd17ac1e6b40f6a94e8466fd2824b3f4fcf0b95b60b11",
+    "rawBytes": 1383,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/green-attempt-1.log",
+    "artifact": "attempts/green-attempt-1.log.gz",
+    "rawSha256": "71ddb75ae11b9a1aa6401e594593890f95eb86467133892baf85d76f4469c1c3",
+    "artifactSha256": "5053fb444a90026ccb1a55b846d297cd7138ba9e0f63f85fb74ef2b33b0c3d67",
+    "rawBytes": 11089,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/regression-attempt-1.log",
+    "artifact": "attempts/regression-attempt-1.log.gz",
+    "rawSha256": "645fabeba60eb8c906833c2380820c020aae0539f9f56fb74d29c58d43700bbe",
+    "artifactSha256": "6111842696b1890647fe4afd34f90e89d34f3d855af6c95820c1d65b15fd4bcf",
+    "rawBytes": 163754,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/qualification/challenge-scalar-1.json",
+    "artifact": "qualification-initial/challenge-scalar-1.json.gz",
+    "rawSha256": "bea60c0333aec09a73de8be72913c990e9bc012d9741fda3a2b63ccd02c7654c",
+    "artifactSha256": "46229341a8118a5eda52d4968203c4f918019f91691ce31b298ffaf8d4d7bf20",
+    "rawBytes": 17650,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/qualification/challenge-scalar-1.log",
+    "artifact": "qualification-initial/challenge-scalar-1.log.gz",
+    "rawSha256": "2a8653b906d60202d653b37bfdfad4fc0304584ce100f3b326c585a239c067a3",
+    "artifactSha256": "e2c10319768a44b90a877af1a82bca1a43e346b1c35a8812fb48e28df417fd00",
+    "rawBytes": 2050,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/qualification/challenge-w1a-1.json",
+    "artifact": "qualification-initial/challenge-w1a-1.json.gz",
+    "rawSha256": "83e2b2146079ddf0f21cfac39f67e673cc9de160f3447bbeb7603ab7d8b78b1b",
+    "artifactSha256": "6264c44a1fa790982f4d5c22e58dde7a264dc0056e8c7992620e4075b32df356",
+    "rawBytes": 17647,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/qualification/challenge-w1a-1.log",
+    "artifact": "qualification-initial/challenge-w1a-1.log.gz",
+    "rawSha256": "c9098aa2e3c93f2a299f078e396000289ea55eee94a6712bb046708bd58e55c0",
+    "artifactSha256": "af3e151ba98b6dede528ed669f12f0f037d40bd8f55fa974cb0de6215c69872a",
+    "rawBytes": 2438,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/qualification/full-1.json",
+    "artifact": "qualification-initial/full-1.json.gz",
+    "rawSha256": "67ef28ed24dbd137c691072792c29d3a365735e49344be90e70fae91954bd9a9",
+    "artifactSha256": "e41e6a0bab64415411978fd6828722121763d340bda7d4b7cabd023cadc8e6a5",
+    "rawBytes": 17626,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/qualification/full-1.log",
+    "artifact": "qualification-initial/full-1.log.gz",
+    "rawSha256": "a5228441473dd2cc1ae865a5fdde6cf477ff0313bedcff8c1211388e31e315f0",
+    "artifactSha256": "e87c8cbefb9f0ac1a016a0669b76c95f0502759e0a284d31d992b0980ece5e16",
+    "rawBytes": 85343,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/qualification/performance-1.json",
+    "artifact": "qualification-initial/performance-1.json.gz",
+    "rawSha256": "16f2e0616c79d3b08c992ba444d8eb3f6dcb1a1ca0cc11e14f99dc1f64c88af1",
+    "artifactSha256": "336d23d9cda9d9139251d699559f095a32b44ae744bc6f3aba91eefea01491cd",
+    "rawBytes": 17633,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/qualification/performance-1.log",
+    "artifact": "qualification-initial/performance-1.log.gz",
+    "rawSha256": "75440f5d342cc664f2854e4488167d0ec381d4c0cac94a6282fb2c0d603cc67d",
+    "artifactSha256": "3437e03cc984c6c50460d0ea6286ebc917bcad72a431724d2537d2c20f823096",
+    "rawBytes": 1285,
+    "lossless": true
+  }
+]

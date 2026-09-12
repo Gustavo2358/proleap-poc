@@ -25,6 +25,10 @@ public interface CobolSemanticPort {
         return entryInventory().entries();
     }
 
+    default CobolSemanticProduct.IndependentStorageSet storageIndependence() {
+        return CobolSemanticProduct.IndependentStorageSet.unavailable();
+    }
+
     List<CobolSemanticProduct.DataDeclaration> dataDeclarations();
 
     List<CobolSemanticProduct.StatementFact> statements();
@@ -126,6 +130,9 @@ final class MaterializedCobolSemanticPort implements CobolSemanticPort {
     public CobolSemanticProduct.EntryInventory entryInventory() {
         return state.entryInventory();
     }
+
+    @Override
+    public CobolSemanticProduct.IndependentStorageSet storageIndependence() { return state.storageIndependence(); }
 
     @Override
     public List<CobolSemanticProduct.DataDeclaration> dataDeclarations() {

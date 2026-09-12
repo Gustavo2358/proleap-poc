@@ -26,7 +26,7 @@ import java.util.Objects;
  */
 public final class SemanticProductJsonWriter {
     public static final String SCHEMA = "cobol-semantic-product";
-    public static final String CONTRACT_VERSION = "1.3.0";
+    public static final String CONTRACT_VERSION = "1.4.0";
 
     private static final ObjectMapper JSON = JsonMapper.builder()
             .enable(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY)
@@ -72,7 +72,7 @@ public final class SemanticProductJsonWriter {
                 new StructureDocument(port.rootStatements().stream()
                         .map(SemanticProductJsonWriter::statementHandle).toList(),
                         List.copyOf(branches)), gaps, coverage(port.coverage()),
-                entryInventory(port.entryInventory()));
+                entryInventory(port.entryInventory()), storageIndependence(port.storageIndependence()));
     }
 
     private static EntryInventoryDocument entryInventory(CobolSemanticProduct.EntryInventory inventory) {
@@ -150,7 +150,8 @@ public final class SemanticProductJsonWriter {
         if (fact instanceof CobolSemanticProduct.IfFact branch) {
             return new IfDocument(header(branch.header()), condition(branch.condition()),
                     branch.explicitlyTerminated(), branch.continuation()
-                    .map(SemanticProductJsonWriter::statementHandle).orElse(null));
+                    .map(SemanticProductJsonWriter::statementHandle).orElse(null),
+                    continuation(branch.normalContinuation()), arm(branch.thenArm()), arm(branch.elseArm()), branch.profile());
         }
         if (fact instanceof CobolSemanticProduct.ObservedStatement observed) {
             return new ObservedDocument(header(observed.header()), observed.observedKind(),
@@ -197,7 +198,26 @@ public final class SemanticProductJsonWriter {
     private static ConditionDocument condition(CobolSemanticProduct.ConditionSurface condition) {
         return new ConditionDocument(condition.shape(), condition.references().stream()
                 .map(SemanticProductJsonWriter::dataReference).toList(),
-                provenance(condition.provenance()));
+                provenance(condition.provenance()), predicate(condition.predicate()));
+    }
+
+    private static PredicateDocument predicate(CobolSemanticProduct.PredicateGuarantee p) {
+        return new PredicateDocument(p.availability(), p.profile(), p.resultDomain(), p.evaluation(), p.normalCompletion(),
+                p.knownReads().stream().map(SemanticProductJsonWriter::operandHandle).toList(), p.readsCompleteness(), p.truthValue(),
+                provenance(p.provenance()), p.gapCodes());
+    }
+    private static ContinuationDocument continuation(CobolSemanticProduct.NormalContinuation c) {
+        return new ContinuationDocument(c.availability(), c.statement().map(SemanticProductJsonWriter::statementHandle).orElse(null), provenance(c.provenance()));
+    }
+    private static IfArmDocument arm(CobolSemanticProduct.IfArm arm) {
+        return new IfArmDocument(arm.presence(), arm.contentAvailability(),
+                new ExecutableStartDocument(arm.entry().availability(), arm.entry().statement().map(SemanticProductJsonWriter::statementHandle).orElse(null)),
+                provenance(arm.provenance()), arm.gapCodes());
+    }
+    private static IndependentStorageDocument storageIndependence(CobolSemanticProduct.IndependentStorageSet p) {
+        return new IndependentStorageDocument(p.availability(), p.rule(), p.authority(),
+                p.members().stream().map(SemanticProductJsonWriter::dataHandle).toList(),
+                p.provenance().map(SemanticProductJsonWriter::provenance).orElse(null), p.gapCodes());
     }
 
     private static GapDocument gap(CobolSemanticProduct.Gap gap) {
@@ -251,7 +271,7 @@ public final class SemanticProductJsonWriter {
     }
 
     @JsonPropertyOrder({"schema", "contractVersion", "unit", "policy",
-            "dataDeclarations", "statements", "structure", "gaps", "coverage", "entryInventory"})
+            "dataDeclarations", "statements", "structure", "gaps", "coverage", "entryInventory", "storageIndependence"})
     private record SemanticProductDocument(
             String schema,
             String contractVersion,
@@ -262,7 +282,7 @@ public final class SemanticProductJsonWriter {
             StructureDocument structure,
             List<GapDocument> gaps,
             CoverageDocument coverage,
-            EntryInventoryDocument entryInventory) { }
+            EntryInventoryDocument entryInventory, IndependentStorageDocument storageIndependence) { }
 
     private record EntryInventoryDocument(CobolSemanticProduct.InventoryStatus status,
                                           CobolSemanticProduct.EntryInventoryScope scope,
@@ -351,7 +371,8 @@ public final class SemanticProductJsonWriter {
             "continuation"})
     private record IfDocument(StatementHeaderDocument header, ConditionDocument condition,
                               boolean explicitlyTerminated,
-                              String continuation) implements StatementDocument { }
+                              String continuation, ContinuationDocument normalContinuation,
+                              IfArmDocument thenArm, IfArmDocument elseArm, CobolSemanticProduct.IfProfile profile) implements StatementDocument { }
 
     @JsonPropertyOrder({"variant", "header", "observedKind", "observedShape", "gapCode"})
     private record ObservedDocument(StatementHeaderDocument header, String observedKind,
@@ -393,7 +414,18 @@ public final class SemanticProductJsonWriter {
     private record DataCandidateDocument(String id, String canonicalName) { }
 
     private record ConditionDocument(String shape, List<DataReferenceDocument> references,
-                                     ProvenanceDocument provenance) { }
+                                     ProvenanceDocument provenance, PredicateDocument predicate) { }
+
+    private record PredicateDocument(CobolSemanticProduct.Availability availability, CobolSemanticProduct.PredicateProfile profile,
+            CobolSemanticProduct.PredicateDomain resultDomain, CobolSemanticProduct.PredicateEvaluation evaluation,
+            CobolSemanticProduct.PredicateCompletion normalCompletion, List<String> knownReads,
+            CobolSemanticProduct.ReadsCompleteness readsCompleteness, CobolSemanticProduct.PredicateTruth truthValue,
+            ProvenanceDocument provenance, List<String> gapCodes) { }
+    private record IfArmDocument(CobolSemanticProduct.ClausePresence presence, CobolSemanticProduct.Availability contentAvailability,
+            ExecutableStartDocument entry, ProvenanceDocument provenance, List<String> gapCodes) { }
+    private record IndependentStorageDocument(CobolSemanticProduct.Availability availability,
+            CobolSemanticProduct.StorageIndependenceRule rule, String authority, List<String> members,
+            ProvenanceDocument provenance, List<String> gapCodes) { }
 
     private record GapDocument(String statement, CobolSemanticProduct.GapScope scope,
                                String code, String detail,

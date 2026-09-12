@@ -206,8 +206,9 @@ class SemanticProductCheckpoint6IntegrationTest {
         assertEquals(CobolSemanticProduct.InventoryStatus.COMPLETE,
                 audit.coverage().inventoryStatus());
         assertEquals(14, audit.coverage().observedStatements());
-        assertEquals(4, audit.coverage().modeledStatements());
-        assertEquals(10, audit.coverage().partialStatements());
+        // SP 1.4 proves completion for the five existing IF-contained MOVEs.
+        assertEquals(9, audit.coverage().modeledStatements());
+        assertEquals(5, audit.coverage().partialStatements());
         assertEquals(0, audit.coverage().unsupportedStatements());
         assertEquals(0, audit.coverage().inputMissingStatements());
         assertEquals(CobolSemanticProduct.ReadinessStatus.BLOCKED,

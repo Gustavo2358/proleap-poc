@@ -470,6 +470,9 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
 
     /** Sequential MOVE completion within a single sentence region. Paragraph/section
      * ends and declaratives are deliberately not assigned executable successors. */
+    private long completionStatementVisits;
+    long completionStatementVisits() { return completionStatementVisits; }
+
     private Map<Integer, Integer> normalContinuations(CobolParser.ProcedureDivisionContext context) {
         Map<Integer, Integer> result = new LinkedHashMap<>();
         if (context.procedureDeclaratives() != null || context.procedureDivisionBody() == null)
@@ -489,18 +492,34 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
 
     private void addSentenceContinuations(List<CobolParser.SentenceContext> sentences,
                                          Map<Integer, Integer> result) {
-        Ast.Statement previous = null;
-        for (var sentence : sentences) {
-            for (var context : sentence.statement()) {
+        List<CobolParser.StatementContext> roots = new ArrayList<>();
+        for (var sentence : sentences) roots.addAll(sentence.statement());
+        Deque<CompletionRegion> pending = new ArrayDeque<>();
+        pending.push(new CompletionRegion(roots, null, true));
+        while (!pending.isEmpty()) {
+            CompletionRegion region = pending.pop();
+            Ast.Statement next = region.successor();
+            for (int i = region.statements().size() - 1; i >= 0; i--) {
+                completionStatementVisits++;
+                var context = region.statements().get(i);
                 Ast.Statement current = context.entryStatement() == null ? builtStatements.get(context) : null;
-                if ((previous instanceof Ast.MoveStatement || previous instanceof Ast.CallStatement call
-                        && !call.surface().hasHandlers()) && current != null)
-                    result.put(previous.meta().id(), current.meta().id());
-                // Even an unmaterialized statement breaks the relation. Never skip it.
-                previous = current;
+                if (next != null && (current instanceof Ast.MoveStatement || current instanceof Ast.IfStatement
+                        || region.topLevel() && current instanceof Ast.CallStatement call && !call.surface().hasHandlers()))
+                    result.put(current.meta().id(), next.meta().id());
+                if (context.ifStatement() != null && current instanceof Ast.IfStatement) {
+                    var branch = context.ifStatement();
+                    pending.push(new CompletionRegion(branch.ifThen().statement(), next, false));
+                    if (branch.ifElse() != null)
+                        pending.push(new CompletionRegion(branch.ifElse().statement(), next, false));
+                }
+                // An unmaterialized direct statement is a barrier, never skipped.
+                next = current;
             }
         }
     }
+
+    private record CompletionRegion(List<CobolParser.StatementContext> statements,
+                                    Ast.Statement successor, boolean topLevel) { }
 
     /** Interpret only the PIC X repetition language, in the canonical frontend.
      * This grammar uses generic pictureChars tokens, so repetition is decoded here
@@ -928,7 +947,9 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
     private Ast.IfStatement buildIf(CobolParser.IfStatementContext context) {
         Ast.Meta meta = meta(context);
         return new Ast.IfStatement(meta, expression(context.condition(), "condition"),
-                statementsInside(context.ifThen()), statementsInside(context.ifElse()), context.END_IF() != null);
+                statementsInside(context.ifThen()), statementsInside(context.ifElse()), context.END_IF() != null,
+                context.ifElse() == null ? Ast.BranchPresence.ABSENT : Ast.BranchPresence.PRESENT,
+                armProvenance(context.ifThen()), context.ifElse() == null ? meta.provenance() : armProvenance(context.ifElse()));
     }
 
     private Ast.EvaluateStatement buildEvaluate(CobolParser.EvaluateStatementContext context) {
@@ -1528,8 +1549,15 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
         Ast.Expression subject = expression(values.get(0), "comparison subject");
         Ast.Expression object = expression(values.get(1), "comparison object");
         return new ConditionBuild(new Ast.RelationCondition(meta, subject, operator, object,
-                sourceText(comparison).strip()),
+                sourceText(comparison).strip(), equalityOperator(comparison.relationalOperator())),
                 new ConditionState(true, subject.meta().span().startToken()));
+    }
+
+    private static Ast.RelationOperator equalityOperator(CobolParser.RelationalOperatorContext operator) {
+        // Typed token alternatives, no reparsing of relationalOperator text.
+        return operator.NOT() == null && operator.GREATER() == null && operator.LESS() == null
+                && (operator.EQUALCHAR() != null || operator.EQUAL() != null)
+                ? Ast.RelationOperator.EQUAL : Ast.RelationOperator.OTHER;
     }
 
     private ConditionBuild buildCombinedComparison(CobolParser.RelationCombinedComparisonContext combined) {
@@ -1918,6 +1946,15 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
                 new Ast.ParseTreeOrigin(parseIds.getOrDefault(context, -1), rule(context),
                         parseSubtreeSizes.getOrDefault(context, 1)),
                 sourceMap.provenance(startOffset, endOffset));
+    }
+
+    /** Written arm anchor; children and owner retain their own complete provenance.
+     * Avoid rescanning an entire nested arm's source-map segments for this fact. */
+    private Ast.SourceProvenance armProvenance(ParserRuleContext context) {
+        Token start = context.getStart();
+        int begin = start == null ? 0 : Math.max(0, start.getStartIndex());
+        int end = start == null ? begin : Math.min(indexedSource.length(), start.getStopIndex() + 1);
+        return sourceMap.provenance(begin, end);
     }
 
     private List<Ast.Statement> statementsInside(ParserRuleContext context) {

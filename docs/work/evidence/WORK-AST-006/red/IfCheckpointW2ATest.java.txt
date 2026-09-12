@@ -1,0 +1,71 @@
+package io.github.gustavo2358.cobolexplorer;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.github.gustavo2358.cobolexplorer.semanticproduct.transport.SemanticProductJsonWriter;
+import org.junit.jupiter.api.Test;
+import java.nio.file.*;
+import java.util.*;
+import static org.junit.jupiter.api.Assertions.*;
+
+/** Behavioral public JSON oracles: missing capabilities fail at runtime, not compilation. */
+class IfCheckpointW2ATest {
+    static String fixture(String name) throws Exception {
+        return Files.readString(Path.of("src/test/resources/cobol/semantic/cp6-w2a-" + name + ".cbl"));
+    }
+    static JsonNode publish(String source, String name) throws Exception {
+        byte[] bytes = SemanticProductJsonWriter.serialize(ScalarMoveCheckpoint4ATest.publish(source));
+        Path out = Path.of("target/cp6-w2a/products"); Files.createDirectories(out);
+        Files.write(out.resolve(name + ".json"), bytes);
+        return new ObjectMapper().readTree(bytes);
+    }
+    static JsonNode doc(String name) throws Exception { return publish(fixture(name), name); }
+    static List<JsonNode> statements(JsonNode doc, String kind) {
+        List<JsonNode> result = new ArrayList<>();
+        doc.path("statements").forEach(s -> { if (s.path("variant").asText().equals(kind)) result.add(s); });
+        return result;
+    }
+    static JsonNode one(JsonNode doc, String kind) { return statements(doc, kind).get(0); }
+    static JsonNode id(JsonNode statement) { return statement.path("header").path("id"); }
+    static void completion(JsonNode statement, JsonNode next) {
+        assertEquals("KNOWN", statement.path("normalContinuation").path("availability").asText(), statement.toString());
+        assertEquals(id(next), statement.path("normalContinuation").path("statement"));
+    }
+    @Test void redAClosedCompletion() throws Exception {
+        var d = doc("closed"); var call = one(d, "CALL");
+        var moves = statements(d, "MOVE");
+        assertAll(() -> completion(moves.get(0), call), () -> completion(moves.get(1), call),
+                () -> completion(one(d, "IF"), call), () -> completion(call, one(d, "GOBACK")));
+    }
+    @Test void redBPredicateGuarantee() throws Exception {
+        var d = doc("closed"); var condition = one(d, "IF").path("condition");
+        var p = condition.path("predicate");
+        assertAll(() -> assertEquals("KNOWN", p.path("availability").asText()),
+                () -> assertEquals("BOOLEAN", p.path("resultDomain").asText()),
+                () -> assertEquals("PURE", p.path("evaluation").asText()),
+                () -> assertEquals("TOTAL", p.path("normalCompletion").asText()),
+                () -> assertEquals("COMPLETE", p.path("readsCompleteness").asText()),
+                () -> assertEquals("UNKNOWN", p.path("truthValue").asText()),
+                () -> assertEquals(1, p.path("knownReads").size()));
+        var ref = condition.path("references").get(0);
+        assertEquals(ref.path("id"), p.path("knownReads").get(0));
+        assertEquals(ref.path("binding").path("selected"), ref.path("wholeItemAccess").path("data"));
+        assertTrue(p.path("provenance").path("exact").asBoolean());
+    }
+    @Test void redCElsePresenceIsNotEmptyChildren() throws Exception {
+        var open = one(doc("open"), "IF"); var empty = one(doc("empty"), "IF");
+        assertAll(() -> assertEquals("ABSENT", open.path("elseArm").path("presence").asText()),
+                () -> assertEquals("PRESENT", empty.path("elseArm").path("presence").asText()),
+                () -> assertEquals("KNOWN", open.path("elseArm").path("contentAvailability").asText()),
+                () -> assertEquals("PARTIAL", empty.path("elseArm").path("contentAvailability").asText()));
+    }
+    @Test void redDStorageIndependence() throws Exception {
+        var d = doc("closed"); var proof = d.path("storageIndependence");
+        assertEquals("KNOWN", proof.path("availability").asText());
+        assertEquals("INDEPENDENT_WORKING_STORAGE_ROOTS", proof.path("rule").asText());
+        var ids = new HashSet<JsonNode>(); d.path("dataDeclarations").forEach(x -> ids.add(x.path("id")));
+        var members = new HashSet<JsonNode>(); proof.path("members").forEach(members::add);
+        assertEquals(2, members.size()); assertEquals(ids, members);
+        assertTrue(proof.path("provenance").path("exact").asBoolean());
+    }
+}

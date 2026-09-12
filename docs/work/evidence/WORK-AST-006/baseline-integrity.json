@@ -1,0 +1,7 @@
+{
+  "rawFile": "baseline.json",
+  "rawSha256": "b945498fa2aca4caeab35b0846da0a41edbff1d5658f9afed6925b0cbcb75d3f",
+  "gzipFile": "baseline.json.gz",
+  "gzipSha256": "a1bd663da750d71223a247fe232e3467d423c1d464661815d57094d4969f6b30",
+  "decompressionByteExact": true
+}

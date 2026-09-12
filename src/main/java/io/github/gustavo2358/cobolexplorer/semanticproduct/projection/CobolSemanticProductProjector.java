@@ -2,6 +2,7 @@ package io.github.gustavo2358.cobolexplorer.semanticproduct.projection;
 
 import io.github.gustavo2358.cobolexplorer.Ast;
 import io.github.gustavo2358.cobolexplorer.ScalarMoveSemantics;
+import io.github.gustavo2358.cobolexplorer.IfSemantics;
 import io.github.gustavo2358.cobolexplorer.CompilationUnitBuildResult;
 import io.github.gustavo2358.cobolexplorer.CompilationUnitModel;
 import io.github.gustavo2358.cobolexplorer.CompilationUnitSymbolTables;
@@ -158,7 +159,7 @@ public final class CobolSemanticProductProjector {
                 inventoryStatus, statements, inputs.unitSummary());
         return new CobolSemanticProduct.State(inputs.boundaryUnit(),
                 policy(inputs.report().policy()), declarations.facts(),
-                statements, gaps, coverage, entries);
+                statements, gaps, coverage, entries, storageIndependence(inputs, declarations.ids()));
     }
 
     private static EntryInventory entries(ProjectionInputs inputs,
@@ -229,6 +230,33 @@ public final class CobolSemanticProductProjector {
         if (inputMissing) inventoryGaps.add("ENTRY_INPUT_INCOMPLETE");
         return new EntryInventory(inputMissing ? InventoryStatus.INPUT_MISSING : InventoryStatus.PARTIAL,
                 List.of(entry), inventoryGaps);
+    }
+
+    private static IndependentStorageSet storageIndependence(ProjectionInputs inputs,
+            Map<ResolutionContracts.SemanticEntityId, DataItemId> dataIds) {
+        var proof = inputs.products().scalarMoves().ifs().storage(inputs.unitId());
+        return new IndependentStorageSet(Availability.valueOf(proof.availability().name()),
+                proof.members().stream().map(id -> Objects.requireNonNull(dataIds.get(id), "independent member must be published")).toList(),
+                Optional.of(provenance(proof.provenance())), proof.availability() == IfSemantics.Availability.KNOWN
+                        ? List.of() : List.of("STORAGE_INDEPENDENCE_NOT_PROVEN"));
+    }
+
+    private static Optional<StatementId> canonicalStatement(Optional<Integer> nodeId, ProjectionInputs inputs,
+            Map<Ast.Statement, StatementId> statementIds) {
+        return nodeId.map(id -> {
+            var node = inputs.selectedSource().nodes().get(id);
+            require(node instanceof Ast.Statement, "canonical entry/completion must name a statement");
+            return Objects.requireNonNull(statementIds.get((Ast.Statement) node), "canonical statement must be published");
+        });
+    }
+
+    private static IfArm arm(IfSemantics.Arm arm, ProjectionInputs inputs, Map<Ast.Statement, StatementId> ids) {
+        var entry = canonicalStatement(arm.entry(), inputs, ids);
+        var availability = Availability.valueOf(arm.contentAvailability().name());
+        return new IfArm(ClausePresence.valueOf(arm.presence().name()), availability,
+                new ExecutableStart(entry.isPresent() ? Availability.KNOWN
+                        : availability == Availability.INPUT_MISSING ? Availability.INPUT_MISSING : Availability.UNAVAILABLE, entry),
+                provenance(arm.provenance()), availability == Availability.KNOWN ? List.of() : List.of("IF_ARM_NOT_PROVEN"));
     }
 
     /** Opens the read-only port over the materialized projection. */
@@ -668,12 +696,14 @@ public final class CobolSemanticProductProjector {
         }
 
         Ast.IfStatement branch = (Ast.IfStatement) plan.position().statement();
+        var semanticIf = inputs.products().scalarMoves().ifs().fact(inputs.unitId(), branch.meta().id());
+        var predicate = semanticIf.predicate();
         ContinuationProjection continuation = continuation(plan.position(), statementIds,
                 positionsByStatement, continuations);
         BranchContentProjection branchContent = branchContent(branch, statementIds);
         List<CobolSemanticProduct.DataReference> references = new ArrayList<>();
         CobolSemanticProduct.CoverageStatus ifCoverage = weakest(
-                CobolSemanticProduct.CoverageStatus.PARTIAL,
+                semanticIf.simpleProfile() ? CoverageStatus.MODELED : CoverageStatus.PARTIAL,
                 containmentCoverage(containment),
                 coverage(inputs.finding(branch.meta().id())));
         for (ReferenceResolution.Entry entry : plan.entries()) {
@@ -693,7 +723,10 @@ public final class CobolSemanticProductProjector {
             ifCoverage = weakest(ifCoverage, bindingCoverage(entry));
             references.add(new CobolSemanticProduct.DataReference(
                     new CobolSemanticProduct.OperandId(statementId, references.size()),
-                    CobolSemanticProduct.OperandRole.READ, binding, referenceProvenance));
+                    CobolSemanticProduct.OperandRole.READ, binding, referenceProvenance,
+                    predicate.readNode().filter(node -> node == entry.occurrence().referenceAstNodeId())
+                            .flatMap(ignored -> predicate.wholeItem()).map(entity ->
+                                    new WholeItemAccess(Objects.requireNonNull(dataIds.get(entity), "predicate DATA must be published")))));
         }
         if (!continuation.exact())
             ifCoverage = weakest(ifCoverage, CobolSemanticProduct.CoverageStatus.PARTIAL);
@@ -702,18 +735,34 @@ public final class CobolSemanticProductProjector {
         CobolSemanticProduct.StatementHeader ifHeader = header(statementId,
                 plan.position().ordinal(), containment, statementProvenance, ifCoverage,
                 containmentReadiness(containment,
-                        ifReadiness(plan.entries(), continuation, branchContent, inputs)));
+                        semanticIf.simpleProfile() ? readiness(ReadinessStatus.SUFFICIENT,
+                                "simple IF source predicate, arm and completion facts available",
+                                ReadinessStatus.SUFFICIENT, "canonical conditional completion; no graph or reachability",
+                                ReadinessStatus.PARTIAL, "no effects/dataflow analysis")
+                                : ifReadiness(plan.entries(), continuation, branchContent, inputs)));
         CobolSemanticProduct.IfFact fact = new CobolSemanticProduct.IfFact(
                 ifHeader,
                 new CobolSemanticProduct.ConditionSurface(conditionShape(branch.condition()),
-                        references, provenance(branch.condition().meta().provenance())),
-                branch.explicitlyTerminated(), continuation.statement());
+                        references, provenance(branch.condition().meta().provenance()),
+                        new PredicateGuarantee(Availability.valueOf(predicate.availability().name()),
+                                predicate.availability() == IfSemantics.Availability.KNOWN
+                                        ? PredicateProfile.SCALAR_TEXT_EQUALITY : PredicateProfile.UNAVAILABLE,
+                                references.stream().map(DataReference::id).toList(), provenance(predicate.provenance()),
+                                predicate.availability() == IfSemantics.Availability.KNOWN ? List.of() : List.of("PREDICATE_NOT_PROVEN"))),
+                branch.explicitlyTerminated(), continuation.statement(),
+                new NormalContinuation(semanticIf.nextStatement().isPresent() ? ContinuationAvailability.KNOWN
+                        : ContinuationAvailability.UNAVAILABLE, canonicalStatement(semanticIf.nextStatement(), inputs, statementIds), statementProvenance),
+                arm(semanticIf.thenArm(), inputs, statementIds), arm(semanticIf.elseArm(), inputs, statementIds),
+                semanticIf.simpleProfile() ? IfProfile.SIMPLE_TEXT_EQUALITY : IfProfile.OUTSIDE_SLICE);
         statements.add(fact);
-        gaps.add(new CobolSemanticProduct.Gap(statementId,
+        if (predicate.availability() != IfSemantics.Availability.KNOWN)
+            gaps.add(new CobolSemanticProduct.Gap(statementId,
                 CobolSemanticProduct.GapScope.CONDITION_SEMANTICS,
                 CONDITION_SEMANTICS_GAP,
                 "predicate normalization and type-sensitive validation are not published",
                 provenance(branch.condition().meta().provenance())));
+        if (!semanticIf.simpleProfile()) gaps.add(capabilityGap(statementId, "IF_OUTSIDE_SIMPLE_PROFILE",
+                "predicate, arm content, explicit scope or executable completion is outside W2A simple profile", statementProvenance));
         if (!continuation.exact())
             gaps.add(new CobolSemanticProduct.Gap(statementId,
                     CobolSemanticProduct.GapScope.STRUCTURE, CONTINUATION_GAP,

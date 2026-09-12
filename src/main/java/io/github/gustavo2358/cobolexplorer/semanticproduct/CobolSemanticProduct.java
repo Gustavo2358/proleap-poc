@@ -502,18 +502,99 @@ public final class CobolSemanticProduct {
         }
     }
 
+    public enum PredicateProfile { SCALAR_TEXT_EQUALITY, UNAVAILABLE }
+    public enum PredicateDomain { BOOLEAN, UNKNOWN }
+    public enum PredicateEvaluation { PURE, UNKNOWN }
+    public enum PredicateCompletion { TOTAL, UNKNOWN }
+    public enum ReadsCompleteness { COMPLETE, PARTIAL }
+    public enum PredicateTruth { UNKNOWN }
+    public enum IfProfile { SIMPLE_TEXT_EQUALITY, OUTSIDE_SLICE }
+    public enum StorageIndependenceRule { INDEPENDENT_WORKING_STORAGE_ROOTS }
+
+    /** Guarantees evaluation properties, never evaluates the predicate truth value. */
+    public record PredicateGuarantee(Availability availability, PredicateProfile profile,
+            List<OperandId> knownReads, Provenance provenance, List<String> gapCodes) {
+        public PredicateGuarantee {
+            Objects.requireNonNull(availability); Objects.requireNonNull(profile); Objects.requireNonNull(provenance);
+            knownReads = List.copyOf(knownReads); gapCodes = List.copyOf(gapCodes);
+            require(new HashSet<>(knownReads).size() == knownReads.size(), "duplicate predicate read");
+            if (availability == Availability.KNOWN)
+                require(profile == PredicateProfile.SCALAR_TEXT_EQUALITY && knownReads.size() == 1
+                        && provenance.exact() && gapCodes.isEmpty(), "predicate proof requires one read and exact provenance");
+            else require(profile == PredicateProfile.UNAVAILABLE && !gapCodes.isEmpty(), "unproven predicate requires gap");
+        }
+        public PredicateDomain resultDomain() { return availability == Availability.KNOWN ? PredicateDomain.BOOLEAN : PredicateDomain.UNKNOWN; }
+        public PredicateEvaluation evaluation() { return availability == Availability.KNOWN ? PredicateEvaluation.PURE : PredicateEvaluation.UNKNOWN; }
+        public PredicateCompletion normalCompletion() { return availability == Availability.KNOWN ? PredicateCompletion.TOTAL : PredicateCompletion.UNKNOWN; }
+        public ReadsCompleteness readsCompleteness() { return availability == Availability.KNOWN ? ReadsCompleteness.COMPLETE : ReadsCompleteness.PARTIAL; }
+        public PredicateTruth truthValue() { return PredicateTruth.UNKNOWN; }
+        public static PredicateGuarantee unavailable(List<DataReference> references, Provenance provenance) {
+            return new PredicateGuarantee(Availability.UNAVAILABLE, PredicateProfile.UNAVAILABLE,
+                    references.stream().map(DataReference::id).toList(), provenance, List.of("PREDICATE_NOT_PROVEN"));
+        }
+    }
+
+    public record IfArm(ClausePresence presence, Availability contentAvailability,
+                        ExecutableStart entry, Provenance provenance, List<String> gapCodes) {
+        public IfArm {
+            Objects.requireNonNull(presence); Objects.requireNonNull(contentAvailability);
+            Objects.requireNonNull(entry); Objects.requireNonNull(provenance); gapCodes = List.copyOf(gapCodes);
+            if (presence == ClausePresence.ABSENT) require(entry.statement().isEmpty(), "absent arm cannot have entry");
+            if (contentAvailability == Availability.KNOWN)
+                require(presence != ClausePresence.UNKNOWN && provenance.exact() && gapCodes.isEmpty()
+                        && (presence == ClausePresence.ABSENT || entry.availability() == Availability.KNOWN),
+                        "complete arm needs presence, origin and executable entry or proven absence");
+            else require(!gapCodes.isEmpty(), "incomplete arm requires gap");
+        }
+        public static IfArm unavailable(Provenance provenance) {
+            return new IfArm(ClausePresence.UNKNOWN, Availability.UNAVAILABLE,
+                    new ExecutableStart(Availability.UNAVAILABLE, Optional.empty()), provenance, List.of("IF_ARM_NOT_PROVEN"));
+        }
+    }
+
+    /** Source-derived declaration evidence. Distinct IDs alone never create this fact. */
+    public record IndependentStorageSet(Availability availability, List<DataItemId> members,
+            Optional<Provenance> provenance, List<String> gapCodes) {
+        public IndependentStorageSet {
+            Objects.requireNonNull(availability); members = List.copyOf(members);
+            Objects.requireNonNull(provenance); gapCodes = List.copyOf(gapCodes);
+            if (availability == Availability.KNOWN)
+                require(members.size() >= 2 && new HashSet<>(members).size() == members.size()
+                        && provenance.isPresent() && provenance.get().exact() && gapCodes.isEmpty(),
+                        "independent storage proof requires members and exact source authority");
+            else require(members.isEmpty() && !gapCodes.isEmpty(), "unproven storage cannot publish independent members");
+        }
+        public StorageIndependenceRule rule() { return StorageIndependenceRule.INDEPENDENT_WORKING_STORAGE_ROOTS; }
+        public String authority() { return "IBM_ENTERPRISE_COBOL_6_4_WORKING_STORAGE"; }
+        public static IndependentStorageSet unavailable() {
+            return new IndependentStorageSet(Availability.UNAVAILABLE, List.of(), Optional.empty(), List.of("STORAGE_INDEPENDENCE_NOT_PROVEN"));
+        }
+    }
+
     /**
      * Surface retained for structural IF facts. Predicate normalization remains
      * a later post-binding product; references here are only those already known.
      */
     public record ConditionSurface(String shape, List<DataReference> references,
-                                   Provenance provenance) {
+                                   Provenance provenance, PredicateGuarantee predicate) {
         public ConditionSurface {
             shape = requireText(shape, "shape");
             references = List.copyOf(references);
             provenance = Objects.requireNonNull(provenance, "provenance");
             if (references.stream().anyMatch(reference -> reference.role() != OperandRole.READ))
                 throw new IllegalArgumentException("condition references must have READ role");
+            Objects.requireNonNull(predicate);
+            require(predicate.knownReads().equals(references.stream().map(DataReference::id).toList()),
+                    "predicate must preserve every known read occurrence");
+            if (predicate.availability() == Availability.KNOWN)
+                require(shape.equals("RELATION") && references.size() == 1 && provenance.exact()
+                        && predicate.provenance().equals(provenance)
+                        && references.get(0).wholeItemAccess().isPresent() && references.get(0).provenance().exact()
+                        && references.get(0).binding().status() == ResolutionStatus.RESOLVED,
+                        "predicate proof requires complete resolved whole-item read and origin");
+        }
+        public ConditionSurface(String shape, List<DataReference> references, Provenance provenance) {
+            this(shape, references, provenance, PredicateGuarantee.unavailable(references, provenance));
         }
     }
 
@@ -640,11 +721,26 @@ public final class CobolSemanticProduct {
      */
     public record IfFact(StatementHeader header, ConditionSurface condition,
                          boolean explicitlyTerminated,
-                         Optional<StatementId> continuation) implements StatementFact {
+                         Optional<StatementId> continuation, NormalContinuation normalContinuation,
+                         IfArm thenArm, IfArm elseArm, IfProfile profile) implements StatementFact {
         public IfFact {
             header = Objects.requireNonNull(header, "header");
             condition = Objects.requireNonNull(condition, "condition");
             continuation = Objects.requireNonNull(continuation, "continuation");
+            Objects.requireNonNull(normalContinuation); Objects.requireNonNull(thenArm);
+            Objects.requireNonNull(elseArm); Objects.requireNonNull(profile);
+            require(normalContinuation.availability() != ContinuationAvailability.NONE, "IF does not prove local exit");
+            require(thenArm.presence() != ClausePresence.ABSENT, "THEN cannot be absent");
+            if (profile == IfProfile.SIMPLE_TEXT_EQUALITY)
+                require(explicitlyTerminated && condition.predicate().availability() == Availability.KNOWN
+                        && normalContinuation.availability() == ContinuationAvailability.KNOWN
+                        && thenArm.contentAvailability() == Availability.KNOWN && elseArm.contentAvailability() == Availability.KNOWN
+                        && header.containment().branch() == Branch.ROOT, "simple IF requires all source proofs and root ownership");
+        }
+        public IfFact(StatementHeader header, ConditionSurface condition, boolean explicitlyTerminated,
+                      Optional<StatementId> continuation) {
+            this(header, condition, explicitlyTerminated, continuation, NormalContinuation.unavailable(header.provenance()),
+                    IfArm.unavailable(header.provenance()), IfArm.unavailable(header.provenance()), IfProfile.OUTSIDE_SLICE);
         }
     }
 
@@ -695,7 +791,7 @@ public final class CobolSemanticProduct {
     public record State(UnitId unit, Policy policy,
                         List<DataDeclaration> dataDeclarations,
                         List<StatementFact> statements,
-                        List<Gap> gaps, CoverageSummary coverage, EntryInventory entryInventory) {
+                        List<Gap> gaps, CoverageSummary coverage, EntryInventory entryInventory, IndependentStorageSet storageIndependence) {
         public State {
             unit = Objects.requireNonNull(unit, "unit");
             policy = Objects.requireNonNull(policy, "policy");
@@ -706,6 +802,19 @@ public final class CobolSemanticProduct {
             entryInventory = Objects.requireNonNull(entryInventory, "entryInventory");
             validateState(unit, dataDeclarations, statements, gaps, coverage);
             validateEntries(unit, statements, entryInventory);
+            Objects.requireNonNull(storageIndependence);
+            Map<DataItemId, DataDeclaration> storageDeclarations = new HashMap<>();
+            for (var declaration : dataDeclarations) storageDeclarations.put(declaration.id(), declaration);
+            for (var member : storageIndependence.members()) {
+                var declaration = storageDeclarations.get(member);
+                require(declaration != null && member.unit().equals(unit) && declaration.scalarText().isPresent()
+                        && declaration.provenance().exact() && declaration.coverage() == CoverageStatus.MODELED,
+                        "independent member requires published, complete scalar declaration and origin");
+            }
+        }
+        public State(UnitId unit, Policy policy, List<DataDeclaration> dataDeclarations,
+                     List<StatementFact> statements, List<Gap> gaps, CoverageSummary coverage, EntryInventory entryInventory) {
+            this(unit, policy, dataDeclarations, statements, gaps, coverage, entryInventory, IndependentStorageSet.unavailable());
         }
 
         /** Older manual publications explicitly lack entry knowledge. */
@@ -839,6 +948,10 @@ public final class CobolSemanticProduct {
     }
 
     private static void validateStructure(Map<StatementId, StatementFact> statements) {
+        Map<Containment, List<StatementFact>> armChildren = new HashMap<>();
+        for (var statement : statements.values())
+            armChildren.computeIfAbsent(statement.header().containment(), ignored -> new java.util.ArrayList<>()).add(statement);
+        Map<StatementId, StructuralInterval> intervals = structuralIntervals(statements);
         for (StatementFact statement : statements.values()) {
             if (statement instanceof MoveFact move) move.normalContinuation().statement().ifPresent(next -> {
                 require(next.unit().equals(move.header().id().unit()) && statements.containsKey(next),
@@ -859,6 +972,13 @@ public final class CobolSemanticProduct {
                         "branch parent must precede its structural child");
             });
             if (statement instanceof IfFact branch) {
+                validateArm(branch, branch.thenArm(), Branch.THEN, armChildren);
+                validateArm(branch, branch.elseArm(), Branch.ELSE, armChildren);
+                branch.normalContinuation().statement().ifPresent(next -> {
+                    require(statements.containsKey(next) && next.unit().equals(branch.header().id().unit())
+                            && !next.equals(branch.header().id()), "IF completion requires published successor");
+                    require(branch.continuation().equals(Optional.of(next)), "executable IF completion contradicts structural continuation");
+                });
                 branch.continuation().ifPresent(continuationId -> {
                     StatementFact continuation = statements.get(continuationId);
                     require(continuation != null,
@@ -866,23 +986,62 @@ public final class CobolSemanticProduct {
                     require(continuation.header().point().ordinal()
                                     > branch.header().point().ordinal(),
                             "IF continuation must follow its structural program point");
-                    require(!isDescendantOf(continuation, branch.header().id(), statements),
+                    require(!intervals.get(branch.header().id()).contains(intervals.get(continuationId)),
                             "IF continuation cannot be contained by that IF");
                 });
             }
         }
     }
 
-    private static boolean isDescendantOf(StatementFact statement, StatementId ancestor,
-                                          Map<StatementId, StatementFact> statements) {
-        Optional<StatementId> parent = statement.header().containment().parent();
-        while (parent.isPresent()) {
-            if (parent.get().equals(ancestor)) return true;
-            StatementFact parentStatement = statements.get(parent.get());
-            if (parentStatement == null) return false;
-            parent = parentStatement.header().containment().parent();
+    private static void validateArm(IfFact owner, IfArm arm, Branch side,
+            Map<Containment, List<StatementFact>> children) {
+        var members = children.getOrDefault(new Containment(Optional.of(owner.header().id()), side), List.of());
+        if (arm.presence() == ClausePresence.ABSENT) require(members.isEmpty(), "absent arm has children");
+        arm.entry().statement().ifPresent(entry -> require(!members.isEmpty() && members.get(0).header().id().equals(entry),
+                "arm entry must identify its first direct child"));
+        if (arm.contentAvailability() == Availability.KNOWN && arm.presence() == ClausePresence.PRESENT) {
+            for (int i = 0; i < members.size(); i++) {
+                var member = members.get(i);
+                require(member instanceof MoveFact, "complete W2 arm admits only direct MOVE facts");
+                var move = (MoveFact) member;
+                require(move.copySemantics() != CopySemantics.UNAVAILABLE && move.header().provenance().exact(),
+                        "complete W2 arm requires MOVE proof and origin");
+                var expected = i + 1 < members.size() ? Optional.of(members.get(i + 1).header().id())
+                        : owner.normalContinuation().statement();
+                require(expected.isPresent() && move.normalContinuation().statement().equals(expected),
+                        "arm MOVE completion must follow direct sibling or IF completion");
+            }
         }
-        return false;
+    }
+
+    private record StructuralInterval(int begin, int end) {
+        boolean contains(StructuralInterval other) { return begin < other.begin && other.end < end; }
+    }
+    private record StructuralVisit(StatementId id, boolean exit) { }
+
+    /** Containment intervals validate ancestry once, without a parent-chain scan per IF. */
+    private static Map<StatementId, StructuralInterval> structuralIntervals(Map<StatementId, StatementFact> statements) {
+        Map<StatementId, List<StatementId>> children = new HashMap<>();
+        java.util.Deque<StructuralVisit> pending = new java.util.ArrayDeque<>();
+        for (var statement : statements.values()) {
+            var parent = statement.header().containment().parent();
+            if (parent.isEmpty()) pending.push(new StructuralVisit(statement.header().id(), false));
+            else children.computeIfAbsent(parent.get(), ignored -> new java.util.ArrayList<>()).add(statement.header().id());
+        }
+        Map<StatementId, Integer> begins = new HashMap<>();
+        Map<StatementId, StructuralInterval> intervals = new HashMap<>();
+        int ordinal = 0;
+        while (!pending.isEmpty()) {
+            var visit = pending.pop();
+            if (visit.exit()) intervals.put(visit.id(), new StructuralInterval(begins.get(visit.id()), ordinal++));
+            else {
+                require(begins.put(visit.id(), ordinal++) == null, "cyclic or duplicate containment");
+                pending.push(new StructuralVisit(visit.id(), true));
+                for (var child : children.getOrDefault(visit.id(), List.of())) pending.push(new StructuralVisit(child, false));
+            }
+        }
+        require(intervals.size() == statements.size(), "containment must be a closed forest");
+        return intervals;
     }
 
     private static void validateLocalizedIncompleteness(

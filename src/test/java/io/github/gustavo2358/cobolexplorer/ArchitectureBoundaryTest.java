@@ -24,6 +24,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -259,6 +260,22 @@ class ArchitectureBoundaryTest {
         String projection = Files.readString(Path.of("src/main/java/io/github/gustavo2358/cobolexplorer/semanticproduct/projection/CobolSemanticProductProjector.java"));
         for (String forbidden : List.of("ScalarMoveSemantics.analyze", "rawLexeme()", "logicalExtent()", "extent() =="))
             assertTrue(!projection.contains(forbidden), forbidden);
+    }
+
+    @Test
+    void ifProofEngineAndOracleKeepTheCanonicalBoundary() throws Exception {
+        var engine = IfSemantics.class;
+        List<Class<?>> engineTypes = new ArrayList<>(); addNestedTypes(engine, engineTypes);
+        for (var type : engineTypes) for (var dependency : directDependencies(type))
+            assertTrue(!dependency.startsWith(SEMANTIC_PRODUCT_PREFIX) && !dependency.startsWith(ANTLR_PREFIX), dependency);
+        var oracle = io.github.gustavo2358.cobolexplorer.semanticproduct.ifprofile.IfFactsOracle.class;
+        List<Class<?>> oracleTypes = new ArrayList<>(); addNestedTypes(oracle, oracleTypes);
+        for (var type : oracleTypes) for (var dependency : directDependencies(type))
+            if (dependency.startsWith(PROJECT_PREFIX_INTERNAL)) assertTrue(dependency.startsWith(oracle.getName().replace('.', '/'))
+                    || dependency.startsWith(SEMANTIC_PRODUCT_INTERNAL) || dependency.equals(SEMANTIC_PORT_INTERNAL), dependency);
+        var projection = Files.readString(Path.of("src/main/java/io/github/gustavo2358/cobolexplorer/semanticproduct/projection/CobolSemanticProductProjector.java"));
+        for (var forbidden : List.of("IfSemantics.analyze", "operatorKind()", "relationalOperator()", "hasOverlay("))
+            assertFalse(projection.contains(forbidden), forbidden);
     }
 
     @Test

@@ -14,7 +14,7 @@ Domínios disponíveis, na ordem do pipeline:
 8. [resolução de referências](reference-resolution.md);
 9. [COBOL Semantic Product e lowering readiness](cobol-semantic-product.md),
    boundary local materializada e transportada por JSON antes do `cobol-lower`
-   externo.
+   externo; [IF W2A](if-semantic-product.md) delimita predicate, braços/completion e independência limitada.
 
 CFG e dataflow não são domínios locais deste repositório: a ownership cross-repo
 está no [pipeline](../architecture/pipeline.md). Interpretação de linguagens

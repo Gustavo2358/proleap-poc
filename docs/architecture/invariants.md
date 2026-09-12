@@ -140,6 +140,15 @@ IDs neste documento são estáveis. `AUTOMATED` indica proteção executável at
 - **Enforcement:** `AUTOMATED` — EVAL-SP-007, oracles X8/literal/negativos, invariantes construtivos e oito mutações semânticas com restauração exata.
 - **Known exceptions:** [domínio CALL](../domain/call-semantic-product.md); nested/handler control, truncation, aliases e interpretação de nomes runtime não são promovidos.
 
+### INV-SP-010 — IF simples exige provas canônicas independentes
+
+- **Statement:** predicate UNKNOWN só recebe BOOLEAN/PURE/TOTAL e reads COMPLETE sob prova positiva de igualdade textual inteira resolvida; ELSE ausente é fato lexical distinto de conteúdo vazio/parcial. Completion deriva de listas diretas e contexto herdado, nunca IDs/linhas/ProgramPoint. Independência exige fact próprio source-derived, sem inferência por IDs distintos. Origem e incerteza não podem desaparecer.
+- **Rationale:** consumers futuros precisam traduzir somente fatos já provados, preservando soundness e a separação entre frontend e controle/dataflow downstream.
+- **Scope:** AstBuilder, IfSemantics, SP 1.4.0, port, writer e oracles W2A.
+- **Related ADRs:** ADR-0013.
+- **Enforcement:** `AUTOMATED` — EVAL-SP-008, negativos canônicos, boundary-only oracle, contadores e challenges com restauração exata.
+- **Known exceptions:** [profile IF W2A](../domain/if-semantic-product.md); nested completo, condições gerais, storage/alias gerais e W2C/B/D permanecem fora.
+
 ## Condições contextuais
 
 ### INV-COND-001 — Significado dependente de binding permanece aberto até a resolução

@@ -31,16 +31,19 @@ public final class ScalarMoveSemantics {
     private final Map<ResolutionContracts.SemanticEntityId, ScalarText> declarations;
     private final Map<NodeKey, Move> moves;
     private final Metrics metrics;
+    private final IfSemantics ifs;
+    public IfSemantics ifs() { return ifs; }
     private final Map<NodeKey, Call> calls;
     public Call call(ResolutionContracts.ProgramUnitId unit, int node) {
         return calls.getOrDefault(new NodeKey(unit, node), new Call(Optional.empty(), Optional.empty(), false));
     }
 
     private ScalarMoveSemantics(Map<ResolutionContracts.SemanticEntityId, ScalarText> declarations,
-                                Map<NodeKey, Move> moves, Map<NodeKey, Call> calls, Metrics metrics) {
+                                Map<NodeKey, Move> moves, Map<NodeKey, Call> calls, Metrics metrics, IfSemantics ifs) {
         this.declarations = Map.copyOf(declarations);
         this.moves = Map.copyOf(moves);
         this.metrics = metrics;
+        this.ifs = Objects.requireNonNull(ifs);
         this.calls = Map.copyOf(calls);
     }
     public Optional<ScalarText> declaration(ResolutionContracts.SemanticEntityId id) {
@@ -178,7 +181,8 @@ public final class ScalarMoveSemantics {
             moves.put(key, new Move(whole, copy, basic.nextStatement(), basic.gaps(), adjustment));
         }
         return new ScalarMoveSemantics(declarations, moves, calls,
-                new Metrics(counts[0], counts[1], counts[2], counts[3], counts[4]));
+                new Metrics(counts[0], counts[1], counts[2], counts[3], counts[4]),
+                IfSemantics.analyze(frontend, tables, resolution, report, declarations, moves));
     }
 
     private static Move fact(Optional<ResolutionContracts.SemanticEntityId> whole,

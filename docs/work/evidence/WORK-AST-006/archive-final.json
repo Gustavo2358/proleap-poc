@@ -1,0 +1,1626 @@
+[
+  {
+    "source": "target/cp6-w2a/challenges-final/01-inner-move-completion-erased.log",
+    "artifact": "challenges-final/w2a/01-inner-move-completion-erased.log.gz",
+    "rawSha256": "21cf9c6b926756b37bd4e8e0e178847abfde1183bc3b6c8859fdf1879b1fa7c8",
+    "artifactSha256": "fd167756c3c2c6eee108e73299e3ddee382970e96993952527dad5a55c51f332",
+    "rawBytes": 31752,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/challenges-final/02-then-else-swapped.log",
+    "artifact": "challenges-final/w2a/02-then-else-swapped.log.gz",
+    "rawSha256": "7687a4b19759a943e2c147ee9ae763e2559b9d06bc3ff2aba21126f40e14c084",
+    "artifactSha256": "bdc09c84152027c65aaf095788cf5e758876a0ecf3f00fb6cbb063e346e48881",
+    "rawBytes": 6597,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/challenges-final/03-absent-else-made-present.log",
+    "artifact": "challenges-final/w2a/03-absent-else-made-present.log.gz",
+    "rawSha256": "0f1e2c322d2bb028697b357f2ff0ecdc593f46aa7094940f17f22d7124b7083a",
+    "artifactSha256": "8de8bc9f3cbe827ee5fd593338953c52a519b3aa33e717d53f164d0cd4718fd9",
+    "rawBytes": 6304,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/challenges-final/04-known-flag-read-erased.log",
+    "artifact": "challenges-final/w2a/04-known-flag-read-erased.log.gz",
+    "rawSha256": "1a205c8317a2e2c1b6b762908db0cf06fa1cd04b64ca10e31d39ea1d5883fbef",
+    "artifactSha256": "3793e5af0d8da46792622150c020ea959393b9f148383d1e428a2ba0bdd99764",
+    "rawBytes": 7452,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/challenges-final/05-incomplete-reads-falsely-complete.log",
+    "artifact": "challenges-final/w2a/05-incomplete-reads-falsely-complete.log.gz",
+    "rawSha256": "daf79707041f219e497edc944294131d8bac3fbfd414d24dc5981201b01cea81",
+    "artifactSha256": "62f32751927dcfe7074875c03105028bf76b5572a5bbc5ed12e94ee621345182",
+    "rawBytes": 7533,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/challenges-final/06-whole-item-read-erased.log",
+    "artifact": "challenges-final/w2a/06-whole-item-read-erased.log.gz",
+    "rawSha256": "d42fa5e421b017b06566f4f54bc293ab61131c543391b98f402d64476338e440",
+    "artifactSha256": "3482d946b6b02628f033d0775c945d3f40bb77e08bf685e9e27dc7e023dea366",
+    "rawBytes": 2316,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/challenges-final/07-predicate-outside-slice-promoted.log",
+    "artifact": "challenges-final/w2a/07-predicate-outside-slice-promoted.log.gz",
+    "rawSha256": "4220cd8e8bc1760ef28adf8722d0d2d95f99f6f8a71be4af051ef8ddecb29da0",
+    "artifactSha256": "cfa17f697d5223187d56fae9e335f08aa53ad4d9fa8fa090201e07c217421cd1",
+    "rawBytes": 2526,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/challenges-final/08-distinct-identities-used-as-proof.log",
+    "artifact": "challenges-final/w2a/08-distinct-identities-used-as-proof.log.gz",
+    "rawSha256": "28b7033aefa80c7502390e3b38a22aed7a457c1f761cf32dbd2c21eb186ad776",
+    "artifactSha256": "39be7a88f6f1a3dd8a4b0ba1b994f0f243e6702e9c39302c710ae7534a2c9fbe",
+    "rawBytes": 2433,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/challenges-final/09-redefines-ignored.log",
+    "artifact": "challenges-final/w2a/09-redefines-ignored.log.gz",
+    "rawSha256": "68a2b123d77105c3eed7e95da4a1f63b0d1f22c3b3923bcf4d25facda7c4f134",
+    "artifactSha256": "527e6532a3dc82e6dfe464c7d1b161397f24e07fe604d7834d7b75a4452a1a0b",
+    "rawBytes": 2433,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/challenges-final/10-nested-ownership-flattened.log",
+    "artifact": "challenges-final/w2a/10-nested-ownership-flattened.log.gz",
+    "rawSha256": "452b83010d35f520c4bf6d391cea6775fdd2187736072f30ba5e5c5d6954cd6a",
+    "artifactSha256": "29c3ea0214a33861c959a6d4e21f8ecc34fdffaf4b612b3071735de36b892c7b",
+    "rawBytes": 3226,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/challenges-final/11-control-derived-from-node-id.log",
+    "artifact": "challenges-final/w2a/11-control-derived-from-node-id.log.gz",
+    "rawSha256": "9484eec5349ea22eaa415b23ab153969fa682c58e8e89ca21fd6fafbbdcd398a",
+    "artifactSha256": "4f1efc4b8ad84c1c0731d003db5b67ed0eab87c37413894b8f9599eb6615fb5f",
+    "rawBytes": 23756,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/challenges-final/12-control-derived-from-program-point.log",
+    "artifact": "challenges-final/w2a/12-control-derived-from-program-point.log.gz",
+    "rawSha256": "d375c26ca605a232feb25a90d0701805e798ae565205e913b1f10ba9a389eb40",
+    "artifactSha256": "11cd2bef55ceb01531d0389282ac7d9ab7bb2e4df00fe2967c71163a83803b75",
+    "rawBytes": 19514,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/challenges-final/13-predicate-provenance-lost.log",
+    "artifact": "challenges-final/w2a/13-predicate-provenance-lost.log.gz",
+    "rawSha256": "c0020e62cc5feeeffdf2e191546d000b0b4b7065029b67be3b66b39fafde431f",
+    "artifactSha256": "c62d636add9300f57f0e588601565b88b6b4f82b12711e4916d8b6bf43f6ded2",
+    "rawBytes": 2295,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/challenges-final/green-before.log",
+    "artifact": "challenges-final/w2a/green-before.log.gz",
+    "rawSha256": "8540c53cee1b7446a698d8789562128a12daed7994e01384bd4b8082d6615ebc",
+    "artifactSha256": "d857b19a669c3431d18c4238566e5bb39ef007a92e45907abdfb59bb57427729",
+    "rawBytes": 365,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/challenges-final/green-restored.log",
+    "artifact": "challenges-final/w2a/green-restored.log.gz",
+    "rawSha256": "e3b716b9fd1dd64ed7ff24b43e74ea734c5acffef11c2835ef9b8a2e6dd6990b",
+    "artifactSha256": "eda56417d4f10f2f2c38c878849de5387aeb1fa0143a551137d23d24b422dff8",
+    "rawBytes": 239,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/challenges-final/results.json",
+    "artifact": "challenges-final/w2a/results.json.gz",
+    "rawSha256": "e57ace21c3145ac5858b6b02d5e2f4cac7f854789a318d9dc48576b21531ade2",
+    "artifactSha256": "bcb42e794436504205d2d558272f5981e2fee01fdbf64cdbf54603f391d6e6e9",
+    "rawBytes": 507784,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w1a/challenges/effects-none.log",
+    "artifact": "challenges-final/w1a/effects-none.log.gz",
+    "rawSha256": "d473e3496cd39838a7e68ec73117736ec534eb6a3d08cfd13636c9300f6908d6",
+    "artifactSha256": "6e6c0769601dedc64f8818a06b073d6a6c56764561d18a26c54ecff65fcab653",
+    "rawBytes": 15226,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w1a/challenges/green-before.log",
+    "artifact": "challenges-final/w1a/green-before.log.gz",
+    "rawSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "artifactSha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "rawBytes": 0,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w1a/challenges/green-restored.log",
+    "artifact": "challenges-final/w1a/green-restored.log.gz",
+    "rawSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "artifactSha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "rawBytes": 0,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w1a/challenges/literal-lost.log",
+    "artifact": "challenges-final/w1a/literal-lost.log.gz",
+    "rawSha256": "25bba6faa7feebd829dee2668da7fbdbd7aef01ebc7afc5694bd3e5caa73a230",
+    "artifactSha256": "4fee1f82c44ca909ad84b4e36fd7d3bd09a67a54236f41e87493eba2ebab8769",
+    "rawBytes": 3186,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w1a/challenges/nonwhole-promoted.log",
+    "artifact": "challenges-final/w1a/nonwhole-promoted.log.gz",
+    "rawSha256": "d18e1501ecfde94df4ca5e491ede95635a55100959dc82b45ef15432052ec173",
+    "artifactSha256": "ddab6da950ee138b5271181ccd331ac3a93977aa6bbed50b03794c9ab542da63",
+    "rawBytes": 2101,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w1a/challenges/padding-erased.log",
+    "artifact": "challenges-final/w1a/padding-erased.log.gz",
+    "rawSha256": "8dff48186a0687e6083d2fbecaa4bf72bcf40673d9060c40e7ea3134d9585e95",
+    "artifactSha256": "139e0cdf16bc23b9dae25390fcc6d035061a5de6b2b95a0fa02bba964b7f6089",
+    "rawBytes": 13504,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w1a/challenges/results.json",
+    "artifact": "challenges-final/w1a/results.json.gz",
+    "rawSha256": "fa18636ddb3d6fb05e8d5b261d01ebbc894832f7c0c0916b4458d741533efa74",
+    "artifactSha256": "657bfcc8bd9ba97a2cadc44087213374755dfe7ccbfbfb4e33c00666d86f8068",
+    "rawBytes": 3045,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w1a/challenges/returning-hidden.log",
+    "artifact": "challenges-final/w1a/returning-hidden.log.gz",
+    "rawSha256": "33815aa50cd9657fbcc0f1721d5f5291f406c2671bb7cb83727147fd707a4848",
+    "artifactSha256": "fd6881687a029e934dd3a788e058322a4aa7128e1633702ec938948d32cda8ac",
+    "rawBytes": 2063,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w1a/challenges/using-hidden.log",
+    "artifact": "challenges-final/w1a/using-hidden.log.gz",
+    "rawSha256": "291c616928ea3654d413680e09bde9d953f755f75f6fe5869b6b349a1468ecb5",
+    "artifactSha256": "1edfc468b2d4e3675bba953e14dd7cb5b4aaaec6462dacb44074d7dfed0316dd",
+    "rawBytes": 4146,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w1a/challenges/whole-item-erased.log",
+    "artifact": "challenges-final/w1a/whole-item-erased.log.gz",
+    "rawSha256": "2aa601f25b777ca9bb94eb3a39ba73aff9c98fc77d22c079710afc20944347ca",
+    "artifactSha256": "c87d7a50879050ce2f79cfc9268454a75d64b9966d80a8dc5f37c039b725fd21",
+    "rawBytes": 6718,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w1a/challenges/wrong-continuation.log",
+    "artifact": "challenges-final/w1a/wrong-continuation.log.gz",
+    "rawSha256": "ac3259391fa92c92fa0c815193b09afc8643c7865976d5dc07c8e1606b33eec7",
+    "artifactSha256": "3d569780c78d744c25b8de92a034e721e65912389128ec35d24d3405b289c409",
+    "rawBytes": 12473,
+    "lossless": true
+  },
+  {
+    "source": "target/checkpoint-4a/challenges/01-any-string-literal.log",
+    "artifact": "challenges-final/scalar/01-any-string-literal.log.gz",
+    "rawSha256": "6098a0fe3855ede1582cd739532fe2a4dcf0793368ad950e86b99b8b56d0d8d0",
+    "artifactSha256": "d41eb7d73d4eb88b8ff204958c8960f1e4e035c6b28f801491d9c249f5916077",
+    "rawBytes": 3312,
+    "lossless": true
+  },
+  {
+    "source": "target/checkpoint-4a/challenges/02-ignore-length.log",
+    "artifact": "challenges-final/scalar/02-ignore-length.log.gz",
+    "rawSha256": "5ea74c8ed688a9e58f16aa2e7b0336d3f18a723bf8c8df40101bb35d36ee1aa0",
+    "artifactSha256": "e6186693dc12b06550476c33ecb0cbd50b43af581278493095ac5d8bb52a26c9",
+    "rawBytes": 3723,
+    "lossless": true
+  },
+  {
+    "source": "target/checkpoint-4a/challenges/03a-ignore-occurs.log",
+    "artifact": "challenges-final/scalar/03a-ignore-occurs.log.gz",
+    "rawSha256": "5c749af856acb5b0e367d2b4ac1f3042767d616cea573ade65f56f380756a9e4",
+    "artifactSha256": "7c31dca28edf25b77010335b4d9dcf07bd4b1b0725c64e2156a93adc98616537",
+    "rawBytes": 3337,
+    "lossless": true
+  },
+  {
+    "source": "target/checkpoint-4a/challenges/03b-ignore-overlay.log",
+    "artifact": "challenges-final/scalar/03b-ignore-overlay.log.gz",
+    "rawSha256": "b21b0b7c3975c952e7e3921dee45bf3f6562f37354117954fff42e929c9cc8f1",
+    "artifactSha256": "24577327d32d51653acce08ef250806311023d5829d507d988fde1b9208f4e5a",
+    "rawBytes": 3388,
+    "lossless": true
+  },
+  {
+    "source": "target/checkpoint-4a/challenges/03c-ignore-refmod.log",
+    "artifact": "challenges-final/scalar/03c-ignore-refmod.log.gz",
+    "rawSha256": "47051163728c4d7171b88ee740de768dec3f35d0d39853a6fcfe05d03a4f658d",
+    "artifactSha256": "1bb92fa81bbc89ac817d91d523a175751ac549f0513690e6a28608c2d762114f",
+    "rawBytes": 3329,
+    "lossless": true
+  },
+  {
+    "source": "target/checkpoint-4a/challenges/04-wrong-selected.log",
+    "artifact": "challenges-final/scalar/04-wrong-selected.log.gz",
+    "rawSha256": "9780c60e546781d20d4a46199ef942962d28d17791e1884f3408c1f26734c0f7",
+    "artifactSha256": "ea55c7e6ff6f5613279e85f94e7018211a092c342bd5dc3f92a03327ddff5e8d",
+    "rawBytes": 20966,
+    "lossless": true
+  },
+  {
+    "source": "target/checkpoint-4a/challenges/05-nominal-implies-whole.log",
+    "artifact": "challenges-final/scalar/05-nominal-implies-whole.log.gz",
+    "rawSha256": "1ed82812aebdcabd8505260b72ad9a2eb4792a8dd317ca9c7dcc4929c99d0970",
+    "artifactSha256": "d0f6ecf87477bcd31a3e04236b1b160a6fa38732a6f008c5709c46a794f00034",
+    "rawBytes": 3323,
+    "lossless": true
+  },
+  {
+    "source": "target/checkpoint-4a/challenges/06-array-order-continuation.log",
+    "artifact": "challenges-final/scalar/06-array-order-continuation.log.gz",
+    "rawSha256": "6855f09bedd043f66187d771683a49310ae93e3a269234e3544c23691fcd3307",
+    "artifactSha256": "2e62d770f02ce87f233d9456dfae94327a22f49c215d14ff373a97ca742c2783",
+    "rawBytes": 5775,
+    "lossless": true
+  },
+  {
+    "source": "target/checkpoint-4a/challenges/07-remove-continuation.log",
+    "artifact": "challenges-final/scalar/07-remove-continuation.log.gz",
+    "rawSha256": "0cd82126aacba7614636b2e472bcd3b9f94d4bb4a42d2a377c91aea7b930aaba",
+    "artifactSha256": "45538e6ad3d01b2f93cca71f0630feafe0d57f057175e224178d299c55c861cb",
+    "rawBytes": 6591,
+    "lossless": true
+  },
+  {
+    "source": "target/checkpoint-4a/challenges/08-goback-fallthrough.log",
+    "artifact": "challenges-final/scalar/08-goback-fallthrough.log.gz",
+    "rawSha256": "d5e13888b8c4e268551fd91ee454672a03034ef55bf6a9b281bb355980f5e553",
+    "artifactSha256": "8e68c421ee621b56422ace0c89fc5596c82dfc1551ea0db0c0e7e7211a635251",
+    "rawBytes": 22806,
+    "lossless": true
+  },
+  {
+    "source": "target/checkpoint-4a/challenges/09a-remove-literal-origin.log",
+    "artifact": "challenges-final/scalar/09a-remove-literal-origin.log.gz",
+    "rawSha256": "92120be3027226df0727eb15e1af36512b63e41fcf2020903e1c870da8ea5ef9",
+    "artifactSha256": "da4437f990cbb054684ad414a516db3ff0f012ccb2c5163d9b6dcb18fa879c94",
+    "rawBytes": 4666,
+    "lossless": true
+  },
+  {
+    "source": "target/checkpoint-4a/challenges/09b-remove-target-origin.log",
+    "artifact": "challenges-final/scalar/09b-remove-target-origin.log.gz",
+    "rawSha256": "2efef85ea5edb84cc35fa9ac8924ec3778b53ecd750e02e3b2e56f7047bffcef",
+    "artifactSha256": "cd3d64aa55dadebc0d377fa8d4652b5b2cd866ab8661fa7b55df5f3f3c9f015e",
+    "rawBytes": 4666,
+    "lossless": true
+  },
+  {
+    "source": "target/checkpoint-4a/challenges/10-duplicate-declaration.log",
+    "artifact": "challenges-final/scalar/10-duplicate-declaration.log.gz",
+    "rawSha256": "b9ff9da002efc2a50d4d66218d8304f55a07eb58bcbe1cf9b189faf0f0075569",
+    "artifactSha256": "40120aecd26209dc746439c40b2d532e0d6772c5f4eabb1e2aad63016eb3b8c8",
+    "rawBytes": 2367,
+    "lossless": true
+  },
+  {
+    "source": "target/checkpoint-4a/challenges/green-before.log",
+    "artifact": "challenges-final/scalar/green-before.log.gz",
+    "rawSha256": "b91cd35d8ebb9234274d6f0bcb442fd79da7218b58423b58ba14d526db066444",
+    "artifactSha256": "9c7c35712ced6b5f0fbe9e2dc005e349fa3710c01dce32fe2d721b3be740431e",
+    "rawBytes": 1156,
+    "lossless": true
+  },
+  {
+    "source": "target/checkpoint-4a/challenges/green-restored.log",
+    "artifact": "challenges-final/scalar/green-restored.log.gz",
+    "rawSha256": "10d3ee1a856b85a711fee94f7fd28b34ec99fc471443b0d71c50c3b9f6b73986",
+    "artifactSha256": "f5f64776a20bfb48b050a763d94543a5de119d44b283dbd05d5f7bdffa72952b",
+    "rawBytes": 2125,
+    "lossless": true
+  },
+  {
+    "source": "target/checkpoint-4a/challenges/results.json",
+    "artifact": "challenges-final/scalar/results.json.gz",
+    "rawSha256": "d1ba2a5736efb09392acc8dd41ce549b9a8207e8ceeaaf8c7582c0028ef809d7",
+    "artifactSha256": "9f113af5a48efacd6405176457f60c0d4dc24ca66b81c7cfab2b1421a2e23627",
+    "rawBytes": 2614,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/qualification/challenge-scalar-1.json",
+    "artifact": "qualification/challenge-scalar-1.json.gz",
+    "rawSha256": "bea60c0333aec09a73de8be72913c990e9bc012d9741fda3a2b63ccd02c7654c",
+    "artifactSha256": "46229341a8118a5eda52d4968203c4f918019f91691ce31b298ffaf8d4d7bf20",
+    "rawBytes": 17650,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/qualification/challenge-scalar-1.log",
+    "artifact": "qualification/challenge-scalar-1.log.gz",
+    "rawSha256": "2a8653b906d60202d653b37bfdfad4fc0304584ce100f3b326c585a239c067a3",
+    "artifactSha256": "e2c10319768a44b90a877af1a82bca1a43e346b1c35a8812fb48e28df417fd00",
+    "rawBytes": 2050,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/qualification/challenge-scalar-final.json",
+    "artifact": "qualification/challenge-scalar-final.json.gz",
+    "rawSha256": "c67ba67eccc288f2020c553720d9881effdfdd39dfb5700d97b7844a0e998fa5",
+    "artifactSha256": "05efe74a8a7a7787898ea63f710fdd7a10a8839a269a9fe5d1cdc85b2a007e0a",
+    "rawBytes": 17651,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/qualification/challenge-scalar-final.log",
+    "artifact": "qualification/challenge-scalar-final.log.gz",
+    "rawSha256": "1d49e5ccc4c3155829cb2406166e4d2530f1c21240abdcc8f1f09f9386f9fc5b",
+    "artifactSha256": "22b0514da58019d0e4ef16a1be1c157201e026c427cc18b68e674cc650f033db",
+    "rawBytes": 2050,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/qualification/challenge-w1a-1.json",
+    "artifact": "qualification/challenge-w1a-1.json.gz",
+    "rawSha256": "83e2b2146079ddf0f21cfac39f67e673cc9de160f3447bbeb7603ab7d8b78b1b",
+    "artifactSha256": "6264c44a1fa790982f4d5c22e58dde7a264dc0056e8c7992620e4075b32df356",
+    "rawBytes": 17647,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/qualification/challenge-w1a-1.log",
+    "artifact": "qualification/challenge-w1a-1.log.gz",
+    "rawSha256": "c9098aa2e3c93f2a299f078e396000289ea55eee94a6712bb046708bd58e55c0",
+    "artifactSha256": "af3e151ba98b6dede528ed669f12f0f037d40bd8f55fa974cb0de6215c69872a",
+    "rawBytes": 2438,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/qualification/challenge-w1a-final.json",
+    "artifact": "qualification/challenge-w1a-final.json.gz",
+    "rawSha256": "89c00282cbcac0c1e3e160c3a226674fd5203a1633c55c687dbd65c2a26c4f12",
+    "artifactSha256": "de4cfa0b702e77a8f84dff3d75a8389f439b9a76294bb3c51b9f8aa5a53b89ea",
+    "rawBytes": 17648,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/qualification/challenge-w1a-final.log",
+    "artifact": "qualification/challenge-w1a-final.log.gz",
+    "rawSha256": "612ea74c7d9f94354e05c7626883e462c4c60b8ce9552f7162b2c1cca33da2ee",
+    "artifactSha256": "a5d7b458407463d58fe677db4cc17cc75ea2f618a52e2483f012de9cd261a4c0",
+    "rawBytes": 2438,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/qualification/challenge-w2a-final.json",
+    "artifact": "qualification/challenge-w2a-final.json.gz",
+    "rawSha256": "4c2a16791e79748090dbbdde1380bcef4a9a9486834e28f55c00647ac6c3ccf1",
+    "artifactSha256": "b60a46e60f91ab6e480cb05c0078afd9c9c545246629cd7d18a9221b8e5696ed",
+    "rawBytes": 17714,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/qualification/challenge-w2a-final.log",
+    "artifact": "qualification/challenge-w2a-final.log.gz",
+    "rawSha256": "5952e019a5579942573dc58a39918b3d7a4a4b6b2e80c0d3cef17f12222f795c",
+    "artifactSha256": "6cc8a6e2ea7ac07d384ba2c1a1c585e131b0461fa02cecf418d35c3b92bd469b",
+    "rawBytes": 955,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/qualification/cli-closed-1.json",
+    "artifact": "qualification/cli-closed-1.json.gz",
+    "rawSha256": "9b4664a63dffb7a542dfbc1469140075d1b74c9a613baa4613469261d7781303",
+    "artifactSha256": "24b2b41092825bd1fcf9d2c5d393a96e79be31311f17860e47c6857d3cb24ce6",
+    "rawBytes": 17742,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/qualification/cli-closed-1.log",
+    "artifact": "qualification/cli-closed-1.log.gz",
+    "rawSha256": "b072c3f7727e6152fa171ccdecdec1e9a3c90d742eeaa95ab62b2b601d11b5ff",
+    "artifactSha256": "19421073a799cb325af9032c36287886f81853e0cdec7195e3a29a6c1d915ac9",
+    "rawBytes": 1932,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/qualification/cli-closed-2.json",
+    "artifact": "qualification/cli-closed-2.json.gz",
+    "rawSha256": "5381e2ad3add5ef209e346e1ea21a4e2b9798a4862b89afb94c254e94cb2982b",
+    "artifactSha256": "fe661cbf6128da6ed85f142e6d8150948f6351826bd39b4e7ffdacd7ebfc861d",
+    "rawBytes": 17742,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/qualification/cli-closed-2.log",
+    "artifact": "qualification/cli-closed-2.log.gz",
+    "rawSha256": "d5f83070a652d14bc1ed7eebab0d424ca27fab9dd2d7ecf007110451c22bc612",
+    "artifactSha256": "134c5fed480907622880c183d6582c1ffb5fea08c19b58e5f9fb37113d3c0fd1",
+    "rawBytes": 1932,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/qualification/cli-empty-1.json",
+    "artifact": "qualification/cli-empty-1.json.gz",
+    "rawSha256": "c6543283decaa15b4f31e5080e1c407a7f9e1f4569f46fcaf9f75fce9f05b91a",
+    "artifactSha256": "a4d4dff54d675c6e5d863dbd719cd7b4f203910c3e5ae222a6aa8564bce7d73f",
+    "rawBytes": 17740,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/qualification/cli-empty-1.log",
+    "artifact": "qualification/cli-empty-1.log.gz",
+    "rawSha256": "5c970efc9935916ed9a1e599617b9e2e20288a58958551aaccca9796ea1e34ae",
+    "artifactSha256": "75ce5bb8f8e3d0be90de6226650183ee7f40a489dfe06322ce336a19e83e65c7",
+    "rawBytes": 1922,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/qualification/cli-empty-2.json",
+    "artifact": "qualification/cli-empty-2.json.gz",
+    "rawSha256": "98c2df882aa2c2312fd67b70b4e71799bc4d73cd38a888d28c144a6b4d836c61",
+    "artifactSha256": "8afd5d3dbe0e6482b0388f14023459265df88ea27b022a8a5953a3fb4963bc87",
+    "rawBytes": 17740,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/qualification/cli-empty-2.log",
+    "artifact": "qualification/cli-empty-2.log.gz",
+    "rawSha256": "f1e4de0c6857a7a9aadac44de23e7d9958ec6406c57490a20146d9c029b78cd9",
+    "artifactSha256": "ebcf311c18cd9e60466e789d1433e174e4eecccd91ac0615fe8536bdf2363b4b",
+    "rawBytes": 1922,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/qualification/cli-open-1.json",
+    "artifact": "qualification/cli-open-1.json.gz",
+    "rawSha256": "10cf9fbe012db8471463102093b551fa0a3cf06aa585361bf8cb9dd3cb361975",
+    "artifactSha256": "54ca0fea998ccfff2abf3fdaf2faa5632dadcab62ce7e0404dbb35f9fcdee1cf",
+    "rawBytes": 17738,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/qualification/cli-open-1.log",
+    "artifact": "qualification/cli-open-1.log.gz",
+    "rawSha256": "3e1627b32c2eff4a9aeee0d516ac46f918e845664a2fe8bd336bdf256eef18dc",
+    "artifactSha256": "735ba751ec9e0d0b7d0d1080a4e45dd27273ca79ade71955479c41b28a8616ee",
+    "rawBytes": 1912,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/qualification/cli-open-2.json",
+    "artifact": "qualification/cli-open-2.json.gz",
+    "rawSha256": "de5e4796929b62a6fc0b8d93283cb7fe633d6d17dd35ca950c5424b484343a45",
+    "artifactSha256": "4b9c989026c5f9526c9f9211783e8fc1ee21deecf5c9249ce566d5aae0cdd62a",
+    "rawBytes": 17738,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/qualification/cli-open-2.log",
+    "artifact": "qualification/cli-open-2.log.gz",
+    "rawSha256": "d291a97f7ac4c1d6af412c6d1bf50ac60c0babdadfd499945e2086294d50ae3d",
+    "artifactSha256": "f0edf74e78ea7f28847072b37c8937ed4ec8722dadf4eed1fafbfc43e5372691",
+    "rawBytes": 1912,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/qualification/deterministic-final.json",
+    "artifact": "qualification/deterministic-final.json.gz",
+    "rawSha256": "1370cb802b224f055f8c1137e7c324e14954ad2df474d506e3a9b0dcb8895bde",
+    "artifactSha256": "2420877064a87fdec9157bd7216e552ad8d2225e4a20fe06cf7c621c47b4cc14",
+    "rawBytes": 17631,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/qualification/deterministic-final.log",
+    "artifact": "qualification/deterministic-final.log.gz",
+    "rawSha256": "810aeb26d2aca3a88cf009ae80ab77dba7fa683caab8400e0b301bce9f1563d6",
+    "artifactSha256": "8788796c4875810d5f1c36acbea5d00b52faf64ec337c5a71f20d2eff381d9e7",
+    "rawBytes": 882,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/qualification/environment.json",
+    "artifact": "qualification/environment.json.gz",
+    "rawSha256": "54514be0d99c999b095c340588c9f0871ee9f48a5c5b03029b17d0fbb9d1d140",
+    "artifactSha256": "c202d29e1c869426d4e9c2bb32838effd98f23b225d1ea5801ccd98678a3ebf8",
+    "rawBytes": 17819,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/qualification/environment.log",
+    "artifact": "qualification/environment.log.gz",
+    "rawSha256": "84fc82cd631888294b64a00ba37756431fe20931e9e663aa41fda785c633a112",
+    "artifactSha256": "91e5b442370b9d2e9aa6c52032af1d956c0300cb6c539482cb2fd48a7defa67e",
+    "rawBytes": 677,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/qualification/fast-docs-final.json",
+    "artifact": "qualification/fast-docs-final.json.gz",
+    "rawSha256": "1d1ed85b7d8c7561c82e765d4af8ba56511c8d3afde831a74d176cc89b3f5cef",
+    "artifactSha256": "c9f739abf104a898b9d823eb6a5ab65a971b567c0509adf626046cf6b42a5484",
+    "rawBytes": 17626,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/qualification/fast-docs-final.log",
+    "artifact": "qualification/fast-docs-final.log.gz",
+    "rawSha256": "5e3e63330ff9fa14b49b32454301ab207b485938a236ae6130a78956214686d5",
+    "artifactSha256": "3821190ad4936dd4ad0a48766c28dc0df7c2358d700b18595c0784c50fe06c26",
+    "rawBytes": 223,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/qualification/full-1.json",
+    "artifact": "qualification/full-1.json.gz",
+    "rawSha256": "67ef28ed24dbd137c691072792c29d3a365735e49344be90e70fae91954bd9a9",
+    "artifactSha256": "e41e6a0bab64415411978fd6828722121763d340bda7d4b7cabd023cadc8e6a5",
+    "rawBytes": 17626,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/qualification/full-1.log",
+    "artifact": "qualification/full-1.log.gz",
+    "rawSha256": "a5228441473dd2cc1ae865a5fdde6cf477ff0313bedcff8c1211388e31e315f0",
+    "artifactSha256": "e87c8cbefb9f0ac1a016a0669b76c95f0502759e0a284d31d992b0980ece5e16",
+    "rawBytes": 85343,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/qualification/full-final.json",
+    "artifact": "qualification/full-final.json.gz",
+    "rawSha256": "419321041bc0f192409bed3461f6bdec91f5324dffcbf7de2b21c96508c8de8a",
+    "artifactSha256": "e6e424db2db796d7defd476dc15cdca9b2ef0b224fd10063db0ab4f4dbf47c35",
+    "rawBytes": 17626,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/qualification/full-final.log",
+    "artifact": "qualification/full-final.log.gz",
+    "rawSha256": "cec325fb969fa18666f417e67284801c0b23253d85e278499f9f8e0f4b064d69",
+    "artifactSha256": "bb116c099c839f1c8fb82eaec631068169796edb17899864ef354347a2ce738a",
+    "rawBytes": 85094,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/qualification/performance-1.json",
+    "artifact": "qualification/performance-1.json.gz",
+    "rawSha256": "16f2e0616c79d3b08c992ba444d8eb3f6dcb1a1ca0cc11e14f99dc1f64c88af1",
+    "artifactSha256": "336d23d9cda9d9139251d699559f095a32b44ae744bc6f3aba91eefea01491cd",
+    "rawBytes": 17633,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/qualification/performance-1.log",
+    "artifact": "qualification/performance-1.log.gz",
+    "rawSha256": "75440f5d342cc664f2854e4488167d0ec381d4c0cac94a6282fb2c0d603cc67d",
+    "artifactSha256": "3437e03cc984c6c50460d0ea6286ebc917bcad72a431724d2537d2c20f823096",
+    "rawBytes": 1285,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/qualification/performance-final.json",
+    "artifact": "qualification/performance-final.json.gz",
+    "rawSha256": "b3c8de89cd166457b26ca2d495b7e0520c63721fab30c95cdde198bac155f7d9",
+    "artifactSha256": "1d2f1de46db4ebfc97d11fd2a4b3261f518e016904d618ef19aded36e2ce245f",
+    "rawBytes": 17633,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/qualification/performance-final.log",
+    "artifact": "qualification/performance-final.log.gz",
+    "rawSha256": "e72b4b19cd2481dde040bea2151a72ab7446bfb1311e790f3e8fd46abdaa1fb5",
+    "artifactSha256": "4fa8beec6ef5215c247eac1d5d3a73cf328cd03b9f8bd9a3b850ceefb89f98a2",
+    "rawBytes": 1285,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/qualification/scope-final.json",
+    "artifact": "qualification/scope-final.json.gz",
+    "rawSha256": "ef2479b4834382771c243be6696a10b326069bb547f285c67b8281261e0b53e2",
+    "artifactSha256": "4588e1b33f99ca9305401a001ee2265a6e1bcbda98d6525d00dd4c05a605a2a7",
+    "rawBytes": 17626,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/qualification/scope-final.log",
+    "artifact": "qualification/scope-final.log.gz",
+    "rawSha256": "278c6dd5982716c33beed1d1321bdc86ff5ae6e4f76e463de3a336692006b815",
+    "artifactSha256": "8fa85aa8c96348cd922829e5ac2538a0c2a4b646dec9ad34123653f105b7bb13",
+    "rawBytes": 2243,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/products/ambiguous.json",
+    "artifact": "products/ambiguous.json.gz",
+    "rawSha256": "8ba03b4eaa490c860df889a0f749efeea2886b2514f9a18894ad17668ff1da49",
+    "artifactSha256": "7a2a22eb7c55447a167532f3dfc436c4e72d88d612ae0535e8cfec8c71b09e95",
+    "rawBytes": 16419,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/products/closed.json",
+    "artifact": "products/closed.json.gz",
+    "rawSha256": "f05396aa6f0f3848cf693c1aa80d1db16fdb834c6050172eacd16ff0505684e2",
+    "artifactSha256": "d583430f750b1fa78e3a4eba56974d2d3bc4328c48bb96df6623f80eb5bc37ca",
+    "rawBytes": 14304,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/products/condition-negative-1023825816.json",
+    "artifact": "products/condition-negative-1023825816.json.gz",
+    "rawSha256": "f0c242e4b526d2419845d1edca5a1ef1a7ed9cae5f934bb7b69d99e1238f6b04",
+    "artifactSha256": "25b1d11431c97584916515fef54acf9eef6ea1e7e60cc2c7c18f9a54bb8b638c",
+    "rawBytes": 15580,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/products/condition-negative-1130748042.json",
+    "artifact": "products/condition-negative-1130748042.json.gz",
+    "rawSha256": "684287035c187b5d9b2fcaf3e4c64fd5cb3ed5be2a53f2263df45b994b97d413",
+    "artifactSha256": "1c3c7e193f513e305994e63e7d2ba0b4c1293bada2f1e4e71041f40a33ed114a",
+    "rawBytes": 15204,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/products/condition-negative-2209026895.json",
+    "artifact": "products/condition-negative-2209026895.json.gz",
+    "rawSha256": "7163302216a56c38638bb62b740e5a0e86bdfdf7d2cfac523832298cb4445891",
+    "artifactSha256": "803fe01249f0500b15870c6469140b708498facf9a0c36322c01aa3f5989c88d",
+    "rawBytes": 15203,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/products/condition-negative-2209585892.json",
+    "artifact": "products/condition-negative-2209585892.json.gz",
+    "rawSha256": "af74fd2ed75b2850cf3b46edf644f549999084b6728210cde357dda16e5cd4f2",
+    "artifactSha256": "d8d14d3ff59318a0a1d7537465e8c70f419ca7af40493ca2871d5e57fe77228b",
+    "rawBytes": 15653,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/products/condition-negative-2353488823.json",
+    "artifact": "products/condition-negative-2353488823.json.gz",
+    "rawSha256": "205c67e023a6478e9a31ec8103cc20409860e520b7dd03c5ee5aaf97b62f2ed3",
+    "artifactSha256": "ce5068ea368223937e634a20be472c341da17e2b5f18ec2eafbf2c2d48befcfe",
+    "rawBytes": 15203,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/products/condition-negative-2384101948.json",
+    "artifact": "products/condition-negative-2384101948.json.gz",
+    "rawSha256": "428014f68b578216506ebd8efa689f8f4824b97c2d27a9182fac0cb64fbec795",
+    "artifactSha256": "bee5b8b452679702cfddc8a6ac7fad055bcb0851bca88f732067c50324291505",
+    "rawBytes": 15653,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/products/condition-negative-2395919962.json",
+    "artifact": "products/condition-negative-2395919962.json.gz",
+    "rawSha256": "8b49cde22f35036211c1af7695b913a89242eb6f1ab3f075e6315a881f2d62e2",
+    "artifactSha256": "df8e41d9a0645e1dcf5e0f632f4347fb308597692ff94c6481cccdbed154a800",
+    "rawBytes": 15203,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/products/condition-negative-2773850315.json",
+    "artifact": "products/condition-negative-2773850315.json.gz",
+    "rawSha256": "3dac72e879df111f4aa1fc87861eb5dc5549f8a510dede427da745752341ec98",
+    "artifactSha256": "607802693b9df892f1f5265478e577236b5cbf6f2a99fe06808c90ef2fe414b8",
+    "rawBytes": 15203,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/products/condition-negative-3085967230.json",
+    "artifact": "products/condition-negative-3085967230.json.gz",
+    "rawSha256": "90da702f5f0afc673f87e54692920e5faa56225cb6ccd117617046e0a5638d91",
+    "artifactSha256": "2db0f5e65119a0d7ba298ce5ca51b00d9de2523979da487d8274065dbb22cce0",
+    "rawBytes": 15203,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/products/condition-negative-3467699494.json",
+    "artifact": "products/condition-negative-3467699494.json.gz",
+    "rawSha256": "8e562b1cf2d206a2e939d7fa41951bcbc92949b71972e899844b0e346eba3fc4",
+    "artifactSha256": "538c89ca224e7d6179426b4494987319e4ecf4e5a4270fff62677fa9a1fbf63c",
+    "rawBytes": 15203,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/products/condition-negative-377529535.json",
+    "artifact": "products/condition-negative-377529535.json.gz",
+    "rawSha256": "8bbba1bd30cb74620d4b6d6f003baed74eeb61bc2bbb6aa0c0d361967f8b40b2",
+    "artifactSha256": "46997235316e5bd8a09ad22d27abad48c0708f9037f8a79d302c8d117f39e943",
+    "rawBytes": 15203,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/products/condition-negative-724154257.json",
+    "artifact": "products/condition-negative-724154257.json.gz",
+    "rawSha256": "1cc1ba0fe7523cfa2585640aca34914d8f742e8f0b1cdb1563224ad1e9b15237",
+    "artifactSha256": "3d8a4c1cf7ddd2b10f999ad18127da1bc56754842cb55d39d942973fc0477f6e",
+    "rawBytes": 15203,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/products/empty.json",
+    "artifact": "products/empty.json.gz",
+    "rawSha256": "af2312b193077fe6208c1873602d31bdb6efc17727afc155f22474e668ad5ba7",
+    "artifactSha256": "cccd6f5eebf5ad0abba9aa77bd9c12e82775ee214dad7b20e7375b77198901af",
+    "rawBytes": 12583,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/products/linkage.json",
+    "artifact": "products/linkage.json.gz",
+    "rawSha256": "2e68aa5a6fe58d2c7b2ce5502c848a86a60dff9ad46375e09dd3d6d0b99aa4a3",
+    "artifactSha256": "ea050e4cec5b0b10602170994cac49df02783619e4cd96493c6ed92247352329",
+    "rawBytes": 16209,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/products/multiple.json",
+    "artifact": "products/multiple.json.gz",
+    "rawSha256": "d7b0efa3dca7239decc3716341795f025915143be70b2eeb1bd8ae67b31fd996",
+    "artifactSha256": "579e4f1152032b5338005caed17a8155b1f67ec28d7121a3d9ce617e5404e04a",
+    "rawBytes": 18732,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/products/nested-last.json",
+    "artifact": "products/nested-last.json.gz",
+    "rawSha256": "320630142568b1e58fe1b88d62b9e455a111262463d07ac86be6cfebcb1b958e",
+    "artifactSha256": "ddfd9c6de76af64a75bd6dd6a1cde2171596abae279c8c603743d169595cb091",
+    "rawBytes": 20636,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/products/nested.json",
+    "artifact": "products/nested.json.gz",
+    "rawSha256": "1a086d24b37b2a172c34258040e3eb98efdbe2d5190849a9bd9e7524e803b8d3",
+    "artifactSha256": "31249c819b9fa39eb4a606fabe09362687110cbb6c8f30efba834207aec5cdb1",
+    "rawBytes": 22850,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/products/open.json",
+    "artifact": "products/open.json.gz",
+    "rawSha256": "30ee38001eef5a3143a17333f79468968af10980b5d8703359dd828273e8615f",
+    "artifactSha256": "12559928197046e9d55f8f8725cba5ba5baa029eb176b755ace27f422f8ce95f",
+    "rawBytes": 12081,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/products/storage-negative-2088890047.json",
+    "artifact": "products/storage-negative-2088890047.json.gz",
+    "rawSha256": "802fef19423a86d9236bea7a6d26c70a2574d43625b90b6b28600aa6454658c1",
+    "artifactSha256": "7cce6529ebdf25ab21c1fb80bf7e6e3adbd092762d39e6c1aa3c76288f44c6d9",
+    "rawBytes": 16877,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/products/storage-negative-291198850.json",
+    "artifact": "products/storage-negative-291198850.json.gz",
+    "rawSha256": "4a2bec027875f7d561624a64a3b7716c6d1b060dd6ffe916cb5ec6264f18a39b",
+    "artifactSha256": "187fb8475f373ead848b83c03b0342e920a4bda6940e41e064efcfd85f69f8fb",
+    "rawBytes": 15127,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/products/storage-negative-3514274080.json",
+    "artifact": "products/storage-negative-3514274080.json.gz",
+    "rawSha256": "8c1a6a3fa34a7803eb05ad1d4974ca709bb5138e68b824ba6e22760df2f1dade",
+    "artifactSha256": "653f084bd27b42fed9d4e200491099e5d43eb6d8df54a3db7dd32c514af32b2d",
+    "rawBytes": 15127,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/products/storage-negative-3894276854.json",
+    "artifact": "products/storage-negative-3894276854.json.gz",
+    "rawSha256": "e09d8f4afb81aecb4943495fee6bdd93b1654a49cc128066b3396a45f8d83f92",
+    "artifactSha256": "1cb1557fac261fb55b159afbbd38345ea115ecf1561d7bc0f050845b99b79012",
+    "rawBytes": 14993,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/products/storage-negative-687946921.json",
+    "artifact": "products/storage-negative-687946921.json.gz",
+    "rawSha256": "78aad7ca952ba009bc1cb020078a70b7befe26caf34c72469042d7853128ec4e",
+    "artifactSha256": "25508473f83bcf868d647542b4a02b14aad3b965c5793bf2928d01d0392db5a3",
+    "rawBytes": 15795,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/products/storage-negative-762924720.json",
+    "artifact": "products/storage-negative-762924720.json.gz",
+    "rawSha256": "bb8865cc22868ebb2dbb444d9b8192adef4ce20b65334abb6793abb1b783d7db",
+    "artifactSha256": "ceb97c3c90a01ec164a44a1aa7259f28546b2ef70b55f2e329f1f9aab7a00db8",
+    "rawBytes": 15127,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/products/storage-negative-874663504.json",
+    "artifact": "products/storage-negative-874663504.json.gz",
+    "rawSha256": "b4dca6aca4004eb40a5ec8bfe0934acd7329bab61d49aac6a7c27c7896a216d4",
+    "artifactSha256": "5d75f8936a14f8c7c096e01c57cd839735d25295b4f44b811b58c204ad66f0e7",
+    "rawBytes": 16207,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/products/storage-negative-982694071.json",
+    "artifact": "products/storage-negative-982694071.json.gz",
+    "rawSha256": "7a9833b93af3aab39e293459dbfa083ebfd568a1d4bf14b8be07c9511ea34baf",
+    "artifactSha256": "ba37281f1ac5957d195b933a1e854e1e3d2307940a2dc8712336d17c48c9cc9d",
+    "rawBytes": 16235,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/products/unresolved.json",
+    "artifact": "products/unresolved.json.gz",
+    "rawSha256": "f0c242e4b526d2419845d1edca5a1ef1a7ed9cae5f934bb7b69d99e1238f6b04",
+    "artifactSha256": "25b1d11431c97584916515fef54acf9eef6ea1e7e60cc2c7c18f9a54bb8b638c",
+    "rawBytes": 15580,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/products/unsupported-arm-1454616365.json",
+    "artifact": "products/unsupported-arm-1454616365.json.gz",
+    "rawSha256": "bb293fe5a2a79258431110673afe6c04da6eb6b673fb2f7a49a7ce3dfa28d3e7",
+    "artifactSha256": "469fb53703e7316eb39d640885a01a82551eda75e6f6425a667f66fe9215c29c",
+    "rawBytes": 13859,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/products/unsupported-arm-1521201763.json",
+    "artifact": "products/unsupported-arm-1521201763.json.gz",
+    "rawSha256": "64336ddcc6eaa641168993392c7815d724a19c50396867a566d78773c460ac2c",
+    "artifactSha256": "28b7ed24995d18404eb49c01458c1ba12a0bd636eeb374488078ac631f441bec",
+    "rawBytes": 13850,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/products/unsupported-arm-516201338.json",
+    "artifact": "products/unsupported-arm-516201338.json.gz",
+    "rawSha256": "af2312b193077fe6208c1873602d31bdb6efc17727afc155f22474e668ad5ba7",
+    "artifactSha256": "cccd6f5eebf5ad0abba9aa77bd9c12e82775ee214dad7b20e7375b77198901af",
+    "rawBytes": 12583,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/products/unsupported-arm-821244247.json",
+    "artifact": "products/unsupported-arm-821244247.json.gz",
+    "rawSha256": "dc8a2e5e0a6eb410507437937c495b7f2a0add8116eba777ec4e1946528c3d86",
+    "artifactSha256": "d632629199a952d9b8e55fd28d5d39f3cfb3f6917e16b8d476c57e61fe8238b7",
+    "rawBytes": 15562,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/scope.json",
+    "artifact": "scope.json",
+    "rawSha256": "278c6dd5982716c33beed1d1321bdc86ff5ae6e4f76e463de3a336692006b815",
+    "artifactSha256": "278c6dd5982716c33beed1d1321bdc86ff5ae6e4f76e463de3a336692006b815",
+    "rawBytes": 2243,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/work-counts.json",
+    "artifact": "work-counts.json",
+    "rawSha256": "41b3eee60040c629a7b1fbf65aa3c15f4769f4c8348be9cc6a8dee5e4df860ca",
+    "artifactSha256": "41b3eee60040c629a7b1fbf65aa3c15f4769f4c8348be9cc6a8dee5e4df860ca",
+    "rawBytes": 301,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite.json",
+    "artifact": "full-suite.json",
+    "rawSha256": "8a53cb08fc02dc07b4dc1d6a2e469d63e482c73b76d60e99e8be7b10bba9b8d6",
+    "artifactSha256": "8a53cb08fc02dc07b4dc1d6a2e469d63e482c73b76d60e99e8be7b10bba9b8d6",
+    "rawBytes": 13163,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.ArchitectureBoundaryTest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.ArchitectureBoundaryTest.xml.gz",
+    "rawSha256": "47874ac1239bc2b138bee6a59cc6a153be8be57d6adcabd49da43a3b63761133",
+    "artifactSha256": "c093d835c720ac46a244e9d49dfca9b4b6f6ccbad57ed80dd6b3dee4e6d6495e",
+    "rawBytes": 9701,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.AstBuildCoverageTest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.AstBuildCoverageTest.xml.gz",
+    "rawSha256": "fb98239bc41576d910d57cdbecae80d3ff3e2bcb42b8f80341ef395c10a60de0",
+    "artifactSha256": "92c43bc36e12e02c9988edc57bcf79fd6d1e083ea08c9bd5bf73073f1bfca65f",
+    "rawBytes": 7506,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.AstBuilderTest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.AstBuilderTest.xml.gz",
+    "rawSha256": "09f7b1b711b0420077d61e9cbddd8e12ee7bf5e8fe96fe661bce202b4f0dea4f",
+    "artifactSha256": "c84645db6d024c72a6c3ac1fc159b39409cc88ff612a6f2635276114b9ad4dc6",
+    "rawBytes": 7821,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.AstBuilderTypedTraversalTest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.AstBuilderTypedTraversalTest.xml.gz",
+    "rawSha256": "f94d97a8e02968c4732b6a5d800f0af4ff228b1a7bc3e7ac49e98b4e8af70208",
+    "artifactSha256": "6e8fa7e94018d0b6b2528c13cec7696ff8535fe521e4ae9ff109143a4d6f021f",
+    "rawBytes": 9126,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.AstPreorderInvariantTest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.AstPreorderInvariantTest.xml.gz",
+    "rawSha256": "2322a6034178aba0e0814d391d963d017d83e7313269bf34d509be5c164bfa38",
+    "artifactSha256": "1cdccea03e2e2c31a61c951200b840d673f099ee669b3cf8b9a43837dce74d6a",
+    "rawBytes": 8226,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.AstSemanticBoundaryCharacterizationTest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.AstSemanticBoundaryCharacterizationTest.xml.gz",
+    "rawSha256": "7f8c9e6c2464ea6e58519f756fd2a408ccc832920bb1140bc24b877c5d2abf3c",
+    "artifactSha256": "a7be284afcf0aa90f9f211f9d624938b7ee2c5fd068d3fdc781836e202dfa739",
+    "rawBytes": 9242,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.AstSemanticBoundaryRequiredOracleTest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.AstSemanticBoundaryRequiredOracleTest.xml.gz",
+    "rawSha256": "5065149e3a481e446b9073e95aa4b7e40fa5f189eb867a8218035e216fa64490",
+    "artifactSha256": "0606189812e6062496decca39c1c82d2b3df2573d53ff3b045a4a9489bfd716b",
+    "rawBytes": 8111,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.CallCheckpointW1ATest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.CallCheckpointW1ATest.xml.gz",
+    "rawSha256": "463fa968734895971266372ddae041e306a1554155c9aac598f8d8b2f58661a6",
+    "artifactSha256": "92af800a3d8faa0ea76bc98539a7a506f34db1b2f6a801f00d8f6d88fdef340b",
+    "rawBytes": 8863,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.CallSemanticsTest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.CallSemanticsTest.xml.gz",
+    "rawSha256": "87b552aa7856f4955fd38fa0934aa85426811d15d6bcdd5634898df16f5ed04e",
+    "artifactSha256": "440869e8454915d4fcad9777f51d425bb6fd9ad90fc4a2a3b5b066d492e034dd",
+    "rawBytes": 8449,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.CicsIntrinsicClassifierTest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.CicsIntrinsicClassifierTest.xml.gz",
+    "rawSha256": "3a9f5c3ca25e92da3f7d358223405c7e83941da428f5fc5b40ef0e06d3eb84d6",
+    "artifactSha256": "842dca9966c22ab8eecd5a827fc926a6707700e333adbec15c034967ee464b4d",
+    "rawBytes": 9481,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.CobolSemanticProductProjectorTest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.CobolSemanticProductProjectorTest.xml.gz",
+    "rawSha256": "6423a10fbe51f477b53ead0d07b354b9089434d9197b79daf2400e312bc28050",
+    "artifactSha256": "1d16d113dffa1b113bb5965b9fd29952ec48d01d33c45556cfa2c38c11b53e97",
+    "rawBytes": 10322,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.CompilationUnitModelTest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.CompilationUnitModelTest.xml.gz",
+    "rawSha256": "2e66086f786902e2f51c4e28420b21cef455513334842c510e5f843d5d32856d",
+    "artifactSha256": "fae50f3ea9e5d7f914912790d7a8c81eedb90a2efa741794055ce750f159eb34",
+    "rawBytes": 7869,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.ConditionNameSurfaceAstTest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.ConditionNameSurfaceAstTest.xml.gz",
+    "rawSha256": "5272e27554c6caba7e3a7f4293ffef8bd6cd0bb29cf9be6b6433f3cecf4d0484",
+    "artifactSha256": "9b089e0805fc5e2534a3b99c71fa71d84659daae33542febd6e6ba47a204d14e",
+    "rawBytes": 9911,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.ConditionNameSurfaceDiscoveryTest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.ConditionNameSurfaceDiscoveryTest.xml.gz",
+    "rawSha256": "796ee1a18cc262f19b1822b6b5cf31e36dc938d83e829a1eab36ff5eccbd4854",
+    "artifactSha256": "22dcffdf047aefc02200ca29757c81bddec8c7019f8239e0e67f6453287232fc",
+    "rawBytes": 12666,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.ConditionSurfaceAstTest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.ConditionSurfaceAstTest.xml.gz",
+    "rawSha256": "21a0b49723e8861b34ad51e0f78d895cf8c32137e17e27063fdd5600e0f8c29d",
+    "artifactSha256": "5e0c46c26fe408b1f973c5154af6826b6811909c4c31d8abc751b27116005eab",
+    "rawBytes": 12077,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.ContextualConditionOccurrenceDiscoveryTest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.ContextualConditionOccurrenceDiscoveryTest.xml.gz",
+    "rawSha256": "e9d6f73709f548fd8923f4d11a789ca2fbb5d1ec2595f5e0b35fb04af5147694",
+    "artifactSha256": "663665f2d169cab86c8a92bfd4907f9b18b785a35e91158da87b17d685086e20",
+    "rawBytes": 10512,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.ContextualConditionOccurrenceTest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.ContextualConditionOccurrenceTest.xml.gz",
+    "rawSha256": "185b00cec49f257cf051edb1c6673992aefb7944921d96e52a5921a1769703a8",
+    "artifactSha256": "dfe89b6ab47cd8284fd2398b420f0c4445a0bf73fd7ac7dc3f2e50e6aac91934",
+    "rawBytes": 9771,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.CopybookDirectoriesTest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.CopybookDirectoriesTest.xml.gz",
+    "rawSha256": "87eebd0de5df679c6e50a83efc4185c4bae6c89e17a1cd319ea5fb51c62e5722",
+    "artifactSha256": "c495bf9e1facec648f2f1e44c24c409831ed91d5db8ba4f358a76ea804b8e294",
+    "rawBytes": 9006,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.CoverageSnapshotTest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.CoverageSnapshotTest.xml.gz",
+    "rawSha256": "a2f874a6772e91d559ddfcd423ae4645064c70589d2fd2500405e501c43c4d48",
+    "artifactSha256": "0ca7ed493c230a3e27c25e69eca988627761dbe8e1e47e31482d81a558b2b997",
+    "rawBytes": 7655,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.DataAndIndexReferenceResolverTest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.DataAndIndexReferenceResolverTest.xml.gz",
+    "rawSha256": "452f3893345ea4a8025490e268bf2a6f424965b497d742bc46f81894106cf91f",
+    "artifactSha256": "3458850a40ba3c17a595655f541719c9917eb1aa7f574b6686602a647d9ae96c",
+    "rawBytes": 11445,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.DeclarationModelAstTest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.DeclarationModelAstTest.xml.gz",
+    "rawSha256": "bcdff2cf52352d78e86ac0937c1470ba65e417f2cd49b705e7096f988a772e11",
+    "artifactSha256": "82b6a8329526de316c9c80c2dc62e9a87fe55476e3ce2f50f0f0acd6713a3e3f",
+    "rawBytes": 7672,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.DynamicCallVariantTest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.DynamicCallVariantTest.xml.gz",
+    "rawSha256": "818739b0beba561a31be0a0df5c479cca2e69e8c17a8a0405e0ba504fadddf4a",
+    "artifactSha256": "ab3f287efbae34585e65c0090df642f53a7125d7c9522dc0a0620c24bbc9a8c9",
+    "rawBytes": 7511,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.EntityScopeAndOccurrenceTest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.EntityScopeAndOccurrenceTest.xml.gz",
+    "rawSha256": "6b5f3593f473025fbd8a7d6f606c18ac1217e76d5f67d92526ee42ab4c150452",
+    "artifactSha256": "30a3c387bdb832f036f93a732a73e3a499e397d71e3f96958b1caa7e6f81bb6a",
+    "rawBytes": 8040,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.ExplorerMainLoggingTest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.ExplorerMainLoggingTest.xml.gz",
+    "rawSha256": "6a61bf3f1ea431dfd05d3443d888bb9bc5aaba71cd2da7592f0712963acadbc1",
+    "artifactSha256": "0f3fa905ad327f29878660dabe292cfda232addbef24f297f433582b43f46ad3",
+    "rawBytes": 9885,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.ExternalCicsCharacterizationTest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.ExternalCicsCharacterizationTest.xml.gz",
+    "rawSha256": "9272c703de29dbfb3b2a181621b8d4f9ee4aa8ee91f7d9f5e92bdabadab434e1",
+    "artifactSha256": "740713a3319dc7f52f8548d978714724c826a9f2812df0d5862747fe222ac586",
+    "rawBytes": 7916,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.ExternalClassificationProductTest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.ExternalClassificationProductTest.xml.gz",
+    "rawSha256": "847609b746eb76276cc0468087fc9bdafb2e1a303b854e449426b61e616d3ac0",
+    "artifactSha256": "4e270619b7b27b202f698d6a4b4bc14d25a138a51d6e29f57ab8b992042ac657",
+    "rawBytes": 7539,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.ExternalClassificationProjectionTest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.ExternalClassificationProjectionTest.xml.gz",
+    "rawSha256": "9c383cf32346141ef4e2de3443e54946efe555cd4f89dc4cf0d43a4159e9430b",
+    "artifactSha256": "be0b7365dcb24c3c06031d33454a115e9e225a127a514a324324325acb50c79b",
+    "rawBytes": 13674,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.FrontendLoggingTest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.FrontendLoggingTest.xml.gz",
+    "rawSha256": "fd1ddcaa84f7adaac109a29fba661397a2665efcb9b7ffd66d96d1f61021ee45",
+    "artifactSha256": "f43ba4d38b5076b5b0afd151ee2e1d2a9dcdc29d639b681e072bc7a2aa8a9fc8",
+    "rawBytes": 8855,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.GrammarCoverageManifestTest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.GrammarCoverageManifestTest.xml.gz",
+    "rawSha256": "4c471ca18d10365e64f879d3ff040a74a03c81a8ca79e6f1d08196d80d72be59",
+    "artifactSha256": "228d859c76441f5ad033620fb486c4bb669a0f09f9a746283c91539233028546",
+    "rawBytes": 7862,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.HarnessDocsTest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.HarnessDocsTest.xml.gz",
+    "rawSha256": "2d820c3353fe30782b2258f6870ee82be2f58c5fbe1cfaab933a06dd00154a91",
+    "artifactSha256": "bb4644826efcd7cec1ce6f80d844edc0a20414a8647b862c5d6ae9ec23d370f0",
+    "rawBytes": 8812,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.IfCanonicalProofTest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.IfCanonicalProofTest.xml.gz",
+    "rawSha256": "7a5575042b1c8854ef2b97769c1f4d1116d3ea177a89c926cc8554a33f760da4",
+    "artifactSha256": "f31d144f058bf98e613e29e82966a081536248f80810e1534412681b9949b32b",
+    "rawBytes": 7806,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.IfCheckpointW2ATest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.IfCheckpointW2ATest.xml.gz",
+    "rawSha256": "301924a9442aea3cc2254821672fc0f1d06989b68b2f4dfc05b958fd7ab7ae22",
+    "artifactSha256": "ae3605f059b5ceb77ce88154453eacac9c3ed5baf6bff5672ed39aa5abe04f42",
+    "rawBytes": 9181,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.IfSemanticsScaleTest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.IfSemanticsScaleTest.xml.gz",
+    "rawSha256": "7ca7ec8f783359e234523af11649c526889120d7b10c3b4e50ad4e1745fc9c31",
+    "artifactSha256": "a2a53ef5994629830b147ab31ea1dca80e1020420b634966450f6f1141b5780a",
+    "rawBytes": 7788,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.LoggingInfrastructureTest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.LoggingInfrastructureTest.xml.gz",
+    "rawSha256": "0a7cc7e8862ed72c8423cc74336a99f809cbcac3e0b017ce1d6ba89fb2b1e79d",
+    "artifactSha256": "f2db2eb338957d6b36a0850f7f9efb530f27d15550c1696f95a9c06be2f06b7a",
+    "rawBytes": 7980,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.NextSentenceCoverageDiscoveryTest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.NextSentenceCoverageDiscoveryTest.xml.gz",
+    "rawSha256": "96d73fa841b40cf46416d391b2726764fd2122818d251f1e3df8421a43c756fb",
+    "artifactSha256": "60c5616c3aca1680d8acb3043cf725e16edcb30dd9e29d79f2b8570a35fe669e",
+    "rawBytes": 10249,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.NominalReferenceAstTest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.NominalReferenceAstTest.xml.gz",
+    "rawSha256": "0ac02e66a07847d9ed4c9c57b4a855cb83963c3a0d0c651d45031613e30d228a",
+    "artifactSha256": "cfb27551e8308e9c189b2daa34576769dd3cfc1e4cf8a959e78c23cd5d82dcf7",
+    "rawBytes": 7691,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.PartialAnalysisMissingCopyTest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.PartialAnalysisMissingCopyTest.xml.gz",
+    "rawSha256": "b0ab89956a5d74bf3b1fb203624b275df45b84582afb6656f0219d1a30a8f5b2",
+    "artifactSha256": "434ed7b97bf7b86b1094f434d442420fb7e4c0f13905bd8ec660e8b6dd777470",
+    "rawBytes": 29118,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.PreprocessorEnginePolicyTest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.PreprocessorEnginePolicyTest.xml.gz",
+    "rawSha256": "ba8300374599f23b4c3575b59607fa3710425ba1d9cd6f32cf49acd3ee304651",
+    "artifactSha256": "b7c42ba22e5cc3ed1c0c374f1903398c01e3869101ed2567cb4788d2f3d1892b",
+    "rawBytes": 7896,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.ProcedureFileProgramReferenceResolverTest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.ProcedureFileProgramReferenceResolverTest.xml.gz",
+    "rawSha256": "e96bf7c41ff864cc3a2cc0809af4845fb86c38d22e4b40fa3b16b62a59d31167",
+    "artifactSha256": "129c22aaff69974d0538c756398c291a58a621f0197e6f3ce1a834286ba90429",
+    "rawBytes": 10369,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.ProgramNameCanonicalizerTest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.ProgramNameCanonicalizerTest.xml.gz",
+    "rawSha256": "3aedcc0a33ecde2abf5262c3409c378269121ff075f948f439e44e9a16d42c19",
+    "artifactSha256": "2136e3ffb0f8ea456b362c607f14f5e2c474f2c3d51d07d66bebce5491b588d1",
+    "rawBytes": 7529,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.ReferenceResolutionBaselineCharacterizationTest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.ReferenceResolutionBaselineCharacterizationTest.xml.gz",
+    "rawSha256": "2113b89c82132e671c1418a2c0f56d2c9e6b64395ae930baee482346977f8bf7",
+    "artifactSha256": "7d72978b785ca415175c91a773a94a43ad2a319ee0884e07c0470f2d0b2a79e1",
+    "rawBytes": 7906,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.ReferenceResolutionManifestTest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.ReferenceResolutionManifestTest.xml.gz",
+    "rawSha256": "b3d3265e5e2e0fa2689f29fe8bb7900990c0e5ac6e62078b6ffb1f0e2dbf565d",
+    "artifactSha256": "9d4182d1e13370f14931cfc4a52bb0c6bc0159b0f1392e8aa5dfd58d1ec9fc88",
+    "rawBytes": 7861,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.ResolutionAnalysisReportTest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.ResolutionAnalysisReportTest.xml.gz",
+    "rawSha256": "7660a9ec7365fc62b3b040a64161af463e094e702c9cf42c3a99a9962c88495d",
+    "artifactSha256": "594b72ca19524682ed568d917e0b734129050feb2f2b078bfb1df2c6009436d2",
+    "rawBytes": 8885,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.ResolutionLoggingTest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.ResolutionLoggingTest.xml.gz",
+    "rawSha256": "02ebca02b37e0cc8b297c25f89c4d06829c338ff170a038f170cec2650d8cd9c",
+    "artifactSha256": "d13a114bb940720a5ff436176a268b22e8570fc638707ae1ad70ed11ce567ad9",
+    "rawBytes": 8236,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.ResolutionSnapshotTest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.ResolutionSnapshotTest.xml.gz",
+    "rawSha256": "1fb4a444043f1091a0ce432ea042748fd76c6ffa1d53818427523f9fb79d7fa5",
+    "artifactSha256": "227be5d9341c564299c1bebf63d9d534d8053b92db11f155d4819f7a21a12117",
+    "rawBytes": 9740,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.ScalarMoveCheckpoint4ATest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.ScalarMoveCheckpoint4ATest.xml.gz",
+    "rawSha256": "7ed1031eea972a4f3ca9cc149ce0a207ed72fa13883fe2bec74fbeb653eedb21",
+    "artifactSha256": "11225fb53dcccbecb9c82f0f38a9a097647681ce41d38d8c52e6748fe47aca2e",
+    "rawBytes": 9464,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.ScalarMoveScaleTest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.ScalarMoveScaleTest.xml.gz",
+    "rawSha256": "c8d446e1160094c726eac87529c74f8d6eadd027d1d1962d6ffab75f5b7ba10d",
+    "artifactSha256": "44abe660a2c5c6c44d993e74309c089643719708e65cbbe770142a552942c5de",
+    "rawBytes": 8938,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.SearchWhenConditionDiscoveryTest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.SearchWhenConditionDiscoveryTest.xml.gz",
+    "rawSha256": "aeafc1b8fa15000b186dc5a8c48bd07b42e5a201493a8809415953c5d01c49c7",
+    "artifactSha256": "3e881081e9776ad48545a9647037e758cd58360cfcc01959e4def1c53c9cbad2",
+    "rawBytes": 10758,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.SearchWhenMaterializationAdversarialTest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.SearchWhenMaterializationAdversarialTest.xml.gz",
+    "rawSha256": "7d2002f22da783dc80c182a9061970d815ad29fc31aa55048683555f28079b48",
+    "artifactSha256": "c731bcdb4c8084be0e8c6545a3d5f7c48e89c8156b353d5287b11d57bdf41776",
+    "rawBytes": 9138,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.SemanticConditionContextDiscoveryTest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.SemanticConditionContextDiscoveryTest.xml.gz",
+    "rawSha256": "5a8d0ded6a6a0d0de2af90672bb8a61c1076af75b2d289dc01471cb93b4e55de",
+    "artifactSha256": "aa3a1c33eaad4e81571354022c3c1a8e0796e69d68639f184edd644ac247aa0a",
+    "rawBytes": 8855,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.SemanticCoverageTest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.SemanticCoverageTest.xml.gz",
+    "rawSha256": "b48ba495682f2ce6a678fc339869c5734c84eb53c4ebeb7bacfcd31afa072a9d",
+    "artifactSha256": "2347311aba337775bf3f913cdc2486c4b946e0fd211728d7fc1dbb34c75b14a8",
+    "rawBytes": 7814,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.SemanticModelBaselineCharacterizationTest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.SemanticModelBaselineCharacterizationTest.xml.gz",
+    "rawSha256": "748fa55d7db583cfc3b023f08eeb389a7eb6fe621e3d7c6c26cd438c0d803951",
+    "artifactSha256": "0b1470d21b69e6bbe57cc44f508cf6dbf6e777af69f49599622c026a36be8f47",
+    "rawBytes": 8387,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.SemanticModelLoggingTest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.SemanticModelLoggingTest.xml.gz",
+    "rawSha256": "62adee2cfbd19512187d5cd95bf7e7d6882341d107b78852599dc10f57798fc2",
+    "artifactSha256": "0bef56ff177c8724a17891efae7ba0e23f68be4b7a8d74d1ee107c2a052c6cec",
+    "rawBytes": 7709,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.SemanticProductBoundaryCheckpoint3ATest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.SemanticProductBoundaryCheckpoint3ATest.xml.gz",
+    "rawSha256": "49c099f83af443d17bc78fa37fc29c77d52230fd014f6b01b0dc4f27925b7fcb",
+    "artifactSha256": "37bf175591833e40d7e5aad3c2d4ce16e8ae0a80299e09d0b9e7d4dbe29051ff",
+    "rawBytes": 8552,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.SemanticProductBoundaryCheckpoint3BTest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.SemanticProductBoundaryCheckpoint3BTest.xml.gz",
+    "rawSha256": "88bbcb56ac0c34a0c65ae81c1a7e9e76981ed5271a8c19874c6055b67068bd81",
+    "artifactSha256": "9365fa4657d2acdbb03e8a5611d1b6513d66789c0d4e9b53306d9df0da18353b",
+    "rawBytes": 8236,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.SemanticProductCheckpoint6IntegrationTest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.SemanticProductCheckpoint6IntegrationTest.xml.gz",
+    "rawSha256": "a443dfa88cd82c39fc03ebd32dc57ec82efcccb88a7e2a6d041735d2a3ad923f",
+    "artifactSha256": "26b66f3a8d41a77f3b187b4478c706d96c161523464debfb0a7a4b33630b8708",
+    "rawBytes": 8104,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.SemanticProductCheckpoint7JsonTest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.SemanticProductCheckpoint7JsonTest.xml.gz",
+    "rawSha256": "1aa730b8a0931e78c7013c59f78e0987a42efd4badcc41e6f377dbddc1879c98",
+    "artifactSha256": "6bff36cedaacb472713c73c417ec7aab0bd61b7612ebc39af57503fea2f4778c",
+    "rawBytes": 10111,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.SemanticProductCheckpoint8LoweringReadinessTest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.SemanticProductCheckpoint8LoweringReadinessTest.xml.gz",
+    "rawSha256": "b9b99e83283221882aa0a2f67994e0d656b582505f3bb67325926c585aca5b6c",
+    "artifactSha256": "515abfc4209f38b8928d11b391a8d8d12f18c47776f3c0db07c3a3f655d57eb5",
+    "rawBytes": 8510,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.SemanticProductEntryGobackTest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.SemanticProductEntryGobackTest.xml.gz",
+    "rawSha256": "b9a80fe6e7a5c3a67f9afad9318d15175165ddfe860407c73624b8d8e07773f4",
+    "artifactSha256": "c343c8f46e68f44166b3f5b7b3f7d979235153680e11b9eeff1e8c874993a397",
+    "rawBytes": 11850,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.SemanticProductFileWriteTest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.SemanticProductFileWriteTest.xml.gz",
+    "rawSha256": "f1a9181b04a1f236db2e6a5bf4519e0eeb8ac2a619d774a07fcf8ecef3e32492",
+    "artifactSha256": "59e0e237e98c715259bded9cad1f8d3ce2edb620b4f6a4f83bb51d1ea509ebfa",
+    "rawBytes": 7549,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.SemanticProductIntegrityValidatorTest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.SemanticProductIntegrityValidatorTest.xml.gz",
+    "rawSha256": "03a6c3e624f90373adb3dea6e0ae7d45d658bcf959b87aa042d3af72692b1b6d",
+    "artifactSha256": "42066de2224f30489418506d57120b2f2f0bf28fe91893a5f63e1d3f4644d6ae",
+    "rawBytes": 21237,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.SemanticProductStatementInventoryTest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.SemanticProductStatementInventoryTest.xml.gz",
+    "rawSha256": "4ce394d3c7f7798885e34c10c3246e3f787d8f91f46dc7eece41bc9f1cd394b2",
+    "artifactSha256": "bb734f0a012ec6128312f1cc6896951d806548c439608ad6343787e663fbf5f1",
+    "rawBytes": 9053,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.SemanticProductTargetModelOracleTest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.SemanticProductTargetModelOracleTest.xml.gz",
+    "rawSha256": "231ca936425f0a90f86761d325d311f06fceba9597016e95402db8ae72d6f7af",
+    "artifactSha256": "c7e95b2343ac4edf586def53b699af08adb292e4220095b16134f8da02e85a1d",
+    "rawBytes": 8680,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.SourceMapUnicodePerformanceTest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.SourceMapUnicodePerformanceTest.xml.gz",
+    "rawSha256": "8415424d3287d0068bd2aca4faf8116070a5a354662131e3bee00da5e5aa0dad",
+    "artifactSha256": "b0ad2ccd8ca9186698e3f9643739bbf669284f763a2fc8749563daf5f9aae852",
+    "rawBytes": 8202,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.SourceNormalizationPreprocessingIntegrationTest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.SourceNormalizationPreprocessingIntegrationTest.xml.gz",
+    "rawSha256": "7daa962f7bc5420dad8a85e79c02d32c80ab9ee749ca50c74414b3311859520c",
+    "artifactSha256": "24b9cdf19a2841ab58b421edb9b575ec48b684adbfbd07a088bbe951a612df11",
+    "rawBytes": 9031,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.SourceNormalizerTest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.SourceNormalizerTest.xml.gz",
+    "rawSha256": "de5b49bfffd59491215caff5838fc9ef50deadd1d5777beee565bf7619d3dde9",
+    "artifactSha256": "f2d2b9e657ca4688092b085c102796156e8e071931446a313dbc2fb9e056e099",
+    "rawBytes": 10046,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.SourceProvenanceTest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.SourceProvenanceTest.xml.gz",
+    "rawSha256": "81c5fed30bf36fe44ed29916a16acbde778f58e4433cb816057d57d5be3aac4c",
+    "artifactSha256": "d4f8e6cd7d603200b17b4125f13944bcb1ea15e1257975117f4f607b1e1df9fa",
+    "rawBytes": 8319,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.StatementModelAstTest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.StatementModelAstTest.xml.gz",
+    "rawSha256": "cc1d9727bbb114a6d444b89e5da991840f3de3088a5bda1eee90eb7d946c32bd",
+    "artifactSha256": "fae61107644d00c13114679a049af4fd658814895448c7d9adb6dad1a8dff42e",
+    "rawBytes": 7839,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.StructuredExpressionAstTest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.StructuredExpressionAstTest.xml.gz",
+    "rawSha256": "d7c95cd38fb38070a1372b99d0892ac1e88f78091524b89b8378593c21b347f9",
+    "artifactSha256": "3520cc9347f687687e20ebbc101720cc4480c2b3f6600c37500507b68cc1a710",
+    "rawBytes": 7689,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.SymbolTableBuilderTest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.SymbolTableBuilderTest.xml.gz",
+    "rawSha256": "c8ed3a5b26eff3940058edb9c6bb2c802436951a80b34c973d5a91d6a213931e",
+    "artifactSha256": "3bfefcd5f4a1a1ae9b8b5862aaacb99d2974aa283037a6712bb408b22121db73",
+    "rawBytes": 8021,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.W1CompatibilityW2ATest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.W1CompatibilityW2ATest.xml.gz",
+    "rawSha256": "8d38551c5476217bbc8d2a5ae1b089a4236ee0d0a46e89c2985c2aa8992bca93",
+    "artifactSha256": "f475cd7b2e400c56c70afb40a8b8cc07d4aacd32aadf58da1f68d69efe0d581e",
+    "rawBytes": 7528,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/full-suite/TEST-io.github.gustavo2358.cobolexplorer.semanticproduct.SemanticProductMoveCallContractTest.xml",
+    "artifact": "full-suite/TEST-io.github.gustavo2358.cobolexplorer.semanticproduct.SemanticProductMoveCallContractTest.xml.gz",
+    "rawSha256": "0afa25ce53fe5aa2e717195981a8a54eebbbab31fab30637d7ff2c6b17094fda",
+    "artifactSha256": "08f371d11aa2977ef30b186cb8411ea6d8414074ebaad3d77ab7f08ed1d24f7c",
+    "rawBytes": 10694,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/w1-compatibility/cp5-1.4.0.json",
+    "artifact": "w1-compatibility/cp5-1.4.0.json",
+    "rawSha256": "d54db9b637ba7a101c59685364497d5768893ad2fa2240a004ec03cbf964977e",
+    "artifactSha256": "d54db9b637ba7a101c59685364497d5768893ad2fa2240a004ec03cbf964977e",
+    "rawBytes": 5640,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/w1-compatibility/dynamic-x8-1.4.0.json",
+    "artifact": "w1-compatibility/dynamic-x8-1.4.0.json",
+    "rawSha256": "ccb56f8fffcb44134b5bac6f404ea988aea2bedc05621541f1a08202f08d78ab",
+    "artifactSha256": "ccb56f8fffcb44134b5bac6f404ea988aea2bedc05621541f1a08202f08d78ab",
+    "rawBytes": 8286,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/w1-compatibility/literal-1.4.0.json",
+    "artifact": "w1-compatibility/literal-1.4.0.json",
+    "rawSha256": "f806e4ee9ee484a68712206ea7a0984b875eaf7e2ea95a437ef07d89b3cd8f2d",
+    "artifactSha256": "f806e4ee9ee484a68712206ea7a0984b875eaf7e2ea95a437ef07d89b3cd8f2d",
+    "rawBytes": 5165,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/cli/closed-1/cobol-semantic-product.json",
+    "artifact": "cli/closed-1.json",
+    "rawSha256": "12d7aa24f16daf4d901a4e0df76904d0a2d525c86acc5ddd122d9e8001c5d827",
+    "artifactSha256": "12d7aa24f16daf4d901a4e0df76904d0a2d525c86acc5ddd122d9e8001c5d827",
+    "rawBytes": 14520,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/cli/closed-2/cobol-semantic-product.json",
+    "artifact": "cli/closed-2.json",
+    "rawSha256": "12d7aa24f16daf4d901a4e0df76904d0a2d525c86acc5ddd122d9e8001c5d827",
+    "artifactSha256": "12d7aa24f16daf4d901a4e0df76904d0a2d525c86acc5ddd122d9e8001c5d827",
+    "rawBytes": 14520,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/cli/open-1/cobol-semantic-product.json",
+    "artifact": "cli/open-1.json",
+    "rawSha256": "25b7a0abddc56169ff1d7329bd7e2be500245a546d08fd61ce81ebd04e32d6b1",
+    "artifactSha256": "25b7a0abddc56169ff1d7329bd7e2be500245a546d08fd61ce81ebd04e32d6b1",
+    "rawBytes": 12213,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/cli/open-2/cobol-semantic-product.json",
+    "artifact": "cli/open-2.json",
+    "rawSha256": "25b7a0abddc56169ff1d7329bd7e2be500245a546d08fd61ce81ebd04e32d6b1",
+    "artifactSha256": "25b7a0abddc56169ff1d7329bd7e2be500245a546d08fd61ce81ebd04e32d6b1",
+    "rawBytes": 12213,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/cli/empty-1/cobol-semantic-product.json",
+    "artifact": "cli/empty-1.json",
+    "rawSha256": "b615225b893e7d9b6c3db045f8a07eaadbfde5e3ff9cdb2de42da98a9ec8e8c4",
+    "artifactSha256": "b615225b893e7d9b6c3db045f8a07eaadbfde5e3ff9cdb2de42da98a9ec8e8c4",
+    "rawBytes": 12744,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/cli/empty-2/cobol-semantic-product.json",
+    "artifact": "cli/empty-2.json",
+    "rawSha256": "b615225b893e7d9b6c3db045f8a07eaadbfde5e3ff9cdb2de42da98a9ec8e8c4",
+    "artifactSha256": "b615225b893e7d9b6c3db045f8a07eaadbfde5e3ff9cdb2de42da98a9ec8e8c4",
+    "rawBytes": 12744,
+    "lossless": true
+  },
+  {
+    "source": "target/cp6-w2a/cli/determinism.json",
+    "artifact": "cli/determinism.json",
+    "rawSha256": "810aeb26d2aca3a88cf009ae80ab77dba7fa683caab8400e0b301bce9f1563d6",
+    "artifactSha256": "810aeb26d2aca3a88cf009ae80ab77dba7fa683caab8400e0b301bce9f1563d6",
+    "rawBytes": 882,
+    "lossless": true
+  },
+  {
+    "source": "/tmp/w2a-verify-cli.py",
+    "artifact": "cli/verify-cli.py.txt",
+    "rawSha256": "23fcc0d184ee42958121a864fe1aa65ceeddd59f449563a6b7fdcfba5a050bb2",
+    "artifactSha256": "23fcc0d184ee42958121a864fe1aa65ceeddd59f449563a6b7fdcfba5a050bb2",
+    "rawBytes": 2697,
+    "lossless": true
+  },
+  {
+    "source": "/tmp/w2a-scope.py",
+    "artifact": "qualification/scope.py.txt",
+    "rawSha256": "815e5fdb4ab52eefb347c972812a1145d49f05c396d85eb2d05b4db6a70dc1ce",
+    "artifactSha256": "815e5fdb4ab52eefb347c972812a1145d49f05c396d85eb2d05b4db6a70dc1ce",
+    "rawBytes": 2356,
+    "lossless": true
+  },
+  {
+    "source": "/tmp/w2a-run.py",
+    "artifact": "qualification/run.py.txt.gz",
+    "rawSha256": "781b917b8745d6e039260a452c0fc24840fbf41855ba743fcec36e727044581b",
+    "artifactSha256": "f0a1598c2c68bfbc02005cacbad182382fb15c5b4e7f31b2fc688e28eee88fc1",
+    "rawBytes": 1387,
+    "lossless": true
+  },
+  {
+    "source": "/tmp/w2a-final-checks.py",
+    "artifact": "qualification/final-checks.py.txt.gz",
+    "rawSha256": "d8417fde92e476ede765619e504828002915e54d6d8808218383d12e3f883e92",
+    "artifactSha256": "25378cd835a52b53047c709ae34be4622d326a6c5b878e90682b2d184377bed3",
+    "rawBytes": 1498,
+    "lossless": true
+  }
+]

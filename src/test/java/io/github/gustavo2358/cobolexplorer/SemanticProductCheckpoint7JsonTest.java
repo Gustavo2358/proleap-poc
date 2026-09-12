@@ -31,10 +31,10 @@ class SemanticProductCheckpoint7JsonTest {
     private static final ObjectMapper JSON = new ObjectMapper();
     private static final List<String> ROOT_FIELD_ORDER = List.of(
             "schema", "contractVersion", "unit", "policy", "dataDeclarations",
-            "statements", "structure", "gaps", "coverage", "entryInventory");
+            "statements", "structure", "gaps", "coverage", "entryInventory", "storageIndependence");
     private static final Set<String> ROOT_FIELDS = Set.of(
             "schema", "contractVersion", "unit", "policy", "dataDeclarations",
-            "statements", "structure", "gaps", "coverage", "entryInventory");
+            "statements", "structure", "gaps", "coverage", "entryInventory", "storageIndependence");
     private static final Set<String> VOLATILE_FIELDS = Set.of(
             "timestamp", "elapsedms", "thread", "objectid", "memoryaddress",
             "generatedat", "nonce");
@@ -63,7 +63,7 @@ class SemanticProductCheckpoint7JsonTest {
         assertEquals(ROOT_FIELDS, fieldSet(document));
         assertEquals(ROOT_FIELD_ORDER, fieldList(document));
         assertEquals("cobol-semantic-product", document.path("schema").asText());
-        assertEquals("1.3.0", document.path("contractVersion").asText());
+        assertEquals("1.4.0", document.path("contractVersion").asText());
         assertEquals("SEMANTIC-TARGET",
                 document.path("unit").path("canonicalProgramName").asText());
         assertEquals(List.of(0), integerValues(document.path("unit").path("structuralPath")));
@@ -145,8 +145,9 @@ class SemanticProductCheckpoint7JsonTest {
         JsonNode coverage = document.path("coverage");
         assertEquals("COMPLETE", coverage.path("inventoryStatus").asText());
         assertEquals(14, coverage.path("observedStatements").asInt());
-        assertEquals(4, coverage.path("modeledStatements").asInt());
-        assertEquals(10, coverage.path("partialStatements").asInt());
+        // SP 1.4 proves completion for the five existing IF-contained MOVEs.
+        assertEquals(9, coverage.path("modeledStatements").asInt());
+        assertEquals(5, coverage.path("partialStatements").asInt());
         assertEquals(0, coverage.path("unsupportedStatements").asInt());
         assertEquals(0, coverage.path("inputMissingStatements").asInt());
         assertEquals("BLOCKED", coverage.path("readiness").path("lowering")
@@ -452,7 +453,7 @@ class SemanticProductCheckpoint7JsonTest {
             case "CALL" -> Set.of("variant", "header", "syntax", "target",
                     "runtimeTarget", "runtimeUncertaintyCode", "normalContinuation", "surface", "effects", "outcomes");
             case "IF" -> Set.of("variant", "header", "condition",
-                    "explicitlyTerminated", "continuation");
+                    "explicitlyTerminated", "continuation", "normalContinuation", "thenArm", "elseArm", "profile");
             case "OBSERVED" -> Set.of("variant", "header", "observedKind",
                     "observedShape", "gapCode");
             default -> throw new AssertionError("unexpected statement variant " + variant);

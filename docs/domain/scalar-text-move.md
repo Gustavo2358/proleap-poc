@@ -1,7 +1,7 @@
 # Profile elementar textual de MOVE — Checkpoint 4A
 
 Este contrato COBOL-specific complementa o [Semantic Product](cobol-semantic-product.md).
-A versão corrente é **1.3.0**; 1.2.0 introduziu o profile 4A. Não define AIR, lowering, CFG, efeitos globais ou dataflow.
+A versão corrente é [**1.4.0**](if-semantic-product.md); 1.2.0 introduziu o profile 4A. Não define AIR, lowering, CFG, efeitos globais ou dataflow.
 
 ## Regra e autoridade
 
@@ -46,7 +46,7 @@ lógico não define encoding físico EBCDIC, ASCII ou UTF-8.
 
 `DataReference.wholeItemAccess` é opcional. Presença prova que **essa ocorrência**
 acessa diretamente o valor escalar completo do `data` referenciado. Exige
-resolução única VALUE_WRITE (MOVE) ou CALL_TARGET (CALL), referência STRUCTURED, sem qualifiers, subscripts
+resolução única VALUE_WRITE (MOVE), CALL_TARGET (CALL) ou VALUE_READ no predicate W2A, referência STRUCTURED, sem qualifiers, subscripts
 ou reference modification, e declaração elegível. O core exige concordância
 entre `wholeItemAccess.data`, `binding.selected` e a declaração com scalarText.
 Binding sozinho e construtores legados não criam essa prova.
@@ -66,7 +66,8 @@ statement opcional e provenance. KNOWN exige StatementId existente na mesma unit
 os demais estados não possuem statement. O builder publica relações entre
 statements diretos consecutivos, dentro da mesma região de sentences (corpo sem
 paragraph, ou um paragraph). Relação entre sentences da mesma região é conhecida.
-Fim de paragraph/section/procedure, contexto aninhado, declaratives ou metadata
+W2A estende a relação aos braços diretos de IF com completion herdada.
+Fim de paragraph/section/procedure, outros contextos aninhados, declaratives ou metadata
 não fornecida ficam UNAVAILABLE. Este profile nunca emite NONE para MOVE.
 Ausência física não prova término. A relação não é reachability: um MOVE
 fisicamente posterior a GOBACK pode ter continuação própria, mas GOBACK mantém
@@ -109,7 +110,7 @@ precisa local não é publicação globalmente completa nem certificação AIR.
 
 ## Transporte e compatibilidade
 
-A versão corrente única 1.3.0 e o handoff W1C estão no [contrato CALL](call-semantic-product.md).
+A versão corrente única 1.4.0 está no [contrato IF](if-semantic-product.md); o histórico W1C está no [contrato CALL](call-semantic-product.md).
 O registro abaixo descreve a introdução histórica do profile 4A.
 
 1.2.0 é evolução minor aditiva: `scalarText`, `logicalValue`, `wholeItemAccess`,

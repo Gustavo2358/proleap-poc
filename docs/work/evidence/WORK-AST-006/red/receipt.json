@@ -1,0 +1,7 @@
+{
+  "command": "mvn -q -Dtest=IfCheckpointW2ATest test",
+  "exitCode": 1,
+  "sourceHead": "53d774026a1e4bcd969c7783a1d277aaa87b5f2f",
+  "productionDiff": "",
+  "logSha256": "5e7aea0f7a10daca06dbe98b095cc33190334769a036210823ec44b41e66ad12"
+}

@@ -1,0 +1,32 @@
+from pathlib import Path
+import json,hashlib
+out=Path('target/cp6-w2a/cli'); results=[]
+for name in ['closed','open','empty']:
+ paths=[out/(name+'-'+str(i))/'cobol-semantic-product.json' for i in [1,2]]
+ raw=[p.read_bytes() for p in paths]; assert raw[0]==raw[1]
+ for i,p in enumerate(paths): assert raw[i]==(p.parent/'semantic-product.json').read_bytes()
+ d=json.loads(raw[0]); assert d['contractVersion']=='1.4.0'
+ by={kind:[s for s in d['statements'] if s['variant']==kind] for kind in ['IF','MOVE','CALL','GOBACK']}
+ branch=by['IF'][0];call=by['CALL'][0];back=by['GOBACK'][0]
+ def id(s):return s['header']['id']
+ def completion(a,b):assert a['normalContinuation']['availability']=='KNOWN' and a['normalContinuation']['statement']==id(b)
+ completion(branch,call);completion(call,back)
+ for move in by['MOVE']:completion(move,call)
+ predicate=branch['condition']['predicate'];ref=branch['condition']['references'][0]
+ assert {k:predicate[k] for k in ['availability','resultDomain','evaluation','normalCompletion','readsCompleteness','truthValue']}==dict(availability='KNOWN',resultDomain='BOOLEAN',evaluation='PURE',normalCompletion='TOTAL',readsCompleteness='COMPLETE',truthValue='UNKNOWN')
+ assert predicate['knownReads']==[ref['id']]
+ assert ref['binding']['selected']==ref['wholeItemAccess']['data']
+ flag=next(x for x in d['dataDeclarations'] if x['canonicalName']=='FLAG');assert flag['id']==ref['binding']['selected']
+ assert branch['thenArm']['entry']['statement']==id(by['MOVE'][0])
+ assert branch['thenArm']['contentAvailability']=='KNOWN'
+ assert branch['elseArm']['presence']==('ABSENT' if name=='open' else 'PRESENT')
+ assert branch['elseArm']['contentAvailability']==('PARTIAL' if name=='empty' else 'KNOWN')
+ assert branch['profile']==('OUTSIDE_SLICE' if name=='empty' else 'SIMPLE_TEXT_EQUALITY')
+ if name=='closed':assert branch['elseArm']['entry']['statement']==id(by['MOVE'][1])
+ else:assert branch['elseArm']['entry']['statement'] is None
+ storage=d['storageIndependence'];assert storage['availability']=='KNOWN' and storage['provenance']['exact']
+ assert sorted(storage['members'],key=str)==sorted([x['id'] for x in d['dataDeclarations']],key=str)
+ for i,move in enumerate(by['MOVE']):assert move['textAdjustment']['result']['value']==('PROGA   ' if i==0 else 'PROGB   ')
+ assert not any(key in d for key in ['nodes','edges','predecessors','possibleValues'])
+ results.append({'fixture':name,'processes':2,'exitCodes':[0,0],'aliasesByteEqual':True,'processesByteEqual':True,'semanticAssertions':'PASS','sha256':hashlib.sha256(raw[0]).hexdigest(),'bytes':len(raw[0])})
+print(json.dumps(results,indent=2));(out/'determinism.json').write_text(json.dumps(results,indent=2)+'\n')
