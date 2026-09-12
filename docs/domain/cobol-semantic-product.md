@@ -1,6 +1,6 @@
 # COBOL Semantic Product
 
-Contrato corrente: [MOVE data source / SP 1.6.0](move-data-source.md), preservando [IF W2A](if-semantic-product.md), preservando [CALL e fitting W1A](call-semantic-product.md).
+Contrato corrente: [composição CP6 / SP 1.7.0](perform-basic.md), preservando [IF W2A](if-semantic-product.md), preservando [CALL e fitting W1A](call-semantic-product.md).
 
 O COBOL Semantic Product é a boundary COBOL-specific, materializada e imutável
 entre o frontend e o futuro repositório externo `cobol-lower`. Cada publicação

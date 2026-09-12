@@ -206,11 +206,12 @@ public final class ScalarMoveSemantics {
             var basic = fact(whole, copy, moves.get(key).nextStatement());
             moves.put(key, new Move(whole, copy, basic.nextStatement(), basic.gaps(), adjustment, sourceWhole));
         }
-        var performs = PerformSemantics.analyze(frontend, tables, resolution, report, moves);
+        var ifs = IfSemantics.analyze(frontend, tables, resolution, report, declarations, moves);
+        var performs = PerformSemantics.analyze(frontend, tables, resolution, report, moves, ifs);
         performs.applyCompletions(moves);
         return new ScalarMoveSemantics(declarations, moves, calls,
                 new Metrics(counts[0], counts[1], counts[2], counts[3], counts[4]),
-                IfSemantics.analyze(frontend, tables, resolution, report, declarations, moves), performs);
+                ifs, performs);
     }
 
     private static Move fact(Optional<ResolutionContracts.SemanticEntityId> whole,

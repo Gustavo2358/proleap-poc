@@ -1,4 +1,4 @@
-# CP6 PERFORM BASIC — SP 1.6.0
+# CP6 PERFORM BASIC — SP 1.7.0
 
 Profile `SIMPLE_SINGLE_CALLSITE_PROCEDURE_PERFORM` publishes an isolated local
 paragraph activation as a typed PerformFact. This is not control.local@1.
@@ -18,13 +18,14 @@ control inventory is sufficient only with complete input and modeled coverage.
 No decision parses writtenControl or paragraph spelling.
 
 PerformSemantics runs after canonical binding. Admission requires exactly two
-nondeclarative direct paragraphs and a complete primary path: MOVE prefix (possibly
-empty), one PERFORM, one CALL, final GOBACK. The primary paragraph is selected by
+nondeclarative direct paragraphs and a complete primary path: any finite composition
+of admitted root MOVE, CALL, simple IF and exactly one PERFORM, then final GOBACK. The primary paragraph is selected by
 explicit entry membership. Its distinct target has only a nonempty linear sequence
 of admitted scalar literal/data MOVEs. Every direct statement is accounted for.
 The primary GOBACK excludes ordinary fallthrough, and the closed inventory excludes
 GO TO, alternate ENTRY, other PERFORMs and hidden control. All required provenance
-must be exact. Section targets, extra paragraphs and more general primary shapes
+must be exact. IF arms retain their existing linear MOVE-only contract.
+Section targets, extra paragraphs and unsupported primary statements
 remain outside this deliberately conservative first vertical.
 
 The source proof uses typed canonical paragraph/sentence containment to publish the
@@ -37,7 +38,7 @@ paragraphOrigin)`, targetEntry, ordered targetStatements, targetExit,
 normalContinuation (including resume provenance), primaryStatements and gapCodes.
 ProcedureId uses the canonical PROCEDURE symbol local ID in its unit namespace;
 names are metadata, never executable identities. Body and primary membership cover
-the entire statement inventory and are disjoint. The lower must validate these
+the entire statement inventory together with the primary IF arms, and are disjoint. The lower must validate these
 relations, use explicit entry, and ignore physical SP/AIR array order.
 
 Proof: with one activation and one static resume, every state inside the linear
@@ -57,3 +58,17 @@ PerformBasicTest covers real literal/copy/overwrite, identity, membership, resum
 provenance, deterministic JSON, alpha-renaming and negative forms/entries. Remote
 FAST includes both. EXIT PARAGRAPH is already rejected by the current parser; no
 grammar change is included. Full remains local only.
+
+## SP1.7 composition evolution
+
+SP1.6 fixed primary shape to MOVE* → PERFORM → CALL → GOBACK. SP1.7 explicitly
+generalizes those invariants without adding fields. primaryStatements is the ordered
+direct root list; typed IF containment supplies its linear arms. PERFORM has one
+static resume of any supported root kind; its target remains MOVE-only and isolated.
+IfSemantics is computed before this proof so its existing admission is reused.
+CALL count and independent root IF count have no artificial maximum. Unknown
+statements, extra activation paths and additional PERFORM occurrences refuse.
+
+MultiCallProgramTest covers all seven specified programs, arbitrary supported resume
+kinds, deterministic SP bytes and unsupported roots. The IBM Basic PERFORM rule
+on pp. 413–414 was rechecked on 2026-09-12; language semantics are unchanged.

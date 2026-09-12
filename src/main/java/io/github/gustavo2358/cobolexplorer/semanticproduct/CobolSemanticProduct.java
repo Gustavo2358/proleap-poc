@@ -1007,13 +1007,30 @@ public final class CobolSemanticProduct {
                     var next = i + 1 < perform.targetStatements().size() ? Optional.of(perform.targetStatements().get(i+1)) : perform.normalContinuation().statement();
                     require(move.normalContinuation().statement().equals(next), "PERFORM body completion disagrees with published relation");
                 }
-                require(members.equals(statements.keySet()), "PERFORM proof covers the complete statement inventory");
                 var main = perform.primaryStatements(); int callsite = main.indexOf(perform.header().id());
-                require(callsite >= 0 && main.size() == callsite + 3 && statements.get(main.get(callsite+1)) instanceof CallFact
-                    && statements.get(main.get(callsite+2)) instanceof GobackFact
-                    && perform.normalContinuation().statement().equals(Optional.of(main.get(callsite+1))), "PERFORM primary shape/resume mismatch");
-                for (int i = 0; i < callsite; i++) require(statements.get(main.get(i)) instanceof MoveFact move
-                    && move.normalContinuation().statement().equals(Optional.of(main.get(i+1))), "PERFORM prefix relation mismatch");
+                require(callsite >= 0 && callsite + 1 < main.size()
+                    && statements.get(main.get(main.size() - 1)) instanceof GobackFact
+                    && perform.normalContinuation().statement().equals(Optional.of(main.get(callsite + 1))), "PERFORM primary end/resume mismatch");
+                require(statements.values().stream().filter(PerformFact.class::isInstance).count() == 1, "one isolated PERFORM callsite");
+                for (int i = 0; i < main.size(); i++) {
+                    var root = statements.get(main.get(i));
+                    require(root.header().containment().equals(new Containment(Optional.empty(), Branch.ROOT)), "PERFORM primary members are direct roots");
+                    if (i == main.size() - 1) continue;
+                    NormalContinuation next;
+                    if (root instanceof MoveFact move) next = move.normalContinuation();
+                    else if (root instanceof CallFact call) next = call.normalContinuation();
+                    else if (root instanceof PerformFact p) next = p.normalContinuation();
+                    else if (root instanceof IfFact branch) {
+                        require(branch.profile() == IfProfile.SIMPLE_TEXT_EQUALITY, "PERFORM primary IF must be supported");
+                        next = branch.normalContinuation();
+                        for (var arm : List.of(Branch.THEN, Branch.ELSE))
+                            for (var child : armChildren.getOrDefault(new Containment(Optional.of(root.header().id()), arm), List.of()))
+                                require(child instanceof MoveFact && members.add(child.header().id()), "PERFORM primary IF has disjoint MOVE-only arms");
+                    } else throw new IllegalArgumentException("unsupported PERFORM primary statement");
+                    require(next.availability() == ContinuationAvailability.KNOWN
+                        && next.statement().equals(Optional.of(main.get(i + 1))), "PERFORM primary continuation mismatch");
+                }
+                require(members.equals(statements.keySet()), "PERFORM proof covers roots, IF arms and target exactly");
             }
             if (statement instanceof MoveFact move) move.normalContinuation().statement().ifPresent(next -> {
                 require(next.unit().equals(move.header().id().unit()) && statements.containsKey(next),
