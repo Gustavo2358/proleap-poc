@@ -33,6 +33,8 @@ public final class ScalarMoveSemantics {
     private final Map<NodeKey, Move> moves;
     private final Metrics metrics;
     private final IfSemantics ifs;
+    private final PerformSemantics performs;
+    public PerformSemantics performs() { return performs; }
     public IfSemantics ifs() { return ifs; }
     private final Map<NodeKey, Call> calls;
     public Call call(ResolutionContracts.ProgramUnitId unit, int node) {
@@ -40,11 +42,12 @@ public final class ScalarMoveSemantics {
     }
 
     private ScalarMoveSemantics(Map<ResolutionContracts.SemanticEntityId, ScalarText> declarations,
-                                Map<NodeKey, Move> moves, Map<NodeKey, Call> calls, Metrics metrics, IfSemantics ifs) {
+                                Map<NodeKey, Move> moves, Map<NodeKey, Call> calls, Metrics metrics, IfSemantics ifs, PerformSemantics performs) {
         this.declarations = Map.copyOf(declarations);
         this.moves = Map.copyOf(moves);
         this.metrics = metrics;
         this.ifs = Objects.requireNonNull(ifs);
+        this.performs = Objects.requireNonNull(performs);
         this.calls = Map.copyOf(calls);
     }
     public Optional<ScalarText> declaration(ResolutionContracts.SemanticEntityId id) {
@@ -203,9 +206,11 @@ public final class ScalarMoveSemantics {
             var basic = fact(whole, copy, moves.get(key).nextStatement());
             moves.put(key, new Move(whole, copy, basic.nextStatement(), basic.gaps(), adjustment, sourceWhole));
         }
+        var performs = PerformSemantics.analyze(frontend, tables, resolution, report, moves);
+        performs.applyCompletions(moves);
         return new ScalarMoveSemantics(declarations, moves, calls,
                 new Metrics(counts[0], counts[1], counts[2], counts[3], counts[4]),
-                IfSemantics.analyze(frontend, tables, resolution, report, declarations, moves));
+                IfSemantics.analyze(frontend, tables, resolution, report, declarations, moves), performs);
     }
 
     private static Move fact(Optional<ResolutionContracts.SemanticEntityId> whole,

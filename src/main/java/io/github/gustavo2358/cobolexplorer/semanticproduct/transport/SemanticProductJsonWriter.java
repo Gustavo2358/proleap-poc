@@ -26,7 +26,7 @@ import java.util.Objects;
  */
 public final class SemanticProductJsonWriter {
     public static final String SCHEMA = "cobol-semantic-product";
-    public static final String CONTRACT_VERSION = "1.5.0";
+    public static final String CONTRACT_VERSION = "1.6.0";
 
     private static final ObjectMapper JSON = JsonMapper.builder()
             .enable(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY)
@@ -126,6 +126,14 @@ public final class SemanticProductJsonWriter {
     }
 
     private static StatementDocument statement(CobolSemanticProduct.StatementFact fact) {
+        if (fact instanceof CobolSemanticProduct.PerformFact perform) {
+            return new PerformDocument(header(perform.header()), perform.profile(), perform.target().map(t ->
+                new PerformTargetDocument("procedure:" + t.id().localId(), provenance(t.referenceOrigin()), provenance(t.paragraphOrigin()))).orElse(null),
+                perform.targetEntry().map(SemanticProductJsonWriter::statementHandle).orElse(null),
+                perform.targetStatements().stream().map(SemanticProductJsonWriter::statementHandle).toList(),
+                perform.targetExit().map(SemanticProductJsonWriter::statementHandle).orElse(null), continuation(perform.normalContinuation()),
+                perform.primaryStatements().stream().map(SemanticProductJsonWriter::statementHandle).toList(), perform.gapCodes());
+        }
         if (fact instanceof CobolSemanticProduct.GobackFact goback)
             return new GobackDocument(header(goback.header()), goback.exit(), goback.localContinuation());
         if (fact instanceof CobolSemanticProduct.MoveFact move) {
@@ -338,10 +346,16 @@ public final class SemanticProductJsonWriter {
             @JsonSubTypes.Type(value = CallDocument.class, name = "CALL"),
             @JsonSubTypes.Type(value = IfDocument.class, name = "IF"),
             @JsonSubTypes.Type(value = GobackDocument.class, name = "GOBACK"),
+            @JsonSubTypes.Type(value = PerformDocument.class, name = "PERFORM"),
             @JsonSubTypes.Type(value = ObservedDocument.class, name = "OBSERVED")
     })
     private sealed interface StatementDocument permits MoveDocument, CallDocument,
-            IfDocument, ObservedDocument, GobackDocument { }
+            IfDocument, ObservedDocument, GobackDocument, PerformDocument { }
+
+    private record PerformTargetDocument(String id, ProvenanceDocument referenceOrigin, ProvenanceDocument paragraphOrigin) { }
+    private record PerformDocument(StatementHeaderDocument header, CobolSemanticProduct.PerformProfile profile,
+        PerformTargetDocument target, String targetEntry, List<String> targetStatements, String targetExit,
+        ContinuationDocument normalContinuation, List<String> primaryStatements, List<String> gapCodes) implements StatementDocument { }
 
     @JsonPropertyOrder({"variant", "header", "exit", "localContinuation"})
     private record GobackDocument(StatementHeaderDocument header, CobolSemanticProduct.GobackExit exit,

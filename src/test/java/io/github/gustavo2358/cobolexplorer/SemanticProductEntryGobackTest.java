@@ -71,7 +71,7 @@ class SemanticProductEntryGobackTest {
         assertArrayEquals(bytes, SemanticProductJsonWriter.serialize(publish(source)));
         JsonNode json = new ObjectMapper().readTree(bytes);
         assertEquals("cobol-semantic-product", json.path("schema").asText());
-        assertEquals("1.5.0", json.path("contractVersion").asText());
+        assertEquals("1.6.0", json.path("contractVersion").asText());
         assertEquals("AIR-FIRST", json.path("unit").path("canonicalProgramName").asText());
         var entry = json.path("entryInventory").path("entries").get(0);
         var terminal = json.path("statements").get(0);

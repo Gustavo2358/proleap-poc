@@ -24,7 +24,7 @@ class W1CompatibilityW2ATest {
             byte[] currentBytes = SemanticProductJsonWriter.serialize(port);
             var current = (ObjectNode) json.readTree(currentBytes);
             assertEquals("1.3.0", old.path("contractVersion").asText());
-            assertEquals("1.5.0", current.path("contractVersion").asText());
+            assertEquals("1.6.0", current.path("contractVersion").asText());
             assertEquals("UNAVAILABLE", current.path("storageIndependence").path("availability").asText());
             assertTrue(current.path("storageIndependence").path("members").isEmpty());
             for (var statement : current.path("statements")) if (statement.path("variant").asText().equals("MOVE")) {

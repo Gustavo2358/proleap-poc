@@ -22,7 +22,11 @@ import java.util.Optional;
 public final class CobolLoweringReadinessConsumer {
     private CobolLoweringReadinessConsumer() { }
 
-    public enum StatementFamily { MOVE, CALL, IF, OBSERVED, GOBACK }
+    public enum StatementFamily { MOVE, CALL, IF, OBSERVED, GOBACK, PERFORM }
+
+    public record PerformAudit(StatementHeaderAudit header, CobolSemanticProduct.PerformFact fact) implements StatementAudit {
+        @Override public StatementFamily family() { return StatementFamily.PERFORM; }
+    }
 
     public record GobackAudit(StatementHeaderAudit header, CobolSemanticProduct.GobackExit exit,
                               CobolSemanticProduct.LocalContinuation localContinuation) implements StatementAudit {
@@ -306,6 +310,7 @@ public final class CobolLoweringReadinessConsumer {
             Map<CobolSemanticProduct.StatementId, List<GapAudit>> gapsByStatement) {
         StatementHeaderAudit header = header(fact.header(), gapsByStatement.getOrDefault(
                 fact.header().id(), List.of()));
+        if (fact instanceof CobolSemanticProduct.PerformFact perform) return new PerformAudit(header, perform);
         if (fact instanceof CobolSemanticProduct.GobackFact goback)
             return new GobackAudit(header, goback.exit(), goback.localContinuation());
         if (fact instanceof CobolSemanticProduct.MoveFact move) {

@@ -8,7 +8,7 @@ import xml.etree.ElementTree as ET
 from lean import require_local
 
 FAST_TESTS = ('ArchitectureBoundaryTest', 'HarnessDocsTest', 'SemanticProductEntryGobackTest',
-              'ScalarMoveCheckpoint4ATest', 'MoveDataSourceTest', 'CallCheckpointW1ATest', 'IfCheckpointW2ATest',
+              'ScalarMoveCheckpoint4ATest', 'MoveDataSourceTest', 'PerformDiscoveryTest', 'PerformBasicTest', 'CallCheckpointW1ATest', 'IfCheckpointW2ATest',
               'IfCanonicalProofTest', 'SemanticProductMoveCallContractTest')
 
 
@@ -57,7 +57,7 @@ def technical_fast(root):
         report = observed.get(suite)
         if report is None or int(report.get('tests', '0')) == 0 or any(int(report.get(k, '0')) for k in ('failures','errors','skipped')):
             raise RuntimeError('Fast suite missing/failed/skipped: ' + suite)
-    print('PASS: all nine Fast frontend contract/architecture suites executed')
+    print('PASS: all fixed Fast frontend contract/architecture suites executed')
 
 
 def full_local(root):

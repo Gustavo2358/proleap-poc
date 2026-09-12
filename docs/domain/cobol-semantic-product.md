@@ -1,6 +1,6 @@
 # COBOL Semantic Product
 
-Contrato corrente: [MOVE data source / SP 1.5.0](move-data-source.md), preservando [IF W2A](if-semantic-product.md), preservando [CALL e fitting W1A](call-semantic-product.md).
+Contrato corrente: [MOVE data source / SP 1.6.0](move-data-source.md), preservando [IF W2A](if-semantic-product.md), preservando [CALL e fitting W1A](call-semantic-product.md).
 
 O COBOL Semantic Product é a boundary COBOL-specific, materializada e imutável
 entre o frontend e o futuro repositório externo `cobol-lower`. Cada publicação
@@ -436,3 +436,7 @@ da tradução AIR; nenhum consumer infere essas regras de texto ou shape.
 - `EVAL-SP-008`: IF W2A, predicate, arms/completion e independência limitada;
 - `EVAL-ARCH-001`: direção de dependências;
 - `EVAL-RES-CALL-002`: binding nominal não resolve valor de CALL dinâmico.
+
+## CP6 PERFORM BASIC
+
+SP 1.6.0 adds the [isolated paragraph PERFORM profile](perform-basic.md); MOVE data sources introduced in SP 1.5.0 remain unchanged.

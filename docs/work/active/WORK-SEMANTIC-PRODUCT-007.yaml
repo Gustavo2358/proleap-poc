@@ -1,0 +1,7 @@
+id: WORK-SEMANTIC-PRODUCT-007
+title: CP6 PERFORM BASIC — publish isolated procedure control facts
+status: IN_PROGRESS
+scope:
+  - SP 1.6.0 typed canonical single-callsite paragraph activation
+  - explicit target body, end and unique resume; existing storage proof
+notes: "Baseline main 8493a8e356bdc3b0002f578581aef5e5b54c4d33 (PR 37); Draft for human review."
