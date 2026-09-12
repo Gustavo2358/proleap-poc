@@ -523,7 +523,8 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
     /** Only normal completion is asserted; no values, file or arithmetic semantics.
      * Handler bodies are barriers until their control is independently published. */
     private static boolean sequentialOpaque(CobolParser.StatementContext c) {
-        return c.continueStatement() != null || c.displayStatement() != null
+        return c.continueStatement() != null
+            || c.displayStatement() != null && c.displayStatement().onExceptionClause() == null && c.displayStatement().notOnExceptionClause() == null
             || c.readStatement() != null && c.readStatement().atEndPhrase() == null
                 && c.readStatement().notAtEndPhrase() == null && c.readStatement().invalidKeyPhrase() == null
                 && c.readStatement().notInvalidKeyPhrase() == null;

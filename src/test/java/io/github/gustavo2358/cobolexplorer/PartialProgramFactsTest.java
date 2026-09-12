@@ -21,6 +21,11 @@ class PartialProgramFactsTest {
                     assertEquals(ContinuationAvailability.KNOWN,unknown.get(0).normalContinuation().availability(),name);
                     assertTrue(p.gaps().stream().anyMatch(g->g.statement().equals(unknown.get(0).header().id())),name);
                 }
+                if(name.equals("control-body") || name.equals("display-handler")) {
+                    assertEquals(2,p.calls().size());assertEquals(1,p.observedStatements().size());
+                    assertEquals(ContinuationAvailability.UNAVAILABLE,p.observedStatements().get(0).normalContinuation().availability(),
+                        "unqualified compound control cannot skip body CALL sites");
+                }
                 if(name.startsWith("perform-")) {
                     assertEquals(2,p.performs().size(),name); assertTrue(p.observedStatements().isEmpty(),name);
                     assertTrue(p.performs().stream().allMatch(f->f.profile()==PerformProfile.BASIC_PROCEDURE_PERFORM),name);

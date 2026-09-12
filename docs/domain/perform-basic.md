@@ -38,3 +38,9 @@ CompositionalityContractTest covers 1/2/5/40 occurrences and a 20-CALL/10-IF/5-P
 mixture. PartialProgramFactsTest includes distinct and repeated target callsites.
 PerformBasicTest retains literal/copy/overwrite, provenance and isolation negatives.
 See the [permanent composition policy](../architecture/compositional-partial-lowering.md).
+
+An unqualified PERFORM is an observed control region with unavailable continuation.
+Its syntactic resume alone cannot exclude execution of body CALL sites. The
+`control-body` regression protects this boundary without adding precise CALL bodies
+or general PERFORM semantics. Observed DISPLAY with exception handlers likewise
+retains open control; only handler-free DISPLAY publishes a sole normal successor.

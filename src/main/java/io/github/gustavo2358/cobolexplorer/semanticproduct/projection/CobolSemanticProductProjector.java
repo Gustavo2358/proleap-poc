@@ -164,6 +164,10 @@ public final class CobolSemanticProductProjector {
 
     private static NormalContinuation observedContinuation(Ast.Statement source, ProjectionInputs inputs,
             Map<Ast.Statement, StatementId> ids) {
+        // A compound region's completion does not describe transfers into its body.
+        // Unqualified control must retain an open frontier, even with a known resume.
+        if(source instanceof Ast.PerformStatement || source instanceof Ast.IfStatement)
+            return NormalContinuation.unavailable(provenance(source.meta().provenance()));
         for (var division : inputs.selectedSource().unit().program().divisions()) {
             if (division.divisionKind() != Ast.DivisionKind.PROCEDURE) continue;
             var next = canonicalStatement(Optional.ofNullable(division.normalContinuations().get(source.meta().id())), inputs, ids);
