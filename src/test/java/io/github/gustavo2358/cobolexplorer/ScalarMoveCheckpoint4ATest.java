@@ -1,5 +1,6 @@
 package io.github.gustavo2358.cobolexplorer;
 
+import io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.LiteralSource;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticPort;
@@ -52,7 +53,7 @@ class ScalarMoveCheckpoint4ATest {
     }
     // JSON-only assertions have no frontend joins and deliberately erase textual readiness.
     static void assertJson(JsonNode doc) {
-        assertEquals("1.4.0", doc.path("contractVersion").asText());
+        assertEquals("1.5.0", doc.path("contractVersion").asText());
         var data = doc.path("dataDeclarations").get(0);
         var statements = doc.path("statements");
         JsonNode move = null, goback = null;
@@ -98,8 +99,8 @@ class ScalarMoveCheckpoint4ATest {
     @Test void categoriesDoNotFollowJavaStringOrQuotedPrefixes() {
         for (String literal : List.of("12345", "SPACE", "ZERO", "N'PROGA'", "X'4142434445'", "Z'PROGA'")) {
             var move = publish(program("01 WS-X PIC X(5).", "MOVE " + literal + " TO WS-X.\nGOBACK.")).moves().get(0);
-            assertEquals(LiteralKind.UNKNOWN, move.source().kind(), literal);
-            assertTrue(move.source().logicalValue().isEmpty(), literal);
+            assertEquals(LiteralKind.UNKNOWN, ((LiteralSource) move.source()).kind(), literal);
+            assertTrue(((LiteralSource) move.source()).logicalValue().isEmpty(), literal);
             assertEquals(CopySemantics.UNAVAILABLE, move.copySemantics(), literal);
         }
         var port = publish(program("01 WS-X PIC 9(5).", "MOVE 'PROGA' TO WS-X.\nGOBACK."));
@@ -258,7 +259,7 @@ class ScalarMoveCheckpoint4ATest {
         var a = AstBoundaryTestSupport.analyze(Files.readString(fixture), fixture.getFileName().toString());
         var port = CobolSemanticProductProjector.open(products(a), a.model().programUnits().get(0).id());
         var current = mapper.readTree(SemanticProductJsonWriter.serialize(port));
-        assertEquals("1.4.0", current.path("contractVersion").asText());
+        assertEquals("1.5.0", current.path("contractVersion").asText());
         assertEquals("GOBACK", previous.path("statements").get(0).path("variant").asText());
         assertEquals("NONE", previous.path("statements").get(0).path("localContinuation").asText());
         ((com.fasterxml.jackson.databind.node.ObjectNode) previous).remove("contractVersion");

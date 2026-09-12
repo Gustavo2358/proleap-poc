@@ -1,6 +1,6 @@
 # COBOL Semantic Product
 
-Contrato corrente: [IF W2A / SP 1.4.0](if-semantic-product.md), preservando [CALL e fitting W1A](call-semantic-product.md).
+Contrato corrente: [MOVE data source / SP 1.5.0](move-data-source.md), preservando [IF W2A](if-semantic-product.md), preservando [CALL e fitting W1A](call-semantic-product.md).
 
 O COBOL Semantic Product é a boundary COBOL-specific, materializada e imutável
 entre o frontend e o futuro repositório externo `cobol-lower`. Cada publicação
@@ -48,7 +48,7 @@ O projector publica:
 
 - todas as declarações DATA selecionadas da unit e o fechamento de declarations
   necessário aos candidates nominais;
-- todas as ocorrências suportadas de `MOVE` literal para DATA;
+- todas as ocorrências suportadas de `MOVE` literal ou DATA para DATA;
 - todas as ocorrências suportadas de `CALL` literal ou por identifier/expression;
 - todos os `IF` com condition surface, membership `THEN`/`ELSE`,
   presença/conteúdo/entry dos arms e continuation; o profile W2A acrescenta

@@ -76,9 +76,9 @@ class SemanticProductCheckpoint6IntegrationTest {
         List<CobolLoweringReadinessConsumer.MoveAudit> moves = statements(
                 audit, CobolLoweringReadinessConsumer.MoveAudit.class);
         assertEquals(List.of("A", "AUXPGM", "B", "NEST", "AFTER", "C", "D"),
-                moves.stream().map(move -> move.source().value()).toList());
+                moves.stream().map(move -> ((CobolLoweringReadinessConsumer.LiteralAudit) move.source()).value()).toList());
         assertTrue(moves.stream().allMatch(move ->
-                move.source().kind() == CobolSemanticProduct.LiteralKind.ALPHANUMERIC
+                ((CobolLoweringReadinessConsumer.LiteralAudit) move.source()).kind() == CobolSemanticProduct.LiteralKind.ALPHANUMERIC
                         && move.target().role() == CobolSemanticProduct.OperandRole.WRITE
                         && move.target().binding().status()
                         == CobolSemanticProduct.ResolutionStatus.RESOLVED));

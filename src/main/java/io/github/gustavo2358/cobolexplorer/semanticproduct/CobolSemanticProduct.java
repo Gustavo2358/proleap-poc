@@ -470,8 +470,13 @@ public final class CobolSemanticProduct {
         }
     }
 
+    public sealed interface MoveSource permits LiteralSource, DataReference {
+        OperandId id();
+        Provenance provenance();
+    }
+
     public record LiteralSource(OperandId id, LiteralKind kind, String value,
-                                Provenance provenance, Optional<TextValue> logicalValue) {
+                                Provenance provenance, Optional<TextValue> logicalValue) implements MoveSource {
         public LiteralSource {
             logicalValue = Objects.requireNonNull(logicalValue);
             if (logicalValue.isPresent()) require(kind == LiteralKind.ALPHANUMERIC && logicalValue.get().value().equals(value),
@@ -487,7 +492,7 @@ public final class CobolSemanticProduct {
     }
 
     public record DataReference(OperandId id, OperandRole role,
-                                NominalBinding binding, Provenance provenance, Optional<WholeItemAccess> wholeItemAccess) implements CallTarget {
+                                NominalBinding binding, Provenance provenance, Optional<WholeItemAccess> wholeItemAccess) implements CallTarget, MoveSource {
         public DataReference {
             wholeItemAccess = Objects.requireNonNull(wholeItemAccess);
             if (wholeItemAccess.isPresent()) require(binding.selected().equals(Optional.of(wholeItemAccess.get().data())),
@@ -617,7 +622,7 @@ public final class CobolSemanticProduct {
         public LocalContinuation localContinuation() { return LocalContinuation.NONE; }
     }
 
-    public record MoveFact(StatementHeader header, LiteralSource source,
+    public record MoveFact(StatementHeader header, MoveSource source,
                            DataReference target, CopySemantics copySemantics,
                            NormalContinuation normalContinuation, Optional<TextAdjustment> textAdjustment) implements StatementFact {
         public MoveFact {
@@ -626,23 +631,26 @@ public final class CobolSemanticProduct {
             require((copySemantics == CopySemantics.FITTED_TEXT) == textAdjustment.isPresent(),
                     "fitted copy requires adjustment; identity/unavailable omit it");
             if (copySemantics == CopySemantics.FITTED_TEXT)
-                require(source.logicalValue().isPresent() && target.wholeItemAccess().isPresent(),
+                require(source instanceof LiteralSource literal && literal.logicalValue().isPresent() && target.wholeItemAccess().isPresent(),
                         "fitting requires logical source and whole scalar target");
             normalContinuation = Objects.requireNonNull(normalContinuation);
             if (copySemantics == CopySemantics.FULL_IDENTITY)
-                require(source.logicalValue().isPresent() && target.wholeItemAccess().isPresent(),
+                require((source instanceof LiteralSource literal && literal.logicalValue().isPresent()
+                        || source instanceof DataReference data && data.wholeItemAccess().isPresent())
+                        && target.wholeItemAccess().isPresent(),
                         "full identity copy requires logical source and whole scalar target");
             header = Objects.requireNonNull(header, "header");
             source = Objects.requireNonNull(source, "source");
             target = Objects.requireNonNull(target, "target");
+            if (source instanceof DataReference data) require(data.role() == OperandRole.READ, "MOVE data source requires READ");
             if (target.role() != OperandRole.WRITE)
                 throw new IllegalArgumentException("MOVE target must have WRITE role");
         }
-        public MoveFact(StatementHeader header, LiteralSource source, DataReference target,
+        public MoveFact(StatementHeader header, MoveSource source, DataReference target,
                         CopySemantics copySemantics, NormalContinuation normalContinuation) {
             this(header, source, target, copySemantics, normalContinuation, Optional.empty());
         }
-        public MoveFact(StatementHeader header, LiteralSource source, DataReference target) {
+        public MoveFact(StatementHeader header, MoveSource source, DataReference target) {
             this(header, source, target, CopySemantics.UNAVAILABLE,
                     NormalContinuation.unavailable(header.provenance()), Optional.empty());
         }
@@ -888,14 +896,20 @@ public final class CobolSemanticProduct {
         if (statement instanceof MoveFact move && move.copySemantics() == CopySemantics.FULL_IDENTITY) {
             var declaration = declarations.get(move.target().wholeItemAccess().orElseThrow().data());
             require(declaration != null && declaration.scalarText().isPresent(), "copy requires scalar declaration");
-            require(declaration.scalarText().orElseThrow().logicalExtent()
-                    == move.source().logicalValue().orElseThrow().logicalExtent(), "identity copy requires equal extents");
+            int extent;
+            if (move.source() instanceof LiteralSource literal) extent = literal.logicalValue().orElseThrow().logicalExtent();
+            else {
+                var source = declarations.get(((DataReference) move.source()).wholeItemAccess().orElseThrow().data());
+                require(source != null && source.scalarText().isPresent(), "copy requires scalar source declaration");
+                extent = source.scalarText().orElseThrow().logicalExtent();
+            }
+            require(declaration.scalarText().orElseThrow().logicalExtent() == extent, "identity copy requires equal extents");
         }
         if (statement instanceof MoveFact move && move.textAdjustment().isPresent()) {
             var adjustment = move.textAdjustment().orElseThrow();
             var declaration = declarations.get(move.target().wholeItemAccess().orElseThrow().data());
             require(declaration != null && declaration.scalarText().isPresent(), "fitting requires scalar declaration");
-            var source = move.source().logicalValue().orElseThrow();
+            var source = ((LiteralSource) move.source()).logicalValue().orElseThrow();
             require(adjustment.receiverExtent() == declaration.scalarText().orElseThrow().logicalExtent()
                     && source.logicalExtent() < adjustment.receiverExtent(), "padding requires larger scalar receiver");
             require(adjustment.result().value().equals(source.value()
@@ -919,7 +933,8 @@ public final class CobolSemanticProduct {
     }
 
     private static List<DataReference> references(StatementFact statement) {
-        if (statement instanceof MoveFact move) return List.of(move.target());
+        if (statement instanceof MoveFact move) return move.source() instanceof DataReference data
+                ? List.of(data, move.target()) : List.of(move.target());
         if (statement instanceof CallFact call) return call.target() instanceof DataReference data ? List.of(data) : List.of();
         if (statement instanceof IfFact branch) return branch.condition().references();
         return List.of();
@@ -1057,7 +1072,7 @@ public final class CobolSemanticProduct {
                                 call.runtimeUncertaintyCode()),
                         "unknown runtime CALL target must retain its localized gap");
             if (statement instanceof MoveFact move
-                    && move.source().kind() == LiteralKind.UNKNOWN) {
+                    && move.source() instanceof LiteralSource literal && literal.kind() == LiteralKind.UNKNOWN) {
                 require(statement.header().coverage() != CoverageStatus.MODELED,
                         "unknown literal kind cannot be hidden by MODELED coverage");
                 require(localized.stream().anyMatch(gap -> gap.scope()

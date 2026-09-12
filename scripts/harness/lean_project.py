@@ -8,7 +8,7 @@ import xml.etree.ElementTree as ET
 from lean import require_local
 
 FAST_TESTS = ('ArchitectureBoundaryTest', 'HarnessDocsTest', 'SemanticProductEntryGobackTest',
-              'ScalarMoveCheckpoint4ATest', 'CallCheckpointW1ATest', 'IfCheckpointW2ATest',
+              'ScalarMoveCheckpoint4ATest', 'MoveDataSourceTest', 'CallCheckpointW1ATest', 'IfCheckpointW2ATest',
               'IfCanonicalProofTest', 'SemanticProductMoveCallContractTest')
 
 
@@ -41,8 +41,8 @@ def break_pin_fixture(root):
 
 def maven(*args):
     command = [os.environ.get('MAVEN_BIN', 'mvn'), '-B', '-ntp']
-    if os.environ.get('PROLEAP_MAVEN_REPO'):
-        command.append('-Dmaven.repo.local=' + os.environ['PROLEAP_MAVEN_REPO'])
+    if os.environ.get('FRONTEND_MAVEN_REPO'):
+        command.append('-Dmaven.repo.local=' + os.environ['FRONTEND_MAVEN_REPO'])
     return command + list(args)
 
 
@@ -57,7 +57,7 @@ def technical_fast(root):
         report = observed.get(suite)
         if report is None or int(report.get('tests', '0')) == 0 or any(int(report.get(k, '0')) for k in ('failures','errors','skipped')):
             raise RuntimeError('Fast suite missing/failed/skipped: ' + suite)
-    print('PASS: all eight Fast frontend contract/architecture suites executed')
+    print('PASS: all nine Fast frontend contract/architecture suites executed')
 
 
 def full_local(root):

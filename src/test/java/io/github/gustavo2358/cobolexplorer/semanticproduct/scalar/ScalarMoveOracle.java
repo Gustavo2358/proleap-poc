@@ -1,5 +1,6 @@
 package io.github.gustavo2358.cobolexplorer.semanticproduct.scalar;
 
+import io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.LiteralSource;
 import io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticPort;
 import static io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.*;
 import java.util.*;
@@ -15,8 +16,8 @@ public final class ScalarMoveOracle {
         for (var d : port.dataDeclarations()) check(data.put(d.id(), d) == null, "duplicate DATA");
         var move = (MoveFact) port.statement(id).orElseThrow();
         check(move.copySemantics() == CopySemantics.FULL_IDENTITY, "copy proof missing");
-        check(move.source().kind() == LiteralKind.ALPHANUMERIC, "literal category");
-        var text = move.source().logicalValue().orElseThrow();
+        check(((LiteralSource) move.source()).kind() == LiteralKind.ALPHANUMERIC, "literal category");
+        var text = ((LiteralSource) move.source()).logicalValue().orElseThrow();
         check(text.logicalDomain() == LogicalDomain.TEXT, "literal domain");
         var access = move.target().wholeItemAccess().orElseThrow();
         check(move.target().role() == OperandRole.WRITE, "write role");

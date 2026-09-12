@@ -4,6 +4,8 @@ Work items delimitam a mudança em execução; o [backlog](backlog.md) registra 
 
 ## Ativo
 
+- [WORK-SEMANTIC-PRODUCT-006 — scalar MOVE data source](active/WORK-SEMANTIC-PRODUCT-006.yaml) — IN_PROGRESS; [SP 1.5.0 contract](../domain/move-data-source.md).
+
 - [WORK-AST-002 — Hardening da fronteira AST para CFG e dataflow](active/WORK-AST-002/spec.md) — Slice 1 mergeado no PR #10; Discovery do Slice 2 no PR #13 e implementação de F-02 integrada pelo PR #28. Nenhum slice adjacente foi iniciado.
 
 

@@ -16,7 +16,8 @@ public final class ScalarMoveSemantics {
                        Optional<Integer> nextStatement, boolean inputComplete) { }
     public enum Gap { SCALAR_WHOLE_ITEM_NOT_PROVEN, MOVE_IDENTITY_NOT_PROVEN, NORMAL_CONTINUATION_NOT_AVAILABLE }
     public record Move(Optional<ResolutionContracts.SemanticEntityId> wholeItem,
-                       Copy copy, Optional<Integer> nextStatement, List<Gap> gaps, Optional<TextAdjustment> adjustment) {
+                       Copy copy, Optional<Integer> nextStatement, List<Gap> gaps, Optional<TextAdjustment> adjustment,
+                       Optional<ResolutionContracts.SemanticEntityId> sourceWholeItem) {
         public Move {
             wholeItem = Objects.requireNonNull(wholeItem);
             copy = Objects.requireNonNull(copy);
@@ -109,7 +110,7 @@ public final class ScalarMoveSemantics {
                     var key = new NodeKey(unit.id(), move.meta().id());
                     moves.put(key, fact(Optional.empty(), Copy.UNAVAILABLE,
                             inputComplete ? Optional.ofNullable(next.get(move.meta().id())) : Optional.empty()));
-                    if (!move.corresponding() && move.source() instanceof Ast.LiteralExpression
+                    if (!move.corresponding() && (move.source() instanceof Ast.LiteralExpression || move.source() instanceof Ast.DataReference)
                             && move.targets().size() == 1 && move.targets().get(0) instanceof Ast.DataReference target)
                         targets.put(new NodeKey(unit.id(), target.meta().id()), move);
                 }
@@ -124,6 +125,9 @@ public final class ScalarMoveSemantics {
                             ResolutionContracts.SemanticEntityDomain.DATA_SYMBOL, symbol.id()), shape);
             }
         }
+        Map<NodeKey, ReferenceResolution.Entry> byOccurrence = new HashMap<>();
+        for (var entry : resolution.entries())
+            byOccurrence.put(new NodeKey(entry.occurrence().programUnitId(), entry.occurrence().referenceAstNodeId()), entry);
         for (var entry : resolution.entries()) {
             counts[2]++;
             var occurrence = entry.occurrence();
@@ -148,6 +152,7 @@ public final class ScalarMoveSemantics {
             if (move == null) continue;
             var target = (Ast.DataReference) move.targets().get(0);
             Optional<ResolutionContracts.SemanticEntityId> whole = Optional.empty();
+            Optional<ResolutionContracts.SemanticEntityId> sourceWhole = Optional.empty();
             Copy copy = Copy.UNAVAILABLE;
             Optional<TextAdjustment> adjustment = Optional.empty();
             if (inputComplete && entry.status() == ResolutionContracts.ResolutionStatus.RESOLVED
@@ -160,25 +165,43 @@ public final class ScalarMoveSemantics {
                 ScalarText shape = declarations.get(selected.entityId());
                 if (shape != null) {
                     whole = Optional.of(selected.entityId());
-                    var literal = (Ast.LiteralExpression) move.source();
-                    // IBM elementary alphanumeric MOVE with equal logical lengths:
-                    // mandatory complete receiving-item write, no conversion or fitting.
-                    if (literal.logicalText().isPresent()
-                            && literal.logicalText().get().extent() == shape.extent()) copy = Copy.FULL_IDENTITY;
-                    else if (literal.logicalText().isPresent()
-                            && literal.logicalText().get().extent() < shape.extent()) {
-                        // IBM 6.4 elementary alphanumeric MOVE, non-JUSTIFIED DISPLAY receiver:
-                        // left alignment fills the remaining logical positions with spaces.
-                        var text = literal.logicalText().get();
-                        copy = Copy.FITTED_TEXT;
-                        adjustment = Optional.of(new TextAdjustment(shape.extent(),
-                                text.value() + " ".repeat(shape.extent() - text.extent())));
+                    if (move.source() instanceof Ast.LiteralExpression literal) {
+                        // IBM elementary alphanumeric MOVE with equal logical lengths:
+                        // mandatory complete receiving-item write, no conversion or fitting.
+                        if (literal.logicalText().isPresent()
+                                && literal.logicalText().get().extent() == shape.extent()) copy = Copy.FULL_IDENTITY;
+                        else if (literal.logicalText().isPresent()
+                                && literal.logicalText().get().extent() < shape.extent()) {
+                            // IBM 6.4 elementary alphanumeric MOVE, non-JUSTIFIED DISPLAY receiver:
+                            // left alignment fills the remaining logical positions with spaces.
+                            var text = literal.logicalText().get();
+                            copy = Copy.FITTED_TEXT;
+                            adjustment = Optional.of(new TextAdjustment(shape.extent(),
+                                    text.value() + " ".repeat(shape.extent() - text.extent())));
+                        }
+                    } else if (move.source() instanceof Ast.DataReference source) {
+                        var sourceEntry = byOccurrence.get(new NodeKey(occurrence.programUnitId(), source.meta().id()));
+                        counts[2]++;
+                        if (sourceEntry != null && sourceEntry.status() == ResolutionContracts.ResolutionStatus.RESOLVED
+                                && sourceEntry.candidates().size() == 1
+                                && sourceEntry.occurrence().role() == ResolutionContracts.ReferenceRole.VALUE_READ
+                                && source.understanding() == Ast.ReferenceUnderstanding.STRUCTURED
+                                && source.qualifiers().isEmpty() && source.subscriptGroups().isEmpty()
+                                && source.referenceModification() == null) {
+                            var sourceId = sourceEntry.selectedCandidate().orElseThrow().entityId();
+                            counts[3]++;
+                            var sourceShape = declarations.get(sourceId);
+                            if (sourceShape != null) {
+                                sourceWhole = Optional.of(sourceId);
+                                if (sourceShape.extent() == shape.extent()) copy = Copy.FULL_IDENTITY;
+                            }
+                        }
                     }
                 }
             }
             NodeKey key = new NodeKey(occurrence.programUnitId(), move.meta().id());
             var basic = fact(whole, copy, moves.get(key).nextStatement());
-            moves.put(key, new Move(whole, copy, basic.nextStatement(), basic.gaps(), adjustment));
+            moves.put(key, new Move(whole, copy, basic.nextStatement(), basic.gaps(), adjustment, sourceWhole));
         }
         return new ScalarMoveSemantics(declarations, moves, calls,
                 new Metrics(counts[0], counts[1], counts[2], counts[3], counts[4]),
@@ -191,7 +214,7 @@ public final class ScalarMoveSemantics {
         if (whole.isEmpty()) gaps.add(Gap.SCALAR_WHOLE_ITEM_NOT_PROVEN);
         if (copy == Copy.UNAVAILABLE) gaps.add(Gap.MOVE_IDENTITY_NOT_PROVEN);
         if (next.isEmpty()) gaps.add(Gap.NORMAL_CONTINUATION_NOT_AVAILABLE);
-        return new Move(whole, copy, next, gaps, Optional.empty());
+        return new Move(whole, copy, next, gaps, Optional.empty(), Optional.empty());
     }
 
     private static boolean hasOverlay(Ast.Section section, long[] counts) {

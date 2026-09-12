@@ -314,7 +314,7 @@ public final class SemanticPortLoweringProbe {
             ReferenceNode target = reference(move.target(), declarations);
             validateOperandOwner(anchor, move.source().id(), violations);
             validateOperandOwner(anchor, target.id(), violations);
-            if (move.source().kind() == CobolSemanticProduct.LiteralKind.UNKNOWN) {
+            if (((CobolSemanticProduct.LiteralSource) move.source()).kind() == CobolSemanticProduct.LiteralKind.UNKNOWN) {
                 if (!hasScope(gaps, CobolSemanticProduct.GapScope.LITERAL_KIND))
                     at(violations, "UNKNOWN_LITERAL_KIND_WITHOUT_GAP", anchor.id(),
                             "literal kind uncertainty disappeared");
@@ -325,8 +325,8 @@ public final class SemanticPortLoweringProbe {
             }
             validateReadyBinding(anchor, target, violations);
             return new MoveNode(anchor,
-                    new LiteralNode(move.source().id(), move.source().kind(),
-                            move.source().value(), move.source().provenance()), target);
+                    new LiteralNode(move.source().id(), ((CobolSemanticProduct.LiteralSource) move.source()).kind(),
+                            ((CobolSemanticProduct.LiteralSource) move.source()).value(), move.source().provenance()), target);
         }
         if (fact instanceof CobolSemanticProduct.CallFact call) {
             ReferenceNode operand = reference(((CobolSemanticProduct.DataReference) call.target()), declarations);
