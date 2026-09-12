@@ -1,5 +1,20 @@
 # AGENTS.md
 
+## Política de engenharia vigente
+
+[LEAN HARNESS / GIT-IS-THE-RECORD](docs/engineering/lean-harness.md) governa o trabalho.
+Git, commits, Pull Requests, testes e merge são a fonte de verdade do desenvolvimento.
+Remote FAST only; full local/on-demand. Receipts e certificados CP não são requisitos.
+História é READ_ONLY / BEST_EFFORT; registry/index servem à navegação.
+Work items novos usam id/title/status/scope, com TODO/IN_PROGRESS/BLOCKED/DONE.
+PR merged + required technical tests passed = DONE. Pins cross-repo permanecem estritos.
+Mudanças semânticas importantes exigem revisão humana; metadata não exige cerimônia.
+Execute `python3 -B scripts/harness/lean.py fast`; full local quando tecnicamente
+necessário: `python3 -B scripts/harness/lean.py qualification-local`.
+Preserve branches dedicadas, escopo, mudanças alheias e isolamento entre repositórios.
+Não faça merge/auto-merge sem autorização.
+
+
 ## Escopo
 
 Estas instruções valem para todo o repositório.
@@ -71,18 +86,8 @@ Comece no [índice de conhecimento](docs/index.md). Carregue somente o contexto 
 
 O índice de trabalho está em [docs/work/index.md](docs/work/index.md). `WORK-AST-002` permanece ativo: Slice 1 mergeado no PR #10, Discovery do Slice 2 no PR #13 e implementação F-02 integrada pelo PR #28. `WORK-SEMANTIC-PRODUCT-003` concluiu o audit bilateral contra AIR 2.0.0 no PR #29 e está arquivado; a [matriz e os findings](docs/architecture/semantic-product-air-v2-audit.md) e os [oracles futuros](docs/evals/semantic-product-air-v2-oracles.md) permanecem canônicos, sem autorizar produção. `WORK-SEMANTIC-PRODUCT-004` foi concluído pelo PR #31 e arquivado. `WORK-SEMANTIC-PRODUCT-005` foi concluído pelo PR #32 e arquivado. `WORK-AST-004` foi concluído pelo PR #33 e arquivado. `WORK-AST-005` foi concluído pelo PR #34 e arquivado. `WORK-AST-006` foi aprovado, mergeado pelo PR #35 e arquivado; o baseline W2A está congelado, sem início de W2C/B/D. `BACKLOG-IR-001`, `BACKLOG-LOWER-001` e `BACKLOG-CFG-001` permanecem somente como registros/handoffs cross-repo para `air-java`, `cobol-lower` e `analysis-cfg`. `WORK-COND-004` concluiu o Slice 4 pelo PR #18 e `WORK-COND-005` concluiu o Slice 5 pelo PR #19; ambos estão arquivados com resumos históricos. Os Slices 1–3 foram concluídos pelos PRs #15–#17 e arquivados como `WORK-COND-001` a `WORK-COND-003`. `WORK-AST-003` foi concluído: o PR #11 fechou o Discovery de IDs/traversal e o PR #12 implementou a correção, removendo aquele bloqueio de `WORK-AST-002`. As conclusões de WORK-EXT-001 e WORK-COV-001 são baselines válidas, mas não autorizam iniciar taint localizado, itens `BACKLOG-EXT`, CFG, dataflow ou outras tecnologias.
 
-Ao trabalhar em um item:
-
-1. leia primeiro `work-item.yaml` e `state.md`;
-2. carregue somente os caminhos em `must_read` relevantes ao slice atual;
-3. consulte `spec.md`, `plan.md` e `eval.md` conforme a decisão em curso;
-4. mantenha `state.md` curto e factual quando o estado material mudar;
-5. antes do handoff, execute a self-validation do harness: diretórios ativos,
-   índice, histórico, contratos documentais e escopo do diff devem permanecer
-   coerentes;
-6. não transforme detalhes transitórios em documentação canônica.
-
-Novo trabalho ativo segue o [protocolo](docs/engineering/work-item-protocol.md). Itens concluídos deixam `active/`; conhecimento durável vai para arquitetura, domínio, engenharia ou evals.
+Work items são orientação de escopo; use o formato mínimo da política lean.
+Registros legados continuam disponíveis para leitura, sem migração ou compliance.
 
 ## Contexto histórico
 
@@ -101,9 +106,10 @@ Use os entrypoints estáveis descritos em [gates do harness](docs/engineering/ga
 ./scripts/harness/check-full.sh
 ```
 
-- `fast`: documentação e fronteiras arquiteturais baratas.
+- `fast`: compile, oito suítes focais de contratos/arquitetura e política.
 - `semantic`: suíte Maven e contratos semânticos.
 - `performance`: propriedade algorítmica, sem threshold dependente de hardware.
 - `full`: fast + semantic + regressão E2E + naming.
 
-Para mudanças documentais/estruturais, comece por `fast`. Para semântica, execute `semantic`; para encerramento ou alteração transversal, execute `full` conforme o work item.
+Para documentação pura, `lean.py docs` basta. FAST é suficiente para harness/lifecycle.
+Full é local/on-demand para mudanças semânticas importantes, nunca requisito de fechamento.

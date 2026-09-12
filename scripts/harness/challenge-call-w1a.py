@@ -6,6 +6,9 @@ import os
 from pathlib import Path
 import subprocess
 
+from lean import require_local
+require_local()
+
 ROOT = Path(__file__).resolve().parents[2]
 BASE = ROOT / 'src/main/java/io/github/gustavo2358/cobolexplorer'
 OUT = ROOT / 'target/cp6-w1a/challenges'

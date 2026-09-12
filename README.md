@@ -74,15 +74,17 @@ As políticas de observabilidade e os demais níveis de logger estão em [Observ
 
 ## Verificação
 
-O harness organiza as verificações por velocidade e profundidade:
+Desenvolvimento:
 
 ```bash
 ./scripts/harness/check-fast.sh
-./scripts/harness/check-semantic.sh
+# Antes de merge tecnicamente importante (local/on-demand):
 ./scripts/harness/check-full.sh
 ```
 
-Consulte [Gates de verificação](docs/engineering/gates.md) para escopo, ordem e comandos legados.
+Abra PR, revisão humana quando aplicável, merge, DONE. CI remoto executa apenas FAST;
+documentação pura não executa Maven. Performance e challenges são locais sob demanda.
+Veja [a política lean](docs/engineering/lean-harness.md).
 
 ## Documentação
 
