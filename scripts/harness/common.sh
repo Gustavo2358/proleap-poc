@@ -7,6 +7,9 @@ harness_project_dir="$(cd "$harness_script_dir/../.." && pwd)"
 maven_bin="${MAVEN_BIN:-mvn}"
 
 harness_gate_start() {
+  if [[ "$harness_gate_name" == semantic || "$harness_gate_name" == performance || "$harness_gate_name" == full ]]; then
+    python3 -c 'import sys; sys.path.insert(0,sys.argv[1]); from lean import require_local; require_local()' "$harness_script_dir"
+  fi
   printf '[harness] gate=%s status=running\n' "$harness_gate_name"
 }
 

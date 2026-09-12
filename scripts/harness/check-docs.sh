@@ -1,8 +1,4 @@
 #!/usr/bin/env bash
-
-harness_gate_name="docs"
-source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/common.sh"
-harness_gate_start
-
-cd "$harness_project_dir"
-"$maven_bin" -q -Dtest=HarnessDocsTest test
+set -euo pipefail
+HERE="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+exec python3 -B "$HERE/lean.py" docs "$@"
