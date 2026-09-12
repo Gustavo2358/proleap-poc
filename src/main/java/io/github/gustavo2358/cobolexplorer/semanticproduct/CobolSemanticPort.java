@@ -51,6 +51,10 @@ public interface CobolSemanticPort {
 
     List<CobolSemanticProduct.IfFact> ifs();
 
+    default List<CobolSemanticProduct.PerformFact> performs() {
+        return statements().stream().filter(CobolSemanticProduct.PerformFact.class::isInstance).map(CobolSemanticProduct.PerformFact.class::cast).toList();
+    }
+
     List<CobolSemanticProduct.ObservedStatement> observedStatements();
 
     static CobolSemanticPort open(CobolSemanticProduct.State state) {

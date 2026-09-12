@@ -98,7 +98,7 @@ class IfCheckpointW2ATest {
             assertEquals(2, result.independent().size());
             var bytes = SemanticProductJsonWriter.serialize(port);
             assertArrayEquals(bytes, SemanticProductJsonWriter.serialize(ScalarMoveCheckpoint4ATest.publish(fixture(name))));
-            assertEquals("1.5.0", new ObjectMapper().readTree(bytes).path("contractVersion").asText());
+            assertEquals("1.6.0", new ObjectMapper().readTree(bytes).path("contractVersion").asText());
         }
     }
     @Test void multipleStatementsInEachArmFollowDirectRelations() throws Exception {

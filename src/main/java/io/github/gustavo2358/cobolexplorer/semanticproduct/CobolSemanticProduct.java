@@ -605,8 +605,37 @@ public final class CobolSemanticProduct {
 
     /** Adding a fact type extends this inventory without changing the State envelope. */
     public sealed interface StatementFact permits MoveFact, CallFact, IfFact,
-            ObservedStatement, GobackFact {
+            ObservedStatement, GobackFact, PerformFact {
         StatementHeader header();
+    }
+
+    public enum PerformProfile { SIMPLE_SINGLE_CALLSITE_PROCEDURE_PERFORM, OUTSIDE_SLICE }
+    /** Canonical local PROCEDURE symbol identity; display spelling is not control. */
+    public record ProcedureId(UnitId unit, int localId) {
+        public ProcedureId { Objects.requireNonNull(unit); require(localId >= 0, "procedure localId must be non-negative"); }
+    }
+    public record PerformTarget(ProcedureId id, Provenance referenceOrigin, Provenance paragraphOrigin) {
+        public PerformTarget { Objects.requireNonNull(id); Objects.requireNonNull(referenceOrigin); Objects.requireNonNull(paragraphOrigin); }
+    }
+    public record PerformFact(StatementHeader header, PerformProfile profile, Optional<PerformTarget> target,
+            Optional<StatementId> targetEntry, List<StatementId> targetStatements, Optional<StatementId> targetExit,
+            NormalContinuation normalContinuation, List<StatementId> primaryStatements, List<String> gapCodes) implements StatementFact {
+        public PerformFact {
+            Objects.requireNonNull(header); Objects.requireNonNull(profile); Objects.requireNonNull(target);
+            Objects.requireNonNull(targetEntry); Objects.requireNonNull(targetExit); Objects.requireNonNull(normalContinuation);
+            targetStatements = List.copyOf(targetStatements); primaryStatements = List.copyOf(primaryStatements); gapCodes = List.copyOf(gapCodes);
+            boolean simple = profile == PerformProfile.SIMPLE_SINGLE_CALLSITE_PROCEDURE_PERFORM;
+            require(simple == gapCodes.isEmpty(), "PERFORM profile must preserve gaps");
+            if (simple) {
+                require(target.isPresent() && !targetStatements.isEmpty() && !primaryStatements.isEmpty(), "PERFORM needs target and closed bodies");
+                require(targetEntry.equals(Optional.of(targetStatements.get(0))) && targetExit.equals(Optional.of(targetStatements.get(targetStatements.size()-1))), "PERFORM body endpoints disagree");
+                require(normalContinuation.availability() == ContinuationAvailability.KNOWN, "PERFORM requires unique resume");
+                require(target.get().id().unit().equals(header.id().unit()), "PERFORM target must be local");
+                require(header.provenance().exact() && target.get().referenceOrigin().exact() && target.get().paragraphOrigin().exact()
+                    && normalContinuation.provenance().exact(), "PERFORM requires exact origins");
+            } else require(target.isEmpty() && targetStatements.isEmpty() && targetEntry.isEmpty() && targetExit.isEmpty()
+                    && primaryStatements.isEmpty() && normalContinuation.statement().isEmpty(), "refused PERFORM cannot publish control guarantees");
+        }
     }
 
     /** GOBACK concludes this program invocation. On a called invocation it returns
@@ -968,6 +997,24 @@ public final class CobolSemanticProduct {
             armChildren.computeIfAbsent(statement.header().containment(), ignored -> new java.util.ArrayList<>()).add(statement);
         Map<StatementId, StructuralInterval> intervals = structuralIntervals(statements);
         for (StatementFact statement : statements.values()) {
+            if (statement instanceof PerformFact perform && perform.profile() == PerformProfile.SIMPLE_SINGLE_CALLSITE_PROCEDURE_PERFORM) {
+                var members = new HashSet<StatementId>();
+                for (var id : perform.primaryStatements()) require(members.add(id) && statements.containsKey(id), "PERFORM primary members must be unique and published");
+                for (int i = 0; i < perform.targetStatements().size(); i++) {
+                    var id = perform.targetStatements().get(i);
+                    require(members.add(id) && statements.get(id) instanceof MoveFact, "PERFORM target is a disjoint linear MOVE body");
+                    var move = (MoveFact) statements.get(id);
+                    var next = i + 1 < perform.targetStatements().size() ? Optional.of(perform.targetStatements().get(i+1)) : perform.normalContinuation().statement();
+                    require(move.normalContinuation().statement().equals(next), "PERFORM body completion disagrees with published relation");
+                }
+                require(members.equals(statements.keySet()), "PERFORM proof covers the complete statement inventory");
+                var main = perform.primaryStatements(); int callsite = main.indexOf(perform.header().id());
+                require(callsite >= 0 && main.size() == callsite + 3 && statements.get(main.get(callsite+1)) instanceof CallFact
+                    && statements.get(main.get(callsite+2)) instanceof GobackFact
+                    && perform.normalContinuation().statement().equals(Optional.of(main.get(callsite+1))), "PERFORM primary shape/resume mismatch");
+                for (int i = 0; i < callsite; i++) require(statements.get(main.get(i)) instanceof MoveFact move
+                    && move.normalContinuation().statement().equals(Optional.of(main.get(i+1))), "PERFORM prefix relation mismatch");
+            }
             if (statement instanceof MoveFact move) move.normalContinuation().statement().ifPresent(next -> {
                 require(next.unit().equals(move.header().id().unit()) && statements.containsKey(next),
                         "MOVE continuation must reference a published statement in the same unit");

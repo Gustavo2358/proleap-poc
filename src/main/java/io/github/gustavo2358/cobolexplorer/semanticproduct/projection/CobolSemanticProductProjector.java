@@ -266,6 +266,9 @@ public final class CobolSemanticProductProjector {
     }
 
     private static StatementPlan plan(StatementPosition position, ProjectionInputs inputs) {
+        if (position.statement() instanceof Ast.PerformStatement perform
+                && inputs.products().scalarMoves().performs().fact(inputs.unitId(), perform.meta().id()).simpleProfile())
+            return new StatementPlan(position, Capability.supported("PERFORM", "PERFORM_BASIC"), List.of());
         if (position.statement() instanceof Ast.GobackStatement)
             return new StatementPlan(position, Capability.supported("GOBACK", "GOBACK_LOCAL_EXIT"), List.of());
         if (position.statement() instanceof Ast.MoveStatement move) {
@@ -537,6 +540,26 @@ public final class CobolSemanticProductProjector {
                 provenance(plan.position().statement().meta().provenance());
         CobolSemanticProduct.Containment containment = containment(
                 plan.position(), statementIds);
+
+        if (plan.position().statement() instanceof Ast.PerformStatement perform && plan.capability().supported()) {
+            var proof = inputs.products().scalarMoves().performs().fact(inputs.unitId(), perform.meta().id());
+            var target = proof.target().map(t -> new PerformTarget(new ProcedureId(inputs.boundaryUnit(), t.identity().localId()),
+                provenance(t.referenceOrigin()), provenance(t.paragraphOrigin())));
+            var body = proof.target().map(t -> t.statements().stream().map(id -> canonicalStatement(Optional.of(id), inputs, statementIds).orElseThrow()).toList()).orElse(List.of());
+            var resume = canonicalStatement(proof.resume(), inputs, statementIds);
+            var primary = proof.primaryStatements().stream().map(id -> canonicalStatement(Optional.of(id), inputs, statementIds).orElseThrow()).toList();
+            var status = proof.simpleProfile() ? ReadinessStatus.SUFFICIENT : ReadinessStatus.BLOCKED;
+            statements.add(new PerformFact(header(statementId, plan.position().ordinal(), containment, statementProvenance,
+                proof.simpleProfile() ? CoverageStatus.MODELED : CoverageStatus.UNSUPPORTED,
+                readiness(status, "isolated single-callsite paragraph profile", status, "explicit body and unique resume", ReadinessStatus.PARTIAL, "general effects not published")),
+                proof.simpleProfile() ? PerformProfile.SIMPLE_SINGLE_CALLSITE_PROCEDURE_PERFORM : PerformProfile.OUTSIDE_SLICE,
+                target, body.isEmpty() ? Optional.empty() : Optional.of(body.get(0)), body,
+                body.isEmpty() ? Optional.empty() : Optional.of(body.get(body.size()-1)),
+                new NormalContinuation(resume.isPresent() ? ContinuationAvailability.KNOWN : ContinuationAvailability.UNAVAILABLE,
+                    resume, provenance(proof.resumeOrigin())), primary, proof.gaps()));
+            for (var code : proof.gaps()) gaps.add(new Gap(statementId, GapScope.CAPABILITY, code, "PERFORM proof unavailable", statementProvenance));
+            return;
+        }
 
         if (plan.position().statement() instanceof Ast.GobackStatement goback) {
             statements.add(new GobackFact(header(statementId, plan.position().ordinal(), containment,
