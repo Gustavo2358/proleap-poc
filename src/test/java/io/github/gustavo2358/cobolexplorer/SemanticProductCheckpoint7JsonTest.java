@@ -357,7 +357,7 @@ class SemanticProductCheckpoint7JsonTest {
         Set<String> dataIds = new LinkedHashSet<>();
         for (JsonNode declaration : document.path("dataDeclarations")) {
             assertEquals(Set.of("id", "canonicalName", "picture", "provenance", "coverage",
-                    "readiness", "scalarText"), fieldSet(declaration));
+                    "readiness", "scalarText", "scalarInteger"), fieldSet(declaration));
             assertTrue(dataIds.add(declaration.path("id").asText()), "duplicate DATA handle");
         }
 

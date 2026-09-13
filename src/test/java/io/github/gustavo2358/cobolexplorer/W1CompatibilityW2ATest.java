@@ -31,6 +31,10 @@ class W1CompatibilityW2ATest {
                 assertEquals("LITERAL", statement.path("source").path("variant").asText());
                 ((ObjectNode) statement.path("source")).remove("variant");
             }
+            for(var data:current.path("dataDeclarations")) {
+                assertTrue(data.path("scalarInteger").isNull(),"unrelated historical text declaration gains no integer proof");
+                ((ObjectNode)data).remove("scalarInteger");
+            }
             current.remove("storageIndependence"); current.remove("contractVersion"); old.remove("contractVersion");
             assertEquals(old, current, name + ": all W1 facts, IDs, bindings, origins, provenance, fitting, gaps and readiness must match");
             assertArrayEquals(frozen, Files.readAllBytes(golden));
