@@ -1,0 +1,9 @@
+id: WORK-STORAGE-FRONTEND-001
+title: Storage Semantics campaign — ST-W0..ST-W5
+status: IN_PROGRESS
+scope:
+  - Promote BACKLOG-SP-008 and source-fact portions of BACKLOG-DF-001/EXT-002; no duplicate backlog.
+  - ST-W0.2/W0.3 profile and contracts; ST-W3.1/W3.2 fixed group layout/access/effects and SP 2.7.
+  - ST-W4.1/W4.3 REDEFINES components and localized physical proof; cumulative W3/W4/W5 E2E fixtures.
+  - Preserve scalar and control profiles; no W6-W8 implementation, downstream solver, merge or auto-merge.
+notes: User authorized autonomous implementation through W5 and one persistent draft PR; human review only after final qualification.
