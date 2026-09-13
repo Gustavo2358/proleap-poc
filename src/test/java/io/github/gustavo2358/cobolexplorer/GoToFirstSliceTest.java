@@ -44,6 +44,12 @@ class GoToFirstSliceTest {
             }
         }
     }
+    @Test void unsupportedContainmentKeepsStructuralGap() {
+        var p=ScalarMoveCheckpoint4ATest.publish(EvaluateFirstSliceTest.source("EVALUATE TRUE\nWHEN FLAG = 'Y' GO TO TARGET\nEND-EVALUATE.\nTARGET.\nCALL 'PROGA'."));
+        var g=p.goTos().get(0); assertEquals(Branch.UNKNOWN,g.header().containment().branch());
+        assertTrue(g.targetEntry().isEmpty());
+        assertTrue(p.gaps().stream().anyMatch(gap->gap.statement().equals(g.header().id()) && gap.scope()==GapScope.STRUCTURE));
+    }
     @Test void targetInAnotherProgramUnitRemainsUnresolved() {
         var source=EvaluateFirstSliceTest.source("GO TO CHILD-TARGET.\nCALL 'PROGA'.")
             + "IDENTIFICATION DIVISION.\nPROGRAM-ID. CHILD.\nPROCEDURE DIVISION.\nCHILD-TARGET.\nGOBACK.\nEND PROGRAM CHILD.\nEND PROGRAM EVALTEST.\n";

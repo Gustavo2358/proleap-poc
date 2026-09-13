@@ -582,7 +582,7 @@ public final class CobolSemanticProductProjector {
                     ReadinessStatus.NOT_APPLICABLE,"control transfer produces no value")),
                 proof.target().map(t->new GoToTarget(new ProcedureId(inputs.boundaryUnit(),t.identity().localId()),provenance(t.paragraphOrigin()))),
                 provenance(proof.referenceOrigin()),entry,entry.isPresent()?proof.entryOrigin().map(CobolSemanticProductProjector::provenance):Optional.empty(),codes));
-            for(var code:codes)gaps.add(new Gap(statementId,GapScope.CAPABILITY,code,"GO TO target control proof unavailable",statementProvenance));
+            for(var code:codes)gaps.add(new Gap(statementId,code.equals(CONTAINMENT_GAP)?GapScope.STRUCTURE:GapScope.CAPABILITY,code,"GO TO target control proof unavailable",statementProvenance));
             return;
         }
 
