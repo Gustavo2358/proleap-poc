@@ -88,8 +88,10 @@ public final class PerformSemantics {
             }
             var primaryIds=main.stream().map(statement->statement.meta().id()).toList();
             var ordinaryTargets=new HashSet<Integer>();
-            for(var node:nodes.values())if(node instanceof Ast.GoToStatement g && GoToSemantics.simple(g))
-                goTos.fact(unit.id(),g.meta().id()).entry().ifPresent(ordinaryTargets::add);
+            boolean ordinaryOpen=nodes.values().stream().filter(Ast.GoToStatement.class::isInstance).map(Ast.GoToStatement.class::cast)
+                .anyMatch(g->GoToSemantics.depending(g)&&!goTos.closed(unit.id(),g));
+            for(var node:nodes.values())if(node instanceof Ast.GoToStatement g)
+                ordinaryTargets.addAll(goTos.entries(unit.id(),g));
             var linearBodies=new IdentityHashMap<Ast.Paragraph,Boolean>();
             for (var perform : performs) {
                 var gaps = new LinkedHashSet<String>();
@@ -116,7 +118,7 @@ public final class PerformSemantics {
                 if (target == null) gaps.add("PERFORM_TARGET_NOT_UNIQUE_LOCAL_PARAGRAPH");
                 var body=target==null?List.<Ast.Statement>of():bodies.getOrDefault(target,List.of());
                 var resumeId=procedure==null?null:procedure.normalContinuations().get(perform.meta().id());
-                boolean isolated=mainSound && target!=null && target!=primary && bodies.containsKey(target)
+                boolean isolated=mainSound && !ordinaryOpen && target!=null && target!=primary && bodies.containsKey(target)
                     && body.stream().noneMatch(s -> positions.containsKey(s) || ordinaryTargets.contains(s.meta().id()))
                     && positions.containsKey(perform) && resumeId!=null;
                 if (!isolated) gaps.add("PERFORM_ISOLATED_PRIMARY_FLOW_NOT_PROVEN");
@@ -163,9 +165,10 @@ public final class PerformSemantics {
             if(statement instanceof Ast.GobackStatement) { active.remove(id);closed.add(id);continue; }
             pending.push(new Visit(id,true));
             if(statement instanceof Ast.GoToStatement g) {
-                if(!GoToSemantics.simple(g))return Set.of();var proof=goTos.fact(unit,id);
-                if(!proof.gaps().isEmpty() || proof.entry().isEmpty())return Set.of();
-                pending.push(new Visit(proof.entry().orElseThrow(),false));continue;
+                if(!goTos.closed(unit,g))return Set.of();
+                for(var target:goTos.entries(unit,g))pending.push(new Visit(target,false));
+                if(GoToSemantics.depending(g))pending.push(new Visit(goTos.conditionalFact(unit,id).continuation().orElseThrow(),false));
+                continue;
             }
             var continuation=next.get(id);if(continuation==null)return Set.of();
             pending.push(new Visit(continuation,false));

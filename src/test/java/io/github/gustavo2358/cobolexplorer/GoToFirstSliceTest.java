@@ -17,7 +17,8 @@ class GoToFirstSliceTest {
                 var name=file.getFileName().toString().replace(".cbl","");
                 if(name.equals("depending")) {
                     assertTrue(p.goTos().isEmpty());
-                    assertTrue(p.observedStatements().stream().anyMatch(o->o.observedKind().equals("GO_TO") && o.normalContinuation().statement().isEmpty()));
+                    assertEquals(1,p.conditionalGoTos().size());
+                    assertTrue(p.conditionalGoTos().get(0).gapCodes().isEmpty(),"integer selector and all targets now supported");
                 } else {
                     assertFalse(p.goTos().isEmpty(),name);
                     if(name.startsWith("compose-"))assertEquals(Integer.parseInt(name.substring(8)),p.goTos().size());

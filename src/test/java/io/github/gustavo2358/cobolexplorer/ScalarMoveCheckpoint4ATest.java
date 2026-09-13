@@ -53,7 +53,7 @@ class ScalarMoveCheckpoint4ATest {
     }
     // JSON-only assertions have no frontend joins and deliberately erase textual readiness.
     static void assertJson(JsonNode doc) {
-        assertEquals("2.5.0", doc.path("contractVersion").asText());
+        assertEquals("2.6.0", doc.path("contractVersion").asText());
         var data = doc.path("dataDeclarations").get(0);
         var statements = doc.path("statements");
         JsonNode move = null, goback = null;
@@ -150,13 +150,15 @@ class ScalarMoveCheckpoint4ATest {
         }
     }
     @Test void unavailableContinuationNeverUsesPhysicalOrArrayOrder() {
-        for (String body : List.of("MOVE 'PROGA' TO WS-X.",
-                "MOVE 'PROGA' TO WS-X.\nNEXT-PARAGRAPH.\nGOBACK.")) {
+        for (String body : List.of("MOVE 'PROGA' TO WS-X.")) {
             var port = publish(program("01 WS-X PIC X(5).", body));
             var next = port.moves().get(0).normalContinuation();
             assertEquals(ContinuationAvailability.UNAVAILABLE, next.availability());
             assertTrue(next.statement().isEmpty());
         }
+        // Units outside the conditional GO TO slice retain the historical boundary profile.
+        var ordinary=publish(program("01 WS-X PIC X(5).","MOVE 'PROGA' TO WS-X.\nNEXT-PARAGRAPH.\nGOBACK."));
+        assertEquals(ContinuationAvailability.UNAVAILABLE,ordinary.moves().get(0).normalContinuation().availability());
         // SP 1.4 explicitly closes the formerly unavailable direct IF arm completion.
         var nested = publish(program("01 WS-X PIC X(5).", "IF WS-X = 'PROGA' MOVE 'PROGA' TO WS-X END-IF.\nGOBACK."));
         assertEquals(nested.statements().get(2).header().id(), nested.moves().get(0).normalContinuation().statement().orElseThrow());
@@ -259,7 +261,7 @@ class ScalarMoveCheckpoint4ATest {
         var a = AstBoundaryTestSupport.analyze(Files.readString(fixture), fixture.getFileName().toString());
         var port = CobolSemanticProductProjector.open(products(a), a.model().programUnits().get(0).id());
         var current = mapper.readTree(SemanticProductJsonWriter.serialize(port));
-        assertEquals("2.5.0", current.path("contractVersion").asText());
+        assertEquals("2.6.0", current.path("contractVersion").asText());
         assertEquals("GOBACK", previous.path("statements").get(0).path("variant").asText());
         assertEquals("NONE", previous.path("statements").get(0).path("localContinuation").asText());
         ((com.fasterxml.jackson.databind.node.ObjectNode) previous).remove("contractVersion");

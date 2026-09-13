@@ -313,3 +313,16 @@ IDs neste documento são estáveis. `AUTOMATED` indica proteção executável at
 - **Related ADRs:** ADR-0003 e ADR-0005.
 - **Enforcement:** `PARTIALLY_AUTOMATED` — métricas/teste de escala e review de complexidade.
 - **Known exceptions:** nenhuma redução semântica implícita.
+
+
+## Finite Multiplicity
+
+One supported occurrence implies arbitrary valid finite multiplicity must remain
+supported unless the source language itself defines a semantic limit. Product code
+must not impose a smaller implementation count limit.
+
+For GO TO DEPENDING ON, lists with hundreds of destinations are normal supported
+inputs and must not be truncated, rejected, or degraded merely because of target
+count. Destination order and duplicate occurrences are semantic. A profile gap
+never authorizes dropping a parser-observed tail. Oracles include destination counts
+1/2/5/40/100/200/255, source occurrence multiplicity 1/2/5/40, and indexed work checks.

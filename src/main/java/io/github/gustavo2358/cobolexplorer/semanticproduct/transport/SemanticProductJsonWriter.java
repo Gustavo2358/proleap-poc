@@ -26,7 +26,7 @@ import java.util.Objects;
  */
 public final class SemanticProductJsonWriter {
     public static final String SCHEMA = "cobol-semantic-product";
-    public static final String CONTRACT_VERSION = "2.5.0";
+    public static final String CONTRACT_VERSION = "2.6.0";
 
     private static final ObjectMapper JSON = JsonMapper.builder()
             .enable(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY)
@@ -128,6 +128,12 @@ public final class SemanticProductJsonWriter {
     }
 
     private static StatementDocument statement(CobolSemanticProduct.StatementFact fact) {
+        if (fact instanceof CobolSemanticProduct.ConditionalGoToFact g)
+            return new ConditionalGoToDocument(header(g.header()),g.selector().map(SemanticProductJsonWriter::dataReference).orElse(null),g.selectorInteger(),
+                provenance(g.selectorOrigin()),g.destinations().stream().map(d->new GoToDestinationDocument(d.ordinal(),
+                    d.target().map(t->"procedure:"+t.localId()).orElse(null),d.procedureOrigin().map(SemanticProductJsonWriter::provenance).orElse(null),
+                    provenance(d.referenceOrigin()),d.targetEntry().map(SemanticProductJsonWriter::statementHandle).orElse(null),
+                    d.entryOrigin().map(SemanticProductJsonWriter::provenance).orElse(null),d.gapCodes())).toList(),continuation(g.normalContinuation()),g.gapCodes());
         if (fact instanceof CobolSemanticProduct.GoToFact g)
             return new GoToDocument(header(g.header()),g.target().map(t -> new GoToTargetDocument("procedure:"+t.id().localId(),provenance(t.paragraphOrigin()))).orElse(null),
                 provenance(g.referenceOrigin()),g.targetEntry().map(SemanticProductJsonWriter::statementHandle).orElse(null),
@@ -371,11 +377,16 @@ public final class SemanticProductJsonWriter {
             @JsonSubTypes.Type(value = ProcedurePerformDocument.class, name = "PERFORM_PROCEDURE"),
             @JsonSubTypes.Type(value = EvaluateDocument.class, name = "EVALUATE"),
             @JsonSubTypes.Type(value = GoToDocument.class, name = "GO_TO"),
+            @JsonSubTypes.Type(value = ConditionalGoToDocument.class, name = "GO_TO_DEPENDING_ON"),
             @JsonSubTypes.Type(value = ObservedDocument.class, name = "OBSERVED")
     })
     private sealed interface StatementDocument permits MoveDocument, CallDocument,
-            IfDocument, ObservedDocument, GobackDocument, PerformDocument, EvaluateDocument, GoToDocument, ProcedurePerformDocument { }
+            IfDocument, ObservedDocument, GobackDocument, PerformDocument, EvaluateDocument, GoToDocument, ConditionalGoToDocument, ProcedurePerformDocument { }
 
+    private record GoToDestinationDocument(int ordinal,String target,ProvenanceDocument procedureOrigin,
+        ProvenanceDocument referenceOrigin,String targetEntry,ProvenanceDocument entryOrigin,List<String> gapCodes) { }
+    private record ConditionalGoToDocument(StatementHeaderDocument header,DataReferenceDocument selector,boolean selectorInteger,
+        ProvenanceDocument selectorOrigin,List<GoToDestinationDocument> destinations,ContinuationDocument normalContinuation,List<String> gapCodes) implements StatementDocument { }
     private record GoToTargetDocument(String id, ProvenanceDocument paragraphOrigin) { }
     private record GoToDocument(StatementHeaderDocument header, GoToTargetDocument target, ProvenanceDocument referenceOrigin,
             String targetEntry, ProvenanceDocument entryOrigin, List<String> gapCodes) implements StatementDocument { }
