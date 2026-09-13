@@ -290,7 +290,7 @@ public final class CobolSemanticProductProjector {
     private static StatementPlan plan(StatementPosition position, ProjectionInputs inputs) {
         if (position.statement() instanceof Ast.PerformStatement p && ProcedurePerformSemantics.applicable(p))
             return new StatementPlan(position, Capability.supported("PERFORM", "PERFORM_PROCEDURE"),
-                p.controls().stream().filter(c->c.context()==Ast.PerformControlContext.CONDITION)
+                p.controls().stream()
                     .flatMap(c->conditionEntries(c.expression(),inputs).stream()).toList());
         if (position.statement() instanceof Ast.PerformStatement perform
                 && inputs.products().scalarMoves().performs().fact(inputs.unitId(), perform.meta().id()).simpleProfile())
@@ -523,13 +523,13 @@ public final class CobolSemanticProductProjector {
                     inputs.boundaryUnit(), localId++);
             ids.put(item.getKey(), id);
             facts.add(dataDeclaration(id, item.getValue(), inputs.products().scalarMoves()
-                    .declaration(item.getKey()).map(shape -> new ScalarText(shape.extent()))));
+                    .declaration(item.getKey()).map(shape -> new ScalarText(shape.extent())),inputs.products().scalarMoves().numbers().declaration(item.getKey()).map(n->new ScalarInteger(n.digits()))));
         }
         return new DeclarationProjection(Collections.unmodifiableMap(ids), List.copyOf(facts));
     }
 
     private static CobolSemanticProduct.DataDeclaration dataDeclaration(
-            CobolSemanticProduct.DataItemId id, DeclarationSource source, Optional<ScalarText> scalarText) {
+            CobolSemanticProduct.DataItemId id, DeclarationSource source, Optional<ScalarText> scalarText,Optional<ScalarInteger> scalarInteger) {
         Optional<String> picture = Optional.empty();
         int pictureCount = 0;
         for (Ast.DataClause clause : source.entry().clauses()) {
@@ -555,7 +555,7 @@ public final class CobolSemanticProductProjector {
                         CobolSemanticProduct.ReadinessStatus.NOT_APPLICABLE,
                         "declaration alone has no control successor",
                         CobolSemanticProduct.ReadinessStatus.PARTIAL,
-                        "nominal identity available; general storage layout and aliases unknown"), scalarText);
+                        "nominal identity available; general storage layout and aliases unknown"), scalarText,scalarInteger);
     }
 
     private static void projectStatement(
@@ -619,13 +619,24 @@ public final class CobolSemanticProductProjector {
                 return new PerformLoop(PerformTestMode.valueOf(l.testMode().name()),new ConditionSurface(l.condition().map(CobolSemanticProductProjector::conditionShape).orElse("UNAVAILABLE"),
                     references,provenance(predicate.provenance()),guarantee));
             });
+            var times=proof.times().map(t->{
+                Optional<DataReference> reference=Optional.empty();
+                for(var entry:plan.entries()) {
+                    if(entry.occurrence().role()==ResolutionContracts.ReferenceRole.PERFORM_FROM||entry.occurrence().role()==ResolutionContracts.ReferenceRole.PERFORM_THROUGH)continue;
+                    var origin=provenance(entry.occurrence().meta().provenance());addReportGaps(statementId,entry.occurrence(),inputs,origin,gaps);
+                    if(!projectableDataBinding(entry,inputs)){codes.add("PERFORM_COUNT_REFERENCE_NOT_PROJECTED");continue;}
+                    reference=Optional.of(new DataReference(new OperandId(statementId,0),OperandRole.READ,nominalBinding(entry,dataIds),origin,t.wholeItem().map(id->new WholeItemAccess(Objects.requireNonNull(dataIds.get(id))))));
+                }
+                return new PerformCount(!t.proven()?PerformCountProfile.UNAVAILABLE:t.integer().isPresent()?PerformCountProfile.POSITIVE_INTEGER:PerformCountProfile.INTEGER_ITEM,
+                    t.integer().map(Object::toString),reference,t.expression().map(e->provenance(e.meta().provenance())).orElse(statementProvenance));
+            });
             var status=codes.isEmpty()?ReadinessStatus.SUFFICIENT:ReadinessStatus.PARTIAL;
             statements.add(new ProcedurePerformFact(header(statementId,plan.position().ordinal(),containment,statementProvenance,
                 codes.isEmpty()?CoverageStatus.MODELED:CoverageStatus.PARTIAL,
                 readiness(status,"typed paragraph range",status,"activation-specific continuation",ReadinessStatus.PARTIAL,"general effects not published")),
                 proof.start().map(endpoint),proof.end().map(endpoint),paragraphs,
                 new NormalContinuation(proof.resume().isPresent()?ContinuationAvailability.KNOWN:ContinuationAvailability.UNAVAILABLE,
-                    canonicalStatement(proof.resume(),inputs,statementIds),provenance(proof.resumeOrigin())),loop,codes));
+                    canonicalStatement(proof.resume(),inputs,statementIds),provenance(proof.resumeOrigin())),loop,times,codes));
             for(var code:codes)gaps.add(new Gap(statementId,code.equals(CONTAINMENT_GAP)?GapScope.STRUCTURE:GapScope.CAPABILITY,code,"PERFORM range proof unavailable",statementProvenance));
             return;
         }

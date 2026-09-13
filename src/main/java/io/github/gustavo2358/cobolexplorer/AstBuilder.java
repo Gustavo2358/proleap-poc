@@ -354,7 +354,7 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
             ParserRuleContext picture = ((CobolParser.DataPictureClauseContext) context).pictureString();
             String spelling = picture == null ? "" : picture.getText();
             return new Ast.PictureClause(meta, picture == null ? "" : sourceText(picture).strip(),
-                    writtenText, elementaryTextExtent(spelling));
+                    writtenText, elementaryTextExtent(spelling), elementaryIntegerDigits(spelling));
         }
         if (context instanceof CobolParser.DataUsageClauseContext) {
             String usage = writtenText.replaceFirst("(?i)^USAGE\\s+(IS\\s+)?", "");
@@ -543,11 +543,15 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
     /** Interpret only the PIC X repetition language, in the canonical frontend.
      * This grammar uses generic pictureChars tokens, so repetition is decoded here
      * without expansion; every other category/edited symbol fails closed. */
-    private static Optional<Integer> elementaryTextExtent(String picture) {
+    private static Optional<Integer> elementaryTextExtent(String picture) { return elementaryExtent(picture,'X'); }
+    private static Optional<Integer> elementaryIntegerDigits(String picture) {
+        return elementaryExtent(picture.startsWith("S")||picture.startsWith("s")?picture.substring(1):picture,'9');
+    }
+    private static Optional<Integer> elementaryExtent(String picture,char category) {
         long extent = 0;
         for (int i = 0; i < picture.length();) {
             char symbol = picture.charAt(i++);
-            if (symbol != 'X' && symbol != 'x') return Optional.empty();
+            if (Character.toUpperCase(symbol) != category) return Optional.empty();
             long count = 1;
             if (i < picture.length() && picture.charAt(i) == '(') {
                 i++;
@@ -1349,8 +1353,12 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
         String raw = sourceText(context).strip();
         Optional<Ast.LogicalText> logical = context instanceof CobolParser.LiteralContext literal
                 ? basicLogicalText(literal) : Optional.empty();
+        var numeric=context instanceof CobolParser.LiteralContext l?l.numericLiteral():context instanceof CobolParser.NumericLiteralContext n?n:null;
+        var integer=context instanceof CobolParser.IntegerLiteralContext n?n:numeric==null?null:numeric.integerLiteral();
+        Optional<java.math.BigInteger> value=integer==null?Optional.empty():Optional.of(new java.math.BigInteger(integer.getText()));
+        if(numeric!=null&&numeric.ZERO()!=null)value=Optional.of(java.math.BigInteger.ZERO);
         return new Ast.LiteralExpression(meta(context), logical.map(Ast.LogicalText::value)
-                .orElseGet(() -> unquote(raw)), raw, logical);
+                .orElseGet(() -> unquote(raw)), raw, logical, value);
     }
 
     private static Optional<Ast.LogicalText> basicLogicalText(CobolParser.LiteralContext literal) {

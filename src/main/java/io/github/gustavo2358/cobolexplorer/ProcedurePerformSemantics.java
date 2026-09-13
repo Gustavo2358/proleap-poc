@@ -11,8 +11,10 @@ public final class ProcedurePerformSemantics {
     public record Endpoint(ResolutionContracts.SemanticEntityId identity, Ast.SourceProvenance referenceOrigin,
                            Ast.SourceProvenance paragraphOrigin) { }
     public record Loop(Ast.PerformTestMode testMode, Optional<Ast.Expression> condition, IfSemantics.Predicate predicate) { }
+    public record Count(Optional<Ast.Expression> expression,Optional<java.math.BigInteger> integer,
+                        Optional<ResolutionContracts.SemanticEntityId> wholeItem,boolean proven) { }
     public record Facts(Optional<Endpoint> start, Optional<Endpoint> end, List<Paragraph> procedures,
-                        Optional<Integer> resume, Ast.SourceProvenance resumeOrigin, Optional<Loop> loop, List<String> gaps) {
+                        Optional<Integer> resume, Ast.SourceProvenance resumeOrigin, Optional<Loop> loop, Optional<Count> times, List<String> gaps) {
         public Facts { procedures=List.copyOf(procedures); gaps=List.copyOf(gaps); }
         public boolean precise() { return gaps.isEmpty(); }
     }
@@ -30,13 +32,13 @@ public final class ProcedurePerformSemantics {
     public boolean completion(ResolutionContracts.ProgramUnitId unit,int id) { return completions.contains(new ScalarMoveSemantics.NodeKey(unit,id)); }
     public static boolean applicable(Ast.PerformStatement p) {
         return p.performKind()==Ast.PerformKind.PROCEDURE && p.inlineBody().isEmpty()
-            && (p.repetition()==Ast.PerformRepetition.UNTIL || p.throughReference()!=null && p.repetition()==Ast.PerformRepetition.ONCE);
+            && (p.repetition()==Ast.PerformRepetition.UNTIL || p.repetition()==Ast.PerformRepetition.TIMES || p.throughReference()!=null && p.repetition()==Ast.PerformRepetition.ONCE);
     }
     static ProcedurePerformSemantics analyze(CompilationUnitBuildResult frontend,CompilationUnitSymbolTables tables,
             ReferenceResolution resolution,ResolutionAnalysisReport report,
             Map<ResolutionContracts.SemanticEntityId,ScalarMoveSemantics.ScalarText> scalars,
             Map<ScalarMoveSemantics.NodeKey,ScalarMoveSemantics.Move> moves,IfSemantics ifs,
-            EvaluateSemantics evaluates,GoToSemantics goTos,PerformSemantics basic) {
+            EvaluateSemantics evaluates,GoToSemantics goTos,PerformSemantics basic,NumericControlSemantics numbers) {
         var result=new HashMap<ScalarMoveSemantics.NodeKey,Facts>();
         var refs=new HashMap<ScalarMoveSemantics.NodeKey,ReferenceResolution.Entry>();
         for(var ref:resolution.entries())refs.put(new ScalarMoveSemantics.NodeKey(ref.occurrence().programUnitId(),ref.occurrence().referenceAstNodeId()),ref);
@@ -92,7 +94,18 @@ public final class ProcedurePerformSemantics {
                     loop=Optional.of(new Loop(p.testMode(),condition,predicate));
                     if(predicate.availability()!=IfSemantics.Availability.KNOWN)gaps.add("PERFORM_UNTIL_PREDICATE_NOT_PROVEN");
                 }
-                provisional.put(p.meta().id(),new Facts(start,end,range,resume,resume.map(nodes::get).map(n->n.meta().provenance()).orElse(p.meta().provenance()),loop,List.copyOf(gaps)));
+                Optional<Count> times=Optional.empty();
+                if(p.repetition()==Ast.PerformRepetition.TIMES) {
+                    var expressions=p.controls().stream().map(Ast.PerformControl::expression).toList();
+                    var expression=expressions.size()==1?Optional.of(expressions.get(0)):Optional.<Ast.Expression>empty();
+                    var integer=expression.filter(Ast.LiteralExpression.class::isInstance).map(Ast.LiteralExpression.class::cast).flatMap(Ast.LiteralExpression::integerValue);
+                    var whole=expression.flatMap(e->numbers.whole(e,unit.id(),refs));
+                    boolean proven=complete&&expression.filter(e->e.meta().provenance().exact()).isPresent()
+                        &&(integer.filter(i->i.signum()>0).isPresent()||whole.isPresent());
+                    times=Optional.of(new Count(expression,integer,whole,proven));
+                    if(!proven)gaps.add("PERFORM_TIMES_COUNT_NOT_PROVEN");
+                }
+                provisional.put(p.meta().id(),new Facts(start,end,range,resume,resume.map(nodes::get).map(n->n.meta().provenance()).orElse(p.meta().provenance()),loop,times,List.copyOf(gaps)));
             }
             // Validate every callee before primary closure; an unproved sibling activation cannot close primary flow.
             for(var item:new ArrayList<>(provisional.entrySet())) {
@@ -104,7 +117,7 @@ public final class ProcedurePerformSemantics {
                 }
                 if(!f.procedures().isEmpty()&&!closed(f.procedures().get(0).entry(),members,boundary,next,nodes,unit.id(),moves,ifs,goTos,basic,provisional,false))
                     gaps.add("PERFORM_RANGE_CONTROL_NOT_PROVEN");
-                provisional.put(item.getKey(),new Facts(f.start(),f.end(),f.procedures(),f.resume(),f.resumeOrigin(),f.loop(),List.copyOf(gaps)));
+                provisional.put(item.getKey(),new Facts(f.start(),f.end(),f.procedures(),f.resume(),f.resumeOrigin(),f.loop(),f.times(),List.copyOf(gaps)));
             }
             // All branches must close; ordinary incoming transfers are checked independently, even if unreachable.
             for(var p:performs) {
@@ -129,12 +142,12 @@ public final class ProcedurePerformSemantics {
                     var otherMembers=new HashSet<Integer>();other.procedures().forEach(r->otherMembers.addAll(r.statements()));
                     if(!members.equals(otherMembers)&&otherMembers.stream().anyMatch(members::contains))gaps.add("PERFORM_OVERLAPPING_RANGES");
                 }
-                result.put(new ScalarMoveSemantics.NodeKey(unit.id(),p.meta().id()),new Facts(f.start(),f.end(),f.procedures(),f.resume(),f.resumeOrigin(),f.loop(),List.copyOf(gaps)));
+                result.put(new ScalarMoveSemantics.NodeKey(unit.id(),p.meta().id()),new Facts(f.start(),f.end(),f.procedures(),f.resume(),f.resumeOrigin(),f.loop(),f.times(),List.copyOf(gaps)));
             }
             if(result.entrySet().stream().anyMatch(e->e.getKey().unit().equals(unit.id())&&!e.getValue().precise())) {
                 for(var p:performs) {
                     var key=new ScalarMoveSemantics.NodeKey(unit.id(),p.meta().id());var f=result.get(key);
-                    if(f.precise())result.put(key,new Facts(f.start(),f.end(),f.procedures(),f.resume(),f.resumeOrigin(),f.loop(),List.of("PERFORM_OPEN_PEER_ACTIVATION")));
+                    if(f.precise())result.put(key,new Facts(f.start(),f.end(),f.procedures(),f.resume(),f.resumeOrigin(),f.loop(),f.times(),List.of("PERFORM_OPEN_PEER_ACTIVATION")));
                 }
             }
         }

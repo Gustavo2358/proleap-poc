@@ -37,6 +37,12 @@ public final class IfSemantics {
             ReferenceResolution resolution, ResolutionAnalysisReport report,
             Map<ResolutionContracts.SemanticEntityId, ScalarMoveSemantics.ScalarText> scalars,
             Map<ScalarMoveSemantics.NodeKey, ScalarMoveSemantics.Move> moves) {
+        return analyze(frontend,tables,resolution,report,scalars,moves,NumericControlSemantics.empty());
+    }
+    static IfSemantics analyze(CompilationUnitBuildResult frontend, CompilationUnitSymbolTables tables,
+            ReferenceResolution resolution, ResolutionAnalysisReport report,
+            Map<ResolutionContracts.SemanticEntityId, ScalarMoveSemantics.ScalarText> scalars,
+            Map<ScalarMoveSemantics.NodeKey, ScalarMoveSemantics.Move> moves, NumericControlSemantics numbers) {
         long[] work = new long[5];
         boolean input = report.gaps().stream().noneMatch(g -> g.category() == ResolutionAnalysisReport.GapCategory.INPUT);
         Map<ScalarMoveSemantics.NodeKey, ReferenceResolution.Entry> reads = new HashMap<>();
@@ -117,7 +123,7 @@ public final class IfSemantics {
                     if (!(child instanceof Ast.DataEntry data)) continue;
                     var entity = entities.get(data.meta().id()); work[4]++;
                     boolean eligible = entity != null && !duplicateDeclarations.contains(data.meta().id())
-                            && scalars.containsKey(entity) && modeled(data, coverage);
+                            && (scalars.containsKey(entity)||numbers.declaration(entity).isPresent()) && modeled(data, coverage);
                     for (var clause : data.clauses()) { work[0]++; eligible &= modeled(clause, coverage); }
                     if (eligible) members.add(entity);
                 }

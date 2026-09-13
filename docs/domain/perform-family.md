@@ -52,3 +52,18 @@ The existing fixed point must preserve OLDPROG/NEWPROG for BEFORE and only
 NEWPROG after the mandatory first strong update in AFTER. Branching bodies,
 THRU composition, condition reads, partial peers and multiplicity are cumulative
 oracles. SP 2.2 retains its historical loop-free meaning.
+
+
+SP 2.4 TIMES profile (IBM printed p. 417): a positive integer literal proves at
+least one execution; a resolved integer count may be zero/negative and therefore
+permits immediate resume. The count is evaluated once on activation entry.
+One body and an unknown exhaustion decision conservatively represent repetition;
+no count-dependent cloning or artificial count ceiling. The back edge does not
+reread the source count. This permits overapproximation of iteration cardinality,
+without claiming an exact finite count. Numeric storage facts prove only a local
+standalone DISPLAY integer item (PIC 9/S9); they do not give its runtime value or
+reinterpret COBOL arithmetic as unbounded integer arithmetic. Existing text
+MOVE/CALL guarantees remain separate. Unknown/noninteger counts and unproved
+ranges stay typed partial. Oracles: unknown count preserves OLDPROG+NEWPROG;
+positive count preserves NEWPROG after a strong update; a million iterations
+has the same static body size as five; 1/2/5/40 callsites and prior families regress.

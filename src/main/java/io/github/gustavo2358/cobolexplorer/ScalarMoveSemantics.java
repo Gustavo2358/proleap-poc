@@ -31,6 +31,8 @@ public final class ScalarMoveSemantics {
                           long scalarLookups, long moveVisits) { }
     private final Map<ResolutionContracts.SemanticEntityId, ScalarText> declarations;
     private final Map<NodeKey, Move> moves;
+    private final NumericControlSemantics numbers;
+    public NumericControlSemantics numbers() { return numbers; }
     private final Metrics metrics;
     private final GoToSemantics goTos;
     public GoToSemantics goTos() { return goTos; }
@@ -48,8 +50,9 @@ public final class ScalarMoveSemantics {
     }
 
     private ScalarMoveSemantics(Map<ResolutionContracts.SemanticEntityId, ScalarText> declarations,
-                                Map<NodeKey, Move> moves, Map<NodeKey, Call> calls, Metrics metrics, IfSemantics ifs, PerformSemantics performs, EvaluateSemantics evaluates, GoToSemantics goTos, ProcedurePerformSemantics procedurePerforms) {
+                                Map<NodeKey, Move> moves, Map<NodeKey, Call> calls, Metrics metrics, IfSemantics ifs, PerformSemantics performs, EvaluateSemantics evaluates, GoToSemantics goTos, ProcedurePerformSemantics procedurePerforms, NumericControlSemantics numbers) {
         this.declarations = Map.copyOf(declarations);
+        this.numbers=numbers;
         this.moves = Map.copyOf(moves);
         this.metrics = metrics;
         this.ifs = Objects.requireNonNull(ifs);
@@ -215,16 +218,17 @@ public final class ScalarMoveSemantics {
             var basic = fact(whole, copy, moves.get(key).nextStatement());
             moves.put(key, new Move(whole, copy, basic.nextStatement(), basic.gaps(), adjustment, sourceWhole));
         }
-        var ifs = IfSemantics.analyze(frontend, tables, resolution, report, declarations, moves);
+        var numbers=NumericControlSemantics.analyze(frontend,tables,inputComplete);
+        var ifs = IfSemantics.analyze(frontend, tables, resolution, report, declarations, moves,numbers);
         var goTos = GoToSemantics.analyze(frontend, tables, resolution, report);
         var performs = PerformSemantics.analyze(frontend, tables, resolution, report, moves, ifs, goTos);
         var evaluates = EvaluateSemantics.analyze(frontend, resolution, report, declarations);
-        var procedurePerforms = ProcedurePerformSemantics.analyze(frontend, tables, resolution, report, declarations, moves, ifs, evaluates, goTos, performs);
+        var procedurePerforms = ProcedurePerformSemantics.analyze(frontend, tables, resolution, report, declarations, moves, ifs, evaluates, goTos, performs,numbers);
         performs = performs.restrictOpenRanges(procedurePerforms);
         return new ScalarMoveSemantics(declarations, moves, calls,
                 new Metrics(counts[0], counts[1], counts[2], counts[3], counts[4]),
                 ifs, performs, evaluates,
-                goTos, procedurePerforms);
+                goTos, procedurePerforms,numbers);
     }
 
     private static Move fact(Optional<ResolutionContracts.SemanticEntityId> whole,

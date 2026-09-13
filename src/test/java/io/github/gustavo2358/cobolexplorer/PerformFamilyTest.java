@@ -25,7 +25,7 @@ class PerformFamilyTest {
     @Test void thruRangeIdentitiesCompletionAndIndependentResumes() throws Exception {
         var sp=publish(source("PERFORM A THRU C.\nPERFORM A THROUGH C.",
             "A.\nMOVE 'PROGA' TO WS-PGM.\nB.\nMOVE 'PROGB' TO WS-PGM.\nC.\nMOVE 'PROGC' TO WS-PGM.\n"));
-        var facts=ranges(sp);assertEquals(2,facts.size());assertEquals("2.3.0",sp.path("contractVersion").asText());
+        var facts=ranges(sp);assertEquals(2,facts.size());assertEquals("2.4.0",sp.path("contractVersion").asText());
         for(var p:facts) {
             assertTrue(p.path("gapCodes").isEmpty(),p.toString());assertEquals(3,p.path("procedures").size());
             assertEquals(p.path("start").path("id"),p.path("procedures").get(0).path("id"));
@@ -41,7 +41,7 @@ class PerformFamilyTest {
         var partial=Set.of("unknown-body","incoming","escape","overlap","recursive","cycle","partial-end","partial-start","reverse","empty");
         var root=Path.of("src/test/resources/cobol/perform-family");var output=Path.of("target/perform-family");Files.createDirectories(output);
         try(var files=Files.list(root)) {
-            for(var path:files.filter(p->p.toString().endsWith(".cbl")&&!p.getFileName().toString().startsWith("until-")).sorted().toList()) {
+            for(var path:files.filter(p->p.toString().endsWith(".cbl")&&!p.getFileName().toString().startsWith("until-")&&!p.getFileName().toString().startsWith("times-")).sorted().toList()) {
                 var name=path.getFileName().toString().replace(".cbl","");
                 var source=Files.readAllLines(path).stream().map(line->line.substring(7)).collect(java.util.stream.Collectors.joining("\n"));
                 var port=ScalarMoveCheckpoint4ATest.publish(source);var bytes=SemanticProductJsonWriter.serialize(port);
