@@ -342,11 +342,14 @@ public final class CobolSemanticProduct {
         }
     }
 
+    /** Local elementary unedited DISPLAY integer. Value/representation remain unknown. */
+    public record ScalarInteger(int digits) { public ScalarInteger { require(digits>0,"positive integer digits"); } }
     public record DataDeclaration(DataItemId id, String canonicalName,
                                   Optional<String> picture, Provenance provenance,
-                                  CoverageStatus coverage, Readiness readiness, Optional<ScalarText> scalarText) {
+                                  CoverageStatus coverage, Readiness readiness, Optional<ScalarText> scalarText, Optional<ScalarInteger> scalarInteger) {
         public DataDeclaration {
             scalarText = Objects.requireNonNull(scalarText);
+            Objects.requireNonNull(scalarInteger); require(scalarText.isEmpty()||scalarInteger.isEmpty(),"distinct scalar domains");
             id = Objects.requireNonNull(id, "id");
             canonicalName = requireText(canonicalName, "canonicalName");
             picture = Objects.requireNonNull(picture, "picture");
@@ -354,6 +357,9 @@ public final class CobolSemanticProduct {
             provenance = Objects.requireNonNull(provenance, "provenance");
             coverage = Objects.requireNonNull(coverage, "coverage");
             readiness = Objects.requireNonNull(readiness, "readiness");
+        }
+        public DataDeclaration(DataItemId id,String canonicalName,Optional<String> picture,Provenance provenance,CoverageStatus coverage,Readiness readiness,Optional<ScalarText> scalarText) {
+            this(id,canonicalName,picture,provenance,coverage,readiness,scalarText,Optional.empty());
         }
         public DataDeclaration(DataItemId id, String canonicalName, Optional<String> picture,
                                Provenance provenance, CoverageStatus coverage, Readiness readiness) {
@@ -508,7 +514,7 @@ public final class CobolSemanticProduct {
         }
     }
 
-    public enum PredicateProfile { SCALAR_TEXT_EQUALITY, UNAVAILABLE }
+    public enum PredicateProfile { SCALAR_TEXT_EQUALITY, NUMERIC_RELATION, UNAVAILABLE }
     public enum PredicateDomain { BOOLEAN, UNKNOWN }
     public enum PredicateEvaluation { PURE, UNKNOWN }
     public enum PredicateCompletion { TOTAL, UNKNOWN }
@@ -525,7 +531,7 @@ public final class CobolSemanticProduct {
             knownReads = List.copyOf(knownReads); gapCodes = List.copyOf(gapCodes);
             require(new HashSet<>(knownReads).size() == knownReads.size(), "duplicate predicate read");
             if (availability == Availability.KNOWN)
-                require(profile == PredicateProfile.SCALAR_TEXT_EQUALITY && knownReads.size() == 1
+                require((profile == PredicateProfile.SCALAR_TEXT_EQUALITY && knownReads.size() == 1||profile==PredicateProfile.NUMERIC_RELATION&&knownReads.size()<=2)
                         && provenance.exact() && gapCodes.isEmpty(), "predicate proof requires one read and exact provenance");
             else require(profile == PredicateProfile.UNAVAILABLE && !gapCodes.isEmpty(), "unproven predicate requires gap");
         }
@@ -593,10 +599,11 @@ public final class CobolSemanticProduct {
             require(predicate.knownReads().equals(references.stream().map(DataReference::id).toList()),
                     "predicate must preserve every known read occurrence");
             if (predicate.availability() == Availability.KNOWN)
-                require(shape.equals("RELATION") && references.size() == 1 && provenance.exact()
+                require(shape.equals("RELATION") && provenance.exact()
                         && predicate.provenance().equals(provenance)
-                        && references.get(0).wholeItemAccess().isPresent() && references.get(0).provenance().exact()
-                        && references.get(0).binding().status() == ResolutionStatus.RESOLVED,
+                        && references.stream().allMatch(reference -> reference.wholeItemAccess().isPresent()
+                            && reference.provenance().exact()
+                            && reference.binding().status() == ResolutionStatus.RESOLVED),
                         "predicate proof requires complete resolved whole-item read and origin");
         }
         public ConditionSurface(String shape, List<DataReference> references, Provenance provenance) {
@@ -606,7 +613,7 @@ public final class CobolSemanticProduct {
 
     /** Adding a fact type extends this inventory without changing the State envelope. */
     public sealed interface StatementFact permits MoveFact, CallFact, IfFact,
-            ObservedStatement, GobackFact, PerformFact, EvaluateFact, GoToFact {
+            ObservedStatement, GobackFact, PerformFact, EvaluateFact, GoToFact, ProcedurePerformFact {
         StatementHeader header();
     }
 
@@ -642,6 +649,59 @@ public final class CobolSemanticProduct {
             require(gapCodes.isEmpty()==targetEntry.isPresent(), "GO TO precise entry requires complete proof");
             if(targetEntry.isPresent()) require(target.isPresent() && header.provenance().exact() && referenceOrigin.exact()
                     && target.get().paragraphOrigin().exact() && entryOrigin.get().exact(), "GO TO requires exact origins");
+        }
+    }
+
+    /** Procedure order is language structure; statement lists are membership only. */
+    public record PerformParagraph(ProcedureId id, StatementId entry, List<StatementId> statements,
+            List<StatementId> completions, Provenance provenance) {
+        public PerformParagraph { Objects.requireNonNull(id); Objects.requireNonNull(entry); Objects.requireNonNull(provenance);
+            statements=List.copyOf(statements); completions=List.copyOf(completions); }
+    }
+    public enum PerformTestMode { BEFORE, AFTER }
+    public record PerformLoop(PerformTestMode testMode, ConditionSurface condition) {
+        public PerformLoop { Objects.requireNonNull(testMode); Objects.requireNonNull(condition); }
+    }
+    public enum PerformCountProfile { POSITIVE_INTEGER, INTEGER_ITEM, UNAVAILABLE }
+    public record PerformCount(PerformCountProfile profile,Optional<String> integer,Optional<DataReference> reference,Provenance provenance) {
+        public PerformCount { Objects.requireNonNull(profile);Objects.requireNonNull(integer);Objects.requireNonNull(reference);Objects.requireNonNull(provenance);
+            require(integer.isEmpty()||reference.isEmpty(),"one count operand");
+            if(profile==PerformCountProfile.POSITIVE_INTEGER)require(integer.filter(i->new java.math.BigInteger(i).signum()>0).isPresent()&&provenance.exact(),"positive count");
+            if(profile==PerformCountProfile.INTEGER_ITEM)require(reference.filter(r->r.wholeItemAccess().isPresent()).isPresent()&&provenance.exact(),"whole integer count");
+        }
+    }
+    public enum VaryingOperandRole { CONTROL_VARIABLE, FROM, BY }
+    public record VaryingOperand(int level,VaryingOperandRole role,Optional<String> integer,List<DataReference> references,Provenance provenance) {
+        public VaryingOperand { require(level>0,"varying level");Objects.requireNonNull(role);Objects.requireNonNull(integer);references=List.copyOf(references);Objects.requireNonNull(provenance); }
+    }
+    /** Each level denotes initialization and iteration whole-item writes to its control operand. */
+    public record PerformVarying(int levels,List<VaryingOperand> controls) {
+        public PerformVarying {require(levels>0,"varying levels");controls=List.copyOf(controls);}
+    }
+    public record ProcedurePerformFact(StatementHeader header, Optional<PerformTarget> start, Optional<PerformTarget> end,
+            List<PerformParagraph> procedures, NormalContinuation normalContinuation, Optional<PerformLoop> loop, Optional<PerformCount> times, Optional<PerformVarying> varying,List<String> gapCodes) implements StatementFact {
+        public ProcedurePerformFact { Objects.requireNonNull(header); Objects.requireNonNull(start); Objects.requireNonNull(end);
+            Objects.requireNonNull(normalContinuation); Objects.requireNonNull(loop);Objects.requireNonNull(times);Objects.requireNonNull(varying);require(loop.isEmpty()||times.isEmpty(),"one repetition kind");require(varying.isEmpty()||loop.isPresent()&&times.isEmpty(),"VARYING uses condition loop"); procedures=List.copyOf(procedures); gapCodes=List.copyOf(gapCodes);
+            if(gapCodes.isEmpty())require(start.isPresent() && end.isPresent() && !procedures.isEmpty()
+                && normalContinuation.statement().isPresent(), "PERFORM range needs endpoints, body and resume");
+            if(!procedures.isEmpty())require(start.isPresent() && end.isPresent()
+                && procedures.get(0).id().equals(start.get().id()) && procedures.get(procedures.size()-1).id().equals(end.get().id()), "PERFORM range endpoints disagree");
+            if(gapCodes.isEmpty())times.ifPresent(t->require(t.profile()!=PerformCountProfile.UNAVAILABLE,"count must be proven"));
+            if(gapCodes.isEmpty())loop.ifPresent(l->require(l.condition().predicate().availability()==Availability.KNOWN,"loop predicate must be proven"));
+            if(gapCodes.isEmpty())varying.ifPresent(v->{
+                require(v.levels()==1 && v.controls().size()==3,"single VARYING control profile");
+                for(var role:VaryingOperandRole.values()) {
+                    var operands=v.controls().stream().filter(o->o.level()==1&&o.role()==role).toList();
+                    require(operands.size()==1,"one typed VARYING operand per role");
+                    var o=operands.get(0);require(o.provenance().exact(),"exact VARYING operand origin");
+                    require(o.integer().isEmpty()||o.references().isEmpty(),"one VARYING operand form");
+                    if(role==VaryingOperandRole.CONTROL_VARIABLE)require(o.integer().isEmpty()&&o.references().size()==1
+                        &&o.references().get(0).role()==OperandRole.WRITE&&o.references().get(0).wholeItemAccess().isPresent(),"whole control item write");
+                    if(role==VaryingOperandRole.FROM)require(o.integer().isPresent()||o.references().size()==1
+                        &&o.references().get(0).role()==OperandRole.READ&&o.references().get(0).wholeItemAccess().isPresent(),"integer FROM value or read");
+                    if(role==VaryingOperandRole.BY)require(o.integer().filter(i->new java.math.BigInteger(i).signum()!=0).isPresent(),"nonzero BY literal");
+                }
+            });
         }
     }
 
@@ -884,7 +944,7 @@ public final class CobolSemanticProduct {
             for (var declaration : dataDeclarations) storageDeclarations.put(declaration.id(), declaration);
             for (var member : storageIndependence.members()) {
                 var declaration = storageDeclarations.get(member);
-                require(declaration != null && member.unit().equals(unit) && declaration.scalarText().isPresent()
+                require(declaration != null && member.unit().equals(unit) && (declaration.scalarText().isPresent()||declaration.scalarInteger().isPresent())
                         && declaration.provenance().exact() && declaration.coverage() == CoverageStatus.MODELED,
                         "independent member requires published, complete scalar declaration and origin");
             }
@@ -987,7 +1047,7 @@ public final class CobolSemanticProduct {
         for (DataReference reference : references(statement)) {
             reference.wholeItemAccess().ifPresent(access -> {
                 var declaration = declarations.get(access.data());
-                require(declaration != null && declaration.scalarText().isPresent(), "whole item requires scalar declaration");
+                require(declaration != null && (declaration.scalarText().isPresent()||declaration.scalarInteger().isPresent()), "whole item requires scalar declaration");
             });
             for (DataCandidate candidate : reference.binding().candidates()) {
                 require(candidate.id().unit().equals(statement.header().id().unit()),
@@ -1006,6 +1066,7 @@ public final class CobolSemanticProduct {
                 ? List.of(data, move.target()) : List.of(move.target());
         if (statement instanceof CallFact call) return call.target() instanceof DataReference data ? List.of(data) : List.of();
         if (statement instanceof IfFact branch) return branch.condition().references();
+        if (statement instanceof ProcedurePerformFact p) return java.util.stream.Stream.concat(java.util.stream.Stream.concat(p.loop().stream().flatMap(l->l.condition().references().stream()),p.times().stream().flatMap(t->t.reference().stream())),p.varying().stream().flatMap(v->v.controls().stream()).flatMap(v->v.references().stream())).toList();
         if (statement instanceof EvaluateFact e) return e.subject().stream().toList();
         if (statement instanceof ObservedStatement observed) return observed.knownReferences();
         return List.of();
@@ -1022,6 +1083,8 @@ public final class CobolSemanticProduct {
             } else if (statement instanceof IfFact branch) {
                 operands = branch.condition().references().stream()
                         .map(DataReference::id).toList();
+            } else if (statement instanceof ProcedurePerformFact p) {
+                operands=references(p).stream().map(DataReference::id).toList();
             } else if (statement instanceof EvaluateFact e) {
                 var ids = new ArrayList<OperandId>(); e.subject().ifPresent(s -> ids.add(s.id()));
                 e.arms().forEach(a -> ids.add(a.selection().id())); operands = ids;
@@ -1051,6 +1114,17 @@ public final class CobolSemanticProduct {
                 require(previous==null || previous.target().equals(g.target()) && previous.targetEntry().equals(g.targetEntry()), "GO TO paragraph has one canonical entry");
                 require(statements.get(id).header().containment().branch()==Branch.ROOT && statements.get(id).header().provenance().equals(g.entryOrigin().orElseThrow()), "GO TO entry origin agrees with target statement");
             });
+            if(statement instanceof ProcedurePerformFact p) {
+                var members=new HashSet<StatementId>();var paragraphs=new HashSet<ProcedureId>();
+                for(var paragraph:p.procedures()) {
+                    require(paragraphs.add(paragraph.id()) && paragraph.id().unit().equals(p.header().id().unit()), "unique local range paragraph");
+                    for(var id:paragraph.statements())require(members.add(id) && statements.containsKey(id), "unique published range member");
+                    require(paragraph.statements().contains(paragraph.entry()), "paragraph entry belongs to body");
+                    require(paragraph.statements().containsAll(paragraph.completions()), "paragraph completion belongs to body");
+                }
+                p.normalContinuation().statement().ifPresent(id->require(statements.containsKey(id), "published range resume"));
+                if(p.gapCodes().isEmpty())require(!members.contains(p.header().id()) && p.normalContinuation().statement().filter(members::contains).isEmpty(), "activation/resume outside range");
+            }
             if (statement instanceof PerformFact basic && basic.profile() == PerformProfile.BASIC_PROCEDURE_PERFORM) {
                 var seen=new HashSet<StatementId>();
                 for(int i=0;i<basic.targetStatements().size();i++) {

@@ -214,6 +214,7 @@ final class AstSnapshot {
         } else if (node instanceof Ast.PerformStatement n) {
             result.put("performKind", n.performKind().name()); result.put("from", n.fromProcedure());
             result.put("through", n.throughProcedure()); result.put("control", n.control());
+            result.put("repetition",n.repetition().name()); result.put("testMode",n.testMode().name());
         } else if (node instanceof Ast.GoToStatement n) {
             result.put("goToKind", n.goToKind().name());
             result.put("targets", n.targets().stream().map(Ast.ProcedureReference::writtenText)

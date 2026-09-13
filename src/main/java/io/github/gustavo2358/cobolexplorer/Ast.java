@@ -48,7 +48,9 @@ public final class Ast {
     public enum CallTargetSyntax { LITERAL_PROGRAM_NAME, IDENTIFIER_OR_EXPRESSION }
     public enum PerformKind { INLINE, PROCEDURE }
     /** Typed pre-binding context of a PERFORM control expression. */
-    public enum PerformControlContext { VALUE, CONDITION }
+    public enum PerformControlContext { VALUE, CONDITION, CONTROL_VARIABLE, FROM, BY }
+    public enum PerformRepetition { ONCE, UNTIL, TIMES, VARYING, UNKNOWN }
+    public enum PerformTestMode { BEFORE, AFTER }
     public enum GoToKind { SIMPLE, DEPENDING_ON }
     public enum QualifierConnector { OF, IN }
     /**
@@ -153,8 +155,9 @@ public final class Ast {
     public sealed interface DataClause extends Node permits PictureClause, UsageClause, ValueClause,
             RedefinesClause, RenamesClause, OccursClause, PreservedDataClause {}
     public record PictureClause(Meta meta, String picture, String writtenText,
-                                Optional<Integer> textExtent) implements DataClause {
-        public PictureClause { textExtent = Objects.requireNonNull(textExtent); }
+                                Optional<Integer> textExtent, Optional<Integer> integerDigits) implements DataClause {
+        public PictureClause { textExtent = Objects.requireNonNull(textExtent); integerDigits=Objects.requireNonNull(integerDigits); }
+        public PictureClause(Meta meta,String picture,String writtenText,Optional<Integer> textExtent) { this(meta,picture,writtenText,textExtent,Optional.empty()); }
         public PictureClause(Meta meta, String picture, String writtenText) {
             this(meta, picture, writtenText, Optional.empty());
         }
@@ -281,10 +284,12 @@ public final class Ast {
                                    EvaluateSelectorContext context) {}
 
     /** Metadata for a PERFORM control; it is not an AST node and consumes no ID. */
-    public record PerformControl(Expression expression, PerformControlContext context) {
+    public record PerformControl(Expression expression, PerformControlContext context,int varyingLevel) {
+        public PerformControl(Expression expression,PerformControlContext context){this(expression,context,0);}
         public PerformControl {
             expression = Objects.requireNonNull(expression, "expression");
             context = Objects.requireNonNull(context, "context");
+            if(varyingLevel<0)throw new IllegalArgumentException("negative varying level");
         }
     }
 
@@ -292,13 +297,20 @@ public final class Ast {
                                    ProcedureReference throughReference, String writtenControl,
                                    List<Expression> controlExpressions,
                                    List<PerformControl> controls,
-                                   List<Statement> inlineBody) implements Statement {
+                                   List<Statement> inlineBody, PerformRepetition repetition, PerformTestMode testMode) implements Statement {
         public PerformStatement {
+            Objects.requireNonNull(repetition); Objects.requireNonNull(testMode);
             controlExpressions = List.copyOf(controlExpressions);
             controls = List.copyOf(controls);
             if (!controls.stream().map(PerformControl::expression).toList().equals(controlExpressions))
                 throw new IllegalArgumentException("PERFORM controls must preserve control expression order");
             inlineBody = List.copyOf(inlineBody);
+        }
+        public PerformStatement(Meta meta, PerformKind performKind, ProcedureReference fromReference,
+                                ProcedureReference throughReference, String writtenControl,
+                                List<Expression> controlExpressions, List<PerformControl> controls, List<Statement> inlineBody) {
+            this(meta,performKind,fromReference,throughReference,writtenControl,controlExpressions,controls,inlineBody,
+                controlExpressions.isEmpty()?PerformRepetition.ONCE:PerformRepetition.UNKNOWN,PerformTestMode.BEFORE);
         }
         public PerformStatement(Meta meta, PerformKind performKind, ProcedureReference fromReference,
                                 ProcedureReference throughReference, String writtenControl,
@@ -395,8 +407,9 @@ public final class Ast {
         public int extent() { return value.codePointCount(0, value.length()); }
     }
     public record LiteralExpression(Meta meta, String value, String rawLexeme,
-                                    Optional<LogicalText> logicalText) implements Expression {
-        public LiteralExpression { logicalText = Objects.requireNonNull(logicalText); }
+                                    Optional<LogicalText> logicalText, Optional<java.math.BigInteger> integerValue) implements Expression {
+        public LiteralExpression { logicalText = Objects.requireNonNull(logicalText); integerValue=Objects.requireNonNull(integerValue); }
+        public LiteralExpression(Meta meta,String value,String rawLexeme,Optional<LogicalText> logicalText) { this(meta,value,rawLexeme,logicalText,Optional.empty()); }
         public LiteralExpression(Meta meta, String value, String rawLexeme) {
             this(meta, value, rawLexeme, Optional.empty());
         }

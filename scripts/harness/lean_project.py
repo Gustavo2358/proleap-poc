@@ -7,8 +7,8 @@ import sys
 import xml.etree.ElementTree as ET
 from lean import require_local
 
-FAST_TESTS = ('ArchitectureBoundaryTest', 'HarnessDocsTest', 'SemanticProductEntryGobackTest', 'LocalizedInputCompletenessContractTest',
-              'ScalarMoveCheckpoint4ATest', 'MoveDataSourceTest', 'PerformDiscoveryTest', 'PerformBasicTest', 'MultiCallProgramTest', 'CompositionalityContractTest', 'EvaluateFirstSliceTest', 'GoToFirstSliceTest', 'PartialProgramFactsTest', 'CallCheckpointW1ATest', 'IfCheckpointW2ATest',
+FAST_TESTS = ('ArchitectureBoundaryTest', 'HarnessDocsTest', 'SemanticProductEntryGobackTest', 'SemanticProductCheckpoint7JsonTest', 'W1CompatibilityW2ATest', 'LocalizedInputCompletenessContractTest',
+              'ScalarMoveCheckpoint4ATest', 'MoveDataSourceTest', 'PerformDiscoveryTest', 'PerformBasicTest', 'PerformFamilyTest', 'PerformUntilTest', 'PerformTimesTest', 'PerformVaryingTest', 'MultiCallProgramTest', 'CompositionalityContractTest', 'EvaluateFirstSliceTest', 'GoToFirstSliceTest', 'PartialProgramFactsTest', 'CallCheckpointW1ATest', 'IfCheckpointW2ATest',
               'IfCanonicalProofTest', 'SemanticProductMoveCallContractTest')
 
 

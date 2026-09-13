@@ -63,7 +63,7 @@ class SemanticProductCheckpoint7JsonTest {
         assertEquals(ROOT_FIELDS, fieldSet(document));
         assertEquals(ROOT_FIELD_ORDER, fieldList(document));
         assertEquals("cobol-semantic-product", document.path("schema").asText());
-        assertEquals("2.1.0", document.path("contractVersion").asText());
+        assertEquals("2.5.0", document.path("contractVersion").asText());
         assertEquals("SEMANTIC-TARGET",
                 document.path("unit").path("canonicalProgramName").asText());
         assertEquals(List.of(0), integerValues(document.path("unit").path("structuralPath")));
@@ -357,7 +357,7 @@ class SemanticProductCheckpoint7JsonTest {
         Set<String> dataIds = new LinkedHashSet<>();
         for (JsonNode declaration : document.path("dataDeclarations")) {
             assertEquals(Set.of("id", "canonicalName", "picture", "provenance", "coverage",
-                    "readiness", "scalarText"), fieldSet(declaration));
+                    "readiness", "scalarText", "scalarInteger"), fieldSet(declaration));
             assertTrue(dataIds.add(declaration.path("id").asText()), "duplicate DATA handle");
         }
 

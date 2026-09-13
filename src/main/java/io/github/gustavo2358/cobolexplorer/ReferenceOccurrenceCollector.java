@@ -167,7 +167,7 @@ final class ReferenceOccurrenceCollector {
             for (Ast.PerformControl control : statement.controls()) {
                 if (control.context() == Ast.PerformControlContext.CONDITION)
                     visitConditionSurface(control.expression(), preservation);
-                else visit(control.expression(), ResolutionContracts.ReferenceRole.VALUE_READ, preservation);
+                else visit(control.expression(), control.context()==Ast.PerformControlContext.CONTROL_VARIABLE?ResolutionContracts.ReferenceRole.VALUE_WRITE:ResolutionContracts.ReferenceRole.VALUE_READ, preservation);
             }
             for (Ast.Statement nested : statement.inlineBody()) visit(nested, role, preservation);
             return;

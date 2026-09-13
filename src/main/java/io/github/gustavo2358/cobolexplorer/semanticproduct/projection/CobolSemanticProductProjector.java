@@ -1,6 +1,7 @@
 package io.github.gustavo2358.cobolexplorer.semanticproduct.projection;
 
 import io.github.gustavo2358.cobolexplorer.Ast;
+import io.github.gustavo2358.cobolexplorer.ProcedurePerformSemantics;
 import io.github.gustavo2358.cobolexplorer.ScalarMoveSemantics;
 import io.github.gustavo2358.cobolexplorer.IfSemantics;
 import io.github.gustavo2358.cobolexplorer.EvaluateSemantics;
@@ -287,6 +288,10 @@ public final class CobolSemanticProductProjector {
     }
 
     private static StatementPlan plan(StatementPosition position, ProjectionInputs inputs) {
+        if (position.statement() instanceof Ast.PerformStatement p && ProcedurePerformSemantics.applicable(p))
+            return new StatementPlan(position, Capability.supported("PERFORM", "PERFORM_PROCEDURE"),
+                p.controls().stream()
+                    .flatMap(c->performControlEntries(c,inputs).stream()).toList());
         if (position.statement() instanceof Ast.PerformStatement perform
                 && inputs.products().scalarMoves().performs().fact(inputs.unitId(), perform.meta().id()).simpleProfile())
             return new StatementPlan(position, Capability.supported("PERFORM", "PERFORM_BASIC"), List.of());
@@ -451,6 +456,15 @@ public final class CobolSemanticProductProjector {
         return capability;
     }
 
+    private static List<ReferenceResolution.Entry> performControlEntries(Ast.PerformControl control, ProjectionInputs inputs) {
+        var entries=new ArrayList<ReferenceResolution.Entry>();
+        var direct=inputs.optionalEntryFor(control.expression());
+        if(control.context()==Ast.PerformControlContext.CONTROL_VARIABLE && direct!=null
+            && direct.occurrence().role()==ResolutionContracts.ReferenceRole.VALUE_WRITE) entries.add(direct);
+        entries.addAll(conditionEntries(control.expression(),inputs));
+        return List.copyOf(entries);
+    }
+
     private static List<ReferenceResolution.Entry> conditionEntries(
             Ast.Expression condition, ProjectionInputs inputs) {
         List<ReferenceResolution.Entry> entries = new ArrayList<>();
@@ -518,13 +532,13 @@ public final class CobolSemanticProductProjector {
                     inputs.boundaryUnit(), localId++);
             ids.put(item.getKey(), id);
             facts.add(dataDeclaration(id, item.getValue(), inputs.products().scalarMoves()
-                    .declaration(item.getKey()).map(shape -> new ScalarText(shape.extent()))));
+                    .declaration(item.getKey()).map(shape -> new ScalarText(shape.extent())),inputs.products().scalarMoves().numbers().declaration(item.getKey()).map(n->new ScalarInteger(n.digits()))));
         }
         return new DeclarationProjection(Collections.unmodifiableMap(ids), List.copyOf(facts));
     }
 
     private static CobolSemanticProduct.DataDeclaration dataDeclaration(
-            CobolSemanticProduct.DataItemId id, DeclarationSource source, Optional<ScalarText> scalarText) {
+            CobolSemanticProduct.DataItemId id, DeclarationSource source, Optional<ScalarText> scalarText,Optional<ScalarInteger> scalarInteger) {
         Optional<String> picture = Optional.empty();
         int pictureCount = 0;
         for (Ast.DataClause clause : source.entry().clauses()) {
@@ -550,7 +564,7 @@ public final class CobolSemanticProductProjector {
                         CobolSemanticProduct.ReadinessStatus.NOT_APPLICABLE,
                         "declaration alone has no control successor",
                         CobolSemanticProduct.ReadinessStatus.PARTIAL,
-                        "nominal identity available; general storage layout and aliases unknown"), scalarText);
+                        "nominal identity available; general storage layout and aliases unknown"), scalarText,scalarInteger);
     }
 
     private static void projectStatement(
@@ -583,6 +597,72 @@ public final class CobolSemanticProductProjector {
                 proof.target().map(t->new GoToTarget(new ProcedureId(inputs.boundaryUnit(),t.identity().localId()),provenance(t.paragraphOrigin()))),
                 provenance(proof.referenceOrigin()),entry,entry.isPresent()?proof.entryOrigin().map(CobolSemanticProductProjector::provenance):Optional.empty(),codes));
             for(var code:codes)gaps.add(new Gap(statementId,code.equals(CONTAINMENT_GAP)?GapScope.STRUCTURE:GapScope.CAPABILITY,code,"GO TO target control proof unavailable",statementProvenance));
+            return;
+        }
+
+        if(plan.position().statement() instanceof Ast.PerformStatement p && ProcedurePerformSemantics.applicable(p)) {
+            var proof=inputs.products().scalarMoves().procedurePerforms().fact(inputs.unitId(),p.meta().id()).orElseThrow();
+            java.util.function.Function<ProcedurePerformSemantics.Endpoint,PerformTarget> endpoint=t->new PerformTarget(
+                new ProcedureId(inputs.boundaryUnit(),t.identity().localId()),provenance(t.referenceOrigin()),provenance(t.paragraphOrigin()));
+            var paragraphs=proof.procedures().stream().map(r->new PerformParagraph(new ProcedureId(inputs.boundaryUnit(),r.identity().localId()),
+                canonicalStatement(Optional.of(r.entry()),inputs,statementIds).orElseThrow(),
+                r.statements().stream().map(id->canonicalStatement(Optional.of(id),inputs,statementIds).orElseThrow()).toList(),
+                r.completions().stream().map(id->canonicalStatement(Optional.of(id),inputs,statementIds).orElseThrow()).toList(),provenance(r.origin()))).toList();
+            var codes=new ArrayList<>(proof.gaps());if(containment.branch()==Branch.UNKNOWN)codes.add(CONTAINMENT_GAP);
+            int[] operandOrdinal={0};
+            var loop=proof.loop().map(l->{
+                var references=new ArrayList<DataReference>();var predicate=l.predicate();
+                for(var entry:p.controls().stream().filter(c->c.context()==Ast.PerformControlContext.CONDITION).flatMap(c->conditionEntries(c.expression(),inputs).stream()).toList()) {
+                    if(entry.occurrence().role()==ResolutionContracts.ReferenceRole.PERFORM_FROM
+                        ||entry.occurrence().role()==ResolutionContracts.ReferenceRole.PERFORM_THROUGH)continue;
+                    var origin=provenance(entry.occurrence().meta().provenance());
+                    addReportGaps(statementId,entry.occurrence(),inputs,origin,gaps);
+                    if(!projectableDataBinding(entry,inputs)) {codes.add(CONDITION_REFERENCE_GAP);continue;}
+                    references.add(new DataReference(new OperandId(statementId,operandOrdinal[0]++),OperandRole.READ,nominalBinding(entry,dataIds),origin,
+                        Optional.ofNullable(predicate.wholeItems().get(entry.occurrence().referenceAstNodeId()))
+                            .map(entity->new WholeItemAccess(Objects.requireNonNull(dataIds.get(entity))))));
+                }
+                var guarantee=new PredicateGuarantee(Availability.valueOf(predicate.availability().name()),
+                    PredicateProfile.valueOf(predicate.profile().name()),
+                    references.stream().map(DataReference::id).toList(),provenance(predicate.provenance()),
+                    predicate.availability()==IfSemantics.Availability.KNOWN?List.of():List.of("PREDICATE_NOT_PROVEN"));
+                return new PerformLoop(PerformTestMode.valueOf(l.testMode().name()),new ConditionSurface(l.condition().map(CobolSemanticProductProjector::conditionShape).orElse("UNAVAILABLE"),
+                    references,provenance(predicate.provenance()),guarantee));
+            });
+            var times=proof.times().map(t->{
+                Optional<DataReference> reference=Optional.empty();
+                for(var entry:plan.entries()) {
+                    if(entry.occurrence().role()==ResolutionContracts.ReferenceRole.PERFORM_FROM||entry.occurrence().role()==ResolutionContracts.ReferenceRole.PERFORM_THROUGH)continue;
+                    var origin=provenance(entry.occurrence().meta().provenance());addReportGaps(statementId,entry.occurrence(),inputs,origin,gaps);
+                    if(!projectableDataBinding(entry,inputs)){codes.add("PERFORM_COUNT_REFERENCE_NOT_PROJECTED");continue;}
+                    reference=Optional.of(new DataReference(new OperandId(statementId,0),OperandRole.READ,nominalBinding(entry,dataIds),origin,t.wholeItem().map(id->new WholeItemAccess(Objects.requireNonNull(dataIds.get(id))))));
+                }
+                return new PerformCount(!t.proven()?PerformCountProfile.UNAVAILABLE:t.integer().isPresent()?PerformCountProfile.POSITIVE_INTEGER:PerformCountProfile.INTEGER_ITEM,
+                    t.integer().map(Object::toString),reference,t.expression().map(e->provenance(e.meta().provenance())).orElse(statementProvenance));
+            });
+            var varying=proof.varying().map(v->{
+                var controls=new ArrayList<VaryingOperand>();
+                for(var operand:v.controls()) {
+                    var control=operand.control();var refs=new ArrayList<DataReference>();
+                    for(var entry:performControlEntries(control,inputs)) {
+                        var origin=provenance(entry.occurrence().meta().provenance());addReportGaps(statementId,entry.occurrence(),inputs,origin,gaps);
+                        if(!projectableDataBinding(entry,inputs)){codes.add("PERFORM_VARYING_REFERENCE_NOT_PROJECTED");continue;}
+                        refs.add(new DataReference(new OperandId(statementId,operandOrdinal[0]++),entry.occurrence().role()==ResolutionContracts.ReferenceRole.VALUE_WRITE?OperandRole.WRITE:OperandRole.READ,
+                            nominalBinding(entry,dataIds),origin,operand.wholeItem().filter(ignored->entry.occurrence().referenceAstNodeId()==control.expression().meta().id())
+                                .map(id->new WholeItemAccess(Objects.requireNonNull(dataIds.get(id))))));
+                    }
+                    controls.add(new VaryingOperand(control.varyingLevel(),VaryingOperandRole.valueOf(control.context().name()),operand.integer().map(Object::toString),refs,provenance(control.expression().meta().provenance())));
+                }
+                return new PerformVarying(v.levels(),controls);
+            });
+            var status=codes.isEmpty()?ReadinessStatus.SUFFICIENT:ReadinessStatus.PARTIAL;
+            statements.add(new ProcedurePerformFact(header(statementId,plan.position().ordinal(),containment,statementProvenance,
+                codes.isEmpty()?CoverageStatus.MODELED:CoverageStatus.PARTIAL,
+                readiness(status,"typed paragraph range",status,"activation-specific continuation",ReadinessStatus.PARTIAL,"general effects not published")),
+                proof.start().map(endpoint),proof.end().map(endpoint),paragraphs,
+                new NormalContinuation(proof.resume().isPresent()?ContinuationAvailability.KNOWN:ContinuationAvailability.UNAVAILABLE,
+                    canonicalStatement(proof.resume(),inputs,statementIds),provenance(proof.resumeOrigin())),loop,times,varying,codes));
+            for(var code:codes)gaps.add(new Gap(statementId,code.equals(CONTAINMENT_GAP)?GapScope.STRUCTURE:GapScope.CAPABILITY,code,"PERFORM range proof unavailable",statementProvenance));
             return;
         }
 
@@ -673,7 +753,8 @@ public final class CobolSemanticProductProjector {
             CobolSemanticProduct.CoverageStatus bindingCoverage = bindingCoverage(entry);
             ScalarMoveSemantics.Move semantic = inputs.products().scalarMoves().move(inputs.unitId(), move.meta().id());
             CopySemantics copy = CopySemantics.valueOf(semantic.copy().name());
-            boolean intrinsicEnd=inputs.products().scalarMoves().performs().intrinsicExit(inputs.unitId(),move.meta().id());
+            boolean intrinsicEnd=inputs.products().scalarMoves().performs().intrinsicExit(inputs.unitId(),move.meta().id())
+                || inputs.products().scalarMoves().procedurePerforms().completion(inputs.unitId(),move.meta().id());
             var moveGaps=semantic.gaps().stream().filter(g -> !intrinsicEnd || g != ScalarMoveSemantics.Gap.NORMAL_CONTINUATION_NOT_AVAILABLE).toList();
             Optional<StatementId> next = semantic.nextStatement().map(nodeId -> {
                 Ast.Node node = inputs.selectedSource().nodes().get(nodeId);

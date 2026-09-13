@@ -32,6 +32,9 @@ public final class CobolLoweringReadinessConsumer {
         @Override public StatementFamily family() { return StatementFamily.EVALUATE; }
     }
 
+    public record ProcedurePerformAudit(StatementHeaderAudit header, CobolSemanticProduct.ProcedurePerformFact fact) implements StatementAudit {
+        @Override public StatementFamily family() { return StatementFamily.PERFORM; }
+    }
     public record PerformAudit(StatementHeaderAudit header, CobolSemanticProduct.PerformFact fact) implements StatementAudit {
         @Override public StatementFamily family() { return StatementFamily.PERFORM; }
     }
@@ -319,6 +322,7 @@ public final class CobolLoweringReadinessConsumer {
         StatementHeaderAudit header = header(fact.header(), gapsByStatement.getOrDefault(
                 fact.header().id(), List.of()));
         if (fact instanceof CobolSemanticProduct.GoToFact g) return new GoToAudit(header,g);
+        if (fact instanceof CobolSemanticProduct.ProcedurePerformFact p) return new ProcedurePerformAudit(header,p);
         if (fact instanceof CobolSemanticProduct.PerformFact perform) return new PerformAudit(header, perform);
         if (fact instanceof CobolSemanticProduct.GobackFact goback)
             return new GobackAudit(header, goback.exit(), goback.localContinuation());

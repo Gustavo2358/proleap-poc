@@ -37,6 +37,12 @@ public final class IfSemantics {
             ReferenceResolution resolution, ResolutionAnalysisReport report,
             Map<ResolutionContracts.SemanticEntityId, ScalarMoveSemantics.ScalarText> scalars,
             Map<ScalarMoveSemantics.NodeKey, ScalarMoveSemantics.Move> moves) {
+        return analyze(frontend,tables,resolution,report,scalars,moves,NumericControlSemantics.empty());
+    }
+    static IfSemantics analyze(CompilationUnitBuildResult frontend, CompilationUnitSymbolTables tables,
+            ReferenceResolution resolution, ResolutionAnalysisReport report,
+            Map<ResolutionContracts.SemanticEntityId, ScalarMoveSemantics.ScalarText> scalars,
+            Map<ScalarMoveSemantics.NodeKey, ScalarMoveSemantics.Move> moves, NumericControlSemantics numbers) {
         long[] work = new long[5];
         boolean input = report.gaps().stream().noneMatch(g -> g.category() == ResolutionAnalysisReport.GapCategory.INPUT);
         Map<ScalarMoveSemantics.NodeKey, ReferenceResolution.Entry> reads = new HashMap<>();
@@ -91,7 +97,7 @@ public final class IfSemantics {
             for (Visit visit : branches) {
                     Ast.IfStatement branch = (Ast.IfStatement) visit.node();
                     boolean intact = input && modeled(branch, coverage);
-                    Predicate predicate = predicate(branch, unit.id(), intact, input, reads, completeScalars, coverage, work);
+                    Predicate predicate = predicate(branch.condition(), unit.id(), intact, input, reads, completeScalars, coverage, work);
                     Arm thenArm = arm(branch.thenBranch(), Ast.BranchPresence.PRESENT, branch.thenProvenance(),
                             unit.id(), intact, input, moves, coverage, work);
                     Arm elseArm = arm(branch.elseBranch(), branch.elsePresence(), branch.elseProvenance(),
@@ -117,7 +123,7 @@ public final class IfSemantics {
                     if (!(child instanceof Ast.DataEntry data)) continue;
                     var entity = entities.get(data.meta().id()); work[4]++;
                     boolean eligible = entity != null && !duplicateDeclarations.contains(data.meta().id())
-                            && scalars.containsKey(entity) && modeled(data, coverage);
+                            && (scalars.containsKey(entity)||numbers.declaration(entity).isPresent()) && modeled(data, coverage);
                     for (var clause : data.clauses()) { work[0]++; eligible &= modeled(clause, coverage); }
                     if (eligible) members.add(entity);
                 }
@@ -141,11 +147,10 @@ public final class IfSemantics {
     private static boolean exactSurface(Ast.Node node, Map<Integer, SemanticCoverage.Finding> coverage) {
         return node.meta().provenance().exact() && (!coverage.containsKey(node.meta().id()) || modeled(node, coverage));
     }
-    private static Predicate predicate(Ast.IfStatement branch, ResolutionContracts.ProgramUnitId unit,
+    static Predicate predicate(Ast.Expression condition, ResolutionContracts.ProgramUnitId unit,
             boolean intact, boolean input, Map<ScalarMoveSemantics.NodeKey, ReferenceResolution.Entry> reads,
             Map<ResolutionContracts.SemanticEntityId, ScalarMoveSemantics.ScalarText> scalars,
             Map<Integer, SemanticCoverage.Finding> coverage, long[] work) {
-        var condition = branch.condition();
         if (intact && condition instanceof Ast.RelationCondition relation
                 && relation.operatorKind() == Ast.RelationOperator.EQUAL && exactSurface(relation, coverage)
                 && relation.subject() instanceof Ast.DataReference reference

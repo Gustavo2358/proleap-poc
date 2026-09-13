@@ -354,7 +354,7 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
             ParserRuleContext picture = ((CobolParser.DataPictureClauseContext) context).pictureString();
             String spelling = picture == null ? "" : picture.getText();
             return new Ast.PictureClause(meta, picture == null ? "" : sourceText(picture).strip(),
-                    writtenText, elementaryTextExtent(spelling));
+                    writtenText, elementaryTextExtent(spelling), elementaryIntegerDigits(spelling));
         }
         if (context instanceof CobolParser.DataUsageClauseContext) {
             String usage = writtenText.replaceFirst("(?i)^USAGE\\s+(IS\\s+)?", "");
@@ -543,11 +543,15 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
     /** Interpret only the PIC X repetition language, in the canonical frontend.
      * This grammar uses generic pictureChars tokens, so repetition is decoded here
      * without expansion; every other category/edited symbol fails closed. */
-    private static Optional<Integer> elementaryTextExtent(String picture) {
+    private static Optional<Integer> elementaryTextExtent(String picture) { return elementaryExtent(picture,'X'); }
+    private static Optional<Integer> elementaryIntegerDigits(String picture) {
+        return elementaryExtent(picture.startsWith("S")||picture.startsWith("s")?picture.substring(1):picture,'9');
+    }
+    private static Optional<Integer> elementaryExtent(String picture,char category) {
         long extent = 0;
         for (int i = 0; i < picture.length();) {
             char symbol = picture.charAt(i++);
-            if (symbol != 'X' && symbol != 'x') return Optional.empty();
+            if (Character.toUpperCase(symbol) != category) return Optional.empty();
             long count = 1;
             if (i < picture.length() && picture.charAt(i) == '(') {
                 i++;
@@ -1072,7 +1076,7 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
             List<Ast.Expression> controls = controlMetadata.stream().map(Ast.PerformControl::expression).toList();
             return new Ast.PerformStatement(meta, Ast.PerformKind.INLINE, null, null,
                     type == null ? "once" : compact(sourceText(type)), controls, controlMetadata,
-                    statementsInside(inline));
+                    statementsInside(inline),performRepetition(type),performTestMode(type));
         }
         List<CobolParser.ProcedureNameContext> names = procedure == null ? List.of()
                 : nearestDescendants(procedure, CobolParser.ProcedureNameContext.class);
@@ -1082,7 +1086,17 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
         List<Ast.Expression> controls = controlMetadata.stream().map(Ast.PerformControl::expression).toList();
         return new Ast.PerformStatement(meta, Ast.PerformKind.PROCEDURE,
                 fromReference, throughReference,
-                type == null ? "once" : compact(sourceText(type)), controls, controlMetadata, List.of());
+                type == null ? "once" : compact(sourceText(type)), controls, controlMetadata, List.of(),performRepetition(type),performTestMode(type));
+    }
+
+    private static Ast.PerformRepetition performRepetition(CobolParser.PerformTypeContext type) {
+        return type==null?Ast.PerformRepetition.ONCE:type.performUntil()!=null?Ast.PerformRepetition.UNTIL:
+            type.performTimes()!=null?Ast.PerformRepetition.TIMES:type.performVarying()!=null?Ast.PerformRepetition.VARYING:Ast.PerformRepetition.UNKNOWN;
+    }
+    private static Ast.PerformTestMode performTestMode(CobolParser.PerformTypeContext type) {
+        var test=type==null?null:type.performUntil()!=null?type.performUntil().performTestClause():
+            type.performVarying()!=null?type.performVarying().performTestClause():null;
+        return test!=null&&test.AFTER()!=null?Ast.PerformTestMode.AFTER:Ast.PerformTestMode.BEFORE;
     }
 
     private Ast.GoToStatement buildGoTo(CobolParser.GoToStatementContext context) {
@@ -1152,6 +1166,23 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
     }
 
     private List<Ast.PerformControl> performControls(CobolParser.PerformTypeContext performType) {
+        if(performType.performVarying()!=null) {
+            var clause=performType.performVarying().performVaryingClause();
+            var phrases=new ArrayList<CobolParser.PerformVaryingPhraseContext>();phrases.add(clause.performVaryingPhrase());
+            for(var after:clause.performAfter())phrases.add(after.performVaryingPhrase());
+            var controls=new ArrayList<Ast.PerformControl>();int level=0;
+            for(var phrase:phrases) {
+                level++;
+                controls.add(new Ast.PerformControl(expression(phrase.identifier()!=null?phrase.identifier():phrase.literal(),"varying control"),Ast.PerformControlContext.CONTROL_VARIABLE,level));
+                var from=phrase.performFrom();var by=phrase.performBy();
+                controls.add(new Ast.PerformControl(expression(from.identifier()!=null?from.identifier():from.literal()!=null?from.literal():from.arithmeticExpression(),"varying FROM"),Ast.PerformControlContext.FROM,level));
+                controls.add(new Ast.PerformControl(expression(by.identifier()!=null?by.identifier():by.literal()!=null?by.literal():by.arithmeticExpression(),"varying BY"),Ast.PerformControlContext.BY,level));
+                // A nested TEST phrase is not the IBM format-4 TEST position.
+                controls.add(new Ast.PerformControl(expression(phrase.performUntil().condition(),"varying condition"),Ast.PerformControlContext.CONDITION,phrase.performUntil().performTestClause()==null?level:0));
+            }
+            return List.copyOf(controls);
+        }
+
         return nearestDescendants(performType, AstBuilder::isExpressionWrapperValueContext).stream()
                 .map(context -> new Ast.PerformControl(expression(context, "perform control"),
                         isInsidePerformUntil(context) ? Ast.PerformControlContext.CONDITION
@@ -1339,8 +1370,12 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
         String raw = sourceText(context).strip();
         Optional<Ast.LogicalText> logical = context instanceof CobolParser.LiteralContext literal
                 ? basicLogicalText(literal) : Optional.empty();
+        var numeric=context instanceof CobolParser.LiteralContext l?l.numericLiteral():context instanceof CobolParser.NumericLiteralContext n?n:null;
+        var integer=context instanceof CobolParser.IntegerLiteralContext n?n:numeric==null?null:numeric.integerLiteral();
+        Optional<java.math.BigInteger> value=integer==null?Optional.empty():Optional.of(new java.math.BigInteger(integer.getText()));
+        if(numeric!=null&&numeric.ZERO()!=null)value=Optional.of(java.math.BigInteger.ZERO);
         return new Ast.LiteralExpression(meta(context), logical.map(Ast.LogicalText::value)
-                .orElseGet(() -> unquote(raw)), raw, logical);
+                .orElseGet(() -> unquote(raw)), raw, logical, value);
     }
 
     private static Optional<Ast.LogicalText> basicLogicalText(CobolParser.LiteralContext literal) {

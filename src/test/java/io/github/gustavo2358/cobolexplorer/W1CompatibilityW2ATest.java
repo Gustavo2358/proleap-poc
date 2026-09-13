@@ -24,12 +24,16 @@ class W1CompatibilityW2ATest {
             byte[] currentBytes = SemanticProductJsonWriter.serialize(port);
             var current = (ObjectNode) json.readTree(currentBytes);
             assertEquals("1.3.0", old.path("contractVersion").asText());
-            assertEquals("2.1.0", current.path("contractVersion").asText());
+            assertEquals("2.5.0", current.path("contractVersion").asText());
             assertEquals("UNAVAILABLE", current.path("storageIndependence").path("availability").asText());
             assertTrue(current.path("storageIndependence").path("members").isEmpty());
             for (var statement : current.path("statements")) if (statement.path("variant").asText().equals("MOVE")) {
                 assertEquals("LITERAL", statement.path("source").path("variant").asText());
                 ((ObjectNode) statement.path("source")).remove("variant");
+            }
+            for(var data:current.path("dataDeclarations")) {
+                assertTrue(data.path("scalarInteger").isNull(),"unrelated historical text declaration gains no integer proof");
+                ((ObjectNode)data).remove("scalarInteger");
             }
             current.remove("storageIndependence"); current.remove("contractVersion"); old.remove("contractVersion");
             assertEquals(old, current, name + ": all W1 facts, IDs, bindings, origins, provenance, fitting, gaps and readiness must match");
