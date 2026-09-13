@@ -33,7 +33,7 @@ class PerformBasicTest {
             if (name.equals("copy")) { assertInstanceOf(DataReference.class, bodyFacts.get(1).source()); assertEquals(Availability.KNOWN, port.storageIndependence().availability()); }
             var json = SemanticProductJsonWriter.serialize(port);
             assertArrayEquals(json, SemanticProductJsonWriter.serialize(ScalarMoveCheckpoint4ATest.publish(source)));
-            var tree = new ObjectMapper().readTree(json); assertEquals("2.4.0", tree.path("contractVersion").asText());
+            var tree = new ObjectMapper().readTree(json); assertEquals("2.5.0", tree.path("contractVersion").asText());
             Path out = Path.of("target/perform-basic"); Files.createDirectories(out);
             Files.write(out.resolve(name + ".json"), json); Files.writeString(out.resolve(name + ".cbl"), source);
         }
@@ -41,8 +41,7 @@ class PerformBasicTest {
     @Test void unsupportedFormsAndOtherActivationsNeverPublishNormalization() {
         var base = PerformDiscoveryTest.simple();
         var sources = new LinkedHashMap<String,String>();
-        for (String form : List.of("DEFINE-PGM VARYING WS-A FROM 1 BY 1 UNTIL WS-A = 5",
-                "MOVE 'PROGA' TO WS-PGM END-PERFORM", "MISSING"))
+        for (String form : List.of("MOVE 'PROGA' TO WS-PGM END-PERFORM", "MISSING"))
             sources.put(form, base.replace("PERFORM DEFINE-PGM.", "PERFORM " + form + "."));
         sources.put("ordinary fallthrough", base.replace("GOBACK.\nDEFINE-PGM.", "DEFINE-PGM."));
         sources.put("GO TO target", base.replace("GOBACK.", "GO TO DEFINE-PGM."));

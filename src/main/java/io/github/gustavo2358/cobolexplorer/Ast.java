@@ -48,7 +48,7 @@ public final class Ast {
     public enum CallTargetSyntax { LITERAL_PROGRAM_NAME, IDENTIFIER_OR_EXPRESSION }
     public enum PerformKind { INLINE, PROCEDURE }
     /** Typed pre-binding context of a PERFORM control expression. */
-    public enum PerformControlContext { VALUE, CONDITION }
+    public enum PerformControlContext { VALUE, CONDITION, CONTROL_VARIABLE, FROM, BY }
     public enum PerformRepetition { ONCE, UNTIL, TIMES, VARYING, UNKNOWN }
     public enum PerformTestMode { BEFORE, AFTER }
     public enum GoToKind { SIMPLE, DEPENDING_ON }
@@ -284,10 +284,12 @@ public final class Ast {
                                    EvaluateSelectorContext context) {}
 
     /** Metadata for a PERFORM control; it is not an AST node and consumes no ID. */
-    public record PerformControl(Expression expression, PerformControlContext context) {
+    public record PerformControl(Expression expression, PerformControlContext context,int varyingLevel) {
+        public PerformControl(Expression expression,PerformControlContext context){this(expression,context,0);}
         public PerformControl {
             expression = Objects.requireNonNull(expression, "expression");
             context = Objects.requireNonNull(context, "context");
+            if(varyingLevel<0)throw new IllegalArgumentException("negative varying level");
         }
     }
 

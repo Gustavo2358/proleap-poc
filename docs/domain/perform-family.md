@@ -1,4 +1,4 @@
-# PERFORM family — SP 2.3 range and UNTIL contract
+# PERFORM family — SP 2.5 range, repetition and implicit effects
 
 Goal: THRU/THROUGH, UNTIL, TIMES and single-variable VARYING end-to-end.
 The wave continues through cumulative qualification; review occurs only at its end.
@@ -67,3 +67,28 @@ MOVE/CALL guarantees remain separate. Unknown/noninteger counts and unproved
 ranges stay typed partial. Oracles: unknown count preserves OLDPROG+NEWPROG;
 positive count preserves NEWPROG after a strong update; a million iterations
 has the same static body size as five; 1/2/5/40 callsites and prior families regress.
+
+
+SP 2.5 VARYING design: single elementary DISPLAY integer control item, integer
+FROM literal or resolved integer item, nonzero integer BY literal, and a proved
+pure total condition with unknown truth. Numeric relations retain each typed
+read; no comparison is evaluated. Initialization and each increment perform a
+mandatory whole-item write with an open numeric value. AIR Opaque with exact
+localized memory/control envelopes preserves the implicit control-item read and
+FROM/BY provenance; this avoids inventing bounded COBOL arithmetic in AIR int.
+No other memory is written by these implicit effects.
+
+The IBM printed p. 420 diagrams were inspected directly. BEFORE is init → test,
+false → body → increment → test, true → resume. AFTER is init → body → test,
+false → increment → body, true → resume: the exiting AFTER path does not increment.
+The UNTIL decision/activation machinery is reused. Multi-level AFTER is preserved
+as typed levels and operands but remains conservative: correct inner-variable
+resets and nested condition ordering are outside this slice. Unknown BY cannot
+prove the required nonzero increment; unsupported numeric/storage/condition,
+open ranges, incoming/escaping control and recursion retain partial facts.
+
+Oracles: BEFORE old/new candidates, AFTER new only, THRU composition, initialization
+and iteration must-writes to the control item, count-independent multiplicity,
+FROM reads, negative increments, AFTER exit bypassing the increment, and cumulative
+byte/order/control regressions. SP 2.4 and older must reject the new wire fields
+and predicate profile; their historical meaning is unchanged.

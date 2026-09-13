@@ -1166,6 +1166,23 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
     }
 
     private List<Ast.PerformControl> performControls(CobolParser.PerformTypeContext performType) {
+        if(performType.performVarying()!=null) {
+            var clause=performType.performVarying().performVaryingClause();
+            var phrases=new ArrayList<CobolParser.PerformVaryingPhraseContext>();phrases.add(clause.performVaryingPhrase());
+            for(var after:clause.performAfter())phrases.add(after.performVaryingPhrase());
+            var controls=new ArrayList<Ast.PerformControl>();int level=0;
+            for(var phrase:phrases) {
+                level++;
+                controls.add(new Ast.PerformControl(expression(phrase.identifier()!=null?phrase.identifier():phrase.literal(),"varying control"),Ast.PerformControlContext.CONTROL_VARIABLE,level));
+                var from=phrase.performFrom();var by=phrase.performBy();
+                controls.add(new Ast.PerformControl(expression(from.identifier()!=null?from.identifier():from.literal()!=null?from.literal():from.arithmeticExpression(),"varying FROM"),Ast.PerformControlContext.FROM,level));
+                controls.add(new Ast.PerformControl(expression(by.identifier()!=null?by.identifier():by.literal()!=null?by.literal():by.arithmeticExpression(),"varying BY"),Ast.PerformControlContext.BY,level));
+                // A nested TEST phrase is not the IBM format-4 TEST position.
+                controls.add(new Ast.PerformControl(expression(phrase.performUntil().condition(),"varying condition"),Ast.PerformControlContext.CONDITION,phrase.performUntil().performTestClause()==null?level:0));
+            }
+            return List.copyOf(controls);
+        }
+
         return nearestDescendants(performType, AstBuilder::isExpressionWrapperValueContext).stream()
                 .map(context -> new Ast.PerformControl(expression(context, "perform control"),
                         isInsidePerformUntil(context) ? Ast.PerformControlContext.CONDITION
