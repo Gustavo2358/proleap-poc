@@ -182,13 +182,14 @@ final class PreprocessorEngine {
                     LOG.trace("event=copy_resolution source={} phase=PREPROCESSING requested={} line={} status=UNRESOLVED reason=NOT_FOUND fallback=KEEP_UNRESOLVED_PLACEHOLDER",
                             file, requested, startToken.getLine());
                     toleratedPreprocessorDiagnostics[0]++;
-                    diagnostics.add(sourceDiagnostic(document, Diagnostic.Phase.PREPROCESSOR,
+                    Diagnostic missing = sourceDiagnostic(document, Diagnostic.Phase.PREPROCESSOR,
                             Diagnostic.Code.UNRESOLVED_COPY,
                             start, end, "COPY '" + requested
                                     + "' could not be found in configured libraries",
-                            requested, ""));
+                            requested, "");
+                    diagnostics.add(missing);
                     edits.add(new Edit(start, end, document.transformedSlice(start, end,
-                            "*> UNRESOLVED COPY " + requested + "\n")));
+                            "*> UNRESOLVED COPY " + requested + "\n").withInputGap(missing)));
                 } else if (!expansionStack.add(path.get().toAbsolutePath().normalize())) {
                     logSummary.cycles++;
                     LOG.trace("event=copy_resolution source={} phase=PREPROCESSING requested={} line={} status=CYCLIC reason=EXPANSION_CYCLE fallback=KEEP_CYCLIC_PLACEHOLDER",

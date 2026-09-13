@@ -93,9 +93,14 @@ public final class Ast {
     /** Non-node relation: the primary entry of the nondeclarative procedure body.
      * It neither adds a traversal edge nor duplicates the target statement. */
     public record ProcedureEntry(Optional<Integer> startStatementId,
-                                 boolean signatureClausesPresent, boolean declarativesPresent) {
+                                 boolean signatureClausesPresent, boolean declarativesPresent,
+                                 EntryInputProof inputProof) {
         public ProcedureEntry {
             startStatementId = Objects.requireNonNull(startStatementId, "startStatementId");
+            inputProof = Objects.requireNonNull(inputProof, "inputProof");
+        }
+        public ProcedureEntry(Optional<Integer> startStatementId, boolean signatureClausesPresent, boolean declarativesPresent) {
+            this(startStatementId, signatureClausesPresent, declarativesPresent, new EntryInputProof(List.of()));
         }
     }
 

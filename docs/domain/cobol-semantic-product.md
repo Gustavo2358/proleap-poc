@@ -1,6 +1,6 @@
 # COBOL Semantic Product
 
-Contrato corrente: [composição e parcialidade / SP 1.8.0](../architecture/compositional-partial-lowering.md), preservando [IF W2A](if-semantic-product.md), preservando [CALL e fitting W1A](call-semantic-product.md).
+Contrato corrente: [entry e input localizado / SP 1.9.0](../architecture/entry-localized-input.md), preservando [composição e parcialidade / SP 1.8.0](../architecture/compositional-partial-lowering.md), preservando [IF W2A](if-semantic-product.md), preservando [CALL e fitting W1A](call-semantic-product.md).
 
 O COBOL Semantic Product é a boundary COBOL-specific, materializada e imutável
 entre o frontend e o futuro repositório externo `cobol-lower`. Cada publicação
@@ -270,8 +270,10 @@ O frontend materializa `Ast.Division.procedureEntry`, metadata não-node com
 referência ao statement do corpo não declarativo. AstBuilder seleciona essa
 relação pelos contextos tipados de sentences/paragraphs/sections, sem consultar
 IDs ou roots projetados; o projector traduz a referência canônica por identidade.
-Primeiro ENTRY, corpo vazio, altered GO TO sem nó, metadata ausente ou input
-incompleto não autorizam fabricar start em um statement posterior. Declaratives
+ENTRYs iniciais são declarações: a relação primária aponta para o primeiro
+statement executável seguinte. Corpo vazio, altered GO TO sem nó e metadata
+ausente não autorizam fabricar start. Input incompleto exige a prova localizada
+canônica descrita em SP 1.9; inventory e assinatura continuam incompletos. Declaratives
 ainda não materializados mantêm gap `DECLARATIVES_NOT_PROJECTED`, start
 indisponível e inventário de statements `PARTIAL`; não há nova modelagem dessas
 regiões neste slice.

@@ -71,7 +71,7 @@ class SemanticProductEntryGobackTest {
         assertArrayEquals(bytes, SemanticProductJsonWriter.serialize(publish(source)));
         JsonNode json = new ObjectMapper().readTree(bytes);
         assertEquals("cobol-semantic-product", json.path("schema").asText());
-        assertEquals("1.8.0", json.path("contractVersion").asText());
+        assertEquals("1.9.0", json.path("contractVersion").asText());
         assertEquals("AIR-FIRST", json.path("unit").path("canonicalProgramName").asText());
         var entry = json.path("entryInventory").path("entries").get(0);
         var terminal = json.path("statements").get(0);
@@ -314,8 +314,8 @@ class SemanticProductEntryGobackTest {
     }
 
     @Test
-    void emptyBodyAndLeadingAlternateEntryDoNotFabricateStart() {
-        for (String body : List.of("", "ENTRY 'ALT'.\nGOBACK.")) {
+    void emptyBodyAndEntryWithoutExecutableDoNotFabricateStart() {
+        for (String body : List.of("", "ENTRY 'ALT'.")) {
             var port = publish(program(body));
             assertTrue(port.entries().get(0).start().statement().isEmpty());
             assertEquals(ReadinessStatus.BLOCKED, port.entries().get(0).readiness().cfg().status());

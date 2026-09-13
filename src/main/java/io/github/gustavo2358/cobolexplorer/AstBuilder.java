@@ -464,7 +464,7 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
                         start == null ? Optional.empty() : Optional.of(start.meta().id()),
                         context.procedureDivisionUsingClause() != null
                                 || context.procedureDivisionGivingClause() != null,
-                        context.procedureDeclaratives() != null)),
+                        context.procedureDeclaratives() != null, entryInputProof(context))),
                 normalContinuations(context));
     }
 
@@ -574,15 +574,35 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
     private static ParserRuleContext firstParagraphStatement(CobolParser.ParagraphsContext group) {
         if (group == null) return null;
         for (var sentence : group.sentence())
-            if (!sentence.statement().isEmpty()) return sentence.statement(0);
+            for (var statement : sentence.statement())
+                if (statement.entryStatement() == null) return statement;
         for (var paragraph : group.paragraph()) {
             // This grammar form has no statement node today. Do not skip it to
             // fabricate an entry at a later, already-materialized statement.
             if (paragraph.alteredGoTo() != null) return paragraph.alteredGoTo();
             for (var sentence : paragraph.sentence())
-                if (!sentence.statement().isEmpty()) return sentence.statement(0);
+                for (var statement : sentence.statement())
+                    if (statement.entryStatement() == null) return statement;
         }
         return null;
+    }
+
+    private EntryInputProof entryInputProof(CobolParser.ProcedureDivisionContext procedure) {
+        var unit = procedure.getParent();
+        if (!(unit instanceof CobolParser.ProgramUnitContext program) || program.dataDivision() == null)
+            return new EntryInputProof(List.of());
+        var data = program.dataDivision();
+        int dataStart = data.DOT_FS().getSymbol().getStopIndex() + 1;
+        int procedureStart = procedure.getStart().getStartIndex();
+        Set<Diagnostic> qualified = Collections.newSetFromMap(new IdentityHashMap<>());
+        Set<Diagnostic> rejected = Collections.newSetFromMap(new IdentityHashMap<>());
+        for (var region : sourceMap.inputGapRegions()) {
+            if (region.start() >= dataStart && region.end() <= procedureStart)
+                qualified.add(region.inputGap());
+            else rejected.add(region.inputGap());
+        }
+        qualified.removeIf(rejected::contains);
+        return new EntryInputProof(List.copyOf(qualified));
     }
 
     private Ast.ProcedureSignature buildProcedureSignature(CobolParser.ProcedureDivisionContext context) {
