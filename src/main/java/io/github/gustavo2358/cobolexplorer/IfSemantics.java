@@ -91,7 +91,7 @@ public final class IfSemantics {
             for (Visit visit : branches) {
                     Ast.IfStatement branch = (Ast.IfStatement) visit.node();
                     boolean intact = input && modeled(branch, coverage);
-                    Predicate predicate = predicate(branch, unit.id(), intact, input, reads, completeScalars, coverage, work);
+                    Predicate predicate = predicate(branch.condition(), unit.id(), intact, input, reads, completeScalars, coverage, work);
                     Arm thenArm = arm(branch.thenBranch(), Ast.BranchPresence.PRESENT, branch.thenProvenance(),
                             unit.id(), intact, input, moves, coverage, work);
                     Arm elseArm = arm(branch.elseBranch(), branch.elsePresence(), branch.elseProvenance(),
@@ -141,11 +141,10 @@ public final class IfSemantics {
     private static boolean exactSurface(Ast.Node node, Map<Integer, SemanticCoverage.Finding> coverage) {
         return node.meta().provenance().exact() && (!coverage.containsKey(node.meta().id()) || modeled(node, coverage));
     }
-    private static Predicate predicate(Ast.IfStatement branch, ResolutionContracts.ProgramUnitId unit,
+    static Predicate predicate(Ast.Expression condition, ResolutionContracts.ProgramUnitId unit,
             boolean intact, boolean input, Map<ScalarMoveSemantics.NodeKey, ReferenceResolution.Entry> reads,
             Map<ResolutionContracts.SemanticEntityId, ScalarMoveSemantics.ScalarText> scalars,
             Map<Integer, SemanticCoverage.Finding> coverage, long[] work) {
-        var condition = branch.condition();
         if (intact && condition instanceof Ast.RelationCondition relation
                 && relation.operatorKind() == Ast.RelationOperator.EQUAL && exactSurface(relation, coverage)
                 && relation.subject() instanceof Ast.DataReference reference

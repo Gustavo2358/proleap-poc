@@ -289,7 +289,9 @@ public final class CobolSemanticProductProjector {
 
     private static StatementPlan plan(StatementPosition position, ProjectionInputs inputs) {
         if (position.statement() instanceof Ast.PerformStatement p && ProcedurePerformSemantics.applicable(p))
-            return new StatementPlan(position, Capability.supported("PERFORM", "PERFORM_PROCEDURE"), List.of());
+            return new StatementPlan(position, Capability.supported("PERFORM", "PERFORM_PROCEDURE"),
+                p.controls().stream().filter(c->c.context()==Ast.PerformControlContext.CONDITION)
+                    .flatMap(c->conditionEntries(c.expression(),inputs).stream()).toList());
         if (position.statement() instanceof Ast.PerformStatement perform
                 && inputs.products().scalarMoves().performs().fact(inputs.unitId(), perform.meta().id()).simpleProfile())
             return new StatementPlan(position, Capability.supported("PERFORM", "PERFORM_BASIC"), List.of());
@@ -598,13 +600,32 @@ public final class CobolSemanticProductProjector {
                 r.statements().stream().map(id->canonicalStatement(Optional.of(id),inputs,statementIds).orElseThrow()).toList(),
                 r.completions().stream().map(id->canonicalStatement(Optional.of(id),inputs,statementIds).orElseThrow()).toList(),provenance(r.origin()))).toList();
             var codes=new ArrayList<>(proof.gaps());if(containment.branch()==Branch.UNKNOWN)codes.add(CONTAINMENT_GAP);
+            var loop=proof.loop().map(l->{
+                var references=new ArrayList<DataReference>();var predicate=l.predicate();
+                for(var entry:plan.entries()) {
+                    if(entry.occurrence().role()==ResolutionContracts.ReferenceRole.PERFORM_FROM
+                        ||entry.occurrence().role()==ResolutionContracts.ReferenceRole.PERFORM_THROUGH)continue;
+                    var origin=provenance(entry.occurrence().meta().provenance());
+                    addReportGaps(statementId,entry.occurrence(),inputs,origin,gaps);
+                    if(!projectableDataBinding(entry,inputs)) {codes.add(CONDITION_REFERENCE_GAP);continue;}
+                    references.add(new DataReference(new OperandId(statementId,references.size()),OperandRole.READ,nominalBinding(entry,dataIds),origin,
+                        predicate.readNode().filter(id->id==entry.occurrence().referenceAstNodeId()).flatMap(ignored->predicate.wholeItem())
+                            .map(entity->new WholeItemAccess(Objects.requireNonNull(dataIds.get(entity))))));
+                }
+                var guarantee=new PredicateGuarantee(Availability.valueOf(predicate.availability().name()),
+                    predicate.availability()==IfSemantics.Availability.KNOWN?PredicateProfile.SCALAR_TEXT_EQUALITY:PredicateProfile.UNAVAILABLE,
+                    references.stream().map(DataReference::id).toList(),provenance(predicate.provenance()),
+                    predicate.availability()==IfSemantics.Availability.KNOWN?List.of():List.of("PREDICATE_NOT_PROVEN"));
+                return new PerformLoop(PerformTestMode.valueOf(l.testMode().name()),new ConditionSurface(l.condition().map(CobolSemanticProductProjector::conditionShape).orElse("UNAVAILABLE"),
+                    references,provenance(predicate.provenance()),guarantee));
+            });
             var status=codes.isEmpty()?ReadinessStatus.SUFFICIENT:ReadinessStatus.PARTIAL;
             statements.add(new ProcedurePerformFact(header(statementId,plan.position().ordinal(),containment,statementProvenance,
                 codes.isEmpty()?CoverageStatus.MODELED:CoverageStatus.PARTIAL,
                 readiness(status,"typed paragraph range",status,"activation-specific continuation",ReadinessStatus.PARTIAL,"general effects not published")),
                 proof.start().map(endpoint),proof.end().map(endpoint),paragraphs,
                 new NormalContinuation(proof.resume().isPresent()?ContinuationAvailability.KNOWN:ContinuationAvailability.UNAVAILABLE,
-                    canonicalStatement(proof.resume(),inputs,statementIds),provenance(proof.resumeOrigin())),codes));
+                    canonicalStatement(proof.resume(),inputs,statementIds),provenance(proof.resumeOrigin())),loop,codes));
             for(var code:codes)gaps.add(new Gap(statementId,code.equals(CONTAINMENT_GAP)?GapScope.STRUCTURE:GapScope.CAPABILITY,code,"PERFORM range proof unavailable",statementProvenance));
             return;
         }

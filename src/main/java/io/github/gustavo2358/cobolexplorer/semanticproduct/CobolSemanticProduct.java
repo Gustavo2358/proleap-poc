@@ -651,14 +651,19 @@ public final class CobolSemanticProduct {
         public PerformParagraph { Objects.requireNonNull(id); Objects.requireNonNull(entry); Objects.requireNonNull(provenance);
             statements=List.copyOf(statements); completions=List.copyOf(completions); }
     }
+    public enum PerformTestMode { BEFORE, AFTER }
+    public record PerformLoop(PerformTestMode testMode, ConditionSurface condition) {
+        public PerformLoop { Objects.requireNonNull(testMode); Objects.requireNonNull(condition); }
+    }
     public record ProcedurePerformFact(StatementHeader header, Optional<PerformTarget> start, Optional<PerformTarget> end,
-            List<PerformParagraph> procedures, NormalContinuation normalContinuation, List<String> gapCodes) implements StatementFact {
+            List<PerformParagraph> procedures, NormalContinuation normalContinuation, Optional<PerformLoop> loop, List<String> gapCodes) implements StatementFact {
         public ProcedurePerformFact { Objects.requireNonNull(header); Objects.requireNonNull(start); Objects.requireNonNull(end);
-            Objects.requireNonNull(normalContinuation); procedures=List.copyOf(procedures); gapCodes=List.copyOf(gapCodes);
+            Objects.requireNonNull(normalContinuation); Objects.requireNonNull(loop); procedures=List.copyOf(procedures); gapCodes=List.copyOf(gapCodes);
             if(gapCodes.isEmpty())require(start.isPresent() && end.isPresent() && !procedures.isEmpty()
                 && normalContinuation.statement().isPresent(), "PERFORM range needs endpoints, body and resume");
             if(!procedures.isEmpty())require(start.isPresent() && end.isPresent()
                 && procedures.get(0).id().equals(start.get().id()) && procedures.get(procedures.size()-1).id().equals(end.get().id()), "PERFORM range endpoints disagree");
+            if(gapCodes.isEmpty())loop.ifPresent(l->require(l.condition().predicate().availability()==Availability.KNOWN,"loop predicate must be proven"));
         }
     }
 
@@ -1023,6 +1028,7 @@ public final class CobolSemanticProduct {
                 ? List.of(data, move.target()) : List.of(move.target());
         if (statement instanceof CallFact call) return call.target() instanceof DataReference data ? List.of(data) : List.of();
         if (statement instanceof IfFact branch) return branch.condition().references();
+        if (statement instanceof ProcedurePerformFact p) return p.loop().map(l->l.condition().references()).orElse(List.of());
         if (statement instanceof EvaluateFact e) return e.subject().stream().toList();
         if (statement instanceof ObservedStatement observed) return observed.knownReferences();
         return List.of();
@@ -1039,6 +1045,8 @@ public final class CobolSemanticProduct {
             } else if (statement instanceof IfFact branch) {
                 operands = branch.condition().references().stream()
                         .map(DataReference::id).toList();
+            } else if (statement instanceof ProcedurePerformFact p) {
+                operands=references(p).stream().map(DataReference::id).toList();
             } else if (statement instanceof EvaluateFact e) {
                 var ids = new ArrayList<OperandId>(); e.subject().ifPresent(s -> ids.add(s.id()));
                 e.arms().forEach(a -> ids.add(a.selection().id())); operands = ids;

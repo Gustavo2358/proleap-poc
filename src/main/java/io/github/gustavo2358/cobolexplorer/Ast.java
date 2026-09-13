@@ -49,6 +49,8 @@ public final class Ast {
     public enum PerformKind { INLINE, PROCEDURE }
     /** Typed pre-binding context of a PERFORM control expression. */
     public enum PerformControlContext { VALUE, CONDITION }
+    public enum PerformRepetition { ONCE, UNTIL, TIMES, VARYING, UNKNOWN }
+    public enum PerformTestMode { BEFORE, AFTER }
     public enum GoToKind { SIMPLE, DEPENDING_ON }
     public enum QualifierConnector { OF, IN }
     /**
@@ -292,13 +294,20 @@ public final class Ast {
                                    ProcedureReference throughReference, String writtenControl,
                                    List<Expression> controlExpressions,
                                    List<PerformControl> controls,
-                                   List<Statement> inlineBody) implements Statement {
+                                   List<Statement> inlineBody, PerformRepetition repetition, PerformTestMode testMode) implements Statement {
         public PerformStatement {
+            Objects.requireNonNull(repetition); Objects.requireNonNull(testMode);
             controlExpressions = List.copyOf(controlExpressions);
             controls = List.copyOf(controls);
             if (!controls.stream().map(PerformControl::expression).toList().equals(controlExpressions))
                 throw new IllegalArgumentException("PERFORM controls must preserve control expression order");
             inlineBody = List.copyOf(inlineBody);
+        }
+        public PerformStatement(Meta meta, PerformKind performKind, ProcedureReference fromReference,
+                                ProcedureReference throughReference, String writtenControl,
+                                List<Expression> controlExpressions, List<PerformControl> controls, List<Statement> inlineBody) {
+            this(meta,performKind,fromReference,throughReference,writtenControl,controlExpressions,controls,inlineBody,
+                controlExpressions.isEmpty()?PerformRepetition.ONCE:PerformRepetition.UNKNOWN,PerformTestMode.BEFORE);
         }
         public PerformStatement(Meta meta, PerformKind performKind, ProcedureReference fromReference,
                                 ProcedureReference throughReference, String writtenControl,

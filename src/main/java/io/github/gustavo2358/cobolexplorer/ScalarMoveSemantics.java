@@ -219,7 +219,7 @@ public final class ScalarMoveSemantics {
         var goTos = GoToSemantics.analyze(frontend, tables, resolution, report);
         var performs = PerformSemantics.analyze(frontend, tables, resolution, report, moves, ifs, goTos);
         var evaluates = EvaluateSemantics.analyze(frontend, resolution, report, declarations);
-        var procedurePerforms = ProcedurePerformSemantics.analyze(frontend, tables, resolution, report, moves, ifs, evaluates, goTos, performs);
+        var procedurePerforms = ProcedurePerformSemantics.analyze(frontend, tables, resolution, report, declarations, moves, ifs, evaluates, goTos, performs);
         performs = performs.restrictOpenRanges(procedurePerforms);
         return new ScalarMoveSemantics(declarations, moves, calls,
                 new Metrics(counts[0], counts[1], counts[2], counts[3], counts[4]),

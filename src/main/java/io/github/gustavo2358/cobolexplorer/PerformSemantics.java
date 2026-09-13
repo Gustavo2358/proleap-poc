@@ -219,7 +219,7 @@ public final class PerformSemantics {
     }
 
     private static boolean basic(Ast.PerformStatement p) {
-        return p.performKind()==Ast.PerformKind.PROCEDURE && p.fromReference()!=null
+        return ProcedurePerformSemantics.applicable(p) || p.performKind()==Ast.PerformKind.PROCEDURE && p.fromReference()!=null
             && p.controls().isEmpty() && p.controlExpressions().isEmpty() && p.inlineBody().isEmpty();
     }
     private static List<Ast.Statement> direct(Ast.Paragraph paragraph) {

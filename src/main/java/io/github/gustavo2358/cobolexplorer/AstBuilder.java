@@ -1072,7 +1072,7 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
             List<Ast.Expression> controls = controlMetadata.stream().map(Ast.PerformControl::expression).toList();
             return new Ast.PerformStatement(meta, Ast.PerformKind.INLINE, null, null,
                     type == null ? "once" : compact(sourceText(type)), controls, controlMetadata,
-                    statementsInside(inline));
+                    statementsInside(inline),performRepetition(type),performTestMode(type));
         }
         List<CobolParser.ProcedureNameContext> names = procedure == null ? List.of()
                 : nearestDescendants(procedure, CobolParser.ProcedureNameContext.class);
@@ -1082,7 +1082,17 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
         List<Ast.Expression> controls = controlMetadata.stream().map(Ast.PerformControl::expression).toList();
         return new Ast.PerformStatement(meta, Ast.PerformKind.PROCEDURE,
                 fromReference, throughReference,
-                type == null ? "once" : compact(sourceText(type)), controls, controlMetadata, List.of());
+                type == null ? "once" : compact(sourceText(type)), controls, controlMetadata, List.of(),performRepetition(type),performTestMode(type));
+    }
+
+    private static Ast.PerformRepetition performRepetition(CobolParser.PerformTypeContext type) {
+        return type==null?Ast.PerformRepetition.ONCE:type.performUntil()!=null?Ast.PerformRepetition.UNTIL:
+            type.performTimes()!=null?Ast.PerformRepetition.TIMES:type.performVarying()!=null?Ast.PerformRepetition.VARYING:Ast.PerformRepetition.UNKNOWN;
+    }
+    private static Ast.PerformTestMode performTestMode(CobolParser.PerformTypeContext type) {
+        var test=type==null?null:type.performUntil()!=null?type.performUntil().performTestClause():
+            type.performVarying()!=null?type.performVarying().performTestClause():null;
+        return test!=null&&test.AFTER()!=null?Ast.PerformTestMode.AFTER:Ast.PerformTestMode.BEFORE;
     }
 
     private Ast.GoToStatement buildGoTo(CobolParser.GoToStatementContext context) {

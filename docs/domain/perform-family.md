@@ -1,4 +1,4 @@
-# PERFORM family — SP 2.2 range contract
+# PERFORM family — SP 2.3 range and UNTIL contract
 
 Goal: THRU/THROUGH, UNTIL, TIMES and single-variable VARYING end-to-end.
 The wave continues through cumulative qualification; review occurs only at its end.
@@ -35,3 +35,20 @@ refusal; 1/2/5/40 occurrences; byte determinism and physical-order permutations.
 SP 1.x/2.0/2.1 semantics remain historical. SP 2.2 adds PERFORM_PROCEDURE
 with typed start/end, ordered paragraphs and completion frontiers; the historical
 PERFORM variant remains unchanged. Open peer ranges prevent isolation claims.
+
+SP 2.3 adds an optional typed UNTIL loop to the same procedure-range fact. A
+single procedure is the one-member case of that range. The grammar supplies
+TEST BEFORE/AFTER; absent TEST means BEFORE (IBM printed pp. 417–418).
+The condition retains nominal reads, whole-item access, provenance and the
+existing IF predicate guarantee. The initial profile is a proved pure, total
+scalar-text equality with unknown truth; unsupported/unresolved conditions keep
+the loop occurrence and a partial proof. No constant-condition pruning occurs.
+
+BEFORE enters a decision, whose true edge resumes and false edge enters the
+range; completion returns to the decision. AFTER enters the range first and
+then uses that same decision/back edge. Primary/body isolation and finite body
+proofs are unchanged; the explicit loop is allowed to iterate without a bound.
+The existing fixed point must preserve OLDPROG/NEWPROG for BEFORE and only
+NEWPROG after the mandatory first strong update in AFTER. Branching bodies,
+THRU composition, condition reads, partial peers and multiplicity are cumulative
+oracles. SP 2.2 retains its historical loop-free meaning.
