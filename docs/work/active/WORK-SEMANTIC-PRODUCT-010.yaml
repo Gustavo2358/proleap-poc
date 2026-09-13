@@ -1,0 +1,6 @@
+id: WORK-SEMANTIC-PRODUCT-010
+title: CP6 — EVALUATE first vertical slice
+status: IN_PROGRESS
+scope:
+  - SP 2.0 typed simple EVALUATE, explicit arms and normal continuations
+  - Conservative unsupported variants; multiplicity and provenance tests

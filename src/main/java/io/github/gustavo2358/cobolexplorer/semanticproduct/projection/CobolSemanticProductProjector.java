@@ -3,6 +3,7 @@ package io.github.gustavo2358.cobolexplorer.semanticproduct.projection;
 import io.github.gustavo2358.cobolexplorer.Ast;
 import io.github.gustavo2358.cobolexplorer.ScalarMoveSemantics;
 import io.github.gustavo2358.cobolexplorer.IfSemantics;
+import io.github.gustavo2358.cobolexplorer.EvaluateSemantics;
 import io.github.gustavo2358.cobolexplorer.CompilationUnitBuildResult;
 import io.github.gustavo2358.cobolexplorer.CompilationUnitModel;
 import io.github.gustavo2358.cobolexplorer.CompilationUnitSymbolTables;
@@ -166,7 +167,7 @@ public final class CobolSemanticProductProjector {
             Map<Ast.Statement, StatementId> ids) {
         // A compound region's completion does not describe transfers into its body.
         // Unqualified control must retain an open frontier, even with a known resume.
-        if(source instanceof Ast.PerformStatement || source instanceof Ast.IfStatement)
+        if(source instanceof Ast.PerformStatement || source instanceof Ast.IfStatement || source instanceof Ast.EvaluateStatement)
             return NormalContinuation.unavailable(provenance(source.meta().provenance()));
         for (var division : inputs.selectedSource().unit().program().divisions()) {
             if (division.divisionKind() != Ast.DivisionKind.PROCEDURE) continue;
@@ -309,6 +310,10 @@ public final class CobolSemanticProductProjector {
             }
             return new StatementPlan(position, capability, entries);
         }
+
+        if (position.statement() instanceof Ast.EvaluateStatement e && EvaluateSemantics.supportedShape(e))
+            return new StatementPlan(position, Capability.supported("EVALUATE", "SIMPLE_SUBJECT_LITERAL_ARMS"),
+                    conditionEntries(e.subjects().get(0), inputs));
 
         if (position.statement() instanceof Ast.IfStatement branch)
             return new StatementPlan(position, Capability.supported("IF", "IF_STRUCTURAL"),
@@ -580,6 +585,11 @@ public final class CobolSemanticProductProjector {
             return;
         }
 
+        if (plan.position().statement() instanceof Ast.EvaluateStatement e && plan.capability().supported()) {
+            projectEvaluate(e, plan, inputs, dataIds, statementIds, statementId, containment, statements, gaps);
+            return;
+        }
+
         if (plan.position().statement() instanceof Ast.GobackStatement goback) {
             statements.add(new GobackFact(header(statementId, plan.position().ordinal(), containment,
                     statementProvenance, weakest(coverage(inputs.finding(goback.meta().id())),
@@ -848,6 +858,53 @@ public final class CobolSemanticProductProjector {
         }
     }
 
+    private static void projectEvaluate(Ast.EvaluateStatement e, StatementPlan plan, ProjectionInputs inputs,
+            Map<ResolutionContracts.SemanticEntityId, DataItemId> dataIds, Map<Ast.Statement, StatementId> ids,
+            StatementId id, Containment containment, List<StatementFact> output, List<Gap> gaps) {
+        var proof = inputs.products().scalarMoves().evaluates().fact(inputs.unitId(), e.meta().id());
+        var origin = provenance(e.meta().provenance());
+        var codes = new ArrayList<String>();
+        Optional<DataReference> subject = plan.entries().stream().filter(r -> projectableDataBinding(r, inputs)).findFirst()
+            .map(r -> new DataReference(new OperandId(id, 0), OperandRole.READ, nominalBinding(r, dataIds),
+                provenance(e.subjects().get(0).meta().provenance()), proof.wholeItem().map(d -> new WholeItemAccess(dataIds.get(d)))));
+        if (subject.isEmpty() || proof.wholeItem().isEmpty()) codes.add("EVALUATE_SUBJECT_NOT_PROVEN");
+        var arms = new ArrayList<EvaluateArm>();
+        var other = new IfArm(ClausePresence.ABSENT, Availability.KNOWN,
+                new ExecutableStart(Availability.UNAVAILABLE, Optional.empty()), origin, List.of());
+        List<StatementId> otherStatements = List.of();
+        for (var a : e.branches()) {
+            var members = a.statements().stream().map(ids::get).toList();
+            var entry = proof.structureKnown() && !members.isEmpty() ? Optional.of(members.get(0)) : Optional.<StatementId>empty();
+            var armCodes = entry.isPresent() ? List.<String>of() : List.of("EVALUATE_ARM_ENTRY_NOT_PROVEN");
+            var control = new IfArm(ClausePresence.PRESENT, entry.isPresent() ? Availability.KNOWN : Availability.PARTIAL,
+                new ExecutableStart(entry.isPresent() ? Availability.KNOWN : Availability.UNAVAILABLE, entry), provenance(a.meta().provenance()), armCodes);
+            codes.addAll(armCodes);
+            if (a.other()) { other = control; otherStatements = members; }
+            else {
+                var literal = (Ast.LiteralExpression)a.selectors().get(0).expression();
+                var selection = new LiteralSource(new OperandId(id, arms.size()+1), LiteralKind.ALPHANUMERIC,
+                    literal.value(), provenance(literal.meta().provenance()), literal.logicalText().map(t -> new TextValue(t.value())));
+                arms.add(new EvaluateArm(arms.size(), selection, members, control));
+            }
+        }
+        var next = canonicalStatement(proof.nextStatement(), inputs, ids);
+        if (next.isEmpty()) codes.add("EVALUATE_CONTINUATION_NOT_PROVEN");
+        if (containment.branch()==Branch.UNKNOWN) codes.add(CONTAINMENT_GAP);
+        var uniqueCodes = codes.stream().distinct().toList();
+        var status = uniqueCodes.isEmpty() ? ReadinessStatus.SUFFICIENT : ReadinessStatus.PARTIAL;
+        output.add(new EvaluateFact(header(id, plan.position().ordinal(), containment, origin,
+            uniqueCodes.isEmpty() ? CoverageStatus.MODELED : CoverageStatus.PARTIAL,
+            readiness(status, "typed literal selection", status, "explicit ordered arms and normal completion",
+                ReadinessStatus.PARTIAL, "runtime subject value unknown")), subject, arms, other, otherStatements,
+            new NormalContinuation(next.isPresent() ? ContinuationAvailability.KNOWN : ContinuationAvailability.UNAVAILABLE, next, origin), uniqueCodes));
+        for (var entry : plan.entries()) if (projectableDataBinding(entry, inputs)) {
+            addReportGaps(id, entry.occurrence(), inputs, provenance(entry.occurrence().meta().provenance()), gaps);
+            requireBindingGapWhenNeeded(output.get(output.size()-1).header(), entry, gaps);
+        }
+        for (var code : uniqueCodes) gaps.add(new Gap(id, code.equals(CONTAINMENT_GAP) ? GapScope.STRUCTURE : GapScope.CAPABILITY,
+                code, "EVALUATE retains explicit partial proof", origin));
+    }
+
     private static CobolSemanticProduct.CoverageStatus containmentCoverage(
             CobolSemanticProduct.Containment containment) {
         return containment.branch() == CobolSemanticProduct.Branch.UNKNOWN
@@ -892,6 +949,8 @@ public final class CobolSemanticProductProjector {
             Map<Ast.Statement, CobolSemanticProduct.StatementId> statementIds) {
         if (position.parent() == null)
             return CobolSemanticProduct.Containment.root();
+        if (position.parent() instanceof Ast.EvaluateStatement && position.branch()==Branch.EVALUATE_ARM)
+            return CobolSemanticProduct.Containment.childOf(statementIds.get(position.parent()), Branch.EVALUATE_ARM);
         if (position.parent() instanceof Ast.IfStatement) {
             CobolSemanticProduct.StatementId parent = statementIds.get(position.parent());
             require(parent != null, "direct IF parent must be part of the projected inventory");
@@ -920,7 +979,8 @@ public final class CobolSemanticProductProjector {
                     : ContinuationProjection.statement(next);
         } else if (position.parent() == null) {
             result = ContinuationProjection.end();
-        } else if (position.parent() instanceof Ast.IfStatement) {
+        } else if (position.parent() instanceof Ast.IfStatement
+                || position.parent() instanceof Ast.EvaluateStatement && position.branch()==Branch.EVALUATE_ARM) {
             StatementPosition parent = positionsByStatement.get(position.parent());
             require(parent != null, "IF parent has no canonical structural position");
             result = continuation(parent, statementIds, positionsByStatement, continuations);
@@ -1658,6 +1718,8 @@ public final class CobolSemanticProductProjector {
                         CobolSemanticProduct.Branch.THEN, output);
                 collectStatementGroup(conditional.elseBranch(), conditional,
                         CobolSemanticProduct.Branch.ELSE, output);
+            } else if (statement instanceof Ast.EvaluateStatement e && EvaluateSemantics.supportedShape(e)) {
+                for (var arm : e.branches()) collectStatementGroup(arm.statements(), e, Branch.EVALUATE_ARM, output);
             } else {
                 List<Ast.Statement> nested = new ArrayList<>();
                 for (Ast.Node child : Ast.children(statement))

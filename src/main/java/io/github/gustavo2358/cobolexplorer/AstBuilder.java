@@ -504,7 +504,7 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
                 var context = region.statements().get(i);
                 Ast.Statement current = context.entryStatement() == null ? builtStatements.get(context) : null;
                 if (next != null && (current instanceof Ast.MoveStatement || current instanceof Ast.IfStatement
-                        || current instanceof Ast.PerformStatement
+                        || current instanceof Ast.PerformStatement || current instanceof Ast.EvaluateStatement
                         || current instanceof Ast.CallStatement call && !call.surface().hasHandlers()
                         || sequentialOpaque(context)))
                     result.put(current.meta().id(), next.meta().id());
@@ -513,6 +513,13 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
                     pending.push(new CompletionRegion(branch.ifThen().statement(), next, false));
                     if (branch.ifElse() != null)
                         pending.push(new CompletionRegion(branch.ifElse().statement(), next, false));
+                }
+                if (context.evaluateStatement() != null && current instanceof Ast.EvaluateStatement) {
+                    var evaluate = context.evaluateStatement();
+                    for (var arm : evaluate.evaluateWhenPhrase())
+                        pending.push(new CompletionRegion(arm.statement(), next, false));
+                    if (evaluate.evaluateWhenOther() != null)
+                        pending.push(new CompletionRegion(evaluate.evaluateWhenOther().statement(), next, false));
                 }
                 // An unmaterialized direct statement is a barrier, never skipped.
                 next = current;
@@ -1014,7 +1021,14 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
         }
         CobolParser.EvaluateWhenOtherContext other = context.evaluateWhenOther();
         if (other != null) branches.add(new Ast.EvaluateBranch(meta(other), List.of(), "OTHER", true, statementsInside(other)));
-        return new Ast.EvaluateStatement(meta, subjects, branches, context.END_EVALUATE() != null);
+        return new Ast.EvaluateStatement(meta, subjects, branches, context.END_EVALUATE() != null,
+                context.evaluateAlsoSelect().isEmpty() && context.evaluateSelect().identifier() != null && !insideEvaluate(context));
+    }
+
+    private static boolean insideEvaluate(ParserRuleContext context) {
+        for (var parent=context.getParent(); parent!=null; parent=parent.getParent())
+            if(parent instanceof CobolParser.EvaluateStatementContext)return true;
+        return false;
     }
 
     private Ast.EvaluateSelector evaluateSelector(CobolParser.EvaluateConditionContext condition,
@@ -1027,7 +1041,10 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
         boolean directNominalValue = condition.evaluateValue() != null
                 && condition.evaluateValue().identifier() != null
                 && condition.evaluateThrough() == null;
-        Ast.EvaluateSelectorContext selectorContext = !directNominalValue || subjectIndex >= subjects.size()
+        boolean simpleLiteral = condition.NOT() == null && condition.evaluateThrough() == null
+                && condition.evaluateValue() != null && condition.evaluateValue().literal() != null
+                && expression instanceof Ast.LiteralExpression literal && literal.logicalText().isPresent();
+        Ast.EvaluateSelectorContext selectorContext = simpleLiteral ? Ast.EvaluateSelectorContext.SIMPLE_LITERAL : !directNominalValue || subjectIndex >= subjects.size()
                 ? Ast.EvaluateSelectorContext.OTHER
                 : correspondingBooleanSubject ? Ast.EvaluateSelectorContext.BOOLEAN_SUBJECT_NOMINAL
                 : Ast.EvaluateSelectorContext.VALUE_COMPARISON;

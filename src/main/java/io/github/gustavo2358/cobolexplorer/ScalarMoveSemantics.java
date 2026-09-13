@@ -32,6 +32,8 @@ public final class ScalarMoveSemantics {
     private final Map<ResolutionContracts.SemanticEntityId, ScalarText> declarations;
     private final Map<NodeKey, Move> moves;
     private final Metrics metrics;
+    private final EvaluateSemantics evaluates;
+    public EvaluateSemantics evaluates() { return evaluates; }
     private final IfSemantics ifs;
     private final PerformSemantics performs;
     public PerformSemantics performs() { return performs; }
@@ -42,11 +44,12 @@ public final class ScalarMoveSemantics {
     }
 
     private ScalarMoveSemantics(Map<ResolutionContracts.SemanticEntityId, ScalarText> declarations,
-                                Map<NodeKey, Move> moves, Map<NodeKey, Call> calls, Metrics metrics, IfSemantics ifs, PerformSemantics performs) {
+                                Map<NodeKey, Move> moves, Map<NodeKey, Call> calls, Metrics metrics, IfSemantics ifs, PerformSemantics performs, EvaluateSemantics evaluates) {
         this.declarations = Map.copyOf(declarations);
         this.moves = Map.copyOf(moves);
         this.metrics = metrics;
         this.ifs = Objects.requireNonNull(ifs);
+        this.evaluates = Objects.requireNonNull(evaluates);
         this.performs = Objects.requireNonNull(performs);
         this.calls = Map.copyOf(calls);
     }
@@ -210,7 +213,7 @@ public final class ScalarMoveSemantics {
         var performs = PerformSemantics.analyze(frontend, tables, resolution, report, moves, ifs);
         return new ScalarMoveSemantics(declarations, moves, calls,
                 new Metrics(counts[0], counts[1], counts[2], counts[3], counts[4]),
-                ifs, performs);
+                ifs, performs, EvaluateSemantics.analyze(frontend, resolution, report, declarations));
     }
 
     private static Move fact(Optional<ResolutionContracts.SemanticEntityId> whole,
