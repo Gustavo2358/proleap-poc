@@ -24,7 +24,7 @@ class W1CompatibilityW2ATest {
             byte[] currentBytes = SemanticProductJsonWriter.serialize(port);
             var current = (ObjectNode) json.readTree(currentBytes);
             assertEquals("1.3.0", old.path("contractVersion").asText());
-            assertEquals("2.6.0", current.path("contractVersion").asText());
+            assertEquals("2.7.0", current.path("contractVersion").asText());
             assertEquals("UNAVAILABLE", current.path("storageIndependence").path("availability").asText());
             assertTrue(current.path("storageIndependence").path("members").isEmpty());
             for (var statement : current.path("statements")) if (statement.path("variant").asText().equals("MOVE")) {
@@ -35,11 +35,24 @@ class W1CompatibilityW2ATest {
                 assertTrue(data.path("scalarInteger").isNull(),"unrelated historical text declaration gains no integer proof");
                 ((ObjectNode)data).remove("scalarInteger");
             }
+            assertEquals("UNSPECIFIED", current.path("storage").path("profile").asText());
+            assertTrue(current.path("storage").path("nodes").isEmpty());
+            removeOnlyAbsentRegionalFacts(current);
+            current.remove("storage");
             current.remove("storageIndependence"); current.remove("contractVersion"); old.remove("contractVersion");
             assertEquals(old, current, name + ": all W1 facts, IDs, bindings, origins, provenance, fitting, gaps and readiness must match");
             assertArrayEquals(frozen, Files.readAllBytes(golden));
             Path output = Path.of("target/cp6-w2a/w1-compatibility"); Files.createDirectories(output);
             Files.write(output.resolve(name + "-1.5.0.json"), currentBytes);
         }
+    }
+    private static void removeOnlyAbsentRegionalFacts(com.fasterxml.jackson.databind.JsonNode node) {
+        if (node instanceof ObjectNode object) {
+            for (var key : java.util.List.of("regionalAccess", "regionalMove")) if (object.has(key)) {
+                assertTrue(object.path(key).isNull(), "legacy publications without storage input gain no regional proof");
+                object.remove(key);
+            }
+        }
+        node.forEach(W1CompatibilityW2ATest::removeOnlyAbsentRegionalFacts);
     }
 }

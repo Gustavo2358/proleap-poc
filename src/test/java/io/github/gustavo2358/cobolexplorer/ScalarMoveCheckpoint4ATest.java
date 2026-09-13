@@ -53,7 +53,7 @@ class ScalarMoveCheckpoint4ATest {
     }
     // JSON-only assertions have no frontend joins and deliberately erase textual readiness.
     static void assertJson(JsonNode doc) {
-        assertEquals("2.6.0", doc.path("contractVersion").asText());
+        assertEquals("2.7.0", doc.path("contractVersion").asText());
         var data = doc.path("dataDeclarations").get(0);
         var statements = doc.path("statements");
         JsonNode move = null, goback = null;
@@ -261,11 +261,14 @@ class ScalarMoveCheckpoint4ATest {
         var a = AstBoundaryTestSupport.analyze(Files.readString(fixture), fixture.getFileName().toString());
         var port = CobolSemanticProductProjector.open(products(a), a.model().programUnits().get(0).id());
         var current = mapper.readTree(SemanticProductJsonWriter.serialize(port));
-        assertEquals("2.6.0", current.path("contractVersion").asText());
+        assertEquals("2.7.0", current.path("contractVersion").asText());
         assertEquals("GOBACK", previous.path("statements").get(0).path("variant").asText());
         assertEquals("NONE", previous.path("statements").get(0).path("localContinuation").asText());
         ((com.fasterxml.jackson.databind.node.ObjectNode) previous).remove("contractVersion");
         assertEquals("UNAVAILABLE", current.path("storageIndependence").path("availability").asText());
+        assertEquals("UNSPECIFIED", current.path("storage").path("profile").asText());
+        assertTrue(current.path("storage").path("nodes").isEmpty());
+        ((com.fasterxml.jackson.databind.node.ObjectNode) current).remove("storage");
         ((com.fasterxml.jackson.databind.node.ObjectNode) current).remove("storageIndependence");
         ((com.fasterxml.jackson.databind.node.ObjectNode) current).remove("contractVersion");
         assertEquals(previous, current, "all CP3 facts, provenance, coverage and gaps must be unchanged");

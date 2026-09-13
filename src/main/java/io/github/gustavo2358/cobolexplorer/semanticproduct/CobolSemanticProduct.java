@@ -1,5 +1,6 @@
 package io.github.gustavo2358.cobolexplorer.semanticproduct;
 
+import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -499,8 +500,9 @@ public final class CobolSemanticProduct {
     }
 
     public record DataReference(OperandId id, OperandRole role,
-                                NominalBinding binding, Provenance provenance, Optional<WholeItemAccess> wholeItemAccess) implements CallTarget, MoveSource {
+                                NominalBinding binding, Provenance provenance, Optional<WholeItemAccess> wholeItemAccess, Optional<RegionalAccess> regionalAccess) implements CallTarget, MoveSource {
         public DataReference {
+            Objects.requireNonNull(regionalAccess);
             wholeItemAccess = Objects.requireNonNull(wholeItemAccess);
             if (wholeItemAccess.isPresent()) require(binding.selected().equals(Optional.of(wholeItemAccess.get().data())),
                     "whole item access must agree with nominal selection");
@@ -509,9 +511,76 @@ public final class CobolSemanticProduct {
             binding = Objects.requireNonNull(binding, "binding");
             provenance = Objects.requireNonNull(provenance, "provenance");
         }
+        public DataReference(OperandId id, OperandRole role, NominalBinding binding, Provenance provenance, Optional<WholeItemAccess> wholeItemAccess) {
+            this(id, role, binding, provenance, wholeItemAccess, Optional.empty());
+        }
         public DataReference(OperandId id, OperandRole role, NominalBinding binding, Provenance provenance) {
             this(id, role, binding, provenance, Optional.empty());
         }
+    }
+
+    /** Physical identities are distinct from nominal DATA and from operand occurrences. */
+    public record StorageNodeId(UnitId unit, int localId) {
+        public StorageNodeId { Objects.requireNonNull(unit); require(localId >= 0, "negative physical node id"); }
+    }
+    public record StorageBaseId(UnitId unit, int localId) {
+        public StorageBaseId { Objects.requireNonNull(unit); require(localId >= 0, "negative storage base id"); }
+    }
+    public enum StorageProfile { UNSPECIFIED, IBM_ENTERPRISE_6_4_FIXED_DISPLAY_1047 }
+    public enum PhysicalKind { GROUP, ELEMENTARY, OPAQUE }
+    public enum AllocationProof { INDEPENDENT_LOCAL_WORKING_STORAGE, UNPROVEN }
+    public enum RegionalMoveKind { LITERAL_BYTES, COPY_BYTES, MUST_UNKNOWN, UNAVAILABLE }
+    public record StorageMeasure(Optional<BigInteger> value, List<String> gapCodes) {
+        public StorageMeasure {
+            Objects.requireNonNull(value); gapCodes = List.copyOf(gapCodes);
+            gapCodes.forEach(code -> requireText(code, "measure gap"));
+            require(value.isPresent() ? value.get().signum() >= 0 && gapCodes.isEmpty() : !gapCodes.isEmpty(),
+                    "known nonnegative measure or explicit unknown reason required");
+        }
+    }
+    public record PhysicalNode(StorageNodeId id, Optional<StorageNodeId> parent, int order,
+            boolean filler, PhysicalKind kind, Optional<DataItemId> data, StorageMeasure extent, Provenance provenance) {
+        public PhysicalNode {
+            Objects.requireNonNull(id); Objects.requireNonNull(parent); require(order >= 0, "negative sibling order");
+            Objects.requireNonNull(kind); Objects.requireNonNull(data); Objects.requireNonNull(extent); Objects.requireNonNull(provenance);
+            require(!filler || data.isEmpty(), "FILLER cannot require a nominal identity");
+        }
+    }
+    public record StorageBase(StorageBaseId id, StorageMeasure extent, AllocationProof allocation, Provenance provenance) {
+        public StorageBase { Objects.requireNonNull(id); Objects.requireNonNull(extent); Objects.requireNonNull(allocation); Objects.requireNonNull(provenance); }
+    }
+    public record StorageView(StorageNodeId node, StorageBaseId base, StorageMeasure offset,
+            StorageMeasure extent, Optional<String> codec, Provenance provenance) {
+        public StorageView {
+            Objects.requireNonNull(node); Objects.requireNonNull(base); Objects.requireNonNull(offset);
+            Objects.requireNonNull(extent); Objects.requireNonNull(codec); Objects.requireNonNull(provenance);
+            require(codec.isEmpty() || codec.get().equals("text.ebcdic.ibm1047@1"), "unsupported storage codec");
+        }
+    }
+    /** This reference accesses exactly the selected physical view, without subscripts or modification. */
+    public record RegionalAccess(StorageNodeId view) { public RegionalAccess { Objects.requireNonNull(view); } }
+    public record RegionalMove(RegionalMoveKind kind, List<Integer> bytes, List<String> gapCodes) {
+        public RegionalMove {
+            Objects.requireNonNull(kind); bytes = List.copyOf(bytes); gapCodes = List.copyOf(gapCodes);
+            require(bytes.stream().allMatch(b -> b >= 0 && b <= 255), "invalid octet");
+            require(kind == RegionalMoveKind.LITERAL_BYTES || bytes.isEmpty(), "only literal byte writes carry bytes");
+            require((kind == RegionalMoveKind.MUST_UNKNOWN || kind == RegionalMoveKind.UNAVAILABLE) == !gapCodes.isEmpty(),
+                    "precise write has no gaps; unknown write requires reasons");
+            gapCodes.forEach(code -> requireText(code, "regional MOVE gap"));
+        }
+    }
+    public record StorageInventory(StorageProfile profile, List<PhysicalNode> nodes, List<StorageBase> bases,
+            List<StorageView> views, List<String> gapCodes) {
+        public StorageInventory {
+            Objects.requireNonNull(profile); nodes = List.copyOf(nodes); bases = List.copyOf(bases);
+            views = List.copyOf(views); gapCodes = List.copyOf(gapCodes);
+            gapCodes.forEach(code -> requireText(code, "storage gap"));
+            require(profile != StorageProfile.UNSPECIFIED || !gapCodes.isEmpty(), "absent environment requires a gap");
+        }
+        public Optional<String> profileId() { return profile == StorageProfile.UNSPECIFIED ? Optional.empty()
+                : Optional.of("ibm-enterprise-6.4-fixed-display-1047@1"); }
+        public Optional<String> runtimeCodec() { return profile == StorageProfile.UNSPECIFIED ? Optional.empty() : Optional.of("text.ebcdic.ibm1047@1"); }
+        public static StorageInventory unavailable() { return new StorageInventory(StorageProfile.UNSPECIFIED, List.of(), List.of(), List.of(), List.of("PROFILE_NOT_SELECTED")); }
     }
 
     public enum PredicateProfile { SCALAR_TEXT_EQUALITY, NUMERIC_RELATION, UNAVAILABLE }
@@ -780,8 +849,9 @@ public final class CobolSemanticProduct {
 
     public record MoveFact(StatementHeader header, MoveSource source,
                            DataReference target, CopySemantics copySemantics,
-                           NormalContinuation normalContinuation, Optional<TextAdjustment> textAdjustment) implements StatementFact {
+                           NormalContinuation normalContinuation, Optional<TextAdjustment> textAdjustment, Optional<RegionalMove> regionalMove) implements StatementFact {
         public MoveFact {
+            Objects.requireNonNull(regionalMove);
             copySemantics = Objects.requireNonNull(copySemantics);
             textAdjustment = Objects.requireNonNull(textAdjustment);
             require((copySemantics == CopySemantics.FITTED_TEXT) == textAdjustment.isPresent(),
@@ -801,6 +871,10 @@ public final class CobolSemanticProduct {
             if (source instanceof DataReference data) require(data.role() == OperandRole.READ, "MOVE data source requires READ");
             if (target.role() != OperandRole.WRITE)
                 throw new IllegalArgumentException("MOVE target must have WRITE role");
+        }
+        public MoveFact(StatementHeader header, MoveSource source, DataReference target,
+                        CopySemantics copySemantics, NormalContinuation normalContinuation, Optional<TextAdjustment> textAdjustment) {
+            this(header, source, target, copySemantics, normalContinuation, textAdjustment, Optional.empty());
         }
         public MoveFact(StatementHeader header, MoveSource source, DataReference target,
                         CopySemantics copySemantics, NormalContinuation normalContinuation) {
@@ -959,7 +1033,7 @@ public final class CobolSemanticProduct {
     public record State(UnitId unit, Policy policy,
                         List<DataDeclaration> dataDeclarations,
                         List<StatementFact> statements,
-                        List<Gap> gaps, CoverageSummary coverage, EntryInventory entryInventory, IndependentStorageSet storageIndependence) {
+                        List<Gap> gaps, CoverageSummary coverage, EntryInventory entryInventory, IndependentStorageSet storageIndependence, StorageInventory storage) {
         public State {
             unit = Objects.requireNonNull(unit, "unit");
             policy = Objects.requireNonNull(policy, "policy");
@@ -970,6 +1044,7 @@ public final class CobolSemanticProduct {
             entryInventory = Objects.requireNonNull(entryInventory, "entryInventory");
             validateState(unit, dataDeclarations, statements, gaps, coverage);
             validateEntries(unit, statements, entryInventory);
+            validateStorage(unit, dataDeclarations, statements, Objects.requireNonNull(storage));
             Objects.requireNonNull(storageIndependence);
             Map<DataItemId, DataDeclaration> storageDeclarations = new HashMap<>();
             for (var declaration : dataDeclarations) storageDeclarations.put(declaration.id(), declaration);
@@ -981,6 +1056,10 @@ public final class CobolSemanticProduct {
             }
         }
         public State(UnitId unit, Policy policy, List<DataDeclaration> dataDeclarations,
+                     List<StatementFact> statements, List<Gap> gaps, CoverageSummary coverage, EntryInventory entryInventory, IndependentStorageSet storageIndependence) {
+            this(unit, policy, dataDeclarations, statements, gaps, coverage, entryInventory, storageIndependence, StorageInventory.unavailable());
+        }
+        public State(UnitId unit, Policy policy, List<DataDeclaration> dataDeclarations,
                      List<StatementFact> statements, List<Gap> gaps, CoverageSummary coverage, EntryInventory entryInventory) {
             this(unit, policy, dataDeclarations, statements, gaps, coverage, entryInventory, IndependentStorageSet.unavailable());
         }
@@ -989,6 +1068,91 @@ public final class CobolSemanticProduct {
         public State(UnitId unit, Policy policy, List<DataDeclaration> dataDeclarations,
                      List<StatementFact> statements, List<Gap> gaps, CoverageSummary coverage) {
             this(unit, policy, dataDeclarations, statements, gaps, coverage, EntryInventory.unavailable());
+        }
+    }
+
+    private static void validateStorage(UnitId unit, List<DataDeclaration> declarations, List<StatementFact> statements, StorageInventory inventory) {
+        var declared = new HashSet<DataItemId>();
+        for (var d : declarations) declared.add(d.id());
+        var nodes = new HashMap<StorageNodeId, PhysicalNode>();
+        var dataNodes = new HashSet<DataItemId>();
+        var siblings = new HashMap<Optional<StorageNodeId>, Set<Integer>>();
+        for (var n : inventory.nodes()) {
+            require(n.id().unit().equals(unit) && nodes.put(n.id(),n) == null, "duplicate or foreign physical node");
+            require(siblings.computeIfAbsent(n.parent(),ignored->new HashSet<>()).add(n.order()), "duplicate physical sibling order");
+            n.data().ifPresent(id->require(declared.contains(id) && dataNodes.add(id), "physical DATA must exist and have one node"));
+            require(inventory.profile() != StorageProfile.UNSPECIFIED || n.extent().value().isEmpty(), "known layout requires an explicit environment");
+        }
+        // Iterative forest closure: no recursive ancestry traversal or quadratic pair scan.
+        var complete = new HashSet<StorageNodeId>();
+        for (var n : inventory.nodes()) {
+            var path = new HashSet<StorageNodeId>();
+            var current = Optional.of(n.id());
+            while (current.isPresent() && !complete.contains(current.get())) {
+                var id = current.get(); var node = nodes.get(id);
+                require(node != null && path.add(id), "dangling parent or cyclic physical tree");
+                current = node.parent();
+            }
+            complete.addAll(path);
+        }
+        var bases = new HashMap<StorageBaseId, StorageBase>();
+        for (var base : inventory.bases()) {
+            require(base.id().unit().equals(unit) && bases.put(base.id(),base) == null, "duplicate or foreign storage base");
+            require(inventory.profile() != StorageProfile.UNSPECIFIED || base.extent().value().isEmpty()
+                && base.allocation() == AllocationProof.UNPROVEN, "known storage requires an explicit environment");
+            require(nodes.containsKey(new StorageNodeId(unit,base.id().localId())), "storage base must have an owning physical node");
+        }
+        var views = new HashMap<StorageNodeId, StorageView>();
+        for (var v : inventory.views()) {
+            var node = nodes.get(v.node()); var base = bases.get(v.base());
+            require(node != null && base != null && views.put(v.node(),v) == null, "view must have unique node and existing base");
+            require(node.extent().equals(v.extent()), "view extent must agree with physical node");
+            require(v.codec().isEmpty() || inventory.runtimeCodec().equals(v.codec()) && v.extent().value().isPresent()
+                && node.kind() != PhysicalKind.OPAQUE, "textual view requires explicit supported layout and codec");
+            if (v.offset().value().isPresent() && v.extent().value().isPresent() && base.extent().value().isPresent())
+                require(v.offset().value().get().add(v.extent().value().get()).compareTo(base.extent().value().get()) <= 0, "view exceeds storage base");
+        }
+        require(views.size() == nodes.size(), "every physical node needs an explicit view, including unknown layout");
+        for (var n : inventory.nodes()) n.parent().ifPresent(parent -> {
+            var p = nodes.get(parent); var pv = views.get(parent); var v = views.get(n.id());
+            require(p.kind() != PhysicalKind.ELEMENTARY && pv.base().equals(v.base()), "child must share parent storage base");
+            if (pv.offset().value().isPresent() && pv.extent().value().isPresent() && v.offset().value().isPresent() && v.extent().value().isPresent())
+                require(v.offset().value().get().compareTo(pv.offset().value().get()) >= 0
+                    && v.offset().value().get().add(v.extent().value().get()).compareTo(pv.offset().value().get().add(pv.extent().value().get())) <= 0,
+                    "child view exceeds physical parent");
+        });
+        for (var statement : statements) {
+            for (var ref : references(statement)) ref.regionalAccess().ifPresent(access -> {
+                var view = views.get(access.view()); var node = nodes.get(access.view());
+                require(view != null && node != null && ref.binding().status() == ResolutionStatus.RESOLVED
+                    && ref.binding().selected().isPresent() && ref.binding().selected().equals(node.data()), "regional access must agree with unique nominal selection");
+                require(view.codec().isPresent() && view.offset().value().isPresent() && view.extent().value().isPresent()
+                    && view.extent().value().get().signum() > 0 && bases.get(view.base()).extent().value().isPresent(), "regional access needs a bounded supported view");
+                require(ref.role() != OperandRole.CALL_TARGET || node.kind() == PhysicalKind.ELEMENTARY, "regional CALL target must be elementary text");
+            });
+            if (statement instanceof MoveFact move && move.regionalMove().isPresent()) {
+                var effect = move.regionalMove().get();
+                if (effect.kind() == RegionalMoveKind.UNAVAILABLE) continue;
+                require(move.target().regionalAccess().isPresent(), "mandatory write requires exact destination access");
+                var dest = views.get(move.target().regionalAccess().get().view());
+                if (effect.kind() == RegionalMoveKind.LITERAL_BYTES) {
+                    require(move.source() instanceof LiteralSource literal && literal.logicalValue().isPresent(), "byte literal write requires logical literal source");
+                    require(dest.extent().value().get().equals(BigInteger.valueOf(effect.bytes().size())), "literal bytes must fill the exact destination");
+                }
+                if (effect.kind() == RegionalMoveKind.COPY_BYTES) {
+                    require(move.source() instanceof DataReference source && source.regionalAccess().isPresent(), "byte copy needs exact source access");
+                    var source = views.get(((DataReference)move.source()).regionalAccess().get().view());
+                    require(source.extent().equals(dest.extent()), "byte copy needs equal source and destination extents");
+                    boolean disjoint;
+                    if (source.base().equals(dest.base())) {
+                        var left = source.offset().value().get(); var right = dest.offset().value().get();
+                        disjoint = left.add(source.extent().value().get()).compareTo(right) <= 0
+                            || right.add(dest.extent().value().get()).compareTo(left) <= 0;
+                    } else disjoint = bases.get(source.base()).allocation() == AllocationProof.INDEPENDENT_LOCAL_WORKING_STORAGE
+                            && bases.get(dest.base()).allocation() == AllocationProof.INDEPENDENT_LOCAL_WORKING_STORAGE;
+                    require(disjoint, "COBOL byte copy requires proved disjoint ranges");
+                }
+            }
         }
     }
 

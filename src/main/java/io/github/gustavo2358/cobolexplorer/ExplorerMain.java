@@ -30,13 +30,14 @@ public final class ExplorerMain {
         List<Path> copybooks = copybookDirectories(project,
                 argument(args, "--copybooks", "corpus/cpy,corpus/cpy-bms"));
         Path output = project.resolve(argument(args, "--output", "dist"));
+        var storageProfile = storageProfile(argument(args, "--storage-profile", "unspecified"));
 
         AnalysisProgress progress = new AnalysisProgress();
         long analysisStarted = System.nanoTime();
         try (AnalysisLogContext logContext = AnalysisLogContext.open(source)) {
             LOG.info("event=analysis_started phase=ANALYSIS output={}", output);
             try {
-                analyze(source, copybooks, output, logContext, progress, analysisStarted);
+                analyze(source, copybooks, output, logContext, progress, analysisStarted, storageProfile);
             } catch (Exception exception) {
                 LOG.error("event=analysis_failed phase={} elapsedMs={} reason={} impact=NO_RESULT",
                         progress.phase, elapsedMs(analysisStarted), exception.getClass().getSimpleName(), exception);
@@ -47,7 +48,7 @@ public final class ExplorerMain {
 
     private static void analyze(Path source, List<Path> copybooks, Path output,
                                 AnalysisLogContext logContext, AnalysisProgress progress,
-                                long analysisStarted) throws Exception {
+                                long analysisStarted, StorageLayoutSemantics.Profile storageProfile) throws Exception {
 
         GrammarBinding binding = Bindings.cobol();
         List<Diagnostic> diagnostics = new ArrayList<>();
@@ -213,7 +214,7 @@ public final class ExplorerMain {
         progress.phase = "SEMANTIC_PRODUCT";
         long semanticProductStarted = System.nanoTime();
         CobolSemanticPort semanticProduct = publishSemanticProduct(primaryUnit.id(), compilationBuild,
-                symbolTables, occurrences, resolution, resolutionReport);
+                symbolTables, occurrences, resolution, resolutionReport, storageProfile);
         SemanticProductJsonWriter.write(semanticProduct,
                 output.resolve("cobol-semantic-product.json"));
         // Preserve the original filename as a byte-identical compatibility alias.
@@ -270,18 +271,29 @@ public final class ExplorerMain {
                 resolutionReport.gaps().size(), resolutionReport.completeness().dependencyAnalysisReady(), output);
     }
 
+    static StorageLayoutSemantics.Profile storageProfile(String value) {
+        if (value.equals("unspecified")) return StorageLayoutSemantics.Profile.UNSPECIFIED;
+        if (value.equals(StorageLayoutSemantics.PROFILE_ID)) return StorageLayoutSemantics.Profile.IBM_ENTERPRISE_6_4_FIXED_DISPLAY_1047;
+        throw new IllegalArgumentException("unsupported --storage-profile: " + value);
+    }
+
     static CobolSemanticPort publishSemanticProduct(
-            ResolutionContracts.ProgramUnitId unitId,
-            CompilationUnitBuildResult frontend,
-            CompilationUnitSymbolTables symbolTables,
-            Map<ResolutionContracts.ProgramUnitId, ReferenceOccurrences> occurrences,
-            ReferenceResolution resolution,
-            ResolutionAnalysisReport report) {
+            ResolutionContracts.ProgramUnitId unitId, CompilationUnitBuildResult frontend,
+            CompilationUnitSymbolTables symbolTables, Map<ResolutionContracts.ProgramUnitId, ReferenceOccurrences> occurrences,
+            ReferenceResolution resolution, ResolutionAnalysisReport report) {
+        return publishSemanticProduct(unitId, frontend, symbolTables, occurrences, resolution, report, StorageLayoutSemantics.Profile.UNSPECIFIED);
+    }
+
+    static CobolSemanticPort publishSemanticProduct(
+            ResolutionContracts.ProgramUnitId unitId, CompilationUnitBuildResult frontend,
+            CompilationUnitSymbolTables symbolTables, Map<ResolutionContracts.ProgramUnitId, ReferenceOccurrences> occurrences,
+            ReferenceResolution resolution, ResolutionAnalysisReport report, StorageLayoutSemantics.Profile storageProfile) {
+        var layout = StorageLayoutSemantics.analyze(frontend, symbolTables, resolution, report, storageProfile);
+        var storage = StorageAccessSemantics.analyze(frontend, resolution, layout);
         return CobolSemanticProductProjector.open(
                 new CobolSemanticProductProjector.FrontendProducts(frontend, symbolTables,
                         occurrences, resolution, report,
-                        ScalarMoveSemantics.analyze(frontend, symbolTables, resolution, report)),
-                unitId);
+                        ScalarMoveSemantics.analyze(frontend, symbolTables, resolution, report), java.util.Optional.of(storage)), unitId);
     }
 
     private static long elapsedMs(long startedNanos) {

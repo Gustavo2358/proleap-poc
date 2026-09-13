@@ -9,7 +9,7 @@ from lean import require_local
 
 FAST_TESTS = ('ArchitectureBoundaryTest', 'HarnessDocsTest', 'SemanticProductEntryGobackTest', 'SemanticProductCheckpoint7JsonTest', 'W1CompatibilityW2ATest', 'LocalizedInputCompletenessContractTest',
               'ScalarMoveCheckpoint4ATest', 'MoveDataSourceTest', 'PerformDiscoveryTest', 'PerformBasicTest', 'PerformFamilyTest', 'PerformUntilTest', 'PerformTimesTest', 'PerformVaryingTest', 'MultiCallProgramTest', 'CompositionalityContractTest', 'EvaluateFirstSliceTest', 'GoToFirstSliceTest', 'ConditionalGoToTest', 'PartialProgramFactsTest', 'CallCheckpointW1ATest', 'IfCheckpointW2ATest',
-              'IfCanonicalProofTest', 'SemanticProductMoveCallContractTest', 'StorageLayoutTest', 'StorageAccessTest')
+              'IfCanonicalProofTest', 'SemanticProductMoveCallContractTest', 'StorageLayoutTest', 'StorageAccessTest', 'StorageProductTest')
 
 
 def pin_errors(root):

@@ -78,9 +78,9 @@ Um cálculo pós-binding produz fatos imutáveis. Projectors apenas os transport
   MUST/MAY, regra de ajuste explicitamente admitida e lacunas.
 - Separação: conjuntos de bases disjuntas com autoridade e provenance.
 
-SP **2.7.0** será o único writer corrente em W3. A família de fatos regionais
-terá schema fechado e versão explícita; leitores SP 1.x e 2.0–2.6 permanecem
-disponíveis. O lower valida closure, concordância das provas e bounds também na
+SP **2.7.0** é o único writer corrente. A família de fatos regionais tem
+schema fechado e versão explícita; a integração do reader 2.7 no lower preserva
+os leitores SP 1.x e 2.0–2.6. O lower valida closure, concordância das provas e bounds também na
 porta em memória. Nenhum campo físico é reconstruído de `picture`, nomes ou
 ordem de inventário. GEN/KILL e resultados de análise não pertencem ao SP.
 
@@ -148,3 +148,49 @@ IBM/IANA fixada, rejeita texto não representável e não consulta charset da JV
 O teste compara os 256 mapeamentos ao arquivo derivado da fonte IANA de W1,
 incluindo a distinção LF/NEL. Captura aqui significa um fato de leitura anterior
 à escrita; valores de runtime e efeitos posteriores continuam no consumidor AIR.
+
+
+## Fronteira SP 2.7 implementada em W3
+
+A CLI aceita `--storage-profile ibm-enterprise-6.4-fixed-display-1047@1`.
+O default `unspecified` não concede bytes, extents conhecidos, codecs ou
+independência física; outro identificador é erro de configuração. A composition
+root executa os dois produtos canônicos e o projector recebe o snapshot pronto.
+O ownership é verificado também no pacote de entrada do projector.
+
+`CobolSemanticPort.storage()` expõe StorageInventory. No JSON, `storage` possui
+`version=1.0.0`, `profile`, `profileId`, `runtimeCodec`, `nodes`, `bases`, `views`
+e `gapCodes`. O identificador versionado seleciona a autoridade IBM/IANA já
+fixada neste contrato; a seleção de ambiente provém da invocação, não de um
+intervalo fictício de source. `storage-node:<id>` e `storage-base:<id>` têm
+namespaces diferentes dos handles DATA. Um nó inclui parent/order/filler/kind,
+DATA opcional, extent e provenance. Base inclui extent, allocation e provenance;
+view inclui node/base/offset/extent/codec/provenance. Offset e extent têm
+`value` decimal não negativo como **string** ou null acompanhado de `gapCodes`.
+
+DataReference acrescenta `regionalAccess: {view}` ou null. A ocorrência,
+role, binding e origem continuam nos mesmos campos do operand. MoveFact
+acrescenta `regionalMove: {kind, bytes, gapCodes}` ou null; bytes são octetos
+inteiros 0–255, exclusivamente para LITERAL_BYTES. COPY_BYTES captura a fonte
+antes de escrever; MUST_UNKNOWN conserva o footprint obrigatório; UNAVAILABLE
+não autoriza uma escrita precisa. Os construtores anteriores continuam
+publicando ausência explícita desses fatos. WholeItemAccess e fitting legado
+mantêm sua semântica. Referências de IF/EVALUATE/PERFORM/observed também podem
+transportar acesso regional quando o produto canônico o conhece; isso sozinho
+não promove predicate, controle nem efeitos da construção.
+
+State verifica índices fechados, pais acíclicos, ordem entre irmãos única,
+base proprietária, view por nó, bounds, concordância nominal dos acessos,
+codec/ambiente explícitos, extensão de literal e disjunção de cópia. A validação
+é iterativa O(n + referências), sem reconstruir PICTURE nem recalcular offsets.
+A correspondência textual completa do payload de octetos é provada no encoder
+canônico contra os 256 mapeamentos IANA; o lower deve validá-la independentemente
+pelo codec AIR ao receber uma publicação não confiável.
+
+`StorageProductTest` verifica o port fechado, JSON determinístico, namespace,
+FILLER, qualificações, cópias 1/2/5/40, lacunas, permutação de inventário físico,
+closure inválida, bounds, seleção nominal, payload de extensão contraditória,
+cópia sobreposta/sem separação e snapshot estrangeiro. O FAST passou com 168
+métodos. As comparações históricas preservam os arquivos brutos e todos os fatos
+anteriores, descontando somente os campos aditivos provados ausentes e a versão.
+A qualificação M1 depende ainda do decoder/lowering e de values/dependências.

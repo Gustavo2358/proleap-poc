@@ -26,7 +26,7 @@ import java.util.Objects;
  */
 public final class SemanticProductJsonWriter {
     public static final String SCHEMA = "cobol-semantic-product";
-    public static final String CONTRACT_VERSION = "2.6.0";
+    public static final String CONTRACT_VERSION = "2.7.0";
 
     private static final ObjectMapper JSON = JsonMapper.builder()
             .enable(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY)
@@ -74,8 +74,31 @@ public final class SemanticProductJsonWriter {
                 new StructureDocument(port.rootStatements().stream()
                         .map(SemanticProductJsonWriter::statementHandle).toList(),
                         List.copyOf(branches)), gaps, coverage(port.coverage()),
-                entryInventory(port.entryInventory()), storageIndependence(port.storageIndependence()));
+                entryInventory(port.entryInventory()), storageIndependence(port.storageIndependence()), storage(port.storage()));
     }
+
+    private static String storageNodeHandle(CobolSemanticProduct.StorageNodeId id) { return "storage-node:" + id.localId(); }
+    private static String storageBaseHandle(CobolSemanticProduct.StorageBaseId id) { return "storage-base:" + id.localId(); }
+    private static StorageMeasureDocument measure(CobolSemanticProduct.StorageMeasure m) {
+        return new StorageMeasureDocument(m.value().map(Object::toString).orElse(null),m.gapCodes());
+    }
+    private static StorageDocument storage(CobolSemanticProduct.StorageInventory storage) {
+        return new StorageDocument("1.0.0",storage.profile(),storage.profileId().orElse(null),storage.runtimeCodec().orElse(null),
+            storage.nodes().stream().map(n->new PhysicalNodeDocument(storageNodeHandle(n.id()),n.parent().map(SemanticProductJsonWriter::storageNodeHandle).orElse(null),
+                n.order(),n.filler(),n.kind(),n.data().map(SemanticProductJsonWriter::dataHandle).orElse(null),measure(n.extent()),provenance(n.provenance()))).toList(),
+            storage.bases().stream().map(b->new StorageBaseDocument(storageBaseHandle(b.id()),measure(b.extent()),b.allocation(),provenance(b.provenance()))).toList(),
+            storage.views().stream().map(v->new StorageViewDocument(storageNodeHandle(v.node()),storageBaseHandle(v.base()),measure(v.offset()),measure(v.extent()),
+                v.codec().orElse(null),provenance(v.provenance()))).toList(),storage.gapCodes());
+    }
+    private record StorageMeasureDocument(String value,List<String> gapCodes) { }
+    private record PhysicalNodeDocument(String id,String parent,int order,boolean filler,CobolSemanticProduct.PhysicalKind kind,
+        String data,StorageMeasureDocument extent,ProvenanceDocument provenance) { }
+    private record StorageBaseDocument(String id,StorageMeasureDocument extent,CobolSemanticProduct.AllocationProof allocation,ProvenanceDocument provenance) { }
+    private record StorageViewDocument(String node,String base,StorageMeasureDocument offset,StorageMeasureDocument extent,String codec,ProvenanceDocument provenance) { }
+    private record StorageDocument(String version,CobolSemanticProduct.StorageProfile profile,String profileId,String runtimeCodec,
+        List<PhysicalNodeDocument> nodes,List<StorageBaseDocument> bases,List<StorageViewDocument> views,List<String> gapCodes) { }
+    private record RegionalAccessDocument(String view) { }
+    private record RegionalMoveDocument(CobolSemanticProduct.RegionalMoveKind kind,List<Integer> bytes,List<String> gapCodes) { }
 
     private static EntryInventoryDocument entryInventory(CobolSemanticProduct.EntryInventory inventory) {
         return new EntryInventoryDocument(inventory.status(), inventory.scope(),
@@ -171,7 +194,7 @@ public final class SemanticProductJsonWriter {
                             provenance(move.normalContinuation().provenance())), move.textAdjustment().map(a ->
                             new TextAdjustmentDocument(a.rule(), a.receiverExtent(),
                                     new TextValueDocument(a.result().logicalDomain(), a.result().value(), a.result().logicalExtent()),
-                                    provenance(a.provenance()))).orElse(null));
+                                    provenance(a.provenance()))).orElse(null), move.regionalMove().map(m->new RegionalMoveDocument(m.kind(),m.bytes(),m.gapCodes())).orElse(null));
         }
         if (fact instanceof CobolSemanticProduct.CallFact call) {
             return new CallDocument(header(call.header()), call.syntax(),
@@ -225,7 +248,8 @@ public final class SemanticProductJsonWriter {
             CobolSemanticProduct.DataReference reference) {
         return new DataReferenceDocument(operandHandle(reference.id()), reference.role(),
                 binding(reference.binding()), provenance(reference.provenance()), reference.wholeItemAccess()
-                        .map(access -> new WholeItemDocument(dataHandle(access.data()))).orElse(null));
+                        .map(access -> new WholeItemDocument(dataHandle(access.data()))).orElse(null),
+                reference.regionalAccess().map(a->new RegionalAccessDocument(storageNodeHandle(a.view()))).orElse(null));
     }
 
     private static BindingDocument binding(CobolSemanticProduct.NominalBinding binding) {
@@ -311,7 +335,7 @@ public final class SemanticProductJsonWriter {
     }
 
     @JsonPropertyOrder({"schema", "contractVersion", "unit", "policy",
-            "dataDeclarations", "statements", "structure", "gaps", "coverage", "entryInventory", "storageIndependence"})
+            "dataDeclarations", "statements", "structure", "gaps", "coverage", "entryInventory", "storageIndependence", "storage"})
     private record SemanticProductDocument(
             String schema,
             String contractVersion,
@@ -322,7 +346,7 @@ public final class SemanticProductJsonWriter {
             StructureDocument structure,
             List<GapDocument> gaps,
             CoverageDocument coverage,
-            EntryInventoryDocument entryInventory, IndependentStorageDocument storageIndependence) { }
+            EntryInventoryDocument entryInventory, IndependentStorageDocument storageIndependence, StorageDocument storage) { }
 
     private record EntryInventoryDocument(CobolSemanticProduct.InventoryStatus status,
                                           CobolSemanticProduct.EntryInventoryScope scope,
@@ -415,7 +439,7 @@ public final class SemanticProductJsonWriter {
     @JsonPropertyOrder({"variant", "header", "source", "target", "copySemantics", "normalContinuation", "textAdjustment"})
     private record MoveDocument(StatementHeaderDocument header, MoveSourceDocument source,
                                 DataReferenceDocument target, CobolSemanticProduct.CopySemantics copySemantics,
-                                ContinuationDocument normalContinuation, TextAdjustmentDocument textAdjustment) implements StatementDocument { }
+                                ContinuationDocument normalContinuation, TextAdjustmentDocument textAdjustment, RegionalMoveDocument regionalMove) implements StatementDocument { }
 
     private record TextAdjustmentDocument(CobolSemanticProduct.TextAdjustmentRule rule, int receiverExtent,
                                             TextValueDocument result, ProvenanceDocument provenance) { }
@@ -478,7 +502,7 @@ public final class SemanticProductJsonWriter {
 
     private record DataReferenceDocument(String id, CobolSemanticProduct.OperandRole role,
                                          BindingDocument binding,
-                                         ProvenanceDocument provenance, WholeItemDocument wholeItemAccess) { }
+                                         ProvenanceDocument provenance, WholeItemDocument wholeItemAccess, RegionalAccessDocument regionalAccess) { }
 
     private record BindingDocument(
             CobolSemanticProduct.ResolutionStatus status,

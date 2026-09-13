@@ -63,7 +63,10 @@ COBOL Frontend
    effects/dataflow readiness, unknowns, provenance e coverage. Readiness
    parcial não pode ser apresentada como completa.
 7. Identidade nominal de DATA não implica identidade final de storage.
-   `REDEFINES`, `RENAMES`, layout e overlap exigem Storage Semantics posterior.
+   Layout e relações COBOL requerem fatos canônicos próprios antes do lowering;
+   SP 2.7 transporta esses fatos sob perfil explícito. Storage Semantics downstream
+   normaliza regiões/vistas AIR e seus efeitos; não reconstrói regras COBOL.
+   RENAMES e os demais casos fora do perfil preservam a incerteza.
 8. Handles e ordem podem ser determinísticos para execuções equivalentes e
    transporte versionado. Isso não promete identidade persistente após edição
    estrutural, mudança de analyzer ou mudança de contract version.

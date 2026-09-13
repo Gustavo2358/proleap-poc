@@ -14,9 +14,12 @@ public final class StorageAccessSemantics {
                        List<Integer> bytes,List<Reason> reasons,Ast.SourceProvenance origin) {
         public Move { bytes=List.copyOf(bytes);reasons=List.copyOf(reasons); }
     }
+    private final StorageLayoutSemantics layout;
+    public StorageLayoutSemantics layout() { return layout; }
+    public boolean belongsTo(CompilationUnitBuildResult frontend, ReferenceResolution resolution) { return layout.belongsTo(frontend, resolution); }
     private final Map<Key,Access> accesses;
     private final Map<Key,Move> moves;
-    private StorageAccessSemantics(Map<Key,Access> accesses,Map<Key,Move> moves){this.accesses=Map.copyOf(accesses);this.moves=Map.copyOf(moves);}
+    private StorageAccessSemantics(StorageLayoutSemantics layout,Map<Key,Access> accesses,Map<Key,Move> moves){this.layout=layout;this.accesses=Map.copyOf(accesses);this.moves=Map.copyOf(moves);}
     public Optional<Access> access(Key reference){return Optional.ofNullable(accesses.get(reference));}
     public Collection<Access> accesses(){return accesses.values();}
     public Collection<Move> moves(){return moves.values();}
@@ -79,7 +82,7 @@ public final class StorageAccessSemantics {
                 moves.put(statement,new Move(statement,destination,source,kind,bytes,reasons,node.meta().provenance()));
             }
         }
-        return new StorageAccessSemantics(accesses,moves);
+        return new StorageAccessSemantics(layout,accesses,moves);
     }
     private record Visit(Ast.Node node,Ast.Statement owner) { }
     private static Role role(ResolutionContracts.ReferenceRole role) {
