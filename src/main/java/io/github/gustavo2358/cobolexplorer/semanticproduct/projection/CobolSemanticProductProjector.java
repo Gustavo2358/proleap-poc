@@ -311,7 +311,7 @@ public final class CobolSemanticProductProjector {
             return new StatementPlan(position, capability, entries);
         }
 
-        if (position.statement() instanceof Ast.EvaluateStatement e && EvaluateSemantics.supportedShape(e))
+        if (position.statement() instanceof Ast.EvaluateStatement e && inputs.products().scalarMoves().evaluates().fact(inputs.unitId(), e.meta().id()).supportedShape())
             return new StatementPlan(position, Capability.supported("EVALUATE", "SIMPLE_SUBJECT_LITERAL_ARMS"),
                     conditionEntries(e.subjects().get(0), inputs));
 
@@ -864,8 +864,9 @@ public final class CobolSemanticProductProjector {
         var proof = inputs.products().scalarMoves().evaluates().fact(inputs.unitId(), e.meta().id());
         var origin = provenance(e.meta().provenance());
         var codes = new ArrayList<String>();
-        Optional<DataReference> subject = plan.entries().stream().filter(r -> projectableDataBinding(r, inputs)).findFirst()
-            .map(r -> new DataReference(new OperandId(id, 0), OperandRole.READ, nominalBinding(r, dataIds),
+        require(plan.entries().size() <= 1, "single canonical EVALUATE subject reference");
+        Optional<DataReference> subject = plan.entries().isEmpty() ? Optional.empty()
+            : Optional.of(plan.entries().get(0)).filter(r -> projectableDataBinding(r, inputs)).map(r -> new DataReference(new OperandId(id, 0), OperandRole.READ, nominalBinding(r, dataIds),
                 provenance(e.subjects().get(0).meta().provenance()), proof.wholeItem().map(d -> new WholeItemAccess(dataIds.get(d)))));
         if (subject.isEmpty() || proof.wholeItem().isEmpty()) codes.add("EVALUATE_SUBJECT_NOT_PROVEN");
         var arms = new ArrayList<EvaluateArm>();
@@ -1584,7 +1585,7 @@ public final class CobolSemanticProductProjector {
                     unitId.compilationUnitId(), unitId.structuralPath(),
                     unitId.canonicalProgramName());
             return new ProjectionInputs(products, unitId, boundaryUnit, selectedSource,
-                    Collections.unmodifiableMap(units), statements(selected.program()),
+                    Collections.unmodifiableMap(units), statements(selected.program(), products.scalarMoves().evaluates(), unitId),
                     Collections.unmodifiableMap(occurrencesByAst),
                     Collections.unmodifiableMap(occurrencesById),
                     Collections.unmodifiableMap(resolutionsByAst),
@@ -1695,11 +1696,11 @@ public final class CobolSemanticProductProjector {
         for (Ast.Node child : Ast.children(node)) collectNodes(child, output);
     }
 
-    private static List<StatementPosition> statements(Ast.Program program) {
+    private static List<StatementPosition> statements(Ast.Program program, EvaluateSemantics evaluates, ResolutionContracts.ProgramUnitId unit) {
         List<Ast.Statement> roots = new ArrayList<>();
         collectDirectStatements(program, roots);
         List<StatementPosition> result = new ArrayList<>();
-        collectStatementGroup(roots, null, CobolSemanticProduct.Branch.ROOT, result);
+        collectStatementGroup(roots, null, CobolSemanticProduct.Branch.ROOT, result, evaluates, unit);
         return List.copyOf(result);
     }
 
@@ -1707,7 +1708,7 @@ public final class CobolSemanticProductProjector {
             List<Ast.Statement> group,
             Ast.Statement parent,
             CobolSemanticProduct.Branch branch,
-            List<StatementPosition> output) {
+            List<StatementPosition> output, EvaluateSemantics evaluates, ResolutionContracts.ProgramUnitId unit) {
         for (int index = 0; index < group.size(); index++) {
             Ast.Statement statement = group.get(index);
             Ast.Statement nextSibling = index + 1 < group.size() ? group.get(index + 1) : null;
@@ -1715,17 +1716,17 @@ public final class CobolSemanticProductProjector {
                     output.size()));
             if (statement instanceof Ast.IfStatement conditional) {
                 collectStatementGroup(conditional.thenBranch(), conditional,
-                        CobolSemanticProduct.Branch.THEN, output);
+                        CobolSemanticProduct.Branch.THEN, output, evaluates, unit);
                 collectStatementGroup(conditional.elseBranch(), conditional,
-                        CobolSemanticProduct.Branch.ELSE, output);
-            } else if (statement instanceof Ast.EvaluateStatement e && EvaluateSemantics.supportedShape(e)) {
-                for (var arm : e.branches()) collectStatementGroup(arm.statements(), e, Branch.EVALUATE_ARM, output);
+                        CobolSemanticProduct.Branch.ELSE, output, evaluates, unit);
+            } else if (statement instanceof Ast.EvaluateStatement e && evaluates.fact(unit, e.meta().id()).supportedShape()) {
+                for (var arm : e.branches()) collectStatementGroup(arm.statements(), e, Branch.EVALUATE_ARM, output, evaluates, unit);
             } else {
                 List<Ast.Statement> nested = new ArrayList<>();
                 for (Ast.Node child : Ast.children(statement))
                     collectDirectStatements(child, nested);
                 collectStatementGroup(nested, statement,
-                        CobolSemanticProduct.Branch.UNKNOWN, output);
+                        CobolSemanticProduct.Branch.UNKNOWN, output, evaluates, unit);
             }
         }
     }
