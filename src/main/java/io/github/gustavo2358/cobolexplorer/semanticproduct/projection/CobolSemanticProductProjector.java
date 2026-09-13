@@ -190,9 +190,10 @@ public final class CobolSemanticProductProjector {
                 ? program.meta().provenance() : procedure.meta().provenance());
         boolean inputMissing = inventoryStatus == InventoryStatus.INPUT_MISSING;
         boolean declaratives = origin != null && origin.declarativesPresent();
+        boolean entryInputKnown = origin != null && origin.inputProof().unaffectedBy(inputs.report().frontendState());
         Availability unavailable = inputMissing ? Availability.INPUT_MISSING : Availability.UNAVAILABLE;
         Optional<StatementId> start = Optional.empty();
-        if (origin != null && !inputMissing && !declaratives && origin.startStatementId().isPresent()) {
+        if (origin != null && entryInputKnown && !declaratives && origin.startStatementId().isPresent()) {
             Ast.Node target = inputs.selectedSource().nodes().get(origin.startStatementId().get());
             require(target instanceof Ast.Statement, "canonical entry target is not a unit statement");
             StatementId id = statementIds.get((Ast.Statement) target);
@@ -225,12 +226,16 @@ public final class CobolSemanticProductProjector {
                     "parameter contracts and explicit result contract are not fully available", provenance));
         if (inputMissing)
             gaps.add(new EntryGap(GapScope.ANALYSIS_INPUT, "ENTRY_INPUT_INCOMPLETE",
-                    "canonical input gaps prevent proving the executable entry", provenance));
+                    "input remains incomplete; entry localization does not prove signature or data completeness", provenance));
+        for (var missing : inputs.report().frontendState().unresolvedCopyDiagnostics())
+            gaps.add(new EntryGap(GapScope.ANALYSIS_INPUT, "UNRESOLVED_COPY",
+                    "COPY '" + missing.offendingToken() + "' from '" + missing.file()
+                            + "' at line " + missing.line() + " is unavailable; input remains incomplete", provenance));
         ReadinessStatus lowering = start.isEmpty() ? ReadinessStatus.BLOCKED
                 : signature.availability() == Availability.KNOWN
                 ? ReadinessStatus.SUFFICIENT : ReadinessStatus.PARTIAL;
         EntryFact entry = new EntryFact(new EntryId(inputs.boundaryUnit(), 0), EntryRole.PRIMARY,
-                origin == null || inputMissing ? unavailable : Availability.KNOWN,
+                origin == null || !entryInputKnown ? unavailable : Availability.KNOWN,
                 new ExecutableStart(start.isPresent() ? Availability.KNOWN : unavailable, start),
                 signature, provenance,
                 inputMissing ? CoverageStatus.INPUT_MISSING : gaps.isEmpty()

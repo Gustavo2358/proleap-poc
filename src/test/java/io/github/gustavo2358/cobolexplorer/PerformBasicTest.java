@@ -33,7 +33,7 @@ class PerformBasicTest {
             if (name.equals("copy")) { assertInstanceOf(DataReference.class, bodyFacts.get(1).source()); assertEquals(Availability.KNOWN, port.storageIndependence().availability()); }
             var json = SemanticProductJsonWriter.serialize(port);
             assertArrayEquals(json, SemanticProductJsonWriter.serialize(ScalarMoveCheckpoint4ATest.publish(source)));
-            var tree = new ObjectMapper().readTree(json); assertEquals("1.8.0", tree.path("contractVersion").asText());
+            var tree = new ObjectMapper().readTree(json); assertEquals("1.9.0", tree.path("contractVersion").asText());
             Path out = Path.of("target/perform-basic"); Files.createDirectories(out);
             Files.write(out.resolve(name + ".json"), json); Files.writeString(out.resolve(name + ".cbl"), source);
         }

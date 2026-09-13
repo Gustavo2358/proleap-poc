@@ -11,15 +11,20 @@ import java.util.Objects;
 /** Immutable, segment-based mapping from preprocessed text back to COBOL source files. */
 final class SourceMap {
     record Segment(int start, int end, String sourceFile, int originalStart, int originalEnd,
-                   List<Ast.CopyFrame> includeChain, boolean exact) {
+                   List<Ast.CopyFrame> includeChain, boolean exact, Diagnostic inputGap) {
         Segment {
             includeChain = List.copyOf(includeChain);
             if (start < 0 || end < start) throw new IllegalArgumentException("invalid expanded range");
         }
 
+        Segment(int start, int end, String sourceFile, int originalStart, int originalEnd,
+                List<Ast.CopyFrame> includeChain, boolean exact) {
+            this(start, end, sourceFile, originalStart, originalEnd, includeChain, exact, null);
+        }
+
         Segment shifted(int delta) {
             return new Segment(start + delta, end + delta, sourceFile, originalStart, originalEnd,
-                    includeChain, exact);
+                    includeChain, exact, inputGap);
         }
 
         Segment clipped(int from, int to, int destinationStart) {
@@ -29,7 +34,7 @@ final class SourceMap {
             int originalClippedEnd = exact ? originalStart + clippedEnd - start : originalEnd;
             return new Segment(destinationStart + clippedStart - from,
                     destinationStart + clippedEnd - from, sourceFile,
-                    originalClippedStart, originalClippedEnd, includeChain, exact);
+                    originalClippedStart, originalClippedEnd, includeChain, exact, inputGap);
         }
     }
 
@@ -128,6 +133,17 @@ final class SourceMap {
         return new SourceMap(replacementText, segment == null ? List.of() : List.of(segment), sources);
     }
 
+    SourceMap withInputGap(Diagnostic diagnostic) {
+        if (diagnostic.code() != Diagnostic.Code.UNRESOLVED_COPY)
+            throw new IllegalArgumentException("only missing COPY regions are qualified");
+        return new SourceMap(text, segments.stream().map(s -> new Segment(s.start(), s.end(),
+                s.sourceFile(), s.originalStart(), s.originalEnd(), s.includeChain(), s.exact(), diagnostic)).toList(), sources);
+    }
+
+    List<Segment> inputGapRegions() {
+        return segments.stream().filter(s -> s.inputGap() != null).toList();
+    }
+
     SourceMap replaceLiteral(String from, String to) {
         if (from.isEmpty()) return this;
         int fromLength = from.codePointCount(0, from.length());
@@ -149,7 +165,7 @@ final class SourceMap {
             chain.add(frame);
             chain.addAll(segment.includeChain());
             return new Segment(segment.start(), segment.end(), segment.sourceFile(), segment.originalStart(),
-                    segment.originalEnd(), chain, segment.exact());
+                    segment.originalEnd(), chain, segment.exact(), segment.inputGap());
         }).toList();
         return new SourceMap(text, framed, sources);
     }
@@ -236,10 +252,11 @@ final class SourceMap {
                         && previous.originalEnd() == current.originalStart();
                 if (previous.end() == current.start() && previous.sourceFile().equals(current.sourceFile())
                         && previous.includeChain().equals(current.includeChain())
-                        && previous.exact() == current.exact() && (linear || !previous.exact())) {
+                        && previous.exact() == current.exact() && previous.inputGap() == current.inputGap()
+                        && (linear || !previous.exact())) {
                     result.set(result.size() - 1, new Segment(previous.start(), current.end(),
                             previous.sourceFile(), previous.originalStart(), current.originalEnd(),
-                            previous.includeChain(), previous.exact()));
+                            previous.includeChain(), previous.exact(), previous.inputGap()));
                     continue;
                 }
             }
