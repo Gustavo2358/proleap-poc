@@ -32,6 +32,8 @@ public final class ScalarMoveSemantics {
     private final Map<ResolutionContracts.SemanticEntityId, ScalarText> declarations;
     private final Map<NodeKey, Move> moves;
     private final Metrics metrics;
+    private final GoToSemantics goTos;
+    public GoToSemantics goTos() { return goTos; }
     private final EvaluateSemantics evaluates;
     public EvaluateSemantics evaluates() { return evaluates; }
     private final IfSemantics ifs;
@@ -44,11 +46,12 @@ public final class ScalarMoveSemantics {
     }
 
     private ScalarMoveSemantics(Map<ResolutionContracts.SemanticEntityId, ScalarText> declarations,
-                                Map<NodeKey, Move> moves, Map<NodeKey, Call> calls, Metrics metrics, IfSemantics ifs, PerformSemantics performs, EvaluateSemantics evaluates) {
+                                Map<NodeKey, Move> moves, Map<NodeKey, Call> calls, Metrics metrics, IfSemantics ifs, PerformSemantics performs, EvaluateSemantics evaluates, GoToSemantics goTos) {
         this.declarations = Map.copyOf(declarations);
         this.moves = Map.copyOf(moves);
         this.metrics = metrics;
         this.ifs = Objects.requireNonNull(ifs);
+        this.goTos = Objects.requireNonNull(goTos);
         this.evaluates = Objects.requireNonNull(evaluates);
         this.performs = Objects.requireNonNull(performs);
         this.calls = Map.copyOf(calls);
@@ -210,10 +213,12 @@ public final class ScalarMoveSemantics {
             moves.put(key, new Move(whole, copy, basic.nextStatement(), basic.gaps(), adjustment, sourceWhole));
         }
         var ifs = IfSemantics.analyze(frontend, tables, resolution, report, declarations, moves);
-        var performs = PerformSemantics.analyze(frontend, tables, resolution, report, moves, ifs);
+        var goTos = GoToSemantics.analyze(frontend, tables, resolution, report);
+        var performs = PerformSemantics.analyze(frontend, tables, resolution, report, moves, ifs, goTos);
         return new ScalarMoveSemantics(declarations, moves, calls,
                 new Metrics(counts[0], counts[1], counts[2], counts[3], counts[4]),
-                ifs, performs, EvaluateSemantics.analyze(frontend, resolution, report, declarations));
+                ifs, performs, EvaluateSemantics.analyze(frontend, resolution, report, declarations),
+                goTos);
     }
 
     private static Move fact(Optional<ResolutionContracts.SemanticEntityId> whole,

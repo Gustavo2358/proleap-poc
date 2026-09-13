@@ -29,7 +29,7 @@ public final class PerformSemantics {
     }
     static PerformSemantics analyze(CompilationUnitBuildResult frontend, CompilationUnitSymbolTables tables,
             ReferenceResolution resolution, ResolutionAnalysisReport report,
-            Map<ScalarMoveSemantics.NodeKey, ScalarMoveSemantics.Move> moves, IfSemantics ifs) {
+            Map<ScalarMoveSemantics.NodeKey, ScalarMoveSemantics.Move> moves, IfSemantics ifs, GoToSemantics goTos) {
         boolean complete = report.gaps().stream().noneMatch(g -> g.category() == ResolutionAnalysisReport.GapCategory.INPUT);
         var references = new HashMap<ScalarMoveSemantics.NodeKey, ReferenceResolution.Entry>();
         for (var entry : resolution.entries()) references.put(new ScalarMoveSemantics.NodeKey(
@@ -74,7 +74,16 @@ public final class PerformSemantics {
                     || statement instanceof Ast.EvaluateStatement e && evaluatePrimary(e, unit.id(), moves, ifs, findings, procedure.normalContinuations(), positions);
                 mainSound &= supported && Objects.equals(procedure.normalContinuations().get(statement.meta().id()),main.get(i+1).meta().id());
             }
+            // A precise GO TO can leave the textual primary paragraph. Follow only published canonical edges.
+            if (!mainSound && primary!=null && nodes.values().stream().anyMatch(Ast.GoToStatement.class::isInstance)) {
+                var closed=closedPrimary(main.get(0).meta().id(),unit.id(),nodes,procedure.normalContinuations(),moves,ifs,goTos,findings);
+                mainSound=!closed.isEmpty(); positions.clear();
+                for(var id:closed)positions.put((Ast.Statement)nodes.get(id),0);
+            }
             var primaryIds=main.stream().map(statement->statement.meta().id()).toList();
+            var ordinaryTargets=new HashSet<Integer>();
+            for(var node:nodes.values())if(node instanceof Ast.GoToStatement g && GoToSemantics.simple(g))
+                goTos.fact(unit.id(),g.meta().id()).entry().ifPresent(ordinaryTargets::add);
             var linearBodies=new IdentityHashMap<Ast.Paragraph,Boolean>();
             for (var perform : performs) {
                 var gaps = new LinkedHashSet<String>();
@@ -102,6 +111,7 @@ public final class PerformSemantics {
                 var body=target==null?List.<Ast.Statement>of():bodies.getOrDefault(target,List.of());
                 var resumeId=procedure==null?null:procedure.normalContinuations().get(perform.meta().id());
                 boolean isolated=mainSound && target!=null && target!=primary && bodies.containsKey(target)
+                    && body.stream().noneMatch(s -> positions.containsKey(s) || ordinaryTargets.contains(s.meta().id()))
                     && positions.containsKey(perform) && resumeId!=null;
                 if (!isolated) gaps.add("PERFORM_ISOLATED_PRIMARY_FLOW_NOT_PROVEN");
                 Boolean linear=linearBodies.get(target);
@@ -131,6 +141,48 @@ public final class PerformSemantics {
         }
         return new PerformSemantics(result);
     }
+    /** A returning primary closes all explicit frontiers; a cycle is not a return proof. */
+    private static Set<Integer> closedPrimary(int entry, ResolutionContracts.ProgramUnitId unit,
+            Map<Integer,Ast.Node> nodes, Map<Integer,Integer> next,
+            Map<ScalarMoveSemantics.NodeKey,ScalarMoveSemantics.Move> moves, IfSemantics ifs,
+            GoToSemantics goTos, Map<Integer,SemanticCoverage.Finding> findings) {
+        record Visit(int id, boolean complete) { }
+        var active=new HashSet<Integer>();var closed=new HashSet<Integer>();var pending=new ArrayDeque<Visit>();
+        pending.push(new Visit(entry,false));
+        while(!pending.isEmpty()) {
+            var visit=pending.pop();var id=visit.id();
+            if(visit.complete()) { active.remove(id);closed.add(id);continue; }
+            if(closed.contains(id))continue;
+            if(!active.add(id) || !(nodes.get(id) instanceof Ast.Statement statement) || !modeled(statement,findings))return Set.of();
+            if(statement instanceof Ast.GobackStatement) { active.remove(id);closed.add(id);continue; }
+            pending.push(new Visit(id,true));
+            if(statement instanceof Ast.GoToStatement g) {
+                if(!GoToSemantics.simple(g))return Set.of();var proof=goTos.fact(unit,id);
+                if(!proof.gaps().isEmpty() || proof.entry().isEmpty())return Set.of();
+                pending.push(new Visit(proof.entry().orElseThrow(),false));continue;
+            }
+            var continuation=next.get(id);if(continuation==null)return Set.of();
+            pending.push(new Visit(continuation,false));
+            if(statement instanceof Ast.IfStatement f) {
+                if(!f.explicitlyTerminated() || ifs.fact(unit,id).predicate().availability()!=IfSemantics.Availability.KNOWN
+                        || f.thenBranch().isEmpty() || f.elsePresence()==Ast.BranchPresence.UNKNOWN)return Set.of();
+                pending.push(new Visit(f.thenBranch().get(0).meta().id(),false));
+                if(f.elsePresence()==Ast.BranchPresence.PRESENT) {
+                    if(f.elseBranch().isEmpty())return Set.of();
+                    pending.push(new Visit(f.elseBranch().get(0).meta().id(),false));
+                }
+            } else if(statement instanceof Ast.EvaluateStatement e) {
+                if(!EvaluateSemantics.supportedShape(e))return Set.of();
+                for(var arm:e.branches()) {
+                    if(arm.statements().isEmpty())return Set.of();
+                    pending.push(new Visit(arm.statements().get(0).meta().id(),false));
+                }
+            } else if(!(supportedMove(statement,unit,moves) || statement instanceof Ast.CallStatement c && !c.surface().hasHandlers()
+                    || statement instanceof Ast.PerformStatement p && basic(p)))return Set.of();
+        }
+        return Set.copyOf(closed);
+    }
+
     /** BASIC activations may be in a bounded EVALUATE arm; each region has its own proved completion. */
     private static boolean evaluatePrimary(Ast.EvaluateStatement evaluate, ResolutionContracts.ProgramUnitId unit,
             Map<ScalarMoveSemantics.NodeKey, ScalarMoveSemantics.Move> moves, IfSemantics ifs,

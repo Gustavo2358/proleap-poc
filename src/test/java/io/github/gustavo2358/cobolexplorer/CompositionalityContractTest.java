@@ -25,7 +25,11 @@ class CompositionalityContractTest {
         for (int n : List.of(1, 2, 5, 40)) {
             var evaluate = "EVALUATE FLAG\nWHEN 'A' MOVE 'PROGA' TO WS-A\nWHEN OTHER MOVE 'PROGB' TO WS-A\nEND-EVALUATE.\n";
             var mixed = ScalarMoveCheckpoint4ATest.publish(program(n, n, n).replace("GOBACK.", evaluate.repeat(n)+"GOBACK."));
-            for (var family : families) assertTrue(mixed.statements().stream().filter(family::isInstance).count() >= n,
+            var gotos=new StringBuilder();
+            for(int i=0;i<n;i++)gotos.append("GO TO TARGET-").append(i).append(".\nTARGET-").append(i).append(".\n");
+            var transfers=ScalarMoveCheckpoint4ATest.publish(EvaluateFirstSliceTest.source(gotos+"CALL 'PROGA'."));
+            assertEquals(n,transfers.goTos().size());
+            for (var family : families) assertTrue((family==GoToFact.class?transfers:mixed).statements().stream().filter(family::isInstance).count() >= n,
                     "Missing compositional generator for " + family.getSimpleName() + " at N=" + n);
         }
         for (int n : List.of(1, 2, 5, 40)) for (var counts : List.of(new int[]{n,0,0}, new int[]{1,n,0}, new int[]{0,0,n})) {

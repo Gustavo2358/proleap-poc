@@ -187,8 +187,12 @@ public final class Ast {
     public record ProcedureParameter(Meta meta, PassingMode passingMode, Expression reference,
                                      boolean optional, boolean any, String writtenText) implements Node {}
 
-    public record Paragraph(Meta meta, String name, List<Sentence> sentences) implements Node {
-        public Paragraph { sentences = List.copyOf(sentences); }
+    public record Paragraph(Meta meta, String name, List<Sentence> sentences,
+                            Optional<Integer> executableEntry) implements Node {
+        public Paragraph { sentences = List.copyOf(sentences); Objects.requireNonNull(executableEntry); }
+        public Paragraph(Meta meta, String name, List<Sentence> sentences) {
+            this(meta, name, sentences, Optional.empty());
+        }
     }
 
     public record Sentence(Meta meta, List<Statement> statements, SentenceTerminator terminator,
