@@ -197,7 +197,10 @@ public final class CobolSemanticProductProjector {
                     b.independent()?AllocationProof.INDEPENDENT_LOCAL_WORKING_STORAGE:AllocationProof.UNPROVEN,provenance(b.origin()))).toList(),
                 layout.views().stream().map(v->new StorageView(storageNode(inputs,v.node()),storageBase(inputs,v.base()),
                     storageMeasure(v.offset()),storageMeasure(v.extent()),v.textual()?Optional.of("text.ebcdic.ibm1047@1"):Optional.empty(),provenance(v.origin()))).toList(),
-                layout.reasons().stream().map(Enum::name).toList());
+                layout.reasons().stream().map(Enum::name).toList(),layout.relations().stream().map(r->new StorageRelation(
+                    new StorageRelationId(inputs.boundaryUnit(),r.clause().meta().id()),new StorageNodeId(inputs.boundaryUnit(),r.owner()),
+                    r.target().map(id->new StorageNodeId(inputs.boundaryUnit(),id)),r.proved()?StorageRelationStatus.PROVEN:StorageRelationStatus.UNPROVEN,
+                    provenance(r.clause().meta().provenance()),r.proved()?List.of():List.of("OVERLAY_NOT_PROVEN"))).toList());
     }
     private static Optional<RegionalAccess> regionalAccess(ProjectionInputs inputs, int reference) {
         return inputs.products().storage().flatMap(s->s.access(new StorageLayoutSemantics.Key(inputs.unitId(),reference)))

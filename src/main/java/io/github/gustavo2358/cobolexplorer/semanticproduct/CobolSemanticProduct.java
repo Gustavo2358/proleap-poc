@@ -526,6 +526,19 @@ public final class CobolSemanticProduct {
     public record StorageBaseId(UnitId unit, int localId) {
         public StorageBaseId { Objects.requireNonNull(unit); require(localId >= 0, "negative storage base id"); }
     }
+    public record StorageRelationId(UnitId unit, int localId) {
+        public StorageRelationId { Objects.requireNonNull(unit); require(localId >= 0, "negative storage relation id"); }
+    }
+    public enum StorageRelationStatus { PROVEN, UNPROVEN }
+    public record StorageRelation(StorageRelationId id, StorageNodeId owner, Optional<StorageNodeId> target,
+            StorageRelationStatus status, Provenance provenance, List<String> gapCodes) {
+        public StorageRelation {
+            Objects.requireNonNull(id);Objects.requireNonNull(owner);Objects.requireNonNull(target);Objects.requireNonNull(status);Objects.requireNonNull(provenance);
+            gapCodes=List.copyOf(gapCodes);gapCodes.forEach(code->requireText(code,"relation gap"));
+            require(status==StorageRelationStatus.PROVEN?target.isPresent()&&gapCodes.isEmpty():target.isEmpty()&&!gapCodes.isEmpty(),
+                "proved relation requires target; unproved relation requires explicit uncertainty");
+        }
+    }
     public enum StorageProfile { UNSPECIFIED, IBM_ENTERPRISE_6_4_FIXED_DISPLAY_1047 }
     public enum PhysicalKind { GROUP, ELEMENTARY, OPAQUE }
     public enum AllocationProof { INDEPENDENT_LOCAL_WORKING_STORAGE, UNPROVEN }
@@ -570,12 +583,15 @@ public final class CobolSemanticProduct {
         }
     }
     public record StorageInventory(StorageProfile profile, List<PhysicalNode> nodes, List<StorageBase> bases,
-            List<StorageView> views, List<String> gapCodes) {
+            List<StorageView> views, List<String> gapCodes, List<StorageRelation> relations) {
         public StorageInventory {
             Objects.requireNonNull(profile); nodes = List.copyOf(nodes); bases = List.copyOf(bases);
-            views = List.copyOf(views); gapCodes = List.copyOf(gapCodes);
+            views = List.copyOf(views); gapCodes = List.copyOf(gapCodes); relations=List.copyOf(relations);
             gapCodes.forEach(code -> requireText(code, "storage gap"));
             require(profile != StorageProfile.UNSPECIFIED || !gapCodes.isEmpty(), "absent environment requires a gap");
+        }
+        public StorageInventory(StorageProfile profile,List<PhysicalNode> nodes,List<StorageBase> bases,List<StorageView> views,List<String> gapCodes) {
+            this(profile,nodes,bases,views,gapCodes,List.of());
         }
         public Optional<String> profileId() { return profile == StorageProfile.UNSPECIFIED ? Optional.empty()
                 : Optional.of("ibm-enterprise-6.4-fixed-display-1047@1"); }
@@ -1114,6 +1130,17 @@ public final class CobolSemanticProduct {
                 require(v.offset().value().get().add(v.extent().value().get()).compareTo(base.extent().value().get()) <= 0, "view exceeds storage base");
         }
         require(views.size() == nodes.size() && referencedBases.equals(bases.keySet()), "every physical node and base needs explicit view closure, including unknown layout");
+        var relationIds=new HashSet<StorageRelationId>();
+        for(var relation:inventory.relations()) {
+            require(relation.id().unit().equals(unit)&&relationIds.add(relation.id()),"duplicate or foreign storage relation");
+            var owner=nodes.get(relation.owner());require(owner!=null,"storage relation owner must exist");
+            if(relation.status()==StorageRelationStatus.PROVEN) {
+                var target=nodes.get(relation.target().orElseThrow());
+                require(target!=null&&target.parent().equals(owner.parent())&&target.order()<owner.order(),"proved relation must select an earlier physical sibling");
+                var ov=views.get(owner.id());var tv=views.get(target.id());
+                require(ov.base().equals(tv.base())&&ov.offset().equals(tv.offset()),"proved overlay must share base and start");
+            }
+        }
         for (var n : inventory.nodes()) n.parent().ifPresent(parent -> {
             var p = nodes.get(parent); var pv = views.get(parent); var v = views.get(n.id());
             require(p.kind() != PhysicalKind.ELEMENTARY && pv.base().equals(v.base()), "child must share parent storage base");

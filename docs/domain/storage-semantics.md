@@ -246,3 +246,21 @@ consulta. StorageOverlayTest fixa os goldens de compartilhamento, max footprint,
 FILLER, cadeia, campos seguintes, nomes repetidos, unknown e 1/2/5/40 alternativas
 antes da implementação. Testes W3 de guarda global serão migrados apenas nos casos
 agora cobertos por essa prova, mantendo os negativos sem prova.
+
+### SP 2.8/storage 1.1: origem explícita de relações físicas
+
+O writer corrente passa a SP 2.8.0, storage 1.1.0. `relations` é inventário
+obrigatório, vazio quando não há cláusulas, de `{id, owner, target, status,
+provenance, gapCodes}`. IDs usam namespace `storage-relation:` e identidade da
+cláusula; owner/target usam `storage-node:`. PROVEN exige alvo presente e ausência
+de gaps; UNPROVEN conserva alvo null e motivo explícito. FILLER pode ser owner.
+O projector transporta relações calculadas; não resolve nomes ou cria offsets.
+
+Closure verifica identidade, referências, parent/order e coerência de base/início
+nas relações provadas. Extents das descrições continuam distintos; compartilhar
+início não exige igualdade de comprimento ou interpretação. Relação estrutural
+pode ser conhecida com extensão física desconhecida; isso não autoriza bytes,
+codec ou independência de alocação sem o perfil. A origem individual da cláusula
+permite ao lower produzir evidência derivada de declaração + relação + base/view,
+inclusive quando o owner não tem DATA nominal. Campos anteriores mantêm significado;
+o reader 2.7 permanece exato no consumidor. Não há dual writer.

@@ -56,10 +56,10 @@ class StorageProductTest {
         assertEquals(StorageProfile.UNSPECIFIED,absent.storage().profile());assertFalse(absent.storage().gapCodes().isEmpty());
         assertTrue(CobolSemanticPort.open(absent).moves().get(0).target().regionalAccess().isEmpty());
     }
-    @Test void json27HasDeterministicClosedStorageTransport() throws Exception {
+    @Test void json28HasDeterministicClosedStorageTransport() throws Exception {
         var p=CobolSemanticPort.open(group());var bytes=SemanticProductJsonWriter.serialize(p);
         assertArrayEquals(bytes,SemanticProductJsonWriter.serialize(CobolSemanticPort.open(group())));
-        var doc=new ObjectMapper().readTree(bytes);assertEquals("2.7.0",doc.path("contractVersion").asText());
+        var doc=new ObjectMapper().readTree(bytes);assertEquals("2.8.0",doc.path("contractVersion").asText());
         assertEquals("ibm-enterprise-6.4-fixed-display-1047@1",doc.path("storage").path("profileId").asText());
         assertEquals("8",doc.path("storage").path("bases").get(0).path("extent").path("value").asText());
         assertTrue(doc.path("storage").path("bases").get(0).path("extent").path("value").isTextual());

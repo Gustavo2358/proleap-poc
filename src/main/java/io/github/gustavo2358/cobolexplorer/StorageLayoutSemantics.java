@@ -21,8 +21,8 @@ public final class StorageLayoutSemantics {
                        Optional<ResolutionContracts.SemanticEntityId> entity,Measure extent,Ast.SourceProvenance origin) { }
     public record Base(Key id,Measure extent,boolean independent,Ast.SourceProvenance origin) { }
     public record View(Key node,Key base,Measure offset,Measure extent,boolean textual,Ast.SourceProvenance origin) { }
-    public record Layout(Profile profile,List<Node> nodes,List<Base> bases,List<View> views,List<Reason> reasons) {
-        public Layout { nodes=List.copyOf(nodes);bases=List.copyOf(bases);views=List.copyOf(views);reasons=List.copyOf(reasons); }
+    public record Layout(Profile profile,List<Node> nodes,List<Base> bases,List<View> views,List<Reason> reasons,List<StorageComponents.Relation> relations) {
+        public Layout { nodes=List.copyOf(nodes);bases=List.copyOf(bases);views=List.copyOf(views);reasons=List.copyOf(reasons);relations=List.copyOf(relations); }
     }
     private final Map<ResolutionContracts.ProgramUnitId,Layout> layouts;
     private final Map<String,Long> metrics;
@@ -104,7 +104,7 @@ public final class StorageLayoutSemantics {
                     cursor=plus(cursor,footprints.get(component.representative()),Reason.UNKNOWN_OFFSET);
                 }
             }
-            layouts.put(unit.id(),new Layout(profile,nodes,bases,views,List.copyOf(reasons)));
+            layouts.put(unit.id(),new Layout(profile,nodes,bases,views,List.copyOf(reasons),physical.relations()));
         }
         return new StorageLayoutSemantics(layouts,Map.of("declarations",declarations,"layoutVisits",visits,"objectPairs",0L),frontend,resolution);
     }

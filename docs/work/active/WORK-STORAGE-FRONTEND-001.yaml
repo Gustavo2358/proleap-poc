@@ -18,3 +18,4 @@ design_w4:
   progress: ST-W3/M1 qualified by 15 cumulative gates; ST-W4.1 components and max footprints implemented, focal 37 methods and FAST 180 methods passed. W4.2/W4.3 integration remains pending.
   ownership: StorageComponents resolves physical relationships from typed AST and contiguous sibling scope, including FILLER, before layout or scalar eligibility.
   limits: Numeric level equality required for precise overlays in this profile; invalid relations, unknown extents and allocation uncertainty remain explicit.
+  transport: SP 2.8.0/storage 1.1.0 publishes relation identity, owner/target/status/gaps and individual clause provenance. Closed-port negatives and JSON permutation/round-trip passed; producer FAST 185 methods. Lower reader/integration remains pending.
