@@ -10,5 +10,5 @@ notes: User authorized autonomous implementation through W5 and one persistent d
 design_w3:
   contract: docs/domain/storage-semantics.md
   ownership: StorageLayoutSemantics computes typed physical facts before SP projection.
-  progress: Canonical layout/access and SP 2.7 writer/CLI are implemented with closure and compatibility oracles; FAST 168 methods. Lower/values integration and M1 qualification remain pending.
+  progress: Canonical layout/access and SP 2.7 writer/CLI are implemented with closure and compatibility oracles; FAST 169 methods after opaque-base-ID closure correction. Lower/values integration and M1 qualification remain pending.
   boundary: Source mapping exactness is preserved independently of layout certainty from completed preprocessing and modeled typed declarations.

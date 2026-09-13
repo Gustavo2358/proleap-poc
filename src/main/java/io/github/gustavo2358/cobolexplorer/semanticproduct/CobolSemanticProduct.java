@@ -1100,19 +1100,20 @@ public final class CobolSemanticProduct {
             require(base.id().unit().equals(unit) && bases.put(base.id(),base) == null, "duplicate or foreign storage base");
             require(inventory.profile() != StorageProfile.UNSPECIFIED || base.extent().value().isEmpty()
                 && base.allocation() == AllocationProof.UNPROVEN, "known storage requires an explicit environment");
-            require(nodes.containsKey(new StorageNodeId(unit,base.id().localId())), "storage base must have an owning physical node");
         }
         var views = new HashMap<StorageNodeId, StorageView>();
+        var referencedBases = new HashSet<StorageBaseId>();
         for (var v : inventory.views()) {
             var node = nodes.get(v.node()); var base = bases.get(v.base());
             require(node != null && base != null && views.put(v.node(),v) == null, "view must have unique node and existing base");
+            referencedBases.add(v.base());
             require(node.extent().equals(v.extent()), "view extent must agree with physical node");
             require(v.codec().isEmpty() || inventory.runtimeCodec().equals(v.codec()) && v.extent().value().isPresent()
                 && node.kind() != PhysicalKind.OPAQUE, "textual view requires explicit supported layout and codec");
             if (v.offset().value().isPresent() && v.extent().value().isPresent() && base.extent().value().isPresent())
                 require(v.offset().value().get().add(v.extent().value().get()).compareTo(base.extent().value().get()) <= 0, "view exceeds storage base");
         }
-        require(views.size() == nodes.size(), "every physical node needs an explicit view, including unknown layout");
+        require(views.size() == nodes.size() && referencedBases.equals(bases.keySet()), "every physical node and base needs explicit view closure, including unknown layout");
         for (var n : inventory.nodes()) n.parent().ifPresent(parent -> {
             var p = nodes.get(parent); var pv = views.get(parent); var v = views.get(n.id());
             require(p.kind() != PhysicalKind.ELEMENTARY && pv.base().equals(v.base()), "child must share parent storage base");

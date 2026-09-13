@@ -180,7 +180,7 @@ transportar acesso regional quando o produto canônico o conhece; isso sozinho
 não promove predicate, controle nem efeitos da construção.
 
 State verifica índices fechados, pais acíclicos, ordem entre irmãos única,
-base proprietária, view por nó, bounds, concordância nominal dos acessos,
+base explicitamente referenciada, view por nó, bounds, concordância nominal dos acessos,
 codec/ambiente explícitos, extensão de literal e disjunção de cópia. A validação
 é iterativa O(n + referências), sem reconstruir PICTURE nem recalcular offsets.
 A correspondência textual completa do payload de octetos é provada no encoder
@@ -194,3 +194,13 @@ cópia sobreposta/sem separação e snapshot estrangeiro. O FAST passou com 168
 métodos. As comparações históricas preservam os arquivos brutos e todos os fatos
 anteriores, descontando somente os campos aditivos provados ausentes e a versão.
 A qualificação M1 depende ainda do decoder/lowering e de values/dependências.
+
+A identidade da base é opaca: renomeá-la coerentemente nas views não altera o
+layout. Closure exige que toda base seja referenciada; não compara seu número
+local ao número de um nó físico. Um oracle de renomeação detectou e eliminou essa
+restrição indevida do primeiro validador SP 2.7, sem alterar o writer.
+
+Após a correção de identidade opaca da base, FAST: 169 métodos, zero skips.
+A execução Maven completa anterior: 659 descobertos, zero falhas, um skip
+herdado em SemanticConditionContextDiscoveryTest por configuração; não é contado
+como teste executado. Os produtos CLI SP 2.7 foram capturados separadamente.

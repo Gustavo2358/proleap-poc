@@ -128,4 +128,12 @@ class StorageProductTest {
             StorageLayoutSemantics.Profile.IBM_ENTERPRISE_6_4_FIXED_DISPLAY_1047);
         assertTrue(((DataReference)p.calls().get(0).target()).regionalAccess().isPresent());
     }
+    @Test void baseIdentityIsOpaqueAndUnusedBasesCannotEnterTheInventory() {
+        var s=group();var base=s.storage().bases().get(0);var renamed=new StorageBaseId(s.unit(),999);
+        var b=new StorageBase(renamed,base.extent(),base.allocation(),base.provenance());
+        var views=s.storage().views().stream().map(v->new StorageView(v.node(),renamed,v.offset(),v.extent(),v.codec(),v.provenance())).toList();
+        assertEquals(s.statements(),withStorage(s,inventory(s,s.storage().nodes(),List.of(b),views)).statements());
+        var unused=new StorageBase(new StorageBaseId(s.unit(),s.storage().nodes().get(1).id().localId()),known(2),base.allocation(),base.provenance());
+        assertThrows(IllegalArgumentException.class,()->withStorage(s,inventory(s,s.storage().nodes(),List.of(base,unused),s.storage().views())));
+    }
 }
