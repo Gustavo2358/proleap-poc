@@ -613,7 +613,7 @@ public final class CobolSemanticProduct {
 
     /** Adding a fact type extends this inventory without changing the State envelope. */
     public sealed interface StatementFact permits MoveFact, CallFact, IfFact,
-            ObservedStatement, GobackFact, PerformFact, EvaluateFact, GoToFact, ProcedurePerformFact {
+            ObservedStatement, GobackFact, PerformFact, EvaluateFact, GoToFact, ConditionalGoToFact, ProcedurePerformFact {
         StatementHeader header();
     }
 
@@ -649,6 +649,37 @@ public final class CobolSemanticProduct {
             require(gapCodes.isEmpty()==targetEntry.isPresent(), "GO TO precise entry requires complete proof");
             if(targetEntry.isPresent()) require(target.isPresent() && header.provenance().exact() && referenceOrigin.exact()
                     && target.get().paragraphOrigin().exact() && entryOrigin.get().exact(), "GO TO requires exact origins");
+        }
+    }
+
+    /** A destination occurrence; duplicate procedure identities retain distinct ordinals. */
+    public record GoToDestination(int ordinal, Optional<ProcedureId> target, Optional<Provenance> procedureOrigin,
+            Provenance referenceOrigin, Optional<StatementId> targetEntry, Optional<Provenance> entryOrigin,
+            List<String> gapCodes) {
+        public GoToDestination {
+            require(ordinal>=0,"destination ordinal is nonnegative");Objects.requireNonNull(target);Objects.requireNonNull(procedureOrigin);
+            Objects.requireNonNull(referenceOrigin);Objects.requireNonNull(targetEntry);Objects.requireNonNull(entryOrigin);gapCodes=List.copyOf(gapCodes);
+            require(target.isPresent()==procedureOrigin.isPresent(),"procedure identity and origin are paired");
+            require(targetEntry.isPresent()==entryOrigin.isPresent(),"entry and origin are paired");
+            require(targetEntry.isEmpty()||target.isPresent(),"entry requires procedure identity");
+            require(!gapCodes.isEmpty()||targetEntry.isPresent(),"complete destination requires entry");
+        }
+    }
+    public record ConditionalGoToFact(StatementHeader header, Optional<DataReference> selector, boolean selectorInteger,
+            Provenance selectorOrigin, List<GoToDestination> destinations, NormalContinuation normalContinuation,
+            List<String> gapCodes) implements StatementFact {
+        public ConditionalGoToFact {
+            Objects.requireNonNull(header);Objects.requireNonNull(selector);Objects.requireNonNull(selectorOrigin);
+            destinations=List.copyOf(destinations);Objects.requireNonNull(normalContinuation);gapCodes=List.copyOf(gapCodes);
+            require(normalContinuation.availability()!=ContinuationAvailability.NONE,"conditional transfer has possible fallthrough");
+            for(int i=0;i<destinations.size();i++) {
+                var d=destinations.get(i);require(d.ordinal()==i,"destination ordinals are contiguous in semantic order");
+                d.target().ifPresent(t->require(t.unit().equals(header.id().unit()),"local procedure identity"));
+            }
+            selector.ifPresent(r->require(r.role()==OperandRole.READ&&r.provenance().equals(selectorOrigin),"one source selector read"));
+            require(!selectorInteger||selector.flatMap(DataReference::wholeItemAccess).isPresent(),"integer selector needs whole item");
+            require(!gapCodes.isEmpty()||selectorInteger&&!destinations.isEmpty()&&normalContinuation.statement().isPresent()
+                &&destinations.stream().allMatch(d->d.gapCodes().isEmpty()),"complete conditional control requires all proofs");
         }
     }
 
@@ -1022,6 +1053,10 @@ public final class CobolSemanticProduct {
 
     private static void validateReferences(StatementFact statement,
                                            Map<DataItemId, DataDeclaration> declarations) {
+        if(statement instanceof ConditionalGoToFact g && g.selectorInteger()) {
+            var d=declarations.get(g.selector().orElseThrow().wholeItemAccess().orElseThrow().data());
+            require(d!=null&&d.scalarInteger().isPresent(),"integer selector references integer declaration");
+        }
         if (statement instanceof MoveFact move && move.copySemantics() == CopySemantics.FULL_IDENTITY) {
             var declaration = declarations.get(move.target().wholeItemAccess().orElseThrow().data());
             require(declaration != null && declaration.scalarText().isPresent(), "copy requires scalar declaration");
@@ -1067,6 +1102,7 @@ public final class CobolSemanticProduct {
         if (statement instanceof CallFact call) return call.target() instanceof DataReference data ? List.of(data) : List.of();
         if (statement instanceof IfFact branch) return branch.condition().references();
         if (statement instanceof ProcedurePerformFact p) return java.util.stream.Stream.concat(java.util.stream.Stream.concat(p.loop().stream().flatMap(l->l.condition().references().stream()),p.times().stream().flatMap(t->t.reference().stream())),p.varying().stream().flatMap(v->v.controls().stream()).flatMap(v->v.references().stream())).toList();
+        if (statement instanceof ConditionalGoToFact g) return g.selector().stream().toList();
         if (statement instanceof EvaluateFact e) return e.subject().stream().toList();
         if (statement instanceof ObservedStatement observed) return observed.knownReferences();
         return List.of();
@@ -1083,6 +1119,8 @@ public final class CobolSemanticProduct {
             } else if (statement instanceof IfFact branch) {
                 operands = branch.condition().references().stream()
                         .map(DataReference::id).toList();
+            } else if (statement instanceof ConditionalGoToFact g) {
+                operands=references(g).stream().map(DataReference::id).toList();
             } else if (statement instanceof ProcedurePerformFact p) {
                 operands=references(p).stream().map(DataReference::id).toList();
             } else if (statement instanceof EvaluateFact e) {
@@ -1106,14 +1144,35 @@ public final class CobolSemanticProduct {
         for (var statement : statements.values())
             armChildren.computeIfAbsent(statement.header().containment(), ignored -> new java.util.ArrayList<>()).add(statement);
         Map<StatementId, StructuralInterval> intervals = structuralIntervals(statements);
-        var goToTargets=new HashMap<ProcedureId,GoToFact>();
+        var goToTargets=new HashMap<ProcedureId,StatementId>();
+        var procedureOrigins=new HashMap<ProcedureId,Provenance>();
         for (StatementFact statement : statements.values()) {
             if (statement instanceof GoToFact g) g.targetEntry().ifPresent(id -> {
                 require(id.unit().equals(g.header().id().unit()) && statements.containsKey(id), "GO TO entry is published in same unit");
-                var previous=goToTargets.putIfAbsent(g.target().orElseThrow().id(),g);
-                require(previous==null || previous.target().equals(g.target()) && previous.targetEntry().equals(g.targetEntry()), "GO TO paragraph has one canonical entry");
+                var previousOrigin=procedureOrigins.putIfAbsent(g.target().orElseThrow().id(),g.target().orElseThrow().paragraphOrigin());
+                require(previousOrigin==null||previousOrigin.equals(g.target().orElseThrow().paragraphOrigin()),"one procedure provenance");
+                var previous=goToTargets.putIfAbsent(g.target().orElseThrow().id(),id);
+                require(previous==null || previous.equals(id), "GO TO paragraph has one canonical entry");
                 require(statements.get(id).header().containment().branch()==Branch.ROOT && statements.get(id).header().provenance().equals(g.entryOrigin().orElseThrow()), "GO TO entry origin agrees with target statement");
             });
+            if(statement instanceof ConditionalGoToFact g) {
+                for(var d:g.destinations()) {
+                    d.target().ifPresent(target->{
+                        var previous=procedureOrigins.putIfAbsent(target,d.procedureOrigin().orElseThrow());
+                        require(previous==null||previous.equals(d.procedureOrigin().orElseThrow()),"one procedure provenance");
+                    });
+                    d.targetEntry().ifPresent(id->{
+                        var target=statements.get(id);require(id.unit().equals(g.header().id().unit())&&target!=null,"local published conditional destination");
+                        require(target.header().containment().branch()==Branch.ROOT&&d.entryOrigin().filter(target.header().provenance()::equals).isPresent(),"conditional entry provenance agreement");
+                        var previous=goToTargets.putIfAbsent(d.target().orElseThrow(),id);
+                        require(previous==null||previous.equals(id),"one canonical procedure entry");
+                    });
+                }
+                g.normalContinuation().statement().ifPresent(id->{
+                    var next=statements.get(id);require(next!=null&&id.unit().equals(g.header().id().unit()),"published local fallthrough");
+                    require(g.normalContinuation().provenance().equals(next.header().provenance()),"fallthrough provenance agreement");
+                });
+            }
             if(statement instanceof ProcedurePerformFact p) {
                 var members=new HashSet<StatementId>();var paragraphs=new HashSet<ProcedureId>();
                 for(var paragraph:p.procedures()) {

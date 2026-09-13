@@ -459,13 +459,14 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
         ParserRuleContext first = firstProcedureStatement(body);
         Ast.Statement start = first instanceof CobolParser.StatementContext statement
                 && statement.entryStatement() == null ? builtStatements.get(statement) : null;
+        var completions=completionRelations(context);
         return new Ast.Division(meta, Ast.DivisionKind.PROCEDURE, children,
                 Optional.of(new Ast.ProcedureEntry(
                         start == null ? Optional.empty() : Optional.of(start.meta().id()),
                         context.procedureDivisionUsingClause() != null
                                 || context.procedureDivisionGivingClause() != null,
                         context.procedureDeclaratives() != null, entryInputProof(context))),
-                normalContinuations(context));
+                completions.paragraphLocal(),completions.ordinary());
     }
 
     /** Sequential MOVE completion within a single sentence region. Paragraph/section
@@ -473,58 +474,67 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
     private long completionStatementVisits;
     long completionStatementVisits() { return completionStatementVisits; }
 
-    private Map<Integer, Integer> normalContinuations(CobolParser.ProcedureDivisionContext context) {
-        Map<Integer, Integer> result = new LinkedHashMap<>();
-        if (context.procedureDeclaratives() != null || context.procedureDivisionBody() == null)
-            return result;
-        var body = context.procedureDivisionBody();
-        addParagraphContinuations(body.paragraphs(), result);
-        for (var section : body.procedureSection()) addParagraphContinuations(section.paragraphs(), result);
-        return result;
+    private record CompletionRelations(Map<Integer,Integer> paragraphLocal,Map<Integer,Integer> ordinary) { }
+    private CompletionRelations completionRelations(CobolParser.ProcedureDivisionContext context) {
+        var local=new LinkedHashMap<Integer,Integer>();var ordinary=new LinkedHashMap<Integer,Integer>();
+        if(context.procedureDeclaratives()==null&&context.procedureDivisionBody()!=null) {
+            var body=context.procedureDivisionBody();addParagraphContinuations(body.paragraphs(),local,ordinary);
+            for(var section:body.procedureSection())addParagraphContinuations(section.paragraphs(),local,ordinary);
+        }
+        return new CompletionRelations(local,ordinary);
     }
-
+    /** Both relations are recorded in one grammar-region walk. An unmaterialized
+     * direct statement blocks adjacency; paragraph names never supply an entry. */
     private void addParagraphContinuations(CobolParser.ParagraphsContext paragraphs,
-                                          Map<Integer, Integer> result) {
-        if (paragraphs == null) return;
-        addSentenceContinuations(paragraphs.sentence(), result);
-        for (var paragraph : paragraphs.paragraph()) addSentenceContinuations(paragraph.sentence(), result);
+            Map<Integer,Integer> local,Map<Integer,Integer> ordinary) {
+        if(paragraphs==null)return;
+        var regions=new ArrayList<List<CobolParser.SentenceContext>>();regions.add(paragraphs.sentence());
+        for(var p:paragraphs.paragraph())regions.add(p.sentence());
+        Ast.Statement next=null;
+        for(int i=regions.size()-1;i>=0;i--)next=addSentenceContinuations(regions.get(i),local,ordinary,next);
     }
 
-    private void addSentenceContinuations(List<CobolParser.SentenceContext> sentences,
-                                         Map<Integer, Integer> result) {
+    private Ast.Statement addSentenceContinuations(List<CobolParser.SentenceContext> sentences,
+            Map<Integer,Integer> result,Map<Integer,Integer> ordinary,Ast.Statement paragraphNext) {
         List<CobolParser.StatementContext> roots = new ArrayList<>();
         for (var sentence : sentences) roots.addAll(sentence.statement());
         Deque<CompletionRegion> pending = new ArrayDeque<>();
-        pending.push(new CompletionRegion(roots, null, true));
+        pending.push(new CompletionRegion(roots,null,paragraphNext));
         while (!pending.isEmpty()) {
             CompletionRegion region = pending.pop();
             Ast.Statement next = region.successor();
+            Ast.Statement ordinaryNext = region.ordinarySuccessor();
             for (int i = region.statements().size() - 1; i >= 0; i--) {
                 completionStatementVisits++;
                 var context = region.statements().get(i);
                 Ast.Statement current = context.entryStatement() == null ? builtStatements.get(context) : null;
-                if (next != null && (current instanceof Ast.MoveStatement || current instanceof Ast.IfStatement
+                boolean continues = current instanceof Ast.MoveStatement || current instanceof Ast.IfStatement
                         || current instanceof Ast.PerformStatement || current instanceof Ast.EvaluateStatement
+                        || current instanceof Ast.GoToStatement g && g.goToKind()==Ast.GoToKind.DEPENDING_ON
                         || current instanceof Ast.CallStatement call && !call.surface().hasHandlers()
-                        || sequentialOpaque(context)))
-                    result.put(current.meta().id(), next.meta().id());
+                        || sequentialOpaque(context);
+                if(continues&&current!=null) {
+                    if(next!=null)result.put(current.meta().id(),next.meta().id());
+                    if(ordinaryNext!=null)ordinary.put(current.meta().id(),ordinaryNext.meta().id());
+                }
                 if (context.ifStatement() != null && current instanceof Ast.IfStatement) {
                     var branch = context.ifStatement();
-                    pending.push(new CompletionRegion(branch.ifThen().statement(), next, false));
+                    pending.push(new CompletionRegion(branch.ifThen().statement(),next,ordinaryNext));
                     if (branch.ifElse() != null)
-                        pending.push(new CompletionRegion(branch.ifElse().statement(), next, false));
+                        pending.push(new CompletionRegion(branch.ifElse().statement(),next,ordinaryNext));
                 }
                 if (context.evaluateStatement() != null && current instanceof Ast.EvaluateStatement) {
                     var evaluate = context.evaluateStatement();
                     for (var arm : evaluate.evaluateWhenPhrase())
-                        pending.push(new CompletionRegion(arm.statement(), next, false));
+                        pending.push(new CompletionRegion(arm.statement(),next,ordinaryNext));
                     if (evaluate.evaluateWhenOther() != null)
-                        pending.push(new CompletionRegion(evaluate.evaluateWhenOther().statement(), next, false));
+                        pending.push(new CompletionRegion(evaluate.evaluateWhenOther().statement(),next,ordinaryNext));
                 }
                 // An unmaterialized direct statement is a barrier, never skipped.
-                next = current;
+                next = current;ordinaryNext=current;
             }
         }
+        return roots.isEmpty()?paragraphNext:roots.get(0).entryStatement()==null?builtStatements.get(roots.get(0)):null;
     }
 
     /** Only normal completion is asserted; no values, file or arithmetic semantics.
@@ -538,7 +548,7 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
     }
 
     private record CompletionRegion(List<CobolParser.StatementContext> statements,
-                                    Ast.Statement successor, boolean topLevel) { }
+                                    Ast.Statement successor, Ast.Statement ordinarySuccessor) { }
 
     /** Interpret only the PIC X repetition language, in the canonical frontend.
      * This grammar uses generic pictureChars tokens, so repetition is decoded here

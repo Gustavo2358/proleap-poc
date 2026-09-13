@@ -33,7 +33,9 @@ class CompositionalityContractTest {
                 "A.\nMOVE 'PROGA' TO WS-PGM.\nC.\nMOVE 'PROGC' TO WS-PGM.\n"));
             assertTrue(ranges.statements().stream().filter(ProcedurePerformFact.class::isInstance)
                 .map(ProcedurePerformFact.class::cast).allMatch(p->p.gapCodes().isEmpty()));
-            for (var family : families) assertTrue((family==GoToFact.class?transfers:family==ProcedurePerformFact.class?ranges:mixed).statements().stream().filter(family::isInstance).count() >= n,
+            var conditional=ScalarMoveCheckpoint4ATest.publish(ConditionalGoToTest.source(
+                "GO TO A B DEPENDING ON WS-IDX.\n".repeat(n)+"GOBACK.\nA.\nGOBACK.\nB.\nGOBACK.\n"));
+            for (var family : families) assertTrue((family==ConditionalGoToFact.class?conditional:family==GoToFact.class?transfers:family==ProcedurePerformFact.class?ranges:mixed).statements().stream().filter(family::isInstance).count() >= n,
                     "Missing compositional generator for " + family.getSimpleName() + " at N=" + n);
         }
         for (int n : List.of(1, 2, 5, 40)) for (var counts : List.of(new int[]{n,0,0}, new int[]{1,n,0}, new int[]{0,0,n})) {

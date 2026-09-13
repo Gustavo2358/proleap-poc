@@ -21,6 +21,7 @@ public final class NumericControlSemantics {
                 var n=pending.pop();Ast.children(n).forEach(pending::push);
                 if(n instanceof Ast.PerformStatement p && p.performKind()==Ast.PerformKind.PROCEDURE
                     && (p.repetition()==Ast.PerformRepetition.TIMES||p.repetition()==Ast.PerformRepetition.VARYING))relevant=true;
+                if(n instanceof Ast.GoToStatement g && GoToSemantics.depending(g))relevant=true;
                 if(n instanceof Ast.Section s&&s.dataSectionKind()==Ast.DataSectionKind.WORKING_STORAGE)sections.add(s);
             }
             if(!relevant)continue;

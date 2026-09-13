@@ -24,6 +24,9 @@ public final class CobolLoweringReadinessConsumer {
 
     public enum StatementFamily { MOVE, CALL, IF, OBSERVED, GOBACK, PERFORM, EVALUATE, GO_TO }
 
+    public record ConditionalGoToAudit(StatementHeaderAudit header, CobolSemanticProduct.ConditionalGoToFact fact) implements StatementAudit {
+        @Override public StatementFamily family() { return StatementFamily.GO_TO; }
+    }
     public record GoToAudit(StatementHeaderAudit header, CobolSemanticProduct.GoToFact fact) implements StatementAudit {
         @Override public StatementFamily family() { return StatementFamily.GO_TO; }
     }
@@ -321,6 +324,7 @@ public final class CobolLoweringReadinessConsumer {
             Map<CobolSemanticProduct.StatementId, List<GapAudit>> gapsByStatement) {
         StatementHeaderAudit header = header(fact.header(), gapsByStatement.getOrDefault(
                 fact.header().id(), List.of()));
+        if (fact instanceof CobolSemanticProduct.ConditionalGoToFact g) return new ConditionalGoToAudit(header,g);
         if (fact instanceof CobolSemanticProduct.GoToFact g) return new GoToAudit(header,g);
         if (fact instanceof CobolSemanticProduct.ProcedurePerformFact p) return new ProcedurePerformAudit(header,p);
         if (fact instanceof CobolSemanticProduct.PerformFact perform) return new PerformAudit(header, perform);

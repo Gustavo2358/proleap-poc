@@ -22,15 +22,20 @@ public final class ProcedurePerformSemantics {
     }
     private final Map<ScalarMoveSemantics.NodeKey,Facts> facts;
     private final Set<ScalarMoveSemantics.NodeKey> completions;
+    private final Set<ScalarMoveSemantics.NodeKey> paragraphEnds;
     private ProcedurePerformSemantics(Map<ScalarMoveSemantics.NodeKey,Facts> facts) {
         this.facts=Map.copyOf(facts);var ends=new HashSet<ScalarMoveSemantics.NodeKey>();
         facts.forEach((k,v)->{if(v.precise())for(var p:v.procedures())for(var id:p.completions())ends.add(new ScalarMoveSemantics.NodeKey(k.unit(),id));});
         completions=Set.copyOf(ends);
+        var boundaries=new HashSet<ScalarMoveSemantics.NodeKey>();
+        facts.forEach((k,v)->v.procedures().forEach(p->p.completions().forEach(id->boundaries.add(new ScalarMoveSemantics.NodeKey(k.unit(),id)))));
+        paragraphEnds=Set.copyOf(boundaries);
     }
     boolean hasPartial(ResolutionContracts.ProgramUnitId unit) {
         return facts.entrySet().stream().anyMatch(e->e.getKey().unit().equals(unit)&&!e.getValue().precise());
     }
     public Optional<Facts> fact(ResolutionContracts.ProgramUnitId unit,int id) { return Optional.ofNullable(facts.get(new ScalarMoveSemantics.NodeKey(unit,id))); }
+    public boolean paragraphEnd(ResolutionContracts.ProgramUnitId unit,int id) { return paragraphEnds.contains(new ScalarMoveSemantics.NodeKey(unit,id)); }
     public boolean completion(ResolutionContracts.ProgramUnitId unit,int id) { return completions.contains(new ScalarMoveSemantics.NodeKey(unit,id)); }
     public static boolean applicable(Ast.PerformStatement p) {
         return p.performKind()==Ast.PerformKind.PROCEDURE && p.inlineBody().isEmpty()
@@ -154,7 +159,7 @@ public final class ProcedurePerformSemantics {
                         ||!primary.contains(p.meta().id())||f.resume().filter(primary::contains).isEmpty()
                         ||members.stream().anyMatch(primary::contains))gaps.add("PERFORM_ISOLATED_PRIMARY_NOT_PROVEN");
                 for(var n:nodes.values())if(n instanceof Ast.Statement s && !members.contains(s.meta().id())) {
-                    if(s instanceof Ast.GoToStatement g && (!GoToSemantics.simple(g) || goTos.fact(unit.id(),g.meta().id()).entry().isEmpty() || goTos.fact(unit.id(),g.meta().id()).entry().filter(members::contains).isPresent()))
+                    if(s instanceof Ast.GoToStatement g && (!goTos.closed(unit.id(),g) || goTos.entries(unit.id(),g).stream().anyMatch(members::contains)))
                         gaps.add("PERFORM_ORDINARY_INCOMING_NOT_EXCLUDED");
                     if(Optional.ofNullable(next.get(s.meta().id())).filter(members::contains).isPresent())gaps.add("PERFORM_ORDINARY_INCOMING_NOT_EXCLUDED");
                 }
@@ -186,8 +191,10 @@ public final class ProcedurePerformSemantics {
             if(s instanceof Ast.GobackStatement){active.remove(v.id());done.add(v.id());continue;}
             todo.push(new Visit(v.id(),true));
             if(s instanceof Ast.GoToStatement g) {
-                if(!GoToSemantics.simple(g))return false;var proof=goTos.fact(unit,v.id());
-                if(!proof.gaps().isEmpty()||proof.entry().isEmpty())return false;todo.push(new Visit(proof.entry().get(),false));continue;
+                if(!goTos.closed(unit,g))return false;
+                for(var target:goTos.entries(unit,g))todo.push(new Visit(target,false));
+                if(GoToSemantics.depending(g))todo.push(new Visit(goTos.conditionalFact(unit,v.id()).continuation().orElseThrow(),false));
+                continue;
             }
             var completion=boundary.containsKey(v.id())?boundary.get(v.id()):next.get(v.id());if(completion==null)return false;
             todo.push(new Visit(completion,false));

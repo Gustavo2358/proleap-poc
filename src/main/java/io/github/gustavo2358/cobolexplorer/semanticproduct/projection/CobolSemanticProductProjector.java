@@ -317,6 +317,9 @@ public final class CobolSemanticProductProjector {
             return new StatementPlan(position, capability, entries);
         }
 
+        if (position.statement() instanceof Ast.GoToStatement g && GoToSemantics.depending(g))
+            return new StatementPlan(position,Capability.supported("GO_TO","ORDERED_DEPENDING_ON"),
+                g.dependingOn()==null?List.of():conditionEntries(g.dependingOn(),inputs));
         if (position.statement() instanceof Ast.GoToStatement g && GoToSemantics.simple(g))
             return new StatementPlan(position, Capability.supported("GO_TO", "LOCAL_UNCONDITIONAL_PARAGRAPH"), List.of());
 
@@ -482,7 +485,8 @@ public final class CobolSemanticProductProjector {
     }
 
     private static boolean isConditionRead(ResolutionContracts.ReferenceRole role) {
-        return role == ResolutionContracts.ReferenceRole.VALUE_READ
+        return role == ResolutionContracts.ReferenceRole.GO_TO_SELECTOR
+                || role == ResolutionContracts.ReferenceRole.VALUE_READ
                 || role == ResolutionContracts.ReferenceRole.SUBSCRIPT
                 || role == ResolutionContracts.ReferenceRole.REFERENCE_MODIFICATION_OFFSET
                 || role == ResolutionContracts.ReferenceRole.REFERENCE_MODIFICATION_LENGTH;
@@ -582,6 +586,39 @@ public final class CobolSemanticProductProjector {
                 provenance(plan.position().statement().meta().provenance());
         CobolSemanticProduct.Containment containment = containment(
                 plan.position(), statementIds);
+
+        if (plan.position().statement() instanceof Ast.GoToStatement g && GoToSemantics.depending(g)) {
+            var proof=inputs.products().scalarMoves().goTos().conditionalFact(inputs.unitId(),g.meta().id());
+            var codes=new LinkedHashSet<>(proof.gaps());
+            if(containment.branch()==Branch.UNKNOWN)codes.add(CONTAINMENT_GAP);
+            Optional<DataReference> selector=Optional.empty();
+            for(var ref:plan.entries()) if(projectableDataBinding(ref,inputs)) {
+                selector=Optional.of(new DataReference(new OperandId(statementId,0),OperandRole.READ,nominalBinding(ref,dataIds),
+                    provenance(proof.selectorOrigin()),proof.integerSelector().map(id->new WholeItemAccess(Objects.requireNonNull(dataIds.get(id))))));
+                addReportGaps(statementId,ref.occurrence(),inputs,provenance(proof.selectorOrigin()),gaps);
+                break;
+            }
+            if(selector.isEmpty())codes.add("GO_TO_SELECTOR_REFERENCE_NOT_PROJECTED");
+            var destinations=new ArrayList<GoToDestination>();
+            for(var d:proof.destinations()) {
+                var f=d.proof();var local=new ArrayList<>(f.gaps());
+                var entry=canonicalStatement(f.entry(),inputs,statementIds);
+                destinations.add(new GoToDestination(d.ordinal(),f.target().map(t->new ProcedureId(inputs.boundaryUnit(),t.identity().localId())),
+                    f.target().map(t->provenance(t.paragraphOrigin())),provenance(f.referenceOrigin()),entry,
+                    f.entryOrigin().map(CobolSemanticProductProjector::provenance),local));
+                codes.addAll(local);
+            }
+            var status=codes.isEmpty()?ReadinessStatus.SUFFICIENT:ReadinessStatus.PARTIAL;
+            statements.add(new ConditionalGoToFact(header(statementId,plan.position().ordinal(),containment,statementProvenance,
+                codes.isEmpty()?CoverageStatus.MODELED:CoverageStatus.PARTIAL,
+                readiness(status,"ordered conditional destinations",status,"explicit alternatives and normal continuation",
+                    ReadinessStatus.NOT_APPLICABLE,"control transfer produces no value")),selector,proof.integerSelector().isPresent(),
+                provenance(proof.selectorOrigin()),destinations,
+                new NormalContinuation(proof.continuation().isPresent()?ContinuationAvailability.KNOWN:ContinuationAvailability.UNAVAILABLE,
+                    canonicalStatement(proof.continuation(),inputs,statementIds),provenance(proof.continuationOrigin())),List.copyOf(codes)));
+            for(var code:codes)gaps.add(new Gap(statementId,code.equals(CONTAINMENT_GAP)?GapScope.STRUCTURE:GapScope.CAPABILITY,code,"Conditional GO TO proof incomplete; known destinations retained",statementProvenance));
+            return;
+        }
 
         if (plan.position().statement() instanceof Ast.GoToStatement g && plan.capability().supported()) {
             var proof=inputs.products().scalarMoves().goTos().fact(inputs.unitId(),g.meta().id());

@@ -220,11 +220,24 @@ public final class ScalarMoveSemantics {
         }
         var numbers=NumericControlSemantics.analyze(frontend,tables,inputComplete);
         var ifs = IfSemantics.analyze(frontend, tables, resolution, report, declarations, moves,numbers);
-        var goTos = GoToSemantics.analyze(frontend, tables, resolution, report);
+        var goTos = GoToSemantics.analyze(frontend, tables, resolution, report,numbers);
         var performs = PerformSemantics.analyze(frontend, tables, resolution, report, moves, ifs, goTos);
         var evaluates = EvaluateSemantics.analyze(frontend, resolution, report, declarations);
         var procedurePerforms = ProcedurePerformSemantics.analyze(frontend, tables, resolution, report, declarations, moves, ifs, evaluates, goTos, performs,numbers);
         performs = performs.restrictOpenRanges(procedurePerforms);
+        // Ordinary execution crosses grammar-owned paragraph boundaries. Never replace
+        // an intrinsic activation's published completion with that ordinary fallthrough.
+        // This new proof is qualified only in units containing the conditional-transfer slice.
+        var conditionalUnits=goTos.conditionalUnits();
+        if(inputComplete)for(var unit:frontend.compilationUnit().programUnits())for(var division:unit.program().divisions())
+            if(conditionalUnits.contains(unit.id())&&division.divisionKind()==Ast.DivisionKind.PROCEDURE)for(var edge:division.ordinaryContinuations().entrySet()) {
+                var key=new NodeKey(unit.id(),edge.getKey());var move=moves.get(key);
+                if(move!=null&&move.nextStatement().isEmpty()&&!performs.intrinsicExit(unit.id(),key.node())
+                        &&!procedurePerforms.paragraphEnd(unit.id(),key.node())) {
+                    moves.put(key,new Move(move.wholeItem(),move.copy(),Optional.of(edge.getValue()),
+                        move.gaps().stream().filter(g->g!=Gap.NORMAL_CONTINUATION_NOT_AVAILABLE).toList(),move.adjustment(),move.sourceWholeItem()));
+                }
+            }
         return new ScalarMoveSemantics(declarations, moves, calls,
                 new Metrics(counts[0], counts[1], counts[2], counts[3], counts[4]),
                 ifs, performs, evaluates,
