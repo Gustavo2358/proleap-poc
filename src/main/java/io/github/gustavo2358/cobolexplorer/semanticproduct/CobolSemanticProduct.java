@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -42,7 +43,7 @@ public final class CobolSemanticProduct {
 
     public enum ReadinessStatus { SUFFICIENT, PARTIAL, BLOCKED, NOT_APPLICABLE }
 
-    public enum Branch { ROOT, THEN, ELSE, UNKNOWN }
+    public enum Branch { ROOT, THEN, ELSE, EVALUATE_ARM, UNKNOWN }
 
     public enum OperandRole { READ, WRITE, CALL_TARGET }
 
@@ -434,7 +435,7 @@ public final class CobolSemanticProduct {
         public Containment {
             parent = Objects.requireNonNull(parent, "parent");
             branch = Objects.requireNonNull(branch, "branch");
-            boolean requiresParent = branch == Branch.THEN || branch == Branch.ELSE;
+            boolean requiresParent = branch == Branch.THEN || branch == Branch.ELSE || branch == Branch.EVALUATE_ARM;
             if (requiresParent != parent.isPresent())
                 throw new IllegalArgumentException(
                         "THEN/ELSE require a parent; ROOT/UNKNOWN must omit it");
@@ -605,8 +606,26 @@ public final class CobolSemanticProduct {
 
     /** Adding a fact type extends this inventory without changing the State envelope. */
     public sealed interface StatementFact permits MoveFact, CallFact, IfFact,
-            ObservedStatement, GobackFact, PerformFact {
+            ObservedStatement, GobackFact, PerformFact, EvaluateFact {
         StatementHeader header();
+    }
+
+    /** Arm ordinal is semantic WHEN order, independent of physical statement inventory. */
+    public record EvaluateArm(int ordinal, LiteralSource selection, List<StatementId> statements, IfArm control) {
+        public EvaluateArm { require(ordinal >= 0, "arm ordinal is non-negative"); Objects.requireNonNull(selection);
+            statements = List.copyOf(statements); Objects.requireNonNull(control); }
+    }
+    public record EvaluateFact(StatementHeader header, Optional<DataReference> subject, List<EvaluateArm> arms,
+            IfArm otherArm, List<StatementId> otherStatements, NormalContinuation normalContinuation,
+            List<String> gapCodes) implements StatementFact {
+        public EvaluateFact { Objects.requireNonNull(header); Objects.requireNonNull(subject); arms = List.copyOf(arms);
+            Objects.requireNonNull(otherArm); otherStatements = List.copyOf(otherStatements);
+            Objects.requireNonNull(normalContinuation); gapCodes = List.copyOf(gapCodes);
+            require(!arms.isEmpty(), "EVALUATE needs a WHEN literal");
+            for (int i=0;i<arms.size();i++) require(arms.get(i).ordinal()==i, "WHEN ordinals preserve semantic order");
+            require(normalContinuation.availability()!=ContinuationAvailability.NONE, "EVALUATE is not a terminal");
+            subject.ifPresent(s -> require(s.role()==OperandRole.READ, "EVALUATE subject is read"));
+        }
     }
 
     public enum PerformProfile { SIMPLE_SINGLE_CALLSITE_PROCEDURE_PERFORM, BASIC_PROCEDURE_PERFORM, OUTSIDE_SLICE }
@@ -970,6 +989,7 @@ public final class CobolSemanticProduct {
                 ? List.of(data, move.target()) : List.of(move.target());
         if (statement instanceof CallFact call) return call.target() instanceof DataReference data ? List.of(data) : List.of();
         if (statement instanceof IfFact branch) return branch.condition().references();
+        if (statement instanceof EvaluateFact e) return e.subject().stream().toList();
         if (statement instanceof ObservedStatement observed) return observed.knownReferences();
         return List.of();
     }
@@ -985,6 +1005,9 @@ public final class CobolSemanticProduct {
             } else if (statement instanceof IfFact branch) {
                 operands = branch.condition().references().stream()
                         .map(DataReference::id).toList();
+            } else if (statement instanceof EvaluateFact e) {
+                var ids = new ArrayList<OperandId>(); e.subject().ifPresent(s -> ids.add(s.id()));
+                e.arms().forEach(a -> ids.add(a.selection().id())); operands = ids;
             } else if(statement instanceof ObservedStatement observed) {
                 operands=observed.knownReferences().stream().map(DataReference::id).toList();
             } else {
@@ -1069,11 +1092,21 @@ public final class CobolSemanticProduct {
             StatementHeader header = statement.header();
             header.containment().parent().ifPresent(parentId -> {
                 StatementFact parent = statements.get(parentId);
-                require(parent instanceof IfFact,
+                require(parent instanceof IfFact && header.containment().branch()!=Branch.EVALUATE_ARM
+                        || parent instanceof EvaluateFact && header.containment().branch()==Branch.EVALUATE_ARM,
                         "branch parent must be a published IF fact");
                 require(parent.header().point().ordinal() < header.point().ordinal(),
                         "branch parent must precede its structural child");
             });
+            if (statement instanceof EvaluateFact e) {
+                var members = new HashSet<StatementId>();
+                for (var a : e.arms()) validateEvaluateArm(e, a.control(), a.statements(), statements, members);
+                validateEvaluateArm(e, e.otherArm(), e.otherStatements(), statements, members);
+                var expected = armChildren.getOrDefault(new Containment(Optional.of(e.header().id()), Branch.EVALUATE_ARM), List.of());
+                require(members.equals(expected.stream().map(s -> s.header().id()).collect(java.util.stream.Collectors.toSet())), "EVALUATE membership is complete");
+                e.normalContinuation().statement().ifPresent(id -> require(statements.containsKey(id)
+                        && !id.equals(e.header().id()) && !members.contains(id), "EVALUATE continuation is outside arms"));
+            }
             if (statement instanceof IfFact branch) {
                 validateArm(branch, branch.thenArm(), Branch.THEN, armChildren);
                 validateArm(branch, branch.elseArm(), Branch.ELSE, armChildren);
@@ -1094,6 +1127,14 @@ public final class CobolSemanticProduct {
                 });
             }
         }
+    }
+
+    private static void validateEvaluateArm(EvaluateFact owner, IfArm arm, List<StatementId> body,
+            Map<StatementId, StatementFact> statements, Set<StatementId> members) {
+        require(arm.presence()!=ClausePresence.ABSENT || body.isEmpty(), "absent OTHER has no body");
+        arm.entry().statement().ifPresent(id -> require(!body.isEmpty() && body.get(0).equals(id), "arm entry is explicit first member"));
+        for (var id : body) require(members.add(id) && statements.containsKey(id)
+                && statements.get(id).header().containment().equals(new Containment(Optional.of(owner.header().id()), Branch.EVALUATE_ARM)), "EVALUATE direct member belongs to one arm");
     }
 
     private static void validateArm(IfFact owner, IfArm arm, Branch side,

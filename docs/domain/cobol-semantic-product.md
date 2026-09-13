@@ -1,6 +1,6 @@
 # COBOL Semantic Product
 
-Contrato corrente: [entry e input localizado / SP 1.9.0](../architecture/entry-localized-input.md), preservando [composição e parcialidade / SP 1.8.0](../architecture/compositional-partial-lowering.md), preservando [IF W2A](if-semantic-product.md), preservando [CALL e fitting W1A](call-semantic-product.md).
+Contrato corrente: [EVALUATE first slice / SP 2.0.0](evaluate-semantic-product.md), preservando [entry e input localizado / SP 1.9.0](../architecture/entry-localized-input.md), preservando [composição e parcialidade / SP 1.8.0](../architecture/compositional-partial-lowering.md), preservando [IF W2A](if-semantic-product.md), preservando [CALL e fitting W1A](call-semantic-product.md).
 
 O COBOL Semantic Product é a boundary COBOL-specific, materializada e imutável
 entre o frontend e o futuro repositório externo `cobol-lower`. Cada publicação

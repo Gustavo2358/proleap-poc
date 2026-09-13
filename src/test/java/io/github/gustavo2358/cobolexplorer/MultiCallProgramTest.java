@@ -28,7 +28,7 @@ class MultiCallProgramTest {
                 assertEquals(Optional.empty(), last.normalContinuation().statement());
             }
             var bytes = SemanticProductJsonWriter.serialize(port);
-            assertEquals("1.9.0", new ObjectMapper().readTree(bytes).path("contractVersion").asText());
+            assertEquals("2.0.0", new ObjectMapper().readTree(bytes).path("contractVersion").asText());
             assertArrayEquals(bytes, SemanticProductJsonWriter.serialize(ScalarMoveCheckpoint4ATest.publish(source(n))));
             var out = Path.of("target/multi-call"); Files.createDirectories(out); Files.write(out.resolve("fixture-" + n + ".json"), bytes);
         }
@@ -42,7 +42,7 @@ class MultiCallProgramTest {
         }
     }
     @Test void extraPerformAndUnsupportedRootRemainObserved() throws Exception {
-        for (String root : List.of("GO TO DEFINE-A.", "CONTINUE.", "ENTRY 'OTHER'.", "EVALUATE FLAG WHEN 'Y' MOVE 'PROGA' TO WS-A END-EVALUATE.")) {
+        for (String root : List.of("GO TO DEFINE-A.", "CONTINUE.", "ENTRY 'OTHER'.", "EVALUATE TRUE WHEN TRUE MOVE 'PROGA' TO WS-A END-EVALUATE.")) {
             var port = ScalarMoveCheckpoint4ATest.publish(source(5).replace("       CALL WS-A.", "       " + root + "\n       CALL WS-A."));
             assertTrue(port.performs().isEmpty(), root); assertFalse(port.observedStatements().isEmpty(), root);
         }

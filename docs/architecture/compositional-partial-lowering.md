@@ -74,3 +74,6 @@ Independent-storage facts cover qualified elementary WORKING-STORAGE roots even
 when another declaration has no scalar model. The section must still be exact;
 any overlay suppresses scalar qualification before the proof is formed. No
 disjointness is inferred from distinct IDs. `mixed-data` protects this distinction.
+
+SP 2.0 adds EVALUATE to the permanent 1/2/5/40 multiplicity contract, including
+composition with IF and BASIC PERFORM in a proved arm. See [EVALUATE](../domain/evaluate-semantic-product.md).

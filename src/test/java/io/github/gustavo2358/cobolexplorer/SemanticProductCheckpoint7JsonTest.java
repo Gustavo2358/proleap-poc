@@ -63,7 +63,7 @@ class SemanticProductCheckpoint7JsonTest {
         assertEquals(ROOT_FIELDS, fieldSet(document));
         assertEquals(ROOT_FIELD_ORDER, fieldList(document));
         assertEquals("cobol-semantic-product", document.path("schema").asText());
-        assertEquals("1.9.0", document.path("contractVersion").asText());
+        assertEquals("2.0.0", document.path("contractVersion").asText());
         assertEquals("SEMANTIC-TARGET",
                 document.path("unit").path("canonicalProgramName").asText());
         assertEquals(List.of(0), integerValues(document.path("unit").path("structuralPath")));
