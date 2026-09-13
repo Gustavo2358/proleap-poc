@@ -606,7 +606,7 @@ public final class CobolSemanticProduct {
 
     /** Adding a fact type extends this inventory without changing the State envelope. */
     public sealed interface StatementFact permits MoveFact, CallFact, IfFact,
-            ObservedStatement, GobackFact, PerformFact, EvaluateFact {
+            ObservedStatement, GobackFact, PerformFact, EvaluateFact, GoToFact {
         StatementHeader header();
     }
 
@@ -625,6 +625,23 @@ public final class CobolSemanticProduct {
             for (int i=0;i<arms.size();i++) require(arms.get(i).ordinal()==i, "WHEN ordinals preserve semantic order");
             require(normalContinuation.availability()!=ContinuationAvailability.NONE, "EVALUATE is not a terminal");
             subject.ifPresent(s -> require(s.role()==OperandRole.READ, "EVALUATE subject is read"));
+        }
+    }
+
+    public record GoToTarget(ProcedureId id, Provenance paragraphOrigin) {
+        public GoToTarget { Objects.requireNonNull(id); Objects.requireNonNull(paragraphOrigin); }
+    }
+    /** No normal continuation: the sole precise successor is targetEntry. */
+    public record GoToFact(StatementHeader header, Optional<GoToTarget> target, Provenance referenceOrigin,
+            Optional<StatementId> targetEntry, Optional<Provenance> entryOrigin, List<String> gapCodes) implements StatementFact {
+        public GoToFact {
+            Objects.requireNonNull(header); Objects.requireNonNull(target); Objects.requireNonNull(referenceOrigin);
+            Objects.requireNonNull(targetEntry); Objects.requireNonNull(entryOrigin); gapCodes=List.copyOf(gapCodes);
+            target.ifPresent(t -> require(t.id().unit().equals(header.id().unit()), "GO TO target is local"));
+            require(targetEntry.isPresent()==entryOrigin.isPresent(), "GO TO entry and origin are paired");
+            require(gapCodes.isEmpty()==targetEntry.isPresent(), "GO TO precise entry requires complete proof");
+            if(targetEntry.isPresent()) require(target.isPresent() && header.provenance().exact() && referenceOrigin.exact()
+                    && target.get().paragraphOrigin().exact() && entryOrigin.get().exact(), "GO TO requires exact origins");
         }
     }
 
@@ -1026,7 +1043,14 @@ public final class CobolSemanticProduct {
         for (var statement : statements.values())
             armChildren.computeIfAbsent(statement.header().containment(), ignored -> new java.util.ArrayList<>()).add(statement);
         Map<StatementId, StructuralInterval> intervals = structuralIntervals(statements);
+        var goToTargets=new HashMap<ProcedureId,GoToFact>();
         for (StatementFact statement : statements.values()) {
+            if (statement instanceof GoToFact g) g.targetEntry().ifPresent(id -> {
+                require(id.unit().equals(g.header().id().unit()) && statements.containsKey(id), "GO TO entry is published in same unit");
+                var previous=goToTargets.putIfAbsent(g.target().orElseThrow().id(),g);
+                require(previous==null || previous.target().equals(g.target()) && previous.targetEntry().equals(g.targetEntry()), "GO TO paragraph has one canonical entry");
+                require(statements.get(id).header().containment().branch()==Branch.ROOT && statements.get(id).header().provenance().equals(g.entryOrigin().orElseThrow()), "GO TO entry origin agrees with target statement");
+            });
             if (statement instanceof PerformFact basic && basic.profile() == PerformProfile.BASIC_PROCEDURE_PERFORM) {
                 var seen=new HashSet<StatementId>();
                 for(int i=0;i<basic.targetStatements().size();i++) {

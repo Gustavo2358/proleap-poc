@@ -666,7 +666,18 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
         Ast.Meta meta = meta(context);
         ParserRuleContext name = context.paragraphName();
         List<Ast.Sentence> sentences = context.sentence().stream().map(this::buildSentence).toList();
-        return new Ast.Paragraph(meta, name == null ? "<paragraph>" : clean(sourceText(name)), sentences);
+        return new Ast.Paragraph(meta, name == null ? "<paragraph>" : clean(sourceText(name)), sentences,
+                context.alteredGoTo() == null ? paragraphEntry(context.sentence()) : Optional.empty());
+    }
+
+    /** Direct grammar entry, with unmaterialized executable statements as barriers. */
+    private Optional<Integer> paragraphEntry(List<CobolParser.SentenceContext> sentences) {
+        for (var sentence : sentences) for (var statement : sentence.statement()) {
+            if (statement.entryStatement() != null) continue;
+            var entry = builtStatements.get(statement);
+            return entry == null ? Optional.empty() : Optional.of(entry.meta().id());
+        }
+        return Optional.empty();
     }
 
     private Ast.Sentence buildSentence(CobolParser.SentenceContext context) {

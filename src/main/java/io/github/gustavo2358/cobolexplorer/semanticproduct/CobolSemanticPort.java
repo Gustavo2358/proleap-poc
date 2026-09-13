@@ -51,6 +51,10 @@ public interface CobolSemanticPort {
 
     List<CobolSemanticProduct.IfFact> ifs();
 
+    default List<CobolSemanticProduct.GoToFact> goTos() {
+        return statements().stream().filter(CobolSemanticProduct.GoToFact.class::isInstance).map(CobolSemanticProduct.GoToFact.class::cast).toList();
+    }
+
     default List<CobolSemanticProduct.EvaluateFact> evaluates() {
         return statements().stream().filter(CobolSemanticProduct.EvaluateFact.class::isInstance).map(CobolSemanticProduct.EvaluateFact.class::cast).toList();
     }

@@ -4,6 +4,7 @@ import io.github.gustavo2358.cobolexplorer.Ast;
 import io.github.gustavo2358.cobolexplorer.ScalarMoveSemantics;
 import io.github.gustavo2358.cobolexplorer.IfSemantics;
 import io.github.gustavo2358.cobolexplorer.EvaluateSemantics;
+import io.github.gustavo2358.cobolexplorer.GoToSemantics;
 import io.github.gustavo2358.cobolexplorer.CompilationUnitBuildResult;
 import io.github.gustavo2358.cobolexplorer.CompilationUnitModel;
 import io.github.gustavo2358.cobolexplorer.CompilationUnitSymbolTables;
@@ -311,6 +312,9 @@ public final class CobolSemanticProductProjector {
             return new StatementPlan(position, capability, entries);
         }
 
+        if (position.statement() instanceof Ast.GoToStatement g && GoToSemantics.simple(g))
+            return new StatementPlan(position, Capability.supported("GO_TO", "LOCAL_UNCONDITIONAL_PARAGRAPH"), List.of());
+
         if (position.statement() instanceof Ast.EvaluateStatement e && inputs.products().scalarMoves().evaluates().fact(inputs.unitId(), e.meta().id()).supportedShape())
             return new StatementPlan(position, Capability.supported("EVALUATE", "SIMPLE_SUBJECT_LITERAL_ARMS"),
                     conditionEntries(e.subjects().get(0), inputs));
@@ -564,6 +568,23 @@ public final class CobolSemanticProductProjector {
                 provenance(plan.position().statement().meta().provenance());
         CobolSemanticProduct.Containment containment = containment(
                 plan.position(), statementIds);
+
+        if (plan.position().statement() instanceof Ast.GoToStatement g && plan.capability().supported()) {
+            var proof=inputs.products().scalarMoves().goTos().fact(inputs.unitId(),g.meta().id());
+            var codes=new ArrayList<>(proof.gaps());
+            if(containment.branch()==Branch.UNKNOWN)codes.add(CONTAINMENT_GAP);
+            var entry=codes.isEmpty()?canonicalStatement(proof.entry(),inputs,statementIds):Optional.<StatementId>empty();
+            if(codes.isEmpty() && entry.isEmpty())codes.add("GO_TO_TARGET_ENTRY_UNAVAILABLE");
+            var status=codes.isEmpty()?ReadinessStatus.SUFFICIENT:ReadinessStatus.PARTIAL;
+            statements.add(new GoToFact(header(statementId,plan.position().ordinal(),containment,statementProvenance,
+                codes.isEmpty()?CoverageStatus.MODELED:CoverageStatus.PARTIAL,
+                readiness(status,"local unconditional paragraph transfer",status,"explicit target without fallthrough",
+                    ReadinessStatus.NOT_APPLICABLE,"control transfer produces no value")),
+                proof.target().map(t->new GoToTarget(new ProcedureId(inputs.boundaryUnit(),t.identity().localId()),provenance(t.paragraphOrigin()))),
+                provenance(proof.referenceOrigin()),entry,entry.isPresent()?proof.entryOrigin().map(CobolSemanticProductProjector::provenance):Optional.empty(),codes));
+            for(var code:codes)gaps.add(new Gap(statementId,GapScope.CAPABILITY,code,"GO TO target control proof unavailable",statementProvenance));
+            return;
+        }
 
         if (plan.position().statement() instanceof Ast.PerformStatement perform && plan.capability().supported()) {
             var proof = inputs.products().scalarMoves().performs().fact(inputs.unitId(), perform.meta().id());

@@ -26,7 +26,7 @@ import java.util.Objects;
  */
 public final class SemanticProductJsonWriter {
     public static final String SCHEMA = "cobol-semantic-product";
-    public static final String CONTRACT_VERSION = "2.0.0";
+    public static final String CONTRACT_VERSION = "2.1.0";
 
     private static final ObjectMapper JSON = JsonMapper.builder()
             .enable(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY)
@@ -128,6 +128,10 @@ public final class SemanticProductJsonWriter {
     }
 
     private static StatementDocument statement(CobolSemanticProduct.StatementFact fact) {
+        if (fact instanceof CobolSemanticProduct.GoToFact g)
+            return new GoToDocument(header(g.header()),g.target().map(t -> new GoToTargetDocument("procedure:"+t.id().localId(),provenance(t.paragraphOrigin()))).orElse(null),
+                provenance(g.referenceOrigin()),g.targetEntry().map(SemanticProductJsonWriter::statementHandle).orElse(null),
+                g.entryOrigin().map(SemanticProductJsonWriter::provenance).orElse(null),g.gapCodes());
         if (fact instanceof CobolSemanticProduct.EvaluateFact e)
             return new EvaluateDocument(header(e.header()), e.subject().map(SemanticProductJsonWriter::dataReference).orElse(null),
                 e.arms().stream().map(a -> new EvaluateArmDocument(a.ordinal(), moveSource(a.selection()),
@@ -356,10 +360,15 @@ public final class SemanticProductJsonWriter {
             @JsonSubTypes.Type(value = GobackDocument.class, name = "GOBACK"),
             @JsonSubTypes.Type(value = PerformDocument.class, name = "PERFORM"),
             @JsonSubTypes.Type(value = EvaluateDocument.class, name = "EVALUATE"),
+            @JsonSubTypes.Type(value = GoToDocument.class, name = "GO_TO"),
             @JsonSubTypes.Type(value = ObservedDocument.class, name = "OBSERVED")
     })
     private sealed interface StatementDocument permits MoveDocument, CallDocument,
-            IfDocument, ObservedDocument, GobackDocument, PerformDocument, EvaluateDocument { }
+            IfDocument, ObservedDocument, GobackDocument, PerformDocument, EvaluateDocument, GoToDocument { }
+
+    private record GoToTargetDocument(String id, ProvenanceDocument paragraphOrigin) { }
+    private record GoToDocument(StatementHeaderDocument header, GoToTargetDocument target, ProvenanceDocument referenceOrigin,
+            String targetEntry, ProvenanceDocument entryOrigin, List<String> gapCodes) implements StatementDocument { }
 
     private record EvaluateArmDocument(int ordinal, MoveSourceDocument selection, List<String> statements, IfArmDocument control) { }
     private record EvaluateDocument(StatementHeaderDocument header, DataReferenceDocument subject, List<EvaluateArmDocument> arms,
