@@ -37,7 +37,12 @@ public final class StorageLayoutSemantics {
     public Map<String,Long> metrics(){return metrics;}
     public static StorageLayoutSemantics analyze(CompilationUnitBuildResult frontend,CompilationUnitSymbolTables tables,
             ReferenceResolution resolution,ResolutionAnalysisReport report,Profile profile) {
+        return analyze(frontend,tables,resolution,report,profile,StorageComponents.analyze(frontend));
+    }
+    public static StorageLayoutSemantics analyze(CompilationUnitBuildResult frontend,CompilationUnitSymbolTables tables,
+            ReferenceResolution resolution,ResolutionAnalysisReport report,Profile profile,StorageComponents components) {
         Objects.requireNonNull(profile);Objects.requireNonNull(resolution);
+        if(!components.belongsTo(frontend))throw new IllegalArgumentException("storage components belong to another snapshot");
         boolean input=report.gaps().stream().noneMatch(g->g.category()==ResolutionAnalysisReport.GapCategory.INPUT);
         var layouts=new LinkedHashMap<ResolutionContracts.ProgramUnitId,Layout>();long declarations=0,visits=0;
         for(var unit:frontend.compilationUnit().programUnits()) {
@@ -46,10 +51,9 @@ public final class StorageLayoutSemantics {
             if(!input)reasons.add(Reason.INPUT_MISSING);
             var attributes=unit.program().attributes();
             if(attributes.initial()||attributes.recursive()||attributes.common()||attributes.library()||attributes.definition())reasons.add(Reason.NONORDINARY_PROGRAM);
-            var sections=new ArrayList<Ast.Section>();
-            for(var division:unit.program().divisions())if(division.divisionKind()==Ast.DivisionKind.DATA)
-                for(var child:division.children())if(child instanceof Ast.Section section&&section.dataSectionKind()==Ast.DataSectionKind.WORKING_STORAGE)sections.add(section);
-            if(sections.size()!=1)reasons.add(Reason.SECTION_NOT_PROVEN);
+            var physical=components.unit(unit.id());
+            if(!physical.structureProven())reasons.add(Reason.SECTION_NOT_PROVEN);
+            if(!physical.relationsProven())reasons.add(Reason.OVERLAY_NOT_PROVEN);
             var coverage=new HashMap<Integer,SemanticCoverage.Finding>();
             var reportUnit=frontend.coverageByProgramUnit().get(unit.id());
             if(reportUnit==null)reasons.add(Reason.INPUT_MISSING);else for(var f:reportUnit.findings())coverage.put(f.astNodeId(),f);
@@ -59,28 +63,10 @@ public final class StorageLayoutSemantics {
                     var entity=new ResolutionContracts.SemanticEntityId(unit.id(),ResolutionContracts.SemanticEntityDomain.DATA_SYMBOL,symbol.id());
                     if(entities.putIfAbsent(symbol.declarationAstNodeId(),entity)!=null)duplicates.add(symbol.declarationAstNodeId());
                 }
-            var ordered=new ArrayList<Position>();var roots=new ArrayList<Ast.DataEntry>();
-            for(var section:sections)for(var child:section.children()) {
-                if(child instanceof Ast.DataEntry data)roots.add(data);else reasons.add(Reason.SECTION_NOT_PROVEN);
-            }
-            if(roots.stream().anyMatch(root->level(root)!=1&&level(root)!=77))reasons.add(Reason.SECTION_NOT_PROVEN);
-            var pending=new ArrayDeque<Position>();
-            for(int i=roots.size()-1;i>=0;i--)pending.push(new Position(roots.get(i),Optional.empty(),i,roots.get(i).meta().id()));
-            var unique=new HashSet<Integer>();boolean opaqueClause=false,overlay=false;
-            while(!pending.isEmpty()) {
-                var position=pending.pop();var data=position.data();visits++;declarations++;
-                if(!unique.add(data.meta().id()))throw new IllegalArgumentException("duplicate physical declaration identity");
-                ordered.add(position);
-                for(var clause:data.clauses()) {
-                    overlay|=clause instanceof Ast.RedefinesClause||clause instanceof Ast.RenamesClause;
-                    opaqueClause|=clause instanceof Ast.PreservedDataClause;
-                }
-                for(int i=data.children().size()-1;i>=0;i--)pending.push(new Position(data.children().get(i),Optional.of(data.meta().id()),i,position.root()));
-            }
-            // W3 deliberately retains the conservative overlay guard; W4 replaces it with components.
-            if(overlay)reasons.add(Reason.OVERLAY_NOT_PROVEN);
+            var ordered=physical.positions();var roots=physical.roots();
+            visits+=ordered.size();declarations+=ordered.size();
             boolean environment=reasons.isEmpty();
-            var extents=new HashMap<Integer,Measure>();var shapes=new HashMap<Integer,Shape>();
+            var extents=new HashMap<Integer,Measure>();var shapes=new HashMap<Integer,Shape>();var footprints=new HashMap<Integer,Measure>();
             for(int i=ordered.size()-1;i>=0;i--) {
                 var data=ordered.get(i).data();visits++;var shape=shape(data,coverage,duplicates);shapes.put(data.meta().id(),shape);
                 Measure extent;
@@ -89,10 +75,17 @@ public final class StorageLayoutSemantics {
                 else if(shape.kind()==Kind.ELEMENTARY)extent=Measure.known(shape.leafExtent().orElseThrow());
                 else {
                     extent=Measure.known(BigInteger.ZERO);
-                    for(var child:data.children())extent=plus(extent,extents.get(child.meta().id()),Reason.UNKNOWN_EXTENT);
+                    for(var component:physical.children().get(data.meta().id())) {
+                        var footprint=footprint(component,extents);footprints.put(component.representative(),footprint);
+                        extent=plus(extent,footprint,Reason.UNKNOWN_EXTENT);
+                    }
                 }
                 extents.put(data.meta().id(),extent);
+                // Even an opaque parent must preserve explicit unknown offsets for its children.
+                for(var component:physical.children().get(data.meta().id()))
+                    footprints.putIfAbsent(component.representative(),footprint(component,extents));
             }
+            for(var component:physical.rootComponents())footprints.put(component.representative(),footprint(component,extents));
             var offsets=new HashMap<Integer,Measure>();var permitted=new HashMap<Integer,Boolean>();
             for(var root:roots){offsets.put(root.meta().id(),Measure.known(BigInteger.ZERO));permitted.put(root.meta().id(),environment);}
             var nodes=new ArrayList<Node>();var views=new ArrayList<View>();var bases=new ArrayList<Base>();
@@ -102,19 +95,28 @@ public final class StorageLayoutSemantics {
                 boolean allowed=permitted.get(data.meta().id())&&shape.supported();
                 nodes.add(new Node(key,position.parent().map(p->new Key(unit.id(),p)),position.order(),data.filler(),shape.kind(),
                     data.filler()||duplicates.contains(data.meta().id())?Optional.empty():Optional.ofNullable(entities.get(data.meta().id())),extent,data.meta().provenance()));
-                views.add(new View(key,new Key(unit.id(),position.root()),offset,extent,allowed&&extent.value().isPresent(),data.meta().provenance()));
-                if(position.parent().isEmpty())bases.add(new Base(key,extent,environment&&!opaqueClause&&data.visibility()==Ast.DeclarationVisibility.LOCAL,data.meta().provenance()));
+                int base=physical.componentOf().get(position.root()).representative();
+                views.add(new View(key,new Key(unit.id(),base),offset,extent,allowed&&extent.value().isPresent(),data.meta().provenance()));
+                if(position.parent().isEmpty()&&base==data.meta().id())bases.add(new Base(key,footprints.get(base),environment&&physical.allocationProven(),data.meta().provenance()));
                 var cursor=allowed?offset:Measure.unknown(Reason.UNKNOWN_OFFSET);
-                for(var child:data.children()) {
-                    offsets.put(child.meta().id(),cursor);permitted.put(child.meta().id(),allowed);
-                    cursor=plus(cursor,extents.get(child.meta().id()),Reason.UNKNOWN_OFFSET);
+                for(var component:physical.children().get(data.meta().id())) {
+                    for(var child:component.members()){offsets.put(child,cursor);permitted.put(child,allowed);}
+                    cursor=plus(cursor,footprints.get(component.representative()),Reason.UNKNOWN_OFFSET);
                 }
             }
             layouts.put(unit.id(),new Layout(profile,nodes,bases,views,List.copyOf(reasons)));
         }
         return new StorageLayoutSemantics(layouts,Map.of("declarations",declarations,"layoutVisits",visits,"objectPairs",0L),frontend,resolution);
     }
-    private record Position(Ast.DataEntry data,Optional<Integer> parent,int order,int root) { }
+    private static Measure footprint(StorageComponents.Component component,Map<Integer,Measure> extents) {
+        BigInteger max=BigInteger.ZERO;
+        for(var member:component.members()) {
+            var extent=extents.get(member);
+            if(extent.value().isEmpty())return Measure.unknown(Reason.UNKNOWN_EXTENT);
+            max=max.max(extent.value().get());
+        }
+        return Measure.known(max);
+    }
     private record Shape(Kind kind,boolean supported,Optional<BigInteger> leafExtent) { }
     private static Shape shape(Ast.DataEntry data,Map<Integer,SemanticCoverage.Finding> coverage,Set<Integer> duplicates) {
         boolean known=!duplicates.contains(data.meta().id())
@@ -127,6 +129,7 @@ public final class StorageLayoutSemantics {
             known&=modeled(clause,coverage);
             if(clause instanceof Ast.PictureClause picture){pictures++;extent=picture.textExtent().map(BigInteger::valueOf);}
             else if(clause instanceof Ast.UsageClause usage&&usage.display())usages++;
+            else if(clause instanceof Ast.RedefinesClause) { /* Physical relation is proved by StorageComponents. */ }
             else known=false;
         }
         var kind=data.children().isEmpty()?Kind.ELEMENTARY:Kind.GROUP;

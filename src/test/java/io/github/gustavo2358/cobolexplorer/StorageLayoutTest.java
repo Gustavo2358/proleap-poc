@@ -50,8 +50,13 @@ class StorageLayoutTest {
             assertTrue(f.view("WS-AREA").extent().value().isEmpty(),clause);
         }
         var overlay=fixture("01 WS-AREA PIC X(8).\n01 OTHER-AREA REDEFINES WS-AREA PIC X(8).");
-        assertTrue(overlay.layout.reasons().contains(Reason.OVERLAY_NOT_PROVEN));
-        assertTrue(overlay.layout.bases().stream().noneMatch(Base::independent));
+        // W4 replaces the W3 global refusal with a proved single allocation.
+        assertFalse(overlay.layout.reasons().contains(Reason.OVERLAY_NOT_PROVEN));
+        assertEquals(1,overlay.layout.bases().size());assertTrue(overlay.layout.bases().get(0).independent());
+        assertEquals(overlay.view("WS-AREA").base(),overlay.view("OTHER-AREA").base());
+        var unproved=fixture("01 WS-AREA PIC X(8).\n01 OTHER-AREA REDEFINES MISSING-AREA PIC X(8).");
+        assertTrue(unproved.layout.reasons().contains(Reason.OVERLAY_NOT_PROVEN));
+        assertTrue(unproved.layout.bases().stream().noneMatch(Base::independent));
     }
     @Test void oneTwoFiveAndManyChildrenHaveUncappedLinearPreparationAndRenameInvariant() {
         for(int n:new int[]{1,2,5,40,256}) {

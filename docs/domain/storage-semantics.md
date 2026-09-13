@@ -204,3 +204,45 @@ Após a correção de identidade opaca da base, FAST: 169 métodos, zero skips.
 A execução Maven completa anterior: 659 descobertos, zero falhas, um skip
 herdado em SemanticConditionContextDiscoveryTest por configuração; não é contado
 como teste executado. Os produtos CLI SP 2.7 foram capturados separadamente.
+
+## Decisão W4: componentes antes de layout e elegibilidade
+
+Autoridade revisitada: IBM z/OS 6.4 REDEFINES e suas considerações (links acima).
+`LANGUAGE_GUARANTEED`: a declaração tipada REDEFINES identifica armazenamento
+compartilhado, inclusive owner FILLER, alvo já redefinidor e tamanhos diferentes
+em WS não EXTERNAL. `ARCHITECTURE_GUARANTEED`: parent/order e referências tipadas
+vêm da AST; os nomes só resolvem o alvo escrito dentro do conjunto estrutural
+contíguo, nunca provam disjunção. Não usar o fallback nominal genérico como prova
+física: ele pode selecionar um nome fora do conjunto permitido.
+
+StorageComponents prepara, por unidade, uma floresta física imutável e conjuntos
+contíguos entre irmãos. Cada relação registra owner, alvo selecionado, identidade
+da cláusula, origem e estado de prova; não exige símbolo no owner. Seleção única,
+cláusula inicial, target integral sem qualifiers/subscripts, hierarquia e ordem
+são premissas verificadas. Esta versão concede prova a membros com o mesmo número
+de nível; números diferentes admitidos pela linguagem mantêm fallback explícito,
+pois a AST atual não certifica toda a renumeração hierárquica relevante.
+
+Cada conjunto possui um representante de alocação, distinto dos objetos nominais.
+Extents das descrições vêm de pós-ordem; o footprint do conjunto usa o máximo,
+e o grupo soma footprints. Offsets vêm depois: membros compartilham o início,
+filhos recebem deslocamentos internos e o campo seguinte avança pelo footprint.
+Unknown de qualquer alternativa torna o footprint desconhecido, nunca zero.
+A relação pode ser provada enquanto a interpretação de uma folha permanece opaca.
+
+O índice também oferece elegibilidade escalar reutilizável, independente de codec:
+raiz singleton, ordinária e local, sem outro membro redefinidor, vista após todas
+as declarações. W4.3 passará a consumi-la em scalar/numeric/IF. Relação inválida,
+RENAMES, cláusula preservada ou GLOBAL/EXTERNAL continuam restringindo a prova;
+uma possível relação com destino desconhecido não pode provar alocações disjuntas.
+Uma relação REDEFINES válida em outra raiz deixa de ser, por si só, bloqueio global.
+A seleção de perfil continua obrigatória para extents/codecs regionais conhecidos.
+
+Terminação: visitas iterativas à floresta finita; relações só selecionam membros
+já vistos do conjunto contíguo atual, impossibilitando ciclos admitidos. Mapas de
+nomes canônicos mantêm multiplicidade, recusando ambiguidade. Custo O(n + clauses),
+fora a ordenação de transporte, sem procurar todos os pares ou refazer walks por
+consulta. StorageOverlayTest fixa os goldens de compartilhamento, max footprint,
+FILLER, cadeia, campos seguintes, nomes repetidos, unknown e 1/2/5/40 alternativas
+antes da implementação. Testes W3 de guarda global serão migrados apenas nos casos
+agora cobertos por essa prova, mantendo os negativos sem prova.
