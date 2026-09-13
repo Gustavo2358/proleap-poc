@@ -26,9 +26,13 @@ public final class StorageLayoutSemantics {
     }
     private final Map<ResolutionContracts.ProgramUnitId,Layout> layouts;
     private final Map<String,Long> metrics;
-    private StorageLayoutSemantics(Map<ResolutionContracts.ProgramUnitId,Layout> layouts,Map<String,Long> metrics) {
-        this.layouts=Map.copyOf(layouts);this.metrics=Map.copyOf(metrics);
+    private final CompilationUnitBuildResult owner;
+    private final ReferenceResolution bindings;
+    private StorageLayoutSemantics(Map<ResolutionContracts.ProgramUnitId,Layout> layouts,Map<String,Long> metrics,
+            CompilationUnitBuildResult owner,ReferenceResolution bindings) {
+        this.layouts=Map.copyOf(layouts);this.metrics=Map.copyOf(metrics);this.owner=owner;this.bindings=bindings;
     }
+    boolean belongsTo(CompilationUnitBuildResult owner,ReferenceResolution bindings){return this.owner==owner&&this.bindings==bindings;}
     public Layout layout(ResolutionContracts.ProgramUnitId unit){return Objects.requireNonNull(layouts.get(unit),"foreign unit");}
     public Map<String,Long> metrics(){return metrics;}
     public static StorageLayoutSemantics analyze(CompilationUnitBuildResult frontend,CompilationUnitSymbolTables tables,
@@ -108,7 +112,7 @@ public final class StorageLayoutSemantics {
             }
             layouts.put(unit.id(),new Layout(profile,nodes,bases,views,List.copyOf(reasons)));
         }
-        return new StorageLayoutSemantics(layouts,Map.of("declarations",declarations,"layoutVisits",visits,"objectPairs",0L));
+        return new StorageLayoutSemantics(layouts,Map.of("declarations",declarations,"layoutVisits",visits,"objectPairs",0L),frontend,resolution);
     }
     private record Position(Ast.DataEntry data,Optional<Integer> parent,int order,int root) { }
     private record Shape(Kind kind,boolean supported,Optional<BigInteger> leafExtent) { }

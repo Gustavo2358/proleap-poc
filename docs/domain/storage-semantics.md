@@ -130,3 +130,21 @@ origem compara o fato publicado ao canônico, inclusive quando exact é false.
 O primeiro teste de COPY assumia incorretamente exatidão do mapeamento; o contrato
 de provenance existente mostrou a distinção, registrada nas tentativas W3.
 Ainda não há afirmação de SP 2.7 ou M1 apenas por estes testes de layout.
+
+`StorageAccessSemantics` recebe esse snapshot e o mesmo binding nominal, com
+validação de ownership por identidade. As chaves publicadas continuam compostas;
+IDs iguais em outro snapshot não permitem reutilizar as provas. Referências
+integrais resolvidas admitem qualificadores, sem fabricar wholeItemAccess legado.
+São publicados ponto/ocorrência, objeto nominal, base/view, role e origem.
+CALL precisa de uma folha textual dentro do perfil; a resolução não calcula
+nome de programa nem estado de runtime.
+
+MOVE exato publica LITERAL_BYTES ou COPY_BYTES; este último exige faixas disjuntas
+provadas e comprimentos iguais. Destino obrigatório conhecido com fonte fora do
+perfil produz MUST_UNKNOWN, e destino não provado permanece UNAVAILABLE. Não há
+fitting/truncamento implícito. Provas escalares de fitting já existentes continuam
+disponíveis separadamente para a tradução compatível. O encoder usa a tabela
+IBM/IANA fixada, rejeita texto não representável e não consulta charset da JVM.
+O teste compara os 256 mapeamentos ao arquivo derivado da fonte IANA de W1,
+incluindo a distinção LF/NEL. Captura aqui significa um fato de leitura anterior
+à escrita; valores de runtime e efeitos posteriores continuam no consumidor AIR.
