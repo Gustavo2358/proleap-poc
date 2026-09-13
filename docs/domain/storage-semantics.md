@@ -103,3 +103,30 @@ closure SP/lower, grupos 1/2/5/N, filler/opacos/qualifiers, E2E group→child→
 W4 acrescenta compartilhamento bidirecional, overlays tardios e disjunção local.
 W5 qualifica os valores compostos downstream. Cada wave mantém FAST e regressões
 anteriores. Escopo de suporte só muda após as provas da respectiva wave.
+
+## Implementação W3 em andamento
+
+`StorageLayoutSemantics` prepara o layout canônico antes do projector. A entrada
+contém uma seleção explícita de Profile; ausência não autoriza o perfil IBM1047.
+Três visitas por declaração calculam estrutura, extents em pós-ordem e offsets
+em pré-ordem. FILLER possui identidade mesmo sem símbolo. Os números usam
+BigInteger, e um prefixo desconhecido propaga UNKNOWN_OFFSET aos sucessores.
+Só níveis 01/77 podem iniciar alocação ordinária; níveis internos seguem a AST.
+W3 ainda mantém a recusa conservadora dos overlays, a ser substituída em W4.
+
+A prova exige preprocessing completo e cobertura semântica MODELED para a
+declaração e suas cláusulas tipadas admitidas. `SourceProvenance.exact` descreve
+fidelidade de mapeamento do texto original, não certeza do layout da AST expandida:
+COPY, intervalos atravessando arquivos e REPLACING podem alterar esse indicador.
+O cálculo preserva integralmente origem, includeChain e exact; não fabrica um
+mapeamento exato para publicar layout conhecido. A autoridade semântica é a AST
+produzida pelo preprocessing concluído. Cláusulas não interpretadas e input ausente
+continuam negando prova. O significado de wholeItemAccess escalar não muda.
+
+`StorageLayoutTest` possui oráculos de grupo aninhado, FILLER, PIC desconhecido,
+ambiente ausente, cláusulas excluídas, níveis inválidos, programas não ordinários,
+COPY aninhado/REPLACING, DISPLAY herdado e multiplicidade 1/2/5/40/256. O teste de
+origem compara o fato publicado ao canônico, inclusive quando exact é false.
+O primeiro teste de COPY assumia incorretamente exatidão do mapeamento; o contrato
+de provenance existente mostrou a distinção, registrada nas tentativas W3.
+Ainda não há afirmação de SP 2.7 ou M1 apenas por estes testes de layout.

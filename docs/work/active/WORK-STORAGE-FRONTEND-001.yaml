@@ -7,3 +7,8 @@ scope:
   - ST-W4.1/W4.3 REDEFINES components and localized physical proof; cumulative W3/W4/W5 E2E fixtures.
   - Preserve scalar and control profiles; no W6-W8 implementation, downstream solver, merge or auto-merge.
 notes: User authorized autonomous implementation through W5 and one persistent draft PR; human review only after final qualification.
+design_w3:
+  contract: docs/domain/storage-semantics.md
+  ownership: StorageLayoutSemantics computes typed physical facts before SP projection.
+  progress: Fixed nested layout, FILLER, explicit environment, unknown offsets and COPY provenance have focal oracle coverage; access, SP and M1 are pending.
+  boundary: Source mapping exactness is preserved independently of layout certainty from completed preprocessing and modeled typed declarations.
