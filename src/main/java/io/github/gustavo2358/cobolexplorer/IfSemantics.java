@@ -104,7 +104,8 @@ public final class IfSemantics {
                     facts.put(new ScalarMoveSemantics.NodeKey(unit.id(), branch.meta().id()),
                             new Facts(predicate, thenArm, elseArm, successor, simple));
                 }
-            // One section and its complete declaration inventory: no pair enumeration.
+            // Qualified independent roots in one exact section; unrelated declarations do not invalidate their proof.
+            // ScalarMoveSemantics already denies the entire section when any overlay is present.
             List<ResolutionContracts.SemanticEntityId> members = new ArrayList<>();
             Ast.SourceProvenance origin = unit.program().meta().provenance();
             boolean independent = input && workingStorage.size() == 1;
@@ -113,12 +114,11 @@ public final class IfSemantics {
                 independent &= exactSurface(section, coverage);
                 for (Ast.Node child : section.children()) {
                     work[1]++;
-                    if (!(child instanceof Ast.DataEntry data)) { independent = false; continue; }
+                    if (!(child instanceof Ast.DataEntry data)) continue;
                     var entity = entities.get(data.meta().id()); work[4]++;
                     boolean eligible = entity != null && !duplicateDeclarations.contains(data.meta().id())
                             && scalars.containsKey(entity) && modeled(data, coverage);
                     for (var clause : data.clauses()) { work[0]++; eligible &= modeled(clause, coverage); }
-                    independent &= eligible;
                     if (eligible) members.add(entity);
                 }
             }

@@ -26,7 +26,7 @@ import java.util.Objects;
  */
 public final class SemanticProductJsonWriter {
     public static final String SCHEMA = "cobol-semantic-product";
-    public static final String CONTRACT_VERSION = "1.7.0";
+    public static final String CONTRACT_VERSION = "1.8.0";
 
     private static final ObjectMapper JSON = JsonMapper.builder()
             .enable(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY)
@@ -132,7 +132,7 @@ public final class SemanticProductJsonWriter {
                 perform.targetEntry().map(SemanticProductJsonWriter::statementHandle).orElse(null),
                 perform.targetStatements().stream().map(SemanticProductJsonWriter::statementHandle).toList(),
                 perform.targetExit().map(SemanticProductJsonWriter::statementHandle).orElse(null), continuation(perform.normalContinuation()),
-                perform.primaryStatements().stream().map(SemanticProductJsonWriter::statementHandle).toList(), perform.gapCodes());
+                perform.gapCodes());
         }
         if (fact instanceof CobolSemanticProduct.GobackFact goback)
             return new GobackDocument(header(goback.header()), goback.exit(), goback.localContinuation());
@@ -163,7 +163,7 @@ public final class SemanticProductJsonWriter {
         }
         if (fact instanceof CobolSemanticProduct.ObservedStatement observed) {
             return new ObservedDocument(header(observed.header()), observed.observedKind(),
-                    observed.observedShape(), observed.gapCode());
+                    observed.observedShape(), observed.gapCode(), continuation(observed.normalContinuation()), observed.knownReferences().stream().map(SemanticProductJsonWriter::dataReference).toList());
         }
         throw new IllegalArgumentException("unsupported Semantic Product statement fact: "
                 + fact.getClass().getName());
@@ -355,7 +355,7 @@ public final class SemanticProductJsonWriter {
     private record PerformTargetDocument(String id, ProvenanceDocument referenceOrigin, ProvenanceDocument paragraphOrigin) { }
     private record PerformDocument(StatementHeaderDocument header, CobolSemanticProduct.PerformProfile profile,
         PerformTargetDocument target, String targetEntry, List<String> targetStatements, String targetExit,
-        ContinuationDocument normalContinuation, List<String> primaryStatements, List<String> gapCodes) implements StatementDocument { }
+        ContinuationDocument normalContinuation, List<String> gapCodes) implements StatementDocument { }
 
     @JsonPropertyOrder({"variant", "header", "exit", "localContinuation"})
     private record GobackDocument(StatementHeaderDocument header, CobolSemanticProduct.GobackExit exit,
@@ -396,7 +396,7 @@ public final class SemanticProductJsonWriter {
     @JsonPropertyOrder({"variant", "header", "observedKind", "observedShape", "gapCode"})
     private record ObservedDocument(StatementHeaderDocument header, String observedKind,
                                     String observedShape,
-                                    String gapCode) implements StatementDocument { }
+                                    String gapCode, ContinuationDocument normalContinuation, List<DataReferenceDocument> knownReferences) implements StatementDocument { }
 
     private record StatementHeaderDocument(
             String id,

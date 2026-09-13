@@ -1,6 +1,6 @@
 # COBOL Semantic Product
 
-Contrato corrente: [composição CP6 / SP 1.7.0](perform-basic.md), preservando [IF W2A](if-semantic-product.md), preservando [CALL e fitting W1A](call-semantic-product.md).
+Contrato corrente: [composição e parcialidade / SP 1.8.0](../architecture/compositional-partial-lowering.md), preservando [IF W2A](if-semantic-product.md), preservando [CALL e fitting W1A](call-semantic-product.md).
 
 O COBOL Semantic Product é a boundary COBOL-specific, materializada e imutável
 entre o frontend e o futuro repositório externo `cobol-lower`. Cada publicação
@@ -440,3 +440,14 @@ da tradução AIR; nenhum consumer infere essas regras de texto ou shape.
 ## CP6 PERFORM BASIC
 
 SP 1.6.0 adds the [isolated paragraph PERFORM profile](perform-basic.md); MOVE data sources introduced in SP 1.5.0 remain unchanged.
+
+## SP1.8 — intrinsic bodies and partial statements
+
+The current wire removes activation-global resume from a paragraph's last MOVE.
+BASIC_PROCEDURE_PERFORM carries targetEntry, ordered targetStatements, targetExit
+and its own normalContinuation. primaryStatements remains only in legacy SP1.6/1.7
+wire contracts; the SP1.8 primary graph is shared through explicit continuations.
+ObservedStatement adds normalContinuation and knownReferences. These nominal facts
+retain identity/role/binding/provenance, but do not invent exact access/effect proof.
+A known observed continuation is the only normal in-unit successor; abnormal exits
+and nontermination remain unproved. No observed construction disappears.

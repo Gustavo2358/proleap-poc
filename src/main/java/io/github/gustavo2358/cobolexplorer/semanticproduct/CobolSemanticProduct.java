@@ -609,7 +609,7 @@ public final class CobolSemanticProduct {
         StatementHeader header();
     }
 
-    public enum PerformProfile { SIMPLE_SINGLE_CALLSITE_PROCEDURE_PERFORM, OUTSIDE_SLICE }
+    public enum PerformProfile { SIMPLE_SINGLE_CALLSITE_PROCEDURE_PERFORM, BASIC_PROCEDURE_PERFORM, OUTSIDE_SLICE }
     /** Canonical local PROCEDURE symbol identity; display spelling is not control. */
     public record ProcedureId(UnitId unit, int localId) {
         public ProcedureId { Objects.requireNonNull(unit); require(localId >= 0, "procedure localId must be non-negative"); }
@@ -624,10 +624,10 @@ public final class CobolSemanticProduct {
             Objects.requireNonNull(header); Objects.requireNonNull(profile); Objects.requireNonNull(target);
             Objects.requireNonNull(targetEntry); Objects.requireNonNull(targetExit); Objects.requireNonNull(normalContinuation);
             targetStatements = List.copyOf(targetStatements); primaryStatements = List.copyOf(primaryStatements); gapCodes = List.copyOf(gapCodes);
-            boolean simple = profile == PerformProfile.SIMPLE_SINGLE_CALLSITE_PROCEDURE_PERFORM;
+            boolean simple = profile != PerformProfile.OUTSIDE_SLICE;
             require(simple == gapCodes.isEmpty(), "PERFORM profile must preserve gaps");
             if (simple) {
-                require(target.isPresent() && !targetStatements.isEmpty() && !primaryStatements.isEmpty(), "PERFORM needs target and closed bodies");
+                require(target.isPresent() && !targetStatements.isEmpty() && (profile == PerformProfile.BASIC_PROCEDURE_PERFORM ? primaryStatements.isEmpty() : !primaryStatements.isEmpty()), "PERFORM needs target and closed bodies");
                 require(targetEntry.equals(Optional.of(targetStatements.get(0))) && targetExit.equals(Optional.of(targetStatements.get(targetStatements.size()-1))), "PERFORM body endpoints disagree");
                 require(normalContinuation.availability() == ContinuationAvailability.KNOWN, "PERFORM requires unique resume");
                 require(target.get().id().unit().equals(header.id().unit()), "PERFORM target must be local");
@@ -784,9 +784,13 @@ public final class CobolSemanticProduct {
     /** A visible statement whose family or shape is not modeled by this capability. */
     public record ObservedStatement(StatementHeader header, String observedKind,
                                     String observedShape,
-                                    String gapCode) implements StatementFact {
+                                    String gapCode, NormalContinuation normalContinuation, List<DataReference> knownReferences) implements StatementFact {
+        public ObservedStatement(StatementHeader header, String observedKind, String observedShape, String gapCode) {
+            this(header, observedKind, observedShape, gapCode, NormalContinuation.unavailable(header.provenance()), List.of());
+        }
         public ObservedStatement {
             header = Objects.requireNonNull(header, "header");
+            Objects.requireNonNull(normalContinuation); knownReferences=List.copyOf(knownReferences);
             observedKind = requireText(observedKind, "observedKind");
             observedShape = requireText(observedShape, "observedShape");
             gapCode = requireText(gapCode, "gapCode");
@@ -966,6 +970,7 @@ public final class CobolSemanticProduct {
                 ? List.of(data, move.target()) : List.of(move.target());
         if (statement instanceof CallFact call) return call.target() instanceof DataReference data ? List.of(data) : List.of();
         if (statement instanceof IfFact branch) return branch.condition().references();
+        if (statement instanceof ObservedStatement observed) return observed.knownReferences();
         return List.of();
     }
 
@@ -980,6 +985,8 @@ public final class CobolSemanticProduct {
             } else if (statement instanceof IfFact branch) {
                 operands = branch.condition().references().stream()
                         .map(DataReference::id).toList();
+            } else if(statement instanceof ObservedStatement observed) {
+                operands=observed.knownReferences().stream().map(DataReference::id).toList();
             } else {
                 operands = List.of();
             }
@@ -997,6 +1004,17 @@ public final class CobolSemanticProduct {
             armChildren.computeIfAbsent(statement.header().containment(), ignored -> new java.util.ArrayList<>()).add(statement);
         Map<StatementId, StructuralInterval> intervals = structuralIntervals(statements);
         for (StatementFact statement : statements.values()) {
+            if (statement instanceof PerformFact basic && basic.profile() == PerformProfile.BASIC_PROCEDURE_PERFORM) {
+                var seen=new HashSet<StatementId>();
+                for(int i=0;i<basic.targetStatements().size();i++) {
+                    var id=basic.targetStatements().get(i);
+                    require(seen.add(id) && statements.get(id) instanceof MoveFact, "BASIC body contains distinct published MOVEs");
+                    var move=(MoveFact)statements.get(id);
+                    var expected=i+1<basic.targetStatements().size()?Optional.of(basic.targetStatements().get(i+1)):Optional.<StatementId>empty();
+                    require(move.normalContinuation().statement().equals(expected), "intrinsic BASIC body continuation mismatch");
+                    require(!id.equals(basic.header().id()) && !basic.normalContinuation().statement().equals(Optional.of(id)), "BASIC activation and resume are outside body");
+                }
+            }
             if (statement instanceof PerformFact perform && perform.profile() == PerformProfile.SIMPLE_SINGLE_CALLSITE_PROCEDURE_PERFORM) {
                 var members = new HashSet<StatementId>();
                 for (var id : perform.primaryStatements()) require(members.add(id) && statements.containsKey(id), "PERFORM primary members must be unique and published");
@@ -1004,14 +1022,15 @@ public final class CobolSemanticProduct {
                     var id = perform.targetStatements().get(i);
                     require(members.add(id) && statements.get(id) instanceof MoveFact, "PERFORM target is a disjoint linear MOVE body");
                     var move = (MoveFact) statements.get(id);
-                    var next = i + 1 < perform.targetStatements().size() ? Optional.of(perform.targetStatements().get(i+1)) : perform.normalContinuation().statement();
+                    var next = i + 1 < perform.targetStatements().size() ? Optional.of(perform.targetStatements().get(i+1)) : (perform.profile() == PerformProfile.BASIC_PROCEDURE_PERFORM ? Optional.<StatementId>empty() : perform.normalContinuation().statement());
                     require(move.normalContinuation().statement().equals(next), "PERFORM body completion disagrees with published relation");
                 }
                 var main = perform.primaryStatements(); int callsite = main.indexOf(perform.header().id());
                 require(callsite >= 0 && callsite + 1 < main.size()
                     && statements.get(main.get(main.size() - 1)) instanceof GobackFact
                     && perform.normalContinuation().statement().equals(Optional.of(main.get(callsite + 1))), "PERFORM primary end/resume mismatch");
-                require(statements.values().stream().filter(PerformFact.class::isInstance).count() == 1, "one isolated PERFORM callsite");
+                if (perform.profile() == PerformProfile.SIMPLE_SINGLE_CALLSITE_PROCEDURE_PERFORM)
+                    require(statements.values().stream().filter(PerformFact.class::isInstance).count() == 1, "legacy SP1.7 one isolated PERFORM callsite");
                 for (int i = 0; i < main.size(); i++) {
                     var root = statements.get(main.get(i));
                     require(root.header().containment().equals(new Containment(Optional.empty(), Branch.ROOT)), "PERFORM primary members are direct roots");
@@ -1030,7 +1049,8 @@ public final class CobolSemanticProduct {
                     require(next.availability() == ContinuationAvailability.KNOWN
                         && next.statement().equals(Optional.of(main.get(i + 1))), "PERFORM primary continuation mismatch");
                 }
-                require(members.equals(statements.keySet()), "PERFORM proof covers roots, IF arms and target exactly");
+                if (perform.profile() == PerformProfile.SIMPLE_SINGLE_CALLSITE_PROCEDURE_PERFORM)
+                    require(members.equals(statements.keySet()), "legacy PERFORM proof covers roots, IF arms and target exactly");
             }
             if (statement instanceof MoveFact move) move.normalContinuation().statement().ifPresent(next -> {
                 require(next.unit().equals(move.header().id().unit()) && statements.containsKey(next),
@@ -1041,6 +1061,10 @@ public final class CobolSemanticProduct {
                 require(next.unit().equals(call.header().id().unit()) && statements.containsKey(next),
                         "CALL continuation must reference a published statement in the same unit");
                 require(!next.equals(call.header().id()), "CALL cannot continue to itself");
+            });
+            if(statement instanceof ObservedStatement observed)observed.normalContinuation().statement().ifPresent(next -> {
+                require(next.unit().equals(statement.header().id().unit()) && statements.containsKey(next) && !next.equals(statement.header().id()),
+                    "observed continuation references a different published statement in the same unit");
             });
             StatementHeader header = statement.header();
             header.containment().parent().ifPresent(parentId -> {

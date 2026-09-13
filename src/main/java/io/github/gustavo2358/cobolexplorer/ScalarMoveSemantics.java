@@ -208,7 +208,6 @@ public final class ScalarMoveSemantics {
         }
         var ifs = IfSemantics.analyze(frontend, tables, resolution, report, declarations, moves);
         var performs = PerformSemantics.analyze(frontend, tables, resolution, report, moves, ifs);
-        performs.applyCompletions(moves);
         return new ScalarMoveSemantics(declarations, moves, calls,
                 new Metrics(counts[0], counts[1], counts[2], counts[3], counts[4]),
                 ifs, performs);

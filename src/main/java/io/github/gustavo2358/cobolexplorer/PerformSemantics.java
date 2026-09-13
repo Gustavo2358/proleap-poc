@@ -2,7 +2,7 @@ package io.github.gustavo2358.cobolexplorer;
 
 import java.util.*;
 
-/** Source-derived proof for a single isolated paragraph invocation, not general PERFORM. */
+/** Source-derived proofs for isolated BASIC paragraph activations, not general PERFORM. */
 public final class PerformSemantics {
     public record Target(ResolutionContracts.SemanticEntityId identity, int paragraph,
                          List<Integer> statements, Ast.SourceProvenance referenceOrigin,
@@ -16,21 +16,16 @@ public final class PerformSemantics {
         public boolean simpleProfile() { return gaps.isEmpty(); }
     }
     private final Map<ScalarMoveSemantics.NodeKey, Facts> facts;
-    private PerformSemantics(Map<ScalarMoveSemantics.NodeKey, Facts> facts) { this.facts = Map.copyOf(facts); }
+    private final Set<ScalarMoveSemantics.NodeKey> intrinsicExits;
+    private PerformSemantics(Map<ScalarMoveSemantics.NodeKey, Facts> facts) {
+        this.facts = Map.copyOf(facts);
+        var exits=new HashSet<ScalarMoveSemantics.NodeKey>();
+        facts.forEach((key,value) -> value.target().ifPresent(t -> exits.add(new ScalarMoveSemantics.NodeKey(key.unit(),t.statements().get(t.statements().size()-1)))));
+        intrinsicExits=Set.copyOf(exits);
+    }
+    public boolean intrinsicExit(ResolutionContracts.ProgramUnitId unit,int node) { return intrinsicExits.contains(new ScalarMoveSemantics.NodeKey(unit,node)); }
     public Facts fact(ResolutionContracts.ProgramUnitId unit, int statement) {
         return Objects.requireNonNull(facts.get(new ScalarMoveSemantics.NodeKey(unit, statement)), "PERFORM fact missing");
-    }
-    /** Only a proved isolated activation may give its final MOVE this return relation. */
-    void applyCompletions(Map<ScalarMoveSemantics.NodeKey, ScalarMoveSemantics.Move> moves) {
-        facts.forEach((key, fact) -> {
-            if (!fact.simpleProfile()) return;
-            var body = fact.target().orElseThrow().statements();
-            var last = new ScalarMoveSemantics.NodeKey(key.unit(), body.get(body.size() - 1));
-            var move = Objects.requireNonNull(moves.get(last));
-            moves.put(last, new ScalarMoveSemantics.Move(move.wholeItem(), move.copy(), fact.resume(),
-                move.gaps().stream().filter(g -> g != ScalarMoveSemantics.Gap.NORMAL_CONTINUATION_NOT_AVAILABLE).toList(),
-                move.adjustment(), move.sourceWholeItem()));
-        });
     }
     static PerformSemantics analyze(CompilationUnitBuildResult frontend, CompilationUnitSymbolTables tables,
             ReferenceResolution resolution, ResolutionAnalysisReport report,
@@ -53,19 +48,40 @@ public final class PerformSemantics {
             var findings = new HashMap<Integer, SemanticCoverage.Finding>();
             for (var finding : frontend.coverageByProgramUnit().get(unit.id()).findings()) findings.put(finding.astNodeId(), finding);
             var procedures = unit.program().divisions().stream().filter(d -> d.divisionKind() == Ast.DivisionKind.PROCEDURE).toList();
+            var procedure=procedures.size()==1?procedures.get(0):null;
+            var bodies=new IdentityHashMap<Ast.Paragraph,List<Ast.Statement>>();
+            Ast.Paragraph primary=null;
+            if(procedure!=null && procedure.procedureEntry().isPresent()) {
+                var entry=procedure.procedureEntry().orElseThrow();
+                if(!entry.declarativesPresent() && !entry.signatureClausesPresent() && entry.startStatementId().isPresent()
+                    && procedure.children().stream().allMatch(Ast.Paragraph.class::isInstance)) {
+                    for(var child:procedure.children()) {
+                        var paragraph=(Ast.Paragraph)child;var body=direct(paragraph);bodies.put(paragraph,body);
+                        if(!body.isEmpty() && body.get(0).meta().id()==entry.startStatementId().orElseThrow())primary=paragraph;
+                    }
+                }
+            }
+            var main=primary==null?List.<Ast.Statement>of():bodies.get(primary);
+            var positions=new IdentityHashMap<Ast.Statement,Integer>();
+            boolean mainSound=!main.isEmpty() && main.get(main.size()-1) instanceof Ast.GobackStatement;
+            for(int i=0;i<main.size();i++) {
+                var statement=main.get(i);positions.put(statement,i);mainSound &= modeled(statement,findings);
+                if(i==main.size()-1)continue;
+                boolean supported=supportedMove(statement,unit.id(),moves)
+                    || statement instanceof Ast.CallStatement call && !call.surface().hasHandlers()
+                    || statement instanceof Ast.PerformStatement other && basic(other)
+                    || statement instanceof Ast.IfStatement branch && ifs.fact(unit.id(),branch.meta().id()).simpleProfile();
+                mainSound &= supported && Objects.equals(procedure.normalContinuations().get(statement.meta().id()),main.get(i+1).meta().id());
+            }
+            var primaryIds=main.stream().map(statement->statement.meta().id()).toList();
+            var linearBodies=new IdentityHashMap<Ast.Paragraph,Boolean>();
             for (var perform : performs) {
                 var gaps = new LinkedHashSet<String>();
-                if (performs.size() != 1) {
-                    result.put(new ScalarMoveSemantics.NodeKey(unit.id(), perform.meta().id()), new Facts(
-                        Optional.empty(), Optional.empty(), perform.meta().provenance(), List.of(), List.of("PERFORM_MULTIPLE_CALLSITES")));
-                    continue;
-                }
                 if (!complete) gaps.add("PERFORM_INPUT_INCOMPLETE");
                 if (perform.performKind() != Ast.PerformKind.PROCEDURE || perform.fromReference() == null
                         || perform.throughReference() != null || !perform.controls().isEmpty()
                         || !perform.controlExpressions().isEmpty() || !perform.inlineBody().isEmpty())
                     gaps.add("PERFORM_FORM_OUTSIDE_PROFILE");
-                if (performs.size() != 1) gaps.add("PERFORM_MULTIPLE_CALLSITES");
                 Ast.Paragraph target = null; ResolutionContracts.SemanticEntityId identity = null;
                 var ref = perform.fromReference() == null ? null : references.get(new ScalarMoveSemantics.NodeKey(unit.id(), perform.fromReference().meta().id()));
                 if (ref != null && ref.occurrence().role() == ResolutionContracts.ReferenceRole.PERFORM_FROM
@@ -82,44 +98,20 @@ public final class PerformSemantics {
                     }
                 }
                 if (target == null) gaps.add("PERFORM_TARGET_NOT_UNIQUE_LOCAL_PARAGRAPH");
-                Ast.Paragraph primary = null; Ast.Division procedure = procedures.size() == 1 ? procedures.get(0) : null;
-                if (procedure != null && procedure.procedureEntry().isPresent()) {
-                    var entry = procedure.procedureEntry().orElseThrow();
-                    if (!entry.declarativesPresent() && !entry.signatureClausesPresent() && entry.startStatementId().isPresent()
-                            && procedure.children().size() == 2 && procedure.children().stream().allMatch(Ast.Paragraph.class::isInstance)) {
-                        for (var child : procedure.children()) {
-                            var paragraph = (Ast.Paragraph) child;
-                            var body = direct(paragraph);
-                            if (!body.isEmpty() && body.get(0).meta().id() == entry.startStatementId().orElseThrow()) primary = paragraph;
-                        }
-                    }
-                }
-                var main = primary == null ? List.<Ast.Statement>of() : direct(primary);
-                var body = target == null ? List.<Ast.Statement>of() : direct(target);
-                boolean isolated = primary != null && target != null && primary != target && procedure.children().contains(target);
-                int index = main.indexOf(perform);
-                // SP1.7: direct supported primary statements with one constant PERFORM resume.
-                isolated &= index >= 0 && index + 1 < main.size()
-                    && main.get(main.size() - 1) instanceof Ast.GobackStatement;
-                if (isolated) {
-                    for (int i = 0; i < main.size(); i++) {
-                        var statement = main.get(i);
-                        isolated &= modeled(statement, findings);
-                        if (i == main.size() - 1) continue;
-                        if (statement == perform) continue;
-                        boolean supported = supportedMove(statement, unit.id(), moves)
-                            || statement instanceof Ast.CallStatement call && !call.surface().hasHandlers()
-                            || statement instanceof Ast.IfStatement branch && ifs.fact(unit.id(), branch.meta().id()).simpleProfile();
-                        isolated &= supported && Objects.equals(procedure.normalContinuations().get(statement.meta().id()), main.get(i + 1).meta().id());
-                    }
-                }
+                var body=target==null?List.<Ast.Statement>of():bodies.getOrDefault(target,List.of());
+                int index=positions.getOrDefault(perform,-1);
+                boolean isolated=mainSound && target!=null && target!=primary && bodies.containsKey(target)
+                    && index>=0 && index+1<main.size();
                 if (!isolated) gaps.add("PERFORM_ISOLATED_PRIMARY_FLOW_NOT_PROVEN");
-                boolean linear = !body.isEmpty();
-                for (int i = 0; i < body.size(); i++) {
-                    var statement = body.get(i);
-                    linear &= supportedMove(statement, unit.id(), moves) && modeled(statement, findings);
-                    if (i + 1 < body.size()) linear &= procedure != null && Objects.equals(
-                        procedure.normalContinuations().get(statement.meta().id()), body.get(i + 1).meta().id());
+                Boolean linear=linearBodies.get(target);
+                if(linear==null) {
+                    linear=!body.isEmpty();
+                    for(int i=0;i<body.size();i++) {
+                        var statement=body.get(i);
+                        linear &= supportedMove(statement,unit.id(),moves) && modeled(statement,findings);
+                        if(i+1<body.size())linear &= procedure!=null && Objects.equals(procedure.normalContinuations().get(statement.meta().id()),body.get(i+1).meta().id());
+                    }
+                    linearBodies.put(target,linear);
                 }
                 if (!linear) gaps.add("PERFORM_LINEAR_MOVE_BODY_NOT_PROVEN");
                 boolean exact = perform.meta().provenance().exact() && primary != null && primary.meta().provenance().exact()
@@ -131,12 +123,16 @@ public final class PerformSemantics {
                     result.put(new ScalarMoveSemantics.NodeKey(unit.id(), perform.meta().id()), new Facts(
                         Optional.of(new Target(identity, target.meta().id(), body.stream().map(s -> s.meta().id()).toList(),
                             perform.fromReference().meta().provenance(), target.meta().provenance())),
-                        Optional.of(resume.meta().id()), resume.meta().provenance(), main.stream().map(s -> s.meta().id()).toList(), List.of()));
+                        Optional.of(resume.meta().id()), resume.meta().provenance(), primaryIds, List.of()));
                 } else result.put(new ScalarMoveSemantics.NodeKey(unit.id(), perform.meta().id()), new Facts(
                     Optional.empty(), Optional.empty(), perform.meta().provenance(), List.of(), List.copyOf(gaps)));
             }
         }
         return new PerformSemantics(result);
+    }
+    private static boolean basic(Ast.PerformStatement p) {
+        return p.performKind()==Ast.PerformKind.PROCEDURE && p.fromReference()!=null && p.throughReference()==null
+            && p.controls().isEmpty() && p.controlExpressions().isEmpty() && p.inlineBody().isEmpty();
     }
     private static List<Ast.Statement> direct(Ast.Paragraph paragraph) {
         return paragraph.sentences().stream().flatMap(s -> s.statements().stream()).toList();

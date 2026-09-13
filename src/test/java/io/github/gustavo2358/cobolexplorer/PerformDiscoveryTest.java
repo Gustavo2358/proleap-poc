@@ -41,8 +41,8 @@ class PerformDiscoveryTest {
         assertEquals(2, paragraphs.size());
         assertEquals(1, AstBoundaryTestSupport.nodes(a, Ast.PerformStatement.class).size());
         assertTrue(AstBoundaryTestSupport.nodes(a, Ast.GoToStatement.class).isEmpty());
-        // Existing continuation authority is deliberately absent for PERFORM.
-        assertFalse(division.normalContinuations().containsKey(perform.meta().id()));
+        // Normal return belongs to this activation; body ends remain intrinsic.
+        assertEquals(primaryBody.get(1).meta().id(), division.normalContinuations().get(perform.meta().id()));
         assertEquals(primaryBody.get(2).meta().id(), division.normalContinuations().get(primaryBody.get(1).meta().id()));
     }
     @Test void everyGrammarLoopControlHasTypedControlExpressions() {
