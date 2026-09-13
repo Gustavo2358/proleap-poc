@@ -26,7 +26,7 @@ import java.util.Objects;
  */
 public final class SemanticProductJsonWriter {
     public static final String SCHEMA = "cobol-semantic-product";
-    public static final String CONTRACT_VERSION = "1.9.0";
+    public static final String CONTRACT_VERSION = "2.0.0";
 
     private static final ObjectMapper JSON = JsonMapper.builder()
             .enable(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY)
@@ -62,6 +62,8 @@ public final class SemanticProductJsonWriter {
 
         List<BranchChildrenDocument> branches = new ArrayList<>();
         for (CobolSemanticProduct.StatementFact fact : port.statements()) {
+            if (fact instanceof CobolSemanticProduct.EvaluateFact e)
+                addBranch(port, branches, e.header().id(), CobolSemanticProduct.Branch.EVALUATE_ARM);
             if (!(fact instanceof CobolSemanticProduct.IfFact branch)) continue;
             addBranch(port, branches, branch.header().id(), CobolSemanticProduct.Branch.THEN);
             addBranch(port, branches, branch.header().id(), CobolSemanticProduct.Branch.ELSE);
@@ -126,6 +128,12 @@ public final class SemanticProductJsonWriter {
     }
 
     private static StatementDocument statement(CobolSemanticProduct.StatementFact fact) {
+        if (fact instanceof CobolSemanticProduct.EvaluateFact e)
+            return new EvaluateDocument(header(e.header()), e.subject().map(SemanticProductJsonWriter::dataReference).orElse(null),
+                e.arms().stream().map(a -> new EvaluateArmDocument(a.ordinal(), moveSource(a.selection()),
+                    a.statements().stream().map(SemanticProductJsonWriter::statementHandle).toList(), arm(a.control()))).toList(),
+                arm(e.otherArm()), e.otherStatements().stream().map(SemanticProductJsonWriter::statementHandle).toList(),
+                continuation(e.normalContinuation()), e.gapCodes());
         if (fact instanceof CobolSemanticProduct.PerformFact perform) {
             return new PerformDocument(header(perform.header()), perform.profile(), perform.target().map(t ->
                 new PerformTargetDocument("procedure:" + t.id().localId(), provenance(t.referenceOrigin()), provenance(t.paragraphOrigin()))).orElse(null),
@@ -347,10 +355,15 @@ public final class SemanticProductJsonWriter {
             @JsonSubTypes.Type(value = IfDocument.class, name = "IF"),
             @JsonSubTypes.Type(value = GobackDocument.class, name = "GOBACK"),
             @JsonSubTypes.Type(value = PerformDocument.class, name = "PERFORM"),
+            @JsonSubTypes.Type(value = EvaluateDocument.class, name = "EVALUATE"),
             @JsonSubTypes.Type(value = ObservedDocument.class, name = "OBSERVED")
     })
     private sealed interface StatementDocument permits MoveDocument, CallDocument,
-            IfDocument, ObservedDocument, GobackDocument, PerformDocument { }
+            IfDocument, ObservedDocument, GobackDocument, PerformDocument, EvaluateDocument { }
+
+    private record EvaluateArmDocument(int ordinal, MoveSourceDocument selection, List<String> statements, IfArmDocument control) { }
+    private record EvaluateDocument(StatementHeaderDocument header, DataReferenceDocument subject, List<EvaluateArmDocument> arms,
+            IfArmDocument otherArm, List<String> otherStatements, ContinuationDocument normalContinuation, List<String> gapCodes) implements StatementDocument { }
 
     private record PerformTargetDocument(String id, ProvenanceDocument referenceOrigin, ProvenanceDocument paragraphOrigin) { }
     private record PerformDocument(StatementHeaderDocument header, CobolSemanticProduct.PerformProfile profile,

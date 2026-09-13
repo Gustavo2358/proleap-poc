@@ -23,7 +23,8 @@ class CompositionalityContractTest {
         var families = java.util.Arrays.stream(StatementFact.class.getPermittedSubclasses())
                 .filter(f -> f != ObservedStatement.class && f != GobackFact.class).toList();
         for (int n : List.of(1, 2, 5, 40)) {
-            var mixed = ScalarMoveCheckpoint4ATest.publish(program(n, n, n));
+            var evaluate = "EVALUATE FLAG\nWHEN 'A' MOVE 'PROGA' TO WS-A\nWHEN OTHER MOVE 'PROGB' TO WS-A\nEND-EVALUATE.\n";
+            var mixed = ScalarMoveCheckpoint4ATest.publish(program(n, n, n).replace("GOBACK.", evaluate.repeat(n)+"GOBACK."));
             for (var family : families) assertTrue(mixed.statements().stream().filter(family::isInstance).count() >= n,
                     "Missing compositional generator for " + family.getSimpleName() + " at N=" + n);
         }

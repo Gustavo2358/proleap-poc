@@ -70,7 +70,8 @@ public final class PerformSemantics {
                 boolean supported=supportedMove(statement,unit.id(),moves)
                     || statement instanceof Ast.CallStatement call && !call.surface().hasHandlers()
                     || statement instanceof Ast.PerformStatement other && basic(other)
-                    || statement instanceof Ast.IfStatement branch && ifs.fact(unit.id(),branch.meta().id()).simpleProfile();
+                    || statement instanceof Ast.IfStatement branch && ifs.fact(unit.id(),branch.meta().id()).simpleProfile()
+                    || statement instanceof Ast.EvaluateStatement e && evaluatePrimary(e, unit.id(), moves, ifs, findings, procedure.normalContinuations(), positions);
                 mainSound &= supported && Objects.equals(procedure.normalContinuations().get(statement.meta().id()),main.get(i+1).meta().id());
             }
             var primaryIds=main.stream().map(statement->statement.meta().id()).toList();
@@ -99,9 +100,9 @@ public final class PerformSemantics {
                 }
                 if (target == null) gaps.add("PERFORM_TARGET_NOT_UNIQUE_LOCAL_PARAGRAPH");
                 var body=target==null?List.<Ast.Statement>of():bodies.getOrDefault(target,List.of());
-                int index=positions.getOrDefault(perform,-1);
+                var resumeId=procedure==null?null:procedure.normalContinuations().get(perform.meta().id());
                 boolean isolated=mainSound && target!=null && target!=primary && bodies.containsKey(target)
-                    && index>=0 && index+1<main.size();
+                    && positions.containsKey(perform) && resumeId!=null;
                 if (!isolated) gaps.add("PERFORM_ISOLATED_PRIMARY_FLOW_NOT_PROVEN");
                 Boolean linear=linearBodies.get(target);
                 if(linear==null) {
@@ -119,7 +120,7 @@ public final class PerformSemantics {
                 if (!exact) gaps.add("PERFORM_PROVENANCE_INCOMPLETE");
                 // Refused forms publish no control guarantees. Their observed inventory remains intact.
                 if (gaps.isEmpty()) {
-                    var resume = main.get(index + 1);
+                    var resume = nodes.get(resumeId);
                     result.put(new ScalarMoveSemantics.NodeKey(unit.id(), perform.meta().id()), new Facts(
                         Optional.of(new Target(identity, target.meta().id(), body.stream().map(s -> s.meta().id()).toList(),
                             perform.fromReference().meta().provenance(), target.meta().provenance())),
@@ -130,6 +131,35 @@ public final class PerformSemantics {
         }
         return new PerformSemantics(result);
     }
+    /** BASIC activations may be in a bounded EVALUATE arm; each region has its own proved completion. */
+    private static boolean evaluatePrimary(Ast.EvaluateStatement evaluate, ResolutionContracts.ProgramUnitId unit,
+            Map<ScalarMoveSemantics.NodeKey, ScalarMoveSemantics.Move> moves, IfSemantics ifs,
+            Map<Integer, SemanticCoverage.Finding> findings, Map<Integer,Integer> next,
+            Map<Ast.Statement,Integer> primaryMembers) {
+        if (!EvaluateSemantics.supportedShape(evaluate)) return false;
+        record Region(List<Ast.Statement> body, Integer resume) { }
+        var pending=new ArrayDeque<Region>();
+        for (var arm:evaluate.branches()) pending.push(new Region(arm.statements(),next.get(evaluate.meta().id())));
+        boolean sound=true;
+        while(!pending.isEmpty()) {
+            var region=pending.pop(); sound &= !region.body().isEmpty() && region.resume()!=null;
+            for(int i=0;i<region.body().size();i++) {
+                var s=region.body().get(i); primaryMembers.put(s,0); sound &= modeled(s,findings);
+                var resume=i+1<region.body().size()?region.body().get(i+1).meta().id():region.resume();
+                if(s instanceof Ast.GobackStatement) continue;
+                sound &= Objects.equals(next.get(s.meta().id()),resume);
+                if(s instanceof Ast.IfStatement f) {
+                    sound &= f.explicitlyTerminated() && ifs.fact(unit,f.meta().id()).predicate().availability()==IfSemantics.Availability.KNOWN;
+                    pending.push(new Region(f.thenBranch(),resume));
+                    if(f.elsePresence()==Ast.BranchPresence.PRESENT)pending.push(new Region(f.elseBranch(),resume));
+                    else sound &= f.elsePresence()==Ast.BranchPresence.ABSENT;
+                } else sound &= supportedMove(s,unit,moves) || s instanceof Ast.CallStatement call && !call.surface().hasHandlers()
+                        || s instanceof Ast.PerformStatement p && basic(p);
+            }
+        }
+        return sound;
+    }
+
     private static boolean basic(Ast.PerformStatement p) {
         return p.performKind()==Ast.PerformKind.PROCEDURE && p.fromReference()!=null && p.throughReference()==null
             && p.controls().isEmpty() && p.controlExpressions().isEmpty() && p.inlineBody().isEmpty();

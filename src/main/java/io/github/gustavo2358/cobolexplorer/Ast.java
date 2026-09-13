@@ -65,7 +65,7 @@ public final class Ast {
     /** Semantic context supplied by the typed statement production; this is not a binding result. */
     public enum StatementOperandContext { DEFAULT, SET_CONDITION_TARGET, SET_DATA_OR_INDEX }
     /** Context of a WHEN selector derived from its typed evaluateCondition and matching subject position. */
-    public enum EvaluateSelectorContext { BOOLEAN_SUBJECT_NOMINAL, VALUE_COMPARISON, OTHER }
+    public enum EvaluateSelectorContext { BOOLEAN_SUBJECT_NOMINAL, VALUE_COMPARISON, SIMPLE_LITERAL, OTHER }
     public enum DataSectionKind { FILE, DATABASE, WORKING_STORAGE, LINKAGE, COMMUNICATION, LOCAL_STORAGE, SCREEN, REPORT, PROGRAM_LIBRARY }
     public enum DataLevelKind { GROUP_OR_ELEMENTARY, STANDALONE_77, RENAMES_66, CONDITION_88, OPAQUE }
     public enum CallArgumentKind { VALUE, OMITTED, ADDRESS_OF, LENGTH_OF }
@@ -253,7 +253,7 @@ public final class Ast {
     }
 
     public record EvaluateStatement(Meta meta, List<Expression> subjects, List<EvaluateBranch> branches,
-                                    boolean explicitlyTerminated) implements Statement {
+                                    boolean explicitlyTerminated, boolean simpleSubject) implements Statement {
         public EvaluateStatement {
             subjects = List.copyOf(subjects);
             branches = List.copyOf(branches);
