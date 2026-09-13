@@ -68,4 +68,13 @@ class StorageOverlayProductTest {
         assertEquals(StorageRelationStatus.PROVEN,absent.storage().relations().get(0).status());
         assertTrue(absent.storage().bases().get(0).extent().value().isEmpty());assertEquals(AllocationProof.UNPROVEN,absent.storage().bases().get(0).allocation());
     }
+    @Test void unknownRelationCannotCoexistWithInventedAllocationIndependence() {
+        var s=state("01 RAW-AREA PIC X(8).\n01 VIEW-AREA REDEFINES MISSING-AREA PIC X(8).","GOBACK.");var st=s.storage();
+        var bases=st.bases().stream().map(b->new StorageBase(b.id(),b.extent(),AllocationProof.INDEPENDENT_LOCAL_WORKING_STORAGE,b.provenance())).toList();
+        assertThrows(IllegalArgumentException.class,()->withStorage(s,new StorageInventory(st.profile(),st.nodes(),bases,st.views(),st.gapCodes(),st.relations())));
+        var declarations=new ArrayList<>(s.dataDeclarations());var d=declarations.get(0);
+        declarations.set(0,new DataDeclaration(d.id(),d.canonicalName(),d.picture(),d.provenance(),d.coverage(),d.readiness(),
+            Optional.of(new ScalarText(8)),Optional.empty()));
+        assertThrows(IllegalArgumentException.class,()->new State(s.unit(),s.policy(),declarations,s.statements(),s.gaps(),s.coverage(),s.entryInventory(),s.storageIndependence(),st));
+    }
 }

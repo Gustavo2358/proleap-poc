@@ -1141,6 +1141,12 @@ public final class CobolSemanticProduct {
                 require(ov.base().equals(tv.base())&&ov.offset().equals(tv.offset()),"proved overlay must share base and start");
             }
         }
+        if(inventory.relations().stream().anyMatch(r->r.status()==StorageRelationStatus.UNPROVEN)) {
+            require(inventory.bases().stream().noneMatch(b->b.allocation()==AllocationProof.INDEPENDENT_LOCAL_WORKING_STORAGE),
+                "unproved storage relation contradicts allocation independence");
+            require(declarations.stream().allMatch(d->d.scalarText().isEmpty()&&d.scalarInteger().isEmpty()),
+                "unproved storage relation contradicts standalone scalar proof");
+        }
         for (var n : inventory.nodes()) n.parent().ifPresent(parent -> {
             var p = nodes.get(parent); var pv = views.get(parent); var v = views.get(n.id());
             require(p.kind() != PhysicalKind.ELEMENTARY && pv.base().equals(v.base()), "child must share parent storage base");

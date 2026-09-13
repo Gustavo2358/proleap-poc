@@ -264,3 +264,10 @@ codec ou independência de alocação sem o perfil. A origem individual da cláu
 permite ao lower produzir evidência derivada de declaração + relação + base/view,
 inclusive quando o owner não tem DATA nominal. Campos anteriores mantêm significado;
 o reader 2.7 permanece exato no consumidor. Não há dual writer.
+
+Challenge de consistência W4.2: um inventário malicioso podia combinar relação
+UNPROVEN com alocação independente ou prova escalar singleton. O produtor não
+emitia essa combinação, mas a porta precisa rejeitá-la. O RED em memória encontrou
+a omissão; frontend e lower agora rejeitam ambas as contradições. Relação cujo
+alvo físico é desconhecido não permite provar que outra base está fora do conjunto
+afetado. A restrição é checada em duas passagens lineares, não por pares.
