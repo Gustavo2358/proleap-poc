@@ -1,6 +1,7 @@
 package io.github.gustavo2358.cobolexplorer.semanticproduct.projection;
 
 import io.github.gustavo2358.cobolexplorer.Ast;
+import io.github.gustavo2358.cobolexplorer.ProcedurePerformSemantics;
 import io.github.gustavo2358.cobolexplorer.ScalarMoveSemantics;
 import io.github.gustavo2358.cobolexplorer.IfSemantics;
 import io.github.gustavo2358.cobolexplorer.EvaluateSemantics;
@@ -287,6 +288,8 @@ public final class CobolSemanticProductProjector {
     }
 
     private static StatementPlan plan(StatementPosition position, ProjectionInputs inputs) {
+        if (position.statement() instanceof Ast.PerformStatement p && ProcedurePerformSemantics.applicable(p))
+            return new StatementPlan(position, Capability.supported("PERFORM", "PERFORM_PROCEDURE"), List.of());
         if (position.statement() instanceof Ast.PerformStatement perform
                 && inputs.products().scalarMoves().performs().fact(inputs.unitId(), perform.meta().id()).simpleProfile())
             return new StatementPlan(position, Capability.supported("PERFORM", "PERFORM_BASIC"), List.of());
@@ -586,6 +589,26 @@ public final class CobolSemanticProductProjector {
             return;
         }
 
+        if(plan.position().statement() instanceof Ast.PerformStatement p && ProcedurePerformSemantics.applicable(p)) {
+            var proof=inputs.products().scalarMoves().procedurePerforms().fact(inputs.unitId(),p.meta().id()).orElseThrow();
+            java.util.function.Function<ProcedurePerformSemantics.Endpoint,PerformTarget> endpoint=t->new PerformTarget(
+                new ProcedureId(inputs.boundaryUnit(),t.identity().localId()),provenance(t.referenceOrigin()),provenance(t.paragraphOrigin()));
+            var paragraphs=proof.procedures().stream().map(r->new PerformParagraph(new ProcedureId(inputs.boundaryUnit(),r.identity().localId()),
+                canonicalStatement(Optional.of(r.entry()),inputs,statementIds).orElseThrow(),
+                r.statements().stream().map(id->canonicalStatement(Optional.of(id),inputs,statementIds).orElseThrow()).toList(),
+                r.completions().stream().map(id->canonicalStatement(Optional.of(id),inputs,statementIds).orElseThrow()).toList(),provenance(r.origin()))).toList();
+            var codes=new ArrayList<>(proof.gaps());if(containment.branch()==Branch.UNKNOWN)codes.add(CONTAINMENT_GAP);
+            var status=codes.isEmpty()?ReadinessStatus.SUFFICIENT:ReadinessStatus.PARTIAL;
+            statements.add(new ProcedurePerformFact(header(statementId,plan.position().ordinal(),containment,statementProvenance,
+                codes.isEmpty()?CoverageStatus.MODELED:CoverageStatus.PARTIAL,
+                readiness(status,"typed paragraph range",status,"activation-specific continuation",ReadinessStatus.PARTIAL,"general effects not published")),
+                proof.start().map(endpoint),proof.end().map(endpoint),paragraphs,
+                new NormalContinuation(proof.resume().isPresent()?ContinuationAvailability.KNOWN:ContinuationAvailability.UNAVAILABLE,
+                    canonicalStatement(proof.resume(),inputs,statementIds),provenance(proof.resumeOrigin())),codes));
+            for(var code:codes)gaps.add(new Gap(statementId,code.equals(CONTAINMENT_GAP)?GapScope.STRUCTURE:GapScope.CAPABILITY,code,"PERFORM range proof unavailable",statementProvenance));
+            return;
+        }
+
         if (plan.position().statement() instanceof Ast.PerformStatement perform && plan.capability().supported()) {
             var proof = inputs.products().scalarMoves().performs().fact(inputs.unitId(), perform.meta().id());
             var target = proof.target().map(t -> new PerformTarget(new ProcedureId(inputs.boundaryUnit(), t.identity().localId()),
@@ -673,7 +696,8 @@ public final class CobolSemanticProductProjector {
             CobolSemanticProduct.CoverageStatus bindingCoverage = bindingCoverage(entry);
             ScalarMoveSemantics.Move semantic = inputs.products().scalarMoves().move(inputs.unitId(), move.meta().id());
             CopySemantics copy = CopySemantics.valueOf(semantic.copy().name());
-            boolean intrinsicEnd=inputs.products().scalarMoves().performs().intrinsicExit(inputs.unitId(),move.meta().id());
+            boolean intrinsicEnd=inputs.products().scalarMoves().performs().intrinsicExit(inputs.unitId(),move.meta().id())
+                || inputs.products().scalarMoves().procedurePerforms().completion(inputs.unitId(),move.meta().id());
             var moveGaps=semantic.gaps().stream().filter(g -> !intrinsicEnd || g != ScalarMoveSemantics.Gap.NORMAL_CONTINUATION_NOT_AVAILABLE).toList();
             Optional<StatementId> next = semantic.nextStatement().map(nodeId -> {
                 Ast.Node node = inputs.selectedSource().nodes().get(nodeId);

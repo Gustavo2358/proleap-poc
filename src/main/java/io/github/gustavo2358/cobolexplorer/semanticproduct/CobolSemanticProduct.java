@@ -606,7 +606,7 @@ public final class CobolSemanticProduct {
 
     /** Adding a fact type extends this inventory without changing the State envelope. */
     public sealed interface StatementFact permits MoveFact, CallFact, IfFact,
-            ObservedStatement, GobackFact, PerformFact, EvaluateFact, GoToFact {
+            ObservedStatement, GobackFact, PerformFact, EvaluateFact, GoToFact, ProcedurePerformFact {
         StatementHeader header();
     }
 
@@ -642,6 +642,23 @@ public final class CobolSemanticProduct {
             require(gapCodes.isEmpty()==targetEntry.isPresent(), "GO TO precise entry requires complete proof");
             if(targetEntry.isPresent()) require(target.isPresent() && header.provenance().exact() && referenceOrigin.exact()
                     && target.get().paragraphOrigin().exact() && entryOrigin.get().exact(), "GO TO requires exact origins");
+        }
+    }
+
+    /** Procedure order is language structure; statement lists are membership only. */
+    public record PerformParagraph(ProcedureId id, StatementId entry, List<StatementId> statements,
+            List<StatementId> completions, Provenance provenance) {
+        public PerformParagraph { Objects.requireNonNull(id); Objects.requireNonNull(entry); Objects.requireNonNull(provenance);
+            statements=List.copyOf(statements); completions=List.copyOf(completions); }
+    }
+    public record ProcedurePerformFact(StatementHeader header, Optional<PerformTarget> start, Optional<PerformTarget> end,
+            List<PerformParagraph> procedures, NormalContinuation normalContinuation, List<String> gapCodes) implements StatementFact {
+        public ProcedurePerformFact { Objects.requireNonNull(header); Objects.requireNonNull(start); Objects.requireNonNull(end);
+            Objects.requireNonNull(normalContinuation); procedures=List.copyOf(procedures); gapCodes=List.copyOf(gapCodes);
+            if(gapCodes.isEmpty())require(start.isPresent() && end.isPresent() && !procedures.isEmpty()
+                && normalContinuation.statement().isPresent(), "PERFORM range needs endpoints, body and resume");
+            if(!procedures.isEmpty())require(start.isPresent() && end.isPresent()
+                && procedures.get(0).id().equals(start.get().id()) && procedures.get(procedures.size()-1).id().equals(end.get().id()), "PERFORM range endpoints disagree");
         }
     }
 
@@ -1051,6 +1068,17 @@ public final class CobolSemanticProduct {
                 require(previous==null || previous.target().equals(g.target()) && previous.targetEntry().equals(g.targetEntry()), "GO TO paragraph has one canonical entry");
                 require(statements.get(id).header().containment().branch()==Branch.ROOT && statements.get(id).header().provenance().equals(g.entryOrigin().orElseThrow()), "GO TO entry origin agrees with target statement");
             });
+            if(statement instanceof ProcedurePerformFact p) {
+                var members=new HashSet<StatementId>();var paragraphs=new HashSet<ProcedureId>();
+                for(var paragraph:p.procedures()) {
+                    require(paragraphs.add(paragraph.id()) && paragraph.id().unit().equals(p.header().id().unit()), "unique local range paragraph");
+                    for(var id:paragraph.statements())require(members.add(id) && statements.containsKey(id), "unique published range member");
+                    require(paragraph.statements().contains(paragraph.entry()), "paragraph entry belongs to body");
+                    require(paragraph.statements().containsAll(paragraph.completions()), "paragraph completion belongs to body");
+                }
+                p.normalContinuation().statement().ifPresent(id->require(statements.containsKey(id), "published range resume"));
+                if(p.gapCodes().isEmpty())require(!members.contains(p.header().id()) && p.normalContinuation().statement().filter(members::contains).isEmpty(), "activation/resume outside range");
+            }
             if (statement instanceof PerformFact basic && basic.profile() == PerformProfile.BASIC_PROCEDURE_PERFORM) {
                 var seen=new HashSet<StatementId>();
                 for(int i=0;i<basic.targetStatements().size();i++) {

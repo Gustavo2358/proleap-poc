@@ -23,6 +23,12 @@ public final class PerformSemantics {
         facts.forEach((key,value) -> value.target().ifPresent(t -> exits.add(new ScalarMoveSemantics.NodeKey(key.unit(),t.statements().get(t.statements().size()-1)))));
         intrinsicExits=Set.copyOf(exits);
     }
+    PerformSemantics restrictOpenRanges(ProcedurePerformSemantics ranges) {
+        var result=new HashMap<ScalarMoveSemantics.NodeKey,Facts>();
+        facts.forEach((key,f)->result.put(key,f.simpleProfile()&&ranges.hasPartial(key.unit())
+            ?new Facts(Optional.empty(),Optional.empty(),f.resumeOrigin(),List.of(),List.of("PERFORM_PRIMARY_CONTAINS_OPEN_RANGE")):f));
+        return new PerformSemantics(result);
+    }
     public boolean intrinsicExit(ResolutionContracts.ProgramUnitId unit,int node) { return intrinsicExits.contains(new ScalarMoveSemantics.NodeKey(unit,node)); }
     public Facts fact(ResolutionContracts.ProgramUnitId unit, int statement) {
         return Objects.requireNonNull(facts.get(new ScalarMoveSemantics.NodeKey(unit, statement)), "PERFORM fact missing");
@@ -213,7 +219,7 @@ public final class PerformSemantics {
     }
 
     private static boolean basic(Ast.PerformStatement p) {
-        return p.performKind()==Ast.PerformKind.PROCEDURE && p.fromReference()!=null && p.throughReference()==null
+        return p.performKind()==Ast.PerformKind.PROCEDURE && p.fromReference()!=null
             && p.controls().isEmpty() && p.controlExpressions().isEmpty() && p.inlineBody().isEmpty();
     }
     private static List<Ast.Statement> direct(Ast.Paragraph paragraph) {

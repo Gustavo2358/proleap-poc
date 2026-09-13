@@ -26,7 +26,7 @@ import java.util.Objects;
  */
 public final class SemanticProductJsonWriter {
     public static final String SCHEMA = "cobol-semantic-product";
-    public static final String CONTRACT_VERSION = "2.1.0";
+    public static final String CONTRACT_VERSION = "2.2.0";
 
     private static final ObjectMapper JSON = JsonMapper.builder()
             .enable(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY)
@@ -138,6 +138,15 @@ public final class SemanticProductJsonWriter {
                     a.statements().stream().map(SemanticProductJsonWriter::statementHandle).toList(), arm(a.control()))).toList(),
                 arm(e.otherArm()), e.otherStatements().stream().map(SemanticProductJsonWriter::statementHandle).toList(),
                 continuation(e.normalContinuation()), e.gapCodes());
+        if(fact instanceof CobolSemanticProduct.ProcedurePerformFact p) {
+            java.util.function.Function<CobolSemanticProduct.PerformTarget,PerformTargetDocument> endpoint=t->
+                new PerformTargetDocument("procedure:"+t.id().localId(),provenance(t.referenceOrigin()),provenance(t.paragraphOrigin()));
+            return new ProcedurePerformDocument(header(p.header()),p.start().map(endpoint).orElse(null),p.end().map(endpoint).orElse(null),
+                p.procedures().stream().map(r->new PerformParagraphDocument("procedure:"+r.id().localId(),statementHandle(r.entry()),
+                    r.statements().stream().map(SemanticProductJsonWriter::statementHandle).toList(),
+                    r.completions().stream().map(SemanticProductJsonWriter::statementHandle).toList(),provenance(r.provenance()))).toList(),
+                continuation(p.normalContinuation()),p.gapCodes());
+        }
         if (fact instanceof CobolSemanticProduct.PerformFact perform) {
             return new PerformDocument(header(perform.header()), perform.profile(), perform.target().map(t ->
                 new PerformTargetDocument("procedure:" + t.id().localId(), provenance(t.referenceOrigin()), provenance(t.paragraphOrigin()))).orElse(null),
@@ -359,12 +368,13 @@ public final class SemanticProductJsonWriter {
             @JsonSubTypes.Type(value = IfDocument.class, name = "IF"),
             @JsonSubTypes.Type(value = GobackDocument.class, name = "GOBACK"),
             @JsonSubTypes.Type(value = PerformDocument.class, name = "PERFORM"),
+            @JsonSubTypes.Type(value = ProcedurePerformDocument.class, name = "PERFORM_PROCEDURE"),
             @JsonSubTypes.Type(value = EvaluateDocument.class, name = "EVALUATE"),
             @JsonSubTypes.Type(value = GoToDocument.class, name = "GO_TO"),
             @JsonSubTypes.Type(value = ObservedDocument.class, name = "OBSERVED")
     })
     private sealed interface StatementDocument permits MoveDocument, CallDocument,
-            IfDocument, ObservedDocument, GobackDocument, PerformDocument, EvaluateDocument, GoToDocument { }
+            IfDocument, ObservedDocument, GobackDocument, PerformDocument, EvaluateDocument, GoToDocument, ProcedurePerformDocument { }
 
     private record GoToTargetDocument(String id, ProvenanceDocument paragraphOrigin) { }
     private record GoToDocument(StatementHeaderDocument header, GoToTargetDocument target, ProvenanceDocument referenceOrigin,
@@ -374,6 +384,9 @@ public final class SemanticProductJsonWriter {
     private record EvaluateDocument(StatementHeaderDocument header, DataReferenceDocument subject, List<EvaluateArmDocument> arms,
             IfArmDocument otherArm, List<String> otherStatements, ContinuationDocument normalContinuation, List<String> gapCodes) implements StatementDocument { }
 
+    private record PerformParagraphDocument(String id, String entry, List<String> statements, List<String> completions, ProvenanceDocument provenance) { }
+    private record ProcedurePerformDocument(StatementHeaderDocument header, PerformTargetDocument start, PerformTargetDocument end,
+        List<PerformParagraphDocument> procedures, ContinuationDocument normalContinuation, List<String> gapCodes) implements StatementDocument { }
     private record PerformTargetDocument(String id, ProvenanceDocument referenceOrigin, ProvenanceDocument paragraphOrigin) { }
     private record PerformDocument(StatementHeaderDocument header, CobolSemanticProduct.PerformProfile profile,
         PerformTargetDocument target, String targetEntry, List<String> targetStatements, String targetExit,
