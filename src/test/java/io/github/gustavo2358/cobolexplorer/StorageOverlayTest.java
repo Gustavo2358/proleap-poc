@@ -79,10 +79,22 @@ class StorageOverlayTest {
         assertThrows(UnsupportedOperationException.class,()->physical.relations().clear());
         assertThrows(UnsupportedOperationException.class,()->physical.componentOf().clear());
     }
-    @Test void distinctNumericLevelsRemainAnExplicitProfileLimit() {
-        var f=fixture("01 WS-AREA.\n05 RAW-PART PIC X(4).\n04 OTHER-PART REDEFINES RAW-PART PIC X(8).");
-        assertTrue(f.layout().reasons().contains(Reason.OVERLAY_NOT_PROVEN));
-        assertTrue(f.layout().bases().stream().noneMatch(Base::independent));
+    @Test void distinctNumericLevelsUseProvedSiblingHierarchy() {
+        var f=fixture("01 WS-AREA.\n05 RAW-PART PIC X(4).\n04 OTHER-PART REDEFINES RAW-PART PIC X(8).\n04 TAIL-PART PIC X(2).");
+        known(10,f.view("WS-AREA").extent());known(0,f.view("RAW-PART").offset());known(0,f.view("OTHER-PART").offset());known(8,f.view("TAIL-PART").offset());
+        assertTrue(f.layout().reasons().isEmpty());assertTrue(f.layout().bases().get(0).independent());
+    }
+    @Test void descendingImmediateChainUsesTheSamePhysicalComponent() {
+        var f=fixture("01 WS-AREA.\n05 RAW-PART PIC X(4).\n04 OTHER-PART REDEFINES RAW-PART PIC X(8).\n03 LAST-PART REDEFINES OTHER-PART PIC X(12).\n03 TAIL-PART PIC X(2).");
+        known(14,f.view("WS-AREA").extent());known(0,f.view("LAST-PART").offset());known(12,f.view("TAIL-PART").offset());
+        assertTrue(f.layout().reasons().isEmpty());
+    }
+    @Test void interveningLowerNumberAndDifferentParentDoNotBecomeProofByName() {
+        for(var data:List.of("01 WS-AREA.\n05 RAW-PART PIC X(4).\n04 OTHER-PART REDEFINES RAW-PART PIC X(8).\n04 LAST-PART REDEFINES RAW-PART PIC X(12).",
+                "01 WS-AREA.\n05 RAW-PART PIC X(4).\n06 OTHER-PART REDEFINES RAW-PART PIC X(8).")) {
+            var f=fixture(data);assertTrue(f.layout().reasons().contains(Reason.OVERLAY_NOT_PROVEN));
+            assertTrue(f.layout().bases().stream().noneMatch(Base::independent));
+        }
     }
     @Test void explicitProfileAndOrdinaryAllocationRemainIndependentRequirements() {
         var absent=fixture("01 RAW-AREA PIC X(8).\n01 VIEW-AREA REDEFINES RAW-AREA PIC X(8).",Profile.UNSPECIFIED);

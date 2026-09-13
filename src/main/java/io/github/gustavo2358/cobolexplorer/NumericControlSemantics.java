@@ -10,6 +10,10 @@ public final class NumericControlSemantics {
     static NumericControlSemantics empty() { return new NumericControlSemantics(Map.of()); }
     public Optional<IntegerItem> declaration(ResolutionContracts.SemanticEntityId id) { return Optional.ofNullable(declarations.get(id)); }
     static NumericControlSemantics analyze(CompilationUnitBuildResult frontend,CompilationUnitSymbolTables tables,boolean complete) {
+        return analyze(frontend,tables,complete,StorageComponents.analyze(frontend));
+    }
+    static NumericControlSemantics analyze(CompilationUnitBuildResult frontend,CompilationUnitSymbolTables tables,boolean complete,StorageComponents components) {
+        if(!components.belongsTo(frontend))throw new IllegalArgumentException("storage components belong to another snapshot");
         var result=new HashMap<ResolutionContracts.SemanticEntityId,IntegerItem>();
         if(!complete)return empty();
         for(var unit:frontend.compilationUnit().programUnits()) {
@@ -29,13 +33,8 @@ public final class NumericControlSemantics {
             for(var f:frontend.coverageByProgramUnit().get(unit.id()).findings())coverage.put(f.astNodeId(),f);
             var eligible=new HashMap<Integer,IntegerItem>();
             for(var section:sections) {
-                boolean overlay=false;pending.add(section);
-                while(!pending.isEmpty()) {
-                    var n=pending.pop();Ast.children(n).forEach(pending::push);
-                    if(n instanceof Ast.RedefinesClause||n instanceof Ast.RenamesClause||n instanceof Ast.PreservedDataClause)overlay=true;
-                }
-                if(overlay)continue;
                 for(var child:section.children())if(child instanceof Ast.DataEntry d && d.children().isEmpty()&&!d.filler()
+                        &&components.unit(unit.id()).standaloneIndependent(d.meta().id())
                         &&d.visibility()==Ast.DeclarationVisibility.LOCAL&&(d.level().equals("01")||d.levelKind()==Ast.DataLevelKind.STANDALONE_77)) {
                     int pictures=0,usages=0;Optional<Integer> digits=Optional.empty();boolean valid=modeled(d,coverage);
                     for(var clause:d.clauses()) {

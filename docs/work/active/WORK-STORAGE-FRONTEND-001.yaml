@@ -17,6 +17,12 @@ design_w4:
   contract: docs/domain/storage-semantics.md
   progress: ST-W3/M1 qualified by 15 cumulative gates; ST-W4.1 components and max footprints implemented, focal 37 methods and FAST 180 methods passed. W4.2/W4.3 integration remains pending.
   ownership: StorageComponents resolves physical relationships from typed AST and contiguous sibling scope, including FILLER, before layout or scalar eligibility.
-  limits: Numeric level equality required for precise overlays in this profile; invalid relations, unknown extents and allocation uncertainty remain explicit.
+  limits: Structural siblings with distinct internal levels are admitted when no lower-number member intervenes before the target; mixed 01/77 roots and unproved relations remain conservative.
   transport: SP 2.8.0/storage 1.1.0 publishes relation identity, owner/target/status/gaps and individual clause provenance. Closed-port negatives and JSON permutation/round-trip passed; producer FAST 185 methods. Lower reader/integration remains pending.
   consistency: Source and consumer ports reject UNPROVEN relation combined with independent allocation or standalone scalar claims; targeted RED GREEN plus final producer FAST 186 methods passed. Writer/layout unchanged from SP2.8 fixture producer 0a0e566.
+
+local_proof_w4:
+  implementation: StorageComponents prepared once at composition root and reused by layout, scalar, numeric and IF independence; unrelated valid overlays no longer globally deny standalone scalar proofs.
+  focal: Related and late FILLER overlays remain non-scalar; unrelated roots retain MOVE/CALL, IF, GO TO, TIMES and VARYING in both storage profiles. Multiplicity 1/2/5/40 and foreign snapshot checks passed.
+  hierarchy: Reused existing AST sibling proof to admit internal 05/04 and immediate descending chains after new RED GREEN; intervening lower-number member and wrong parent remain unproved.
+  subtask_gate: FAST passed with 196 methods after local/hierarchy RED GREEN. Full W4 cumulative E2E/mutation qualification remains pending.

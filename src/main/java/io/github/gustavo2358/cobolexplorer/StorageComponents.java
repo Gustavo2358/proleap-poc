@@ -67,13 +67,14 @@ public final class StorageComponents {
             Map<Integer,SemanticCoverage.Finding> coverage,Map<Integer,Component> byNode,List<Relation> relations) {
         var result=new ArrayList<Component>();var members=new ArrayList<Integer>();
         var names=new HashMap<String,Ast.DataEntry>();var ambiguous=new HashSet<String>();
+        Ast.DataEntry previous=null;
         for(var data:siblings) {
             var redefines=data.clauses().stream().filter(Ast.RedefinesClause.class::isInstance).map(Ast.RedefinesClause.class::cast).toList();
             Ast.DataEntry selected=null;boolean proved=false;
             if(redefines.size()==1) {
                 var clause=redefines.get(0);var ref=clause.target();var name=SymbolTable.canonical(ref.baseName());
                 selected=ambiguous.contains(name)?null:names.get(name);
-                proved=selected!=null&&level(data)==level(selected)&&level(data)!=66&&level(data)!=88
+                proved=selected!=null&&levelsProven(data,selected,previous,parent)
                     &&data.clauses().get(0)==clause&&ref.understanding()==Ast.ReferenceUnderstanding.STRUCTURED
                     &&ref.qualifiers().isEmpty()&&ref.subscriptGroups().isEmpty()&&ref.referenceModification()==null
                     &&modeled(data,coverage)&&modeled(clause,coverage)&&modeled(selected,coverage);
@@ -84,9 +85,17 @@ public final class StorageComponents {
             if(!data.filler()&&!data.name().isBlank()) {
                 var name=SymbolTable.canonical(data.name());if(names.putIfAbsent(name,data)!=null)ambiguous.add(name);
             }
+            previous=data;
         }
         if(!members.isEmpty())finish(members,parent,byNode,result);
         return List.copyOf(result);
+    }
+    private static boolean levelsProven(Ast.DataEntry owner,Ast.DataEntry target,Ast.DataEntry previous,Optional<Integer> parent) {
+        int o=level(owner),t=level(target),p=level(previous);
+        if(parent.isEmpty())return o==t&&(o==1||o==77);
+        // AST siblings can have different written numbers. In a proved nonincreasing
+        // component, the previous member is its minimum; no scan per target is needed.
+        return o>=2&&o<=49&&t>=2&&t<=49&&p>=o&&(previous==target||p>=t);
     }
     private static void finish(List<Integer> members,Optional<Integer> parent,Map<Integer,Component> byNode,List<Component> result) {
         var component=new Component(members.get(0),parent,members);result.add(component);

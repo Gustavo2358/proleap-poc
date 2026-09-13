@@ -43,6 +43,13 @@ public final class IfSemantics {
             ReferenceResolution resolution, ResolutionAnalysisReport report,
             Map<ResolutionContracts.SemanticEntityId, ScalarMoveSemantics.ScalarText> scalars,
             Map<ScalarMoveSemantics.NodeKey, ScalarMoveSemantics.Move> moves, NumericControlSemantics numbers) {
+        return analyze(frontend,tables,resolution,report,scalars,moves,numbers,StorageComponents.analyze(frontend));
+    }
+    static IfSemantics analyze(CompilationUnitBuildResult frontend, CompilationUnitSymbolTables tables,
+            ReferenceResolution resolution, ResolutionAnalysisReport report,
+            Map<ResolutionContracts.SemanticEntityId, ScalarMoveSemantics.ScalarText> scalars,
+            Map<ScalarMoveSemantics.NodeKey, ScalarMoveSemantics.Move> moves, NumericControlSemantics numbers,StorageComponents components) {
+        if(!components.belongsTo(frontend))throw new IllegalArgumentException("storage components belong to another snapshot");
         long[] work = new long[5];
         boolean input = report.gaps().stream().noneMatch(g -> g.category() == ResolutionAnalysisReport.GapCategory.INPUT);
         Map<ScalarMoveSemantics.NodeKey, ReferenceResolution.Entry> reads = new HashMap<>();
@@ -110,8 +117,7 @@ public final class IfSemantics {
                     facts.put(new ScalarMoveSemantics.NodeKey(unit.id(), branch.meta().id()),
                             new Facts(predicate, thenArm, elseArm, successor, simple));
                 }
-            // Qualified independent roots in one exact section; unrelated declarations do not invalidate their proof.
-            // ScalarMoveSemantics already denies the entire section when any overlay is present.
+            // Membership filters source-owned independent roots; no overlay inference belongs to IF.
             List<ResolutionContracts.SemanticEntityId> members = new ArrayList<>();
             Ast.SourceProvenance origin = unit.program().meta().provenance();
             boolean independent = input && workingStorage.size() == 1;
@@ -123,6 +129,7 @@ public final class IfSemantics {
                     if (!(child instanceof Ast.DataEntry data)) continue;
                     var entity = entities.get(data.meta().id()); work[4]++;
                     boolean eligible = entity != null && !duplicateDeclarations.contains(data.meta().id())
+                            && components.unit(unit.id()).standaloneIndependent(data.meta().id())
                             && (scalars.containsKey(entity)||numbers.declaration(entity).isPresent()) && modeled(data, coverage);
                     for (var clause : data.clauses()) { work[0]++; eligible &= modeled(clause, coverage); }
                     if (eligible) members.add(entity);

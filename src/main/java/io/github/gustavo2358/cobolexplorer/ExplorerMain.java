@@ -288,12 +288,13 @@ public final class ExplorerMain {
             ResolutionContracts.ProgramUnitId unitId, CompilationUnitBuildResult frontend,
             CompilationUnitSymbolTables symbolTables, Map<ResolutionContracts.ProgramUnitId, ReferenceOccurrences> occurrences,
             ReferenceResolution resolution, ResolutionAnalysisReport report, StorageLayoutSemantics.Profile storageProfile) {
-        var layout = StorageLayoutSemantics.analyze(frontend, symbolTables, resolution, report, storageProfile);
+        var components=StorageComponents.analyze(frontend);
+        var layout = StorageLayoutSemantics.analyze(frontend, symbolTables, resolution, report, storageProfile,components);
         var storage = StorageAccessSemantics.analyze(frontend, resolution, layout);
         return CobolSemanticProductProjector.open(
                 new CobolSemanticProductProjector.FrontendProducts(frontend, symbolTables,
                         occurrences, resolution, report,
-                        ScalarMoveSemantics.analyze(frontend, symbolTables, resolution, report), java.util.Optional.of(storage)), unitId);
+                        ScalarMoveSemantics.analyze(frontend, symbolTables, resolution, report,components), java.util.Optional.of(storage)), unitId);
     }
 
     private static long elapsedMs(long startedNanos) {

@@ -219,9 +219,15 @@ StorageComponents prepara, por unidade, uma floresta física imutável e conjunt
 contíguos entre irmãos. Cada relação registra owner, alvo selecionado, identidade
 da cláusula, origem e estado de prova; não exige símbolo no owner. Seleção única,
 cláusula inicial, target integral sem qualifiers/subscripts, hierarquia e ordem
-são premissas verificadas. Esta versão concede prova a membros com o mesmo número
-de nível; números diferentes admitidos pela linguagem mantêm fallback explícito,
-pois a AST atual não certifica toda a renumeração hierárquica relevante.
+são premissas verificadas. A revisão W4.3 reutiliza a prova de irmãos com números
+de nível distintos já existente em DataAndIndexReferenceResolverTest e na pilha
+de AstBuilder: igualdade numérica não é requisito para os irmãos internos 02–49.
+A sequência admitida é não crescente; o alvo deve preceder o owner sem membro
+interposto com número inferior ao alvo. Assim, 05 A / 04 B REDEFINES A e a cadeia
+03 C REDEFINES B são provados; a seleção de A através do membro 04 B continua
+fora da prova atual. Raízes 01/77 só compartilham neste perfil quando seus números
+coincidem. A restrição provisória anterior de igualdade em todos os casos foi
+ampliada após confrontar os oracles e a autoridade, sem alterar a AST ou o resolver.
 
 Cada conjunto possui um representante de alocação, distinto dos objetos nominais.
 Extents das descrições vêm de pós-ordem; o footprint do conjunto usa o máximo,
@@ -271,3 +277,21 @@ emitia essa combinação, mas a porta precisa rejeitá-la. O RED em memória enc
 a omissão; frontend e lower agora rejeitam ambas as contradições. Relação cujo
 alvo físico é desconhecido não permite provar que outra base está fora do conjunto
 afetado. A restrição é checada em duas passagens lineares, não por pares.
+
+### W4.3: mesma prova de alocação para scalar, numeric e IF
+
+Os REDs distinguem controles relacionados/disjuntos: alvo de um componente com
+REDEFINES continua sem wholeItemAccess escalar; raiz singleton independente em
+outra alocação recupera MOVE/CALL e as provas de IF/GO TO já existentes. Não há
+mudança no significado de scalarText, scalarInteger ou fitting. A seleção de
+codec continua separada: recuperação legada vale também com perfil UNSPECIFIED,
+sem conceder extents/bytes regionais nesse perfil.
+
+A composition root prepara StorageComponents uma vez e fornece o mesmo snapshot
+a layout e scalar. Scalar e Numeric filtram raízes pelo índice; IfSemantics usa
+o mesmo critério explícito ao formar o conjunto de independência, sem depender
+da antiga hipótese de bloqueio global. Input completo, programa ordinário,
+cobertura/provenance e formato escalar continuam premissas próprias já existentes.
+Overlays posteriores e FILLER participam do índice antes de qualquer consulta.
+Cláusula preservada, relação não provada, RENAMES e visibilidade não local não
+viram alocação independente. Um índice de outro snapshot é rejeitado por identidade.

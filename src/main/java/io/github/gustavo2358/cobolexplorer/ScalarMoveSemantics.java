@@ -76,6 +76,12 @@ public final class ScalarMoveSemantics {
     public static ScalarMoveSemantics analyze(CompilationUnitBuildResult frontend,
             CompilationUnitSymbolTables tables, ReferenceResolution resolution,
             ResolutionAnalysisReport report) {
+        return analyze(frontend,tables,resolution,report,StorageComponents.analyze(frontend));
+    }
+    public static ScalarMoveSemantics analyze(CompilationUnitBuildResult frontend,
+            CompilationUnitSymbolTables tables,ReferenceResolution resolution,
+            ResolutionAnalysisReport report,StorageComponents components) {
+        if(!components.belongsTo(frontend))throw new IllegalArgumentException("storage components belong to another snapshot");
         Map<ResolutionContracts.SemanticEntityId, ScalarText> declarations = new HashMap<>();
         Map<NodeKey, Ast.MoveStatement> targets = new HashMap<>();
         Map<NodeKey, Move> moves = new HashMap<>();
@@ -105,11 +111,9 @@ public final class ScalarMoveSemantics {
                 counts[0]++;
                 if (node instanceof Ast.Section section
                         && section.dataSectionKind() == Ast.DataSectionKind.WORKING_STORAGE && ordinary) {
-                    // Any overlay in this section denies the profile, including aliases
-                    // declared after a candidate. This is conservative, not alias analysis.
-                    boolean overlay = hasOverlay(section, counts);
-                    if (!overlay) for (Ast.Node child : section.children()) {
-                        if (child instanceof Ast.DataEntry entry) scalar(entry, counts)
+                    // The complete component index includes later overlays and anonymous owners.
+                    for (Ast.Node child : section.children()) {
+                        if (child instanceof Ast.DataEntry entry&&components.unit(unit.id()).standaloneIndependent(entry.meta().id())) scalar(entry, counts)
                                 .ifPresent(shape -> eligible.put(entry.meta().id(), shape));
                     }
                 }
@@ -218,8 +222,8 @@ public final class ScalarMoveSemantics {
             var basic = fact(whole, copy, moves.get(key).nextStatement());
             moves.put(key, new Move(whole, copy, basic.nextStatement(), basic.gaps(), adjustment, sourceWhole));
         }
-        var numbers=NumericControlSemantics.analyze(frontend,tables,inputComplete);
-        var ifs = IfSemantics.analyze(frontend, tables, resolution, report, declarations, moves,numbers);
+        var numbers=NumericControlSemantics.analyze(frontend,tables,inputComplete,components);
+        var ifs = IfSemantics.analyze(frontend, tables, resolution, report, declarations, moves,numbers,components);
         var goTos = GoToSemantics.analyze(frontend, tables, resolution, report,numbers);
         var performs = PerformSemantics.analyze(frontend, tables, resolution, report, moves, ifs, goTos);
         var evaluates = EvaluateSemantics.analyze(frontend, resolution, report, declarations);
@@ -251,19 +255,6 @@ public final class ScalarMoveSemantics {
         if (copy == Copy.UNAVAILABLE) gaps.add(Gap.MOVE_IDENTITY_NOT_PROVEN);
         if (next.isEmpty()) gaps.add(Gap.NORMAL_CONTINUATION_NOT_AVAILABLE);
         return new Move(whole, copy, next, gaps, Optional.empty(), Optional.empty());
-    }
-
-    private static boolean hasOverlay(Ast.Section section, long[] counts) {
-        Deque<Ast.Node> pending = new ArrayDeque<>(section.children());
-        boolean overlay = false;
-        while (!pending.isEmpty()) {
-            Ast.Node node = pending.pop();
-            counts[0]++;
-            if (node instanceof Ast.RedefinesClause || node instanceof Ast.RenamesClause
-                    || node instanceof Ast.PreservedDataClause) overlay = true;
-            for (var child : Ast.children(node)) pending.push(child);
-        }
-        return overlay;
     }
 
     private static Optional<ScalarText> scalar(Ast.DataEntry entry, long[] counts) {
