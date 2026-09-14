@@ -35,7 +35,7 @@ public final class PerformSemantics {
     }
     static PerformSemantics analyze(CompilationUnitBuildResult frontend, CompilationUnitSymbolTables tables,
             ReferenceResolution resolution, ResolutionAnalysisReport report,
-            Map<ScalarMoveSemantics.NodeKey, ScalarMoveSemantics.Move> moves, IfSemantics ifs, GoToSemantics goTos) {
+            Set<ScalarMoveSemantics.NodeKey> moves, IfSemantics ifs, GoToSemantics goTos) {
         boolean complete = report.gaps().stream().noneMatch(g -> g.category() == ResolutionAnalysisReport.GapCategory.INPUT);
         var references = new HashMap<ScalarMoveSemantics.NodeKey, ReferenceResolution.Entry>();
         for (var entry : resolution.entries()) references.put(new ScalarMoveSemantics.NodeKey(
@@ -152,7 +152,7 @@ public final class PerformSemantics {
     /** A returning primary closes all explicit frontiers; a cycle is not a return proof. */
     private static Set<Integer> closedPrimary(int entry, ResolutionContracts.ProgramUnitId unit,
             Map<Integer,Ast.Node> nodes, Map<Integer,Integer> next,
-            Map<ScalarMoveSemantics.NodeKey,ScalarMoveSemantics.Move> moves, IfSemantics ifs,
+            Set<ScalarMoveSemantics.NodeKey> moves, IfSemantics ifs,
             GoToSemantics goTos, Map<Integer,SemanticCoverage.Finding> findings) {
         record Visit(int id, boolean complete) { }
         var active=new HashSet<Integer>();var closed=new HashSet<Integer>();var pending=new ArrayDeque<Visit>();
@@ -194,7 +194,7 @@ public final class PerformSemantics {
 
     /** BASIC activations may be in a bounded EVALUATE arm; each region has its own proved completion. */
     private static boolean evaluatePrimary(Ast.EvaluateStatement evaluate, ResolutionContracts.ProgramUnitId unit,
-            Map<ScalarMoveSemantics.NodeKey, ScalarMoveSemantics.Move> moves, IfSemantics ifs,
+            Set<ScalarMoveSemantics.NodeKey> moves, IfSemantics ifs,
             Map<Integer, SemanticCoverage.Finding> findings, Map<Integer,Integer> next,
             Map<Ast.Statement,Integer> primaryMembers) {
         if (!EvaluateSemantics.supportedShape(evaluate)) return false;
@@ -229,9 +229,8 @@ public final class PerformSemantics {
         return paragraph.sentences().stream().flatMap(s -> s.statements().stream()).toList();
     }
     private static boolean supportedMove(Ast.Statement statement, ResolutionContracts.ProgramUnitId unit,
-            Map<ScalarMoveSemantics.NodeKey, ScalarMoveSemantics.Move> moves) {
-        var move = moves.get(new ScalarMoveSemantics.NodeKey(unit, statement.meta().id()));
-        return statement instanceof Ast.MoveStatement && move != null && move.copy() != ScalarMoveSemantics.Copy.UNAVAILABLE;
+            Set<ScalarMoveSemantics.NodeKey> moves) {
+        return statement instanceof Ast.MoveStatement && moves.contains(new ScalarMoveSemantics.NodeKey(unit,statement.meta().id()));
     }
     private static boolean modeled(Ast.Statement statement, Map<Integer, SemanticCoverage.Finding> findings) {
         var finding = findings.get(statement.meta().id());

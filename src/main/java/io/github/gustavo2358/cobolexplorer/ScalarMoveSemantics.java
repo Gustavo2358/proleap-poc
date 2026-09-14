@@ -81,6 +81,12 @@ public final class ScalarMoveSemantics {
     public static ScalarMoveSemantics analyze(CompilationUnitBuildResult frontend,
             CompilationUnitSymbolTables tables,ReferenceResolution resolution,
             ResolutionAnalysisReport report,StorageComponents components) {
+        return analyze(frontend,tables,resolution,report,components,Optional.empty());
+    }
+    public static ScalarMoveSemantics analyze(CompilationUnitBuildResult frontend,
+            CompilationUnitSymbolTables tables,ReferenceResolution resolution,
+            ResolutionAnalysisReport report,StorageComponents components,Optional<StorageAccessSemantics> storage) {
+        storage.ifPresent(s->{if(!s.belongsTo(frontend,resolution))throw new IllegalArgumentException("storage facts belong to another snapshot");});
         if(!components.belongsTo(frontend))throw new IllegalArgumentException("storage components belong to another snapshot");
         Map<ResolutionContracts.SemanticEntityId, ScalarText> declarations = new HashMap<>();
         Map<NodeKey, Ast.MoveStatement> targets = new HashMap<>();
@@ -225,7 +231,16 @@ public final class ScalarMoveSemantics {
         var numbers=NumericControlSemantics.analyze(frontend,tables,inputComplete,components);
         var ifs = IfSemantics.analyze(frontend, tables, resolution, report, declarations, moves,numbers,components);
         var goTos = GoToSemantics.analyze(frontend, tables, resolution, report,numbers);
-        var performs = PerformSemantics.analyze(frontend, tables, resolution, report, moves, ifs, goTos);
+        var completingMoves=new HashSet<NodeKey>();
+        moves.forEach((key,move)->{if(move.copy()!=Copy.UNAVAILABLE)completingMoves.add(key);});
+        storage.ifPresent(s->s.moves().forEach(move->{
+            var sequence=s.sequence(move.statement());
+            if(!sequence.isEmpty()&&sequence.stream().allMatch(t->t.origin().exact()&&switch(t.kind()) {
+                case LITERAL_BYTES,FITTED_LITERAL_BYTES,COPY_BYTES,FIT_TEXT->true;
+                case MUST_UNKNOWN,UNAVAILABLE->false;
+            }))completingMoves.add(new NodeKey(move.statement().unit(),move.statement().node()));
+        }));
+        var performs = PerformSemantics.analyze(frontend, tables, resolution, report, completingMoves, ifs, goTos);
         var evaluates = EvaluateSemantics.analyze(frontend, resolution, report, declarations);
         var procedurePerforms = ProcedurePerformSemantics.analyze(frontend, tables, resolution, report, declarations, moves, ifs, evaluates, goTos, performs,numbers);
         performs = performs.restrictOpenRanges(procedurePerforms);

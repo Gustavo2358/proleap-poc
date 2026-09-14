@@ -45,10 +45,12 @@ class StorageLayoutTest {
         var absent=fixture("01 WS-AREA.\n05 TARGET-PART PIC X(8).",Profile.UNSPECIFIED);
         assertTrue(absent.layout.reasons().contains(Reason.PROFILE_NOT_SELECTED));
         assertTrue(absent.layout.views().stream().allMatch(v->v.extent().value().isEmpty()));
-        for(var clause:List.of("OCCURS 2 TIMES","JUSTIFIED RIGHT","VALUE 'ABCDEFGH'","USAGE NATIONAL","EXTERNAL")) {
+        for(var clause:List.of("OCCURS 2 TIMES","JUSTIFIED RIGHT","USAGE NATIONAL","EXTERNAL")) {
             var f=fixture("01 WS-AREA PIC X(8) "+clause+".");
             assertTrue(f.view("WS-AREA").extent().value().isEmpty(),clause);
         }
+        var initialized=fixture("01 WS-AREA PIC X(8) VALUE 'ABCDEFGH'.");
+        known(8,initialized.view("WS-AREA").extent()); // VALUE affects entry content, not physical extent.
         var overlay=fixture("01 WS-AREA PIC X(8).\n01 OTHER-AREA REDEFINES WS-AREA PIC X(8).");
         // W4 replaces the W3 global refusal with a proved single allocation.
         assertFalse(overlay.layout.reasons().contains(Reason.OVERLAY_NOT_PROVEN));

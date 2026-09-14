@@ -200,11 +200,21 @@ public final class CobolSemanticProductProjector {
                 layout.reasons().stream().map(Enum::name).toList(),layout.relations().stream().map(r->new StorageRelation(
                     new StorageRelationId(inputs.boundaryUnit(),r.clause().meta().id()),new StorageNodeId(inputs.boundaryUnit(),r.owner()),
                     r.target().map(id->new StorageNodeId(inputs.boundaryUnit(),id)),r.proved()?StorageRelationStatus.PROVEN:StorageRelationStatus.UNPROVEN,
-                    provenance(r.clause().meta().provenance()),r.proved()?List.of():List.of("OVERLAY_NOT_PROVEN"))).toList());
+                    provenance(r.clause().meta().provenance()),r.proved()?List.of():List.of("OVERLAY_NOT_PROVEN"))).toList(),layout.renames().stream().map(r->new StorageRenames(
+                    new StorageRelationId(inputs.boundaryUnit(),r.clause().meta().id()),storageNode(inputs,r.owner()),
+                    r.from().map(id->storageNode(inputs,id)),r.through().map(id->storageNode(inputs,id)),
+                    r.proved()?StorageRelationStatus.PROVEN:StorageRelationStatus.UNPROVEN,provenance(r.clause().meta().provenance()),
+                    r.proved()?List.of():List.of("RENAMES_NOT_PROVEN"))).toList(),initialStorage(inputs));
+    }
+    private static StorageEntryState initialStorage(ProjectionInputs inputs) {
+        var facts=inputs.products().storage().orElseThrow().initial().facts(inputs.unitId());
+        return new StorageEntryState(StorageEntryMode.valueOf(facts.mode().name()),facts.conditions().stream().map(c->
+            new StorageInitialCondition(storageNode(inputs,c.declaration()),InitialStorageKind.valueOf(c.kind().name()),c.bytes(),
+                c.reasons().stream().map(Enum::name).toList(),provenance(c.origin()))).toList());
     }
     private static Optional<RegionalAccess> regionalAccess(ProjectionInputs inputs, int reference) {
         return inputs.products().storage().flatMap(s->s.access(new StorageLayoutSemantics.Key(inputs.unitId(),reference)))
-            .map(a->new RegionalAccess(storageNode(inputs,a.view().node())));
+            .map(a->new RegionalAccess(storageNode(inputs,a.view().node()),a.sliced()?Optional.of(new RegionalSlice(a.view().offset().value().orElseThrow(),a.view().extent().value().orElseThrow())):Optional.empty()));
     }
     private static Optional<RegionalMove> regionalMove(ProjectionInputs inputs, int statement) {
         return inputs.products().storage().map(s->s.move(new StorageLayoutSemantics.Key(inputs.unitId(),statement)))
@@ -345,13 +355,20 @@ public final class CobolSemanticProductProjector {
             return new StatementPlan(position, Capability.supported("GOBACK", "GOBACK_LOCAL_EXIT"), List.of());
         if (position.statement() instanceof Ast.MoveStatement move) {
             Capability capability = moveCapability(move);
+            var sequence=inputs.products().storage().map(s->s.sequence(new StorageLayoutSemantics.Key(inputs.unitId(),move.meta().id()))).orElse(List.of());
+            if((move.corresponding() || move.source() instanceof Ast.LiteralExpression || move.source() instanceof Ast.DataReference)
+                    && move.targets().stream().allMatch(Ast.DataReference.class::isInstance)
+                    && !sequence.isEmpty()&&sequence.stream().allMatch(e->e.kind()!=StorageAccessSemantics.MoveKind.UNAVAILABLE))
+                capability=Capability.supported("MOVE","REGIONAL_TRANSFER_SEQUENCE");
             List<ReferenceResolution.Entry> entries = new ArrayList<>();
             if (capability.supported()) {
-                var target = inputs.entryFor((Ast.DataReference) move.targets().get(0));
+                for(var receiver:move.targets()) {
+                var target = inputs.entryFor((Ast.DataReference) receiver);
                 require(target.occurrence().role() == ResolutionContracts.ReferenceRole.VALUE_WRITE,
                         "MOVE target role must come from the canonical occurrence");
                 entries.add(target);
                 capability = bindingCapability(capability, target, "MOVE");
+                }
                 if (move.source() instanceof Ast.DataReference source) {
                     var read = inputs.entryFor(source);
                     require(read.occurrence().role() == ResolutionContracts.ReferenceRole.VALUE_READ,
@@ -562,7 +579,7 @@ public final class CobolSemanticProductProjector {
                 new LinkedHashMap<>();
         for (SymbolTable.Symbol symbol : inputs.selectedSource().table().symbols()) {
             if (symbol.namespace() != SymbolTable.Namespace.DATA
-                    || symbol.kind() != SymbolTable.SymbolKind.DATA_ITEM)
+                    || (symbol.kind() != SymbolTable.SymbolKind.DATA_ITEM && symbol.kind()!=SymbolTable.SymbolKind.RENAMES))
                 continue;
             ResolutionContracts.SemanticEntityId entityId =
                     new ResolutionContracts.SemanticEntityId(inputs.unitId(),
@@ -831,6 +848,10 @@ public final class CobolSemanticProductProjector {
         }
 
         if (plan.position().statement() instanceof Ast.MoveStatement move) {
+            if(move.corresponding()) {
+                projectCorresponding(move,plan,inputs,dataIds,statementIds,statementId,containment,statements,gaps);
+                return;
+            }
             ReferenceResolution.Entry entry = plan.entries().get(0);
             CobolSemanticProduct.NominalBinding binding = nominalBinding(entry, dataIds);
             CobolSemanticProduct.CoverageStatus bindingCoverage = bindingCoverage(entry);
@@ -855,7 +876,7 @@ public final class CobolSemanticProductProjector {
                         literal.value(), provenance(literal.meta().provenance()),
                         literal.logicalText().map(text -> new TextValue(text.value())));
             } else {
-                var read = plan.entries().get(1);
+                var read = plan.entries().get(move.targets().size());
                 source = new DataReference(new OperandId(statementId, 0), OperandRole.READ,
                         nominalBinding(read, dataIds), provenance(move.source().meta().provenance()),
                         semantic.sourceWholeItem().map(entity -> new WholeItemAccess(
@@ -881,6 +902,19 @@ public final class CobolSemanticProductProjector {
                     copy, continuation, semantic.adjustment().map(adjustment -> new TextAdjustment(
                             TextAdjustmentRule.RIGHT_PAD_SPACE, adjustment.receiverExtent(),
                             new TextValue(adjustment.result()), statementProvenance)), regionalMove(inputs, move.meta().id()));
+            var effects=inputs.products().storage().map(s->s.sequence(new StorageLayoutSemantics.Key(inputs.unitId(),move.meta().id()))).orElse(List.of());
+            if(effects.size()>1) {
+                var extra=new ArrayList<MoveTransfer>();
+                for(int i=1;i<effects.size();i++) {
+                    var e=effects.get(i);var receiver=(Ast.DataReference)move.targets().get(i);
+                    MoveSource sending;
+                    if(source instanceof LiteralSource literal)sending=new LiteralSource(new OperandId(statementId,i*2),literal.kind(),literal.value(),literal.provenance(),literal.logicalValue());
+                    else {var read=(DataReference)source;sending=new DataReference(new OperandId(statementId,i*2),OperandRole.READ,read.binding(),read.provenance(),Optional.empty(),read.regionalAccess());}
+                    var receiving=new DataReference(new OperandId(statementId,i*2+1),OperandRole.WRITE,nominalBinding(plan.entries().get(i),dataIds),provenance(receiver.meta().provenance()),Optional.empty(),regionalAccess(inputs,receiver.meta().id()));
+                    extra.add(new MoveTransfer(sending,receiving,new RegionalMove(RegionalMoveKind.valueOf(e.kind().name()),e.bytes(),e.reasons().stream().map(Enum::name).toList())));
+                }
+                fact=new MoveFact(fact.header(),fact.source(),fact.target(),CopySemantics.UNAVAILABLE,fact.normalContinuation(),Optional.empty(),fact.regionalMove(),extra);
+            }
             statements.add(fact);
             if (move.source() instanceof Ast.LiteralExpression literal && literal.logicalText().isEmpty()) gaps.add(new Gap(statementId, GapScope.LITERAL_KIND,
                     LITERAL_KIND_GAP, "literal category is outside the canonical basic text capability",
@@ -1041,6 +1075,42 @@ public final class CobolSemanticProductProjector {
             if (projectableDataBinding(entry, inputs))
                 requireBindingGapWhenNeeded(ifHeader, entry, gaps);
         }
+    }
+
+    private static void projectCorresponding(Ast.MoveStatement move,StatementPlan plan,ProjectionInputs inputs,
+            Map<ResolutionContracts.SemanticEntityId,DataItemId> dataIds,Map<Ast.Statement,StatementId> ids,
+            StatementId id,Containment containment,List<StatementFact> output,List<Gap> gaps) {
+        var effects=inputs.products().storage().orElseThrow().sequence(new StorageLayoutSemantics.Key(inputs.unitId(),move.meta().id()));
+        var origin=provenance(move.meta().provenance());
+        var proof=inputs.products().scalarMoves().move(inputs.unitId(),move.meta().id());
+        var next=canonicalStatement(proof.nextStatement(),inputs,ids);
+        boolean end=inputs.products().scalarMoves().performs().intrinsicExit(inputs.unitId(),move.meta().id())
+                ||inputs.products().scalarMoves().procedurePerforms().completion(inputs.unitId(),move.meta().id());
+        var continuation=new NormalContinuation(next.isPresent()?ContinuationAvailability.KNOWN:end?ContinuationAvailability.NONE:ContinuationAvailability.UNAVAILABLE,next,origin);
+        var transfers=new ArrayList<MoveTransfer>();var reasons=new LinkedHashSet<String>();
+        for(int i=0;i<effects.size();i++) {
+            var e=effects.get(i);var read=implicitReference(e.source().orElseThrow(),inputs,dataIds,new OperandId(id,i*2),OperandRole.READ);
+            var write=implicitReference(e.destination().orElseThrow(),inputs,dataIds,new OperandId(id,i*2+1),OperandRole.WRITE);
+            e.reasons().stream().map(Enum::name).forEach(reasons::add);
+            transfers.add(new MoveTransfer(read,write,new RegionalMove(RegionalMoveKind.valueOf(e.kind().name()),e.bytes(),e.reasons().stream().map(Enum::name).toList())));
+        }
+        if(next.isEmpty()&&!end)reasons.add("NORMAL_CONTINUATION_NOT_AVAILABLE");
+        var first=transfers.get(0);
+        output.add(new MoveFact(header(id,plan.position().ordinal(),containment,origin,
+                weakest(reasons.isEmpty()?CoverageStatus.MODELED:CoverageStatus.PARTIAL,containmentCoverage(containment),coverage(inputs.finding(move.meta().id()))),
+                containmentReadiness(containment,readiness(ReadinessStatus.SUFFICIENT,"canonical fixed textual corresponding pairs",
+                    next.isPresent()||end?ReadinessStatus.SUFFICIENT:ReadinessStatus.PARTIAL,"canonical normal continuation",
+                    reasons.isEmpty()?ReadinessStatus.SUFFICIENT:ReadinessStatus.PARTIAL,"explicit regional transfer sequence"))),
+                first.source(),first.target(),CopySemantics.UNAVAILABLE,continuation,Optional.empty(),Optional.of(first.effect()),transfers.subList(1,transfers.size())));
+        for(var reason:reasons)gaps.add(new Gap(id,reason.equals("NORMAL_CONTINUATION_NOT_AVAILABLE")?GapScope.STRUCTURE:GapScope.CAPABILITY,reason,"canonical CORRESPONDING effect or continuation remains partial",origin));
+        addContainmentGap(containment,id,origin,gaps);
+        for(var operand:plan.entries())addReportGaps(id,operand.occurrence(),inputs,provenance(operand.occurrence().meta().provenance()),gaps);
+    }
+    private static DataReference implicitReference(StorageAccessSemantics.Access access,ProjectionInputs inputs,
+            Map<ResolutionContracts.SemanticEntityId,DataItemId> dataIds,OperandId id,OperandRole role) {
+        var declaration=inputs.declarationSource(access.entity(),null);
+        return new DataReference(id,role,NominalBinding.resolved(Objects.requireNonNull(dataIds.get(access.entity())),declaration.symbol().canonicalName()),
+            provenance(access.origin()),Optional.empty(),Optional.of(new RegionalAccess(storageNode(inputs,access.view().node()),Optional.empty())));
     }
 
     private static void projectEvaluate(Ast.EvaluateStatement e, StatementPlan plan, ProjectionInputs inputs,

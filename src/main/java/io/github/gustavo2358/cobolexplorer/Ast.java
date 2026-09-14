@@ -171,8 +171,9 @@ public final class Ast {
     public record UsageClause(Meta meta, String usage, String writtenText, boolean display) implements DataClause {
         public UsageClause(Meta meta, String usage, String writtenText) { this(meta, usage, writtenText, false); }
     }
-    public record ValueClause(Meta meta, List<String> values, String writtenText) implements DataClause {
-        public ValueClause { values = List.copyOf(values); }
+    public record ValueClause(Meta meta, List<String> values, String writtenText, Optional<LogicalText> logicalText) implements DataClause {
+        public ValueClause { values = List.copyOf(values); logicalText=Objects.requireNonNull(logicalText); }
+        public ValueClause(Meta meta,List<String> values,String writtenText) {this(meta,values,writtenText,Optional.empty());}
     }
     public record RedefinesClause(Meta meta, DataReference target, String writtenText) implements DataClause {}
     public record RenamesClause(Meta meta, DataReference from, DataReference through,

@@ -26,7 +26,7 @@ import java.util.Objects;
  */
 public final class SemanticProductJsonWriter {
     public static final String SCHEMA = "cobol-semantic-product";
-    public static final String CONTRACT_VERSION = "2.8.0";
+    public static final String CONTRACT_VERSION = "2.12.0";
 
     private static final ObjectMapper JSON = JsonMapper.builder()
             .enable(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY)
@@ -83,7 +83,7 @@ public final class SemanticProductJsonWriter {
         return new StorageMeasureDocument(m.value().map(Object::toString).orElse(null),m.gapCodes());
     }
     private static StorageDocument storage(CobolSemanticProduct.StorageInventory storage) {
-        return new StorageDocument("1.1.0",storage.profile(),storage.profileId().orElse(null),storage.runtimeCodec().orElse(null),
+        return new StorageDocument("1.3.0",storage.profile(),storage.profileId().orElse(null),storage.runtimeCodec().orElse(null),
             storage.nodes().stream().map(n->new PhysicalNodeDocument(storageNodeHandle(n.id()),n.parent().map(SemanticProductJsonWriter::storageNodeHandle).orElse(null),
                 n.order(),n.filler(),n.kind(),n.data().map(SemanticProductJsonWriter::dataHandle).orElse(null),measure(n.extent()),provenance(n.provenance()))).toList(),
             storage.bases().stream().map(b->new StorageBaseDocument(storageBaseHandle(b.id()),measure(b.extent()),b.allocation(),provenance(b.provenance()))).toList(),
@@ -91,7 +91,11 @@ public final class SemanticProductJsonWriter {
                 v.codec().orElse(null),provenance(v.provenance()))).toList(),storage.gapCodes(),
             storage.relations().stream().sorted(java.util.Comparator.comparingInt(r->r.id().localId())).map(r->new StorageRelationDocument(
                 "storage-relation:"+r.id().localId(),storageNodeHandle(r.owner()),r.target().map(SemanticProductJsonWriter::storageNodeHandle).orElse(null),
-                r.status(),provenance(r.provenance()),r.gapCodes())).toList());
+                r.status(),provenance(r.provenance()),r.gapCodes())).toList(),
+            storage.renames().stream().sorted(java.util.Comparator.comparingInt(r->r.id().localId())).map(r->new StorageRenamesDocument(
+                "storage-relation:"+r.id().localId(),storageNodeHandle(r.owner()),r.from().map(SemanticProductJsonWriter::storageNodeHandle).orElse(null),
+                r.through().map(SemanticProductJsonWriter::storageNodeHandle).orElse(null),r.status(),provenance(r.provenance()),r.gapCodes())).toList(),new StorageEntryDocument(storage.entryState().mode(),
+            storage.entryState().conditions().stream().map(c->new StorageInitialDocument(storageNodeHandle(c.node()),c.kind(),c.bytes(),c.gapCodes(),provenance(c.provenance()))).toList()));
     }
     private record StorageMeasureDocument(String value,List<String> gapCodes) { }
     private record PhysicalNodeDocument(String id,String parent,int order,boolean filler,CobolSemanticProduct.PhysicalKind kind,
@@ -99,9 +103,14 @@ public final class SemanticProductJsonWriter {
     private record StorageBaseDocument(String id,StorageMeasureDocument extent,CobolSemanticProduct.AllocationProof allocation,ProvenanceDocument provenance) { }
     private record StorageViewDocument(String node,String base,StorageMeasureDocument offset,StorageMeasureDocument extent,String codec,ProvenanceDocument provenance) { }
     private record StorageRelationDocument(String id,String owner,String target,CobolSemanticProduct.StorageRelationStatus status,ProvenanceDocument provenance,List<String> gapCodes) { }
+    private record StorageRenamesDocument(String id,String owner,String from,String through,CobolSemanticProduct.StorageRelationStatus status,ProvenanceDocument provenance,List<String> gapCodes) { }
     private record StorageDocument(String version,CobolSemanticProduct.StorageProfile profile,String profileId,String runtimeCodec,
-        List<PhysicalNodeDocument> nodes,List<StorageBaseDocument> bases,List<StorageViewDocument> views,List<String> gapCodes,List<StorageRelationDocument> relations) { }
-    private record RegionalAccessDocument(String view) { }
+        List<PhysicalNodeDocument> nodes,List<StorageBaseDocument> bases,List<StorageViewDocument> views,List<String> gapCodes,List<StorageRelationDocument> relations,List<StorageRenamesDocument> renames,StorageEntryDocument entryState) { }
+    private record StorageEntryDocument(CobolSemanticProduct.StorageEntryMode mode,List<StorageInitialDocument> conditions) { }
+    private record StorageInitialDocument(String node,CobolSemanticProduct.InitialStorageKind kind,List<Integer> bytes,List<String> gapCodes,ProvenanceDocument provenance) { }
+    private record RegionalSliceDocument(String offset,String extent) { }
+    private record RegionalAccessDocument(String view,RegionalSliceDocument slice) { }
+    private record MoveTransferDocument(MoveSourceDocument source,DataReferenceDocument target,RegionalMoveDocument effect) { }
     private record RegionalMoveDocument(CobolSemanticProduct.RegionalMoveKind kind,List<Integer> bytes,List<String> gapCodes) { }
 
     private static EntryInventoryDocument entryInventory(CobolSemanticProduct.EntryInventory inventory) {
@@ -198,7 +207,7 @@ public final class SemanticProductJsonWriter {
                             provenance(move.normalContinuation().provenance())), move.textAdjustment().map(a ->
                             new TextAdjustmentDocument(a.rule(), a.receiverExtent(),
                                     new TextValueDocument(a.result().logicalDomain(), a.result().value(), a.result().logicalExtent()),
-                                    provenance(a.provenance()))).orElse(null), move.regionalMove().map(m->new RegionalMoveDocument(m.kind(),m.bytes(),m.gapCodes())).orElse(null));
+                                    provenance(a.provenance()))).orElse(null), move.regionalMove().map(m->new RegionalMoveDocument(m.kind(),m.bytes(),m.gapCodes())).orElse(null),move.additionalTransfers().stream().map(t->new MoveTransferDocument(moveSource(t.source()),dataReference(t.target()),new RegionalMoveDocument(t.effect().kind(),t.effect().bytes(),t.effect().gapCodes()))).toList());
         }
         if (fact instanceof CobolSemanticProduct.CallFact call) {
             return new CallDocument(header(call.header()), call.syntax(),
@@ -253,7 +262,7 @@ public final class SemanticProductJsonWriter {
         return new DataReferenceDocument(operandHandle(reference.id()), reference.role(),
                 binding(reference.binding()), provenance(reference.provenance()), reference.wholeItemAccess()
                         .map(access -> new WholeItemDocument(dataHandle(access.data()))).orElse(null),
-                reference.regionalAccess().map(a->new RegionalAccessDocument(storageNodeHandle(a.view()))).orElse(null));
+                reference.regionalAccess().map(a->new RegionalAccessDocument(storageNodeHandle(a.view()),a.slice().map(s->new RegionalSliceDocument(s.offset().toString(),s.extent().toString())).orElse(null))).orElse(null));
     }
 
     private static BindingDocument binding(CobolSemanticProduct.NominalBinding binding) {
@@ -443,7 +452,7 @@ public final class SemanticProductJsonWriter {
     @JsonPropertyOrder({"variant", "header", "source", "target", "copySemantics", "normalContinuation", "textAdjustment"})
     private record MoveDocument(StatementHeaderDocument header, MoveSourceDocument source,
                                 DataReferenceDocument target, CobolSemanticProduct.CopySemantics copySemantics,
-                                ContinuationDocument normalContinuation, TextAdjustmentDocument textAdjustment, RegionalMoveDocument regionalMove) implements StatementDocument { }
+                                ContinuationDocument normalContinuation, TextAdjustmentDocument textAdjustment, RegionalMoveDocument regionalMove,List<MoveTransferDocument> additionalTransfers) implements StatementDocument { }
 
     private record TextAdjustmentDocument(CobolSemanticProduct.TextAdjustmentRule rule, int receiverExtent,
                                             TextValueDocument result, ProvenanceDocument provenance) { }

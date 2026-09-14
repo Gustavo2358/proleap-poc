@@ -364,7 +364,9 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
         if (context instanceof CobolParser.DataValueClauseContext) {
             List<String> values = ((CobolParser.DataValueClauseContext) context).dataValueInterval().stream()
                     .map(this::sourceText).map(String::strip).toList();
-            return new Ast.ValueClause(meta, values, writtenText);
+            var intervals=((CobolParser.DataValueClauseContext)context).dataValueInterval();
+            var single=intervals.size()==1&&intervals.get(0).dataValueIntervalTo()==null?intervals.get(0).dataValueIntervalFrom().literal():null;
+            return new Ast.ValueClause(meta, values, writtenText,single==null?Optional.empty():basicLogicalText(single));
         }
         if (context instanceof CobolParser.DataRedefinesClauseContext) {
             return new Ast.RedefinesClause(meta,
@@ -1226,8 +1228,8 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
                 : firstDirectOrNearest(qualified, AstBuilder::isReferenceBaseContext);
         String baseName = base == null ? firstSemanticWord(context) : clean(sourceText(base));
         List<Ast.DataQualifier> qualifiers = buildQualifiers(qualified == null ? context : qualified);
-        return new Ast.DataReference(meta, baseName, sourceText(context).strip(), qualifiers, List.of(), null,
-                Ast.ReferenceUnderstanding.STRUCTURED);
+        return trailingReferenceModifier(new Ast.DataReference(meta, baseName, sourceText(context).strip(), qualifiers, List.of(), null,
+                Ast.ReferenceUnderstanding.STRUCTURED));
     }
 
     /**
@@ -1305,9 +1307,22 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
         }
         ParserRuleContext modifier = context.referenceModifier();
         Ast.ReferenceModification referenceModification = modifier == null ? null : referenceModification(modifier);
-        return new Ast.DataReference(meta, base == null ? firstSemanticWord(context) : clean(sourceText(base)),
+        return trailingReferenceModifier(new Ast.DataReference(meta, base == null ? firstSemanticWord(context) : clean(sourceText(base)),
                 sourceText(context).strip(), qualifiers, groups, referenceModification,
-                Ast.ReferenceUnderstanding.STRUCTURED);
+                Ast.ReferenceUnderstanding.STRUCTURED));
+    }
+
+    /** The grammar can nest the trailing modifier in inTable. In COBOL it modifies
+     * the complete qualified identifier, never the qualifier's group. Preserve the
+     * existing typed expressions and exact provenance while relocating that syntax. */
+    private static Ast.DataReference trailingReferenceModifier(Ast.DataReference reference) {
+        if(reference.referenceModification()!=null||reference.qualifiers().isEmpty())return reference;
+        var qualifiers=new ArrayList<>(reference.qualifiers());var last=qualifiers.get(qualifiers.size()-1);
+        var qualified=last.reference();var modifier=qualified.referenceModification();
+        if(modifier==null)return reference;
+        var without=new Ast.DataReference(qualified.meta(),qualified.baseName(),qualified.writtenText(),qualified.qualifiers(),qualified.subscriptGroups(),null,qualified.understanding());
+        qualifiers.set(qualifiers.size()-1,new Ast.DataQualifier(last.meta(),last.connector(),last.target(),without,last.writtenText()));
+        return new Ast.DataReference(reference.meta(),reference.baseName(),reference.writtenText(),qualifiers,reference.subscriptGroups(),modifier,reference.understanding());
     }
 
     private List<Ast.DataQualifier> buildQualifiers(ParserRuleContext qualified) {

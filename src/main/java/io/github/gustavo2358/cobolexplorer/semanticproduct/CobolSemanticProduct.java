@@ -539,10 +539,18 @@ public final class CobolSemanticProduct {
                 "proved relation requires target; unproved relation requires explicit uncertainty");
         }
     }
+    public record StorageRenames(StorageRelationId id, StorageNodeId owner, Optional<StorageNodeId> from,
+            Optional<StorageNodeId> through, StorageRelationStatus status, Provenance provenance, List<String> gapCodes) {
+        public StorageRenames {
+            Objects.requireNonNull(id);Objects.requireNonNull(owner);Objects.requireNonNull(from);Objects.requireNonNull(through);
+            Objects.requireNonNull(status);Objects.requireNonNull(provenance);gapCodes=List.copyOf(gapCodes);
+            require(status==StorageRelationStatus.PROVEN?from.isPresent()&&gapCodes.isEmpty():!gapCodes.isEmpty(),"RENAMES proof or explicit gap required");
+        }
+    }
     public enum StorageProfile { UNSPECIFIED, IBM_ENTERPRISE_6_4_FIXED_DISPLAY_1047 }
     public enum PhysicalKind { GROUP, ELEMENTARY, OPAQUE }
     public enum AllocationProof { INDEPENDENT_LOCAL_WORKING_STORAGE, UNPROVEN }
-    public enum RegionalMoveKind { LITERAL_BYTES, COPY_BYTES, MUST_UNKNOWN, UNAVAILABLE }
+    public enum RegionalMoveKind { LITERAL_BYTES, FITTED_LITERAL_BYTES, COPY_BYTES, FIT_TEXT, MUST_UNKNOWN, UNAVAILABLE }
     public record StorageMeasure(Optional<BigInteger> value, List<String> gapCodes) {
         public StorageMeasure {
             Objects.requireNonNull(value); gapCodes = List.copyOf(gapCodes);
@@ -570,25 +578,52 @@ public final class CobolSemanticProduct {
             require(codec.isEmpty() || codec.get().equals("text.ebcdic.ibm1047@1"), "unsupported storage codec");
         }
     }
-    /** This reference accesses exactly the selected physical view, without subscripts or modification. */
-    public record RegionalAccess(StorageNodeId view) { public RegionalAccess { Objects.requireNonNull(view); } }
+    /** Absolute byte range within the declared view, proven for this occurrence. */
+    public record RegionalSlice(BigInteger offset,BigInteger extent) {
+        public RegionalSlice { Objects.requireNonNull(offset);Objects.requireNonNull(extent);require(offset.signum()>=0&&extent.signum()>0,"slice requires nonnegative offset and positive extent"); }
+    }
+    public record RegionalAccess(StorageNodeId view,Optional<RegionalSlice> slice) {
+        public RegionalAccess { Objects.requireNonNull(view);Objects.requireNonNull(slice); }
+        public RegionalAccess(StorageNodeId view) { this(view,Optional.empty()); }
+    }
     public record RegionalMove(RegionalMoveKind kind, List<Integer> bytes, List<String> gapCodes) {
         public RegionalMove {
             Objects.requireNonNull(kind); bytes = List.copyOf(bytes); gapCodes = List.copyOf(gapCodes);
             require(bytes.stream().allMatch(b -> b >= 0 && b <= 255), "invalid octet");
-            require(kind == RegionalMoveKind.LITERAL_BYTES || bytes.isEmpty(), "only literal byte writes carry bytes");
+            require(kind == RegionalMoveKind.LITERAL_BYTES || kind == RegionalMoveKind.FITTED_LITERAL_BYTES || bytes.isEmpty(), "only literal byte writes carry bytes");
             require((kind == RegionalMoveKind.MUST_UNKNOWN || kind == RegionalMoveKind.UNAVAILABLE) == !gapCodes.isEmpty(),
                     "precise write has no gaps; unknown write requires reasons");
             gapCodes.forEach(code -> requireText(code, "regional MOVE gap"));
         }
     }
+    public enum StorageEntryMode { UNKNOWN, INITIAL, PRESERVED }
+    public enum InitialStorageKind { LITERAL_BYTES, PRESERVE, UNKNOWN }
+    public record StorageInitialCondition(StorageNodeId node,InitialStorageKind kind,List<Integer> bytes,List<String> gapCodes,Provenance provenance) {
+        public StorageInitialCondition {
+            Objects.requireNonNull(node);Objects.requireNonNull(kind);Objects.requireNonNull(provenance);bytes=List.copyOf(bytes);gapCodes=List.copyOf(gapCodes);
+            require(bytes.stream().allMatch(b->b>=0&&b<=255),"invalid initial octet");
+            require(kind==InitialStorageKind.LITERAL_BYTES||bytes.isEmpty(),"only literal initialization carries bytes");
+            require((kind==InitialStorageKind.UNKNOWN)==!gapCodes.isEmpty(),"unknown initial state requires gaps");
+            gapCodes.forEach(g->requireText(g,"initial storage gap"));
+        }
+    }
+    public record StorageEntryState(StorageEntryMode mode,List<StorageInitialCondition> conditions) {
+        public StorageEntryState {Objects.requireNonNull(mode);conditions=List.copyOf(conditions);}
+        public static StorageEntryState unknown() {return new StorageEntryState(StorageEntryMode.UNKNOWN,List.of());}
+    }
     public record StorageInventory(StorageProfile profile, List<PhysicalNode> nodes, List<StorageBase> bases,
-            List<StorageView> views, List<String> gapCodes, List<StorageRelation> relations) {
+            List<StorageView> views, List<String> gapCodes, List<StorageRelation> relations, List<StorageRenames> renames,StorageEntryState entryState) {
         public StorageInventory {
-            Objects.requireNonNull(profile); nodes = List.copyOf(nodes); bases = List.copyOf(bases);
-            views = List.copyOf(views); gapCodes = List.copyOf(gapCodes); relations=List.copyOf(relations);
+            Objects.requireNonNull(entryState);Objects.requireNonNull(profile); nodes = List.copyOf(nodes); bases = List.copyOf(bases);
+            views = List.copyOf(views); gapCodes = List.copyOf(gapCodes); relations=List.copyOf(relations);renames=List.copyOf(renames);
             gapCodes.forEach(code -> requireText(code, "storage gap"));
             require(profile != StorageProfile.UNSPECIFIED || !gapCodes.isEmpty(), "absent environment requires a gap");
+        }
+        public StorageInventory(StorageProfile profile,List<PhysicalNode> nodes,List<StorageBase> bases,List<StorageView> views,List<String> gapCodes,List<StorageRelation> relations,List<StorageRenames> renames) {
+            this(profile,nodes,bases,views,gapCodes,relations,renames,StorageEntryState.unknown());
+        }
+        public StorageInventory(StorageProfile profile,List<PhysicalNode> nodes,List<StorageBase> bases,List<StorageView> views,List<String> gapCodes,List<StorageRelation> relations) {
+            this(profile,nodes,bases,views,gapCodes,relations,List.of());
         }
         public StorageInventory(StorageProfile profile,List<PhysicalNode> nodes,List<StorageBase> bases,List<StorageView> views,List<String> gapCodes) {
             this(profile,nodes,bases,views,gapCodes,List.of());
@@ -863,10 +898,16 @@ public final class CobolSemanticProduct {
         public LocalContinuation localContinuation() { return LocalContinuation.NONE; }
     }
 
+    public record MoveTransfer(MoveSource source,DataReference target,RegionalMove effect) {
+        public MoveTransfer { Objects.requireNonNull(source);Objects.requireNonNull(target);Objects.requireNonNull(effect);require(target.role()==OperandRole.WRITE,"transfer target requires WRITE");if(source instanceof DataReference r)require(r.role()==OperandRole.READ,"transfer source requires READ"); }
+    }
+
     public record MoveFact(StatementHeader header, MoveSource source,
                            DataReference target, CopySemantics copySemantics,
-                           NormalContinuation normalContinuation, Optional<TextAdjustment> textAdjustment, Optional<RegionalMove> regionalMove) implements StatementFact {
+                           NormalContinuation normalContinuation, Optional<TextAdjustment> textAdjustment, Optional<RegionalMove> regionalMove, List<MoveTransfer> additionalTransfers) implements StatementFact {
         public MoveFact {
+            additionalTransfers=List.copyOf(additionalTransfers);
+            require(additionalTransfers.isEmpty()||regionalMove.isPresent()&&copySemantics==CopySemantics.UNAVAILABLE,"additional transfers require regional effects exclusively");
             Objects.requireNonNull(regionalMove);
             copySemantics = Objects.requireNonNull(copySemantics);
             textAdjustment = Objects.requireNonNull(textAdjustment);
@@ -887,6 +928,14 @@ public final class CobolSemanticProduct {
             if (source instanceof DataReference data) require(data.role() == OperandRole.READ, "MOVE data source requires READ");
             if (target.role() != OperandRole.WRITE)
                 throw new IllegalArgumentException("MOVE target must have WRITE role");
+        }
+        public MoveFact(StatementHeader header,MoveSource source,DataReference target,CopySemantics copySemantics,
+                NormalContinuation normalContinuation,Optional<TextAdjustment> textAdjustment,Optional<RegionalMove> regionalMove) {
+            this(header,source,target,copySemantics,normalContinuation,textAdjustment,regionalMove,List.of());
+        }
+        public List<MoveTransfer> transfers() {
+            if(regionalMove.isEmpty())return List.of();
+            var result=new ArrayList<MoveTransfer>();result.add(new MoveTransfer(source,target,regionalMove.get()));result.addAll(additionalTransfers);return List.copyOf(result);
         }
         public MoveFact(StatementHeader header, MoveSource source, DataReference target,
                         CopySemantics copySemantics, NormalContinuation normalContinuation, Optional<TextAdjustment> textAdjustment) {
@@ -1087,6 +1136,11 @@ public final class CobolSemanticProduct {
         }
     }
 
+    private static StorageView accessedView(Map<StorageNodeId,StorageView> views,RegionalAccess access) {
+        var view=views.get(access.view());
+        return access.slice().map(slice->new StorageView(view.node(),view.base(),new StorageMeasure(Optional.of(slice.offset()),List.of()),
+            new StorageMeasure(Optional.of(slice.extent()),List.of()),view.codec(),view.provenance())).orElse(view);
+    }
     private static void validateStorage(UnitId unit, List<DataDeclaration> declarations, List<StatementFact> statements, StorageInventory inventory) {
         var declared = new HashSet<DataItemId>();
         for (var d : declarations) declared.add(d.id());
@@ -1155,6 +1209,19 @@ public final class CobolSemanticProduct {
                     && v.offset().value().get().add(v.extent().value().get()).compareTo(pv.offset().value().get().add(pv.extent().value().get())) <= 0,
                     "child view exceeds physical parent");
         });
+        StorageRenamesContract.validate(unit,inventory,nodes,views,relationIds);
+        var initialNodes=new HashSet<StorageNodeId>();
+        for(var condition:inventory.entryState().conditions()) {
+            require(nodes.containsKey(condition.node())&&initialNodes.add(condition.node()),"initial condition needs unique existing physical node");
+            if(condition.kind()!=InitialStorageKind.UNKNOWN) {
+                var view=views.get(condition.node());
+                require(condition.provenance().exact()&&view.codec().isPresent()&&view.offset().value().isPresent()&&view.extent().value().isPresent()
+                    &&bases.get(view.base()).extent().value().isPresent(),"precise initial condition needs exact provenance and bounded supported view");
+                require(condition.kind()==InitialStorageKind.LITERAL_BYTES?inventory.entryState().mode()==StorageEntryMode.INITIAL
+                    &&view.extent().value().get().equals(BigInteger.valueOf(condition.bytes().size())):inventory.entryState().mode()==StorageEntryMode.PRESERVED,
+                    "initial condition contradicts entry mode or extent");
+            }
+        }
         for (var statement : statements) {
             for (var ref : references(statement)) ref.regionalAccess().ifPresent(access -> {
                 var view = views.get(access.view()); var node = nodes.get(access.view());
@@ -1162,21 +1229,24 @@ public final class CobolSemanticProduct {
                     && ref.binding().selected().isPresent() && ref.binding().selected().equals(node.data()), "regional access must agree with unique nominal selection");
                 require(view.codec().isPresent() && view.offset().value().isPresent() && view.extent().value().isPresent()
                     && view.extent().value().get().signum() > 0 && bases.get(view.base()).extent().value().isPresent(), "regional access needs a bounded supported view");
-                require(ref.role() != OperandRole.CALL_TARGET || node.kind() == PhysicalKind.ELEMENTARY, "regional CALL target must be elementary text");
+                require(ref.role() != OperandRole.CALL_TARGET || access.slice().isPresent() || node.kind() == PhysicalKind.ELEMENTARY, "regional CALL target must be elementary text");
+                access.slice().ifPresent(slice->require(slice.offset().compareTo(view.offset().value().get())>=0
+                    &&slice.offset().add(slice.extent()).compareTo(view.offset().value().get().add(view.extent().value().get()))<=0,"access slice must remain inside declared view"));
             });
             if (statement instanceof MoveFact move && move.regionalMove().isPresent()) {
-                var effect = move.regionalMove().get();
+                for(var transfer:move.transfers()) {
+                var effect = transfer.effect();
                 if (effect.kind() == RegionalMoveKind.UNAVAILABLE) continue;
-                require(move.target().regionalAccess().isPresent(), "mandatory write requires exact destination access");
-                var dest = views.get(move.target().regionalAccess().get().view());
-                if (effect.kind() == RegionalMoveKind.LITERAL_BYTES) {
-                    require(move.source() instanceof LiteralSource literal && literal.logicalValue().isPresent(), "byte literal write requires logical literal source");
+                require(transfer.target().regionalAccess().isPresent(), "mandatory write requires exact destination access");
+                var dest = accessedView(views,transfer.target().regionalAccess().get());
+                if (effect.kind() == RegionalMoveKind.LITERAL_BYTES || effect.kind() == RegionalMoveKind.FITTED_LITERAL_BYTES) {
+                    require(transfer.source() instanceof LiteralSource literal && literal.logicalValue().isPresent(), "byte literal write requires logical literal source");
                     require(dest.extent().value().get().equals(BigInteger.valueOf(effect.bytes().size())), "literal bytes must fill the exact destination");
                 }
-                if (effect.kind() == RegionalMoveKind.COPY_BYTES) {
-                    require(move.source() instanceof DataReference source && source.regionalAccess().isPresent(), "byte copy needs exact source access");
-                    var source = views.get(((DataReference)move.source()).regionalAccess().get().view());
-                    require(source.extent().equals(dest.extent()), "byte copy needs equal source and destination extents");
+                if (effect.kind() == RegionalMoveKind.COPY_BYTES || effect.kind() == RegionalMoveKind.FIT_TEXT) {
+                    require(transfer.source() instanceof DataReference source && source.regionalAccess().isPresent(), "byte copy needs exact source access");
+                    var source = accessedView(views,((DataReference)transfer.source()).regionalAccess().get());
+                    require(effect.kind()!=RegionalMoveKind.COPY_BYTES || source.extent().equals(dest.extent()), "byte copy needs equal source and destination extents");
                     boolean disjoint;
                     if (source.base().equals(dest.base())) {
                         var left = source.offset().value().get(); var right = dest.offset().value().get();
@@ -1185,6 +1255,7 @@ public final class CobolSemanticProduct {
                     } else disjoint = bases.get(source.base()).allocation() == AllocationProof.INDEPENDENT_LOCAL_WORKING_STORAGE
                             && bases.get(dest.base()).allocation() == AllocationProof.INDEPENDENT_LOCAL_WORKING_STORAGE;
                     require(disjoint, "COBOL byte copy requires proved disjoint ranges");
+                }
                 }
             }
         }
@@ -1295,8 +1366,10 @@ public final class CobolSemanticProduct {
     }
 
     private static List<DataReference> references(StatementFact statement) {
-        if (statement instanceof MoveFact move) return move.source() instanceof DataReference data
-                ? List.of(data, move.target()) : List.of(move.target());
+        if (statement instanceof MoveFact move) {
+            var result=new ArrayList<DataReference>();if(move.source() instanceof DataReference r)result.add(r);result.add(move.target());
+            for(var t:move.additionalTransfers()){if(t.source() instanceof DataReference r)result.add(r);result.add(t.target());}return List.copyOf(result);
+        }
         if (statement instanceof CallFact call) return call.target() instanceof DataReference data ? List.of(data) : List.of();
         if (statement instanceof IfFact branch) return branch.condition().references();
         if (statement instanceof ProcedurePerformFact p) return java.util.stream.Stream.concat(java.util.stream.Stream.concat(p.loop().stream().flatMap(l->l.condition().references().stream()),p.times().stream().flatMap(t->t.reference().stream())),p.varying().stream().flatMap(v->v.controls().stream()).flatMap(v->v.references().stream())).toList();
@@ -1311,7 +1384,8 @@ public final class CobolSemanticProduct {
         for (StatementFact statement : statements) {
             List<OperandId> operands;
             if (statement instanceof MoveFact move) {
-                operands = List.of(move.source().id(), move.target().id());
+                var all=new ArrayList<OperandId>();all.add(move.source().id());all.add(move.target().id());
+                for(var t:move.additionalTransfers()){all.add(t.source().id());all.add(t.target().id());}operands=List.copyOf(all);
             } else if (statement instanceof CallFact call) {
                 operands = List.of(call.target().id());
             } else if (statement instanceof IfFact branch) {

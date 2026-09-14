@@ -454,3 +454,49 @@ ObservedStatement adds normalContinuation and knownReferences. These nominal fac
 retain identity/role/binding/provenance, but do not invent exact access/effect proof.
 A known observed continuation is the only normal in-unit successor; abnormal exits
 and nontermination remain unproved. No observed construction disappears.
+
+### SP2.9 / storage1.2 — fixed RENAMES
+
+Extensão 2.9.0; `storage.version=1.2.0` adiciona `renames` obrigatório
+(vazio quando ausente), com `{id,owner,from,through,status,provenance,gapCodes}`.
+Endpoints nullable preservam resolução disponível mesmo quando a faixa não é
+provada. PROVEN requer from e vista existente coerente com toda a faixa; sem
+THROUGH a categoria é herdada. UNPROVEN requer gaps e vista sem precisão.
+Nenhum alias aloca uma nova base. Declarações de aliases não usados também são
+publicadas. O reader 2.8 é preservado no lower; não existe writer duplo.
+
+### ST-W6.2 / SP2.10
+
+`regionalAccess` exige `view` e `slice` (nullable). Slice provado transporta
+`offset` absoluto e `extent` em bytes como decimais canônicos não negativos,
+com extensão positiva e range contido no item. Views de declaração permanecem
+inteiras; acesso dinâmico ou sem prova não substitui slice por acesso inteiro.
+
+### ST-W6.3 / SP2.11
+
+`MOVE.additionalTransfers` é lista obrigatória, possivelmente vazia, de
+`{source,target,effect}` com operandos próprios. A primeira transferência continua
+em source/target/regionalMove. Ordem do array é semântica; lower não usa nomes
+para ordenar ou descobrir receivers. FIT_TEXT significa ajuste à direita com
+SPACE, ao extent explícito do target. FITTED_LITERAL_BYTES conserva o literal
+original e publica o vetor após esse ajuste; LITERAL_BYTES continua byte-exato.
+Múltiplos receivers admitem valores exatos somente sem alteração potencial de
+origem; em sobreposição todos os valores da sequência têm gap explícito.
+
+ST-W6.4 consumes the same SP2.11 transfer sequence: canonical fixed textual
+CORRESPONDING publishes each implicit pair with declaration identity/origin and
+its own regional effect. Both primary and additional sources can differ. The
+sequence contains only selected pairs; unmatched bytes are not written. Matching
+is owned by StorageCorrespondence, never by a projector or downstream consumer.
+
+### ST-W7.1 / SP2.12, storage1.3
+
+`storage.entryState` é obrigatório: `{mode,conditions}`; mode é INITIAL,
+PRESERVED ou UNKNOWN. Conditions contém `{node,kind,bytes,gapCodes,provenance}`.
+Node referencia uma declaração física existente, única por condição.
+LITERAL_BYTES exige modo INITIAL, origem exata e bytes no extent integral da
+vista com codec provado; PRESERVE exige modo PRESERVED; UNKNOWN exige gaps e
+nenhum byte. Ausência de condições nunca implica zero. O CLI seleciona o perfil
+de invocação com `--entry-storage-state initial|preserved|unknown` (default unknown).
+A publicação de VALUE é canônica no frontend; projector não interpreta cláusulas.
+Não há MOVE sintético nem condição reaplicada em retorno/backedge.

@@ -63,7 +63,7 @@ class SemanticProductCheckpoint7JsonTest {
         assertEquals(ROOT_FIELDS, fieldSet(document));
         assertEquals(ROOT_FIELD_ORDER, fieldList(document));
         assertEquals("cobol-semantic-product", document.path("schema").asText());
-        assertEquals("2.8.0", document.path("contractVersion").asText());
+        assertEquals("2.12.0", document.path("contractVersion").asText());
         assertEquals("SEMANTIC-TARGET",
                 document.path("unit").path("canonicalProgramName").asText());
         assertEquals(List.of(0), integerValues(document.path("unit").path("structuralPath")));
@@ -450,7 +450,7 @@ class SemanticProductCheckpoint7JsonTest {
 
     private static Set<String> expectedStatementFields(String variant) {
         return switch (variant) {
-            case "MOVE" -> Set.of("variant", "header", "source", "target", "copySemantics", "normalContinuation", "textAdjustment", "regionalMove");
+            case "MOVE" -> Set.of("variant", "header", "source", "target", "copySemantics", "normalContinuation", "textAdjustment", "regionalMove", "additionalTransfers");
             case "CALL" -> Set.of("variant", "header", "syntax", "target",
                     "runtimeTarget", "runtimeUncertaintyCode", "normalContinuation", "surface", "effects", "outcomes");
             case "IF" -> Set.of("variant", "header", "condition",
