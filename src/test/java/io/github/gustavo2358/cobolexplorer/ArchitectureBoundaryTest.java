@@ -279,6 +279,16 @@ class ArchitectureBoundaryTest {
     }
 
     @Test
+    void regionalLayoutEngineRemainsBeforeProjectionAndDownstream() throws Exception {
+        List<Class<?>> types = new ArrayList<>(); addNestedTypes(StorageLayoutSemantics.class, types); addNestedTypes(StorageAccessSemantics.class, types);
+        for (var type : types) for (var dependency : directDependencies(type)) {
+            assertFalse(dependency.startsWith(SEMANTIC_PRODUCT_PREFIX) || dependency.startsWith(ANTLR_PREFIX)
+                || dependency.startsWith("io/github/gustavo2358/air/") || dependency.startsWith("io/github/gustavo2358/analysis/")
+                || dependency.startsWith("io/github/gustavo2358/lower/"), dependency);
+        }
+    }
+
+    @Test
     void checkpoint8ProbeDependsOnlyOnTheSemanticPortBoundary() throws Exception {
         List<Class<?>> probeTypes = new ArrayList<>();
         addNestedTypes(SemanticPortLoweringProbe.class, probeTypes);

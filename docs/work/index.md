@@ -4,6 +4,8 @@ Work items delimitam a mudança em execução; o [backlog](backlog.md) registra 
 
 ## Ativo
 
+- [WORK-STORAGE-FRONTEND-001 — Storage Semantics ST-W0..ST-W5](active/WORK-STORAGE-FRONTEND-001.yaml) — IN_PROGRESS; [perfil e contrato](../domain/storage-semantics.md).
+
 - [WORK-SEMANTIC-PRODUCT-007 — PERFORM BASIC](active/WORK-SEMANTIC-PRODUCT-007.yaml) — IN_PROGRESS; [profile and proof](../domain/perform-basic.md).
 
 - [WORK-SEMANTIC-PRODUCT-006 — scalar MOVE data source](active/WORK-SEMANTIC-PRODUCT-006.yaml) — IN_PROGRESS; [SP 1.5.0 contract](../domain/move-data-source.md).
