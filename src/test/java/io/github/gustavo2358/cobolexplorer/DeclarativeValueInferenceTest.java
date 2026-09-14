@@ -129,4 +129,71 @@ class DeclarativeValueInferenceTest {
         assertEquals("1.4.0",wire.path("storage").path("version").asText());
         assertEquals("DECLARATIVE_INVARIANT",wire.path("storage").path("entryState").path("conditions").get(0).path("proof").asText());
     }
+
+    @Test void e02e08ReferenceArgumentsExposeOnlyTheirPhysicalRegion() {
+        for(var mode:List.of("", "BY REFERENCE "))
+            invariant(VALUE+"01 ARG-AREA PIC X(20).\n","CALL LIT-PGM USING "+mode+"ARG-AREA.");
+    }
+    @Test void e03e06OverlappingReferenceArgumentsBlockWithForeignReason() {
+        for(var pair:List.of(
+                new String[]{VALUE,"LIT-PGM"},
+                new String[]{GROUP,"WS-AREA"},
+                new String[]{GROUP+"01 ALIAS-AREA REDEFINES WS-AREA PIC X(16).\n","ALIAS-AREA"},
+                new String[]{GROUP+"66 ALIAS-PGM RENAMES LIT-PGM.\n","ALIAS-PGM"},
+                new String[]{GROUP+"66 ALIAS-PGM RENAMES LIT-PGM THROUGH TAIL-PART.\n","ALIAS-PGM"})) {
+            var c=condition(product(pair[0],"CALL LIT-PGM USING BY REFERENCE "+pair[1]+"."));
+            assertEquals(InitialStorageKind.UNKNOWN,c.kind());
+            assertEquals(InitialStorageProof.NONE,c.proof());
+            assertTrue(c.gapCodes().contains("FOREIGN_MUTATION_OR_ESCAPE"),c.gapCodes().toString());
+        }
+    }
+    @Test void e07e09e10PhysicalSlicesWithinSameBaseDecideOverlap() {
+        invariant(GROUP,"CALL LIT-PGM USING TAIL-PART.");
+        invariant(GROUP,"CALL LIT-PGM USING WS-AREA(9:8).");
+        blocked(GROUP,"CALL LIT-PGM USING WS-AREA(8:8).");
+        blocked(GROUP,"CALL LIT-PGM USING WS-AREA(1:1).");
+        invariant(GROUP+"66 ALIAS-TAIL RENAMES TAIL-PART.\n","CALL LIT-PGM USING ALIAS-TAIL.");
+    }
+    @Test void e11e13UnknownExposureNeverMeansNoMutation() {
+        for(var arg:List.of("WS-AREA(POS:1)","WS-AREA(17:1)","MISSING-AREA",
+                "BY REFERENCE ADDRESS OF WS-AREA","BY CONTENT ADDRESS OF WS-AREA",
+                "BY VALUE ADDRESS OF WS-AREA","BY REFERENCE OMITTED",
+                "BY CONTENT TAIL-PART","BY VALUE POS","BY REFERENCE 'X'")) {
+            var c=condition(product(GROUP+"01 POS PIC 9.\n","CALL LIT-PGM USING "+arg+"."));
+            assertEquals(InitialStorageKind.UNKNOWN,c.kind(),arg);
+            assertTrue(c.gapCodes().contains("FOREIGN_MUTATION_OR_ESCAPE"),arg+": "+c.gapCodes());
+        }
+    }
+    @Test void e14AllCallsAndCandidatesUsePhysicalExposureNotStatementFamily() {
+        invariant(VALUE+"01 ARG-AREA PIC X(20).\n","CALL LIT-PGM.\nCALL 'OTHER' USING ARG-AREA.");
+        var p=product(VALUE+"01 OTHER-PGM PIC X(8) VALUE 'PROGB'.\n01 ARG-AREA PIC X(20).\n",
+            "CALL LIT-PGM USING ARG-AREA.\nCALL OTHER-PGM USING LIT-PGM.");
+        assertEquals(InitialStorageKind.UNKNOWN,p.storage().entryState().conditions().get(0).kind());
+        assertEquals(InitialStorageProof.DECLARATIVE_INVARIANT,p.storage().entryState().conditions().get(1).proof());
+        blocked(GROUP,"CALL LIT-PGM USING TAIL-PART.\nGOBACK.\nCALL 'OTHER' USING LIT-PGM.");
+        blocked(GROUP,"CALL LIT-PGM USING TAIL-PART\nON EXCEPTION CALL 'OTHER' USING LIT-PGM\nEND-CALL.");
+    }
+    @Test void e15e16DisjointExposureCannotHideIndependentWritesOrForeignEffects() {
+        for(var effect:List.of("MOVE 'OTHER' TO LIT-PGM.","ACCEPT TAIL-PART.",
+                "EXEC CICS READ FILE('A') INTO(TAIL-PART) END-EXEC.",
+                "MOVE FUNCTION CURRENT-DATE TO TAIL-PART."))
+            blocked(GROUP,"CALL LIT-PGM USING TAIL-PART.\n"+effect);
+        var c=condition(product(GROUP,"CALL LIT-PGM USING LIT-PGM.\nMOVE 'OTHER' TO LIT-PGM."));
+        assertTrue(c.gapCodes().contains("OVERLAPPING_WRITE"));
+        assertTrue(c.gapCodes().contains("FOREIGN_MUTATION_OR_ESCAPE"));
+    }
+    @Test void e17DisjointExposurePreservesKnownProducerAndRuntimeAlternative() {
+        var p=product(VALUE+"01 ARG-AREA PIC X(20).\n01 TARGET-PGM PIC X(8) VALUE 'BEFORE'.\n01 INPUT-PGM PIC X(8).\n01 FLAG PIC X.\n",
+            "IF FLAG = 'Y'\nMOVE LIT-PGM TO TARGET-PGM\nELSE\nMOVE INPUT-PGM TO TARGET-PGM\nEND-IF.\nCALL TARGET-PGM USING ARG-AREA.");
+        assertEquals(InitialStorageProof.DECLARATIVE_INVARIANT,p.storage().entryState().conditions().get(0).proof());
+        assertEquals(InitialStorageKind.UNKNOWN,p.storage().entryState().conditions().get(1).kind());
+    }
+    @Test void typedArgumentModesIncludeDefaultAndPhraseInheritance() {
+        var a=AstBoundaryTestSupport.analyze(source(GROUP,"CALL LIT-PGM USING TAIL-PART LIT-PGM\nBY CONTENT TAIL-PART LIT-PGM\nBY VALUE 1 2\nBY REFERENCE TAIL-PART LIT-PGM."),"modes.cbl");
+        var call=AstBoundaryTestSupport.nodes(a,Ast.CallStatement.class).get(0);
+        assertEquals(List.of(Ast.PassingMode.REFERENCE,Ast.PassingMode.REFERENCE,
+            Ast.PassingMode.CONTENT,Ast.PassingMode.CONTENT,Ast.PassingMode.VALUE,Ast.PassingMode.VALUE,
+            Ast.PassingMode.REFERENCE,Ast.PassingMode.REFERENCE),call.arguments().stream().map(Ast.CallArgument::passingMode).toList());
+        assertTrue(call.arguments().stream().allMatch(arg->arg.argumentKind()==Ast.CallArgumentKind.VALUE));
+    }
 }
