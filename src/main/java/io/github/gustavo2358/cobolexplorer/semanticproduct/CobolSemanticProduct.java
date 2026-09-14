@@ -578,8 +578,14 @@ public final class CobolSemanticProduct {
             require(codec.isEmpty() || codec.get().equals("text.ebcdic.ibm1047@1"), "unsupported storage codec");
         }
     }
-    /** This reference accesses exactly the selected physical view, without subscripts or modification. */
-    public record RegionalAccess(StorageNodeId view) { public RegionalAccess { Objects.requireNonNull(view); } }
+    /** Absolute byte range within the declared view, proven for this occurrence. */
+    public record RegionalSlice(BigInteger offset,BigInteger extent) {
+        public RegionalSlice { Objects.requireNonNull(offset);Objects.requireNonNull(extent);require(offset.signum()>=0&&extent.signum()>0,"slice requires nonnegative offset and positive extent"); }
+    }
+    public record RegionalAccess(StorageNodeId view,Optional<RegionalSlice> slice) {
+        public RegionalAccess { Objects.requireNonNull(view);Objects.requireNonNull(slice); }
+        public RegionalAccess(StorageNodeId view) { this(view,Optional.empty()); }
+    }
     public record RegionalMove(RegionalMoveKind kind, List<Integer> bytes, List<String> gapCodes) {
         public RegionalMove {
             Objects.requireNonNull(kind); bytes = List.copyOf(bytes); gapCodes = List.copyOf(gapCodes);
@@ -1098,6 +1104,11 @@ public final class CobolSemanticProduct {
         }
     }
 
+    private static StorageView accessedView(Map<StorageNodeId,StorageView> views,RegionalAccess access) {
+        var view=views.get(access.view());
+        return access.slice().map(slice->new StorageView(view.node(),view.base(),new StorageMeasure(Optional.of(slice.offset()),List.of()),
+            new StorageMeasure(Optional.of(slice.extent()),List.of()),view.codec(),view.provenance())).orElse(view);
+    }
     private static void validateStorage(UnitId unit, List<DataDeclaration> declarations, List<StatementFact> statements, StorageInventory inventory) {
         var declared = new HashSet<DataItemId>();
         for (var d : declarations) declared.add(d.id());
@@ -1174,20 +1185,22 @@ public final class CobolSemanticProduct {
                     && ref.binding().selected().isPresent() && ref.binding().selected().equals(node.data()), "regional access must agree with unique nominal selection");
                 require(view.codec().isPresent() && view.offset().value().isPresent() && view.extent().value().isPresent()
                     && view.extent().value().get().signum() > 0 && bases.get(view.base()).extent().value().isPresent(), "regional access needs a bounded supported view");
-                require(ref.role() != OperandRole.CALL_TARGET || node.kind() == PhysicalKind.ELEMENTARY, "regional CALL target must be elementary text");
+                require(ref.role() != OperandRole.CALL_TARGET || access.slice().isPresent() || node.kind() == PhysicalKind.ELEMENTARY, "regional CALL target must be elementary text");
+                access.slice().ifPresent(slice->require(slice.offset().compareTo(view.offset().value().get())>=0
+                    &&slice.offset().add(slice.extent()).compareTo(view.offset().value().get().add(view.extent().value().get()))<=0,"access slice must remain inside declared view"));
             });
             if (statement instanceof MoveFact move && move.regionalMove().isPresent()) {
                 var effect = move.regionalMove().get();
                 if (effect.kind() == RegionalMoveKind.UNAVAILABLE) continue;
                 require(move.target().regionalAccess().isPresent(), "mandatory write requires exact destination access");
-                var dest = views.get(move.target().regionalAccess().get().view());
+                var dest = accessedView(views,move.target().regionalAccess().get());
                 if (effect.kind() == RegionalMoveKind.LITERAL_BYTES) {
                     require(move.source() instanceof LiteralSource literal && literal.logicalValue().isPresent(), "byte literal write requires logical literal source");
                     require(dest.extent().value().get().equals(BigInteger.valueOf(effect.bytes().size())), "literal bytes must fill the exact destination");
                 }
                 if (effect.kind() == RegionalMoveKind.COPY_BYTES) {
                     require(move.source() instanceof DataReference source && source.regionalAccess().isPresent(), "byte copy needs exact source access");
-                    var source = views.get(((DataReference)move.source()).regionalAccess().get().view());
+                    var source = accessedView(views,((DataReference)move.source()).regionalAccess().get());
                     require(source.extent().equals(dest.extent()), "byte copy needs equal source and destination extents");
                     boolean disjoint;
                     if (source.base().equals(dest.base())) {

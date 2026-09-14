@@ -457,10 +457,17 @@ and nontermination remain unproved. No observed construction disappears.
 
 ### SP2.9 / storage1.2 — fixed RENAMES
 
-Writer corrente 2.9.0; `storage.version=1.2.0` adiciona `renames` obrigatório
+Extensão 2.9.0; `storage.version=1.2.0` adiciona `renames` obrigatório
 (vazio quando ausente), com `{id,owner,from,through,status,provenance,gapCodes}`.
 Endpoints nullable preservam resolução disponível mesmo quando a faixa não é
 provada. PROVEN requer from e vista existente coerente com toda a faixa; sem
 THROUGH a categoria é herdada. UNPROVEN requer gaps e vista sem precisão.
 Nenhum alias aloca uma nova base. Declarações de aliases não usados também são
 publicadas. O reader 2.8 é preservado no lower; não existe writer duplo.
+
+### ST-W6.2 / SP2.10
+
+`regionalAccess` exige `view` e `slice` (nullable). Slice provado transporta
+`offset` absoluto e `extent` em bytes como decimais canônicos não negativos,
+com extensão positiva e range contido no item. Views de declaração permanecem
+inteiras; acesso dinâmico ou sem prova não substitui slice por acesso inteiro.

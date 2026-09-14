@@ -28,3 +28,15 @@ prova por alias limitada à profundidade de ancestrais, sem tabela de pares.
 Oracle independente: registro 2+FILLER1+3 tem extent6; alias do último campo tem
 offset3/extent3; alias THROUGH tem offset0/extent6; uma única base. Endpoints
 invertidos, raiz, mesmo item, outro registro e intermediário desconhecido recusam.
+
+## ST-W6.2 — reference modification constante
+
+[Regra IBM de reference modification](https://www.ibm.com/docs/en/cobol-zos/6.3.0?topic=reference-modification), verificada em 2026-09-14: posição é ordinal a partir de1;
+DISPLAY usa um byte por caractere. Perfil exige posição p e length n literais
+inteiros positivos, ambos presentes, p+n−1 ≤ extent. Sem suporte a ZLEN ou
+comprimento omitido nesta extensão. Oracle: texto em offset2, p=6,n=1 → [7,8).
+Algoritmo O(1) por acesso após layout: offset absoluto view.offset+p−1, extent n.
+Prova exige codec/perfil1047 e bounds do item; origem da ocorrência preservada.
+Dinâmica e parâmetros não provados não recebem acesso inteiro substituto.
+SP2.10/storage1.2 acrescenta slice nullable em regionalAccess; versões anteriores
+continuam fechadas no reader. AIR usa RegionSlice existente, com codec explícito.

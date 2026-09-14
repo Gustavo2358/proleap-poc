@@ -7,7 +7,7 @@ import static io.github.gustavo2358.cobolexplorer.StorageLayoutSemantics.*;
 public final class StorageAccessSemantics {
     public enum Role { READ, WRITE, CALL_TARGET }
     public record Access(Key reference,Key statement,ResolutionContracts.SemanticEntityId entity,
-                         View view,Role role,Ast.SourceProvenance origin) { }
+                         View view,Role role,boolean sliced,Ast.SourceProvenance origin) { }
     public enum MoveKind { LITERAL_BYTES, COPY_BYTES, MUST_UNKNOWN, UNAVAILABLE }
     public enum Reason { ACCESS_NOT_PROVEN, SOURCE_NOT_PROVEN, EXTENT_MISMATCH, UNREPRESENTABLE_TEXT, OVERLAPPING_COPY, MOVE_FORM_NOT_SUPPORTED }
     public record Move(Key statement,Optional<Access> destination,Optional<Access> source,MoveKind kind,
@@ -46,13 +46,15 @@ public final class StorageAccessSemantics {
                     var key=new Key(unit.id(),reference.meta().id());var binding=bindings.get(key);
                     if(binding!=null&&binding.status()==ResolutionContracts.ResolutionStatus.RESOLVED&&binding.candidates().size()==1
                             &&binding.selectedCandidate().isPresent()&&reference.understanding()==Ast.ReferenceUnderstanding.STRUCTURED
-                            &&reference.subscriptGroups().isEmpty()&&reference.referenceModification()==null) {
+                            &&reference.subscriptGroups().isEmpty()) {
                         var entity=binding.selectedCandidate().orElseThrow().entityId();var view=byEntity.get(entity);
                         var role=role(binding.occurrence().role());
+                        boolean sliced=reference.referenceModification()!=null;
+                        if(sliced)view=slice(view,reference.referenceModification(),physical.profile());
                         if(role!=null&&view!=null&&view.textual()&&view.offset().value().isPresent()&&view.extent().value().isPresent()
                                 &&bases.get(view.base()).extent().value().isPresent()
-                                &&(role!=Role.CALL_TARGET||nodes.get(view.node()).kind()==Kind.ELEMENTARY))
-                            accesses.put(key,new Access(key,new Key(unit.id(),owner.meta().id()),entity,view,role,reference.meta().provenance()));
+                                &&(role!=Role.CALL_TARGET||sliced||nodes.get(view.node()).kind()==Kind.ELEMENTARY))
+                            accesses.put(key,new Access(key,new Key(unit.id(),owner.meta().id()),entity,view,role,sliced,reference.meta().provenance()));
                     }
                 }
                 var children=Ast.children(node);for(int i=children.size()-1;i>=0;i--)pending.push(new Visit(children.get(i),owner));
@@ -83,6 +85,16 @@ public final class StorageAccessSemantics {
             }
         }
         return new StorageAccessSemantics(layout,accesses,moves);
+    }
+    private static View slice(View view,Ast.ReferenceModification modification,Profile profile) {
+        if(profile!=Profile.IBM_ENTERPRISE_6_4_FIXED_DISPLAY_1047||view==null||!view.textual()
+                ||view.offset().value().isEmpty()||view.extent().value().isEmpty()
+                ||!(modification.offset() instanceof Ast.LiteralExpression position)
+                ||!(modification.length() instanceof Ast.LiteralExpression length)
+                ||position.integerValue().isEmpty()||length.integerValue().isEmpty())return null;
+        var p=position.integerValue().get();var n=length.integerValue().get();
+        if(p.signum()<=0||n.signum()<=0||p.subtract(java.math.BigInteger.ONE).add(n).compareTo(view.extent().value().get())>0)return null;
+        return new View(view.node(),view.base(),Measure.known(view.offset().value().get().add(p).subtract(java.math.BigInteger.ONE)),Measure.known(n),true,view.origin());
     }
     private record Visit(Ast.Node node,Ast.Statement owner) { }
     private static Role role(ResolutionContracts.ReferenceRole role) {

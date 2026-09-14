@@ -208,7 +208,7 @@ public final class CobolSemanticProductProjector {
     }
     private static Optional<RegionalAccess> regionalAccess(ProjectionInputs inputs, int reference) {
         return inputs.products().storage().flatMap(s->s.access(new StorageLayoutSemantics.Key(inputs.unitId(),reference)))
-            .map(a->new RegionalAccess(storageNode(inputs,a.view().node())));
+            .map(a->new RegionalAccess(storageNode(inputs,a.view().node()),a.sliced()?Optional.of(new RegionalSlice(a.view().offset().value().orElseThrow(),a.view().extent().value().orElseThrow())):Optional.empty()));
     }
     private static Optional<RegionalMove> regionalMove(ProjectionInputs inputs, int statement) {
         return inputs.products().storage().map(s->s.move(new StorageLayoutSemantics.Key(inputs.unitId(),statement)))

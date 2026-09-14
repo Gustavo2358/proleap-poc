@@ -26,7 +26,7 @@ import java.util.Objects;
  */
 public final class SemanticProductJsonWriter {
     public static final String SCHEMA = "cobol-semantic-product";
-    public static final String CONTRACT_VERSION = "2.9.0";
+    public static final String CONTRACT_VERSION = "2.10.0";
 
     private static final ObjectMapper JSON = JsonMapper.builder()
             .enable(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY)
@@ -105,7 +105,8 @@ public final class SemanticProductJsonWriter {
     private record StorageRenamesDocument(String id,String owner,String from,String through,CobolSemanticProduct.StorageRelationStatus status,ProvenanceDocument provenance,List<String> gapCodes) { }
     private record StorageDocument(String version,CobolSemanticProduct.StorageProfile profile,String profileId,String runtimeCodec,
         List<PhysicalNodeDocument> nodes,List<StorageBaseDocument> bases,List<StorageViewDocument> views,List<String> gapCodes,List<StorageRelationDocument> relations,List<StorageRenamesDocument> renames) { }
-    private record RegionalAccessDocument(String view) { }
+    private record RegionalSliceDocument(String offset,String extent) { }
+    private record RegionalAccessDocument(String view,RegionalSliceDocument slice) { }
     private record RegionalMoveDocument(CobolSemanticProduct.RegionalMoveKind kind,List<Integer> bytes,List<String> gapCodes) { }
 
     private static EntryInventoryDocument entryInventory(CobolSemanticProduct.EntryInventory inventory) {
@@ -257,7 +258,7 @@ public final class SemanticProductJsonWriter {
         return new DataReferenceDocument(operandHandle(reference.id()), reference.role(),
                 binding(reference.binding()), provenance(reference.provenance()), reference.wholeItemAccess()
                         .map(access -> new WholeItemDocument(dataHandle(access.data()))).orElse(null),
-                reference.regionalAccess().map(a->new RegionalAccessDocument(storageNodeHandle(a.view()))).orElse(null));
+                reference.regionalAccess().map(a->new RegionalAccessDocument(storageNodeHandle(a.view()),a.slice().map(s->new RegionalSliceDocument(s.offset().toString(),s.extent().toString())).orElse(null))).orElse(null));
     }
 
     private static BindingDocument binding(CobolSemanticProduct.NominalBinding binding) {
