@@ -22,6 +22,15 @@ public final class CicsProgramControlAnalyzer {
         public boolean defaultHandlers(ResolutionContracts.ProgramUnitId unit,int statement){return defaultHandlers.contains(new Key(unit,statement));}
         public boolean belongsTo(CompilationUnitBuildResult frontend) { return owner==frontend; }
         public Optional<Fact> fact(ResolutionContracts.ProgramUnitId unit,int statement) { return Optional.ofNullable(facts.get(new Key(unit,statement))); }
+        boolean boundedLocal(ResolutionContracts.ProgramUnitId unit,Ast.Node node) {
+            return node!=null&&fact(unit,node.meta().id()).filter(f->f.gaps().isEmpty()&&f.options().stream().anyMatch(o->o.name().equals("RESP")||o.name().equals("NOHANDLE"))).isPresent();
+        }
+        /** Physical provenance remains inexact; only the active typed contribution bounds CICS control. */
+        boolean boundedRegion(ResolutionContracts.ProgramUnitId unit,Ast.Node node) {
+            if(node instanceof Ast.EmbeddedLanguageStatement)return boundedLocal(unit,node);
+            if(node.meta().provenance().exact())return true;
+            var children=Ast.children(node);return !children.isEmpty()&&children.stream().allMatch(child->boundedRegion(unit,child));
+        }
     }
     public Contribution analyze(CompilationUnitBuildResult frontend) {return analyze(frontend,null);}
     public Contribution analyze(CompilationUnitBuildResult frontend,ResolutionAnalysisReport report) {return analyze(frontend,report,EntryMode.UNKNOWN);}
@@ -55,16 +64,6 @@ public final class CicsProgramControlAnalyzer {
                 }
             }
         return new Contribution(frontend,facts,defaults);
-    }
-    static boolean boundedLocal(Ast.Node node) {
-        if(!(node instanceof Ast.EmbeddedLanguageStatement e)||e.language()!=Ast.EmbeddedLanguage.CICS)return false;
-        return new CicsProgramControlAnalyzer().parse(e.rawText()).filter(f->f.gaps().isEmpty()&&f.options().stream().anyMatch(o->o.name().equals("RESP")||o.name().equals("NOHANDLE"))).isPresent();
-    }
-    /** A transformed CICS span is not an exact physical location, but its parsed local continuation can be proved. */
-    static boolean boundedRegion(Ast.Node node) {
-        if(node.meta().provenance().exact())return true;
-        if(boundedLocal(node))return true;
-        var children=Ast.children(node);return !children.isEmpty()&&children.stream().allMatch(CicsProgramControlAnalyzer::boundedRegion);
     }
     public Optional<Fact> parse(String raw) {
         var cursor=new Cursor(raw);cursor.space();

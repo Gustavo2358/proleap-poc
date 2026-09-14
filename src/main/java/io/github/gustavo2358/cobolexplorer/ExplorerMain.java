@@ -310,10 +310,11 @@ public final class ExplorerMain {
         var components=StorageComponents.analyze(frontend);
         var layout = StorageLayoutSemantics.analyze(frontend, symbolTables, resolution, report, storageProfile,components);
         var storage = StorageAccessSemantics.analyze(frontend, resolution, layout,entryMode);
+        var cics=new CicsProgramControlAnalyzer().analyze(frontend,report,cicsMode);
         return CobolSemanticProductProjector.open(
                 new CobolSemanticProductProjector.FrontendProducts(frontend, symbolTables,
                         occurrences, resolution, report,
-                        ScalarMoveSemantics.analyze(frontend, symbolTables, resolution, report,components,java.util.Optional.of(storage)), java.util.Optional.of(storage), java.util.Optional.of(new CicsProgramControlAnalyzer().analyze(frontend, report,cicsMode))), unitId);
+                        ScalarMoveSemantics.analyze(frontend, symbolTables, resolution, report,components,java.util.Optional.of(storage),cics), java.util.Optional.of(storage), java.util.Optional.of(cics)), unitId);
     }
 
     private static long elapsedMs(long startedNanos) {

@@ -501,6 +501,6 @@ de invocação com `--entry-storage-state initial|preserved|unknown` (default un
 A publicação de VALUE é canônica no frontend; projector não interpreta cláusulas.
 Não há MOVE sintético nem condição reaplicada em retorno/backedge.
 
-## SP 2.13: CICS Program Control
+## SP 2.14: CICS Program Control
 
-The current writer publishes 2.13.0. `CICS_PROGRAM_CONTROL` is an additive statement family with LINK/XCTL, PROGRAM target, preserved options, bound host references and independently partial control/effects/signature. See [CICS](cics-program-control.md). The storage contract remains 1.3.0. Readers must explicitly support this version.
+The current writer publishes 2.14.0, superseding the Draft 2.13.0 shape. `CICS_PROGRAM_CONTROL` is an additive statement family with LINK/XCTL, PROGRAM target, preserved options, bound host references and independently partial control/effects/signature. Paragraph-local and ordinary continuations are separate required fields. Typed condition profiles must agree with options and gaps. See [CICS](cics-program-control.md). The storage contract remains 1.3.0. Readers must explicitly support this version.

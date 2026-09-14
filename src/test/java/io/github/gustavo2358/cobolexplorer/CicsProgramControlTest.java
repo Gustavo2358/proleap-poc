@@ -46,7 +46,7 @@ class CicsProgramControlTest {
         var bytes=io.github.gustavo2358.cobolexplorer.semanticproduct.transport.SemanticProductJsonWriter.serialize(
             io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticPort.open(state));
         var json=new com.fasterxml.jackson.databind.ObjectMapper().readTree(bytes);
-        assertEquals("2.13.0",json.path("contractVersion").asText());assertEquals("CICS_PROGRAM_CONTROL",json.path("statements").get(0).path("variant").asText());
+        assertEquals("2.14.0",json.path("contractVersion").asText());assertEquals("CICS_PROGRAM_CONTROL",json.path("statements").get(0).path("variant").asText());
         var disabled=io.github.gustavo2358.cobolexplorer.semanticproduct.projection.CobolSemanticProductProjector.project(source,unit);
         assertTrue(disabled.statements().get(0) instanceof io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.ObservedStatement);
         if(System.getProperty("cics.fixture.output")!=null)java.nio.file.Files.write(java.nio.file.Path.of(System.getProperty("cics.fixture.output")),bytes);
@@ -57,8 +57,9 @@ class CicsProgramControlTest {
     }
     static io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.State regional(String data,String code,CicsProgramControlAnalyzer.EntryMode mode) {
         var a=StorageAccessTest.fixture(data,code.replace(" COMMAREA(","\nCOMMAREA(").replace(" NOHANDLE","\nNOHANDLE").replace(" ELSE ","\nELSE ").replace(" END-IF","\nEND-IF"));var f=a.source();
+        var cics=new CicsProgramControlAnalyzer().analyze(f.build(),f.report(),mode);
         return io.github.gustavo2358.cobolexplorer.semanticproduct.projection.CobolSemanticProductProjector.project(new io.github.gustavo2358.cobolexplorer.semanticproduct.projection.CobolSemanticProductProjector.FrontendProducts(
-            f.build(),f.tables(),f.occurrences(),f.resolution(),f.report(),ScalarMoveSemantics.analyze(f.build(),f.tables(),f.resolution(),f.report()),Optional.of(a.effects()),Optional.of(new CicsProgramControlAnalyzer().analyze(f.build(),f.report(),mode))),f.model().programUnits().get(0).id());
+            f.build(),f.tables(),f.occurrences(),f.resolution(),f.report(),ScalarMoveSemantics.analyze(f.build(),f.tables(),f.resolution(),f.report(),StorageComponents.analyze(f.build()),Optional.of(a.effects()),cics),Optional.of(a.effects()),Optional.of(cics)),f.model().programUnits().get(0).id());
     }
     @Test void canonicalHostBindingKeepsQualificationAliasesAndEightByteViews() throws Exception {
         var s=regional("01 FIRST-AREA.\n05 WS-PGM PIC X(8).\n01 SECOND-AREA.\n05 WS-PGM PIC X(8).",
@@ -107,9 +108,35 @@ class CicsProgramControlTest {
             var a=AstBoundaryTestSupport.analyze(source,"cics-perform.cbl");
             var layout=StorageLayoutSemantics.analyze(a.build(),a.tables(),a.resolution(),a.report(),StorageLayoutSemantics.Profile.IBM_ENTERPRISE_6_4_FIXED_DISPLAY_1047);
             var storage=StorageAccessSemantics.analyze(a.build(),a.resolution(),layout);
-            var state=io.github.gustavo2358.cobolexplorer.semanticproduct.projection.CobolSemanticProductProjector.project(new io.github.gustavo2358.cobolexplorer.semanticproduct.projection.CobolSemanticProductProjector.FrontendProducts(a.build(),a.tables(),a.occurrences(),a.resolution(),a.report(),ScalarMoveSemantics.analyze(a.build(),a.tables(),a.resolution(),a.report()),Optional.of(storage),Optional.of(new CicsProgramControlAnalyzer().analyze(a.build(),a.report()))),a.model().programUnits().get(0).id());
+            var cics=new CicsProgramControlAnalyzer().analyze(a.build(),a.report());
+            var state=io.github.gustavo2358.cobolexplorer.semanticproduct.projection.CobolSemanticProductProjector.project(new io.github.gustavo2358.cobolexplorer.semanticproduct.projection.CobolSemanticProductProjector.FrontendProducts(a.build(),a.tables(),a.occurrences(),a.resolution(),a.report(),ScalarMoveSemantics.analyze(a.build(),a.tables(),a.resolution(),a.report(),StorageComponents.analyze(a.build()),Optional.of(storage),cics),Optional.of(storage),Optional.of(cics)),a.model().programUnits().get(0).id());
             var perform=state.statements().stream().filter(io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.ProcedurePerformFact.class::isInstance).map(io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.ProcedurePerformFact.class::cast).findFirst().orElseThrow();
             assertTrue(perform.gapCodes().isEmpty(),perform.gapCodes().toString());emit("perform-"+command.toLowerCase(Locale.ROOT),state);
+        }
+    }
+
+    @Test void ordinaryLinkCrossesParagraphAndTypedConditionsRejectContradictions() {
+        var state=regional("01 WS-PGM PIC X(8).","MAIN-PARA.\nEXEC CICS LINK PROGRAM('PROGA') END-EXEC.\nAFTER-PARA.\nCALL 'AFTER'.",CicsProgramControlAnalyzer.EntryMode.NEW_LOGICAL_LEVEL);
+        var c=(io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.CicsFact)state.statements().get(0);
+        assertEquals("UNAVAILABLE",c.localContinuation().availability().name());
+        assertEquals(Optional.of(state.statements().get(1).header().id()),c.ordinaryContinuation().statement());
+        var local=regional("01 WS-PGM PIC X(8).","EXEC CICS XCTL PROGRAM('PROGA') NOHANDLE END-EXEC.");
+        var f=(io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.CicsFact)local.statements().get(0);
+        assertThrows(IllegalArgumentException.class,()->new io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.CicsFact(f.header(),f.command(),f.rawText(),f.target(),f.options(),c.conditions(),f.localContinuation(),f.ordinaryContinuation(),f.nameProfile(),f.gapCodes()));
+        assertThrows(IllegalArgumentException.class,()->new io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.CicsFact(c.header(),c.command(),c.rawText(),c.target(),c.options(),f.conditions(),c.localContinuation(),c.ordinaryContinuation(),c.nameProfile(),f.gapCodes()));
+        var invalidGaps=new ArrayList<>(c.gapCodes());invalidGaps.add("CICS_UNMODELED_OPTION");
+        assertThrows(IllegalArgumentException.class,()->new io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.CicsFact(c.header(),c.command(),c.rawText(),c.target(),c.options(),c.conditions(),c.localContinuation(),c.ordinaryContinuation(),c.nameProfile(),invalidGaps));
+    }
+
+    @Test void cliCompositionDisablesCicsControlProofs() {
+        for(String command:List.of("LINK","XCTL"))for(var mode:List.of(CicsProgramControlAnalyzer.EntryMode.UNKNOWN,CicsProgramControlAnalyzer.EntryMode.DISABLED)) {
+            var a=AstBoundaryTestSupport.analyze(PerformFamilyTest.source("PERFORM A THRU A.\nCALL 'AFTER'.\n","A.\nEXEC CICS "+command+" PROGRAM('PROGA')\nNOHANDLE END-EXEC.\nB.\nCALL 'OUTSIDE'.\nGOBACK.\n"),"disabled-perform.cbl");
+            var port=ExplorerMain.publishSemanticProduct(a.model().programUnits().get(0).id(),a.build(),a.tables(),a.occurrences(),a.resolution(),a.report(),StorageLayoutSemantics.Profile.IBM_ENTERPRISE_6_4_FIXED_DISPLAY_1047,StorageInitialSemantics.EntryMode.UNKNOWN,mode);
+            var p=port.statements().stream().filter(io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.ProcedurePerformFact.class::isInstance).map(io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.ProcedurePerformFact.class::cast).findFirst().orElseThrow();
+            if(mode==CicsProgramControlAnalyzer.EntryMode.DISABLED) {
+                assertTrue(p.gapCodes().contains("PERFORM_PARAGRAPH_BOUNDARY_NOT_PROVEN"),p.gapCodes().toString());assertTrue(p.procedures().isEmpty());
+                assertTrue(port.statements().stream().noneMatch(io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.CicsFact.class::isInstance));
+            } else {assertTrue(p.gapCodes().isEmpty(),p.gapCodes().toString());assertEquals(1,p.procedures().get(0).completions().size());}
         }
     }
 

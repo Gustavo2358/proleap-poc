@@ -745,15 +745,30 @@ public final class CobolSemanticProduct {
     /** PROGRAM is the target option. Signature and effects remain independently partial. */
     public record CicsFact(StatementHeader header, CicsCommand command, String rawText,
         Optional<CallTarget> target, List<CicsOption> options, CicsConditions conditions,
-        NormalContinuation localContinuation, String nameProfile, List<String> gapCodes) implements StatementFact {
+        NormalContinuation localContinuation, NormalContinuation ordinaryContinuation, String nameProfile, List<String> gapCodes) implements StatementFact {
         public CicsFact {
             Objects.requireNonNull(header);Objects.requireNonNull(command);Objects.requireNonNull(rawText);
             Objects.requireNonNull(target);options=List.copyOf(options);Objects.requireNonNull(conditions);
-            Objects.requireNonNull(localContinuation);nameProfile=requireText(nameProfile,"name profile");gapCodes=List.copyOf(gapCodes);
+            Objects.requireNonNull(localContinuation);Objects.requireNonNull(ordinaryContinuation);nameProfile=requireText(nameProfile,"name profile");gapCodes=List.copyOf(gapCodes);
+            require(localContinuation.statement().isEmpty()||localContinuation.statement().equals(ordinaryContinuation.statement()),"CICS local and ordinary continuation agree within a paragraph");
+            require(coherentCicsConditions(command,options,conditions,gapCodes),"CICS conditions contradict typed options or gaps");
             require(header.coverage()!=CoverageStatus.MODELED,"CICS effects/signature remain partial");
             for(var option:options)require(option.end()<=rawText.length(),"CICS option outside payload");
             target.ifPresent(t->require(t.id().statement().equals(header.id()),"CICS operand owner"));
         }
+    }
+
+    private static boolean coherentCicsConditions(CicsCommand command,List<CicsOption> options,CicsConditions conditions,List<String> gapCodes) {
+        if(conditions==CicsConditions.UNKNOWN)return true;
+        boolean local=options.stream().anyMatch(o->o.name().equals("RESP")||o.name().equals("NOHANDLE"));
+        boolean shape=options.stream().filter(o->o.name().equals("PROGRAM")).count()==1
+            &&options.stream().allMatch(o->Set.of("PROGRAM","COMMAREA","LENGTH","CHANNEL","RESP","RESP2","NOHANDLE","INPUTMSG","INPUTMSGLEN","SYSID","SYNCONRETURN","TRANSID","DATALENGTH").contains(o.name())
+                &&((o.name().equals("NOHANDLE")||o.name().equals("SYNCONRETURN"))!=o.operand().isPresent())
+                &&(command!=CicsCommand.XCTL||!Set.of("SYSID","SYNCONRETURN","TRANSID","DATALENGTH").contains(o.name())));
+        var allowed=new HashSet<>(Set.of("CICS_EFFECTS_SIGNATURE_PARTIAL","CICS_HOST_BINDING_UNAVAILABLE","CICS_TARGET_UNKNOWN"));
+        if(conditions==CicsConditions.LOCAL_CONDITION)allowed.add("CICS_CONDITION_VALUES_UNKNOWN");
+        return shape&&allowed.containsAll(gapCodes)&&(conditions==CicsConditions.LOCAL_CONDITION?local:
+            !local&&options.stream().noneMatch(o->o.name().equals("RESP2")));
     }
 
     /** Arm ordinal is semantic WHEN order, independent of physical statement inventory. */
@@ -1536,7 +1551,7 @@ public final class CobolSemanticProduct {
                         "CALL continuation must reference a published statement in the same unit");
                 require(!next.equals(call.header().id()), "CALL cannot continue to itself");
             });
-            if(statement instanceof CicsFact cics)cics.localContinuation().statement().ifPresent(next -> {
+            if(statement instanceof CicsFact cics)for(var continuation:List.of(cics.localContinuation(),cics.ordinaryContinuation()))continuation.statement().ifPresent(next -> {
                 require(next.unit().equals(statement.header().id().unit()) && statements.containsKey(next) && !next.equals(statement.header().id()),
                     "CICS lexical continuation references a different published statement in the same unit");
             });

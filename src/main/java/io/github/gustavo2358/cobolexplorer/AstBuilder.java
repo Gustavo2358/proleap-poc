@@ -469,7 +469,7 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
                         context.procedureDivisionUsingClause() != null
                                 || context.procedureDivisionGivingClause() != null,
                         context.procedureDeclaratives() != null, entryInputProof(context))),
-                completions.paragraphLocal(),completions.ordinary(),completions.embedded());
+                completions.paragraphLocal(),completions.ordinary(),completions.embedded(),completions.embeddedOrdinary());
     }
 
     /** Sequential MOVE completion within a single sentence region. Paragraph/section
@@ -477,28 +477,28 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
     private long completionStatementVisits;
     long completionStatementVisits() { return completionStatementVisits; }
 
-    private record CompletionRelations(Map<Integer,Integer> paragraphLocal,Map<Integer,Integer> ordinary,Map<Integer,Integer> embedded) { }
+    private record CompletionRelations(Map<Integer,Integer> paragraphLocal,Map<Integer,Integer> ordinary,Map<Integer,Integer> embedded,Map<Integer,Integer> embeddedOrdinary) { }
     private CompletionRelations completionRelations(CobolParser.ProcedureDivisionContext context) {
-        var local=new LinkedHashMap<Integer,Integer>();var ordinary=new LinkedHashMap<Integer,Integer>();var embedded=new LinkedHashMap<Integer,Integer>();
+        var local=new LinkedHashMap<Integer,Integer>();var ordinary=new LinkedHashMap<Integer,Integer>();var embedded=new LinkedHashMap<Integer,Integer>();var embeddedOrdinary=new LinkedHashMap<Integer,Integer>();
         if(context.procedureDeclaratives()==null&&context.procedureDivisionBody()!=null) {
-            var body=context.procedureDivisionBody();addParagraphContinuations(body.paragraphs(),local,ordinary,embedded);
-            for(var section:body.procedureSection())addParagraphContinuations(section.paragraphs(),local,ordinary,embedded);
+            var body=context.procedureDivisionBody();addParagraphContinuations(body.paragraphs(),local,ordinary,embedded,embeddedOrdinary);
+            for(var section:body.procedureSection())addParagraphContinuations(section.paragraphs(),local,ordinary,embedded,embeddedOrdinary);
         }
-        return new CompletionRelations(local,ordinary,embedded);
+        return new CompletionRelations(local,ordinary,embedded,embeddedOrdinary);
     }
     /** Both relations are recorded in one grammar-region walk. An unmaterialized
      * direct statement blocks adjacency; paragraph names never supply an entry. */
     private void addParagraphContinuations(CobolParser.ParagraphsContext paragraphs,
-            Map<Integer,Integer> local,Map<Integer,Integer> ordinary,Map<Integer,Integer> embedded) {
+            Map<Integer,Integer> local,Map<Integer,Integer> ordinary,Map<Integer,Integer> embedded,Map<Integer,Integer> embeddedOrdinary) {
         if(paragraphs==null)return;
         var regions=new ArrayList<List<CobolParser.SentenceContext>>();regions.add(paragraphs.sentence());
         for(var p:paragraphs.paragraph())regions.add(p.sentence());
         Ast.Statement next=null;
-        for(int i=regions.size()-1;i>=0;i--)next=addSentenceContinuations(regions.get(i),local,ordinary,embedded,next);
+        for(int i=regions.size()-1;i>=0;i--)next=addSentenceContinuations(regions.get(i),local,ordinary,embedded,embeddedOrdinary,next);
     }
 
     private Ast.Statement addSentenceContinuations(List<CobolParser.SentenceContext> sentences,
-            Map<Integer,Integer> result,Map<Integer,Integer> ordinary,Map<Integer,Integer> embedded,Ast.Statement paragraphNext) {
+            Map<Integer,Integer> result,Map<Integer,Integer> ordinary,Map<Integer,Integer> embedded,Map<Integer,Integer> embeddedOrdinary,Ast.Statement paragraphNext) {
         List<CobolParser.StatementContext> roots = new ArrayList<>();
         for (var sentence : sentences) roots.addAll(sentence.statement());
         Deque<CompletionRegion> pending = new ArrayDeque<>();
@@ -517,7 +517,10 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
                         || current instanceof Ast.CallStatement call && !call.surface().hasHandlers()
                         || sequentialOpaque(context);
                 // Positional host boundary only; no embedded-language success/return claim.
-                if(current instanceof Ast.EmbeddedLanguageStatement&&next!=null)embedded.put(current.meta().id(),next.meta().id());
+                if(current instanceof Ast.EmbeddedLanguageStatement) {
+                    if(next!=null)embedded.put(current.meta().id(),next.meta().id());
+                    if(ordinaryNext!=null)embeddedOrdinary.put(current.meta().id(),ordinaryNext.meta().id());
+                }
                 if(continues&&current!=null) {
                     if(next!=null)result.put(current.meta().id(),next.meta().id());
                     if(ordinaryNext!=null)ordinary.put(current.meta().id(),ordinaryNext.meta().id());

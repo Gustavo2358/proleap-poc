@@ -60,7 +60,7 @@ class StorageProductTest {
     @Test void json28HasDeterministicClosedStorageTransport() throws Exception {
         var p=CobolSemanticPort.open(group());var bytes=SemanticProductJsonWriter.serialize(p);
         assertArrayEquals(bytes,SemanticProductJsonWriter.serialize(CobolSemanticPort.open(group())));
-        var doc=new ObjectMapper().readTree(bytes);assertEquals("2.13.0",doc.path("contractVersion").asText());
+        var doc=new ObjectMapper().readTree(bytes);assertEquals("2.14.0",doc.path("contractVersion").asText());
         assertEquals("ibm-enterprise-6.4-fixed-display-1047@1",doc.path("storage").path("profileId").asText());
         assertEquals("8",doc.path("storage").path("bases").get(0).path("extent").path("value").asText());
         assertTrue(doc.path("storage").path("bases").get(0).path("extent").path("value").isTextual());

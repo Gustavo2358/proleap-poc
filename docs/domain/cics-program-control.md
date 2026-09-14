@@ -35,9 +35,12 @@ SP options retain bound references when available; malformed, short, dynamic or
 unproved accesses remain explicit. The lower requires an IBM1047 physical view of
 exactly eight bytes before it emits a computed name read.
 
-The generic AST records an embedded positional continuation independently of
-normal completion. SP `localContinuation` is this boundary; the lower assigns
-its meaning from the command and condition profile. The current CLI option
+The generic AST records two positional relations: `embeddedContinuations` stays
+within the paragraph; `embeddedOrdinaryContinuations` also crosses paragraph
+boundaries. SP 2.14.0 publishes both as `localContinuation` and
+`ordinaryContinuation`. An explicit PERFORM completion frontier uses the local
+relation and the activation resume, while ordinary execution uses the ordinary
+relation. Neither positional fact asserts XCTL success returns. The current CLI option
 `--cics-entry-mode unknown|new-logical-level|disabled` defaults to unknown.
 `new-logical-level` is an explicit environment premise that CICS handlers start
 at defaults; it is not inferred from a source file. Only complete input with a
@@ -64,3 +67,25 @@ source navigation correction, reusing unaffected outputs and the full test run.
 The naming check still rejects the pre-existing product name in
 `docs/engineering/storage-w8-qualification.md`; that historical file is unchanged.
 See the campaign handoff for the exact pins and final composed evidence.
+
+Review remediation F1–F3: SP 2.14.0 replaces the Draft 2.13.0 contract in a
+coordinated producer/consumer update under INTERNAL-CONTRACT-DEV-001. There is one
+current writer; the lower explicitly rejects superseded 2.13 CICS documents.
+`ordinaryContinuation` is required, including when unavailable. Within a paragraph,
+a known local continuation must agree with the ordinary relation.
+
+`DEFAULT_ENTRY_PREFIX` excludes RESP, NOHANDLE, RESP2 and syntax/handler gaps.
+`LOCAL_CONDITION` requires RESP or NOHANDLE and a coherent typed option inventory.
+Only signature/effect, name-binding and local-condition-value gaps may coexist
+with that local profile. Unknown or malformed options and incomplete payloads
+require UNKNOWN. Typed contradictory facts are rejected; the lower repeats these
+invariants without reparsing the payload.
+
+ExplorerMain composes the configured immutable CICS contribution before scalar
+and PERFORM analysis. PERFORM consumes that same contribution, not a fresh parser.
+Legacy scalar-only composition receives an empty contribution; disabled therefore
+retains opaque CICS syntax and the missing paragraph-boundary proof/gaps.
+CicsProgramControlTest exercises both active/disabled LINK/XCTL at paragraph ends,
+ordinary LINK continuation, and contradictory typed conditions. Focal CICS,
+PERFORM and composition tests pass (16 tests). No full rerun is needed for this
+localized remediation; the historical naming qualification remains PARTIAL.

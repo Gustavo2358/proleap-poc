@@ -692,9 +692,13 @@ public final class CobolSemanticProductProjector {
                 .map(d->d.embeddedContinuations().get(plan.position().statement().meta().id())).filter(Objects::nonNull).reduce((left,right)->{throw new IllegalArgumentException("CICS contribution must have one identity at this position");});
             var nextStatement=canonicalStatement(nextId,inputs,statementIds);
             var next=new NormalContinuation(nextStatement.isPresent()?ContinuationAvailability.KNOWN:inputs.products().scalarMoves().procedurePerforms().completion(inputs.unitId(),plan.position().statement().meta().id())?ContinuationAvailability.NONE:ContinuationAvailability.UNAVAILABLE,nextStatement,statementProvenance);
+            var ordinaryId=inputs.selectedSource().unit().program().divisions().stream().filter(d->d.divisionKind()==Ast.DivisionKind.PROCEDURE)
+                .map(d->d.embeddedOrdinaryContinuations().get(plan.position().statement().meta().id())).filter(Objects::nonNull).reduce((left,right)->{throw new IllegalArgumentException("CICS contribution must have one identity at this position");});
+            var ordinaryStatement=canonicalStatement(ordinaryId,inputs,statementIds);
+            var ordinary=new NormalContinuation(ordinaryStatement.isPresent()?ContinuationAvailability.KNOWN:ContinuationAvailability.UNAVAILABLE,ordinaryStatement,statementProvenance);
             statements.add(new CicsFact(header(statementId,plan.position().ordinal(),containment,statementProvenance,CoverageStatus.PARTIAL,
                 readiness(ReadinessStatus.PARTIAL,"CICS program target surface",ReadinessStatus.PARTIAL,"CICS conditions remain conservative",ReadinessStatus.PARTIAL,"external effects and signature partial")),
-                CicsCommand.valueOf(source.command().name()),source.raw(),target,options,condition,next,"cics-ts.program@1",List.copyOf(codes)));
+                CicsCommand.valueOf(source.command().name()),source.raw(),target,options,condition,next,ordinary,"cics-ts.program@1",List.copyOf(codes)));
             for(var code:codes)gaps.add(capabilityGap(statementId,code,"CICS dimension remains partial",statementProvenance));
             addContainmentGap(containment,statementId,statementProvenance,gaps);return;
         }
