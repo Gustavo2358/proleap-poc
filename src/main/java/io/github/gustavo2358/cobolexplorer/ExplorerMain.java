@@ -213,6 +213,8 @@ public final class ExplorerMain {
                 unresolvedCopies > 0 ? "ANALYSIS_INCOMPLETE" : "NO_ADDITIONAL_IMPACT");
         ResolutionAnalysisReport resolutionReport = ResolutionAnalysisReport.compose(compilationBuild,
                 frontendState, occurrences, resolution, externalClassifications);
+        ObservedDependencyWriter.write(ObservedDependencyInventory.from(compilationBuild,resolutionReport),
+                output.resolve("observed-dependencies.json"));
         progress.phase = "SEMANTIC_PRODUCT";
         long semanticProductStarted = System.nanoTime();
         CobolSemanticPort semanticProduct = publishSemanticProduct(primaryUnit.id(), compilationBuild,

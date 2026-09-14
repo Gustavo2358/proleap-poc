@@ -18,3 +18,11 @@ ScopedInputTest covers DATA/PROCEDURE gaps in another unit, unowned and nested g
 and observed literal CALLs before/after a missing PROCEDURE COPY. The latter remain
 observed facts with unknown entry/reachability. W4 qualification and further layout/
 metamorphic evidence remain in progress. No missing COPY content is invented.
+
+The CLI additionally writes `observed-dependencies.json` (schema
+`cobol-observed-dependencies` 1.0.0) for all parsed units. It preserves typed CALL
+literal values, unit/site identity, source provenance and all input gaps. Every site
+is OBSERVED_ONLY with UNKNOWN reachability and an open remainder. Computed names
+are not evaluated here. There is no edges array and no claim of runtime callee
+resolution. This separate inventory survives a blocked lowering/entry admission;
+consumers must keep it distinct from `dependencies.json` reachable edges.
