@@ -450,7 +450,7 @@ class SemanticProductCheckpoint7JsonTest {
 
     private static Set<String> expectedStatementFields(String variant) {
         return switch (variant) {
-            case "MOVE" -> Set.of("variant", "header", "source", "target", "copySemantics", "normalContinuation", "textAdjustment", "regionalMove");
+            case "MOVE" -> Set.of("variant", "header", "source", "target", "copySemantics", "normalContinuation", "textAdjustment", "regionalMove", "additionalTransfers");
             case "CALL" -> Set.of("variant", "header", "syntax", "target",
                     "runtimeTarget", "runtimeUncertaintyCode", "normalContinuation", "surface", "effects", "outcomes");
             case "IF" -> Set.of("variant", "header", "condition",

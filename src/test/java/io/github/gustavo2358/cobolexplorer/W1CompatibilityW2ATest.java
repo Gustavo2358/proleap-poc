@@ -28,6 +28,8 @@ class W1CompatibilityW2ATest {
             assertEquals("UNAVAILABLE", current.path("storageIndependence").path("availability").asText());
             assertTrue(current.path("storageIndependence").path("members").isEmpty());
             for (var statement : current.path("statements")) if (statement.path("variant").asText().equals("MOVE")) {
+                assertTrue(statement.path("additionalTransfers").isArray() && statement.path("additionalTransfers").isEmpty(), "historical single receivers gain no extra writes");
+                ((ObjectNode)statement).remove("additionalTransfers");
                 assertEquals("LITERAL", statement.path("source").path("variant").asText());
                 ((ObjectNode) statement.path("source")).remove("variant");
             }
