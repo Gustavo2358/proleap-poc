@@ -23,7 +23,7 @@ class StorageInitialProductTest {
         assertEquals(PerformProfile.BASIC_PROCEDURE_PERFORM,p.performs().get(0).profile());
         var c=p.storage().entryState().conditions().get(0);assertEquals(InitialStorageKind.LITERAL_BYTES,c.kind());assertTrue(c.provenance().exact());
         var bytes=SemanticProductJsonWriter.serialize(p);var d=new ObjectMapper().readTree(bytes);
-        assertEquals("2.12.0",d.path("contractVersion").asText());assertEquals("1.3.0",d.path("storage").path("version").asText());
+        assertEquals("2.14.0",d.path("contractVersion").asText());assertEquals("1.3.0",d.path("storage").path("version").asText());
         assertEquals("INITIAL",d.path("storage").path("entryState").path("mode").asText());
         assertEquals(8,d.path("storage").path("entryState").path("conditions").get(0).path("bytes").size());
         if(System.getProperty("storage.fixture.output")!=null)java.nio.file.Files.write(java.nio.file.Path.of(System.getProperty("storage.fixture.output")),bytes);

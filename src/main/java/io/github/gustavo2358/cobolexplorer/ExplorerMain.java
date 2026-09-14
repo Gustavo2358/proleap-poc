@@ -32,13 +32,14 @@ public final class ExplorerMain {
         Path output = project.resolve(argument(args, "--output", "dist"));
         var storageProfile = storageProfile(argument(args, "--storage-profile", "unspecified"));
         var entryMode=entryStorageState(argument(args,"--entry-storage-state","unknown"));
+        var cicsMode=cicsEntryMode(argument(args,"--cics-entry-mode","unknown"));
 
         AnalysisProgress progress = new AnalysisProgress();
         long analysisStarted = System.nanoTime();
         try (AnalysisLogContext logContext = AnalysisLogContext.open(source)) {
             LOG.info("event=analysis_started phase=ANALYSIS output={}", output);
             try {
-                analyze(source, copybooks, output, logContext, progress, analysisStarted, storageProfile,entryMode);
+                analyze(source, copybooks, output, logContext, progress, analysisStarted, storageProfile,entryMode,cicsMode);
             } catch (Exception exception) {
                 LOG.error("event=analysis_failed phase={} elapsedMs={} reason={} impact=NO_RESULT",
                         progress.phase, elapsedMs(analysisStarted), exception.getClass().getSimpleName(), exception);
@@ -49,7 +50,7 @@ public final class ExplorerMain {
 
     private static void analyze(Path source, List<Path> copybooks, Path output,
                                 AnalysisLogContext logContext, AnalysisProgress progress,
-                                long analysisStarted, StorageLayoutSemantics.Profile storageProfile,StorageInitialSemantics.EntryMode entryMode) throws Exception {
+                                long analysisStarted, StorageLayoutSemantics.Profile storageProfile,StorageInitialSemantics.EntryMode entryMode,CicsProgramControlAnalyzer.EntryMode cicsMode) throws Exception {
 
         GrammarBinding binding = Bindings.cobol();
         List<Diagnostic> diagnostics = new ArrayList<>();
@@ -215,7 +216,7 @@ public final class ExplorerMain {
         progress.phase = "SEMANTIC_PRODUCT";
         long semanticProductStarted = System.nanoTime();
         CobolSemanticPort semanticProduct = publishSemanticProduct(primaryUnit.id(), compilationBuild,
-                symbolTables, occurrences, resolution, resolutionReport, storageProfile,entryMode);
+                symbolTables, occurrences, resolution, resolutionReport, storageProfile,entryMode,cicsMode);
         SemanticProductJsonWriter.write(semanticProduct,
                 output.resolve("cobol-semantic-product.json"));
         // Preserve the original filename as a byte-identical compatibility alias.
@@ -298,13 +299,22 @@ public final class ExplorerMain {
     static CobolSemanticPort publishSemanticProduct(ResolutionContracts.ProgramUnitId unitId,CompilationUnitBuildResult frontend,
             CompilationUnitSymbolTables symbolTables,Map<ResolutionContracts.ProgramUnitId,ReferenceOccurrences> occurrences,
             ReferenceResolution resolution,ResolutionAnalysisReport report,StorageLayoutSemantics.Profile storageProfile,StorageInitialSemantics.EntryMode entryMode) {
+        return publishSemanticProduct(unitId,frontend,symbolTables,occurrences,resolution,report,storageProfile,entryMode,CicsProgramControlAnalyzer.EntryMode.UNKNOWN);
+    }
+    static CicsProgramControlAnalyzer.EntryMode cicsEntryMode(String value) {
+        return switch(value){case "unknown"->CicsProgramControlAnalyzer.EntryMode.UNKNOWN;case "new-logical-level"->CicsProgramControlAnalyzer.EntryMode.NEW_LOGICAL_LEVEL;case "disabled"->CicsProgramControlAnalyzer.EntryMode.DISABLED;default->throw new IllegalArgumentException("unsupported --cics-entry-mode: "+value);};
+    }
+    static CobolSemanticPort publishSemanticProduct(ResolutionContracts.ProgramUnitId unitId,CompilationUnitBuildResult frontend,
+            CompilationUnitSymbolTables symbolTables,Map<ResolutionContracts.ProgramUnitId,ReferenceOccurrences> occurrences,
+            ReferenceResolution resolution,ResolutionAnalysisReport report,StorageLayoutSemantics.Profile storageProfile,StorageInitialSemantics.EntryMode entryMode,CicsProgramControlAnalyzer.EntryMode cicsMode) {
         var components=StorageComponents.analyze(frontend);
         var layout = StorageLayoutSemantics.analyze(frontend, symbolTables, resolution, report, storageProfile,components);
         var storage = StorageAccessSemantics.analyze(frontend, resolution, layout,entryMode);
+        var cics=new CicsProgramControlAnalyzer().analyze(frontend,report,cicsMode);
         return CobolSemanticProductProjector.open(
                 new CobolSemanticProductProjector.FrontendProducts(frontend, symbolTables,
                         occurrences, resolution, report,
-                        ScalarMoveSemantics.analyze(frontend, symbolTables, resolution, report,components,java.util.Optional.of(storage)), java.util.Optional.of(storage)), unitId);
+                        ScalarMoveSemantics.analyze(frontend, symbolTables, resolution, report,components,java.util.Optional.of(storage),cics), java.util.Optional.of(storage), java.util.Optional.of(cics)), unitId);
     }
 
     private static long elapsedMs(long startedNanos) {

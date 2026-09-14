@@ -82,6 +82,10 @@ final class ReferenceOccurrenceCollector {
                     reference.writtenText(), ReferenceOccurrences.Preservation.PRESERVED_NODE);
             return;
         }
+        if(node instanceof Ast.EmbeddedLanguageStatement embedded) {
+            for(var host:embedded.hostOperands())visit(host.reference(),host.role()==Ast.EmbeddedHostRole.WRITE?ResolutionContracts.ReferenceRole.VALUE_WRITE:ResolutionContracts.ReferenceRole.VALUE_READ,preservation);
+            return;
+        }
         if (node instanceof Ast.CallStatement statement) {
             visit(statement.target(), ResolutionContracts.ReferenceRole.CALL_TARGET, preservation);
             for (Ast.CallArgument argument : statement.arguments())

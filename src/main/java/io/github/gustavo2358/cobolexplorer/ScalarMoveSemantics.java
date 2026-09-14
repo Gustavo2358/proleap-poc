@@ -86,6 +86,12 @@ public final class ScalarMoveSemantics {
     public static ScalarMoveSemantics analyze(CompilationUnitBuildResult frontend,
             CompilationUnitSymbolTables tables,ReferenceResolution resolution,
             ResolutionAnalysisReport report,StorageComponents components,Optional<StorageAccessSemantics> storage) {
+        return analyze(frontend,tables,resolution,report,components,storage,new CicsProgramControlAnalyzer().analyze(frontend,report,CicsProgramControlAnalyzer.EntryMode.DISABLED));
+    }
+    public static ScalarMoveSemantics analyze(CompilationUnitBuildResult frontend,
+            CompilationUnitSymbolTables tables,ReferenceResolution resolution,ResolutionAnalysisReport report,
+            StorageComponents components,Optional<StorageAccessSemantics> storage,CicsProgramControlAnalyzer.Contribution cics) {
+        if(!cics.belongsTo(frontend))throw new IllegalArgumentException("CICS facts belong to another frontend");
         storage.ifPresent(s->{if(!s.belongsTo(frontend,resolution))throw new IllegalArgumentException("storage facts belong to another snapshot");});
         if(!components.belongsTo(frontend))throw new IllegalArgumentException("storage components belong to another snapshot");
         Map<ResolutionContracts.SemanticEntityId, ScalarText> declarations = new HashMap<>();
@@ -242,7 +248,7 @@ public final class ScalarMoveSemantics {
         }));
         var performs = PerformSemantics.analyze(frontend, tables, resolution, report, completingMoves, ifs, goTos);
         var evaluates = EvaluateSemantics.analyze(frontend, resolution, report, declarations);
-        var procedurePerforms = ProcedurePerformSemantics.analyze(frontend, tables, resolution, report, declarations, moves, ifs, evaluates, goTos, performs,numbers);
+        var procedurePerforms = ProcedurePerformSemantics.analyze(frontend, tables, resolution, report, declarations, moves, ifs, evaluates, goTos, performs,numbers,cics);
         performs = performs.restrictOpenRanges(procedurePerforms);
         // Ordinary execution crosses grammar-owned paragraph boundaries. Never replace
         // an intrinsic activation's published completion with that ordinary fallthrough.

@@ -108,15 +108,19 @@ public final class Ast {
 
     public record Division(Meta meta, DivisionKind divisionKind, List<Node> children,
                            Optional<ProcedureEntry> procedureEntry, Map<Integer, Integer> normalContinuations,
-                           Map<Integer,Integer> ordinaryContinuations) implements Node {
+                           Map<Integer,Integer> ordinaryContinuations,Map<Integer,Integer> embeddedContinuations,
+                           Map<Integer,Integer> embeddedOrdinaryContinuations) implements Node {
         public Division {
             children = List.copyOf(children);
             procedureEntry = Objects.requireNonNull(procedureEntry, "procedureEntry");
             normalContinuations = Map.copyOf(normalContinuations);
             ordinaryContinuations = Map.copyOf(ordinaryContinuations);
+            embeddedContinuations = Map.copyOf(embeddedContinuations);
+            embeddedOrdinaryContinuations = Map.copyOf(embeddedOrdinaryContinuations);
             if (procedureEntry.isPresent() && divisionKind != DivisionKind.PROCEDURE)
                 throw new IllegalArgumentException("only PROCEDURE DIVISION has an executable entry");
         }
+        public Division(Meta meta,DivisionKind kind,List<Node> children,Optional<ProcedureEntry> entry,Map<Integer,Integer> normal,Map<Integer,Integer> ordinary) {this(meta,kind,children,entry,normal,ordinary,Map.of(),Map.of());}
         /** Paragraph-local completion stays distinct from ordinary flow across paragraph boundaries. */
         public Division(Meta meta, DivisionKind kind, List<Node> children,Optional<ProcedureEntry> entry,Map<Integer,Integer> next) {
             this(meta,kind,children,entry,next,next);
@@ -341,9 +345,14 @@ public final class Ast {
         public MoveStatement { targets = List.copyOf(targets); }
     }
 
-    /** Raw embedded-language payload; parsedContent is intentionally deferred to a future plugin. */
+    /** Preserved payload with optional host syntax. Platform meaning belongs to its analyzer. */
+    public enum EmbeddedHostRole { READ, WRITE, READ_WRITE }
+    public record EmbeddedHostOperand(String option,int optionStart,EmbeddedHostRole role,DataReference reference) { }
     public record EmbeddedLanguageStatement(Meta meta, EmbeddedLanguage language,
-                                            String rawText) implements Statement {}
+                                            String rawText,List<EmbeddedHostOperand> hostOperands) implements Statement {
+        public EmbeddedLanguageStatement {hostOperands=List.copyOf(hostOperands);}
+        public EmbeddedLanguageStatement(Meta meta,EmbeddedLanguage language,String rawText){this(meta,language,rawText,List.of());}
+    }
 
     public record NextSentenceStatement(Meta meta) implements Statement {}
 
@@ -599,6 +608,7 @@ public final class Ast {
             result.addAll(n.exceptionFlow());
             return result;
         }
+        if (node instanceof EmbeddedLanguageStatement n) return n.hostOperands().stream().map(EmbeddedHostOperand::reference).toList();
         if (node instanceof CallArgument n) return n.value() == null ? List.of() : List.of(n.value());
         if (node instanceof IfStatement n) {
             List<Node> result = new ArrayList<>();

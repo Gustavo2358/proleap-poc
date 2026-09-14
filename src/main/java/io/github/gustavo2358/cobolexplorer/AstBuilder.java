@@ -36,6 +36,7 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
     private final IdentityHashMap<CobolParser.StatementContext, Ast.Statement> builtStatements =
             new IdentityHashMap<>();
     private int nextId;
+    private Ast.ParseTreeOrigin embeddedOperandOrigin;
 
     private record CoverageDraft(String grammarRule, Ast.Meta meta, String writtenText,
                                  int astNodeId) { }
@@ -468,7 +469,7 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
                         context.procedureDivisionUsingClause() != null
                                 || context.procedureDivisionGivingClause() != null,
                         context.procedureDeclaratives() != null, entryInputProof(context))),
-                completions.paragraphLocal(),completions.ordinary());
+                completions.paragraphLocal(),completions.ordinary(),completions.embedded(),completions.embeddedOrdinary());
     }
 
     /** Sequential MOVE completion within a single sentence region. Paragraph/section
@@ -476,28 +477,28 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
     private long completionStatementVisits;
     long completionStatementVisits() { return completionStatementVisits; }
 
-    private record CompletionRelations(Map<Integer,Integer> paragraphLocal,Map<Integer,Integer> ordinary) { }
+    private record CompletionRelations(Map<Integer,Integer> paragraphLocal,Map<Integer,Integer> ordinary,Map<Integer,Integer> embedded,Map<Integer,Integer> embeddedOrdinary) { }
     private CompletionRelations completionRelations(CobolParser.ProcedureDivisionContext context) {
-        var local=new LinkedHashMap<Integer,Integer>();var ordinary=new LinkedHashMap<Integer,Integer>();
+        var local=new LinkedHashMap<Integer,Integer>();var ordinary=new LinkedHashMap<Integer,Integer>();var embedded=new LinkedHashMap<Integer,Integer>();var embeddedOrdinary=new LinkedHashMap<Integer,Integer>();
         if(context.procedureDeclaratives()==null&&context.procedureDivisionBody()!=null) {
-            var body=context.procedureDivisionBody();addParagraphContinuations(body.paragraphs(),local,ordinary);
-            for(var section:body.procedureSection())addParagraphContinuations(section.paragraphs(),local,ordinary);
+            var body=context.procedureDivisionBody();addParagraphContinuations(body.paragraphs(),local,ordinary,embedded,embeddedOrdinary);
+            for(var section:body.procedureSection())addParagraphContinuations(section.paragraphs(),local,ordinary,embedded,embeddedOrdinary);
         }
-        return new CompletionRelations(local,ordinary);
+        return new CompletionRelations(local,ordinary,embedded,embeddedOrdinary);
     }
     /** Both relations are recorded in one grammar-region walk. An unmaterialized
      * direct statement blocks adjacency; paragraph names never supply an entry. */
     private void addParagraphContinuations(CobolParser.ParagraphsContext paragraphs,
-            Map<Integer,Integer> local,Map<Integer,Integer> ordinary) {
+            Map<Integer,Integer> local,Map<Integer,Integer> ordinary,Map<Integer,Integer> embedded,Map<Integer,Integer> embeddedOrdinary) {
         if(paragraphs==null)return;
         var regions=new ArrayList<List<CobolParser.SentenceContext>>();regions.add(paragraphs.sentence());
         for(var p:paragraphs.paragraph())regions.add(p.sentence());
         Ast.Statement next=null;
-        for(int i=regions.size()-1;i>=0;i--)next=addSentenceContinuations(regions.get(i),local,ordinary,next);
+        for(int i=regions.size()-1;i>=0;i--)next=addSentenceContinuations(regions.get(i),local,ordinary,embedded,embeddedOrdinary,next);
     }
 
     private Ast.Statement addSentenceContinuations(List<CobolParser.SentenceContext> sentences,
-            Map<Integer,Integer> result,Map<Integer,Integer> ordinary,Ast.Statement paragraphNext) {
+            Map<Integer,Integer> result,Map<Integer,Integer> ordinary,Map<Integer,Integer> embedded,Map<Integer,Integer> embeddedOrdinary,Ast.Statement paragraphNext) {
         List<CobolParser.StatementContext> roots = new ArrayList<>();
         for (var sentence : sentences) roots.addAll(sentence.statement());
         Deque<CompletionRegion> pending = new ArrayDeque<>();
@@ -515,6 +516,11 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
                         || current instanceof Ast.GoToStatement g && g.goToKind()==Ast.GoToKind.DEPENDING_ON
                         || current instanceof Ast.CallStatement call && !call.surface().hasHandlers()
                         || sequentialOpaque(context);
+                // Positional host boundary only; no embedded-language success/return claim.
+                if(current instanceof Ast.EmbeddedLanguageStatement) {
+                    if(next!=null)embedded.put(current.meta().id(),next.meta().id());
+                    if(ordinaryNext!=null)embeddedOrdinary.put(current.meta().id(),ordinaryNext.meta().id());
+                }
                 if(continues&&current!=null) {
                     if(next!=null)result.put(current.meta().id(),next.meta().id());
                     if(ordinaryNext!=null)ordinary.put(current.meta().id(),ordinaryNext.meta().id());
@@ -1138,7 +1144,17 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
     }
 
     private Ast.EmbeddedLanguageStatement buildEmbedded(ParserRuleContext context, Ast.EmbeddedLanguage language) {
-        return new Ast.EmbeddedLanguageStatement(meta(context), language, sourceText(context).strip());
+        var anchor=meta(context);String raw=sourceText(context).strip();var operands=new ArrayList<Ast.EmbeddedHostOperand>();
+        if(language==Ast.EmbeddedLanguage.CICS)for(var host:CicsHostSyntax.parse(raw,context.getStart().getStartIndex(),context.getStart().getLine(),context.getStart().getCharPositionInLine(),context.getStart().getTokenIndex())) {
+            // The operand grammar is a separate tree. UI navigation points to its real EXEC container,
+            // while the operand retains its own expanded offsets and conservative SourceMap provenance.
+            var previous=embeddedOperandOrigin;embeddedOperandOrigin=anchor.origin();
+            try {
+                var expression=identifierExpression(host.identifier());
+                if(expression instanceof Ast.DataReference reference)operands.add(new Ast.EmbeddedHostOperand(host.option(),host.optionStart(),host.role(),reference));
+            } finally { embeddedOperandOrigin=previous; }
+        }
+        return new Ast.EmbeddedLanguageStatement(anchor, language, raw, operands);
     }
 
     private Ast.Expression expression(ParserRuleContext context, String role) {
@@ -2063,7 +2079,8 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
         int startOffset = start == null ? 0 : Math.max(0, start.getStartIndex());
         int endOffset = stop == null ? startOffset : Math.min(indexedSource.length(), stop.getStopIndex() + 1);
         return new Ast.Meta(id, span,
-                new Ast.ParseTreeOrigin(parseIds.getOrDefault(context, -1), rule(context),
+                !parseIds.containsKey(context)&&embeddedOperandOrigin!=null?embeddedOperandOrigin:
+                    new Ast.ParseTreeOrigin(parseIds.getOrDefault(context, -1), rule(context),
                         parseSubtreeSizes.getOrDefault(context, 1)),
                 sourceMap.provenance(startOffset, endOffset));
     }

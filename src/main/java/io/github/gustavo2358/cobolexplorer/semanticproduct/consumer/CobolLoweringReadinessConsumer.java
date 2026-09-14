@@ -22,7 +22,7 @@ import java.util.Optional;
 public final class CobolLoweringReadinessConsumer {
     private CobolLoweringReadinessConsumer() { }
 
-    public enum StatementFamily { MOVE, CALL, IF, OBSERVED, GOBACK, PERFORM, EVALUATE, GO_TO }
+    public enum StatementFamily { MOVE, CALL, CICS_PROGRAM_CONTROL, IF, OBSERVED, GOBACK, PERFORM, EVALUATE, GO_TO }
 
     public record ConditionalGoToAudit(StatementHeaderAudit header, CobolSemanticProduct.ConditionalGoToFact fact) implements StatementAudit {
         @Override public StatementFamily family() { return StatementFamily.GO_TO; }
@@ -214,6 +214,11 @@ public final class CobolLoweringReadinessConsumer {
         @Override public StatementFamily family() { return StatementFamily.MOVE; }
     }
 
+    public record CicsAudit(StatementHeaderAudit header, CobolSemanticProduct.CicsFact fact) implements StatementAudit {
+        public CicsAudit { Objects.requireNonNull(header); Objects.requireNonNull(fact); }
+        @Override public StatementFamily family() { return StatementFamily.CICS_PROGRAM_CONTROL; }
+    }
+
     public record CallAudit(StatementHeaderAudit header,
                             CobolSemanticProduct.CallSyntax syntax,
                             CobolSemanticProduct.CallTarget target,
@@ -334,6 +339,7 @@ public final class CobolLoweringReadinessConsumer {
             return new MoveAudit(header, move.source() instanceof CobolSemanticProduct.LiteralSource literal
                     ? literal(literal) : reference((CobolSemanticProduct.DataReference) move.source()), reference(move.target()));
         }
+        if (fact instanceof CobolSemanticProduct.CicsFact cics) return new CicsAudit(header,cics);
         if (fact instanceof CobolSemanticProduct.CallFact call) {
             return new CallAudit(header, call.syntax(), call.target(),
                     call.runtimeTarget(), call.runtimeUncertaintyCode());
