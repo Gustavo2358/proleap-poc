@@ -40,8 +40,11 @@ public final class StorageInitialSemantics {
                 for(var child:data.children())count=Math.addExact(count,descendantValues.getOrDefault(child.meta().id(),0));
                 descendantValues.put(data.meta().id(),count);
             }
+            var physicalNodes=new HashSet<Integer>();physical.nodes().forEach(n->physicalNodes.add(n.id().node()));
             var conditions=new ArrayList<Condition>();
             for(var data:declarations) {
+                // Nonphysical declarations (for example FILE SECTION) remain outside this entry profile.
+                if(!physicalNodes.contains(data.meta().id()))continue;
                 var values=data.clauses().stream().filter(Ast.ValueClause.class::isInstance).map(Ast.ValueClause.class::cast).toList();
                 if(values.isEmpty())continue;
                 var reasons=new ArrayList<Reason>();var candidate=views.get(data.meta().id());

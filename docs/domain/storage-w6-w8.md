@@ -130,3 +130,6 @@ Authority: [IBM Enterprise COBOL 6.4 Language Reference](https://publibfp.dhe.ib
 [qualification](https://www.ibm.com/docs/en/cobol-zos/6.4.0?topic=reference-qualification).
 StorageMetamorphicTest checks rename, qualification, RENAMES/REDEFINES alias copy,
 disjoint overlay insertion, qualified slices and their negative bounds/dynamic cases.
+
+## W8 corpus fixes
+The regional projection requires a representable literal/reference source and data receivers before promoting a MOVE; a proved destination with unknown FUNCTION content retains the existing observed fallback. Initial conditions are produced only for nodes in the canonical physical inventory: FILE SECTION VALUE does not allocate working-storage. Unknown extent is still explicit. Both reduced reproducers fail at RC2 and pass after the fixes, with CALL/inventory retained.
