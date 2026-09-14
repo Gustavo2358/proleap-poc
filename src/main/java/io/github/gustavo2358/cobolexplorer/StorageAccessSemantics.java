@@ -32,6 +32,11 @@ public final class StorageAccessSemantics {
         return analyze(frontend,resolution,layout,StorageInitialSemantics.EntryMode.UNKNOWN);
     }
     public static StorageAccessSemantics analyze(CompilationUnitBuildResult frontend,ReferenceResolution resolution,StorageLayoutSemantics layout,StorageInitialSemantics.EntryMode mode) {
+        return analyze(frontend,resolution,layout,mode,new CicsProgramControlAnalyzer().analyze(frontend));
+    }
+    public static StorageAccessSemantics analyze(CompilationUnitBuildResult frontend,ReferenceResolution resolution,StorageLayoutSemantics layout,
+            StorageInitialSemantics.EntryMode mode,CicsProgramControlAnalyzer.Contribution cics) {
+        if(!cics.belongsTo(frontend))throw new IllegalArgumentException("foreign platform contribution");
         if(!layout.belongsTo(frontend,resolution))throw new IllegalArgumentException("layout and binding proof belong to another snapshot");
         var bindings=new HashMap<Key,ReferenceResolution.Entry>();
         for(var entry:resolution.entries())bindings.put(new Key(entry.occurrence().programUnitId(),entry.occurrence().referenceAstNodeId()),entry);
@@ -95,7 +100,7 @@ public final class StorageAccessSemantics {
                 moves.put(statement,effects.get(0));sequences.put(statement,List.copyOf(effects));
             }
         }
-        return new StorageAccessSemantics(layout,accesses,moves,sequences,StorageInitialSemantics.analyze(frontend,resolution,layout,mode));
+        return new StorageAccessSemantics(layout,accesses,moves,sequences,StorageInitialSemantics.analyze(frontend,resolution,layout,mode,accesses,sequences,cics));
     }
     private static Move effect(Key statement,Optional<Access> destination,Optional<Access> source,Ast.Expression expression,
             Profile profile,Map<Key,Base> bases,Ast.SourceProvenance origin) {

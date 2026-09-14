@@ -26,7 +26,7 @@ import java.util.Objects;
  */
 public final class SemanticProductJsonWriter {
     public static final String SCHEMA = "cobol-semantic-product";
-    public static final String CONTRACT_VERSION = "2.14.0";
+    public static final String CONTRACT_VERSION = "2.15.0";
 
     private static final ObjectMapper JSON = JsonMapper.builder()
             .enable(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY)
@@ -83,7 +83,7 @@ public final class SemanticProductJsonWriter {
         return new StorageMeasureDocument(m.value().map(Object::toString).orElse(null),m.gapCodes());
     }
     private static StorageDocument storage(CobolSemanticProduct.StorageInventory storage) {
-        return new StorageDocument("1.3.0",storage.profile(),storage.profileId().orElse(null),storage.runtimeCodec().orElse(null),
+        return new StorageDocument("1.4.0",storage.profile(),storage.profileId().orElse(null),storage.runtimeCodec().orElse(null),
             storage.nodes().stream().map(n->new PhysicalNodeDocument(storageNodeHandle(n.id()),n.parent().map(SemanticProductJsonWriter::storageNodeHandle).orElse(null),
                 n.order(),n.filler(),n.kind(),n.data().map(SemanticProductJsonWriter::dataHandle).orElse(null),measure(n.extent()),provenance(n.provenance()))).toList(),
             storage.bases().stream().map(b->new StorageBaseDocument(storageBaseHandle(b.id()),measure(b.extent()),b.allocation(),provenance(b.provenance()))).toList(),
@@ -95,7 +95,7 @@ public final class SemanticProductJsonWriter {
             storage.renames().stream().sorted(java.util.Comparator.comparingInt(r->r.id().localId())).map(r->new StorageRenamesDocument(
                 "storage-relation:"+r.id().localId(),storageNodeHandle(r.owner()),r.from().map(SemanticProductJsonWriter::storageNodeHandle).orElse(null),
                 r.through().map(SemanticProductJsonWriter::storageNodeHandle).orElse(null),r.status(),provenance(r.provenance()),r.gapCodes())).toList(),new StorageEntryDocument(storage.entryState().mode(),
-            storage.entryState().conditions().stream().map(c->new StorageInitialDocument(storageNodeHandle(c.node()),c.kind(),c.bytes(),c.gapCodes(),provenance(c.provenance()))).toList()));
+            storage.entryState().conditions().stream().map(c->new StorageInitialDocument(storageNodeHandle(c.node()),c.kind(),c.bytes(),c.gapCodes(),provenance(c.provenance()),c.proof())).toList()));
     }
     private record StorageMeasureDocument(String value,List<String> gapCodes) { }
     private record PhysicalNodeDocument(String id,String parent,int order,boolean filler,CobolSemanticProduct.PhysicalKind kind,
@@ -107,7 +107,7 @@ public final class SemanticProductJsonWriter {
     private record StorageDocument(String version,CobolSemanticProduct.StorageProfile profile,String profileId,String runtimeCodec,
         List<PhysicalNodeDocument> nodes,List<StorageBaseDocument> bases,List<StorageViewDocument> views,List<String> gapCodes,List<StorageRelationDocument> relations,List<StorageRenamesDocument> renames,StorageEntryDocument entryState) { }
     private record StorageEntryDocument(CobolSemanticProduct.StorageEntryMode mode,List<StorageInitialDocument> conditions) { }
-    private record StorageInitialDocument(String node,CobolSemanticProduct.InitialStorageKind kind,List<Integer> bytes,List<String> gapCodes,ProvenanceDocument provenance) { }
+    private record StorageInitialDocument(String node,CobolSemanticProduct.InitialStorageKind kind,List<Integer> bytes,List<String> gapCodes,ProvenanceDocument provenance,CobolSemanticProduct.InitialStorageProof proof) { }
     private record RegionalSliceDocument(String offset,String extent) { }
     private record RegionalAccessDocument(String view,RegionalSliceDocument slice) { }
     private record MoveTransferDocument(MoveSourceDocument source,DataReferenceDocument target,RegionalMoveDocument effect) { }

@@ -83,7 +83,9 @@ class StorageLayoutTest {
             String source=ScalarMoveCheckpoint4ATest.program("01 WS-AREA PIC X(8).","GOBACK.").replace("PROGRAM-ID. SAMPLE.","PROGRAM-ID. SAMPLE IS "+attribute+".");
             var restricted=AstBoundaryTestSupport.analyze(source,"layout.cbl");
             var p=StorageLayoutSemantics.analyze(restricted.build(),restricted.tables(),restricted.resolution(),restricted.report(),Profile.IBM_ENTERPRISE_6_4_FIXED_DISPLAY_1047);
-            assertTrue(p.layout(restricted.model().programUnits().get(0).id()).reasons().contains(Reason.NONORDINARY_PROGRAM));
+            var result=p.layout(restricted.model().programUnits().get(0).id());
+            assertEquals(!attribute.equals("INITIAL"),result.reasons().contains(Reason.NONORDINARY_PROGRAM));
+            if(attribute.equals("INITIAL"))assertTrue(result.bases().stream().allMatch(b->b.independent()&&b.extent().value().isPresent()));
         }
     }
     @Test void copybookOriginsAndInheritedDisplaySurvivePhysicalProjection() {

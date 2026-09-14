@@ -1,5 +1,8 @@
 # COBOL Semantic Product
 
+Writer corrente: [DVI / SP 2.15.0, storage 1.4.0](declarative-value-inference.md),
+com prova tipada por condição de entrada, preservando [CICS Program Control](cics-program-control.md).
+
 Contrato corrente: [Storage Semantics e relações físicas / SP 2.8.0](storage-semantics.md), preservando os fatos regionais SP 2.7 e [GO TO DEPENDING ON / SP 2.6.0](goto-depending.md), preservando [PERFORM family / SP 2.5.0](perform-family.md), preservando [GO TO first slice / SP 2.1.0](goto-semantic-product.md), preservando [EVALUATE / SP 2.0.0](evaluate-semantic-product.md), preservando [entry e input localizado / SP 1.9.0](../architecture/entry-localized-input.md), preservando [composição e parcialidade / SP 1.8.0](../architecture/compositional-partial-lowering.md), preservando [IF W2A](if-semantic-product.md), preservando [CALL e fitting W1A](call-semantic-product.md).
 
 O COBOL Semantic Product é a boundary COBOL-specific, materializada e imutável

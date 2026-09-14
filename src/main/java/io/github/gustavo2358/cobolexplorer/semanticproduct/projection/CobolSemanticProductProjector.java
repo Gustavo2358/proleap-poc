@@ -217,7 +217,7 @@ public final class CobolSemanticProductProjector {
         var facts=inputs.products().storage().orElseThrow().initial().facts(inputs.unitId());
         return new StorageEntryState(StorageEntryMode.valueOf(facts.mode().name()),facts.conditions().stream().map(c->
             new StorageInitialCondition(storageNode(inputs,c.declaration()),InitialStorageKind.valueOf(c.kind().name()),c.bytes(),
-                c.reasons().stream().map(Enum::name).toList(),provenance(c.origin()))).toList());
+                c.reasons().stream().map(Enum::name).toList(),provenance(c.origin()),InitialStorageProof.valueOf(c.proof().name()))).toList());
     }
     private static Optional<RegionalAccess> regionalAccess(ProjectionInputs inputs, int reference) {
         return inputs.products().storage().flatMap(s->s.access(new StorageLayoutSemantics.Key(inputs.unitId(),reference)))
