@@ -67,7 +67,8 @@ public final class ProcedurePerformSemantics {
                 && !division.procedureEntry().orElseThrow().declarativesPresent() && !division.procedureEntry().orElseThrow().signatureClausesPresent()
                 && division.children().stream().allMatch(Ast.Paragraph.class::isInstance);
             if(structure)for(var child:division.children())paragraphs.add((Ast.Paragraph)child);
-            var next=division==null?Map.<Integer,Integer>of():division.normalContinuations();
+            var next=new HashMap<Integer,Integer>();
+            if(division!=null){next.putAll(division.normalContinuations());division.embeddedContinuations().forEach((from,to)->{if(CicsProgramControlAnalyzer.boundedLocal(nodes.get(from)))next.put(from,to);});}
             var provisional=new LinkedHashMap<Integer,Facts>();
             var performs=nodes.values().stream().filter(Ast.PerformStatement.class::isInstance).map(Ast.PerformStatement.class::cast)
                 .filter(ProcedurePerformSemantics::applicable).sorted(Comparator.comparingInt(p->p.meta().id())).toList();
@@ -83,7 +84,7 @@ public final class ProcedurePerformSemantics {
                 else for(int i=first;i<=last;i++) {
                     var paragraph=paragraphs.get(i);var roots=direct(paragraph);var members=members(roots);
                     if(roots.isEmpty()||paragraph.executableEntry().isEmpty()||paragraph.executableEntry().get()!=roots.get(0).meta().id()
-                            || !paragraph.meta().provenance().exact()) {gaps.add("PERFORM_PARAGRAPH_BOUNDARY_NOT_PROVEN");break;}
+                            || !CicsProgramControlAnalyzer.boundedRegion(paragraph)) {gaps.add("PERFORM_PARAGRAPH_BOUNDARY_NOT_PROVEN");break;}
                     var completions=completions(roots);
                     range.add(new Paragraph(identities.get(paragraph.meta().id()),roots.get(0).meta().id(),
                         members.stream().map(s->s.meta().id()).toList(),completions,paragraph.meta().provenance()));
@@ -186,7 +187,7 @@ public final class ProcedurePerformSemantics {
         while(!todo.isEmpty()) {
             var v=todo.pop();if(v.id()==-1)continue;
             if(v.finish()){active.remove(v.id());done.add(v.id());continue;}if(done.contains(v.id()))continue;
-            if(!active.add(v.id())||!primary&&!members.contains(v.id())||!(nodes.get(v.id()) instanceof Ast.Statement s)||!s.meta().provenance().exact())return false;
+            if(!active.add(v.id())||!primary&&!members.contains(v.id())||!(nodes.get(v.id()) instanceof Ast.Statement s)||!CicsProgramControlAnalyzer.boundedRegion(s))return false;
             if(primary)members.add(v.id());
             if(s instanceof Ast.GobackStatement){active.remove(v.id());done.add(v.id());continue;}
             todo.push(new Visit(v.id(),true));
@@ -207,7 +208,8 @@ public final class ProcedurePerformSemantics {
                 for(var arm:e.branches()){if(arm.statements().isEmpty())return false;todo.push(new Visit(arm.statements().get(0).meta().id(),false));}
             } else if(s instanceof Ast.MoveStatement) {
                 var move=moves.get(new ScalarMoveSemantics.NodeKey(unit,v.id()));if(move==null||move.copy()==ScalarMoveSemantics.Copy.UNAVAILABLE)return false;
-            } else if(s instanceof Ast.CallStatement c) {if(c.surface().hasHandlers())return false;}
+            } else if(CicsProgramControlAnalyzer.boundedLocal(s)) { /* local error/return and external completion only */ }
+            else if(s instanceof Ast.CallStatement c) {if(c.surface().hasHandlers())return false;}
             else if(s instanceof Ast.PerformStatement p && primary) {
                 var range=ranges.get(v.id());if(range!=null ? !range.precise() : !basic.fact(unit,v.id()).simpleProfile())return false;
             } else return false;
@@ -231,7 +233,7 @@ public final class ProcedurePerformSemantics {
         var result=new ArrayList<Integer>();var pending=new ArrayDeque<List<Ast.Statement>>();pending.push(roots);
         while(!pending.isEmpty()) {
             var region=pending.pop();if(region.isEmpty())continue;var last=region.get(region.size()-1);
-            if(last instanceof Ast.MoveStatement || last instanceof Ast.CallStatement c && !c.surface().hasHandlers())result.add(last.meta().id());
+            if(CicsProgramControlAnalyzer.boundedLocal(last)||last instanceof Ast.MoveStatement || last instanceof Ast.CallStatement c && !c.surface().hasHandlers())result.add(last.meta().id());
             else if(last instanceof Ast.IfStatement f && f.explicitlyTerminated()) {
                 result.add(last.meta().id());pending.push(f.thenBranch());pending.push(f.elseBranch());
             } else if(last instanceof Ast.EvaluateStatement e && EvaluateSemantics.supportedShape(e)) {

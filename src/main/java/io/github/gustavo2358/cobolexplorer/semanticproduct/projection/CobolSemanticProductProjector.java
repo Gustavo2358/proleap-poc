@@ -685,10 +685,13 @@ public final class CobolSemanticProductProjector {
                 }
                 options.add(new CicsOption(option.name(),option.operand(),option.start(),option.end(),ref));
             }
-            var condition=options.stream().anyMatch(o->o.name().equals("RESP")||o.name().equals("NOHANDLE"))
-                ?CicsConditions.LOCAL_CONDITION:CicsConditions.UNKNOWN;
-            codes.add(condition==CicsConditions.UNKNOWN?"CICS_HANDLER_STATE_UNKNOWN":"CICS_CONDITION_VALUES_UNKNOWN");
-            var next=observedContinuation(plan.position().statement(),inputs,statementIds);
+            var condition=!source.gaps().isEmpty()?CicsConditions.UNKNOWN:options.stream().anyMatch(o->o.name().equals("RESP")||o.name().equals("NOHANDLE"))
+                ?CicsConditions.LOCAL_CONDITION:inputs.products().cics().orElseThrow().defaultHandlers(inputs.unitId(),plan.position().statement().meta().id())?CicsConditions.DEFAULT_ENTRY_PREFIX:CicsConditions.UNKNOWN;
+            if(condition!=CicsConditions.DEFAULT_ENTRY_PREFIX)codes.add(condition==CicsConditions.UNKNOWN?"CICS_HANDLER_STATE_UNKNOWN":"CICS_CONDITION_VALUES_UNKNOWN");
+            var nextId=inputs.selectedSource().unit().program().divisions().stream().filter(d->d.divisionKind()==Ast.DivisionKind.PROCEDURE)
+                .map(d->d.embeddedContinuations().get(plan.position().statement().meta().id())).filter(Objects::nonNull).findFirst();
+            var nextStatement=canonicalStatement(nextId,inputs,statementIds);
+            var next=new NormalContinuation(nextStatement.isPresent()?ContinuationAvailability.KNOWN:inputs.products().scalarMoves().procedurePerforms().completion(inputs.unitId(),plan.position().statement().meta().id())?ContinuationAvailability.NONE:ContinuationAvailability.UNAVAILABLE,nextStatement,statementProvenance);
             statements.add(new CicsFact(header(statementId,plan.position().ordinal(),containment,statementProvenance,CoverageStatus.PARTIAL,
                 readiness(ReadinessStatus.PARTIAL,"CICS program target surface",ReadinessStatus.PARTIAL,"CICS conditions remain conservative",ReadinessStatus.PARTIAL,"external effects and signature partial")),
                 CicsCommand.valueOf(source.command().name()),source.raw(),target,options,condition,next,"cics-ts.program@1",List.copyOf(codes)));

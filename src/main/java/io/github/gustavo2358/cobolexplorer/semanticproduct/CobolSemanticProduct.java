@@ -738,18 +738,18 @@ public final class CobolSemanticProduct {
     }
 
     public enum CicsCommand { LINK, XCTL }
-    public enum CicsConditions { LOCAL_CONDITION, UNKNOWN }
+    public enum CicsConditions { LOCAL_CONDITION, DEFAULT_ENTRY_PREFIX, UNKNOWN }
     public record CicsOption(String name, Optional<String> operand, int start, int end, Optional<DataReference> reference) {
         public CicsOption { Objects.requireNonNull(reference); name=requireText(name,"option name");Objects.requireNonNull(operand);require(start>=0&&end>=start,"option offsets"); }
     }
     /** PROGRAM is the target option. Signature and effects remain independently partial. */
     public record CicsFact(StatementHeader header, CicsCommand command, String rawText,
         Optional<CallTarget> target, List<CicsOption> options, CicsConditions conditions,
-        NormalContinuation normalContinuation, String nameProfile, List<String> gapCodes) implements StatementFact {
+        NormalContinuation localContinuation, String nameProfile, List<String> gapCodes) implements StatementFact {
         public CicsFact {
             Objects.requireNonNull(header);Objects.requireNonNull(command);Objects.requireNonNull(rawText);
             Objects.requireNonNull(target);options=List.copyOf(options);Objects.requireNonNull(conditions);
-            Objects.requireNonNull(normalContinuation);nameProfile=requireText(nameProfile,"name profile");gapCodes=List.copyOf(gapCodes);
+            Objects.requireNonNull(localContinuation);nameProfile=requireText(nameProfile,"name profile");gapCodes=List.copyOf(gapCodes);
             require(header.coverage()!=CoverageStatus.MODELED,"CICS effects/signature remain partial");
             for(var option:options)require(option.end()<=rawText.length(),"CICS option outside payload");
             target.ifPresent(t->require(t.id().statement().equals(header.id()),"CICS operand owner"));
@@ -1536,7 +1536,7 @@ public final class CobolSemanticProduct {
                         "CALL continuation must reference a published statement in the same unit");
                 require(!next.equals(call.header().id()), "CALL cannot continue to itself");
             });
-            if(statement instanceof CicsFact cics)cics.normalContinuation().statement().ifPresent(next -> {
+            if(statement instanceof CicsFact cics)cics.localContinuation().statement().ifPresent(next -> {
                 require(next.unit().equals(statement.header().id().unit()) && statements.containsKey(next) && !next.equals(statement.header().id()),
                     "CICS lexical continuation references a different published statement in the same unit");
             });

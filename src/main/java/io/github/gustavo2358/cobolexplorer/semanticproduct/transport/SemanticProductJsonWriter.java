@@ -210,7 +210,7 @@ public final class SemanticProductJsonWriter {
                                     provenance(a.provenance()))).orElse(null), move.regionalMove().map(m->new RegionalMoveDocument(m.kind(),m.bytes(),m.gapCodes())).orElse(null),move.additionalTransfers().stream().map(t->new MoveTransferDocument(moveSource(t.source()),dataReference(t.target()),new RegionalMoveDocument(t.effect().kind(),t.effect().bytes(),t.effect().gapCodes()))).toList());
         }
         if (fact instanceof CobolSemanticProduct.CicsFact cics) return new CicsDocument(header(cics.header()),cics.command(),cics.rawText(),cics.target().map(SemanticProductJsonWriter::callTarget).orElse(null),
-            cics.options().stream().map(o->new CicsOptionDocument(o.name(),o.operand().orElse(null),o.start(),o.end(),o.reference().map(SemanticProductJsonWriter::dataReference).orElse(null))).toList(),cics.conditions(),continuation(cics.normalContinuation()),cics.nameProfile(),cics.gapCodes());
+            cics.options().stream().map(o->new CicsOptionDocument(o.name(),o.operand().orElse(null),o.start(),o.end(),o.reference().map(SemanticProductJsonWriter::dataReference).orElse(null))).toList(),cics.conditions(),continuation(cics.localContinuation()),cics.nameProfile(),cics.gapCodes());
         if (fact instanceof CobolSemanticProduct.CallFact call) {
             return new CallDocument(header(call.header()), call.syntax(),
                     callTarget(call.target()), call.runtimeTarget(), call.runtimeUncertaintyCode(),
@@ -426,7 +426,7 @@ public final class SemanticProductJsonWriter {
     private record CicsOptionDocument(String name,String operand,int start,int end,DataReferenceDocument reference) { }
     private record CicsDocument(StatementHeaderDocument header,CobolSemanticProduct.CicsCommand command,String rawText,
         CallTargetDocument target,List<CicsOptionDocument> options,CobolSemanticProduct.CicsConditions conditions,
-        ContinuationDocument normalContinuation,String nameProfile,List<String> gapCodes) implements StatementDocument { }
+        ContinuationDocument localContinuation,String nameProfile,List<String> gapCodes) implements StatementDocument { }
 
     private record GoToDestinationDocument(int ordinal,String target,ProvenanceDocument procedureOrigin,
         ProvenanceDocument referenceOrigin,String targetEntry,ProvenanceDocument entryOrigin,List<String> gapCodes) { }

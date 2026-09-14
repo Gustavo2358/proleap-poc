@@ -35,7 +35,7 @@ class CicsProgramControlTest {
         var source=ScalarMoveCheckpoint4ATest.products(a);var unit=a.model().programUnits().get(0).id();
         var enriched=new io.github.gustavo2358.cobolexplorer.semanticproduct.projection.CobolSemanticProductProjector.FrontendProducts(
             source.frontend(),source.symbolTables(),source.occurrencesByUnit(),source.resolution(),source.report(),source.scalarMoves(),source.storage(),
-            Optional.of(new CicsProgramControlAnalyzer().analyze(a.build())));
+            Optional.of(new CicsProgramControlAnalyzer().analyze(a.build(),a.report())));
         var state=io.github.gustavo2358.cobolexplorer.semanticproduct.projection.CobolSemanticProductProjector.project(enriched,unit);
         var fact=(io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.CicsFact)state.statements().get(0);
         assertEquals("LINK",fact.command().name());assertEquals(2,fact.options().size());assertFalse(fact.gapCodes().isEmpty());
@@ -50,15 +50,19 @@ class CicsProgramControlTest {
     }
 
     static io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.State regional(String data,String code) {
+        return regional(data,code,CicsProgramControlAnalyzer.EntryMode.UNKNOWN);
+    }
+    static io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.State regional(String data,String code,CicsProgramControlAnalyzer.EntryMode mode) {
         var a=StorageAccessTest.fixture(data,code.replace(" COMMAREA(","\nCOMMAREA(").replace(" NOHANDLE","\nNOHANDLE").replace(" ELSE ","\nELSE ").replace(" END-IF","\nEND-IF"));var f=a.source();
         return io.github.gustavo2358.cobolexplorer.semanticproduct.projection.CobolSemanticProductProjector.project(new io.github.gustavo2358.cobolexplorer.semanticproduct.projection.CobolSemanticProductProjector.FrontendProducts(
-            f.build(),f.tables(),f.occurrences(),f.resolution(),f.report(),ScalarMoveSemantics.analyze(f.build(),f.tables(),f.resolution(),f.report()),Optional.of(a.effects()),Optional.of(new CicsProgramControlAnalyzer().analyze(f.build()))),f.model().programUnits().get(0).id());
+            f.build(),f.tables(),f.occurrences(),f.resolution(),f.report(),ScalarMoveSemantics.analyze(f.build(),f.tables(),f.resolution(),f.report()),Optional.of(a.effects()),Optional.of(new CicsProgramControlAnalyzer().analyze(f.build(),f.report(),mode))),f.model().programUnits().get(0).id());
     }
     @Test void canonicalHostBindingKeepsQualificationAliasesAndEightByteViews() throws Exception {
         var s=regional("01 FIRST-AREA.\n05 WS-PGM PIC X(8).\n01 SECOND-AREA.\n05 WS-PGM PIC X(8).",
             "MOVE 'PROGA' TO WS-PGM OF FIRST-AREA.\nEXEC CICS LINK PROGRAM(WS-PGM OF FIRST-AREA) COMMAREA(FIRST-AREA) NOHANDLE END-EXEC.");
         var fact=(io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.CicsFact)s.statements().get(1);
         var reference=(io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.DataReference)fact.target().orElseThrow();
+        assertEquals("KNOWN",fact.localContinuation().availability().name());
         assertTrue(reference.regionalAccess().isPresent());assertTrue(reference.binding().selected().isPresent());
         var move=(io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.MoveFact)s.statements().get(0);
         assertEquals(move.target().binding().selected(),reference.binding().selected());
@@ -76,6 +80,31 @@ class CicsProgramControlTest {
         if(System.getProperty("cics.fixtures.dir")==null)return;
         var path=java.nio.file.Path.of(System.getProperty("cics.fixtures.dir"));java.nio.file.Files.createDirectories(path);
         java.nio.file.Files.write(path.resolve(name+".sp.json"),io.github.gustavo2358.cobolexplorer.semanticproduct.transport.SemanticProductJsonWriter.serialize(io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticPort.open(state)));
+    }
+
+    @Test void defaultEntryPrefixAndLocalErrorsStayDistinct() throws Exception {
+        for(String option:List.of("","NOHANDLE","RESP(RC)","RESP2(RC)")) {
+            var state=regional("01 RC PIC 9.","EXEC CICS XCTL PROGRAM('PROGA')\n"+option+" END-EXEC.\nCALL 'AFTER'.",CicsProgramControlAnalyzer.EntryMode.NEW_LOGICAL_LEVEL);
+            var fact=(io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.CicsFact)state.statements().get(0);
+            String expected=option.isEmpty()?"DEFAULT_ENTRY_PREFIX":option.startsWith("RESP2")?"UNKNOWN":"LOCAL_CONDITION";
+            assertEquals(expected,fact.conditions().name());emit(option.isEmpty()?"xctl-default":option.startsWith("RESP2")?"xctl-resp2":option.startsWith("RESP(")?"xctl-resp":"xctl-nohandle",state);
+        }
+        var noPremise=regional("01 RC PIC 9.","EXEC CICS XCTL PROGRAM('PROGA') END-EXEC.\nCALL 'AFTER'.");
+        assertEquals("UNKNOWN",((io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.CicsFact)noPremise.statements().get(0)).conditions().name());emit("xctl-entry-unknown",noPremise);
+        var unknown=regional("01 RC PIC 9.","EXEC CICS HANDLE CONDITION ERROR(ERR-PARA) END-EXEC.\nEXEC CICS XCTL PROGRAM('PROGA') END-EXEC.\nCALL 'AFTER'.");
+        assertEquals("UNKNOWN",((io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.CicsFact)unknown.statements().get(1)).conditions().name());emit("xctl-handler",unknown);
+    }
+
+    @Test void boundedCicsInsidePerformedParagraphKeepsActivationBoundary() throws Exception {
+        for(String command:List.of("LINK","XCTL")) {
+            var source=PerformFamilyTest.source("PERFORM A THRU A.\nCALL 'AFTER'.\n","A.\nEXEC CICS "+command+" PROGRAM('PROGA')\nNOHANDLE END-EXEC.\nMOVE 'PROGB' TO WS-PGM.\n");
+            var a=AstBoundaryTestSupport.analyze(source,"cics-perform.cbl");
+            var layout=StorageLayoutSemantics.analyze(a.build(),a.tables(),a.resolution(),a.report(),StorageLayoutSemantics.Profile.IBM_ENTERPRISE_6_4_FIXED_DISPLAY_1047);
+            var storage=StorageAccessSemantics.analyze(a.build(),a.resolution(),layout);
+            var state=io.github.gustavo2358.cobolexplorer.semanticproduct.projection.CobolSemanticProductProjector.project(new io.github.gustavo2358.cobolexplorer.semanticproduct.projection.CobolSemanticProductProjector.FrontendProducts(a.build(),a.tables(),a.occurrences(),a.resolution(),a.report(),ScalarMoveSemantics.analyze(a.build(),a.tables(),a.resolution(),a.report()),Optional.of(storage),Optional.of(new CicsProgramControlAnalyzer().analyze(a.build(),a.report()))),a.model().programUnits().get(0).id());
+            var perform=state.statements().stream().filter(io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.ProcedurePerformFact.class::isInstance).map(io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.ProcedurePerformFact.class::cast).findFirst().orElseThrow();
+            assertTrue(perform.gapCodes().isEmpty(),perform.gapCodes().toString());emit("perform-"+command.toLowerCase(Locale.ROOT),state);
+        }
     }
 
 }

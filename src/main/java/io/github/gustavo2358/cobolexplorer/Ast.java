@@ -108,15 +108,17 @@ public final class Ast {
 
     public record Division(Meta meta, DivisionKind divisionKind, List<Node> children,
                            Optional<ProcedureEntry> procedureEntry, Map<Integer, Integer> normalContinuations,
-                           Map<Integer,Integer> ordinaryContinuations) implements Node {
+                           Map<Integer,Integer> ordinaryContinuations,Map<Integer,Integer> embeddedContinuations) implements Node {
         public Division {
             children = List.copyOf(children);
             procedureEntry = Objects.requireNonNull(procedureEntry, "procedureEntry");
             normalContinuations = Map.copyOf(normalContinuations);
             ordinaryContinuations = Map.copyOf(ordinaryContinuations);
+            embeddedContinuations = Map.copyOf(embeddedContinuations);
             if (procedureEntry.isPresent() && divisionKind != DivisionKind.PROCEDURE)
                 throw new IllegalArgumentException("only PROCEDURE DIVISION has an executable entry");
         }
+        public Division(Meta meta,DivisionKind kind,List<Node> children,Optional<ProcedureEntry> entry,Map<Integer,Integer> normal,Map<Integer,Integer> ordinary) {this(meta,kind,children,entry,normal,ordinary,Map.of());}
         /** Paragraph-local completion stays distinct from ordinary flow across paragraph boundaries. */
         public Division(Meta meta, DivisionKind kind, List<Node> children,Optional<ProcedureEntry> entry,Map<Integer,Integer> next) {
             this(meta,kind,children,entry,next,next);

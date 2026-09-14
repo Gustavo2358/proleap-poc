@@ -5,6 +5,7 @@ import java.util.*;
 /** Dedicated parser for the preserved CICS command surface. No runtime value analysis. */
 public final class CicsProgramControlAnalyzer {
     public enum Command { LINK, XCTL }
+    public enum EntryMode { UNKNOWN, NEW_LOGICAL_LEVEL, DISABLED }
     public record Option(String name, Optional<String> operand, int start, int end) {
         public Option { Objects.requireNonNull(name); Objects.requireNonNull(operand); }
     }
@@ -16,11 +17,16 @@ public final class CicsProgramControlAnalyzer {
     public static final class Snapshot {
         private final CompilationUnitBuildResult owner;
         private final Map<Key,Fact> facts;
-        private Snapshot(CompilationUnitBuildResult owner, Map<Key,Fact> facts) { this.owner=owner;this.facts=Map.copyOf(facts); }
+        private final Set<Key> defaultHandlers;
+        private Snapshot(CompilationUnitBuildResult owner, Map<Key,Fact> facts,Set<Key> defaultHandlers) { this.owner=owner;this.facts=Map.copyOf(facts);this.defaultHandlers=Set.copyOf(defaultHandlers); }
+        public boolean defaultHandlers(ResolutionContracts.ProgramUnitId unit,int statement){return defaultHandlers.contains(new Key(unit,statement));}
         public boolean belongsTo(CompilationUnitBuildResult frontend) { return owner==frontend; }
         public Optional<Fact> fact(ResolutionContracts.ProgramUnitId unit,int statement) { return Optional.ofNullable(facts.get(new Key(unit,statement))); }
     }
-    public Snapshot analyze(CompilationUnitBuildResult frontend) {
+    public Snapshot analyze(CompilationUnitBuildResult frontend) {return analyze(frontend,null);}
+    public Snapshot analyze(CompilationUnitBuildResult frontend,ResolutionAnalysisReport report) {return analyze(frontend,report,EntryMode.UNKNOWN);}
+    public Snapshot analyze(CompilationUnitBuildResult frontend,ResolutionAnalysisReport report,EntryMode mode) {
+        if(mode==EntryMode.DISABLED)return new Snapshot(frontend,Map.of(),Set.of());
         var facts=new LinkedHashMap<Key,Fact>();
         for(var unit:frontend.compilationUnit().programUnits()) {
             var pending=new ArrayDeque<Ast.Node>();pending.push(unit.program());
@@ -31,7 +37,34 @@ public final class CicsProgramControlAnalyzer {
                 var children=Ast.children(node);for(int i=children.size()-1;i>=0;i--)pending.push(children.get(i));
             }
         }
-        return new Snapshot(frontend,facts);
+        var defaults=new HashSet<Key>();
+        if(mode==EntryMode.NEW_LOGICAL_LEVEL&&report!=null&&report.gaps().stream().noneMatch(g->g.category()==ResolutionAnalysisReport.GapCategory.INPUT))
+            for(var unit:frontend.compilationUnit().programUnits()) {
+                var nodes=new HashMap<Integer,Ast.Node>();var todo=new ArrayDeque<Ast.Node>();todo.push(unit.program());
+                while(!todo.isEmpty()){var n=todo.pop();if(n instanceof Ast.Program&&n!=unit.program())continue;nodes.put(n.meta().id(),n);Ast.children(n).forEach(todo::push);}
+                if(nodes.values().stream().anyMatch(n->n.meta().origin().grammarRule().equals("entryStatement")))continue;
+                var division=unit.program().divisions().stream().filter(d->d.divisionKind()==Ast.DivisionKind.PROCEDURE).findFirst();
+                if(division.isEmpty()||division.get().procedureEntry().isEmpty()||division.get().procedureEntry().get().declarativesPresent())continue;
+                // Narrow entry-prefix proof: only canonical MOVE edges before the first CICS command.
+                var current=division.get().procedureEntry().get().startStatementId().orElse(null);var seen=new HashSet<Integer>();
+                while(current!=null&&seen.add(current)) {
+                    var n=nodes.get(current);var fact=facts.get(new Key(unit.id(),current));
+                    if(fact!=null) {if(fact.gaps().isEmpty()&&fact.options().stream().noneMatch(o->o.name().equals("RESP2")))defaults.add(new Key(unit.id(),current));break;}
+                    if(!(n instanceof Ast.MoveStatement)||!n.meta().provenance().exact())break;
+                    current=division.get().normalContinuations().get(current);
+                }
+            }
+        return new Snapshot(frontend,facts,defaults);
+    }
+    static boolean boundedLocal(Ast.Node node) {
+        if(!(node instanceof Ast.EmbeddedLanguageStatement e)||e.language()!=Ast.EmbeddedLanguage.CICS)return false;
+        return new CicsProgramControlAnalyzer().parse(e.rawText()).filter(f->f.gaps().isEmpty()&&f.options().stream().anyMatch(o->o.name().equals("RESP")||o.name().equals("NOHANDLE"))).isPresent();
+    }
+    /** A transformed CICS span is not an exact physical location, but its parsed local continuation can be proved. */
+    static boolean boundedRegion(Ast.Node node) {
+        if(node.meta().provenance().exact())return true;
+        if(boundedLocal(node))return true;
+        var children=Ast.children(node);return !children.isEmpty()&&children.stream().allMatch(CicsProgramControlAnalyzer::boundedRegion);
     }
     public Optional<Fact> parse(String raw) {
         var cursor=new Cursor(raw);cursor.space();

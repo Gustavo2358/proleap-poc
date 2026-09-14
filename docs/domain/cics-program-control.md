@@ -34,3 +34,18 @@ StorageAccessSemantics admits existing group/alias/qualified/constant slice read
 SP options retain bound references when available; malformed, short, dynamic or
 unproved accesses remain explicit. The lower requires an IBM1047 physical view of
 exactly eight bytes before it emits a computed name read.
+
+The generic AST records an embedded positional continuation independently of
+normal completion. SP `localContinuation` is this boundary; the lower assigns
+its meaning from the command and condition profile. The current CLI option
+`--cics-entry-mode unknown|new-logical-level|disabled` defaults to unknown.
+`new-logical-level` is an explicit environment premise that CICS handlers start
+at defaults; it is not inferred from a source file. Only complete input with a
+canonical entry prefix consisting of MOVE statements can prove DEFAULT_ENTRY_PREFIX.
+RESP2 alone, prior calls/opaque commands, ENTRY/declaratives and input gaps exclude
+this proof. Local error tests use separate RESP/NOHANDLE fixtures.
+
+Bounded RESP/NOHANDLE commands can participate in the existing PERFORM paragraph
+range profile. A complete parsed embedded transform proves its structural span
+without changing `provenance.exact=false`. Error continuation may reach the
+activation resume; XCTL success never receives a normal return edge.
