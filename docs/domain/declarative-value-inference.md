@@ -1,4 +1,4 @@
-# Declarative Value Inference — SP 2.15.0 / storage 1.4.0
+# Declarative Value Inference — SP 2.16.0 / storage 1.5.0
 
 The configured `ibm-enterprise-6.4-fixed-display-1047@1` profile is still required.
 Ordinary WORKING-STORAGE persists; the default CLI remains `unknown`. A VALUE
@@ -22,12 +22,13 @@ Every `storage.entryState.conditions[]` adds required enum `proof`:
 | EXPLICIT_PRESERVED | PRESERVE | PRESERVED | existing preservation premise |
 | PROGRAM_INITIAL | LITERAL_BYTES | UNKNOWN | source INITIAL attribute guarantees fresh entry |
 | DECLARATIVE_INVARIANT | LITERAL_BYTES | UNKNOWN | lifetime inventory proves unchanged bytes |
+| DECLARATIVE_POSSIBILITY | POSSIBLE_LITERAL_BYTES | UNKNOWN | supported entry candidate, with mandatory lifecycle remainder |
 
 All literal conditions retain the existing supported VALUE encoding, bounds,
 provenance, and nested VALUE/REDEFINES exclusions. Their byte count equals view
 extent. Invariant conditions additionally require independent local WS allocation.
 Constructors and publication validation reject contradictory kind/proof/mode.
-SP 2.15.0/storage 1.4.0 is the single current writer. Older consumer rejection is
+SP 2.16.0/storage 1.5.0 is the single current writer. Older consumer rejection is
 expected until its coordinated reader/pin update; no draft downgrade writer.
 
 ## Lifetime proof
@@ -38,7 +39,8 @@ statement, including unreachable statements and handler bodies. It does not use
 reachability to infer lifetime invariance. Exact physical writes and exposures
 are separately grouped by base, sorted and coalesced. Binary searches test
 overlap with the VALUE view. Global blockers and unknown exposures stay separate.
-The declaration can be known only when all relevant inventory gaps are absent.
+The lifetime invariant requires all relevant inventory gaps to be absent.
+The possible entry candidate does not require this invariant.
 
 LANGUAGE_GUARANTEED: VALUE initialization; persistence; physical alias overlap;
 no direct access to unexposed local bytes by an argument-free callee.
@@ -67,8 +69,10 @@ establish the distinction. All other options/commands remain foreign blockers in
 this slice. There is no CICS logic in a value solver.
 
 Soundness: local lifetime bytes start at the declared literal and none of the
-complete admitted operations can change/expose them. Any missing premise keeps
-UNKNOWN. The inventory traverses finite AST n, exact writes w, exposures e and
+complete admitted operations can change/expose them. A missing mutation/lifecycle premise prevents strong invariance and produces
+POSSIBLE_LITERAL_BYTES + ENTRY_STATE_NOT_PROVEN when the declaration bytes and
+physical allocation are independently proved. Missing VALUE/codec/layout proof
+keeps UNKNOWN without bytes. The inventory traverses finite AST n, exact writes w, exposures e and
 VALUE conditions c; there is no iteration over runtime values or second propagation
 engine. Gaps distinguish storage, inventory, overlap, unproved writes, unknown
 effects and foreign exposure. This deliberately sacrifices completeness.
@@ -123,3 +127,24 @@ unmodeled effects; candidate gain must be measured, not inferred from VALUE coun
 This implements ADR-0013 and INV-SP-001–010: the projector only transports the
 canonical proof, preserving VALUE origin and gaps. No synthetic MOVE or targets
 are published by the frontend.
+
+## RF-W1 — declarative possibility is an entry fact
+
+Materialization of the VALUE bytes is checked separately from the lifetime
+mutation inventory. For ordinary persistent WS, blocked constancy preserves
+those bytes as POSSIBLE_LITERAL_BYTES with proof DECLARATIVE_POSSIBILITY and
+mandatory ENTRY_STATE_NOT_PROVEN remainder. It does not assert equality in
+every activation. INITIAL, PROGRAM INITIAL and DECLARATIVE_INVARIANT stay strong;
+the explicit PRESERVED profile stays PRESERVE.
+
+The frontend never unions VALUE at a use site and never emits synthetic writes.
+The lower must publish the typed AIR entry.possibilities@1 variant; ordinary
+CFG/value flow then kills old candidates under exact MUST overwrite. SP 2.16.0 /
+storage 1.5.0 is a deliberate coordinated reader change. Current readers reject
+unsupported versions explicitly. Unknown exposure continues to prevent strong
+DVI proof; its effect no longer erases independent declarative entry bytes.
+
+Own VALUE/storage exclusions remain: unsupported codec/extent, nonlocal allocation,
+VALUE on REDEFINES, nested VALUE and unmaterialized values publish UNKNOWN.
+`RecallFirstEntryTest` freezes this distinction; the DVI negative matrix asserts
+absence of invariant, now allowing entry possibilities where bytes are proved.

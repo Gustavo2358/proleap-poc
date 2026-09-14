@@ -597,22 +597,25 @@ public final class CobolSemanticProduct {
         }
     }
     public enum StorageEntryMode { UNKNOWN, INITIAL, PRESERVED }
-    public enum InitialStorageKind { LITERAL_BYTES, PRESERVE, UNKNOWN }
-    /** Source entry proof, versioned by storage 1.4.0. */
-    public enum InitialStorageProof { NONE, EXPLICIT_INITIAL, EXPLICIT_PRESERVED, PROGRAM_INITIAL, DECLARATIVE_INVARIANT }
+    public enum InitialStorageKind { LITERAL_BYTES, POSSIBLE_LITERAL_BYTES, PRESERVE, UNKNOWN }
+    /** Source entry proof, versioned by storage 1.5.0. */
+    public enum InitialStorageProof { NONE, EXPLICIT_INITIAL, EXPLICIT_PRESERVED, PROGRAM_INITIAL, DECLARATIVE_INVARIANT, DECLARATIVE_POSSIBILITY }
     public record StorageInitialCondition(StorageNodeId node,InitialStorageKind kind,List<Integer> bytes,List<String> gapCodes,Provenance provenance,InitialStorageProof proof) {
         public StorageInitialCondition {
             Objects.requireNonNull(proof);
             Objects.requireNonNull(node);Objects.requireNonNull(kind);Objects.requireNonNull(provenance);bytes=List.copyOf(bytes);gapCodes=List.copyOf(gapCodes);
             require(bytes.stream().allMatch(b->b>=0&&b<=255),"invalid initial octet");
-            require(kind==InitialStorageKind.LITERAL_BYTES||bytes.isEmpty(),"only literal initialization carries bytes");
-            require((kind==InitialStorageKind.UNKNOWN)==!gapCodes.isEmpty(),"unknown initial state requires gaps");
+            require(kind==InitialStorageKind.LITERAL_BYTES||kind==InitialStorageKind.POSSIBLE_LITERAL_BYTES||bytes.isEmpty(),"only literal entry facts carry bytes");
+            require(kind!=InitialStorageKind.POSSIBLE_LITERAL_BYTES||!bytes.isEmpty(),"possible literal bytes must not be empty");
+            require((kind==InitialStorageKind.UNKNOWN||kind==InitialStorageKind.POSSIBLE_LITERAL_BYTES)==!gapCodes.isEmpty(),"unknown or possible initial state requires gaps");
+            require(kind!=InitialStorageKind.POSSIBLE_LITERAL_BYTES||gapCodes.contains("ENTRY_STATE_NOT_PROVEN"),"possible entry requires lifecycle remainder");
             require(kind==InitialStorageKind.UNKNOWN?proof==InitialStorageProof.NONE:kind==InitialStorageKind.PRESERVE?proof==InitialStorageProof.EXPLICIT_PRESERVED
+                :kind==InitialStorageKind.POSSIBLE_LITERAL_BYTES?proof==InitialStorageProof.DECLARATIVE_POSSIBILITY
                 :Set.of(InitialStorageProof.EXPLICIT_INITIAL,InitialStorageProof.PROGRAM_INITIAL,InitialStorageProof.DECLARATIVE_INVARIANT).contains(proof),"initial kind contradicts proof");
             gapCodes.forEach(g->requireText(g,"initial storage gap"));
         }
         public StorageInitialCondition(StorageNodeId node,InitialStorageKind kind,List<Integer> bytes,List<String> gapCodes,Provenance provenance) {
-            this(node,kind,bytes,gapCodes,provenance,kind==InitialStorageKind.UNKNOWN?InitialStorageProof.NONE:kind==InitialStorageKind.PRESERVE?InitialStorageProof.EXPLICIT_PRESERVED:InitialStorageProof.EXPLICIT_INITIAL);
+            this(node,kind,bytes,gapCodes,provenance,kind==InitialStorageKind.UNKNOWN?InitialStorageProof.NONE:kind==InitialStorageKind.PRESERVE?InitialStorageProof.EXPLICIT_PRESERVED:kind==InitialStorageKind.POSSIBLE_LITERAL_BYTES?InitialStorageProof.DECLARATIVE_POSSIBILITY:InitialStorageProof.EXPLICIT_INITIAL);
         }
     }
     public record StorageEntryState(StorageEntryMode mode,List<StorageInitialCondition> conditions) {
@@ -1261,9 +1264,9 @@ public final class CobolSemanticProduct {
                     &&bases.get(view.base()).extent().value().isPresent(),"precise initial condition needs exact provenance and bounded supported view");
                 boolean mode=condition.proof()==InitialStorageProof.EXPLICIT_INITIAL?inventory.entryState().mode()==StorageEntryMode.INITIAL
                     :condition.proof()==InitialStorageProof.EXPLICIT_PRESERVED?inventory.entryState().mode()==StorageEntryMode.PRESERVED:inventory.entryState().mode()==StorageEntryMode.UNKNOWN;
-                require(mode&&(condition.kind()!=InitialStorageKind.LITERAL_BYTES||view.extent().value().get().equals(BigInteger.valueOf(condition.bytes().size()))),
+                require(mode&&((condition.kind()!=InitialStorageKind.LITERAL_BYTES&&condition.kind()!=InitialStorageKind.POSSIBLE_LITERAL_BYTES)||view.extent().value().get().equals(BigInteger.valueOf(condition.bytes().size()))),
                     "initial condition contradicts entry mode or extent");
-                require(condition.proof()!=InitialStorageProof.DECLARATIVE_INVARIANT||bases.get(view.base()).allocation()==AllocationProof.INDEPENDENT_LOCAL_WORKING_STORAGE,
+                require((condition.proof()!=InitialStorageProof.DECLARATIVE_INVARIANT&&condition.proof()!=InitialStorageProof.DECLARATIVE_POSSIBILITY)||bases.get(view.base()).allocation()==AllocationProof.INDEPENDENT_LOCAL_WORKING_STORAGE,
                     "declarative invariant needs local independent storage");
             }
         }
