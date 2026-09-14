@@ -271,6 +271,8 @@ class ScalarMoveCheckpoint4ATest {
         ((com.fasterxml.jackson.databind.node.ObjectNode) current).remove("storage");
         ((com.fasterxml.jackson.databind.node.ObjectNode) current).remove("storageIndependence");
         ((com.fasterxml.jackson.databind.node.ObjectNode) current).remove("contractVersion");
+        assertTrue(current.path("statementEffects").isArray()&&current.path("statementEffects").isEmpty());
+        ((com.fasterxml.jackson.databind.node.ObjectNode) current).remove("statementEffects");
         assertEquals(previous, current, "all CP3 facts, provenance, coverage and gaps must be unchanged");
     }
 

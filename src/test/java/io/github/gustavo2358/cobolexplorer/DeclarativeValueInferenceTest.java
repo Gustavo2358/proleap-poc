@@ -177,7 +177,8 @@ class DeclarativeValueInferenceTest {
         notInvariant(GROUP,"CALL LIT-PGM USING TAIL-PART\nON EXCEPTION CALL 'OTHER' USING LIT-PGM\nEND-CALL.");
     }
     @Test void e15e16DisjointExposureCannotHideIndependentWritesOrForeignEffects() {
-        for(var effect:List.of("MOVE 'OTHER' TO LIT-PGM.","ACCEPT TAIL-PART.",
+        invariant(GROUP,"CALL LIT-PGM USING TAIL-PART.\nACCEPT TAIL-PART.");
+        for(var effect:List.of("MOVE 'OTHER' TO LIT-PGM.","EXHIBIT TAIL-PART.",
                 "EXEC CICS READ FILE('A') INTO(TAIL-PART) END-EXEC.",
                 "MOVE FUNCTION CURRENT-DATE TO TAIL-PART."))
             notInvariant(GROUP,"CALL LIT-PGM USING TAIL-PART.\n"+effect);
@@ -210,7 +211,7 @@ class DeclarativeValueInferenceTest {
         assertEquals(java.math.BigInteger.valueOf(8),argument.view().extent().value().orElseThrow());
         var retained=new HashMap<StorageLayoutSemantics.Key,StorageAccessSemantics.Access>();
         for(var access:f.effects().accesses())if(access!=argument)retained.put(access.reference(),access);
-        var inventory=StorageMutationInventory.analyze(a.build(),unit,f.effects().layout().layout(unit.id()),retained,Map.of(),
+        var inventory=StorageMutationInventory.analyze(a.build(),unit,f.effects().layout().layout(unit.id()),retained,Map.of(),Map.of(),
             new CicsProgramControlAnalyzer().analyze(a.build()));
         assertTrue(inventory.blockers(condition.view().orElseThrow()).contains(StorageInitialSemantics.Reason.FOREIGN_MUTATION_OR_ESCAPE));
     }

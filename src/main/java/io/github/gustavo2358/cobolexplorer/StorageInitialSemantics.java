@@ -21,14 +21,14 @@ public final class StorageInitialSemantics {
         return StorageAccessSemantics.analyze(frontend,resolution,layout,mode).initial();
     }
     static StorageInitialSemantics analyze(CompilationUnitBuildResult frontend,ReferenceResolution resolution,StorageLayoutSemantics layout,EntryMode mode,
-            Map<Key,StorageAccessSemantics.Access> accesses,Map<Key,List<StorageAccessSemantics.Move>> moves,CicsProgramControlAnalyzer.Contribution cics) {
+            Map<Key,StorageAccessSemantics.Access> accesses,Map<Key,List<StorageAccessSemantics.Move>> moves,Map<Key,StatementEffectSummary> effects,CicsProgramControlAnalyzer.Contribution cics) {
         if(!layout.belongsTo(frontend,resolution))throw new IllegalArgumentException("foreign layout proof");
         var units=new LinkedHashMap<ResolutionContracts.ProgramUnitId,Facts>();
         for(var unit:frontend.compilationUnit().programUnits()) {
             var physical=layout.layout(unit.id());var views=new HashMap<Integer,View>();var bases=new HashMap<Key,Base>();
             physical.views().forEach(v->views.put(v.node().node(),v));physical.bases().forEach(b->bases.put(b.id(),b));
             var inventory=mode==EntryMode.UNKNOWN&&!unit.program().attributes().initial()
-                ?StorageMutationInventory.analyze(frontend,unit,physical,accesses,moves,cics):null;
+                ?StorageMutationInventory.analyze(frontend,unit,physical,accesses,moves,effects,cics):null;
             var declarations=new ArrayList<Ast.DataEntry>();var inherited=new HashMap<Integer,Flags>();
             var pending=new ArrayDeque<Visit>();pending.push(new Visit(unit.program(),new Flags(false,false)));
             while(!pending.isEmpty()) {

@@ -1095,7 +1095,7 @@ public final class CobolSemanticProduct {
     public enum EffectBound { NONE, ALL }
     public enum EnvironmentEffect { OUTPUT, INPUT, UNKNOWN }
     public enum EffectValueTransform { NONE, UNKNOWN }
-    public enum EffectProof { DISPLAY_SIMPLE }
+    public enum EffectProof { DISPLAY_SIMPLE, INITIALIZE_TARGETS, ACCEPT_TARGET, SET_TARGETS, ARITHMETIC_TARGETS, STRING_TARGETS, UNSTRING_TARGETS, INSPECT_TARGETS }
     public record EffectSummary(List<OperandId> knownReads,List<OperandId> mayWrites,List<OperandId> mustOverwrite,
             List<OperandId> exposedRegions,EffectBound unknownReadBound,EffectBound unknownWriteBound,
             EffectBound unknownExposureBound,EnvironmentEffect environment,EffectValueTransform values,EffectProof proof) {
@@ -1128,8 +1128,13 @@ public final class CobolSemanticProduct {
                     require(new java.util.HashSet<>(ids).size()==ids.size(),"duplicate effect operand");
                     require(refs.keySet().containsAll(ids),"effect must reference an owned operand");
                 }
+                require(e.mayWrites().stream().allMatch(id->refs.get(id).role()==OperandRole.WRITE),"effect write role");
+                require(e.mustOverwrite().isEmpty()||e.proof()==EffectProof.INITIALIZE_TARGETS,"only exact INITIALIZE is MUST in this slice");
+                require(e.mustOverwrite().stream().allMatch(id->refs.get(id).regionalAccess().isPresent()),"MUST requires a physical access");
+                if(e.proof()!=EffectProof.DISPLAY_SIMPLE)require(e.values()==EffectValueTransform.UNKNOWN
+                    &&(e.unknownWriteBound()!=EffectBound.NONE||!e.mayWrites().isEmpty()),"receiver effect must retain writes or unknown bound");
                 require(e.knownReads().stream().allMatch(id->refs.get(id).role()==OperandRole.READ),"effect read role");
-                require(e.proof()==EffectProof.DISPLAY_SIMPLE&&e.mayWrites().isEmpty()&&e.mustOverwrite().isEmpty()&&e.exposedRegions().isEmpty()
+                if(e.proof()==EffectProof.DISPLAY_SIMPLE)require(e.mayWrites().isEmpty()&&e.mustOverwrite().isEmpty()&&e.exposedRegions().isEmpty()
                     &&e.unknownWriteBound()==EffectBound.NONE&&e.unknownExposureBound()==EffectBound.NONE
                     &&e.environment()==EnvironmentEffect.OUTPUT&&e.values()==EffectValueTransform.NONE,"DISPLAY proof shape");
             }

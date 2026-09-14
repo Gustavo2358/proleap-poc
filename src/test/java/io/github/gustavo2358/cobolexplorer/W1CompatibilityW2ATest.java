@@ -40,6 +40,8 @@ class W1CompatibilityW2ATest {
             assertEquals("UNSPECIFIED", current.path("storage").path("profile").asText());
             assertTrue(current.path("storage").path("nodes").isEmpty());
             removeOnlyAbsentRegionalFacts(current);
+            assertTrue(current.path("statementEffects").isArray()&&current.path("statementEffects").isEmpty());
+            current.remove("statementEffects");
             current.remove("storage");
             current.remove("storageIndependence"); current.remove("contractVersion"); old.remove("contractVersion");
             assertEquals(old, current, name + ": all W1 facts, IDs, bindings, origins, provenance, fitting, gaps and readiness must match");

@@ -430,8 +430,22 @@ public final class CobolSemanticProductProjector {
                 inputs.finding(position.statement().meta().id()));
         return new StatementPlan(position,
                 Capability.unmodeled(observed.kind(), observed.shape(),
-                        observedGapCode(observedCoverage)), io.github.gustavo2358.cobolexplorer.StatementEffectSummary.of(position.statement())
-                    .map(e->e.knownReads().stream().map(inputs::entryFor).toList()).orElse(List.of()));
+                        observedGapCode(observedCoverage)), effectSummary(position.statement(),inputs)
+                    .map(e->java.util.stream.Stream.of(e.knownReads(),e.mayWrites(),e.exposedRegions()).flatMap(List::stream).distinct().map(inputs::entryFor).toList()).orElse(List.of()));
+    }
+
+    private static Optional<io.github.gustavo2358.cobolexplorer.StatementEffectSummary> effectSummary(Ast.Statement statement,ProjectionInputs inputs) {
+        return inputs.products().storage().flatMap(s->s.effects(new StorageLayoutSemantics.Key(inputs.unitId(),statement.meta().id())))
+            .or(()->io.github.gustavo2358.cobolexplorer.StatementEffectSummary.of(statement));
+    }
+    private static EffectSummary projectEffects(io.github.gustavo2358.cobolexplorer.StatementEffectSummary e,Map<Integer,OperandId> ids) {
+        java.util.function.Function<List<Ast.DataReference>,List<OperandId>> mapped=rs->rs.stream().map(r->ids.get(r.meta().id())).filter(Objects::nonNull).toList();
+        var reads=mapped.apply(e.knownReads());var writes=mapped.apply(e.mayWrites());var exposures=mapped.apply(e.exposedRegions());
+        return new EffectSummary(reads,writes,mapped.apply(e.mustOverwrite()),exposures,
+            reads.size()==e.knownReads().size()?EffectBound.valueOf(e.unknownReadBound().name()):EffectBound.ALL,
+            writes.size()==e.mayWrites().size()?EffectBound.valueOf(e.unknownWriteBound().name()):EffectBound.ALL,
+            exposures.size()==e.exposedRegions().size()?EffectBound.valueOf(e.unknownExposureBound().name()):EffectBound.ALL,
+            EnvironmentEffect.valueOf(e.environment().name()),EffectValueTransform.valueOf(e.values().name()),EffectProof.valueOf(e.proof().name()));
     }
 
     private static Capability moveCapability(Ast.MoveStatement move) {
@@ -872,21 +886,20 @@ public final class CobolSemanticProductProjector {
                     statementCoverage,
                     blockedReadiness("statement shape is outside the current projection capability"));
             var references=new ArrayList<CobolSemanticProduct.DataReference>();
+            var referenceIds=new java.util.HashMap<Integer,OperandId>();
             for(var entry:plan.entries()) {
                 var role=entry.occurrence().role();
-                if(projectableDataBinding(entry,inputs) && (role==ResolutionContracts.ReferenceRole.VALUE_READ || role==ResolutionContracts.ReferenceRole.VALUE_WRITE))
+                if(projectableDataBinding(entry,inputs) && (role==ResolutionContracts.ReferenceRole.VALUE_READ || role==ResolutionContracts.ReferenceRole.VALUE_WRITE)) {
+                    referenceIds.put(entry.occurrence().referenceAstNodeId(),new OperandId(statementId,references.size()));
                     references.add(new CobolSemanticProduct.DataReference(new OperandId(statementId,references.size()),
                         role==ResolutionContracts.ReferenceRole.VALUE_READ?OperandRole.READ:OperandRole.WRITE,
                         nominalBinding(entry,dataIds),provenance(entry.occurrence().meta().provenance()),Optional.empty(), regionalAccess(inputs,entry.occurrence().referenceAstNodeId())));
+                }
             }
             statements.add(new CobolSemanticProduct.ObservedStatement(header,
                     plan.capability().kind(),
                     plan.capability().shape(), plan.capability().gapCode(), observedContinuation(plan.position().statement(), inputs, statementIds), references,
-                    io.github.gustavo2358.cobolexplorer.StatementEffectSummary.of(plan.position().statement()).map(e->new EffectSummary(
-                        references.stream().map(DataReference::id).toList(),List.of(),List.of(),List.of(),
-                        references.size()==e.knownReads().size()?EffectBound.NONE:EffectBound.ALL,
-                        EffectBound.valueOf(e.unknownWriteBound().name()),EffectBound.valueOf(e.unknownExposureBound().name()),
-                        EnvironmentEffect.valueOf(e.environment().name()),EffectValueTransform.valueOf(e.values().name()),EffectProof.valueOf(e.proof().name())))));
+                    effectSummary(plan.position().statement(),inputs).map(e->projectEffects(e,referenceIds))));
             gaps.add(new CobolSemanticProduct.Gap(statementId,
                     CobolSemanticProduct.GapScope.CAPABILITY,
                     plan.capability().gapCode(),

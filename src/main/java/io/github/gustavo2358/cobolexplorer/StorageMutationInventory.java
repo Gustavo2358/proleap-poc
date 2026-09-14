@@ -59,7 +59,7 @@ final class StorageMutationInventory {
 
     static StorageMutationInventory analyze(CompilationUnitBuildResult frontend,CompilationUnitModel.ProgramUnit unit,
             Layout layout,Map<Key,StorageAccessSemantics.Access> accesses,
-            Map<Key,List<StorageAccessSemantics.Move>> moves,CicsProgramControlAnalyzer.Contribution cics) {
+            Map<Key,List<StorageAccessSemantics.Move>> moves,Map<Key,StatementEffectSummary> effects,CicsProgramControlAnalyzer.Contribution cics) {
         var gaps=new LinkedHashSet<StorageInitialSemantics.Reason>();var writes=new HashMap<Key,List<Interval>>();
         var exposedRegions=new HashMap<Key,List<Interval>>();var unknownExposures=new LinkedHashSet<Key>();
         var bases=new HashMap<Key,Base>();layout.bases().forEach(b->bases.put(b.id(),b));
@@ -84,7 +84,7 @@ final class StorageMutationInventory {
             if(node instanceof Ast.Program) {gaps.add(StorageInitialSemantics.Reason.FOREIGN_MUTATION_OR_ESCAPE);continue;}
             if(node instanceof Ast.Statement statement) {
                 var finding=coverage.get(node.meta().id());
-                var summary=StatementEffectSummary.of(statement);
+                var summary=Optional.ofNullable(effects.get(new Key(unit.id(),node.meta().id())));
                 boolean bounded=summary.filter(StatementEffectSummary::completeMutationBound).isPresent();
                 boolean embeddedInputOnly=cics.localStorageInputOnly(unit.id(),node);
                 if(finding==null||(!embeddedInputOnly&&!bounded&&finding.coverage()!=SemanticCoverage.ConstructionCoverage.MODELED))

@@ -31,10 +31,10 @@ class SemanticProductCheckpoint7JsonTest {
     private static final ObjectMapper JSON = new ObjectMapper();
     private static final List<String> ROOT_FIELD_ORDER = List.of(
             "schema", "contractVersion", "unit", "policy", "dataDeclarations",
-            "statements", "structure", "gaps", "coverage", "entryInventory", "storageIndependence", "storage");
+            "statements", "structure", "gaps", "coverage", "entryInventory", "storageIndependence", "storage", "statementEffects");
     private static final Set<String> ROOT_FIELDS = Set.of(
             "schema", "contractVersion", "unit", "policy", "dataDeclarations",
-            "statements", "structure", "gaps", "coverage", "entryInventory", "storageIndependence", "storage");
+            "statements", "structure", "gaps", "coverage", "entryInventory", "storageIndependence", "storage", "statementEffects");
     private static final Set<String> VOLATILE_FIELDS = Set.of(
             "timestamp", "elapsedms", "thread", "objectid", "memoryaddress",
             "generatedat", "nonce");
