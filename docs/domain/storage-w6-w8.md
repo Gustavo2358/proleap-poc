@@ -111,3 +111,12 @@ W7.3: fixture misto combina escalar inteiro usado por controle, grupo com VALUE 
 REDEFINES, OCCURS e NATIONAL. Os dois últimos mantêm extensão/codec desconhecidos,
 sem ampliar o perfil. Prova de alocação local separa componentes, enquanto EXTERNAL
 remove a prova; CALL literal permanece publicado em ambos os casos.
+
+W7.1 composição com BASIC PERFORM: a prova de término de MOVE já admitido pelo
+perfil regional pode compor o corpo linear existente. A análise canônica de
+controle recebe um conjunto de statements com conclusão provada, construído em
+O(m) a partir de fatos escalares ou de todas as transferências regionais exatas
+da ocorrência. Ela não converte uma operação regional em fato escalar. Provas de
+entrada isolada, corpo linear, origem exata e retorno ao callsite seguem intactas.
+MUST_UNKNOWN/UNAVAILABLE não fortalecem esse conjunto. O caso VALUE child →
+PERFORM com overwrite → retorno é o oracle, e MOVE não provado mantém fallback.
