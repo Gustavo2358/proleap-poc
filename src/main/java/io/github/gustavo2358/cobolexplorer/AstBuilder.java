@@ -767,6 +767,9 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
     @Override public Ast.Node visitExhibitStatement(CobolParser.ExhibitStatementContext ctx) { return preserved(ctx); }
     @Override public Ast.Node visitExecCicsStatement(CobolParser.ExecCicsStatementContext ctx) { return buildEmbedded(ctx, Ast.EmbeddedLanguage.CICS); }
     @Override public Ast.Node visitExecSqlStatement(CobolParser.ExecSqlStatementContext ctx) { return buildEmbedded(ctx, Ast.EmbeddedLanguage.SQL); }
+    @Override public Ast.Node visitExecDliStatement(CobolParser.ExecDliStatementContext ctx) {
+        return new Ast.EmbeddedLanguageStatement(meta(ctx), Ast.EmbeddedLanguage.DLI, DliRegion.payload(sourceText(ctx)));
+    }
     @Override public Ast.Node visitExecSqlImsStatement(CobolParser.ExecSqlImsStatementContext ctx) { return buildEmbedded(ctx, Ast.EmbeddedLanguage.SQLIMS); }
     @Override public Ast.Node visitExitStatement(CobolParser.ExitStatementContext ctx) { return modeled(ctx); }
     @Override public Ast.Node visitGenerateStatement(CobolParser.GenerateStatementContext ctx) { return preserved(ctx); }
@@ -1012,7 +1015,7 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
         result.addAll(PRESERVED_STATEMENTS);
         result.addAll(Set.of("callStatement", "ifStatement", "evaluateStatement", "performStatement",
                 "goToStatement", "moveStatement", "execSqlStatement", "execCicsStatement",
-                "execSqlImsStatement", "nextSentenceStatement", "gobackStatement"));
+                "execSqlImsStatement", "execDliStatement", "nextSentenceStatement", "gobackStatement"));
         return Set.copyOf(result);
     }
 

@@ -60,7 +60,7 @@ class ExecDliOpaqueTest {
     void normalizedSliceIsLossless(String newline) {
         String body = "           EXEC DLI GU  PCB(1)\n"
                 + "      * END-EXEC EXEC DLI false delimiter 😀\n"
-                + "           TEXT('END-EXEC '' } *>EXECDLI 中文 😀')\n"
+                + "           TEXT('END-EXEC}*>ENDDLI '' } 中文 😀')\n"
                 + "           TEXT(\"END-EXEC \"\" }\") *> END-EXEC EXEC CICS\n"
                 + "           NAME(X-END-EXEC END-EXEC-X)\n"
                 + "           END-EXEC.\n           GOBACK.\n";
@@ -110,6 +110,89 @@ class ExecDliOpaqueTest {
                 assertFalse(division.normalContinuations().containsKey(dli.meta().id()));
             }
         }
+    }
+
+    @Test void transportTagsAndCommentWordsStayInsideTheirOwnRegion() {
+        String raw = "EXEC DLI GU\n           T('*>EXECDLI{END-EXEC}*>ENDDLI')\n"
+                + "           *> EXEC MYSTERY END-EXEC }*>ENDDLI\n           END-EXEC";
+        var analysis = analyze("           " + raw + "\n           EXEC DLI TERM END-EXEC\n           GOBACK.");
+        assertEquals(raw.replace("\n           ", "\n    "), embedded(analysis).get(0).rawText());
+        assertEquals("EXEC DLI TERM END-EXEC", embedded(analysis).get(1).rawText());
+        assertEquals(3, AstBoundaryTestSupport.nodes(analysis, Ast.Statement.class).size());
+        var finding = analysis.build().coverageByProgramUnit().get(analysis.model().programUnits().get(0).id())
+                .findings().stream().filter(f -> f.astNodeId() == embedded(analysis).get(0).meta().id()).findFirst().orElseThrow();
+        assertEquals(SemanticCoverage.ConstructionCoverage.PRESERVED_UNINTERPRETED, finding.coverage());
+        assertEquals(SemanticCoverage.DependencyKnowledge.DEPENDENCY_UNKNOWN, finding.dependencyKnowledge());
+    }
+
+    @Test void jsonAndReadinessKeepDliUnknown() throws Exception {
+        var state = project(analyze("           EXEC DLI TERM END-EXEC\n           GOBACK."));
+        var port = io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticPort.open(state);
+        byte[] bytes = io.github.gustavo2358.cobolexplorer.semanticproduct.transport.SemanticProductJsonWriter.serialize(port);
+        var json = new com.fasterxml.jackson.databind.ObjectMapper().readTree(bytes);
+        var fact = json.path("statements").get(0);
+        assertEquals("OBSERVED", fact.path("variant").asText());
+        assertEquals("OPAQUE_DLI", fact.path("observedShape").asText());
+        assertEquals("UNAVAILABLE", fact.path("normalContinuation").path("availability").asText());
+        assertTrue(fact.path("knownReferences").isArray());
+        assertEquals(0, fact.path("knownReferences").size());
+        var audit = io.github.gustavo2358.cobolexplorer.semanticproduct.consumer.CobolLoweringReadinessConsumer.audit(port);
+        var observed = assertInstanceOf(io.github.gustavo2358.cobolexplorer.semanticproduct.consumer.CobolLoweringReadinessConsumer.ObservedAudit.class, audit.statements().get(0));
+        assertEquals("OPAQUE_DLI", observed.observedShape());
+        assertEquals(CobolSemanticProduct.ReadinessStatus.BLOCKED, observed.header().readiness().lowering().status());
+        assertFalse(observed.header().gaps().isEmpty());
+    }
+
+    @Test void realCicsBeforeAndAfterIsIsolatedInEveryEntryMode() {
+        var analysis = analyze("           EXEC CICS LINK PROGRAM(WS-NAME) END-EXEC\n"
+                + "           EXEC DLI GU PROGRAM(WS-NAME) LINK XCTL SQL\n"
+                + "           END-EXEC\n"
+                + "           EXEC CICS XCTL PROGRAM('AFTER') END-EXEC\n"
+                + "           GOBACK.");
+        var unit = analysis.model().programUnits().get(0).id();
+        var nodes = embedded(analysis);
+        assertEquals(1, nodes.get(0).hostOperands().size());
+        assertTrue(nodes.get(1).hostOperands().isEmpty());
+        assertEquals(1, analysis.occurrences().get(unit).occurrences().size());
+        for (var mode : CicsProgramControlAnalyzer.EntryMode.values()) {
+            var cics = new CicsProgramControlAnalyzer().analyze(analysis.build(), analysis.report(), mode);
+            assertTrue(cics.fact(unit, nodes.get(1).meta().id()).isEmpty());
+            if (mode == CicsProgramControlAnalyzer.EntryMode.DISABLED) {
+                assertTrue(cics.fact(unit, nodes.get(0).meta().id()).isEmpty());
+                assertTrue(cics.fact(unit, nodes.get(2).meta().id()).isEmpty());
+                continue;
+            }
+            assertEquals("WS-NAME", cics.fact(unit, nodes.get(0).meta().id()).orElseThrow().host().orElseThrow());
+            assertEquals("AFTER", cics.fact(unit, nodes.get(2).meta().id()).orElseThrow().literal().orElseThrow());
+            var base = ScalarMoveCheckpoint4ATest.products(analysis);
+            var state = CobolSemanticProductProjector.project(new CobolSemanticProductProjector.FrontendProducts(
+                    base.frontend(), base.symbolTables(), base.occurrencesByUnit(), base.resolution(), base.report(),
+                    base.scalarMoves(), base.storage(), java.util.Optional.of(cics)), unit);
+            assertEquals(2, state.statements().stream().filter(f -> f instanceof CobolSemanticProduct.CicsFact).count());
+            assertEquals("OPAQUE_DLI", ((CobolSemanticProduct.ObservedStatement)state.statements().get(1)).observedShape());
+        }
+        var disabled = project(analysis);
+        assertEquals(List.of("OPAQUE_CICS", "OPAQUE_DLI", "OPAQUE_CICS"), disabled.statements().stream()
+                .filter(CobolSemanticProduct.ObservedStatement.class::isInstance)
+                .map(CobolSemanticProduct.ObservedStatement.class::cast).map(CobolSemanticProduct.ObservedStatement::observedShape).toList());
+    }
+
+    @Test void bareCrBetweenUnterminatedStatementsIsNotLexerRecovery() throws Exception {
+        String raw = source("           MOVE 'A' TO WS-NAME\r           EXEC DLI TERM END-EXEC\r           GOBACK.");
+        var norm = SourceNormalizer.normalize(raw, "cr-adjacent.cbl", SourceNormalizer.SourceFormat.FIXED);
+        var pre = preprocess(norm.text());
+        var lexer = Bindings.cobol().cobolLexer(org.antlr.v4.runtime.CharStreams.fromString(pre.text()));
+        var diagnostics = new java.util.ArrayList<Diagnostic>();
+        lexer.removeErrorListeners();
+        lexer.addErrorListener(new AntlrDiagnosticListener("COBOL", Diagnostic.Phase.LEXER, "cr-adjacent.cbl", diagnostics));
+        new org.antlr.v4.runtime.CommonTokenStream(lexer).fill();
+        assertTrue(diagnostics.isEmpty(), diagnostics.toString());
+        assertEquals(3, AstBoundaryTestSupport.nodes(AstBoundaryTestSupport.analyze(pre, "cr-adjacent.cbl"), Ast.Statement.class).size());
+    }
+
+    @Test void bareCrHostRecordsRemainValidOutsideDli() {
+        var analysis = AstBoundaryTestSupport.analyze(source("           GOBACK.\n").replace("\n", "\r"), "cr.cbl");
+        assertEquals(1, AstBoundaryTestSupport.nodes(analysis, Ast.GobackStatement.class).size());
     }
 
     static PreprocessorEngine.Outcome preprocess(String normalized) throws Exception {
