@@ -488,3 +488,15 @@ CORRESPONDING publishes each implicit pair with declaration identity/origin and
 its own regional effect. Both primary and additional sources can differ. The
 sequence contains only selected pairs; unmatched bytes are not written. Matching
 is owned by StorageCorrespondence, never by a projector or downstream consumer.
+
+### ST-W7.1 / SP2.12, storage1.3
+
+`storage.entryState` é obrigatório: `{mode,conditions}`; mode é INITIAL,
+PRESERVED ou UNKNOWN. Conditions contém `{node,kind,bytes,gapCodes,provenance}`.
+Node referencia uma declaração física existente, única por condição.
+LITERAL_BYTES exige modo INITIAL, origem exata e bytes no extent integral da
+vista com codec provado; PRESERVE exige modo PRESERVED; UNKNOWN exige gaps e
+nenhum byte. Ausência de condições nunca implica zero. O CLI seleciona o perfil
+de invocação com `--entry-storage-state initial|preserved|unknown` (default unknown).
+A publicação de VALUE é canônica no frontend; projector não interpreta cláusulas.
+Não há MOVE sintético nem condição reaplicada em retorno/backedge.

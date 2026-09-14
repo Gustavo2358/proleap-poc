@@ -80,3 +80,29 @@ SP2.11 já transporta a sequência de pares como source/target/effect, com IDs e
 provenance de declaração e statement. Lower não faz matching nem cópia de grupo.
 Oracle: SRC A(2),FILLER(1),B(2),ONLY-S(1); DST B(1),ONLY-D(3),A(4)
 produz apenas A→A (2→4) e B→B (2→1), nessa ordem; bytes de ONLY-D preservados.
+
+## ST-W7.1 — VALUE e perfil explícito de entrada
+
+Autoridade: IBM Enterprise COBOL6.4 VALUE format1 e WORKING-STORAGE
+(https://www.ibm.com/docs/en/cobol-zos/6.4.0?topic=vc-format-1;
+https://www.ibm.com/docs/en/cobol-zos/6.4.0?topic=overview-working-storage-section),
+conteúdo indexado IBM consultado2026-09-14; páginas diretas403. WORKING-STORAGE
+persiste no último estado; VALUE assegura a primeira inicialização, não todo
+reingresso. Não se infere primeira chamada de Entry PRIMARY.
+
+Perfil explícito --entry-storage-state initial|preserved|unknown, default unknown.
+INITIAL é condição de execução selecionada pelo produtor/usuário, não fato
+inferido da grafia do programa. Literais alfanuméricos simples no layout fixo1047
+podem fornecer condição simultânea inicial; texto curto recebe SPACE à direita;
+literal maior que a área é inválido para VALUE e não é truncado como MOVE.
+PRESERVED publica preservação; UNKNOWN mantém razão explícita. Sem VALUE, bytes
+permanecem abertos. VALUE não altera tamanho/layout e nunca gera MOVE de fluxo.
+VALUE subordinado a VALUE ou a REDEFINES é excluído pela regra fonte. OCCURS,
+NATIONAL, numérico, figurativos e programas especiais continuam fora do subset.
+
+Algoritmo: uma visita indexada a declarações, carregando flags ancestrais VALUE/
+REDEFINES; mapa de views físicas preparado. Emitir condições por declaração, sem
+varrer pares/bytes desconhecidos. Literal1047 provado e padding explícito apenas
+para faixa conhecida; lower recebe fatos e modo, sem parsingdeVALUE. Origem inclui
+cláusula VALUE e declaração. AIR EntryState existente é a fronteira canônica;
+contradição entre condições regionais é erro, não last-write-wins.

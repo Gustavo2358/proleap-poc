@@ -204,7 +204,13 @@ public final class CobolSemanticProductProjector {
                     new StorageRelationId(inputs.boundaryUnit(),r.clause().meta().id()),storageNode(inputs,r.owner()),
                     r.from().map(id->storageNode(inputs,id)),r.through().map(id->storageNode(inputs,id)),
                     r.proved()?StorageRelationStatus.PROVEN:StorageRelationStatus.UNPROVEN,provenance(r.clause().meta().provenance()),
-                    r.proved()?List.of():List.of("RENAMES_NOT_PROVEN"))).toList());
+                    r.proved()?List.of():List.of("RENAMES_NOT_PROVEN"))).toList(),initialStorage(inputs));
+    }
+    private static StorageEntryState initialStorage(ProjectionInputs inputs) {
+        var facts=inputs.products().storage().orElseThrow().initial().facts(inputs.unitId());
+        return new StorageEntryState(StorageEntryMode.valueOf(facts.mode().name()),facts.conditions().stream().map(c->
+            new StorageInitialCondition(storageNode(inputs,c.declaration()),InitialStorageKind.valueOf(c.kind().name()),c.bytes(),
+                c.reasons().stream().map(Enum::name).toList(),provenance(c.origin()))).toList());
     }
     private static Optional<RegionalAccess> regionalAccess(ProjectionInputs inputs, int reference) {
         return inputs.products().storage().flatMap(s->s.access(new StorageLayoutSemantics.Key(inputs.unitId(),reference)))

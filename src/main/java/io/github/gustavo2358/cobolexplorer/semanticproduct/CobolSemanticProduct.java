@@ -596,13 +596,31 @@ public final class CobolSemanticProduct {
             gapCodes.forEach(code -> requireText(code, "regional MOVE gap"));
         }
     }
+    public enum StorageEntryMode { UNKNOWN, INITIAL, PRESERVED }
+    public enum InitialStorageKind { LITERAL_BYTES, PRESERVE, UNKNOWN }
+    public record StorageInitialCondition(StorageNodeId node,InitialStorageKind kind,List<Integer> bytes,List<String> gapCodes,Provenance provenance) {
+        public StorageInitialCondition {
+            Objects.requireNonNull(node);Objects.requireNonNull(kind);Objects.requireNonNull(provenance);bytes=List.copyOf(bytes);gapCodes=List.copyOf(gapCodes);
+            require(bytes.stream().allMatch(b->b>=0&&b<=255),"invalid initial octet");
+            require(kind==InitialStorageKind.LITERAL_BYTES||bytes.isEmpty(),"only literal initialization carries bytes");
+            require((kind==InitialStorageKind.UNKNOWN)==!gapCodes.isEmpty(),"unknown initial state requires gaps");
+            gapCodes.forEach(g->requireText(g,"initial storage gap"));
+        }
+    }
+    public record StorageEntryState(StorageEntryMode mode,List<StorageInitialCondition> conditions) {
+        public StorageEntryState {Objects.requireNonNull(mode);conditions=List.copyOf(conditions);}
+        public static StorageEntryState unknown() {return new StorageEntryState(StorageEntryMode.UNKNOWN,List.of());}
+    }
     public record StorageInventory(StorageProfile profile, List<PhysicalNode> nodes, List<StorageBase> bases,
-            List<StorageView> views, List<String> gapCodes, List<StorageRelation> relations, List<StorageRenames> renames) {
+            List<StorageView> views, List<String> gapCodes, List<StorageRelation> relations, List<StorageRenames> renames,StorageEntryState entryState) {
         public StorageInventory {
-            Objects.requireNonNull(profile); nodes = List.copyOf(nodes); bases = List.copyOf(bases);
+            Objects.requireNonNull(entryState);Objects.requireNonNull(profile); nodes = List.copyOf(nodes); bases = List.copyOf(bases);
             views = List.copyOf(views); gapCodes = List.copyOf(gapCodes); relations=List.copyOf(relations);renames=List.copyOf(renames);
             gapCodes.forEach(code -> requireText(code, "storage gap"));
             require(profile != StorageProfile.UNSPECIFIED || !gapCodes.isEmpty(), "absent environment requires a gap");
+        }
+        public StorageInventory(StorageProfile profile,List<PhysicalNode> nodes,List<StorageBase> bases,List<StorageView> views,List<String> gapCodes,List<StorageRelation> relations,List<StorageRenames> renames) {
+            this(profile,nodes,bases,views,gapCodes,relations,renames,StorageEntryState.unknown());
         }
         public StorageInventory(StorageProfile profile,List<PhysicalNode> nodes,List<StorageBase> bases,List<StorageView> views,List<String> gapCodes,List<StorageRelation> relations) {
             this(profile,nodes,bases,views,gapCodes,relations,List.of());
@@ -1192,6 +1210,18 @@ public final class CobolSemanticProduct {
                     "child view exceeds physical parent");
         });
         StorageRenamesContract.validate(unit,inventory,nodes,views,relationIds);
+        var initialNodes=new HashSet<StorageNodeId>();
+        for(var condition:inventory.entryState().conditions()) {
+            require(nodes.containsKey(condition.node())&&initialNodes.add(condition.node()),"initial condition needs unique existing physical node");
+            if(condition.kind()!=InitialStorageKind.UNKNOWN) {
+                var view=views.get(condition.node());
+                require(condition.provenance().exact()&&view.codec().isPresent()&&view.offset().value().isPresent()&&view.extent().value().isPresent()
+                    &&bases.get(view.base()).extent().value().isPresent(),"precise initial condition needs exact provenance and bounded supported view");
+                require(condition.kind()==InitialStorageKind.LITERAL_BYTES?inventory.entryState().mode()==StorageEntryMode.INITIAL
+                    &&view.extent().value().get().equals(BigInteger.valueOf(condition.bytes().size())):inventory.entryState().mode()==StorageEntryMode.PRESERVED,
+                    "initial condition contradicts entry mode or extent");
+            }
+        }
         for (var statement : statements) {
             for (var ref : references(statement)) ref.regionalAccess().ifPresent(access -> {
                 var view = views.get(access.view()); var node = nodes.get(access.view());

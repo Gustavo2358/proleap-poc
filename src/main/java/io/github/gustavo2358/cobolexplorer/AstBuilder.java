@@ -364,7 +364,9 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
         if (context instanceof CobolParser.DataValueClauseContext) {
             List<String> values = ((CobolParser.DataValueClauseContext) context).dataValueInterval().stream()
                     .map(this::sourceText).map(String::strip).toList();
-            return new Ast.ValueClause(meta, values, writtenText);
+            var intervals=((CobolParser.DataValueClauseContext)context).dataValueInterval();
+            var single=intervals.size()==1&&intervals.get(0).dataValueIntervalTo()==null?intervals.get(0).dataValueIntervalFrom().literal():null;
+            return new Ast.ValueClause(meta, values, writtenText,single==null?Optional.empty():basicLogicalText(single));
         }
         if (context instanceof CobolParser.DataRedefinesClauseContext) {
             return new Ast.RedefinesClause(meta,

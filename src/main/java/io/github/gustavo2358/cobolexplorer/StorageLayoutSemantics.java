@@ -135,6 +135,7 @@ public final class StorageLayoutSemantics {
             known&=modeled(clause,coverage);
             if(clause instanceof Ast.PictureClause picture){pictures++;extent=picture.textExtent().map(BigInteger::valueOf);}
             else if(clause instanceof Ast.UsageClause usage&&usage.display())usages++;
+            else if(clause instanceof Ast.ValueClause) { /* Initial content does not change physical extent. */ }
             else if(clause instanceof Ast.RedefinesClause) { /* Physical relation is proved by StorageComponents. */ }
             else known=false;
         }

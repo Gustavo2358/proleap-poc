@@ -15,18 +15,23 @@ public final class StorageAccessSemantics {
         public Move { bytes=List.copyOf(bytes);reasons=List.copyOf(reasons); }
     }
     private final StorageLayoutSemantics layout;
+    private final StorageInitialSemantics initial;
+    public StorageInitialSemantics initial() {return initial;}
     public StorageLayoutSemantics layout() { return layout; }
     public boolean belongsTo(CompilationUnitBuildResult frontend, ReferenceResolution resolution) { return layout.belongsTo(frontend, resolution); }
     private final Map<Key,Access> accesses;
     private final Map<Key,Move> moves;
     private final Map<Key,List<Move>> sequences;
     public List<Move> sequence(Key statement) { return sequences.getOrDefault(statement,List.of()); }
-    private StorageAccessSemantics(StorageLayoutSemantics layout,Map<Key,Access> accesses,Map<Key,Move> moves,Map<Key,List<Move>> sequences){this.layout=layout;this.accesses=Map.copyOf(accesses);this.moves=Map.copyOf(moves);this.sequences=Map.copyOf(sequences);}
+    private StorageAccessSemantics(StorageLayoutSemantics layout,Map<Key,Access> accesses,Map<Key,Move> moves,Map<Key,List<Move>> sequences,StorageInitialSemantics initial){this.initial=initial;this.layout=layout;this.accesses=Map.copyOf(accesses);this.moves=Map.copyOf(moves);this.sequences=Map.copyOf(sequences);}
     public Optional<Access> access(Key reference){return Optional.ofNullable(accesses.get(reference));}
     public Collection<Access> accesses(){return accesses.values();}
     public Collection<Move> moves(){return moves.values();}
     public Move move(Key statement){return Objects.requireNonNull(moves.get(statement),"unknown MOVE");}
     public static StorageAccessSemantics analyze(CompilationUnitBuildResult frontend,ReferenceResolution resolution,StorageLayoutSemantics layout) {
+        return analyze(frontend,resolution,layout,StorageInitialSemantics.EntryMode.UNKNOWN);
+    }
+    public static StorageAccessSemantics analyze(CompilationUnitBuildResult frontend,ReferenceResolution resolution,StorageLayoutSemantics layout,StorageInitialSemantics.EntryMode mode) {
         if(!layout.belongsTo(frontend,resolution))throw new IllegalArgumentException("layout and binding proof belong to another snapshot");
         var bindings=new HashMap<Key,ReferenceResolution.Entry>();
         for(var entry:resolution.entries())bindings.put(new Key(entry.occurrence().programUnitId(),entry.occurrence().referenceAstNodeId()),entry);
@@ -90,7 +95,7 @@ public final class StorageAccessSemantics {
                 moves.put(statement,effects.get(0));sequences.put(statement,List.copyOf(effects));
             }
         }
-        return new StorageAccessSemantics(layout,accesses,moves,sequences);
+        return new StorageAccessSemantics(layout,accesses,moves,sequences,StorageInitialSemantics.analyze(frontend,resolution,layout,mode));
     }
     private static Move effect(Key statement,Optional<Access> destination,Optional<Access> source,Ast.Expression expression,
             Profile profile,Map<Key,Base> bases,Ast.SourceProvenance origin) {
