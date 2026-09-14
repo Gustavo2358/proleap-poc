@@ -18,7 +18,7 @@ class StatementModelAstTest {
                 grammar.indexOf("\n   ;", grammar.indexOf("statement\n   :")));
         Set<String> grammarRules = new LinkedHashSet<>(List.of(alternatives
                 .replace(":", " ").replace("|", " ").trim().split("\\s+")));
-        assertEquals(50, grammarRules.size());
+        assertEquals(51, grammarRules.size());
         assertEquals(grammarRules, AstBuilder.supportedStatementRules());
     }
 

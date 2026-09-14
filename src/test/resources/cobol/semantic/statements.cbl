@@ -7,6 +7,7 @@
        01 C PIC 9.
        01 REC PIC X.
        PROCEDURE DIVISION.
+           *>EXECDLI{EXEC DLI TERM END-EXEC}*>ENDDLI.
            ACCEPT A
            ADD 1 TO A
            ALTER P1 TO PROCEED TO P2

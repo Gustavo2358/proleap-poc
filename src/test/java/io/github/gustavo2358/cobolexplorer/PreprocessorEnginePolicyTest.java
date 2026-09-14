@@ -95,6 +95,8 @@ class PreprocessorEnginePolicyTest {
                 PreprocessorEngine.policyFor("replaceArea"));
         assertEquals(PreprocessorEngine.PreprocessorPolicy.UNSUPPORTED,
                 PreprocessorEngine.policyFor("replaceOffStatement"));
+        assertEquals(PreprocessorEngine.PreprocessorPolicy.PRESERVE_EMBEDDED_LANGUAGE,
+                PreprocessorEngine.policyFor("execDliStatement"));
         assertThrows(IllegalStateException.class,
                 () -> PreprocessorEngine.policyFor("futureGrammarConstruct"));
     }

@@ -22,6 +22,32 @@ Cada alternativa top-level de `CobolPreprocessor.startRule` possui classificaç�
 
 COPY ausente, cíclico ou com erro de I/O produz placeholder mapeado e diagnostic. Para membro não encontrado, `Diagnostic.Code.UNRESOLVED_COPY` é a identidade semântica estruturada; `Outcome.unresolved()` é derivado desses fatos, que preservam nome solicitado e localização em ordem determinística. A mensagem humana continua útil, mas seu wording não participa de contagem, composição ou geração de gaps. Ausência de copybook mantém a execução observável como incompleta; não equivale a COPY vazio nem exige interromper fases posteriores quando o placeholder ainda permite construir seus produtos coerentemente. COPY cíclico e falha de I/O conservam a política anterior e não pertencem a esse fallback.
 
+## EXEC DLI opaco
+
+`execDliStatement` possui policy `PRESERVE_EMBEDDED_LANGUAGE` e um token
+`EXECDLIBLOCK` próprio. A abertura é `EXEC`, separadores físicos e `DLI` com
+fronteira de palavra. `DliRegion` percorre o slice normalizado em tempo linear,
+com estados para literal (inclusive aspas duplicadas), comentário inline e
+palavra. Apenas `END-EXEC` real fora desses estados fecha a região; EOF, literal
+aberto, outro `EXEC` real e payload vazio/comentário-only falham explicitamente.
+Não há fallback para `EXEC` desconhecido nem fechamento sintetizado pelo parser.
+
+O transporte é `*>EXECDLI{` + slice normalizado original + `}*>ENDDLI`.
+O segundo lexer valida novamente a fronteira lexical e exige o sufixo imediatamente
+após o delimitador real. Cada região é um único token multiline; nenhum `+`
+agrega blocos adjacentes. Chaves e tags dentro do payload não são delimitadores.
+Espaços, comentários normalizados, Unicode e LF/CRLF/CR permanecem verbatim.
+O período COBOL permanece fora do token. As regras `NEWLINE` das duas gramáticas
+aceitam os três terminadores já preservados pelo normalizador.
+
+A fronteira valida o enquadramento lexical, não comandos/opções IMS. Texto COBOL
+acidental antes de um `END-EXEC` posterior, sem violação lexical ou novo `EXEC`,
+não é distinguível de payload opaco. COPY REPLACING mantém o mecanismo existente;
+se corromper o framing, o lexer COBOL falha em vez de publicar DLI recuperado.
+As transformações usam `transformedSlice`/`replaceAll`, com origem aproximada,
+sem alteração de SourceMap ou normalização. Esta capability não determina
+referências, efeitos nem controle IMS.
+
 ## Provenance e determinismo
 
 Expansões compõem os segmentos existentes e acrescentam `CopyFrame`; `REPLACING`
@@ -35,11 +61,11 @@ O processamento percorre a parse tree e resolve COPYs pelo repositório configur
 
 ## Fronteiras explícitas
 
-O preprocessor não resolve símbolos COBOL, não interpreta payload de SQL/CICS/SQLIMS, não busca membros fora dos diretórios configurados e não inventa configuração ausente. Modos não especificados permanecem valores explícitos na policy posterior. A composição posterior, não o preprocessor, decide quais fases possuem pré-requisitos estruturais sob input incompleto.
+O preprocessor não resolve símbolos COBOL, não interpreta payload de SQL/CICS/SQLIMS/DLI, não busca membros fora dos diretórios configurados e não inventa configuração ausente. Modos não especificados permanecem valores explícitos na policy posterior. A composição posterior, não o preprocessor, decide quais fases possuem pré-requisitos estruturais sob input incompleto.
 
 ## Evidência executável
 
-`PreprocessorEnginePolicyTest`, `SourceNormalizationPreprocessingIntegrationTest`, `SourceProvenanceTest` e regressão do normalizador.
+`ExecDliOpaqueTest`, `ExecDliProvenanceTest`, `PreprocessorEnginePolicyTest`, `SourceNormalizationPreprocessingIntegrationTest`, `SourceProvenanceTest` e regressão do normalizador.
 
 ## Relações
 

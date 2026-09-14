@@ -1161,7 +1161,7 @@ sentence
    ;
 
 statement
-   : acceptStatement | addStatement | alterStatement | callStatement | cancelStatement | closeStatement | computeStatement | continueStatement | deleteStatement | disableStatement | displayStatement | divideStatement | enableStatement | entryStatement | evaluateStatement | exhibitStatement | execCicsStatement | execSqlStatement | execSqlImsStatement | exitStatement | generateStatement | gobackStatement | goToStatement | ifStatement | initializeStatement | initiateStatement | inspectStatement | mergeStatement | moveStatement | multiplyStatement | nextSentenceStatement | openStatement | performStatement | purgeStatement | readStatement | receiveStatement | releaseStatement | returnStatement | rewriteStatement | searchStatement | sendStatement | setStatement | sortStatement | startStatement | stopStatement | stringStatement | subtractStatement | terminateStatement | unstringStatement | writeStatement
+   : acceptStatement | addStatement | alterStatement | callStatement | cancelStatement | closeStatement | computeStatement | continueStatement | deleteStatement | disableStatement | displayStatement | divideStatement | enableStatement | entryStatement | evaluateStatement | exhibitStatement | execCicsStatement | execSqlStatement | execSqlImsStatement | execDliStatement | exitStatement | generateStatement | gobackStatement | goToStatement | ifStatement | initializeStatement | initiateStatement | inspectStatement | mergeStatement | moveStatement | multiplyStatement | nextSentenceStatement | openStatement | performStatement | purgeStatement | readStatement | receiveStatement | releaseStatement | returnStatement | rewriteStatement | searchStatement | sendStatement | setStatement | sortStatement | startStatement | stopStatement | stringStatement | subtractStatement | terminateStatement | unstringStatement | writeStatement
    ;
 
 // accept statement
@@ -1480,6 +1480,10 @@ execSqlStatement
 
 execSqlImsStatement
    : EXECSQLIMSLINE+
+   ;
+
+execDliStatement
+   : EXECDLIBLOCK
    ;
 
 // exhibit statement
@@ -3231,8 +3235,14 @@ NUMERICLITERAL : (PLUSCHAR | MINUSCHAR)? [0-9]* (DOT | COMMACHAR) [0-9]+ (('e' |
 IDENTIFIER : [a-zA-Z0-9]+ ([-_]+ [a-zA-Z0-9]+)*;
 
 // whitespace, line breaks, comments, ...
-NEWLINE : '\r'? '\n' -> channel(HIDDEN);
+NEWLINE : ('\r\n' | '\n' | '\r') -> channel(HIDDEN);
 EXECCICSLINE : EXECCICSTAG WS ~('\n' | '\r' | '}')* ('\n' | '\r' | '}');
+// Exactly one multiline token per DLI, ending at its validated real delimiter.
+EXECDLIBLOCK
+   : '*>EXECDLI{' E X E C [ \t\r\n]+ D L I
+     {!io.github.gustavo2358.cobolexplorer.DliRegion.wordPart(_input.LA(1))}?
+     {io.github.gustavo2358.cobolexplorer.DliRegion.consumeBody(this, true);}
+   ;
 EXECSQLIMSLINE : EXECSQLIMSTAG WS ~('\n' | '\r' | '}')* ('\n' | '\r' | '}');
 EXECSQLLINE : EXECSQLTAG WS ~('\n' | '\r' | '}')* ('\n' | '\r' | '}');
 COMMENTENTRYLINE : COMMENTENTRYTAG WS ~('\n' | '\r')*;

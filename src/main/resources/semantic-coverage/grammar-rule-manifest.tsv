@@ -339,6 +339,7 @@ COBOL	evaluateValue	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNO
 COBOL	execCicsStatement	STATEMENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Embedded-language payload is preserved opaquely and requires a future plugin.
 COBOL	execSqlStatement	STATEMENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Embedded-language payload is preserved opaquely and requires a future plugin.
 COBOL	execSqlImsStatement	STATEMENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Embedded-language payload is preserved opaquely and requires a future plugin.
+COBOL	execDliStatement	STATEMENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	DLI region is preserved opaquely; IMS dependencies, effects and control remain unknown.
 COBOL	exhibitStatement	STATEMENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement has a grammar-specific preserved node and requires later semantic interpretation.
 COBOL	exhibitOperand	STATEMENT_COMPONENT	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Statement component is explicitly cataloged but not independently guaranteed by the current AST.
 COBOL	exitStatement	STATEMENT	MODELED	NOT_DEPENDENCY_BEARING	Flow statement is structurally modeled and does not itself name a dependency.
@@ -604,6 +605,7 @@ PREPROCESSOR	compilerOption	PREPROCESSOR	PRESERVED_UNINTERPRETED	NOT_DEPENDENCY_
 PREPROCESSOR	execCicsStatement	PREPROCESSOR	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Preprocessor construct is preserved but not yet represented with semantic provenance.
 PREPROCESSOR	execSqlStatement	PREPROCESSOR	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Preprocessor construct is preserved but not yet represented with semantic provenance.
 PREPROCESSOR	execSqlImsStatement	PREPROCESSOR	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Preprocessor construct is preserved but not yet represented with semantic provenance.
+PREPROCESSOR	execDliStatement	PREPROCESSOR	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	DLI region is preserved opaquely; IMS dependencies, effects and control remain unknown.
 PREPROCESSOR	copyStatement	PREPROCESSOR	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Preprocessor construct is preserved but not yet represented with semantic provenance.
 PREPROCESSOR	copySource	PREPROCESSOR	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Preprocessor construct is preserved but not yet represented with semantic provenance.
 PREPROCESSOR	copyLibrary	PREPROCESSOR	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Preprocessor construct is preserved but not yet represented with semantic provenance.

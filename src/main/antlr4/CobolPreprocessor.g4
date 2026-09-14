@@ -16,7 +16,7 @@
 grammar CobolPreprocessor;
 
 startRule
-   : (compilerOptions | copyStatement | execCicsStatement | execSqlStatement | execSqlImsStatement | replaceOffStatement | replaceArea | ejectStatement | skipStatement | titleStatement | charDataLine | NEWLINE)* EOF
+   : (compilerOptions | copyStatement | execCicsStatement | execSqlStatement | execSqlImsStatement | execDliStatement | replaceOffStatement | replaceArea | ejectStatement | skipStatement | titleStatement | charDataLine | NEWLINE)* EOF
    ;
 
 // compiler options
@@ -167,6 +167,11 @@ execSqlStatement
 
 execSqlImsStatement
    : EXEC SQLIMS charData END_EXEC DOT?
+   ;
+
+// One lexically validated region; the COBOL sentence period stays outside it.
+execDliStatement
+   : EXECDLIBLOCK
    ;
 
 // copy statement
@@ -617,6 +622,13 @@ COMMACHAR : ',';
 DOT : '.';
 DOUBLEEQUALCHAR : '==';
 
+// DLI alone has an opaque lexical boundary. Its action never uses parser recovery.
+EXECDLIBLOCK
+   : E X E C [ \t\r\n]+ D L I
+     {!io.github.gustavo2358.cobolexplorer.DliRegion.wordPart(_input.LA(1))}?
+     {io.github.gustavo2358.cobolexplorer.DliRegion.consumeBody(this, false);}
+   ;
+
 // literals
 NONNUMERICLITERAL : STRINGLITERAL | HEXNUMBER;
 NUMERICLITERAL : [0-9]+;
@@ -636,7 +648,7 @@ FILENAME : [a-zA-Z0-9]+ '.' [a-zA-Z0-9]+;
 
 
 // whitespace, line breaks, comments, ...
-NEWLINE : '\r'? '\n';
+NEWLINE : '\r\n' | '\n' | '\r';
 COMMENTLINE : COMMENTTAG ~('\n' | '\r')* -> channel(HIDDEN);
 WS : [ \t\f;]+ -> channel(HIDDEN);
 TEXT : ~('\n' | '\r');

@@ -28,6 +28,7 @@ final class PreprocessorEngine {
             Map.entry("execCicsStatement", PreprocessorPolicy.PRESERVE_EMBEDDED_LANGUAGE),
             Map.entry("execSqlStatement", PreprocessorPolicy.PRESERVE_EMBEDDED_LANGUAGE),
             Map.entry("execSqlImsStatement", PreprocessorPolicy.PRESERVE_EMBEDDED_LANGUAGE),
+            Map.entry("execDliStatement", PreprocessorPolicy.PRESERVE_EMBEDDED_LANGUAGE),
             Map.entry("replaceOffStatement", PreprocessorPolicy.UNSUPPORTED),
             Map.entry("replaceArea", PreprocessorPolicy.UNSUPPORTED),
             Map.entry("ejectStatement", PreprocessorPolicy.REMOVE),
@@ -234,6 +235,17 @@ final class PreprocessorEngine {
                     }
                 }
             } else if (policy == PreprocessorPolicy.PRESERVE_EMBEDDED_LANGUAGE) {
+                if (rule.equals("execDliStatement")) {
+                    // A lexer-owned real token is the oracle, never a recovered END-EXEC.
+                    if (context.getChildCount() != 1 || !(context.getChild(0) instanceof TerminalNode terminal)
+                            || terminal instanceof ErrorNode || startToken != stopToken
+                            || terminal.getSymbol().getTokenIndex() < 0
+                            || !"EXECDLIBLOCK".equals(parser.getVocabulary().getSymbolicName(startToken.getType()))
+                            || !original.equals(startToken.getText()))
+                        throw new IllegalStateException("EXEC DLI has no real validated region token");
+                    edits.add(new Edit(start, end, document.transformedSlice(start, end, DliRegion.frame(original))));
+                    continue;
+                }
                 String tag = switch (rule) {
                     case "execCicsStatement" -> "*>EXECCICS";
                     case "execSqlStatement" -> "*>EXECSQL";

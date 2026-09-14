@@ -43,7 +43,7 @@ public final class Ast {
     public enum DivisionKind { IDENTIFICATION, ENVIRONMENT, DATA, PROCEDURE }
     public enum SentenceTerminator { PERIOD, END_OF_PROCEDURE }
     public enum PassingMode { REFERENCE, VALUE, CONTENT }
-    public enum EmbeddedLanguage { SQL, CICS, SQLIMS, UNKNOWN }
+    public enum EmbeddedLanguage { SQL, CICS, SQLIMS, DLI, UNKNOWN }
     /** Syntactic form only; linkage is compiler-option-dependent and belongs to resolution. */
     public enum CallTargetSyntax { LITERAL_PROGRAM_NAME, IDENTIFIER_OR_EXPRESSION }
     public enum PerformKind { INLINE, PROCEDURE }

@@ -46,6 +46,11 @@ final class AstBoundaryTestSupport {
         } catch (IOException exception) {
             throw new IllegalStateException("test copybook library must be readable", exception);
         }
+        return analyze(preprocessing, sourceName);
+    }
+
+    static Analysis analyze(PreprocessorEngine.Outcome preprocessing, String sourceName) {
+        GrammarBinding binding = Bindings.cobol();
         assertEquals(0, preprocessing.errors(), "fixture must preprocess without errors");
         String source = preprocessing.text();
         Parser parser = binding.cobolParser(new CommonTokenStream(
@@ -75,7 +80,7 @@ final class AstBoundaryTestSupport {
                 .resolve(model, tables, occurrences);
         SemanticProductIntegrityValidator.validate(model, tables, scopes, occurrences, resolution);
         ResolutionAnalysisReport report = ResolutionAnalysisReport.compose(build,
-                ResolutionAnalysisReport.FrontendState.complete(), occurrences, resolution);
+                new ResolutionAnalysisReport.FrontendState(preprocessing.errors(), 0, 0, preprocessing.diagnostics()), occurrences, resolution);
         return new Analysis(tree, build, model, tables, scopes, occurrences, resolution, report);
     }
 
