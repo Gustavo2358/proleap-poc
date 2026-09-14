@@ -719,6 +719,24 @@ definição do contrato mínimo da IR no mesmo work item, mas ocorre depois dos
 respectivos oracles e decisões de entrada/saída. CFG e dataflow não entram no
 lowerer.
 
+### BACKLOG-LOWER-002 — Preservar observedShape na opacidade AIR
+
+Ownership: handoff cross-repo para `cobol-lower`; trabalho futuro, sem autorização
+de implementação ou repin neste fechamento. Não é blocker retroativo do
+[fix EXEC DLI, concluído no PR #50](exec-dli-fix.md).
+
+O wire SP publica `observedShape=OPAQUE_DLI` corretamente. No lower qualificado
+em `b163cbcc1795962fac3f14ac4c29b73ae93e5f41`, a materialização interna conserva
+`observedKind` e `gapCode`, mas descarta `observedShape`. A operação AIR continua
+opaca, com controle, efeitos e dependências desconhecidos explícitos; a perda
+é descritiva, não uma conversão de desconhecimento em certeza.
+
+Preservar futuramente `observedShape` através do lower até a representação opaca
+da AIR. Oracle focal: SP observado com `OPAQUE_DLI` mantém a identidade
+descritiva após materialização e publicação, sem fechar envelopes, inventar
+referências ou afirmar continuation. Definir a fronteira e os gates no trabalho
+do lower; este item não implementa semântica IMS/DLI nem corrige framing SQLIMS.
+
 ### BACKLOG-IR-001 — Analysis IR
 
 Ownership: handoff cross-repo. O modelo/validator Java da AIR 2.0.0 já pertence
