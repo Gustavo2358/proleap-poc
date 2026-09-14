@@ -26,7 +26,7 @@ import java.util.Objects;
  */
 public final class SemanticProductJsonWriter {
     public static final String SCHEMA = "cobol-semantic-product";
-    public static final String CONTRACT_VERSION = "2.16.0";
+    public static final String CONTRACT_VERSION = "2.17.0";
 
     private static final ObjectMapper JSON = JsonMapper.builder()
             .enable(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY)
@@ -74,8 +74,20 @@ public final class SemanticProductJsonWriter {
                 new StructureDocument(port.rootStatements().stream()
                         .map(SemanticProductJsonWriter::statementHandle).toList(),
                         List.copyOf(branches)), gaps, coverage(port.coverage()),
-                entryInventory(port.entryInventory()), storageIndependence(port.storageIndependence()), storage(port.storage()));
+                entryInventory(port.entryInventory()), storageIndependence(port.storageIndependence()), storage(port.storage()),
+                port.statements().stream().filter(CobolSemanticProduct.ObservedStatement.class::isInstance)
+                    .map(CobolSemanticProduct.ObservedStatement.class::cast).filter(s->s.effects().isPresent())
+                    .map(s->effectDocument(s.header().id(),s.effects().orElseThrow())).toList());
     }
+
+    private static EffectDocument effectDocument(CobolSemanticProduct.StatementId statement,CobolSemanticProduct.EffectSummary e) {
+        return new EffectDocument("1.0.0",statementHandle(statement),e.knownReads().stream().map(SemanticProductJsonWriter::operandHandle).toList(),
+            e.mayWrites().stream().map(SemanticProductJsonWriter::operandHandle).toList(),e.mustOverwrite().stream().map(SemanticProductJsonWriter::operandHandle).toList(),
+            e.exposedRegions().stream().map(SemanticProductJsonWriter::operandHandle).toList(),e.unknownReadBound(),e.unknownWriteBound(),e.unknownExposureBound(),e.environment(),e.values(),e.proof());
+    }
+    private record EffectDocument(String version,String statement,List<String> knownReads,List<String> mayWrites,List<String> mustOverwrite,List<String> exposedRegions,
+            CobolSemanticProduct.EffectBound unknownReadBound,CobolSemanticProduct.EffectBound unknownWriteBound,CobolSemanticProduct.EffectBound unknownExposureBound,
+            CobolSemanticProduct.EnvironmentEffect environment,CobolSemanticProduct.EffectValueTransform values,CobolSemanticProduct.EffectProof proof) { }
 
     private static String storageNodeHandle(CobolSemanticProduct.StorageNodeId id) { return "storage-node:" + id.localId(); }
     private static String storageBaseHandle(CobolSemanticProduct.StorageBaseId id) { return "storage-base:" + id.localId(); }
@@ -361,7 +373,7 @@ public final class SemanticProductJsonWriter {
             StructureDocument structure,
             List<GapDocument> gaps,
             CoverageDocument coverage,
-            EntryInventoryDocument entryInventory, IndependentStorageDocument storageIndependence, StorageDocument storage) { }
+            EntryInventoryDocument entryInventory, IndependentStorageDocument storageIndependence, StorageDocument storage,List<EffectDocument> statementEffects) { }
 
     private record EntryInventoryDocument(CobolSemanticProduct.InventoryStatus status,
                                           CobolSemanticProduct.EntryInventoryScope scope,

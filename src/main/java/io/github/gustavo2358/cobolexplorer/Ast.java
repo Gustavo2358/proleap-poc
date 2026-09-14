@@ -391,8 +391,12 @@ public final class Ast {
 
     public record ModeledStatement(Meta meta, String grammarRule, String writtenText,
                                    List<StatementOperand> operands,
-                                   List<StatementClause> clauses) implements Statement {
+                                   List<StatementClause> clauses, Optional<StatementEffectSummary> effects) implements Statement {
+        public ModeledStatement(Meta meta,String grammarRule,String writtenText,List<StatementOperand> operands,List<StatementClause> clauses) {
+            this(meta,grammarRule,writtenText,operands,clauses,Optional.empty());
+        }
         public ModeledStatement {
+            Objects.requireNonNull(effects);
             operands = List.copyOf(operands);
             clauses = List.copyOf(clauses);
         }
@@ -400,8 +404,12 @@ public final class Ast {
 
     public record PreservedStatement(Meta meta, String grammarRule, String writtenText,
                                      List<StatementOperand> operands,
-                                     List<StatementClause> clauses) implements Statement {
+                                     List<StatementClause> clauses, Optional<StatementEffectSummary> effects) implements Statement {
+        public PreservedStatement(Meta meta,String grammarRule,String writtenText,List<StatementOperand> operands,List<StatementClause> clauses) {
+            this(meta,grammarRule,writtenText,operands,clauses,Optional.empty());
+        }
         public PreservedStatement {
+            Objects.requireNonNull(effects);
             operands = List.copyOf(operands);
             clauses = List.copyOf(clauses);
         }

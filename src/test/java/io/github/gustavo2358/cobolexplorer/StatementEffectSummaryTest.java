@@ -10,8 +10,10 @@ import static io.github.gustavo2358.cobolexplorer.DeclarativeValueInferenceTest.
 /** RF-W2 independent wire oracles: effect precision is not value interpretation. */
 class StatementEffectSummaryTest {
     private static JsonNode statement(String code) throws Exception {
-        return new ObjectMapper().readTree(SemanticProductJsonWriter.serialize(product(VALUE,code+"\nCALL LIT-PGM.")))
-            .path("statements").get(0);
+        var wire=new ObjectMapper().readTree(SemanticProductJsonWriter.serialize(product(VALUE,code+"\nCALL LIT-PGM.")));
+        var statement=(com.fasterxml.jackson.databind.node.ObjectNode)wire.path("statements").get(0);
+        if(!wire.path("statementEffects").isEmpty())statement.set("effects",wire.path("statementEffects").get(0));
+        return statement;
     }
     @Test void literalDisplayProvesNoMemoryWriteWithoutBecomingNop() throws Exception {
         var s=statement("DISPLAY 'TRACE'.");var e=s.path("effects");

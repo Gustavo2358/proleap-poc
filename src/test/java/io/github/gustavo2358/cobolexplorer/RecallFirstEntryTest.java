@@ -17,7 +17,8 @@ class RecallFirstEntryTest {
         assertTrue(c.gapCodes().contains("ENTRY_STATE_NOT_PROVEN"));
     }
     @Test void unknownStatementDoesNotEraseSourceSupportedEntryBytes() {
-        possible("DISPLAY 'TRACE'.\nCALL LIT-PGM.");
+        // DISPLAY gains a typed no-write proof in RF-W2; EXHIBIT remains unknown.
+        possible("EXHIBIT LIT-PGM.\nCALL LIT-PGM.");
     }
     @Test void futureMustWriteDoesNotEraseEntryButIsStillAnExecutableWrite() {
         possible("MOVE 'PROGB' TO LIT-PGM.\nCALL LIT-PGM.");

@@ -84,10 +84,16 @@ final class StorageMutationInventory {
             if(node instanceof Ast.Program) {gaps.add(StorageInitialSemantics.Reason.FOREIGN_MUTATION_OR_ESCAPE);continue;}
             if(node instanceof Ast.Statement statement) {
                 var finding=coverage.get(node.meta().id());
+                var summary=StatementEffectSummary.of(statement);
+                boolean bounded=summary.filter(StatementEffectSummary::completeMutationBound).isPresent();
                 boolean embeddedInputOnly=cics.localStorageInputOnly(unit.id(),node);
-                if(finding==null||(!embeddedInputOnly&&finding.coverage()!=SemanticCoverage.ConstructionCoverage.MODELED))
+                if(finding==null||(!embeddedInputOnly&&!bounded&&finding.coverage()!=SemanticCoverage.ConstructionCoverage.MODELED))
                     gaps.add(StorageInitialSemantics.Reason.INCOMPLETE_WRITE_INVENTORY);
-                if(statement instanceof Ast.MoveStatement move) {
+                if(bounded) {
+                    var effect=summary.orElseThrow();
+                    for(var target:effect.mayWrites())addWrite(accesses.get(new Key(unit.id(),target.meta().id())),bases,writes,gaps);
+                    if(!effect.exposedRegions().isEmpty())unknownExposures.add(new Key(unit.id(),node.meta().id()));
+                } else if(statement instanceof Ast.MoveStatement move) {
                     if(move.corresponding()) {
                         var sequence=moves.getOrDefault(new Key(unit.id(),move.meta().id()),List.of());
                         if(sequence.isEmpty())gaps.add(StorageInitialSemantics.Reason.WRITE_NOT_PROVEN);

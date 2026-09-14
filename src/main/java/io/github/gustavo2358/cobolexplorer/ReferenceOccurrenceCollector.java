@@ -208,11 +208,11 @@ final class ReferenceOccurrenceCollector {
             return;
         }
         if (node instanceof Ast.ModeledStatement statement) {
-            visitStatementOperands(statement.grammarRule(), statement.operands(), statement.clauses(), preservation);
+            visitStatementOperands(statement.effects(), statement.operands(), statement.clauses(), preservation);
             return;
         }
         if (node instanceof Ast.PreservedStatement statement) {
-            visitStatementOperands(statement.grammarRule(), statement.operands(), statement.clauses(),
+            visitStatementOperands(statement.effects(), statement.operands(), statement.clauses(),
                     ReferenceOccurrences.Preservation.PRESERVED_CONTAINER);
             return;
         }
@@ -269,13 +269,17 @@ final class ReferenceOccurrenceCollector {
         for (Ast.Node child : Ast.children(node)) visit(child, role, preservation);
     }
 
-    private void visitStatementOperands(String statementGrammarRule, List<Ast.StatementOperand> operands,
+    private void visitStatementOperands(java.util.Optional<StatementEffectSummary> effects, List<Ast.StatementOperand> operands,
                                         List<Ast.StatementClause> clauses,
                                         ReferenceOccurrences.Preservation preservation) {
+        var reads=new java.util.HashSet<Integer>();var writes=new java.util.HashSet<Integer>();
+        effects.ifPresent(e->{e.knownReads().forEach(r->reads.add(r.meta().id()));e.mayWrites().forEach(r->writes.add(r.meta().id()));});
         for (Ast.StatementOperand operand : operands) {
             ResolutionContracts.ReferenceRole role = operand.value() instanceof Ast.FileReference
                     ? ResolutionContracts.ReferenceRole.FILE_OPERATION
                     : ResolutionContracts.ReferenceRole.CONTEXT_DEPENDENT;
+            if(writes.contains(operand.value().meta().id()))role=ResolutionContracts.ReferenceRole.VALUE_WRITE;
+            else if(reads.contains(operand.value().meta().id()))role=ResolutionContracts.ReferenceRole.VALUE_READ;
             if (operand.context() == Ast.StatementOperandContext.SET_CONDITION_TARGET
                     && operand.value() instanceof Ast.DataReference reference)
                 addDataReference(reference, role, preservation, ResolutionContracts.ReferenceKind.CONDITION,

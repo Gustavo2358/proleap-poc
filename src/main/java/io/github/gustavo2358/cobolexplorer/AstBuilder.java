@@ -929,9 +929,26 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
         collectStatementOperands(context, context, operands);
         List<Ast.StatementClause> clauses = nearestDescendants(context, AstBuilder::isFlowClauseContext).stream()
                 .map(this::buildStatementClause).toList();
+        var effects=displayEffects(context,operands,clauses);
         return preserved
-                ? new Ast.PreservedStatement(meta, rule(context), sourceText(context).strip(), operands, clauses)
-                : new Ast.ModeledStatement(meta, rule(context), sourceText(context).strip(), operands, clauses);
+                ? new Ast.PreservedStatement(meta, rule(context), sourceText(context).strip(), operands, clauses,effects)
+                : new Ast.ModeledStatement(meta, rule(context), sourceText(context).strip(), operands, clauses,effects);
+    }
+
+    private static Optional<StatementEffectSummary> displayEffects(ParserRuleContext context,
+            List<Ast.StatementOperand> operands,List<Ast.StatementClause> clauses) {
+        if(!(context instanceof CobolParser.DisplayStatementContext d)||d.displayAt()!=null
+                ||d.displayUpon()!=null||!clauses.isEmpty()||operands.isEmpty())return Optional.empty();
+        var reads=new ArrayList<Ast.DataReference>();
+        for(var operand:operands) {
+            if(operand.value() instanceof Ast.LiteralExpression)continue;
+            if(!(operand.value() instanceof Ast.DataReference r)||r.understanding()!=Ast.ReferenceUnderstanding.STRUCTURED
+                    ||!r.subscriptGroups().isEmpty()||r.referenceModification()!=null)return Optional.empty();
+            reads.add(r);
+        }
+        return Optional.of(new StatementEffectSummary(reads,List.of(),List.of(),List.of(),
+            StatementEffectSummary.Bound.NONE,StatementEffectSummary.Bound.NONE,StatementEffectSummary.Bound.NONE,
+            StatementEffectSummary.Environment.OUTPUT,StatementEffectSummary.ValueTransform.NONE,StatementEffectSummary.Proof.DISPLAY_SIMPLE));
     }
 
     private Ast.SearchStatement buildSearch(CobolParser.SearchStatementContext context) {

@@ -1092,16 +1092,47 @@ public final class CobolSemanticProduct {
         }
     }
 
-    /** A visible statement whose family or shape is not modeled by this capability. */
+    public enum EffectBound { NONE, ALL }
+    public enum EnvironmentEffect { OUTPUT, INPUT, UNKNOWN }
+    public enum EffectValueTransform { NONE, UNKNOWN }
+    public enum EffectProof { DISPLAY_SIMPLE }
+    public record EffectSummary(List<OperandId> knownReads,List<OperandId> mayWrites,List<OperandId> mustOverwrite,
+            List<OperandId> exposedRegions,EffectBound unknownReadBound,EffectBound unknownWriteBound,
+            EffectBound unknownExposureBound,EnvironmentEffect environment,EffectValueTransform values,EffectProof proof) {
+        public EffectSummary {
+            knownReads=List.copyOf(knownReads);mayWrites=List.copyOf(mayWrites);mustOverwrite=List.copyOf(mustOverwrite);
+            exposedRegions=List.copyOf(exposedRegions);Objects.requireNonNull(unknownReadBound);Objects.requireNonNull(unknownWriteBound);
+            Objects.requireNonNull(unknownExposureBound);Objects.requireNonNull(environment);Objects.requireNonNull(values);Objects.requireNonNull(proof);
+            require(mayWrites.containsAll(mustOverwrite),"MUST must be a known write");
+        }
+    }
+    /** A visible statement whose value/control shape is not modeled by this capability. */
     public record ObservedStatement(StatementHeader header, String observedKind,
                                     String observedShape,
-                                    String gapCode, NormalContinuation normalContinuation, List<DataReference> knownReferences) implements StatementFact {
+                                    String gapCode, NormalContinuation normalContinuation, List<DataReference> knownReferences,
+                                    Optional<EffectSummary> effects) implements StatementFact {
+        public ObservedStatement(StatementHeader header,String observedKind,String observedShape,String gapCode,
+                NormalContinuation normalContinuation,List<DataReference> knownReferences) {
+            this(header,observedKind,observedShape,gapCode,normalContinuation,knownReferences,Optional.empty());
+        }
         public ObservedStatement(StatementHeader header, String observedKind, String observedShape, String gapCode) {
             this(header, observedKind, observedShape, gapCode, NormalContinuation.unavailable(header.provenance()), List.of());
         }
         public ObservedStatement {
+            Objects.requireNonNull(effects);
             header = Objects.requireNonNull(header, "header");
             Objects.requireNonNull(normalContinuation); knownReferences=List.copyOf(knownReferences);
+            if(effects.isPresent()) {
+                var e=effects.orElseThrow();var refs=new java.util.HashMap<OperandId,DataReference>();knownReferences.forEach(r->refs.put(r.id(),r));
+                for(var ids:List.of(e.knownReads(),e.mayWrites(),e.mustOverwrite(),e.exposedRegions())) {
+                    require(new java.util.HashSet<>(ids).size()==ids.size(),"duplicate effect operand");
+                    require(refs.keySet().containsAll(ids),"effect must reference an owned operand");
+                }
+                require(e.knownReads().stream().allMatch(id->refs.get(id).role()==OperandRole.READ),"effect read role");
+                require(e.proof()==EffectProof.DISPLAY_SIMPLE&&e.mayWrites().isEmpty()&&e.mustOverwrite().isEmpty()&&e.exposedRegions().isEmpty()
+                    &&e.unknownWriteBound()==EffectBound.NONE&&e.unknownExposureBound()==EffectBound.NONE
+                    &&e.environment()==EnvironmentEffect.OUTPUT&&e.values()==EffectValueTransform.NONE,"DISPLAY proof shape");
+            }
             observedKind = requireText(observedKind, "observedKind");
             observedShape = requireText(observedShape, "observedShape");
             gapCode = requireText(gapCode, "gapCode");

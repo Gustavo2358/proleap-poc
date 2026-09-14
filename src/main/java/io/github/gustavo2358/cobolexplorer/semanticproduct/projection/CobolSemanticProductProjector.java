@@ -430,7 +430,8 @@ public final class CobolSemanticProductProjector {
                 inputs.finding(position.statement().meta().id()));
         return new StatementPlan(position,
                 Capability.unmodeled(observed.kind(), observed.shape(),
-                        observedGapCode(observedCoverage)), List.of());
+                        observedGapCode(observedCoverage)), io.github.gustavo2358.cobolexplorer.StatementEffectSummary.of(position.statement())
+                    .map(e->e.knownReads().stream().map(inputs::entryFor).toList()).orElse(List.of()));
     }
 
     private static Capability moveCapability(Ast.MoveStatement move) {
@@ -880,7 +881,12 @@ public final class CobolSemanticProductProjector {
             }
             statements.add(new CobolSemanticProduct.ObservedStatement(header,
                     plan.capability().kind(),
-                    plan.capability().shape(), plan.capability().gapCode(), observedContinuation(plan.position().statement(), inputs, statementIds), references));
+                    plan.capability().shape(), plan.capability().gapCode(), observedContinuation(plan.position().statement(), inputs, statementIds), references,
+                    io.github.gustavo2358.cobolexplorer.StatementEffectSummary.of(plan.position().statement()).map(e->new EffectSummary(
+                        references.stream().map(DataReference::id).toList(),List.of(),List.of(),List.of(),
+                        references.size()==e.knownReads().size()?EffectBound.NONE:EffectBound.ALL,
+                        EffectBound.valueOf(e.unknownWriteBound().name()),EffectBound.valueOf(e.unknownExposureBound().name()),
+                        EnvironmentEffect.valueOf(e.environment().name()),EffectValueTransform.valueOf(e.values().name()),EffectProof.valueOf(e.proof().name())))));
             gaps.add(new CobolSemanticProduct.Gap(statementId,
                     CobolSemanticProduct.GapScope.CAPABILITY,
                     plan.capability().gapCode(),
