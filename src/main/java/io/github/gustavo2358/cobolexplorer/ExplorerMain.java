@@ -309,8 +309,8 @@ public final class ExplorerMain {
             ReferenceResolution resolution,ResolutionAnalysisReport report,StorageLayoutSemantics.Profile storageProfile,StorageInitialSemantics.EntryMode entryMode,CicsProgramControlAnalyzer.EntryMode cicsMode) {
         var components=StorageComponents.analyze(frontend);
         var layout = StorageLayoutSemantics.analyze(frontend, symbolTables, resolution, report, storageProfile,components);
-        var storage = StorageAccessSemantics.analyze(frontend, resolution, layout,entryMode);
         var cics=new CicsProgramControlAnalyzer().analyze(frontend,report,cicsMode);
+        var storage = StorageAccessSemantics.analyze(frontend, resolution, layout,entryMode,cics);
         return CobolSemanticProductProjector.open(
                 new CobolSemanticProductProjector.FrontendProducts(frontend, symbolTables,
                         occurrences, resolution, report,

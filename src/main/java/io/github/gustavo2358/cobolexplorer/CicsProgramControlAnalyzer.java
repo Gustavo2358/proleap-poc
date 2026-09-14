@@ -22,6 +22,17 @@ public final class CicsProgramControlAnalyzer {
         public boolean defaultHandlers(ResolutionContracts.ProgramUnitId unit,int statement){return defaultHandlers.contains(new Key(unit,statement));}
         public boolean belongsTo(CompilationUnitBuildResult frontend) { return owner==frontend; }
         public Optional<Fact> fact(ResolutionContracts.ProgramUnitId unit,int statement) { return Optional.ofNullable(facts.get(new Key(unit,statement))); }
+        /** PROGRAM is an input name, not a mutable/escaping data area (IBM CICS LINK/XCTL).
+         * All other data options remain foreign mutation blockers for the lifetime proof. */
+        boolean localStorageInputOnly(ResolutionContracts.ProgramUnitId unit,Ast.Node node) {
+            if(!(node instanceof Ast.EmbeddedLanguageStatement embedded))return false;
+            var fact=fact(unit,node.meta().id()).orElse(null);
+            if(fact==null||!fact.gaps().isEmpty()||fact.options().stream().anyMatch(o->!Set.of("PROGRAM","NOHANDLE").contains(o.name())))return false;
+            if(fact.options().stream().map(Option::name).distinct().count()!=fact.options().size())return false;
+            return fact.literal().isPresent()?embedded.hostOperands().isEmpty():fact.host().isPresent()
+                &&embedded.hostOperands().size()==1&&embedded.hostOperands().get(0).option().equals("PROGRAM")
+                &&embedded.hostOperands().get(0).role()==Ast.EmbeddedHostRole.READ;
+        }
         boolean boundedLocal(ResolutionContracts.ProgramUnitId unit,Ast.Node node) {
             return node!=null&&fact(unit,node.meta().id()).filter(f->f.gaps().isEmpty()&&f.options().stream().anyMatch(o->o.name().equals("RESP")||o.name().equals("NOHANDLE"))).isPresent();
         }

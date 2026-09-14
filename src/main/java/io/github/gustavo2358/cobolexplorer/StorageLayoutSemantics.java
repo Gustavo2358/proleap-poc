@@ -51,7 +51,7 @@ public final class StorageLayoutSemantics {
             if(profile==Profile.UNSPECIFIED)reasons.add(Reason.PROFILE_NOT_SELECTED);
             if(!input)reasons.add(Reason.INPUT_MISSING);
             var attributes=unit.program().attributes();
-            if(attributes.initial()||attributes.recursive()||attributes.common()||attributes.library()||attributes.definition())reasons.add(Reason.NONORDINARY_PROGRAM);
+            if(attributes.recursive()||attributes.common()||attributes.library()||attributes.definition())reasons.add(Reason.NONORDINARY_PROGRAM);
             var physical=components.unit(unit.id());
             if(!physical.structureProven())reasons.add(Reason.SECTION_NOT_PROVEN);
             if(!physical.relationsProven())reasons.add(Reason.OVERLAY_NOT_PROVEN);

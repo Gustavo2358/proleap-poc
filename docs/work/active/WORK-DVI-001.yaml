@@ -1,0 +1,7 @@
+id: WORK-DVI-001
+title: Declarative Value Inference with lifetime proof and INITIAL entry
+status: IN_PROGRESS
+scope:
+  - DVI-W0 through DVI-W3; per-condition source proof and SP 2.15.0/storage 1.4.0
+  - Preserve conservative ordinary WS, physical aliases and unknown effects
+  - Persistent Draft PR; no merge or auto-merge
