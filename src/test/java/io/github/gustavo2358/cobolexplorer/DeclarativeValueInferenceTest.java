@@ -92,4 +92,41 @@ class DeclarativeValueInferenceTest {
         var facts=StorageAccessSemantics.analyze(build,a.resolution(),layout).initial().facts(id);
         assertTrue(facts.conditions().stream().allMatch(c->c.kind()==StorageInitialSemantics.Kind.UNKNOWN));
     }
+    @Test void removingOneBlockerCannotHideAnotherAndRemovingBothEnablesProof() {
+        String alias=GROUP+"01 ALIAS-AREA REDEFINES WS-AREA PIC X(16).\n";
+        String overlap="MOVE 'OTHER' TO ALIAS-AREA.\n";
+        blocked(alias,"ACCEPT TAIL-PART.\n"+overlap+"CALL LIT-PGM.");
+        blocked(alias,overlap+"CALL LIT-PGM.");
+        invariant(alias,"CALL LIT-PGM.");
+    }
+    @Test void missingOnlyTheWriteFindingBlocksEvenWhenLayoutIsExact() {
+        var a=AstBoundaryTestSupport.analyze(source(VALUE,"MOVE 'X' TO LIT-PGM.\nCALL LIT-PGM."),"missing-write-coverage.cbl");
+        var id=a.model().programUnits().get(0).id();
+        int move=AstBoundaryTestSupport.nodes(a,Ast.MoveStatement.class).get(0).meta().id();
+        var findings=new ArrayList<SemanticCoverage.Finding>();
+        for(var f:a.build().coverageByProgramUnit().get(id).findings())if(f.astNodeId()!=move)
+            findings.add(new SemanticCoverage.Finding(findings.size(),f.grammarRule(),f.meta(),f.writtenText(),f.coverage(),f.dependencyKnowledge(),f.reason(),f.astNodeId()));
+        var build=new CompilationUnitBuildResult(a.model(),Map.of(id,new SemanticCoverage.Report(findings)),a.build().diagnosticsByProgramUnit());
+        var layout=StorageLayoutSemantics.analyze(build,a.tables(),a.resolution(),a.report(),StorageLayoutSemantics.Profile.IBM_ENTERPRISE_6_4_FIXED_DISPLAY_1047);
+        assertTrue(layout.layout(id).bases().stream().allMatch(b->b.independent()&&b.extent().value().isPresent()));
+        var c=StorageAccessSemantics.analyze(build,a.resolution(),layout).initial().facts(id).conditions().get(0);
+        assertEquals(StorageInitialSemantics.Kind.UNKNOWN,c.kind());
+        assertTrue(c.reasons().contains(StorageInitialSemantics.Reason.INCOMPLETE_WRITE_INVENTORY));
+    }
+    @Test void disabledPlatformContributionCannotProveNoForeignMutation() {
+        var a=AstBoundaryTestSupport.analyze(source(VALUE,"EXEC CICS LINK PROGRAM(LIT-PGM) NOHANDLE END-EXEC."),"disabled.cbl");
+        var p=ExplorerMain.publishSemanticProduct(a.model().programUnits().get(0).id(),a.build(),a.tables(),a.occurrences(),a.resolution(),a.report(),
+            StorageLayoutSemantics.Profile.IBM_ENTERPRISE_6_4_FIXED_DISPLAY_1047,StorageInitialSemantics.EntryMode.UNKNOWN,CicsProgramControlAnalyzer.EntryMode.DISABLED);
+        assertEquals(InitialStorageKind.UNKNOWN,condition(p).kind());
+        assertTrue(condition(p).gapCodes().contains("FOREIGN_MUTATION_OR_ESCAPE"));
+    }
+    @Test void proofKindCannotBeForgedIndependentlyOfConditionShape() throws Exception {
+        var p=product(VALUE,"CALL LIT-PGM.");var c=condition(p);
+        assertEquals(InitialStorageProof.DECLARATIVE_INVARIANT,c.proof());
+        assertThrows(IllegalArgumentException.class,()->new StorageInitialCondition(c.node(),c.kind(),c.bytes(),c.gapCodes(),c.provenance(),InitialStorageProof.NONE));
+        var wire=new ObjectMapper().readTree(SemanticProductJsonWriter.serialize(p));
+        assertEquals("2.15.0",wire.path("contractVersion").asText());
+        assertEquals("1.4.0",wire.path("storage").path("version").asText());
+        assertEquals("DECLARATIVE_INVARIANT",wire.path("storage").path("entryState").path("conditions").get(0).path("proof").asText());
+    }
 }
