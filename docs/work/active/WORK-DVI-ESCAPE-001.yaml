@@ -5,4 +5,4 @@ scope:
   - DVI-E0 through DVI-E2; frontend physical mutation and escape inventory
   - Preserve unknown exposures, aliases, writes and independent foreign blockers
   - Keep SP 2.15.0/storage 1.4.0 and downstream production unchanged
-notes: E0 approved by user; E1 authorized independently of the real source. E18 PENDING_SOURCE; no claims about the four real sites. Dedicated worktree proleap-poc-dvi-escape, branch fix/dvi-alias-aware-call-escape, base a5a06ce6d5eb416b40cc35ce6b6b7e58ee8f72f5 from freshly fetched origin/main.
+notes: READY FOR HUMAN REVIEW. E01–E17 qualified with 23 focal tests, one local FAST (293 tests), and 9 selected production CLI E2Es. E18 PENDING_SOURCE; no claims about the four real sites. See docs/evals/dvi-call-escape.md. No merge or auto-merge; IN_PROGRESS until reviewed and merged.

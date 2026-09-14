@@ -11,3 +11,6 @@ Os [oracles normativos `COND-*`](conditional-expression-oracles.md) preservam as
 Os [oracles futuros Semantic Product / AIR V2](semantic-product-air-v2-oracles.md)
 roteiam falsificações para contrato, frontend, lowerer e consumers. São plano
 de próximos checkpoints; não ampliam a evidência executável atual.
+
+[DVI CALL escape](dvi-call-escape.md) registra E01–E17, a prova de exposição física
+por candidato e a qualificação focal; E18 permanece PENDING_SOURCE.
