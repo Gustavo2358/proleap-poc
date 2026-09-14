@@ -507,3 +507,15 @@ Não há MOVE sintético nem condição reaplicada em retorno/backedge.
 ## SP 2.14: CICS Program Control
 
 The current writer publishes 2.14.0, superseding the Draft 2.13.0 shape. `CICS_PROGRAM_CONTROL` is an additive statement family with LINK/XCTL, PROGRAM target, preserved options, bound host references and independently partial control/effects/signature. Paragraph-local and ordinary continuations are separate required fields. Typed condition profiles must agree with options and gaps. See [CICS](cics-program-control.md). The storage contract remains 1.3.0. Readers must explicitly support this version.
+
+### EXEC DLI observado
+
+No writer 2.15.0, DLI usa a variante existente `OBSERVED`, com
+`observedKind=EMBEDDED_LANGUAGE`, `observedShape=OPAQUE_DLI`, `coverage=PARTIAL`
+e gap `OBSERVED_STATEMENT_PARTIAL` vinculado à identidade/provenance do statement.
+`knownReferences=[]` significa dependências não determinadas por esta capability.
+`normalContinuation=UNAVAILABLE` não afirma fallthrough nem retorno de comando IMS.
+Readiness de lowering, CFG e efeitos permanece `BLOCKED`; inventário estrutural
+completo não promove semântica. O consumer local conserva shape/gap/readiness.
+Não há novo schema, enum wire ou facts IMS. Oráculos: `ExecDliOpaqueTest` e
+`ExecDliProvenanceTest`; [handoff do fix](../work/exec-dli-fix.md).
