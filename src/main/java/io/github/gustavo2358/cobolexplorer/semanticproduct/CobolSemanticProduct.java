@@ -550,7 +550,7 @@ public final class CobolSemanticProduct {
     public enum StorageProfile { UNSPECIFIED, IBM_ENTERPRISE_6_4_FIXED_DISPLAY_1047 }
     public enum PhysicalKind { GROUP, ELEMENTARY, OPAQUE }
     public enum AllocationProof { INDEPENDENT_LOCAL_WORKING_STORAGE, UNPROVEN }
-    public enum RegionalMoveKind { LITERAL_BYTES, COPY_BYTES, MUST_UNKNOWN, UNAVAILABLE }
+    public enum RegionalMoveKind { LITERAL_BYTES, FITTED_LITERAL_BYTES, COPY_BYTES, FIT_TEXT, MUST_UNKNOWN, UNAVAILABLE }
     public record StorageMeasure(Optional<BigInteger> value, List<String> gapCodes) {
         public StorageMeasure {
             Objects.requireNonNull(value); gapCodes = List.copyOf(gapCodes);
@@ -590,7 +590,7 @@ public final class CobolSemanticProduct {
         public RegionalMove {
             Objects.requireNonNull(kind); bytes = List.copyOf(bytes); gapCodes = List.copyOf(gapCodes);
             require(bytes.stream().allMatch(b -> b >= 0 && b <= 255), "invalid octet");
-            require(kind == RegionalMoveKind.LITERAL_BYTES || bytes.isEmpty(), "only literal byte writes carry bytes");
+            require(kind == RegionalMoveKind.LITERAL_BYTES || kind == RegionalMoveKind.FITTED_LITERAL_BYTES || bytes.isEmpty(), "only literal byte writes carry bytes");
             require((kind == RegionalMoveKind.MUST_UNKNOWN || kind == RegionalMoveKind.UNAVAILABLE) == !gapCodes.isEmpty(),
                     "precise write has no gaps; unknown write requires reasons");
             gapCodes.forEach(code -> requireText(code, "regional MOVE gap"));
@@ -880,10 +880,16 @@ public final class CobolSemanticProduct {
         public LocalContinuation localContinuation() { return LocalContinuation.NONE; }
     }
 
+    public record MoveTransfer(MoveSource source,DataReference target,RegionalMove effect) {
+        public MoveTransfer { Objects.requireNonNull(source);Objects.requireNonNull(target);Objects.requireNonNull(effect);require(target.role()==OperandRole.WRITE,"transfer target requires WRITE");if(source instanceof DataReference r)require(r.role()==OperandRole.READ,"transfer source requires READ"); }
+    }
+
     public record MoveFact(StatementHeader header, MoveSource source,
                            DataReference target, CopySemantics copySemantics,
-                           NormalContinuation normalContinuation, Optional<TextAdjustment> textAdjustment, Optional<RegionalMove> regionalMove) implements StatementFact {
+                           NormalContinuation normalContinuation, Optional<TextAdjustment> textAdjustment, Optional<RegionalMove> regionalMove, List<MoveTransfer> additionalTransfers) implements StatementFact {
         public MoveFact {
+            additionalTransfers=List.copyOf(additionalTransfers);
+            require(additionalTransfers.isEmpty()||regionalMove.isPresent()&&copySemantics==CopySemantics.UNAVAILABLE,"additional transfers require regional effects exclusively");
             Objects.requireNonNull(regionalMove);
             copySemantics = Objects.requireNonNull(copySemantics);
             textAdjustment = Objects.requireNonNull(textAdjustment);
@@ -904,6 +910,14 @@ public final class CobolSemanticProduct {
             if (source instanceof DataReference data) require(data.role() == OperandRole.READ, "MOVE data source requires READ");
             if (target.role() != OperandRole.WRITE)
                 throw new IllegalArgumentException("MOVE target must have WRITE role");
+        }
+        public MoveFact(StatementHeader header,MoveSource source,DataReference target,CopySemantics copySemantics,
+                NormalContinuation normalContinuation,Optional<TextAdjustment> textAdjustment,Optional<RegionalMove> regionalMove) {
+            this(header,source,target,copySemantics,normalContinuation,textAdjustment,regionalMove,List.of());
+        }
+        public List<MoveTransfer> transfers() {
+            if(regionalMove.isEmpty())return List.of();
+            var result=new ArrayList<MoveTransfer>();result.add(new MoveTransfer(source,target,regionalMove.get()));result.addAll(additionalTransfers);return List.copyOf(result);
         }
         public MoveFact(StatementHeader header, MoveSource source, DataReference target,
                         CopySemantics copySemantics, NormalContinuation normalContinuation, Optional<TextAdjustment> textAdjustment) {
@@ -1190,18 +1204,19 @@ public final class CobolSemanticProduct {
                     &&slice.offset().add(slice.extent()).compareTo(view.offset().value().get().add(view.extent().value().get()))<=0,"access slice must remain inside declared view"));
             });
             if (statement instanceof MoveFact move && move.regionalMove().isPresent()) {
-                var effect = move.regionalMove().get();
+                for(var transfer:move.transfers()) {
+                var effect = transfer.effect();
                 if (effect.kind() == RegionalMoveKind.UNAVAILABLE) continue;
-                require(move.target().regionalAccess().isPresent(), "mandatory write requires exact destination access");
-                var dest = accessedView(views,move.target().regionalAccess().get());
-                if (effect.kind() == RegionalMoveKind.LITERAL_BYTES) {
-                    require(move.source() instanceof LiteralSource literal && literal.logicalValue().isPresent(), "byte literal write requires logical literal source");
+                require(transfer.target().regionalAccess().isPresent(), "mandatory write requires exact destination access");
+                var dest = accessedView(views,transfer.target().regionalAccess().get());
+                if (effect.kind() == RegionalMoveKind.LITERAL_BYTES || effect.kind() == RegionalMoveKind.FITTED_LITERAL_BYTES) {
+                    require(transfer.source() instanceof LiteralSource literal && literal.logicalValue().isPresent(), "byte literal write requires logical literal source");
                     require(dest.extent().value().get().equals(BigInteger.valueOf(effect.bytes().size())), "literal bytes must fill the exact destination");
                 }
-                if (effect.kind() == RegionalMoveKind.COPY_BYTES) {
-                    require(move.source() instanceof DataReference source && source.regionalAccess().isPresent(), "byte copy needs exact source access");
-                    var source = accessedView(views,((DataReference)move.source()).regionalAccess().get());
-                    require(source.extent().equals(dest.extent()), "byte copy needs equal source and destination extents");
+                if (effect.kind() == RegionalMoveKind.COPY_BYTES || effect.kind() == RegionalMoveKind.FIT_TEXT) {
+                    require(transfer.source() instanceof DataReference source && source.regionalAccess().isPresent(), "byte copy needs exact source access");
+                    var source = accessedView(views,((DataReference)transfer.source()).regionalAccess().get());
+                    require(effect.kind()!=RegionalMoveKind.COPY_BYTES || source.extent().equals(dest.extent()), "byte copy needs equal source and destination extents");
                     boolean disjoint;
                     if (source.base().equals(dest.base())) {
                         var left = source.offset().value().get(); var right = dest.offset().value().get();
@@ -1210,6 +1225,7 @@ public final class CobolSemanticProduct {
                     } else disjoint = bases.get(source.base()).allocation() == AllocationProof.INDEPENDENT_LOCAL_WORKING_STORAGE
                             && bases.get(dest.base()).allocation() == AllocationProof.INDEPENDENT_LOCAL_WORKING_STORAGE;
                     require(disjoint, "COBOL byte copy requires proved disjoint ranges");
+                }
                 }
             }
         }
@@ -1320,8 +1336,10 @@ public final class CobolSemanticProduct {
     }
 
     private static List<DataReference> references(StatementFact statement) {
-        if (statement instanceof MoveFact move) return move.source() instanceof DataReference data
-                ? List.of(data, move.target()) : List.of(move.target());
+        if (statement instanceof MoveFact move) {
+            var result=new ArrayList<DataReference>();if(move.source() instanceof DataReference r)result.add(r);result.add(move.target());
+            for(var t:move.additionalTransfers()){if(t.source() instanceof DataReference r)result.add(r);result.add(t.target());}return List.copyOf(result);
+        }
         if (statement instanceof CallFact call) return call.target() instanceof DataReference data ? List.of(data) : List.of();
         if (statement instanceof IfFact branch) return branch.condition().references();
         if (statement instanceof ProcedurePerformFact p) return java.util.stream.Stream.concat(java.util.stream.Stream.concat(p.loop().stream().flatMap(l->l.condition().references().stream()),p.times().stream().flatMap(t->t.reference().stream())),p.varying().stream().flatMap(v->v.controls().stream()).flatMap(v->v.references().stream())).toList();
@@ -1336,7 +1354,8 @@ public final class CobolSemanticProduct {
         for (StatementFact statement : statements) {
             List<OperandId> operands;
             if (statement instanceof MoveFact move) {
-                operands = List.of(move.source().id(), move.target().id());
+                var all=new ArrayList<OperandId>();all.add(move.source().id());all.add(move.target().id());
+                for(var t:move.additionalTransfers()){all.add(t.source().id());all.add(t.target().id());}operands=List.copyOf(all);
             } else if (statement instanceof CallFact call) {
                 operands = List.of(call.target().id());
             } else if (statement instanceof IfFact branch) {

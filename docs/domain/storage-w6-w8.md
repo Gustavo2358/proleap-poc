@@ -40,3 +40,21 @@ Prova exige codec/perfil1047 e bounds do item; origem da ocorrência preservada.
 Dinâmica e parâmetros não provados não recebem acesso inteiro substituto.
 SP2.10/storage1.2 acrescenta slice nullable em regionalAccess; versões anteriores
 continuam fechadas no reader. AIR usa RegionSlice existente, com codec explícito.
+
+## ST-W6.3 — MOVE textual ajustado e múltiplo
+
+Autoridade IBM, consultada 2026-09-14:
+[MOVE](https://www.ibm.com/docs/en/cobol-zos/6.3.0?topic=statements-move-statement),
+[ajuste textual](https://www.ibm.com/docs/en/cobol-zos/6.3.0?topic=items-assigning-values-elementary-data-move).
+Subset fixo textual sem JUSTIFIED/conversão: alinhamento à esquerda, descarte
+à direita e padding SPACE (1047=0x40). Tamanho igual permite CopyBytes;
+tamanho diferente de DATA exige transformação FitText explícita. Literal
+é ajustado pelo frontend antes da publicação de bytes. Receivers seguem a
+ordem lexical. Captura segura exige que nenhum receiver possa alterar a
+origem: todos disjuntos da origem provada. Sobreposição torna TODOS os valores
+da sequência desconhecidos, inclusive quando um receiver anterior altera a
+origem; não se inventa resultado determinístico para comportamento imprevisível
+na regra IBM. Overlap entre receivers é permitido e preserva a ordem. Referências
+modificadas admitidas têm posições/length constantes, portanto avaliação do
+endereço é invariável. Sem limite artificial de receivers; uma visita por
+receiver e consulta O(1) ao layout. Oracle de padding: AB→4 = C1 C2 40 40.

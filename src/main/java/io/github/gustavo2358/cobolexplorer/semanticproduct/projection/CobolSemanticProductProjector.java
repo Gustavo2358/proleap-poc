@@ -349,13 +349,18 @@ public final class CobolSemanticProductProjector {
             return new StatementPlan(position, Capability.supported("GOBACK", "GOBACK_LOCAL_EXIT"), List.of());
         if (position.statement() instanceof Ast.MoveStatement move) {
             Capability capability = moveCapability(move);
+            var sequence=inputs.products().storage().map(s->s.sequence(new StorageLayoutSemantics.Key(inputs.unitId(),move.meta().id()))).orElse(List.of());
+            if(!move.corresponding()&&!sequence.isEmpty()&&sequence.stream().allMatch(e->e.kind()!=StorageAccessSemantics.MoveKind.UNAVAILABLE))
+                capability=Capability.supported("MOVE","REGIONAL_TRANSFER_SEQUENCE");
             List<ReferenceResolution.Entry> entries = new ArrayList<>();
             if (capability.supported()) {
-                var target = inputs.entryFor((Ast.DataReference) move.targets().get(0));
+                for(var receiver:move.targets()) {
+                var target = inputs.entryFor((Ast.DataReference) receiver);
                 require(target.occurrence().role() == ResolutionContracts.ReferenceRole.VALUE_WRITE,
                         "MOVE target role must come from the canonical occurrence");
                 entries.add(target);
                 capability = bindingCapability(capability, target, "MOVE");
+                }
                 if (move.source() instanceof Ast.DataReference source) {
                     var read = inputs.entryFor(source);
                     require(read.occurrence().role() == ResolutionContracts.ReferenceRole.VALUE_READ,
@@ -859,7 +864,7 @@ public final class CobolSemanticProductProjector {
                         literal.value(), provenance(literal.meta().provenance()),
                         literal.logicalText().map(text -> new TextValue(text.value())));
             } else {
-                var read = plan.entries().get(1);
+                var read = plan.entries().get(move.targets().size());
                 source = new DataReference(new OperandId(statementId, 0), OperandRole.READ,
                         nominalBinding(read, dataIds), provenance(move.source().meta().provenance()),
                         semantic.sourceWholeItem().map(entity -> new WholeItemAccess(
@@ -885,6 +890,19 @@ public final class CobolSemanticProductProjector {
                     copy, continuation, semantic.adjustment().map(adjustment -> new TextAdjustment(
                             TextAdjustmentRule.RIGHT_PAD_SPACE, adjustment.receiverExtent(),
                             new TextValue(adjustment.result()), statementProvenance)), regionalMove(inputs, move.meta().id()));
+            var effects=inputs.products().storage().map(s->s.sequence(new StorageLayoutSemantics.Key(inputs.unitId(),move.meta().id()))).orElse(List.of());
+            if(effects.size()>1) {
+                var extra=new ArrayList<MoveTransfer>();
+                for(int i=1;i<effects.size();i++) {
+                    var e=effects.get(i);var receiver=(Ast.DataReference)move.targets().get(i);
+                    MoveSource sending;
+                    if(source instanceof LiteralSource literal)sending=new LiteralSource(new OperandId(statementId,i*2),literal.kind(),literal.value(),literal.provenance(),literal.logicalValue());
+                    else {var read=(DataReference)source;sending=new DataReference(new OperandId(statementId,i*2),OperandRole.READ,read.binding(),read.provenance(),Optional.empty(),read.regionalAccess());}
+                    var receiving=new DataReference(new OperandId(statementId,i*2+1),OperandRole.WRITE,nominalBinding(plan.entries().get(i),dataIds),provenance(receiver.meta().provenance()),Optional.empty(),regionalAccess(inputs,receiver.meta().id()));
+                    extra.add(new MoveTransfer(sending,receiving,new RegionalMove(RegionalMoveKind.valueOf(e.kind().name()),e.bytes(),e.reasons().stream().map(Enum::name).toList())));
+                }
+                fact=new MoveFact(fact.header(),fact.source(),fact.target(),CopySemantics.UNAVAILABLE,fact.normalContinuation(),Optional.empty(),fact.regionalMove(),extra);
+            }
             statements.add(fact);
             if (move.source() instanceof Ast.LiteralExpression literal && literal.logicalText().isEmpty()) gaps.add(new Gap(statementId, GapScope.LITERAL_KIND,
                     LITERAL_KIND_GAP, "literal category is outside the canonical basic text capability",

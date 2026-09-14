@@ -26,7 +26,7 @@ import java.util.Objects;
  */
 public final class SemanticProductJsonWriter {
     public static final String SCHEMA = "cobol-semantic-product";
-    public static final String CONTRACT_VERSION = "2.10.0";
+    public static final String CONTRACT_VERSION = "2.11.0";
 
     private static final ObjectMapper JSON = JsonMapper.builder()
             .enable(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY)
@@ -107,6 +107,7 @@ public final class SemanticProductJsonWriter {
         List<PhysicalNodeDocument> nodes,List<StorageBaseDocument> bases,List<StorageViewDocument> views,List<String> gapCodes,List<StorageRelationDocument> relations,List<StorageRenamesDocument> renames) { }
     private record RegionalSliceDocument(String offset,String extent) { }
     private record RegionalAccessDocument(String view,RegionalSliceDocument slice) { }
+    private record MoveTransferDocument(MoveSourceDocument source,DataReferenceDocument target,RegionalMoveDocument effect) { }
     private record RegionalMoveDocument(CobolSemanticProduct.RegionalMoveKind kind,List<Integer> bytes,List<String> gapCodes) { }
 
     private static EntryInventoryDocument entryInventory(CobolSemanticProduct.EntryInventory inventory) {
@@ -203,7 +204,7 @@ public final class SemanticProductJsonWriter {
                             provenance(move.normalContinuation().provenance())), move.textAdjustment().map(a ->
                             new TextAdjustmentDocument(a.rule(), a.receiverExtent(),
                                     new TextValueDocument(a.result().logicalDomain(), a.result().value(), a.result().logicalExtent()),
-                                    provenance(a.provenance()))).orElse(null), move.regionalMove().map(m->new RegionalMoveDocument(m.kind(),m.bytes(),m.gapCodes())).orElse(null));
+                                    provenance(a.provenance()))).orElse(null), move.regionalMove().map(m->new RegionalMoveDocument(m.kind(),m.bytes(),m.gapCodes())).orElse(null),move.additionalTransfers().stream().map(t->new MoveTransferDocument(moveSource(t.source()),dataReference(t.target()),new RegionalMoveDocument(t.effect().kind(),t.effect().bytes(),t.effect().gapCodes()))).toList());
         }
         if (fact instanceof CobolSemanticProduct.CallFact call) {
             return new CallDocument(header(call.header()), call.syntax(),
@@ -448,7 +449,7 @@ public final class SemanticProductJsonWriter {
     @JsonPropertyOrder({"variant", "header", "source", "target", "copySemantics", "normalContinuation", "textAdjustment"})
     private record MoveDocument(StatementHeaderDocument header, MoveSourceDocument source,
                                 DataReferenceDocument target, CobolSemanticProduct.CopySemantics copySemantics,
-                                ContinuationDocument normalContinuation, TextAdjustmentDocument textAdjustment, RegionalMoveDocument regionalMove) implements StatementDocument { }
+                                ContinuationDocument normalContinuation, TextAdjustmentDocument textAdjustment, RegionalMoveDocument regionalMove,List<MoveTransferDocument> additionalTransfers) implements StatementDocument { }
 
     private record TextAdjustmentDocument(CobolSemanticProduct.TextAdjustmentRule rule, int receiverExtent,
                                             TextValueDocument result, ProvenanceDocument provenance) { }

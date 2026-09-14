@@ -37,14 +37,15 @@ class StorageProductTest {
         assertEquals(Optional.of("text.ebcdic.ibm1047@1"),view.codec());
         assertTrue(p.gaps().stream().anyMatch(g->g.scope()==GapScope.RUNTIME_CALL_TARGET));
     }
-    @Test void sourceCopyAndMandatoryUnknownAreExplicitAndPlural() {
+    @Test void sourceCopyAndLiteralTruncationAreExplicitAndPlural() {
         for(int count:List.of(1,2,5,40)) {
             var code=new StringBuilder();for(int i=0;i<count;i++)code.append("MOVE SOURCE-PART TO TARGET-PART.\n");
             code.append("MOVE 'TOO-LONG' TO TARGET-PART.");
             var p=CobolSemanticPort.open(state("01 SOURCE-PART PIC X(4).\n01 TARGET-PART PIC X(4).",code.toString()));
             assertEquals(count+1,p.moves().size());
             for(int i=0;i<count;i++) { var m=p.moves().get(i);assertEquals(RegionalMoveKind.COPY_BYTES,m.regionalMove().orElseThrow().kind());assertTrue(((DataReference)m.source()).regionalAccess().isPresent()); }
-            assertEquals(RegionalMoveKind.MUST_UNKNOWN,p.moves().get(count).regionalMove().orElseThrow().kind());
+            assertEquals(RegionalMoveKind.FITTED_LITERAL_BYTES,p.moves().get(count).regionalMove().orElseThrow().kind());
+            assertEquals(List.of(227,214,214,96),p.moves().get(count).regionalMove().orElseThrow().bytes());
         }
     }
     @Test void absentProfileAndUnknownExtentNeverBecomeZeroOrExactAccess() {
@@ -59,7 +60,7 @@ class StorageProductTest {
     @Test void json28HasDeterministicClosedStorageTransport() throws Exception {
         var p=CobolSemanticPort.open(group());var bytes=SemanticProductJsonWriter.serialize(p);
         assertArrayEquals(bytes,SemanticProductJsonWriter.serialize(CobolSemanticPort.open(group())));
-        var doc=new ObjectMapper().readTree(bytes);assertEquals("2.10.0",doc.path("contractVersion").asText());
+        var doc=new ObjectMapper().readTree(bytes);assertEquals("2.11.0",doc.path("contractVersion").asText());
         assertEquals("ibm-enterprise-6.4-fixed-display-1047@1",doc.path("storage").path("profileId").asText());
         assertEquals("8",doc.path("storage").path("bases").get(0).path("extent").path("value").asText());
         assertTrue(doc.path("storage").path("bases").get(0).path("extent").path("value").isTextual());

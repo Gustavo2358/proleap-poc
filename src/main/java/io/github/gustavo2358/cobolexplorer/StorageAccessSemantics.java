@@ -8,7 +8,7 @@ public final class StorageAccessSemantics {
     public enum Role { READ, WRITE, CALL_TARGET }
     public record Access(Key reference,Key statement,ResolutionContracts.SemanticEntityId entity,
                          View view,Role role,boolean sliced,Ast.SourceProvenance origin) { }
-    public enum MoveKind { LITERAL_BYTES, COPY_BYTES, MUST_UNKNOWN, UNAVAILABLE }
+    public enum MoveKind { LITERAL_BYTES, FITTED_LITERAL_BYTES, COPY_BYTES, FIT_TEXT, MUST_UNKNOWN, UNAVAILABLE }
     public enum Reason { ACCESS_NOT_PROVEN, SOURCE_NOT_PROVEN, EXTENT_MISMATCH, UNREPRESENTABLE_TEXT, OVERLAPPING_COPY, MOVE_FORM_NOT_SUPPORTED }
     public record Move(Key statement,Optional<Access> destination,Optional<Access> source,MoveKind kind,
                        List<Integer> bytes,List<Reason> reasons,Ast.SourceProvenance origin) {
@@ -19,7 +19,9 @@ public final class StorageAccessSemantics {
     public boolean belongsTo(CompilationUnitBuildResult frontend, ReferenceResolution resolution) { return layout.belongsTo(frontend, resolution); }
     private final Map<Key,Access> accesses;
     private final Map<Key,Move> moves;
-    private StorageAccessSemantics(StorageLayoutSemantics layout,Map<Key,Access> accesses,Map<Key,Move> moves){this.layout=layout;this.accesses=Map.copyOf(accesses);this.moves=Map.copyOf(moves);}
+    private final Map<Key,List<Move>> sequences;
+    public List<Move> sequence(Key statement) { return sequences.getOrDefault(statement,List.of()); }
+    private StorageAccessSemantics(StorageLayoutSemantics layout,Map<Key,Access> accesses,Map<Key,Move> moves,Map<Key,List<Move>> sequences){this.layout=layout;this.accesses=Map.copyOf(accesses);this.moves=Map.copyOf(moves);this.sequences=Map.copyOf(sequences);}
     public Optional<Access> access(Key reference){return Optional.ofNullable(accesses.get(reference));}
     public Collection<Access> accesses(){return accesses.values();}
     public Collection<Move> moves(){return moves.values();}
@@ -28,7 +30,7 @@ public final class StorageAccessSemantics {
         if(!layout.belongsTo(frontend,resolution))throw new IllegalArgumentException("layout and binding proof belong to another snapshot");
         var bindings=new HashMap<Key,ReferenceResolution.Entry>();
         for(var entry:resolution.entries())bindings.put(new Key(entry.occurrence().programUnitId(),entry.occurrence().referenceAstNodeId()),entry);
-        var accesses=new LinkedHashMap<Key,Access>();var moves=new LinkedHashMap<Key,Move>();
+        var accesses=new LinkedHashMap<Key,Access>();var moves=new LinkedHashMap<Key,Move>();var sequences=new LinkedHashMap<Key,List<Move>>();
         for(var unit:frontend.compilationUnit().programUnits()) {
             var physical=layout.layout(unit.id());var nodes=new HashMap<Key,Node>();var bases=new HashMap<Key,Base>();
             for(var node:physical.nodes())nodes.put(node.id(),node);
@@ -63,28 +65,45 @@ public final class StorageAccessSemantics {
             for(var finding:frontend.coverageByProgramUnit().get(unit.id()).findings())coverage.put(finding.astNodeId(),finding);
             for(var node:moveNodes) {
                 var statement=new Key(unit.id(),node.meta().id());var finding=coverage.get(node.meta().id());
-                if(node.corresponding()||node.targets().size()!=1||!(node.targets().get(0) instanceof Ast.DataReference)
+                if(node.corresponding()||node.targets().isEmpty()||node.targets().stream().anyMatch(t->!(t instanceof Ast.DataReference))
                         ||finding==null||finding.coverage()!=SemanticCoverage.ConstructionCoverage.MODELED) {
                     moves.put(statement,new Move(statement,Optional.empty(),Optional.empty(),MoveKind.UNAVAILABLE,List.of(),List.of(Reason.MOVE_FORM_NOT_SUPPORTED),node.meta().provenance()));continue;
                 }
-                var destination=Optional.ofNullable(accesses.get(new Key(unit.id(),node.targets().get(0).meta().id()))).filter(a->a.role()==Role.WRITE);
                 var source=Optional.ofNullable(accesses.get(new Key(unit.id(),node.source().meta().id()))).filter(a->a.role()==Role.READ);
-                MoveKind kind=MoveKind.MUST_UNKNOWN;var reasons=new ArrayList<Reason>();List<Integer> bytes=List.of();
-                if(destination.isEmpty()){kind=MoveKind.UNAVAILABLE;reasons.add(Reason.ACCESS_NOT_PROVEN);}
-                else if(node.source() instanceof Ast.LiteralExpression literal&&literal.logicalText().isPresent()) {
-                    var encoded=encode(literal.logicalText().get().value(),physical.profile());
-                    if(encoded.isEmpty())reasons.add(Reason.UNREPRESENTABLE_TEXT);
-                    else if(!destination.get().view().extent().value().orElseThrow().equals(java.math.BigInteger.valueOf(encoded.get().size())))reasons.add(Reason.EXTENT_MISMATCH);
-                    else {kind=MoveKind.LITERAL_BYTES;bytes=encoded.get();}
-                } else if(source.isPresent()) {
-                    if(!source.get().view().extent().equals(destination.get().view().extent()))reasons.add(Reason.EXTENT_MISMATCH);
-                    else if(!disjoint(source.get().view(),destination.get().view(),bases))reasons.add(Reason.OVERLAPPING_COPY);
-                    else kind=MoveKind.COPY_BYTES;
-                } else reasons.add(Reason.SOURCE_NOT_PROVEN);
-                moves.put(statement,new Move(statement,destination,source,kind,bytes,reasons,node.meta().provenance()));
+                var effects=new ArrayList<Move>();
+                for(var target:node.targets()) {
+                    var destination=Optional.ofNullable(accesses.get(new Key(unit.id(),target.meta().id()))).filter(a->a.role()==Role.WRITE);
+                    effects.add(effect(statement,destination,source,node.source(),physical.profile(),bases,node.meta().provenance()));
+                }
+                // A receiver may invalidate all later source reads. Never publish concrete
+                // values for the remaining receivers of an overlapping source statement.
+                boolean overlap=effects.stream().anyMatch(e->e.reasons().contains(Reason.OVERLAPPING_COPY));
+                if(overlap)effects.replaceAll(e->e.destination().isEmpty()?e:new Move(statement,e.destination(),e.source(),MoveKind.MUST_UNKNOWN,List.of(),List.of(Reason.OVERLAPPING_COPY),e.origin()));
+                moves.put(statement,effects.get(0));sequences.put(statement,List.copyOf(effects));
             }
         }
-        return new StorageAccessSemantics(layout,accesses,moves);
+        return new StorageAccessSemantics(layout,accesses,moves,sequences);
+    }
+    private static Move effect(Key statement,Optional<Access> destination,Optional<Access> source,Ast.Expression expression,
+            Profile profile,Map<Key,Base> bases,Ast.SourceProvenance origin) {
+        MoveKind kind=MoveKind.MUST_UNKNOWN;var reasons=new ArrayList<Reason>();List<Integer> bytes=List.of();
+        if(destination.isEmpty()){kind=MoveKind.UNAVAILABLE;reasons.add(Reason.ACCESS_NOT_PROVEN);}
+        else if(expression instanceof Ast.LiteralExpression literal&&literal.logicalText().isPresent()) {
+            var encoded=encode(literal.logicalText().get().value(),profile);
+            if(encoded.isEmpty())reasons.add(Reason.UNREPRESENTABLE_TEXT);
+            else {
+                var size=destination.get().view().extent().value().orElseThrow();
+                // The emitted byte vector has the same intrinsic JVM collection-size
+                // representability as the source inventory, with no configurable cap.
+                var fitted=new ArrayList<Integer>();int length=size.intValueExact();
+                for(int i=0;i<length;i++)fitted.add(i<encoded.get().size()?encoded.get().get(i):0x40);
+                kind=length==encoded.get().size()?MoveKind.LITERAL_BYTES:MoveKind.FITTED_LITERAL_BYTES;bytes=List.copyOf(fitted);
+            }
+        } else if(source.isPresent()) {
+            if(!disjoint(source.get().view(),destination.get().view(),bases))reasons.add(Reason.OVERLAPPING_COPY);
+            else kind=source.get().view().extent().equals(destination.get().view().extent())?MoveKind.COPY_BYTES:MoveKind.FIT_TEXT;
+        } else reasons.add(Reason.SOURCE_NOT_PROVEN);
+        return new Move(statement,destination,source,kind,bytes,reasons,origin);
     }
     private static View slice(View view,Ast.ReferenceModification modification,Profile profile) {
         if(profile!=Profile.IBM_ENTERPRISE_6_4_FIXED_DISPLAY_1047||view==null||!view.textual()

@@ -36,10 +36,10 @@ class StorageAccessTest {
         var same=fixture("01 WS-AREA.\n05 CHILD-PART PIC X(4).","MOVE WS-AREA TO CHILD-PART.").effects.moves().iterator().next();
         assertEquals(MoveKind.MUST_UNKNOWN,same.kind());assertTrue(same.reasons().contains(Reason.OVERLAPPING_COPY));
         var mismatch=fixture("01 SOURCE-PART PIC X(2).\n01 TARGET-PART PIC X(4).","MOVE SOURCE-PART TO TARGET-PART.").effects.moves().iterator().next();
-        assertEquals(MoveKind.MUST_UNKNOWN,mismatch.kind());assertTrue(mismatch.reasons().contains(Reason.EXTENT_MISMATCH));
+        assertEquals(MoveKind.FIT_TEXT,mismatch.kind());assertTrue(mismatch.reasons().isEmpty());
     }
     @Test void unsupportedLiteralKeepsMandatoryFootprintWithoutInventingBytes() {
-        for(var text:List.of("AB","ABCDEFGH","€")) {
+        for(var text:List.of("€")) {
             var move=fixture("01 WS-AREA.\n05 CHILD-PART PIC X(4).","MOVE '"+text+"' TO WS-AREA.").effects.moves().iterator().next();
             assertEquals(MoveKind.MUST_UNKNOWN,move.kind());assertTrue(move.destination().isPresent());assertTrue(move.bytes().isEmpty());assertFalse(move.reasons().isEmpty());
         }

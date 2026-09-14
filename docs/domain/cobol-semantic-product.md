@@ -471,3 +471,14 @@ publicadas. O reader 2.8 é preservado no lower; não existe writer duplo.
 `offset` absoluto e `extent` em bytes como decimais canônicos não negativos,
 com extensão positiva e range contido no item. Views de declaração permanecem
 inteiras; acesso dinâmico ou sem prova não substitui slice por acesso inteiro.
+
+### ST-W6.3 / SP2.11
+
+`MOVE.additionalTransfers` é lista obrigatória, possivelmente vazia, de
+`{source,target,effect}` com operandos próprios. A primeira transferência continua
+em source/target/regionalMove. Ordem do array é semântica; lower não usa nomes
+para ordenar ou descobrir receivers. FIT_TEXT significa ajuste à direita com
+SPACE, ao extent explícito do target. FITTED_LITERAL_BYTES conserva o literal
+original e publica o vetor após esse ajuste; LITERAL_BYTES continua byte-exato.
+Múltiplos receivers admitem valores exatos somente sem alteração potencial de
+origem; em sobreposição todos os valores da sequência têm gap explícito.
