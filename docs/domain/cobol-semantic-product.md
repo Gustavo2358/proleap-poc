@@ -482,3 +482,9 @@ SPACE, ao extent explícito do target. FITTED_LITERAL_BYTES conserva o literal
 original e publica o vetor após esse ajuste; LITERAL_BYTES continua byte-exato.
 Múltiplos receivers admitem valores exatos somente sem alteração potencial de
 origem; em sobreposição todos os valores da sequência têm gap explícito.
+
+ST-W6.4 consumes the same SP2.11 transfer sequence: canonical fixed textual
+CORRESPONDING publishes each implicit pair with declaration identity/origin and
+its own regional effect. Both primary and additional sources can differ. The
+sequence contains only selected pairs; unmatched bytes are not written. Matching
+is owned by StorageCorrespondence, never by a projector or downstream consumer.

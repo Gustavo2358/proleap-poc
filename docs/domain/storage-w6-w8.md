@@ -58,3 +58,25 @@ na regra IBM. Overlap entre receivers é permitido e preserva a ordem. Referênc
 modificadas admitidas têm posições/length constantes, portanto avaliação do
 endereço é invariável. Sem limite artificial de receivers; uma visita por
 receiver e consulta O(1) ao layout. Oracle de padding: AB→4 = C1 C2 40 40.
+
+## ST-W6.4 — CORRESPONDING textual fixo
+
+Autoridade: IBM Enterprise COBOL 6.4 Language Reference, CORRESPONDING phrase
+(https://publibfp.dhe.ibm.com/epubs/pdf/igy6lr40.pdf), índice oficial consultado
+em 2026-09-14; página IBM Docs 6.4 indisponível (403). A regra exige nomes e
+qualificadores iguais até excluir os dois grupos raiz, identificação única e
+exclui FILLER e descrições subordinadas REDEFINES/RENAMES/OCCURS/index/pointer.
+Raiz pode redefinir; referência modificada como raiz não é admitida.
+
+Subset: ambos os grupos e todos os pares selecionados precisam de layout fixo
+textual; par grupo/elementar, numérico, qualificação ambígua ou FILLER agrupador
+mantém fallback explícito. Não se descartam pares fora do perfil para certificar
+os restantes. O frontend indexa descendentes por caminho qualificado, seleciona
+pares e os ordena pela declaração fonte. Efeitos usam as regras W6.3. Grupos que
+podem se sobrepor produzem valores desconhecidos para todos os pares, impedindo
+captura tardia inventada; pares de grupos fisicamente disjuntos são independentes.
+Custo linear no inventário e no tamanho dos caminhos, sem produto cartesiano.
+SP2.11 já transporta a sequência de pares como source/target/effect, com IDs e
+provenance de declaração e statement. Lower não faz matching nem cópia de grupo.
+Oracle: SRC A(2),FILLER(1),B(2),ONLY-S(1); DST B(1),ONLY-D(3),A(4)
+produz apenas A→A (2→4) e B→B (2→1), nessa ordem; bytes de ONLY-D preservados.

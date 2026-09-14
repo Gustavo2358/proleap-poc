@@ -38,12 +38,13 @@ public final class StorageAccessSemantics {
             var byEntity=new HashMap<ResolutionContracts.SemanticEntityId,View>();
             for(var view:physical.views())nodes.get(view.node()).entity().ifPresent(id->byEntity.put(id,view));
             var pending=new ArrayDeque<Visit>();pending.push(new Visit(unit.program(),null));
-            var moveNodes=new ArrayList<Ast.MoveStatement>();
+            var moveNodes=new ArrayList<Ast.MoveStatement>();var declarations=new HashMap<Key,Ast.DataEntry>();
             while(!pending.isEmpty()) {
                 var visit=pending.pop();var node=visit.node();
                 if(node instanceof Ast.Program&&node!=unit.program())continue;
                 var owner=node instanceof Ast.Statement s?s:visit.owner();
                 if(node instanceof Ast.MoveStatement move)moveNodes.add(move);
+                if(node instanceof Ast.DataEntry data)declarations.put(new Key(unit.id(),data.meta().id()),data);
                 if(owner!=null&&node instanceof Ast.DataReference reference) {
                     var key=new Key(unit.id(),reference.meta().id());var binding=bindings.get(key);
                     if(binding!=null&&binding.status()==ResolutionContracts.ResolutionStatus.RESOLVED&&binding.candidates().size()==1
@@ -63,11 +64,18 @@ public final class StorageAccessSemantics {
             }
             var coverage=new HashMap<Integer,SemanticCoverage.Finding>();
             for(var finding:frontend.coverageByProgramUnit().get(unit.id()).findings())coverage.put(finding.astNodeId(),finding);
+            var correspondence=new StorageCorrespondence(declarations,nodes,physical,bases);
             for(var node:moveNodes) {
                 var statement=new Key(unit.id(),node.meta().id());var finding=coverage.get(node.meta().id());
-                if(node.corresponding()||node.targets().isEmpty()||node.targets().stream().anyMatch(t->!(t instanceof Ast.DataReference))
+                if(node.targets().isEmpty()||node.targets().stream().anyMatch(t->!(t instanceof Ast.DataReference))
                         ||finding==null||finding.coverage()!=SemanticCoverage.ConstructionCoverage.MODELED) {
                     moves.put(statement,new Move(statement,Optional.empty(),Optional.empty(),MoveKind.UNAVAILABLE,List.of(),List.of(Reason.MOVE_FORM_NOT_SUPPORTED),node.meta().provenance()));continue;
+                }
+                if(node.corresponding()) {
+                    var pairs=correspondence.sequence(statement,node,accesses);
+                    if(pairs.isEmpty())moves.put(statement,new Move(statement,Optional.empty(),Optional.empty(),MoveKind.UNAVAILABLE,List.of(),List.of(Reason.MOVE_FORM_NOT_SUPPORTED),node.meta().provenance()));
+                    else {moves.put(statement,pairs.get(0));sequences.put(statement,pairs);}
+                    continue;
                 }
                 var source=Optional.ofNullable(accesses.get(new Key(unit.id(),node.source().meta().id()))).filter(a->a.role()==Role.READ);
                 var effects=new ArrayList<Move>();
@@ -120,7 +128,7 @@ public final class StorageAccessSemantics {
         return role==ResolutionContracts.ReferenceRole.VALUE_READ?Role.READ:role==ResolutionContracts.ReferenceRole.VALUE_WRITE?Role.WRITE
             :role==ResolutionContracts.ReferenceRole.CALL_TARGET?Role.CALL_TARGET:null;
     }
-    private static boolean disjoint(View a,View b,Map<Key,Base> bases) {
+    static boolean disjoint(View a,View b,Map<Key,Base> bases) {
         if(!a.base().equals(b.base()))return a.base().unit().equals(b.base().unit())&&bases.get(a.base()).independent()&&bases.get(b.base()).independent();
         var left=a.offset().value().orElseThrow();var right=b.offset().value().orElseThrow();
         return left.add(a.extent().value().orElseThrow()).compareTo(right)<=0||right.add(b.extent().value().orElseThrow()).compareTo(left)<=0;

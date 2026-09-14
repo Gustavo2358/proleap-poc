@@ -350,7 +350,7 @@ public final class CobolSemanticProductProjector {
         if (position.statement() instanceof Ast.MoveStatement move) {
             Capability capability = moveCapability(move);
             var sequence=inputs.products().storage().map(s->s.sequence(new StorageLayoutSemantics.Key(inputs.unitId(),move.meta().id()))).orElse(List.of());
-            if(!move.corresponding()&&!sequence.isEmpty()&&sequence.stream().allMatch(e->e.kind()!=StorageAccessSemantics.MoveKind.UNAVAILABLE))
+            if(!sequence.isEmpty()&&sequence.stream().allMatch(e->e.kind()!=StorageAccessSemantics.MoveKind.UNAVAILABLE))
                 capability=Capability.supported("MOVE","REGIONAL_TRANSFER_SEQUENCE");
             List<ReferenceResolution.Entry> entries = new ArrayList<>();
             if (capability.supported()) {
@@ -840,6 +840,10 @@ public final class CobolSemanticProductProjector {
         }
 
         if (plan.position().statement() instanceof Ast.MoveStatement move) {
+            if(move.corresponding()) {
+                projectCorresponding(move,plan,inputs,dataIds,statementIds,statementId,containment,statements,gaps);
+                return;
+            }
             ReferenceResolution.Entry entry = plan.entries().get(0);
             CobolSemanticProduct.NominalBinding binding = nominalBinding(entry, dataIds);
             CobolSemanticProduct.CoverageStatus bindingCoverage = bindingCoverage(entry);
@@ -1063,6 +1067,42 @@ public final class CobolSemanticProductProjector {
             if (projectableDataBinding(entry, inputs))
                 requireBindingGapWhenNeeded(ifHeader, entry, gaps);
         }
+    }
+
+    private static void projectCorresponding(Ast.MoveStatement move,StatementPlan plan,ProjectionInputs inputs,
+            Map<ResolutionContracts.SemanticEntityId,DataItemId> dataIds,Map<Ast.Statement,StatementId> ids,
+            StatementId id,Containment containment,List<StatementFact> output,List<Gap> gaps) {
+        var effects=inputs.products().storage().orElseThrow().sequence(new StorageLayoutSemantics.Key(inputs.unitId(),move.meta().id()));
+        var origin=provenance(move.meta().provenance());
+        var proof=inputs.products().scalarMoves().move(inputs.unitId(),move.meta().id());
+        var next=canonicalStatement(proof.nextStatement(),inputs,ids);
+        boolean end=inputs.products().scalarMoves().performs().intrinsicExit(inputs.unitId(),move.meta().id())
+                ||inputs.products().scalarMoves().procedurePerforms().completion(inputs.unitId(),move.meta().id());
+        var continuation=new NormalContinuation(next.isPresent()?ContinuationAvailability.KNOWN:end?ContinuationAvailability.NONE:ContinuationAvailability.UNAVAILABLE,next,origin);
+        var transfers=new ArrayList<MoveTransfer>();var reasons=new LinkedHashSet<String>();
+        for(int i=0;i<effects.size();i++) {
+            var e=effects.get(i);var read=implicitReference(e.source().orElseThrow(),inputs,dataIds,new OperandId(id,i*2),OperandRole.READ);
+            var write=implicitReference(e.destination().orElseThrow(),inputs,dataIds,new OperandId(id,i*2+1),OperandRole.WRITE);
+            e.reasons().stream().map(Enum::name).forEach(reasons::add);
+            transfers.add(new MoveTransfer(read,write,new RegionalMove(RegionalMoveKind.valueOf(e.kind().name()),e.bytes(),e.reasons().stream().map(Enum::name).toList())));
+        }
+        if(next.isEmpty()&&!end)reasons.add("NORMAL_CONTINUATION_NOT_AVAILABLE");
+        var first=transfers.get(0);
+        output.add(new MoveFact(header(id,plan.position().ordinal(),containment,origin,
+                weakest(reasons.isEmpty()?CoverageStatus.MODELED:CoverageStatus.PARTIAL,containmentCoverage(containment),coverage(inputs.finding(move.meta().id()))),
+                containmentReadiness(containment,readiness(ReadinessStatus.SUFFICIENT,"canonical fixed textual corresponding pairs",
+                    next.isPresent()||end?ReadinessStatus.SUFFICIENT:ReadinessStatus.PARTIAL,"canonical normal continuation",
+                    reasons.isEmpty()?ReadinessStatus.SUFFICIENT:ReadinessStatus.PARTIAL,"explicit regional transfer sequence"))),
+                first.source(),first.target(),CopySemantics.UNAVAILABLE,continuation,Optional.empty(),Optional.of(first.effect()),transfers.subList(1,transfers.size())));
+        for(var reason:reasons)gaps.add(new Gap(id,reason.equals("NORMAL_CONTINUATION_NOT_AVAILABLE")?GapScope.STRUCTURE:GapScope.CAPABILITY,reason,"canonical CORRESPONDING effect or continuation remains partial",origin));
+        addContainmentGap(containment,id,origin,gaps);
+        for(var operand:plan.entries())addReportGaps(id,operand.occurrence(),inputs,provenance(operand.occurrence().meta().provenance()),gaps);
+    }
+    private static DataReference implicitReference(StorageAccessSemantics.Access access,ProjectionInputs inputs,
+            Map<ResolutionContracts.SemanticEntityId,DataItemId> dataIds,OperandId id,OperandRole role) {
+        var declaration=inputs.declarationSource(access.entity(),null);
+        return new DataReference(id,role,NominalBinding.resolved(Objects.requireNonNull(dataIds.get(access.entity())),declaration.symbol().canonicalName()),
+            provenance(access.origin()),Optional.empty(),Optional.of(new RegionalAccess(storageNode(inputs,access.view().node()),Optional.empty())));
     }
 
     private static void projectEvaluate(Ast.EvaluateStatement e, StatementPlan plan, ProjectionInputs inputs,
