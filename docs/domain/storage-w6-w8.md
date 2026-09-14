@@ -120,3 +120,13 @@ da ocorrência. Ela não converte uma operação regional em fato escalar. Prova
 entrada isolada, corpo linear, origem exata e retorno ao callsite seguem intactas.
 MUST_UNKNOWN/UNAVAILABLE não fortalecem esse conjunto. O caso VALUE child →
 PERFORM com overwrite → retorno é o oracle, e MOVE não provado mantém fallback.
+
+W8 demonstrated AST fix: a qualified reference such as `FIELD OF GROUP(2:4)`
+can parse with the trailing modifier nested in grammar `inTable`. The AST moves
+that existing typed modifier to the complete identifier, preserving provenance.
+Dynamic or out-of-bounds qualified modifiers retain unavailable storage access;
+they never become whole-item reads. No SP wire change or new language profile.
+Authority: [IBM Enterprise COBOL 6.4 Language Reference](https://publibfp.dhe.ibm.com/epubs/pdf/igy6lr40.pdf), reference modification of qualified data names;
+[qualification](https://www.ibm.com/docs/en/cobol-zos/6.4.0?topic=reference-qualification).
+StorageMetamorphicTest checks rename, qualification, RENAMES/REDEFINES alias copy,
+disjoint overlay insertion, qualified slices and their negative bounds/dynamic cases.
