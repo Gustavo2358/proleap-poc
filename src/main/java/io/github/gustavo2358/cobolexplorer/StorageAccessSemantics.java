@@ -5,7 +5,7 @@ import static io.github.gustavo2358.cobolexplorer.StorageLayoutSemantics.*;
 
 /** Source-language access and exact MOVE facts over the prepared physical layout. */
 public final class StorageAccessSemantics {
-    public enum Role { READ, WRITE, CALL_TARGET }
+    public enum Role { READ, WRITE, CALL_TARGET, CALL_ARGUMENT }
     public record Access(Key reference,Key statement,ResolutionContracts.SemanticEntityId entity,
                          View view,Role role,boolean sliced,Ast.SourceProvenance origin) { }
     public enum MoveKind { LITERAL_BYTES, FITTED_LITERAL_BYTES, COPY_BYTES, FIT_TEXT, MUST_UNKNOWN, UNAVAILABLE }
@@ -136,7 +136,8 @@ public final class StorageAccessSemantics {
     private record Visit(Ast.Node node,Ast.Statement owner) { }
     private static Role role(ResolutionContracts.ReferenceRole role) {
         return role==ResolutionContracts.ReferenceRole.VALUE_READ?Role.READ:role==ResolutionContracts.ReferenceRole.VALUE_WRITE?Role.WRITE
-            :role==ResolutionContracts.ReferenceRole.CALL_TARGET?Role.CALL_TARGET:null;
+            :role==ResolutionContracts.ReferenceRole.CALL_TARGET?Role.CALL_TARGET
+            :role==ResolutionContracts.ReferenceRole.CALL_ARGUMENT?Role.CALL_ARGUMENT:null;
     }
     static boolean disjoint(View a,View b,Map<Key,Base> bases) {
         if(!a.base().equals(b.base()))return a.base().unit().equals(b.base().unit())&&bases.get(a.base()).independent()&&bases.get(b.base()).independent();

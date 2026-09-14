@@ -196,4 +196,29 @@ class DeclarativeValueInferenceTest {
             Ast.PassingMode.REFERENCE,Ast.PassingMode.REFERENCE),call.arguments().stream().map(Ast.CallArgument::passingMode).toList());
         assertTrue(call.arguments().stream().allMatch(arg->arg.argumentKind()==Ast.CallArgumentKind.VALUE));
     }
+    @Test void missingCanonicalArgumentAccessCannotCertifyDisjunction() {
+        var f=StorageAccessTest.fixture(GROUP,"CALL LIT-PGM USING WS-AREA(9:8).");
+        var a=f.source();var unit=a.model().programUnits().get(0);
+        var condition=f.effects().initial().facts(unit.id()).conditions().get(0);
+        assertEquals(StorageInitialSemantics.Proof.DECLARATIVE_INVARIANT,condition.proof());
+        var argument=f.effects().accesses().stream().filter(x->x.role()==StorageAccessSemantics.Role.CALL_ARGUMENT).findFirst().orElseThrow();
+        assertEquals(condition.view().orElseThrow().base(),argument.view().base());
+        assertEquals(java.math.BigInteger.valueOf(8),argument.view().offset().value().orElseThrow());
+        assertEquals(java.math.BigInteger.valueOf(8),argument.view().extent().value().orElseThrow());
+        var retained=new HashMap<StorageLayoutSemantics.Key,StorageAccessSemantics.Access>();
+        for(var access:f.effects().accesses())if(access!=argument)retained.put(access.reference(),access);
+        var inventory=StorageMutationInventory.analyze(a.build(),unit,f.effects().layout().layout(unit.id()),retained,Map.of(),
+            new CicsProgramControlAnalyzer().analyze(a.build()));
+        assertTrue(inventory.blockers(condition.view().orElseThrow()).contains(StorageInitialSemantics.Reason.FOREIGN_MUTATION_OR_ESCAPE));
+    }
+    @Test void everyArgumentMustProveDisjunctionRegardlessOfOrderOrOtherModes() {
+        invariant(GROUP,"CALL LIT-PGM USING TAIL-PART WS-AREA(9:4) WS-AREA(13:4).");
+        for(var args:List.of("TAIL-PART LIT-PGM","LIT-PGM TAIL-PART","TAIL-PART MISSING-AREA",
+                "MISSING-AREA TAIL-PART","BY CONTENT TAIL-PART BY REFERENCE TAIL-PART",
+                "BY REFERENCE TAIL-PART BY VALUE 1"))blocked(GROUP,"CALL LIT-PGM USING "+args+".");
+        blocked(VALUE+"01 TABLE-AREA.\n05 ITEM-AREA PIC X(8) OCCURS 2 TIMES.\n01 IDX PIC 9.\n",
+            "CALL LIT-PGM USING ITEM-AREA(IDX).");
+        blocked(VALUE+"01 ARG-AREA PIC X(8) EXTERNAL.\n","CALL LIT-PGM USING ARG-AREA.");
+        blocked(GROUP,"CALL LIT-PGM USING TAIL-PART RETURNING LIT-PGM.");
+    }
 }

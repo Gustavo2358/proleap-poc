@@ -35,8 +35,9 @@ expected until its coordinated reader/pin update; no draft downgrade writer.
 `StorageMutationInventory` consumes the same canonical AST/coverage and completed
 `StorageAccessSemantics` access/MOVE-sequence maps. It visits every procedure
 statement, including unreachable statements and handler bodies. It does not use
-reachability to infer lifetime invariance. Exact physical writes are grouped by
-base, sorted and coalesced. A binary search tests overlap with the VALUE view.
+reachability to infer lifetime invariance. Exact physical writes and exposures
+are separately grouped by base, sorted and coalesced. Binary searches test
+overlap with the VALUE view. Global blockers and unknown exposures stay separate.
 The declaration can be known only when all relevant inventory gaps are absent.
 
 LANGUAGE_GUARANTEED: VALUE initialization; persistence; physical alias overlap;
@@ -49,7 +50,9 @@ ref-mod preserves the exact slice; dynamic/unproved destinations block inference
 The bounded statement slice is MOVE (including proven correspondence sequences),
 IF/EVALUATE, non-VARYING PERFORM, GO TO, NEXT SENTENCE, CONTINUE and GOBACK.
 CALL without arguments may read a target; RETURNING must have a proved physical
-write. Calls with arguments conservatively block the lifetime proof. Function,
+write. Ordinary BY REFERENCE arguments expose their exact canonical region when
+binding, layout and allocation are proved; overlap blocks the lifetime proof.
+Unknown exposures conservatively block it. Function,
 special-register/address and uninterpreted expressions block it, even within a
 modeled statement. VARYING/unknown repetition, unsupported statements, incomplete
 coverage/input, diagnostics, nested programs, signatures/declaratives, unknown
@@ -65,10 +68,40 @@ this slice. There is no CICS logic in a value solver.
 
 Soundness: local lifetime bytes start at the declared literal and none of the
 complete admitted operations can change/expose them. Any missing premise keeps
-UNKNOWN. Complexity is O(n+w log w+c log w), finite AST n, exact writes w and VALUE
-conditions c; there is no iteration over runtime values or second propagation
+UNKNOWN. The inventory traverses finite AST n, exact writes w, exposures e and
+VALUE conditions c; there is no iteration over runtime values or second propagation
 engine. Gaps distinguish storage, inventory, overlap, unproved writes, unknown
 effects and foreign exposure. This deliberately sacrifices completeness.
+
+### Candidate-specific CALL exposure
+
+[IBM Enterprise COBOL 6.4 CALL](https://www.ibm.com/docs/en/cobol-zos/6.4.0?topic=statements-call-statement)
+(consulted 2026-09-14) specifies shared storage for BY REFERENCE. The configured
+grammar and AST supply the implicit REFERENCE mode and phrase inheritance.
+`passingMode == REFERENCE`, `argumentKind == VALUE`, and `DataReference` are all
+required. Argument kind VALUE means an ordinary operand; it does not mean BY VALUE.
+
+`StorageAccessSemantics` materializes CALL_ARGUMENT through the existing canonical
+binding/view/slice path. The inventory admits only exact accesses on independent
+local allocations. Distinct bases are disjoint only when both have that proof;
+same-base overlap uses half-open byte intervals `[offset, offset + extent)`.
+REDEFINES, RENAMES, groups and constant reference modification use the same
+physical views as writes. Nominal spelling never proves disjunction.
+
+`blockers(candidate)` accumulates global blockers, overlapping writes and foreign
+exposure. A known disjoint argument adds no blocker for that candidate. Missing
+arguments/accesses, unproved binding/layout/allocation, dynamic slices/subscripts,
+BY CONTENT, BY VALUE, ADDRESS OF, OMITTED, literals and other expressions remain
+unknown exposures. This slice does not infer that copy/value modes are safe.
+Unknown exposures have no proved confinement, so they block every potentially
+affected candidate. Existing independent foreign effects still block globally.
+
+Soundness premises remain LANGUAGE_GUARANTEED shared argument storage and
+ARCHITECTURE_GUARANTEED complete typed inventory, canonical binding and independent
+allocation. A callee's signature/effects/control can remain open while a disjoint
+VALUE supplies a known target. This refines the frontend proof, not the SP wire,
+lowering or downstream dataflow. With exposures e, indexing and queries cost
+O(n + w log w + e log e + c(log w + log e)); storage is O(n+w+e).
 
 ## Downstream and evidence
 

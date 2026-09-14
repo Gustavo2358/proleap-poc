@@ -1,8 +1,8 @@
 id: WORK-DVI-ESCAPE-001
 title: Candidate-specific physical CALL USING exposure for declarative VALUE inference
-status: BLOCKED
+status: IN_PROGRESS
 scope:
   - DVI-E0 through DVI-E2; frontend physical mutation and escape inventory
   - Preserve unknown exposures, aliases, writes and independent foreign blockers
   - Keep SP 2.15.0/storage 1.4.0 and downstream production unchanged
-notes: E0 synthetic root cause and expected RED tests frozen. Real source required by the user before production changes has not been supplied or located. E1 has not started; no READY FOR HUMAN REVIEW claim.
+notes: E0 approved by user; E1 authorized independently of the real source. E18 PENDING_SOURCE; no claims about the four real sites. Dedicated worktree proleap-poc-dvi-escape, branch fix/dvi-alias-aware-call-escape, base a5a06ce6d5eb416b40cc35ce6b6b7e58ee8f72f5 from freshly fetched origin/main.
