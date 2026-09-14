@@ -82,10 +82,14 @@ public final class Ast {
     }
 
     public record Program(Meta meta, String name, ProgramAttributes attributes,
-                          List<Division> divisions) implements Node {
+                          List<Division> divisions, UnitInputProof inputProof) implements Node {
         public Program {
             attributes = Objects.requireNonNull(attributes, "attributes");
+            inputProof = Objects.requireNonNull(inputProof, "inputProof");
             divisions = List.copyOf(divisions);
+        }
+        public Program(Meta meta, String name, ProgramAttributes attributes, List<Division> divisions) {
+            this(meta, name, attributes, divisions, UnitInputProof.unknown());
         }
         public Program(Meta meta, String name, List<Division> divisions) {
             this(meta, name, ProgramAttributes.none(), divisions);

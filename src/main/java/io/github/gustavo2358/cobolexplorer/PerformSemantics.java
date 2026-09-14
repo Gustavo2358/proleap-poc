@@ -36,12 +36,12 @@ public final class PerformSemantics {
     static PerformSemantics analyze(CompilationUnitBuildResult frontend, CompilationUnitSymbolTables tables,
             ReferenceResolution resolution, ResolutionAnalysisReport report,
             Set<ScalarMoveSemantics.NodeKey> moves, IfSemantics ifs, GoToSemantics goTos) {
-        boolean complete = report.gaps().stream().noneMatch(g -> g.category() == ResolutionAnalysisReport.GapCategory.INPUT);
         var references = new HashMap<ScalarMoveSemantics.NodeKey, ReferenceResolution.Entry>();
         for (var entry : resolution.entries()) references.put(new ScalarMoveSemantics.NodeKey(
             entry.occurrence().programUnitId(), entry.occurrence().referenceAstNodeId()), entry);
         var result = new HashMap<ScalarMoveSemantics.NodeKey, Facts>();
         for (var unit : frontend.compilationUnit().programUnits()) {
+            boolean complete=report.inputComplete(unit.id());
             var nodes = new HashMap<Integer, Ast.Node>(); var performs = new ArrayList<Ast.PerformStatement>();
             var pending = new ArrayDeque<Ast.Node>(); pending.push(unit.program());
             while (!pending.isEmpty()) {

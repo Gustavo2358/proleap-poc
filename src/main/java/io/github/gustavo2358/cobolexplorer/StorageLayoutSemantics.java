@@ -44,9 +44,9 @@ public final class StorageLayoutSemantics {
             ReferenceResolution resolution,ResolutionAnalysisReport report,Profile profile,StorageComponents components) {
         Objects.requireNonNull(profile);Objects.requireNonNull(resolution);
         if(!components.belongsTo(frontend))throw new IllegalArgumentException("storage components belong to another snapshot");
-        boolean input=report.gaps().stream().noneMatch(g->g.category()==ResolutionAnalysisReport.GapCategory.INPUT);
         var layouts=new LinkedHashMap<ResolutionContracts.ProgramUnitId,Layout>();long declarations=0,visits=0;
         for(var unit:frontend.compilationUnit().programUnits()) {
+            boolean input=report.inputComplete(unit.id());
             var reasons=new LinkedHashSet<Reason>();
             if(profile==Profile.UNSPECIFIED)reasons.add(Reason.PROFILE_NOT_SELECTED);
             if(!input)reasons.add(Reason.INPUT_MISSING);

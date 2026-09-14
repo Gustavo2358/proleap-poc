@@ -167,8 +167,7 @@ public final class CobolSemanticProductProjector {
                     positionsByStatement, continuations, statements, gaps);
 
         CobolSemanticProduct.InventoryStatus inventoryStatus =
-                inputs.report().gaps().stream().anyMatch(gap ->
-                        gap.category() == ResolutionAnalysisReport.GapCategory.INPUT)
+                !inputs.report().inputComplete(inputs.unitId())
                         ? CobolSemanticProduct.InventoryStatus.INPUT_MISSING
                         : CobolSemanticProduct.InventoryStatus.COMPLETE;
         EntryInventory entries = entries(inputs, statementIds, inventoryStatus);
@@ -294,6 +293,7 @@ public final class CobolSemanticProductProjector {
             gaps.add(new EntryGap(GapScope.ANALYSIS_INPUT, "ENTRY_INPUT_INCOMPLETE",
                     "input remains incomplete; entry localization does not prove signature or data completeness", provenance));
         for (var missing : inputs.report().frontendState().unresolvedCopyDiagnostics())
+            if (inputMissing && (program.inputProof().copies().isEmpty() || program.inputProof().copies().contains(missing)))
             gaps.add(new EntryGap(GapScope.ANALYSIS_INPUT, "UNRESOLVED_COPY",
                     "COPY '" + missing.offendingToken() + "' from '" + missing.file()
                             + "' at line " + missing.line() + " is unavailable; input remains incomplete", provenance));

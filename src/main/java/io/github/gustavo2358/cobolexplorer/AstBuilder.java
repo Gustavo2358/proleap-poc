@@ -29,6 +29,7 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
     private final CobolParser parser;
     private final UnicodeText indexedSource;
     private final SourceMap sourceMap;
+    private final Map<CobolParser.ProgramUnitContext,UnitInputProof> inputProofs=new IdentityHashMap<>();
     private final IdentityHashMap<ParseTree, Integer> parseIds;
     private final IdentityHashMap<ParseTree, Integer> parseSubtreeSizes;
     private final List<CoverageDraft> coverageDrafts = new ArrayList<>();
@@ -138,7 +139,7 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
         if (context.environmentDivision() != null) divisions.add((Ast.Division) visit(context.environmentDivision()));
         if (context.dataDivision() != null) divisions.add((Ast.Division) visit(context.dataDivision()));
         if (context.procedureDivision() != null) divisions.add((Ast.Division) visit(context.procedureDivision()));
-        return new Ast.Program(meta, clean(sourceText(programId.programName())), programAttributes(programId), divisions);
+        return new Ast.Program(meta, clean(sourceText(programId.programName())), programAttributes(programId), divisions, unitInputProof(context));
     }
 
     @Override public Ast.Node visitIdentificationDivision(CobolParser.IdentificationDivisionContext ctx) { return buildIdentification(ctx); }
@@ -616,10 +617,36 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
         return null;
     }
 
+    private UnitInputProof unitInputProof(CobolParser.ProgramUnitContext program) {
+        return inputProofs.computeIfAbsent(program,this::computeUnitInputProof);
+    }
+    private UnitInputProof computeUnitInputProof(CobolParser.ProgramUnitContext program) {
+        if (!(program.getParent() instanceof CobolParser.CompilationUnitContext)
+                || program.endProgramStatement() == null) return UnitInputProof.unknown();
+        int start=program.getStart().getStartIndex(), end=program.endProgramStatement().getStop().getStopIndex()+1;
+        Set<Diagnostic> qualified=Collections.newSetFromMap(new IdentityHashMap<>());
+        Set<Diagnostic> rejected=Collections.newSetFromMap(new IdentityHashMap<>());
+        for(var region:sourceMap.inputGapRegions()) {
+            if(region.start()>=start && region.end()<=end)qualified.add(region.inputGap());
+            else rejected.add(region.inputGap());
+        }
+        qualified.removeIf(rejected::contains);
+        // Preserve SourceMap occurrence order; never infer ownership from diagnostic text/line.
+        return new UnitInputProof(sourceMap.inputGapRegions().stream().map(SourceMap.Segment::inputGap)
+            .filter(qualified::contains).distinct().toList());
+    }
+    private List<Diagnostic> separateUnitCopies(CobolParser.ProgramUnitContext program) {
+        if(sourceMap.inputGapRegions().isEmpty())return List.of();
+        if (!(program.getParent() instanceof CobolParser.CompilationUnitContext compilation)
+                || program.endProgramStatement() == null) return List.of();
+        return compilation.programUnit().stream().filter(p->p!=program)
+            .flatMap(p->unitInputProof(p).copies().stream()).toList();
+    }
     private EntryInputProof entryInputProof(CobolParser.ProcedureDivisionContext procedure) {
         var unit = procedure.getParent();
-        if (!(unit instanceof CobolParser.ProgramUnitContext program) || program.dataDivision() == null)
+        if (!(unit instanceof CobolParser.ProgramUnitContext program))
             return new EntryInputProof(List.of());
+        if(program.dataDivision() == null)return new EntryInputProof(List.of(),separateUnitCopies(program));
         var data = program.dataDivision();
         int dataStart = data.DOT_FS().getSymbol().getStopIndex() + 1;
         int procedureStart = procedure.getStart().getStartIndex();
@@ -631,7 +658,7 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
             else rejected.add(region.inputGap());
         }
         qualified.removeIf(rejected::contains);
-        return new EntryInputProof(List.copyOf(qualified));
+        return new EntryInputProof(List.copyOf(qualified),separateUnitCopies(program));
     }
 
     private Ast.ProcedureSignature buildProcedureSignature(CobolParser.ProcedureDivisionContext context) {

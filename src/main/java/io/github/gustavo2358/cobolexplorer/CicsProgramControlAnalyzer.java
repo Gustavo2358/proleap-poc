@@ -58,8 +58,9 @@ public final class CicsProgramControlAnalyzer {
             }
         }
         var defaults=new HashSet<Key>();
-        if(mode==EntryMode.NEW_LOGICAL_LEVEL&&report!=null&&report.gaps().stream().noneMatch(g->g.category()==ResolutionAnalysisReport.GapCategory.INPUT))
+        if(mode==EntryMode.NEW_LOGICAL_LEVEL&&report!=null)
             for(var unit:frontend.compilationUnit().programUnits()) {
+                if(!report.inputComplete(unit.id()))continue;
                 var nodes=new HashMap<Integer,Ast.Node>();var todo=new ArrayDeque<Ast.Node>();todo.push(unit.program());
                 while(!todo.isEmpty()){var n=todo.pop();if(n instanceof Ast.Program&&n!=unit.program())continue;nodes.put(n.meta().id(),n);Ast.children(n).forEach(todo::push);}
                 if(nodes.values().stream().anyMatch(n->n.meta().origin().grammarRule().equals("entryStatement")))continue;

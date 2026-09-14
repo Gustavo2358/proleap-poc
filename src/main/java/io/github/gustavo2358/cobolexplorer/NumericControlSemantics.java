@@ -13,10 +13,14 @@ public final class NumericControlSemantics {
         return analyze(frontend,tables,complete,StorageComponents.analyze(frontend));
     }
     static NumericControlSemantics analyze(CompilationUnitBuildResult frontend,CompilationUnitSymbolTables tables,boolean complete,StorageComponents components) {
+        return analyze(frontend,tables,unit->complete,components);
+    }
+    static NumericControlSemantics analyze(CompilationUnitBuildResult frontend,CompilationUnitSymbolTables tables,
+            java.util.function.Predicate<ResolutionContracts.ProgramUnitId> complete,StorageComponents components) {
         if(!components.belongsTo(frontend))throw new IllegalArgumentException("storage components belong to another snapshot");
         var result=new HashMap<ResolutionContracts.SemanticEntityId,IntegerItem>();
-        if(!complete)return empty();
         for(var unit:frontend.compilationUnit().programUnits()) {
+            if(!complete.test(unit.id()))continue;
             var attributes=unit.program().attributes();
             if(attributes.initial()||attributes.recursive()||attributes.common()||attributes.library()||attributes.definition())continue;
             var sections=new ArrayList<Ast.Section>();var pending=new ArrayDeque<Ast.Node>();pending.push(unit.program());
