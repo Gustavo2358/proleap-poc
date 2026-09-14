@@ -1,5 +1,7 @@
 # Trabalho ativo e backlog
 
+[WORK-STORAGE-W6-W8](WORK-STORAGE-W6-W8.json): W6/W7 G2 and W8 G3 qualified; IN_PROGRESS pending human review/merge. Extends the accepted W0–W5 work item without reopening it.
+
 Work items delimitam a mudança em execução; o [backlog](backlog.md) registra trabalho futuro ainda sem autorização de início. Não use tasklists históricas como contexto padrão.
 
 ## Ativo

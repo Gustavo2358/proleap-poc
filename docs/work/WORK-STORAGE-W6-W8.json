@@ -1,11 +1,14 @@
 {
   "id": "WORK-STORAGE-W6-W8",
-  "title": "Source fixed storage extensions W6\u2013W8",
+  "title": "Source fixed storage extensions W6–W8",
   "status": "IN_PROGRESS",
   "scope": [
     "ST-W6",
     "ST-W7",
     "ST-W8"
   ],
-  "notes": "User authorizes continuous development to M5 and persistent review PR; no merge. G0/G1 focal, G2 wave, G3 W8 only."
+  "notes": "User authorizes continuous development to M5 and persistent review PR; no merge. G0/G1 focal, G2 wave, G3 W8 only.",
+  "qualification": "W6 12/12 G2 PASS; W7 12/12 G2 PASS; W8 technical G3 PASS (composed unchanged evidence + affected RC3 requalification).",
+  "review": "READY_FOR_HUMAN_REVIEW; no merge/auto-merge; lifecycle status remains IN_PROGRESS until merge",
+  "qualification_document": "docs/engineering/storage-w8-qualification.md"
 }
