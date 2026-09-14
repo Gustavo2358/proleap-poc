@@ -36,6 +36,7 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
     private final IdentityHashMap<CobolParser.StatementContext, Ast.Statement> builtStatements =
             new IdentityHashMap<>();
     private int nextId;
+    private Ast.ParseTreeOrigin embeddedOperandOrigin;
 
     private record CoverageDraft(String grammarRule, Ast.Meta meta, String writtenText,
                                  int astNodeId) { }
@@ -1142,8 +1143,13 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
     private Ast.EmbeddedLanguageStatement buildEmbedded(ParserRuleContext context, Ast.EmbeddedLanguage language) {
         var anchor=meta(context);String raw=sourceText(context).strip();var operands=new ArrayList<Ast.EmbeddedHostOperand>();
         if(language==Ast.EmbeddedLanguage.CICS)for(var host:CicsHostSyntax.parse(raw,context.getStart().getStartIndex(),context.getStart().getLine(),context.getStart().getCharPositionInLine(),context.getStart().getTokenIndex())) {
-            var expression=identifierExpression(host.identifier());
-            if(expression instanceof Ast.DataReference reference)operands.add(new Ast.EmbeddedHostOperand(host.option(),host.optionStart(),host.role(),reference));
+            // The operand grammar is a separate tree. UI navigation points to its real EXEC container,
+            // while the operand retains its own expanded offsets and conservative SourceMap provenance.
+            var previous=embeddedOperandOrigin;embeddedOperandOrigin=anchor.origin();
+            try {
+                var expression=identifierExpression(host.identifier());
+                if(expression instanceof Ast.DataReference reference)operands.add(new Ast.EmbeddedHostOperand(host.option(),host.optionStart(),host.role(),reference));
+            } finally { embeddedOperandOrigin=previous; }
         }
         return new Ast.EmbeddedLanguageStatement(anchor, language, raw, operands);
     }
@@ -2070,7 +2076,8 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
         int startOffset = start == null ? 0 : Math.max(0, start.getStartIndex());
         int endOffset = stop == null ? startOffset : Math.min(indexedSource.length(), stop.getStopIndex() + 1);
         return new Ast.Meta(id, span,
-                new Ast.ParseTreeOrigin(parseIds.getOrDefault(context, -1), rule(context),
+                !parseIds.containsKey(context)&&embeddedOperandOrigin!=null?embeddedOperandOrigin:
+                    new Ast.ParseTreeOrigin(parseIds.getOrDefault(context, -1), rule(context),
                         parseSubtreeSizes.getOrDefault(context, 1)),
                 sourceMap.provenance(startOffset, endOffset));
     }

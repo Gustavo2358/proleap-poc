@@ -49,3 +49,18 @@ Bounded RESP/NOHANDLE commands can participate in the existing PERFORM paragraph
 range profile. A complete parsed embedded transform proves its structural span
 without changing `provenance.exact=false`. Error continuation may reach the
 activation resume; XCTL success never receives a normal return edge.
+
+CICS target references carry the READ role for a data-area. The elementary-only
+CALL target restriction therefore remains exclusive to COBOL CALL. The readiness
+consumer exposes a separate CICS_PROGRAM_CONTROL audit family. Host operand AST
+nodes have their own identities/spans; parse-tree navigation points to the real
+EXEC container because the host grammar runs in a separate syntax tree.
+
+W4: full Maven selected 741 tests (one pre-existing opt-in oracle skipped); the
+new-family projector guard failure was corrected with unique-position lookup
+and focused regression. CICS CLI/readiness, group storage and source navigation
+regressions have reduced tests. Full normalizer artifact checks passed after the
+source navigation correction, reusing unaffected outputs and the full test run.
+The naming check still rejects the pre-existing product name in
+`docs/engineering/storage-w8-qualification.md`; that historical file is unchanged.
+See the campaign handoff for the exact pins and final composed evidence.

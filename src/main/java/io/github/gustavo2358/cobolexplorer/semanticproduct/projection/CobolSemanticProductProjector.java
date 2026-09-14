@@ -72,7 +72,7 @@ public final class CobolSemanticProductProjector {
             CompilationUnitSymbolTables symbolTables,
             Map<ResolutionContracts.ProgramUnitId, ReferenceOccurrences> occurrencesByUnit,
             ReferenceResolution resolution,
-            ResolutionAnalysisReport report, ScalarMoveSemantics scalarMoves, Optional<StorageAccessSemantics> storage, Optional<io.github.gustavo2358.cobolexplorer.CicsProgramControlAnalyzer.Snapshot> cics) {
+            ResolutionAnalysisReport report, ScalarMoveSemantics scalarMoves, Optional<StorageAccessSemantics> storage, Optional<io.github.gustavo2358.cobolexplorer.CicsProgramControlAnalyzer.Contribution> cics) {
         public FrontendProducts(CompilationUnitBuildResult frontend, CompilationUnitSymbolTables symbolTables,
                 Map<ResolutionContracts.ProgramUnitId, ReferenceOccurrences> occurrencesByUnit, ReferenceResolution resolution,
                 ResolutionAnalysisReport report, ScalarMoveSemantics scalarMoves, Optional<StorageAccessSemantics> storage) {
@@ -663,13 +663,13 @@ public final class CobolSemanticProductProjector {
         if(cics.isPresent()) {
             var source=cics.orElseThrow();var codes=new LinkedHashSet<>(source.gaps());codes.add("CICS_EFFECTS_SIGNATURE_PARTIAL");
             Optional<CallTarget> target=source.literal().map(value->new LiteralCallTarget(new OperandId(statementId,0),value,
-                source.options().stream().filter(o->o.name().equals("PROGRAM")).findFirst().orElseThrow().operand().orElseThrow(),
+                source.options().stream().filter(o->o.name().equals("PROGRAM")).reduce((left,right)->{throw new IllegalArgumentException("CICS contribution must have one identity at this position");}).orElseThrow().operand().orElseThrow(),
                 Optional.of(new TextValue(value)),statementProvenance));
             if(target.isEmpty()&&source.host().isPresent()) {
-                var host=((Ast.EmbeddedLanguageStatement)plan.position().statement()).hostOperands().stream().filter(h->h.option().equals("PROGRAM")).findFirst();
+                var host=((Ast.EmbeddedLanguageStatement)plan.position().statement()).hostOperands().stream().filter(h->h.option().equals("PROGRAM")).reduce((left,right)->{throw new IllegalArgumentException("CICS contribution must have one identity at this position");});
                 if(host.isPresent()) {
                     var reference=host.orElseThrow().reference();var entry=inputs.entryFor(reference);
-                    if(projectableDataBinding(entry,inputs))target=Optional.of(new DataReference(new OperandId(statementId,0),OperandRole.CALL_TARGET,
+                    if(projectableDataBinding(entry,inputs))target=Optional.of(new DataReference(new OperandId(statementId,0),OperandRole.READ,
                         nominalBinding(entry,dataIds),provenance(reference.meta().provenance()),Optional.empty(),regionalAccess(inputs,reference.meta().id())));
                 }
             }
@@ -677,7 +677,7 @@ public final class CobolSemanticProductProjector {
             var options=new ArrayList<CicsOption>();int optionOrdinal=1;
             for(var option:source.options()) {
                 Optional<DataReference> ref=Optional.empty();
-                var host=((Ast.EmbeddedLanguageStatement)plan.position().statement()).hostOperands().stream().filter(h->h.optionStart()==option.start()).findFirst();
+                var host=((Ast.EmbeddedLanguageStatement)plan.position().statement()).hostOperands().stream().filter(h->h.optionStart()==option.start()).reduce((left,right)->{throw new IllegalArgumentException("CICS contribution must have one identity at this position");});
                 if(!option.name().equals("PROGRAM")&&host.isPresent()) {
                     var h=host.orElseThrow();var entry=inputs.entryFor(h.reference());
                     if(projectableDataBinding(entry,inputs))ref=Optional.of(new DataReference(new OperandId(statementId,optionOrdinal++),h.role()==Ast.EmbeddedHostRole.WRITE?OperandRole.WRITE:OperandRole.READ,
@@ -689,7 +689,7 @@ public final class CobolSemanticProductProjector {
                 ?CicsConditions.LOCAL_CONDITION:inputs.products().cics().orElseThrow().defaultHandlers(inputs.unitId(),plan.position().statement().meta().id())?CicsConditions.DEFAULT_ENTRY_PREFIX:CicsConditions.UNKNOWN;
             if(condition!=CicsConditions.DEFAULT_ENTRY_PREFIX)codes.add(condition==CicsConditions.UNKNOWN?"CICS_HANDLER_STATE_UNKNOWN":"CICS_CONDITION_VALUES_UNKNOWN");
             var nextId=inputs.selectedSource().unit().program().divisions().stream().filter(d->d.divisionKind()==Ast.DivisionKind.PROCEDURE)
-                .map(d->d.embeddedContinuations().get(plan.position().statement().meta().id())).filter(Objects::nonNull).findFirst();
+                .map(d->d.embeddedContinuations().get(plan.position().statement().meta().id())).filter(Objects::nonNull).reduce((left,right)->{throw new IllegalArgumentException("CICS contribution must have one identity at this position");});
             var nextStatement=canonicalStatement(nextId,inputs,statementIds);
             var next=new NormalContinuation(nextStatement.isPresent()?ContinuationAvailability.KNOWN:inputs.products().scalarMoves().procedurePerforms().completion(inputs.unitId(),plan.position().statement().meta().id())?ContinuationAvailability.NONE:ContinuationAvailability.UNAVAILABLE,nextStatement,statementProvenance);
             statements.add(new CicsFact(header(statementId,plan.position().ordinal(),containment,statementProvenance,CoverageStatus.PARTIAL,

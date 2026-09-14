@@ -14,19 +14,19 @@ public final class CicsProgramControlAnalyzer {
         public Fact { options=List.copyOf(options); gaps=List.copyOf(gaps); }
     }
     public record Key(ResolutionContracts.ProgramUnitId unit, int statement) { }
-    public static final class Snapshot {
+    public static final class Contribution {
         private final CompilationUnitBuildResult owner;
         private final Map<Key,Fact> facts;
         private final Set<Key> defaultHandlers;
-        private Snapshot(CompilationUnitBuildResult owner, Map<Key,Fact> facts,Set<Key> defaultHandlers) { this.owner=owner;this.facts=Map.copyOf(facts);this.defaultHandlers=Set.copyOf(defaultHandlers); }
+        private Contribution(CompilationUnitBuildResult owner, Map<Key,Fact> facts,Set<Key> defaultHandlers) { this.owner=owner;this.facts=Map.copyOf(facts);this.defaultHandlers=Set.copyOf(defaultHandlers); }
         public boolean defaultHandlers(ResolutionContracts.ProgramUnitId unit,int statement){return defaultHandlers.contains(new Key(unit,statement));}
         public boolean belongsTo(CompilationUnitBuildResult frontend) { return owner==frontend; }
         public Optional<Fact> fact(ResolutionContracts.ProgramUnitId unit,int statement) { return Optional.ofNullable(facts.get(new Key(unit,statement))); }
     }
-    public Snapshot analyze(CompilationUnitBuildResult frontend) {return analyze(frontend,null);}
-    public Snapshot analyze(CompilationUnitBuildResult frontend,ResolutionAnalysisReport report) {return analyze(frontend,report,EntryMode.UNKNOWN);}
-    public Snapshot analyze(CompilationUnitBuildResult frontend,ResolutionAnalysisReport report,EntryMode mode) {
-        if(mode==EntryMode.DISABLED)return new Snapshot(frontend,Map.of(),Set.of());
+    public Contribution analyze(CompilationUnitBuildResult frontend) {return analyze(frontend,null);}
+    public Contribution analyze(CompilationUnitBuildResult frontend,ResolutionAnalysisReport report) {return analyze(frontend,report,EntryMode.UNKNOWN);}
+    public Contribution analyze(CompilationUnitBuildResult frontend,ResolutionAnalysisReport report,EntryMode mode) {
+        if(mode==EntryMode.DISABLED)return new Contribution(frontend,Map.of(),Set.of());
         var facts=new LinkedHashMap<Key,Fact>();
         for(var unit:frontend.compilationUnit().programUnits()) {
             var pending=new ArrayDeque<Ast.Node>();pending.push(unit.program());
@@ -54,7 +54,7 @@ public final class CicsProgramControlAnalyzer {
                     current=division.get().normalContinuations().get(current);
                 }
             }
-        return new Snapshot(frontend,facts,defaults);
+        return new Contribution(frontend,facts,defaults);
     }
     static boolean boundedLocal(Ast.Node node) {
         if(!(node instanceof Ast.EmbeddedLanguageStatement e)||e.language()!=Ast.EmbeddedLanguage.CICS)return false;

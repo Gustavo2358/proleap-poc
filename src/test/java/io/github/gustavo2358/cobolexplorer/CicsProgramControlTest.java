@@ -25,6 +25,9 @@ class CicsProgramControlTest {
         var a=AstBoundaryTestSupport.analyze(ScalarMoveCheckpoint4ATest.program("01 WS-AREA PIC X(8).",
             "EXEC CICS LINK PROGRAM('PROGA') END-EXEC\nEXEC CICS XCTL PROGRAM(WS-AREA) NOHANDLE END-EXEC\nGOBACK."),"cics.cbl");
         var nodes=AstBoundaryTestSupport.nodes(a,Ast.EmbeddedLanguageStatement.class);assertEquals(2,nodes.size());
+        var host=nodes.get(1).hostOperands().get(0).reference();
+        assertEquals(nodes.get(1).meta().origin(),host.meta().origin());assertTrue(host.meta().origin().rootNodeId()>=0);
+        assertFalse(host.meta().provenance().exact(),"embedded syntax must not invent exact physical provenance");
         var snapshot=new CicsProgramControlAnalyzer().analyze(a.build());var unit=a.model().programUnits().get(0).id();
         assertEquals("PROGA",snapshot.fact(unit,nodes.get(0).meta().id()).orElseThrow().literal().orElseThrow());
         assertEquals("WS-AREA",snapshot.fact(unit,nodes.get(1).meta().id()).orElseThrow().host().orElseThrow());
@@ -69,6 +72,9 @@ class CicsProgramControlTest {
         assertEquals(move.target().regionalAccess(),reference.regionalAccess());
         assertTrue(fact.options().stream().filter(o->o.name().equals("COMMAREA")).findFirst().orElseThrow().reference().isPresent());
         emit("qualified",s);
+        var group=regional("01 WS-GROUP.\n05 P1 PIC X(4).\n05 P2 PIC X(4).","MOVE 'PROGA' TO WS-GROUP.\nEXEC CICS LINK PROGRAM(WS-GROUP) NOHANDLE END-EXEC.");
+        var groupTarget=(io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.DataReference)((io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.CicsFact)group.statements().get(1)).target().orElseThrow();
+        assertEquals("READ",groupTarget.role().name());assertTrue(groupTarget.regionalAccess().isPresent());emit("group",group);
         emit("variable",regional("01 WS-PGM PIC X(8).","MOVE 'PROGA' TO WS-PGM.\nEXEC CICS LINK PROGRAM(WS-PGM) COMMAREA(WS-PGM) NOHANDLE END-EXEC.\nCALL WS-PGM."));
         emit("short",regional("01 WS-PGM PIC X(5).","MOVE 'PROGA' TO WS-PGM.\nEXEC CICS LINK PROGRAM(WS-PGM) END-EXEC."));
         emit("if",regional("01 FLAG PIC X.\n01 WS-PGM PIC X(8).","IF FLAG = 'Y' MOVE 'PROGA' TO WS-PGM ELSE MOVE 'PROGB' TO WS-PGM END-IF.\nEXEC CICS LINK PROGRAM(WS-PGM) NOHANDLE END-EXEC."));
@@ -105,6 +111,21 @@ class CicsProgramControlTest {
             var perform=state.statements().stream().filter(io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.ProcedurePerformFact.class::isInstance).map(io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.ProcedurePerformFact.class::cast).findFirst().orElseThrow();
             assertTrue(perform.gapCodes().isEmpty(),perform.gapCodes().toString());emit("perform-"+command.toLowerCase(Locale.ROOT),state);
         }
+    }
+
+    @Test void completeCliPublishesCicsAndReadiness(@org.junit.jupiter.api.io.TempDir java.nio.file.Path directory) throws Exception {
+        var source=directory.resolve("cli.cbl");
+        java.nio.file.Files.writeString(source,ScalarMoveCheckpoint4ATest.program("01 WS-PGM PIC X(8).",
+            "EXEC CICS LINK PROGRAM('PROGA') END-EXEC.\nEXEC CICS XCTL PROGRAM(WS-PGM) NOHANDLE END-EXEC.\nGOBACK.").lines().map(line->"       "+line).collect(java.util.stream.Collectors.joining("\n","","\n")));
+        var output=directory.resolve("out");
+        ExplorerMain.main(new String[]{"--source",source.toString(),"--copybooks",directory.toString(),"--output",output.toString(),"--storage-profile","ibm-enterprise-6.4-fixed-display-1047@1"});
+        var doc=new com.fasterxml.jackson.databind.ObjectMapper().readTree(output.resolve("cobol-semantic-product.json").toFile());
+        int sites=0;for(var statement:doc.path("statements"))if(statement.path("variant").asText().equals("CICS_PROGRAM_CONTROL"))sites++;
+        assertEquals(2,sites);assertTrue(java.nio.file.Files.size(output.resolve("resolution-data.js"))>0);
+        var port=io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticPort.open(regional("01 WS-PGM PIC X(8).","EXEC CICS LINK PROGRAM('PROGA') END-EXEC."));
+        var audit=io.github.gustavo2358.cobolexplorer.semanticproduct.consumer.CobolLoweringReadinessConsumer.audit(port);
+        assertEquals("CICS_PROGRAM_CONTROL",audit.statements().get(0).family().name());
+        assertEquals(port.statements().get(0),((io.github.gustavo2358.cobolexplorer.semanticproduct.consumer.CobolLoweringReadinessConsumer.CicsAudit)audit.statements().get(0)).fact());
     }
 
 }
