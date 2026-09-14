@@ -78,11 +78,13 @@ Um cálculo pós-binding produz fatos imutáveis. Projectors apenas os transport
   MUST/MAY, regra de ajuste explicitamente admitida e lacunas.
 - Separação: conjuntos de bases disjuntas com autoridade e provenance.
 
-SP **2.7.0** é o único writer corrente. A família de fatos regionais tem
-schema fechado e versão explícita; a integração do reader 2.7 no lower preserva
-os leitores SP 1.x e 2.0–2.6. O lower valida closure, concordância das provas e bounds também na
-porta em memória. Nenhum campo físico é reconstruído de `picture`, nomes ou
-ordem de inventário. GEN/KILL e resultados de análise não pertencem ao SP.
+SP **2.8.0** é o writer corrente, com `storage` **1.1.0** e seu inventário
+`relations`. SP 2.7.0 introduziu os fatos regionais anteriores e permanece aceito
+pelo reader para compatibilidade. O lower preserva os readers das versões
+anteriores explicitamente suportadas e valida closure, concordância das provas e
+bounds também na porta em memória. Nenhum campo físico é reconstruído de
+`picture`, nomes ou ordem de inventário. GEN/KILL e resultados de análise não
+pertencem ao SP.
 
 Exemplo canônico: AREA tem dois filhos X(4), base R extent 8, views em [0,4) e
 [4,8). `MOVE 'ABCDEFGH' TO AREA` escreve `c1c2c3c4c5c6c7c8` em R[0,8).
