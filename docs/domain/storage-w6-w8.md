@@ -106,3 +106,8 @@ varrer pares/bytes desconhecidos. Literal1047 provado e padding explícito apena
 para faixa conhecida; lower recebe fatos e modo, sem parsingdeVALUE. Origem inclui
 cláusula VALUE e declaração. AIR EntryState existente é a fronteira canônica;
 contradição entre condições regionais é erro, não last-write-wins.
+
+W7.3: fixture misto combina escalar inteiro usado por controle, grupo com VALUE e
+REDEFINES, OCCURS e NATIONAL. Os dois últimos mantêm extensão/codec desconhecidos,
+sem ampliar o perfil. Prova de alocação local separa componentes, enquanto EXTERNAL
+remove a prova; CALL literal permanece publicado em ambos os casos.
