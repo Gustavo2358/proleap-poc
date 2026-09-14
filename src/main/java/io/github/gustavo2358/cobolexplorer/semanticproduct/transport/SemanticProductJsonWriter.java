@@ -26,7 +26,7 @@ import java.util.Objects;
  */
 public final class SemanticProductJsonWriter {
     public static final String SCHEMA = "cobol-semantic-product";
-    public static final String CONTRACT_VERSION = "2.8.0";
+    public static final String CONTRACT_VERSION = "2.9.0";
 
     private static final ObjectMapper JSON = JsonMapper.builder()
             .enable(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY)
@@ -83,7 +83,7 @@ public final class SemanticProductJsonWriter {
         return new StorageMeasureDocument(m.value().map(Object::toString).orElse(null),m.gapCodes());
     }
     private static StorageDocument storage(CobolSemanticProduct.StorageInventory storage) {
-        return new StorageDocument("1.1.0",storage.profile(),storage.profileId().orElse(null),storage.runtimeCodec().orElse(null),
+        return new StorageDocument("1.2.0",storage.profile(),storage.profileId().orElse(null),storage.runtimeCodec().orElse(null),
             storage.nodes().stream().map(n->new PhysicalNodeDocument(storageNodeHandle(n.id()),n.parent().map(SemanticProductJsonWriter::storageNodeHandle).orElse(null),
                 n.order(),n.filler(),n.kind(),n.data().map(SemanticProductJsonWriter::dataHandle).orElse(null),measure(n.extent()),provenance(n.provenance()))).toList(),
             storage.bases().stream().map(b->new StorageBaseDocument(storageBaseHandle(b.id()),measure(b.extent()),b.allocation(),provenance(b.provenance()))).toList(),
@@ -91,7 +91,10 @@ public final class SemanticProductJsonWriter {
                 v.codec().orElse(null),provenance(v.provenance()))).toList(),storage.gapCodes(),
             storage.relations().stream().sorted(java.util.Comparator.comparingInt(r->r.id().localId())).map(r->new StorageRelationDocument(
                 "storage-relation:"+r.id().localId(),storageNodeHandle(r.owner()),r.target().map(SemanticProductJsonWriter::storageNodeHandle).orElse(null),
-                r.status(),provenance(r.provenance()),r.gapCodes())).toList());
+                r.status(),provenance(r.provenance()),r.gapCodes())).toList(),
+            storage.renames().stream().sorted(java.util.Comparator.comparingInt(r->r.id().localId())).map(r->new StorageRenamesDocument(
+                "storage-relation:"+r.id().localId(),storageNodeHandle(r.owner()),r.from().map(SemanticProductJsonWriter::storageNodeHandle).orElse(null),
+                r.through().map(SemanticProductJsonWriter::storageNodeHandle).orElse(null),r.status(),provenance(r.provenance()),r.gapCodes())).toList());
     }
     private record StorageMeasureDocument(String value,List<String> gapCodes) { }
     private record PhysicalNodeDocument(String id,String parent,int order,boolean filler,CobolSemanticProduct.PhysicalKind kind,
@@ -99,8 +102,9 @@ public final class SemanticProductJsonWriter {
     private record StorageBaseDocument(String id,StorageMeasureDocument extent,CobolSemanticProduct.AllocationProof allocation,ProvenanceDocument provenance) { }
     private record StorageViewDocument(String node,String base,StorageMeasureDocument offset,StorageMeasureDocument extent,String codec,ProvenanceDocument provenance) { }
     private record StorageRelationDocument(String id,String owner,String target,CobolSemanticProduct.StorageRelationStatus status,ProvenanceDocument provenance,List<String> gapCodes) { }
+    private record StorageRenamesDocument(String id,String owner,String from,String through,CobolSemanticProduct.StorageRelationStatus status,ProvenanceDocument provenance,List<String> gapCodes) { }
     private record StorageDocument(String version,CobolSemanticProduct.StorageProfile profile,String profileId,String runtimeCodec,
-        List<PhysicalNodeDocument> nodes,List<StorageBaseDocument> bases,List<StorageViewDocument> views,List<String> gapCodes,List<StorageRelationDocument> relations) { }
+        List<PhysicalNodeDocument> nodes,List<StorageBaseDocument> bases,List<StorageViewDocument> views,List<String> gapCodes,List<StorageRelationDocument> relations,List<StorageRenamesDocument> renames) { }
     private record RegionalAccessDocument(String view) { }
     private record RegionalMoveDocument(CobolSemanticProduct.RegionalMoveKind kind,List<Integer> bytes,List<String> gapCodes) { }
 

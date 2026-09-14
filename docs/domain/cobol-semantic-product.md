@@ -454,3 +454,13 @@ ObservedStatement adds normalContinuation and knownReferences. These nominal fac
 retain identity/role/binding/provenance, but do not invent exact access/effect proof.
 A known observed continuation is the only normal in-unit successor; abnormal exits
 and nontermination remain unproved. No observed construction disappears.
+
+### SP2.9 / storage1.2 — fixed RENAMES
+
+Writer corrente 2.9.0; `storage.version=1.2.0` adiciona `renames` obrigatório
+(vazio quando ausente), com `{id,owner,from,through,status,provenance,gapCodes}`.
+Endpoints nullable preservam resolução disponível mesmo quando a faixa não é
+provada. PROVEN requer from e vista existente coerente com toda a faixa; sem
+THROUGH a categoria é herdada. UNPROVEN requer gaps e vista sem precisão.
+Nenhum alias aloca uma nova base. Declarações de aliases não usados também são
+publicadas. O reader 2.8 é preservado no lower; não existe writer duplo.

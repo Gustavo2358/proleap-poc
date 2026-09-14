@@ -200,7 +200,11 @@ public final class CobolSemanticProductProjector {
                 layout.reasons().stream().map(Enum::name).toList(),layout.relations().stream().map(r->new StorageRelation(
                     new StorageRelationId(inputs.boundaryUnit(),r.clause().meta().id()),new StorageNodeId(inputs.boundaryUnit(),r.owner()),
                     r.target().map(id->new StorageNodeId(inputs.boundaryUnit(),id)),r.proved()?StorageRelationStatus.PROVEN:StorageRelationStatus.UNPROVEN,
-                    provenance(r.clause().meta().provenance()),r.proved()?List.of():List.of("OVERLAY_NOT_PROVEN"))).toList());
+                    provenance(r.clause().meta().provenance()),r.proved()?List.of():List.of("OVERLAY_NOT_PROVEN"))).toList(),layout.renames().stream().map(r->new StorageRenames(
+                    new StorageRelationId(inputs.boundaryUnit(),r.clause().meta().id()),storageNode(inputs,r.owner()),
+                    r.from().map(id->storageNode(inputs,id)),r.through().map(id->storageNode(inputs,id)),
+                    r.proved()?StorageRelationStatus.PROVEN:StorageRelationStatus.UNPROVEN,provenance(r.clause().meta().provenance()),
+                    r.proved()?List.of():List.of("RENAMES_NOT_PROVEN"))).toList());
     }
     private static Optional<RegionalAccess> regionalAccess(ProjectionInputs inputs, int reference) {
         return inputs.products().storage().flatMap(s->s.access(new StorageLayoutSemantics.Key(inputs.unitId(),reference)))
@@ -562,7 +566,7 @@ public final class CobolSemanticProductProjector {
                 new LinkedHashMap<>();
         for (SymbolTable.Symbol symbol : inputs.selectedSource().table().symbols()) {
             if (symbol.namespace() != SymbolTable.Namespace.DATA
-                    || symbol.kind() != SymbolTable.SymbolKind.DATA_ITEM)
+                    || (symbol.kind() != SymbolTable.SymbolKind.DATA_ITEM && symbol.kind()!=SymbolTable.SymbolKind.RENAMES))
                 continue;
             ResolutionContracts.SemanticEntityId entityId =
                     new ResolutionContracts.SemanticEntityId(inputs.unitId(),

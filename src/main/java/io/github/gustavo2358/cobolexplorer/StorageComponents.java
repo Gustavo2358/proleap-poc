@@ -13,17 +13,18 @@ public final class StorageComponents {
     public record Relation(int owner, Optional<Integer> target, Ast.RedefinesClause clause, boolean proved) { }
     public record Unit(List<Position> positions, List<Ast.DataEntry> roots,
                        Map<Integer,Component> componentOf, Map<Integer,List<Component>> children,
-                       List<Component> rootComponents, List<Relation> relations,
+                       List<Component> rootComponents, List<Relation> relations, List<Position> renames,
                        boolean structureProven, boolean allocationProven, boolean relationsProven) {
         public Unit {
             positions=List.copyOf(positions);roots=List.copyOf(roots);componentOf=Map.copyOf(componentOf);
             var copy=new HashMap<Integer,List<Component>>();children.forEach((k,v)->copy.put(k,List.copyOf(v)));children=Map.copyOf(copy);
-            rootComponents=List.copyOf(rootComponents);relations=List.copyOf(relations);
+            rootComponents=List.copyOf(rootComponents);relations=List.copyOf(relations);renames=List.copyOf(renames);
         }
         /** No separate Cell is safe for any root participating in an overlay, including a later declaration. */
         public boolean standaloneIndependent(int node) {
             var c=componentOf.get(node);
-            return structureProven&&allocationProven&&relationsProven&&c!=null&&c.parent().isEmpty()&&c.members().size()==1;
+            return structureProven&&allocationProven&&relationsProven&&c!=null&&c.parent().isEmpty()&&c.members().size()==1
+                &&renames.stream().noneMatch(p->p.root()==node);
         }
     }
     private final CompilationUnitBuildResult owner;
@@ -45,11 +46,13 @@ public final class StorageComponents {
             var coverage=new HashMap<Integer,SemanticCoverage.Finding>();
             var report=frontend.coverageByProgramUnit().get(unit.id());
             if(report==null)structure=false;else for(var f:report.findings())coverage.put(f.astNodeId(),f);
-            var positions=new ArrayList<Position>();var pending=new ArrayDeque<Position>();
+            var positions=new ArrayList<Position>();var renames=new ArrayList<Position>();var pending=new ArrayDeque<Position>();
             for(int i=roots.size()-1;i>=0;i--)pending.push(new Position(roots.get(i),Optional.empty(),i,roots.get(i).meta().id()));
             var identities=new HashSet<Integer>();boolean allocation=true;
             while(!pending.isEmpty()) {
-                var p=pending.pop();var data=p.data();positions.add(p);
+                var p=pending.pop();var data=p.data();
+                if(data.levelKind()==Ast.DataLevelKind.RENAMES_66&&p.parent().isPresent()){renames.add(p);continue;}
+                positions.add(p);
                 if(!identities.add(data.meta().id()))throw new IllegalArgumentException("duplicate physical declaration identity");
                 allocation&=data.visibility()==Ast.DeclarationVisibility.LOCAL;
                 for(var clause:data.clauses())if(clause instanceof Ast.RenamesClause||clause instanceof Ast.PreservedDataClause)allocation=false;
@@ -59,7 +62,7 @@ public final class StorageComponents {
             var rootComponents=components(roots,Optional.empty(),coverage,byNode,relations);
             for(var p:positions)children.put(p.data().meta().id(),components(p.data().children(),Optional.of(p.data().meta().id()),coverage,byNode,relations));
             boolean proved=relations.stream().allMatch(Relation::proved);
-            units.put(unit.id(),new Unit(positions,roots,byNode,children,rootComponents,relations,structure,allocation,proved));
+            units.put(unit.id(),new Unit(positions,roots,byNode,children,rootComponents,relations,renames,structure,allocation,proved));
         }
         return new StorageComponents(frontend,units);
     }
@@ -69,6 +72,7 @@ public final class StorageComponents {
         var names=new HashMap<String,Ast.DataEntry>();var ambiguous=new HashSet<String>();
         Ast.DataEntry previous=null;
         for(var data:siblings) {
+            if(data.levelKind()==Ast.DataLevelKind.RENAMES_66&&parent.isPresent())continue;
             var redefines=data.clauses().stream().filter(Ast.RedefinesClause.class::isInstance).map(Ast.RedefinesClause.class::cast).toList();
             Ast.DataEntry selected=null;boolean proved=false;
             if(redefines.size()==1) {

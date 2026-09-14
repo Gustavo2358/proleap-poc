@@ -8,7 +8,7 @@ public final class StorageLayoutSemantics {
     public enum Profile { UNSPECIFIED, IBM_ENTERPRISE_6_4_FIXED_DISPLAY_1047 }
     public static final String PROFILE_ID="ibm-enterprise-6.4-fixed-display-1047@1";
     public enum Reason { PROFILE_NOT_SELECTED, INPUT_MISSING, NONORDINARY_PROGRAM, SECTION_NOT_PROVEN,
-        UNSUPPORTED_DECLARATION, UNKNOWN_EXTENT, UNKNOWN_OFFSET, OVERLAY_NOT_PROVEN }
+        UNSUPPORTED_DECLARATION, UNKNOWN_EXTENT, UNKNOWN_OFFSET, OVERLAY_NOT_PROVEN, RENAMES_NOT_PROVEN }
     public record Key(ResolutionContracts.ProgramUnitId unit,int node) { }
     public record Measure(Optional<BigInteger> value,List<Reason> reasons) {
         public Measure { Objects.requireNonNull(value);reasons=List.copyOf(reasons);
@@ -21,8 +21,9 @@ public final class StorageLayoutSemantics {
                        Optional<ResolutionContracts.SemanticEntityId> entity,Measure extent,Ast.SourceProvenance origin) { }
     public record Base(Key id,Measure extent,boolean independent,Ast.SourceProvenance origin) { }
     public record View(Key node,Key base,Measure offset,Measure extent,boolean textual,Ast.SourceProvenance origin) { }
-    public record Layout(Profile profile,List<Node> nodes,List<Base> bases,List<View> views,List<Reason> reasons,List<StorageComponents.Relation> relations) {
-        public Layout { nodes=List.copyOf(nodes);bases=List.copyOf(bases);views=List.copyOf(views);reasons=List.copyOf(reasons);relations=List.copyOf(relations); }
+    public record Renaming(Key owner, Optional<Key> from, Optional<Key> through, boolean proved, Ast.RenamesClause clause) { }
+    public record Layout(Profile profile,List<Node> nodes,List<Base> bases,List<View> views,List<Reason> reasons,List<StorageComponents.Relation> relations,List<Renaming> renames) {
+        public Layout { nodes=List.copyOf(nodes);bases=List.copyOf(bases);views=List.copyOf(views);reasons=List.copyOf(reasons);relations=List.copyOf(relations);renames=List.copyOf(renames); }
     }
     private final Map<ResolutionContracts.ProgramUnitId,Layout> layouts;
     private final Map<String,Long> metrics;
@@ -59,7 +60,7 @@ public final class StorageLayoutSemantics {
             if(reportUnit==null)reasons.add(Reason.INPUT_MISSING);else for(var f:reportUnit.findings())coverage.put(f.astNodeId(),f);
             var entities=new HashMap<Integer,ResolutionContracts.SemanticEntityId>();var duplicates=new HashSet<Integer>();
             for(var symbol:tables.forProgramUnit(unit.id()).orElseThrow().symbolTable().symbols())
-                if(symbol.namespace()==SymbolTable.Namespace.DATA&&symbol.kind()==SymbolTable.SymbolKind.DATA_ITEM) {
+                if(symbol.namespace()==SymbolTable.Namespace.DATA&&(symbol.kind()==SymbolTable.SymbolKind.DATA_ITEM||symbol.kind()==SymbolTable.SymbolKind.RENAMES)) {
                     var entity=new ResolutionContracts.SemanticEntityId(unit.id(),ResolutionContracts.SemanticEntityDomain.DATA_SYMBOL,symbol.id());
                     if(entities.putIfAbsent(symbol.declarationAstNodeId(),entity)!=null)duplicates.add(symbol.declarationAstNodeId());
                 }
@@ -104,7 +105,12 @@ public final class StorageLayoutSemantics {
                     cursor=plus(cursor,footprints.get(component.representative()),Reason.UNKNOWN_OFFSET);
                 }
             }
-            layouts.put(unit.id(),new Layout(profile,nodes,bases,views,List.copyOf(reasons),physical.relations()));
+            var renames=StorageRenames.prove(unit.id(),physical,resolution,entities,coverage,nodes,views);
+            if(renames.stream().anyMatch(r->!r.proved())) {
+                reasons.add(Reason.RENAMES_NOT_PROVEN);
+                bases.replaceAll(b->new Base(b.id(),b.extent(),false,b.origin()));
+            }
+            layouts.put(unit.id(),new Layout(profile,nodes,bases,views,List.copyOf(reasons),physical.relations(),renames));
         }
         return new StorageLayoutSemantics(layouts,Map.of("declarations",declarations,"layoutVisits",visits,"objectPairs",0L),frontend,resolution);
     }
@@ -132,7 +138,7 @@ public final class StorageLayoutSemantics {
             else if(clause instanceof Ast.RedefinesClause) { /* Physical relation is proved by StorageComponents. */ }
             else known=false;
         }
-        var kind=data.children().isEmpty()?Kind.ELEMENTARY:Kind.GROUP;
+        var kind=data.children().stream().allMatch(c->c.levelKind()==Ast.DataLevelKind.RENAMES_66)?Kind.ELEMENTARY:Kind.GROUP;
         known&=usages<=1&&(kind==Kind.GROUP?pictures==0:pictures==1&&extent.isPresent());
         return new Shape(known?kind:Kind.OPAQUE,known,extent);
     }

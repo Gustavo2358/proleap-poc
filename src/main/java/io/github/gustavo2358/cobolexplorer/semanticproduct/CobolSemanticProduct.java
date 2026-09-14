@@ -539,6 +539,14 @@ public final class CobolSemanticProduct {
                 "proved relation requires target; unproved relation requires explicit uncertainty");
         }
     }
+    public record StorageRenames(StorageRelationId id, StorageNodeId owner, Optional<StorageNodeId> from,
+            Optional<StorageNodeId> through, StorageRelationStatus status, Provenance provenance, List<String> gapCodes) {
+        public StorageRenames {
+            Objects.requireNonNull(id);Objects.requireNonNull(owner);Objects.requireNonNull(from);Objects.requireNonNull(through);
+            Objects.requireNonNull(status);Objects.requireNonNull(provenance);gapCodes=List.copyOf(gapCodes);
+            require(status==StorageRelationStatus.PROVEN?from.isPresent()&&gapCodes.isEmpty():!gapCodes.isEmpty(),"RENAMES proof or explicit gap required");
+        }
+    }
     public enum StorageProfile { UNSPECIFIED, IBM_ENTERPRISE_6_4_FIXED_DISPLAY_1047 }
     public enum PhysicalKind { GROUP, ELEMENTARY, OPAQUE }
     public enum AllocationProof { INDEPENDENT_LOCAL_WORKING_STORAGE, UNPROVEN }
@@ -583,12 +591,15 @@ public final class CobolSemanticProduct {
         }
     }
     public record StorageInventory(StorageProfile profile, List<PhysicalNode> nodes, List<StorageBase> bases,
-            List<StorageView> views, List<String> gapCodes, List<StorageRelation> relations) {
+            List<StorageView> views, List<String> gapCodes, List<StorageRelation> relations, List<StorageRenames> renames) {
         public StorageInventory {
             Objects.requireNonNull(profile); nodes = List.copyOf(nodes); bases = List.copyOf(bases);
-            views = List.copyOf(views); gapCodes = List.copyOf(gapCodes); relations=List.copyOf(relations);
+            views = List.copyOf(views); gapCodes = List.copyOf(gapCodes); relations=List.copyOf(relations);renames=List.copyOf(renames);
             gapCodes.forEach(code -> requireText(code, "storage gap"));
             require(profile != StorageProfile.UNSPECIFIED || !gapCodes.isEmpty(), "absent environment requires a gap");
+        }
+        public StorageInventory(StorageProfile profile,List<PhysicalNode> nodes,List<StorageBase> bases,List<StorageView> views,List<String> gapCodes,List<StorageRelation> relations) {
+            this(profile,nodes,bases,views,gapCodes,relations,List.of());
         }
         public StorageInventory(StorageProfile profile,List<PhysicalNode> nodes,List<StorageBase> bases,List<StorageView> views,List<String> gapCodes) {
             this(profile,nodes,bases,views,gapCodes,List.of());
@@ -1155,6 +1166,7 @@ public final class CobolSemanticProduct {
                     && v.offset().value().get().add(v.extent().value().get()).compareTo(pv.offset().value().get().add(pv.extent().value().get())) <= 0,
                     "child view exceeds physical parent");
         });
+        StorageRenamesContract.validate(unit,inventory,nodes,views,relationIds);
         for (var statement : statements) {
             for (var ref : references(statement)) ref.regionalAccess().ifPresent(access -> {
                 var view = views.get(access.view()); var node = nodes.get(access.view());
