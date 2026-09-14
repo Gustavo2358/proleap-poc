@@ -1138,7 +1138,12 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
     }
 
     private Ast.EmbeddedLanguageStatement buildEmbedded(ParserRuleContext context, Ast.EmbeddedLanguage language) {
-        return new Ast.EmbeddedLanguageStatement(meta(context), language, sourceText(context).strip());
+        var anchor=meta(context);String raw=sourceText(context).strip();var operands=new ArrayList<Ast.EmbeddedHostOperand>();
+        if(language==Ast.EmbeddedLanguage.CICS)for(var host:CicsHostSyntax.parse(raw,context.getStart().getStartIndex(),context.getStart().getLine(),context.getStart().getCharPositionInLine(),context.getStart().getTokenIndex())) {
+            var expression=identifierExpression(host.identifier());
+            if(expression instanceof Ast.DataReference reference)operands.add(new Ast.EmbeddedHostOperand(host.option(),host.optionStart(),host.role(),reference));
+        }
+        return new Ast.EmbeddedLanguageStatement(anchor, language, raw, operands);
     }
 
     private Ast.Expression expression(ParserRuleContext context, String role) {

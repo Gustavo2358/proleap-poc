@@ -72,13 +72,20 @@ public final class CobolSemanticProductProjector {
             CompilationUnitSymbolTables symbolTables,
             Map<ResolutionContracts.ProgramUnitId, ReferenceOccurrences> occurrencesByUnit,
             ReferenceResolution resolution,
-            ResolutionAnalysisReport report, ScalarMoveSemantics scalarMoves, Optional<StorageAccessSemantics> storage) {
+            ResolutionAnalysisReport report, ScalarMoveSemantics scalarMoves, Optional<StorageAccessSemantics> storage, Optional<io.github.gustavo2358.cobolexplorer.CicsProgramControlAnalyzer.Snapshot> cics) {
+        public FrontendProducts(CompilationUnitBuildResult frontend, CompilationUnitSymbolTables symbolTables,
+                Map<ResolutionContracts.ProgramUnitId, ReferenceOccurrences> occurrencesByUnit, ReferenceResolution resolution,
+                ResolutionAnalysisReport report, ScalarMoveSemantics scalarMoves, Optional<StorageAccessSemantics> storage) {
+            this(frontend,symbolTables,occurrencesByUnit,resolution,report,scalarMoves,storage,Optional.empty());
+        }
         public FrontendProducts(CompilationUnitBuildResult frontend, CompilationUnitSymbolTables symbolTables,
                 Map<ResolutionContracts.ProgramUnitId, ReferenceOccurrences> occurrencesByUnit, ReferenceResolution resolution,
                 ResolutionAnalysisReport report, ScalarMoveSemantics scalarMoves) {
             this(frontend, symbolTables, occurrencesByUnit, resolution, report, scalarMoves, Optional.empty());
         }
         public FrontendProducts {
+            Objects.requireNonNull(cics);
+            if(cics.isPresent()&&!cics.get().belongsTo(frontend))throw new IllegalArgumentException("CICS snapshot belongs to another frontend");
             Objects.requireNonNull(storage);
             if (storage.isPresent() && !storage.get().belongsTo(frontend, resolution))
                 throw new IllegalArgumentException("storage proof belongs to another frontend snapshot");
@@ -344,6 +351,8 @@ public final class CobolSemanticProductProjector {
     }
 
     private static StatementPlan plan(StatementPosition position, ProjectionInputs inputs) {
+        if(position.statement() instanceof Ast.EmbeddedLanguageStatement embedded && inputs.products().cics().flatMap(c->c.fact(inputs.unitId(),embedded.meta().id())).isPresent())
+            return new StatementPlan(position,Capability.supported("CICS","CICS_PROGRAM_CONTROL"),embedded.hostOperands().stream().map(h->inputs.entryFor(h.reference())).toList());
         if (position.statement() instanceof Ast.PerformStatement p && ProcedurePerformSemantics.applicable(p))
             return new StatementPlan(position, Capability.supported("PERFORM", "PERFORM_PROCEDURE"),
                 p.controls().stream()
@@ -649,6 +658,43 @@ public final class CobolSemanticProductProjector {
                 provenance(plan.position().statement().meta().provenance());
         CobolSemanticProduct.Containment containment = containment(
                 plan.position(), statementIds);
+
+        var cics=inputs.products().cics().flatMap(c->c.fact(inputs.unitId(),plan.position().statement().meta().id()));
+        if(cics.isPresent()) {
+            var source=cics.orElseThrow();var codes=new LinkedHashSet<>(source.gaps());codes.add("CICS_EFFECTS_SIGNATURE_PARTIAL");
+            Optional<CallTarget> target=source.literal().map(value->new LiteralCallTarget(new OperandId(statementId,0),value,
+                source.options().stream().filter(o->o.name().equals("PROGRAM")).findFirst().orElseThrow().operand().orElseThrow(),
+                Optional.of(new TextValue(value)),statementProvenance));
+            if(target.isEmpty()&&source.host().isPresent()) {
+                var host=((Ast.EmbeddedLanguageStatement)plan.position().statement()).hostOperands().stream().filter(h->h.option().equals("PROGRAM")).findFirst();
+                if(host.isPresent()) {
+                    var reference=host.orElseThrow().reference();var entry=inputs.entryFor(reference);
+                    if(projectableDataBinding(entry,inputs))target=Optional.of(new DataReference(new OperandId(statementId,0),OperandRole.CALL_TARGET,
+                        nominalBinding(entry,dataIds),provenance(reference.meta().provenance()),Optional.empty(),regionalAccess(inputs,reference.meta().id())));
+                }
+            }
+            if(target.isEmpty())codes.add(source.host().isPresent()?"CICS_HOST_BINDING_UNAVAILABLE":"CICS_TARGET_UNKNOWN");
+            var options=new ArrayList<CicsOption>();int optionOrdinal=1;
+            for(var option:source.options()) {
+                Optional<DataReference> ref=Optional.empty();
+                var host=((Ast.EmbeddedLanguageStatement)plan.position().statement()).hostOperands().stream().filter(h->h.optionStart()==option.start()).findFirst();
+                if(!option.name().equals("PROGRAM")&&host.isPresent()) {
+                    var h=host.orElseThrow();var entry=inputs.entryFor(h.reference());
+                    if(projectableDataBinding(entry,inputs))ref=Optional.of(new DataReference(new OperandId(statementId,optionOrdinal++),h.role()==Ast.EmbeddedHostRole.WRITE?OperandRole.WRITE:OperandRole.READ,
+                        nominalBinding(entry,dataIds),provenance(h.reference().meta().provenance()),Optional.empty(),regionalAccess(inputs,h.reference().meta().id())));
+                }
+                options.add(new CicsOption(option.name(),option.operand(),option.start(),option.end(),ref));
+            }
+            var condition=options.stream().anyMatch(o->o.name().equals("RESP")||o.name().equals("NOHANDLE"))
+                ?CicsConditions.LOCAL_CONDITION:CicsConditions.UNKNOWN;
+            codes.add(condition==CicsConditions.UNKNOWN?"CICS_HANDLER_STATE_UNKNOWN":"CICS_CONDITION_VALUES_UNKNOWN");
+            var next=observedContinuation(plan.position().statement(),inputs,statementIds);
+            statements.add(new CicsFact(header(statementId,plan.position().ordinal(),containment,statementProvenance,CoverageStatus.PARTIAL,
+                readiness(ReadinessStatus.PARTIAL,"CICS program target surface",ReadinessStatus.PARTIAL,"CICS conditions remain conservative",ReadinessStatus.PARTIAL,"external effects and signature partial")),
+                CicsCommand.valueOf(source.command().name()),source.raw(),target,options,condition,next,"cics-ts.program@1",List.copyOf(codes)));
+            for(var code:codes)gaps.add(capabilityGap(statementId,code,"CICS dimension remains partial",statementProvenance));
+            addContainmentGap(containment,statementId,statementProvenance,gaps);return;
+        }
 
         if (plan.position().statement() instanceof Ast.GoToStatement g && GoToSemantics.depending(g)) {
             var proof=inputs.products().scalarMoves().goTos().conditionalFact(inputs.unitId(),g.meta().id());

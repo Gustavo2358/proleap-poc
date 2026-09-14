@@ -732,9 +732,28 @@ public final class CobolSemanticProduct {
     }
 
     /** Adding a fact type extends this inventory without changing the State envelope. */
-    public sealed interface StatementFact permits MoveFact, CallFact, IfFact,
+    public sealed interface StatementFact permits MoveFact, CallFact, CicsFact, IfFact,
             ObservedStatement, GobackFact, PerformFact, EvaluateFact, GoToFact, ConditionalGoToFact, ProcedurePerformFact {
         StatementHeader header();
+    }
+
+    public enum CicsCommand { LINK, XCTL }
+    public enum CicsConditions { LOCAL_CONDITION, UNKNOWN }
+    public record CicsOption(String name, Optional<String> operand, int start, int end, Optional<DataReference> reference) {
+        public CicsOption { Objects.requireNonNull(reference); name=requireText(name,"option name");Objects.requireNonNull(operand);require(start>=0&&end>=start,"option offsets"); }
+    }
+    /** PROGRAM is the target option. Signature and effects remain independently partial. */
+    public record CicsFact(StatementHeader header, CicsCommand command, String rawText,
+        Optional<CallTarget> target, List<CicsOption> options, CicsConditions conditions,
+        NormalContinuation normalContinuation, String nameProfile, List<String> gapCodes) implements StatementFact {
+        public CicsFact {
+            Objects.requireNonNull(header);Objects.requireNonNull(command);Objects.requireNonNull(rawText);
+            Objects.requireNonNull(target);options=List.copyOf(options);Objects.requireNonNull(conditions);
+            Objects.requireNonNull(normalContinuation);nameProfile=requireText(nameProfile,"name profile");gapCodes=List.copyOf(gapCodes);
+            require(header.coverage()!=CoverageStatus.MODELED,"CICS effects/signature remain partial");
+            for(var option:options)require(option.end()<=rawText.length(),"CICS option outside payload");
+            target.ifPresent(t->require(t.id().statement().equals(header.id()),"CICS operand owner"));
+        }
     }
 
     /** Arm ordinal is semantic WHEN order, independent of physical statement inventory. */
@@ -1370,6 +1389,7 @@ public final class CobolSemanticProduct {
             var result=new ArrayList<DataReference>();if(move.source() instanceof DataReference r)result.add(r);result.add(move.target());
             for(var t:move.additionalTransfers()){if(t.source() instanceof DataReference r)result.add(r);result.add(t.target());}return List.copyOf(result);
         }
+        if (statement instanceof CicsFact cics) return java.util.stream.Stream.concat(cics.target().filter(DataReference.class::isInstance).map(DataReference.class::cast).stream(),cics.options().stream().flatMap(o->o.reference().stream())).toList();
         if (statement instanceof CallFact call) return call.target() instanceof DataReference data ? List.of(data) : List.of();
         if (statement instanceof IfFact branch) return branch.condition().references();
         if (statement instanceof ProcedurePerformFact p) return java.util.stream.Stream.concat(java.util.stream.Stream.concat(p.loop().stream().flatMap(l->l.condition().references().stream()),p.times().stream().flatMap(t->t.reference().stream())),p.varying().stream().flatMap(v->v.controls().stream()).flatMap(v->v.references().stream())).toList();
@@ -1386,6 +1406,8 @@ public final class CobolSemanticProduct {
             if (statement instanceof MoveFact move) {
                 var all=new ArrayList<OperandId>();all.add(move.source().id());all.add(move.target().id());
                 for(var t:move.additionalTransfers()){all.add(t.source().id());all.add(t.target().id());}operands=List.copyOf(all);
+            } else if (statement instanceof CicsFact cics) {
+                operands=java.util.stream.Stream.concat(cics.target().stream().map(CallTarget::id),cics.options().stream().flatMap(o->o.reference().stream()).map(DataReference::id)).toList();
             } else if (statement instanceof CallFact call) {
                 operands = List.of(call.target().id());
             } else if (statement instanceof IfFact branch) {
@@ -1513,6 +1535,10 @@ public final class CobolSemanticProduct {
                 require(next.unit().equals(call.header().id().unit()) && statements.containsKey(next),
                         "CALL continuation must reference a published statement in the same unit");
                 require(!next.equals(call.header().id()), "CALL cannot continue to itself");
+            });
+            if(statement instanceof CicsFact cics)cics.normalContinuation().statement().ifPresent(next -> {
+                require(next.unit().equals(statement.header().id().unit()) && statements.containsKey(next) && !next.equals(statement.header().id()),
+                    "CICS lexical continuation references a different published statement in the same unit");
             });
             if(statement instanceof ObservedStatement observed)observed.normalContinuation().statement().ifPresent(next -> {
                 require(next.unit().equals(statement.header().id().unit()) && statements.containsKey(next) && !next.equals(statement.header().id()),

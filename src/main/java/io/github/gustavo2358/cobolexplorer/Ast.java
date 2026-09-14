@@ -341,9 +341,14 @@ public final class Ast {
         public MoveStatement { targets = List.copyOf(targets); }
     }
 
-    /** Raw embedded-language payload; parsedContent is intentionally deferred to a future plugin. */
+    /** Preserved payload with optional host syntax. Platform meaning belongs to its analyzer. */
+    public enum EmbeddedHostRole { READ, WRITE, READ_WRITE }
+    public record EmbeddedHostOperand(String option,int optionStart,EmbeddedHostRole role,DataReference reference) { }
     public record EmbeddedLanguageStatement(Meta meta, EmbeddedLanguage language,
-                                            String rawText) implements Statement {}
+                                            String rawText,List<EmbeddedHostOperand> hostOperands) implements Statement {
+        public EmbeddedLanguageStatement {hostOperands=List.copyOf(hostOperands);}
+        public EmbeddedLanguageStatement(Meta meta,EmbeddedLanguage language,String rawText){this(meta,language,rawText,List.of());}
+    }
 
     public record NextSentenceStatement(Meta meta) implements Statement {}
 
@@ -599,6 +604,7 @@ public final class Ast {
             result.addAll(n.exceptionFlow());
             return result;
         }
+        if (node instanceof EmbeddedLanguageStatement n) return n.hostOperands().stream().map(EmbeddedHostOperand::reference).toList();
         if (node instanceof CallArgument n) return n.value() == null ? List.of() : List.of(n.value());
         if (node instanceof IfStatement n) {
             List<Node> result = new ArrayList<>();

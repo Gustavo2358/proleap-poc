@@ -304,7 +304,7 @@ public final class ExplorerMain {
         return CobolSemanticProductProjector.open(
                 new CobolSemanticProductProjector.FrontendProducts(frontend, symbolTables,
                         occurrences, resolution, report,
-                        ScalarMoveSemantics.analyze(frontend, symbolTables, resolution, report,components,java.util.Optional.of(storage)), java.util.Optional.of(storage)), unitId);
+                        ScalarMoveSemantics.analyze(frontend, symbolTables, resolution, report,components,java.util.Optional.of(storage)), java.util.Optional.of(storage), java.util.Optional.of(new CicsProgramControlAnalyzer().analyze(frontend))), unitId);
     }
 
     private static long elapsedMs(long startedNanos) {

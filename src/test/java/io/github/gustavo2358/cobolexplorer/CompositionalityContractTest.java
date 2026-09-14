@@ -35,7 +35,8 @@ class CompositionalityContractTest {
                 .map(ProcedurePerformFact.class::cast).allMatch(p->p.gapCodes().isEmpty()));
             var conditional=ScalarMoveCheckpoint4ATest.publish(ConditionalGoToTest.source(
                 "GO TO A B DEPENDING ON WS-IDX.\n".repeat(n)+"GOBACK.\nA.\nGOBACK.\nB.\nGOBACK.\n"));
-            for (var family : families) assertTrue((family==ConditionalGoToFact.class?conditional:family==GoToFact.class?transfers:family==ProcedurePerformFact.class?ranges:mixed).statements().stream().filter(family::isInstance).count() >= n,
+            var cics=io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticPort.open(CicsProgramControlTest.regional("01 WS-PGM PIC X(8).","EXEC CICS LINK PROGRAM(WS-PGM)\nNOHANDLE END-EXEC.\n".repeat(n)));
+            for (var family : families) assertTrue((family==CicsFact.class?cics:family==ConditionalGoToFact.class?conditional:family==GoToFact.class?transfers:family==ProcedurePerformFact.class?ranges:mixed).statements().stream().filter(family::isInstance).count() >= n,
                     "Missing compositional generator for " + family.getSimpleName() + " at N=" + n);
         }
         for (int n : List.of(1, 2, 5, 40)) for (var counts : List.of(new int[]{n,0,0}, new int[]{1,n,0}, new int[]{0,0,n})) {

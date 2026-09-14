@@ -500,3 +500,7 @@ nenhum byte. Ausência de condições nunca implica zero. O CLI seleciona o perf
 de invocação com `--entry-storage-state initial|preserved|unknown` (default unknown).
 A publicação de VALUE é canônica no frontend; projector não interpreta cláusulas.
 Não há MOVE sintético nem condição reaplicada em retorno/backedge.
+
+## SP 2.13: CICS Program Control
+
+The current writer publishes 2.13.0. `CICS_PROGRAM_CONTROL` is an additive statement family with LINK/XCTL, PROGRAM target, preserved options, bound host references and independently partial control/effects/signature. See [CICS](cics-program-control.md). The storage contract remains 1.3.0. Readers must explicitly support this version.

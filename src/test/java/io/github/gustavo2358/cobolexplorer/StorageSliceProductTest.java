@@ -11,7 +11,7 @@ class StorageSliceProductTest {
     @Test void writeAndCallCarryOccurrenceSliceWithoutChangingTheDeclaredView() throws Exception {
         var s=state(StorageReferenceModificationTest.DATA,"MOVE 'ABC' TO TEXT-PART(2:3).\nCALL TEXT-ALIAS(2:3).");
         var bytes=SemanticProductJsonWriter.serialize(CobolSemanticPort.open(s));var doc=new ObjectMapper().readTree(bytes);
-        assertEquals("2.12.0",doc.path("contractVersion").asText());
+        assertEquals("2.13.0",doc.path("contractVersion").asText());
         var write=doc.path("statements").get(0).path("target").path("regionalAccess");
         var call=doc.path("statements").get(1).path("target").path("reference").path("regionalAccess");
         for(var access:java.util.List.of(write,call)) {

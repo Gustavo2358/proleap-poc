@@ -1467,7 +1467,7 @@ evaluateValue
 // exec cics statement
 
 execCicsStatement
-   : EXECCICSLINE+
+   : EXECCICSLINE
    ;
 
 // exec sql statement
