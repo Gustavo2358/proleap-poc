@@ -1,19 +1,45 @@
 # EXEC DLI — handoff do fix
 
-Branch `fix/exec-dli-opaque`, baseada em `origin/main`
-`eb5c78101cce335dcd56cf8a8c9388f91b031917`, confirmada por fetch remoto em
-2026-09-14. Checkout principal preservado. Implementação qualificada localmente para revisão
-humana, sem merge/auto-merge. O SHA final e o link do PR são receipts da entrega
-no Git/GitHub, não baselines históricos.
+**DONE / APPROVED / MERGED** — [PR #50](https://github.com/Gustavo2358/proleap-poc/pull/50).
+`EXEC DLI` deixou de bloquear o preprocessing: agora é uma embedded language
+explicitamente identificada, lexicalmente delimitada e semanticamente
+opaca/PARTIAL. Nenhuma semântica IMS foi implementada.
+
+## Fechamento em 2026-09-14
+
+- Branch de implementação: `fix/exec-dli-opaque`; base remota confirmada por fetch:
+  `eb5c78101cce335dcd56cf8a8c9388f91b031917`.
+- Head qualificado e aprovado externamente:
+  `6dfdf3bb302873e0ff87756b476d08fd96a674eb`. A aprovação externa foi informada
+  pelo responsável; não há reviews, comentários ou threads registrados no GitHub.
+- Pré-merge: head e base inalterados desde a entrega, PR aberto e mergeable,
+  [Fast CI #105](https://github.com/Gustavo2358/proleap-poc/actions/runs/34871451078)
+  `completed/success` no head qualificado, sem novos blockers.
+- Merge explícito pelo método usual do repositório, merge commit:
+  `88e9493472c183357445c0be61ca80e7193b6e37`, em `2026-09-14T17:09:45Z`
+  (14:09:45 UTC−03). Sem auto-merge, rebase ou resolução de conflito.
+- Após fetch, `origin/main` continha o merge e os três commits do fix.
+  Head e merge têm a mesma árvore Git:
+  `62374b9c61a4e0c3988461076bfbd404409ce391`; `git diff --exit-code` entre
+  ambos passou. Nenhum delta produtivo foi introduzido no fechamento.
+- A equivalência permite reutilizar a qualificação abaixo, inclusive corpus e
+  downstream. FAST/full/qualification/corpus/decoder/CFG não foram repetidos.
+  O checkout principal foi preservado; a referência remota é a autoridade final.
+- Não havia work item formal DLI em `active/` ou `history/`; nenhum foi inventado.
+  O índice referencia este handoff concluído. Não havia blocker DLI pendente no
+  backlog nem no roadmap E2E inspecionado; não há `roadmap.md` neste repositório.
+- A perda descritiva do lower fica em
+  [BACKLOG-LOWER-002](backlog.md#backlog-lower-002--preservar-observedshape-na-opacidade-air),
+  sem implementação, repin ou blocker retroativo.
 
 ## Causa e delta desde o discovery
 
 Faltava a alternativa explícita DLI no preprocessor; recovery deixava `EXEC`
-chegar ao catálogo fechado. A causa permanece na base atual. O discovery foi
+chegar ao catálogo fechado. A causa foi confirmada na base de implementação. O discovery foi
 lido integralmente da cópia na raiz agregadora, idêntica à cópia da worktree de
 investigação. Seu SHA histórico não foi usado como baseline.
 
-A main atual publica SP 2.15.0, com DVI, em lugar do 2.14.0 do discovery.
+A main usada como base publicava SP 2.15.0, com DVI, em lugar do 2.14.0 do discovery.
 `ObservedStatement` só recebe continuation executável a partir de
 `Division.normalContinuations`; embedded adjacency é separada. DLI fica fora
 desse mapa, portanto nenhuma mudança produtiva no projector de continuation
@@ -36,8 +62,11 @@ zero diagnostics lexicais. Não houve mudança em charData.
 
 ## Evidência atual
 
-Logs, fontes, produtos brutos e comandos completos: `.harness-results/exec-dli/`
-(ignorados; resultados não editados para obter PASS).
+Logs, fontes, produtos brutos e comandos completos foram gerados em
+`.harness-results/exec-dli/` (ignorados; resultados não editados para obter PASS).
+Na retirada da worktree, foram preservados no workspace local em
+`exec-dli-fix/evidence/frontend-harness-results/exec-dli/`. Os caminhos dos
+comandos abaixo conservam o contexto original da execução.
 
 - RED focal inicial: 19 testes, 8 failures, 10 errors, zero skips. Dez casos
   válidos bloqueados pela policy EXEC; oito negativos sem diagnóstico DLI local.
@@ -68,8 +97,9 @@ Nenhum pin ou fonte downstream alterado.
 
 AIR conserva operação opaca, nenhum controle conhecido e remainder aberto,
 com memória desconhecida e dependências any_resource. O lower descarta
-`observedShape` no modelo interno atual e conserva `observedKind`; follow-up
-recomendado para fidelidade descritiva, sem inventar semântica IMS.
+`observedShape` no modelo interno atual e conserva `observedKind` e `gapCode`;
+[BACKLOG-LOWER-002](backlog.md#backlog-lower-002--preservar-observedshape-na-opacidade-air)
+registra o follow-up de fidelidade descritiva, sem inventar semântica IMS.
 
 GU/GNP/REPL/SCHD/TERM, PCB, segmentos, status, opções, efeitos e controle IMS
 continuam desconhecidos. Não se distingue COBOL acidental dentro de região
@@ -94,7 +124,8 @@ lexer, sem AST DLI recuperada.
 
 ## Comandos e resultados
 
-Todos os logs abaixo ficam em `.harness-results/exec-dli/`. Colunas F/E/S:
+Os logs abaixo usam o diretório original `.harness-results/exec-dli/`, preservado
+na localização de fechamento indicada acima. Colunas F/E/S:
 failures/errors/skips de Surefire. Nenhum gate planejado é listado como executado.
 
 | Comando efetivamente executado | Log | Exit | Testes; F/E/S |

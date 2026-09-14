@@ -22,6 +22,10 @@ como registros/handoffs cross-repo para `air-java`, `cobol-lower` e
 
 ## Histórico
 
+- [EXEC DLI — fix opaco](exec-dli-fix.md) — DONE / APPROVED / MERGED, PR #50;
+  delimitação lexical e SP OPAQUE_DLI/PARTIAL. Semântica IMS permanece futura;
+  fidelidade descritiva do lower em BACKLOG-LOWER-002. Não houve work item formal.
+
 - [WORK-AST-006 — CP6 W2A IF semantic facts](history/WORK-AST-006.md) — APPROVED / MERGED / CLOSED; PR #35; [baseline W2A congelado](evidence/WORK-AST-006/closeout/baseline.json). W2C/B/D NOT_STARTED / NOT_AUTHORIZED.
 
 - [WORK-AST-005 — CP6 W1A CALL Semantic Product](history/WORK-AST-005.md) — PR #34 mergeado.
