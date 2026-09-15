@@ -500,8 +500,11 @@ public final class CobolSemanticProduct {
     }
 
     public record DataReference(OperandId id, OperandRole role,
-                                NominalBinding binding, Provenance provenance, Optional<WholeItemAccess> wholeItemAccess, Optional<RegionalAccess> regionalAccess) implements CallTarget, MoveSource {
+                                NominalBinding binding, Provenance provenance, Optional<WholeItemAccess> wholeItemAccess, Optional<RegionalAccess> regionalAccess, List<RegionalAccess> regionalAlternatives) implements CallTarget, MoveSource {
         public DataReference {
+            regionalAlternatives=List.copyOf(regionalAlternatives);
+            require(regionalAlternatives.isEmpty()||role==OperandRole.CALL_TARGET&&binding.status()==ResolutionStatus.AMBIGUOUS
+                &&regionalAccess.isEmpty()&&wholeItemAccess.isEmpty(),"physical alternatives require an ambiguous CALL target");
             Objects.requireNonNull(regionalAccess);
             wholeItemAccess = Objects.requireNonNull(wholeItemAccess);
             if (wholeItemAccess.isPresent()) require(binding.selected().equals(Optional.of(wholeItemAccess.get().data())),
@@ -510,6 +513,9 @@ public final class CobolSemanticProduct {
             role = Objects.requireNonNull(role, "role");
             binding = Objects.requireNonNull(binding, "binding");
             provenance = Objects.requireNonNull(provenance, "provenance");
+        }
+        public DataReference(OperandId id, OperandRole role, NominalBinding binding, Provenance provenance, Optional<WholeItemAccess> wholeItemAccess, Optional<RegionalAccess> regionalAccess) {
+            this(id,role,binding,provenance,wholeItemAccess,regionalAccess,List.of());
         }
         public DataReference(OperandId id, OperandRole role, NominalBinding binding, Provenance provenance, Optional<WholeItemAccess> wholeItemAccess) {
             this(id, role, binding, provenance, wholeItemAccess, Optional.empty());
@@ -1327,6 +1333,17 @@ public final class CobolSemanticProduct {
             }
         }
         for (var statement : statements) {
+            for(var ref:references(statement)) {
+                var seenAlternatives=new HashSet<StorageNodeId>();
+                for(var alternative:ref.regionalAlternatives()) {
+                    var view=views.get(alternative.view());var node=nodes.get(alternative.view());
+                    require(view!=null&&node!=null&&node.data().isPresent()&&ref.binding().candidates().stream().anyMatch(c->c.id().equals(node.data().get()))
+                        &&seenAlternatives.add(node.id()),"physical alternatives must retain distinct nominal candidates");
+                    require(alternative.slice().isEmpty()&&node.kind()==PhysicalKind.ELEMENTARY&&view.codec().isPresent()
+                        &&view.offset().value().isPresent()&&view.extent().value().isPresent()&&view.extent().value().get().signum()>0
+                        &&bases.get(view.base()).extent().value().isPresent(),"alternative requires canonical bounded whole text view");
+                }
+            }
             for (var ref : references(statement)) ref.regionalAccess().ifPresent(access -> {
                 var view = views.get(access.view()); var node = nodes.get(access.view());
                 require(view != null && node != null && ref.binding().status() == ResolutionStatus.RESOLVED

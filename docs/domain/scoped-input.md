@@ -42,3 +42,19 @@ Semantic basis: IBM Enterprise COBOL 6.4 [REDEFINES clause](https://www.ibm.com/
 (endpoints in the associated level-01 record; no allocation). This is a refinement of
 proof admission using existing SP fields, not a new wire shape. No layout is invented
 for missing DATA input or an unbounded root relationship.
+
+
+## Ambiguous CALL reference — SP 2.18
+
+`DataReference.regionalAlternatives` is a non-exhaustive list of canonical physical
+whole-text accesses for a structured, unsubscripted, unmodified ambiguous CALL target.
+It never selects a nominal binding. Empty means no materialized alternative; it never
+proves that no value exists. Each view must agree with a distinct nominal candidate,
+known bounds and a supported text codec. Other forms retain their existing unknown
+state. StorageAccessSemantics materializes these facts; the projector only transports
+them. The storage schema remains 1.5.0; SP becomes 2.18.0 for the new reference field.
+
+The downstream target is an open Place.Choice. AIR target.possibilities@1 is required
+because the remaining memory need not have a known TEXT domain. The extension preserves
+TEXT candidates without claiming anything about the unknown remainder. Consumer queries
+remain BEFORE Invoke over current regional values, never a union with declared VALUE.

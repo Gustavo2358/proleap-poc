@@ -19,13 +19,15 @@ public final class StorageAccessSemantics {
     public StorageInitialSemantics initial() {return initial;}
     public StorageLayoutSemantics layout() { return layout; }
     public boolean belongsTo(CompilationUnitBuildResult frontend, ReferenceResolution resolution) { return layout.belongsTo(frontend, resolution); }
+    private final Map<Key,List<Access>> alternatives;
+    public List<Access> alternatives(Key reference){return alternatives.getOrDefault(reference,List.of());}
     private final Map<Key,Access> accesses;
     private final Map<Key,Move> moves;
     private final Map<Key,List<Move>> sequences;
     private final Map<Key,StatementEffectSummary> effects;
     public Optional<StatementEffectSummary> effects(Key statement){return Optional.ofNullable(effects.get(statement));}
     public List<Move> sequence(Key statement) { return sequences.getOrDefault(statement,List.of()); }
-    private StorageAccessSemantics(StorageLayoutSemantics layout,Map<Key,Access> accesses,Map<Key,Move> moves,Map<Key,List<Move>> sequences,Map<Key,StatementEffectSummary> effects,StorageInitialSemantics initial){this.initial=initial;this.layout=layout;this.accesses=Map.copyOf(accesses);this.moves=Map.copyOf(moves);this.sequences=Map.copyOf(sequences);this.effects=Map.copyOf(effects);}
+    private StorageAccessSemantics(StorageLayoutSemantics layout,Map<Key,List<Access>> alternatives,Map<Key,Access> accesses,Map<Key,Move> moves,Map<Key,List<Move>> sequences,Map<Key,StatementEffectSummary> effects,StorageInitialSemantics initial){this.alternatives=Map.copyOf(alternatives);this.initial=initial;this.layout=layout;this.accesses=Map.copyOf(accesses);this.moves=Map.copyOf(moves);this.sequences=Map.copyOf(sequences);this.effects=Map.copyOf(effects);}
     public Optional<Access> access(Key reference){return Optional.ofNullable(accesses.get(reference));}
     public Collection<Access> accesses(){return accesses.values();}
     public Collection<Move> moves(){return moves.values();}
@@ -44,6 +46,7 @@ public final class StorageAccessSemantics {
         for(var entry:resolution.entries())bindings.put(new Key(entry.occurrence().programUnitId(),entry.occurrence().referenceAstNodeId()),entry);
         var accesses=new LinkedHashMap<Key,Access>();var moves=new LinkedHashMap<Key,Move>();var sequences=new LinkedHashMap<Key,List<Move>>();
         var summaries=new LinkedHashMap<Key,StatementEffectSummary>();
+        var alternatives=new LinkedHashMap<Key,List<Access>>();
         for(var unit:frontend.compilationUnit().programUnits()) {
             var physical=layout.layout(unit.id());var nodes=new HashMap<Key,Node>();var bases=new HashMap<Key,Base>();
             for(var node:physical.nodes())nodes.put(node.id(),node);
@@ -62,6 +65,19 @@ public final class StorageAccessSemantics {
                 if(node instanceof Ast.DataEntry data)declarations.put(new Key(unit.id(),data.meta().id()),data);
                 if(owner!=null&&node instanceof Ast.DataReference reference) {
                     var key=new Key(unit.id(),reference.meta().id());var binding=bindings.get(key);
+                    if(binding!=null&&binding.status()==ResolutionContracts.ResolutionStatus.AMBIGUOUS
+                            &&binding.occurrence().role()==ResolutionContracts.ReferenceRole.CALL_TARGET
+                            &&reference.understanding()==Ast.ReferenceUnderstanding.STRUCTURED
+                            &&reference.subscriptGroups().isEmpty()&&reference.referenceModification()==null) {
+                        var choices=new ArrayList<Access>();
+                        for(var candidate:binding.candidates()) {
+                            var entity=candidate.entityId();var view=byEntity.get(entity);
+                            if(view!=null&&view.textual()&&view.offset().value().isPresent()&&view.extent().value().isPresent()
+                                    &&bases.get(view.base()).extent().value().isPresent()&&nodes.get(view.node()).kind()==Kind.ELEMENTARY)
+                                choices.add(new Access(key,new Key(unit.id(),owner.meta().id()),entity,view,Role.CALL_TARGET,false,reference.meta().provenance()));
+                        }
+                        if(!choices.isEmpty())alternatives.put(key,List.copyOf(choices));
+                    }
                     if(binding!=null&&binding.status()==ResolutionContracts.ResolutionStatus.RESOLVED&&binding.candidates().size()==1
                             &&binding.selectedCandidate().isPresent()&&reference.understanding()==Ast.ReferenceUnderstanding.STRUCTURED
                             &&reference.subscriptGroups().isEmpty()) {
@@ -119,7 +135,7 @@ public final class StorageAccessSemantics {
                 moves.put(statement,effects.get(0));sequences.put(statement,List.copyOf(effects));
             }
         }
-        return new StorageAccessSemantics(layout,accesses,moves,sequences,summaries,StorageInitialSemantics.analyze(frontend,resolution,layout,mode,accesses,sequences,summaries,cics));
+        return new StorageAccessSemantics(layout,alternatives,accesses,moves,sequences,summaries,StorageInitialSemantics.analyze(frontend,resolution,layout,mode,accesses,sequences,summaries,cics));
     }
     private static Move effect(Key statement,Optional<Access> destination,Optional<Access> source,Ast.Expression expression,
             Profile profile,Map<Key,Base> bases,Ast.SourceProvenance origin) {

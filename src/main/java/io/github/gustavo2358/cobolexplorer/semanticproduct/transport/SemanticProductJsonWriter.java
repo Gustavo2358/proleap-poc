@@ -26,7 +26,7 @@ import java.util.Objects;
  */
 public final class SemanticProductJsonWriter {
     public static final String SCHEMA = "cobol-semantic-product";
-    public static final String CONTRACT_VERSION = "2.17.0";
+    public static final String CONTRACT_VERSION = "2.18.0";
 
     private static final ObjectMapper JSON = JsonMapper.builder()
             .enable(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY)
@@ -276,7 +276,8 @@ public final class SemanticProductJsonWriter {
         return new DataReferenceDocument(operandHandle(reference.id()), reference.role(),
                 binding(reference.binding()), provenance(reference.provenance()), reference.wholeItemAccess()
                         .map(access -> new WholeItemDocument(dataHandle(access.data()))).orElse(null),
-                reference.regionalAccess().map(a->new RegionalAccessDocument(storageNodeHandle(a.view()),a.slice().map(s->new RegionalSliceDocument(s.offset().toString(),s.extent().toString())).orElse(null))).orElse(null));
+                reference.regionalAccess().map(a->new RegionalAccessDocument(storageNodeHandle(a.view()),a.slice().map(s->new RegionalSliceDocument(s.offset().toString(),s.extent().toString())).orElse(null))).orElse(null),
+                reference.regionalAlternatives().stream().map(a->new RegionalAccessDocument(storageNodeHandle(a.view()),null)).toList());
     }
 
     private static BindingDocument binding(CobolSemanticProduct.NominalBinding binding) {
@@ -535,7 +536,7 @@ public final class SemanticProductJsonWriter {
 
     private record DataReferenceDocument(String id, CobolSemanticProduct.OperandRole role,
                                          BindingDocument binding,
-                                         ProvenanceDocument provenance, WholeItemDocument wholeItemAccess, RegionalAccessDocument regionalAccess) { }
+                                         ProvenanceDocument provenance, WholeItemDocument wholeItemAccess, RegionalAccessDocument regionalAccess, List<RegionalAccessDocument> regionalAlternatives) { }
 
     private record BindingDocument(
             CobolSemanticProduct.ResolutionStatus status,
