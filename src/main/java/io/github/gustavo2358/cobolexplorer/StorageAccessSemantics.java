@@ -5,7 +5,7 @@ import static io.github.gustavo2358.cobolexplorer.StorageLayoutSemantics.*;
 
 /** Source-language access and exact MOVE facts over the prepared physical layout. */
 public final class StorageAccessSemantics {
-    public enum Role { READ, WRITE, CALL_TARGET }
+    public enum Role { READ, WRITE, CALL_TARGET, CALL_ARGUMENT }
     public record Access(Key reference,Key statement,ResolutionContracts.SemanticEntityId entity,
                          View view,Role role,boolean sliced,Ast.SourceProvenance origin) { }
     public enum MoveKind { LITERAL_BYTES, FITTED_LITERAL_BYTES, COPY_BYTES, FIT_TEXT, MUST_UNKNOWN, UNAVAILABLE }
@@ -19,11 +19,15 @@ public final class StorageAccessSemantics {
     public StorageInitialSemantics initial() {return initial;}
     public StorageLayoutSemantics layout() { return layout; }
     public boolean belongsTo(CompilationUnitBuildResult frontend, ReferenceResolution resolution) { return layout.belongsTo(frontend, resolution); }
+    private final Map<Key,List<Access>> alternatives;
+    public List<Access> alternatives(Key reference){return alternatives.getOrDefault(reference,List.of());}
     private final Map<Key,Access> accesses;
     private final Map<Key,Move> moves;
     private final Map<Key,List<Move>> sequences;
+    private final Map<Key,StatementEffectSummary> effects;
+    public Optional<StatementEffectSummary> effects(Key statement){return Optional.ofNullable(effects.get(statement));}
     public List<Move> sequence(Key statement) { return sequences.getOrDefault(statement,List.of()); }
-    private StorageAccessSemantics(StorageLayoutSemantics layout,Map<Key,Access> accesses,Map<Key,Move> moves,Map<Key,List<Move>> sequences,StorageInitialSemantics initial){this.initial=initial;this.layout=layout;this.accesses=Map.copyOf(accesses);this.moves=Map.copyOf(moves);this.sequences=Map.copyOf(sequences);}
+    private StorageAccessSemantics(StorageLayoutSemantics layout,Map<Key,List<Access>> alternatives,Map<Key,Access> accesses,Map<Key,Move> moves,Map<Key,List<Move>> sequences,Map<Key,StatementEffectSummary> effects,StorageInitialSemantics initial){this.alternatives=Map.copyOf(alternatives);this.initial=initial;this.layout=layout;this.accesses=Map.copyOf(accesses);this.moves=Map.copyOf(moves);this.sequences=Map.copyOf(sequences);this.effects=Map.copyOf(effects);}
     public Optional<Access> access(Key reference){return Optional.ofNullable(accesses.get(reference));}
     public Collection<Access> accesses(){return accesses.values();}
     public Collection<Move> moves(){return moves.values();}
@@ -41,6 +45,8 @@ public final class StorageAccessSemantics {
         var bindings=new HashMap<Key,ReferenceResolution.Entry>();
         for(var entry:resolution.entries())bindings.put(new Key(entry.occurrence().programUnitId(),entry.occurrence().referenceAstNodeId()),entry);
         var accesses=new LinkedHashMap<Key,Access>();var moves=new LinkedHashMap<Key,Move>();var sequences=new LinkedHashMap<Key,List<Move>>();
+        var summaries=new LinkedHashMap<Key,StatementEffectSummary>();
+        var alternatives=new LinkedHashMap<Key,List<Access>>();
         for(var unit:frontend.compilationUnit().programUnits()) {
             var physical=layout.layout(unit.id());var nodes=new HashMap<Key,Node>();var bases=new HashMap<Key,Base>();
             for(var node:physical.nodes())nodes.put(node.id(),node);
@@ -49,14 +55,29 @@ public final class StorageAccessSemantics {
             for(var view:physical.views())nodes.get(view.node()).entity().ifPresent(id->byEntity.put(id,view));
             var pending=new ArrayDeque<Visit>();pending.push(new Visit(unit.program(),null));
             var moveNodes=new ArrayList<Ast.MoveStatement>();var declarations=new HashMap<Key,Ast.DataEntry>();
+            var statementNodes=new ArrayList<Ast.Statement>();
             while(!pending.isEmpty()) {
                 var visit=pending.pop();var node=visit.node();
                 if(node instanceof Ast.Program&&node!=unit.program())continue;
                 var owner=node instanceof Ast.Statement s?s:visit.owner();
+                if(node instanceof Ast.Statement s)statementNodes.add(s);
                 if(node instanceof Ast.MoveStatement move)moveNodes.add(move);
                 if(node instanceof Ast.DataEntry data)declarations.put(new Key(unit.id(),data.meta().id()),data);
                 if(owner!=null&&node instanceof Ast.DataReference reference) {
                     var key=new Key(unit.id(),reference.meta().id());var binding=bindings.get(key);
+                    if(binding!=null&&binding.status()==ResolutionContracts.ResolutionStatus.AMBIGUOUS
+                            &&binding.occurrence().role()==ResolutionContracts.ReferenceRole.CALL_TARGET
+                            &&reference.understanding()==Ast.ReferenceUnderstanding.STRUCTURED
+                            &&reference.subscriptGroups().isEmpty()&&reference.referenceModification()==null) {
+                        var choices=new ArrayList<Access>();
+                        for(var candidate:binding.candidates()) {
+                            var entity=candidate.entityId();var view=byEntity.get(entity);
+                            if(view!=null&&view.textual()&&view.offset().value().isPresent()&&view.extent().value().isPresent()
+                                    &&bases.get(view.base()).extent().value().isPresent()&&nodes.get(view.node()).kind()==Kind.ELEMENTARY)
+                                choices.add(new Access(key,new Key(unit.id(),owner.meta().id()),entity,view,Role.CALL_TARGET,false,reference.meta().provenance()));
+                        }
+                        if(!choices.isEmpty())alternatives.put(key,List.copyOf(choices));
+                    }
                     if(binding!=null&&binding.status()==ResolutionContracts.ResolutionStatus.RESOLVED&&binding.candidates().size()==1
                             &&binding.selectedCandidate().isPresent()&&reference.understanding()==Ast.ReferenceUnderstanding.STRUCTURED
                             &&reference.subscriptGroups().isEmpty()) {
@@ -73,6 +94,20 @@ public final class StorageAccessSemantics {
                 var children=Ast.children(node);for(int i=children.size()-1;i>=0;i--)pending.push(new Visit(children.get(i),owner));
             }
             var coverage=new HashMap<Integer,SemanticCoverage.Finding>();
+            for(var statement:statementNodes)StatementEffectSummary.of(statement).ifPresent(e->{
+                var must=new ArrayList<Ast.DataReference>();
+                if(e.proof()==StatementEffectSummary.Proof.INITIALIZE_TARGETS&&e.completeMutationBound())for(var ref:e.mayWrites()) {
+                    var access=accesses.get(new Key(unit.id(),ref.meta().id()));
+                    if(access==null||access.sliced())continue;
+                    var physicalNode=nodes.get(access.view().node());var declaration=declarations.get(access.view().node());
+                    // A group may contain excluded bytes (FILLER, REDEFINES).
+                    // Only an ordinary exact elementary text receiver proves full overwrite.
+                    if(physicalNode!=null&&physicalNode.kind()==Kind.ELEMENTARY&&!physicalNode.filler()&&declaration!=null
+                            &&declaration.clauses().stream().noneMatch(c->c instanceof Ast.RedefinesClause||c instanceof Ast.OccursClause))must.add(ref);
+                }
+                summaries.put(new Key(unit.id(),statement.meta().id()),new StatementEffectSummary(e.knownReads(),e.mayWrites(),must,e.exposedRegions(),
+                    e.unknownReadBound(),e.unknownWriteBound(),e.unknownExposureBound(),e.environment(),e.values(),e.proof()));
+            });
             for(var finding:frontend.coverageByProgramUnit().get(unit.id()).findings())coverage.put(finding.astNodeId(),finding);
             var correspondence=new StorageCorrespondence(declarations,nodes,physical,bases);
             for(var node:moveNodes) {
@@ -100,7 +135,7 @@ public final class StorageAccessSemantics {
                 moves.put(statement,effects.get(0));sequences.put(statement,List.copyOf(effects));
             }
         }
-        return new StorageAccessSemantics(layout,accesses,moves,sequences,StorageInitialSemantics.analyze(frontend,resolution,layout,mode,accesses,sequences,cics));
+        return new StorageAccessSemantics(layout,alternatives,accesses,moves,sequences,summaries,StorageInitialSemantics.analyze(frontend,resolution,layout,mode,accesses,sequences,summaries,cics));
     }
     private static Move effect(Key statement,Optional<Access> destination,Optional<Access> source,Ast.Expression expression,
             Profile profile,Map<Key,Base> bases,Ast.SourceProvenance origin) {
@@ -136,7 +171,8 @@ public final class StorageAccessSemantics {
     private record Visit(Ast.Node node,Ast.Statement owner) { }
     private static Role role(ResolutionContracts.ReferenceRole role) {
         return role==ResolutionContracts.ReferenceRole.VALUE_READ?Role.READ:role==ResolutionContracts.ReferenceRole.VALUE_WRITE?Role.WRITE
-            :role==ResolutionContracts.ReferenceRole.CALL_TARGET?Role.CALL_TARGET:null;
+            :role==ResolutionContracts.ReferenceRole.CALL_TARGET?Role.CALL_TARGET
+            :role==ResolutionContracts.ReferenceRole.CALL_ARGUMENT?Role.CALL_ARGUMENT:null;
     }
     static boolean disjoint(View a,View b,Map<Key,Base> bases) {
         if(!a.base().equals(b.base()))return a.base().unit().equals(b.base().unit())&&bases.get(a.base()).independent()&&bases.get(b.base()).independent();

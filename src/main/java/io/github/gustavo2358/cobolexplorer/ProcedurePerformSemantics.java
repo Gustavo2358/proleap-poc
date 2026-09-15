@@ -49,8 +49,8 @@ public final class ProcedurePerformSemantics {
         var result=new HashMap<ScalarMoveSemantics.NodeKey,Facts>();
         var refs=new HashMap<ScalarMoveSemantics.NodeKey,ReferenceResolution.Entry>();
         for(var ref:resolution.entries())refs.put(new ScalarMoveSemantics.NodeKey(ref.occurrence().programUnitId(),ref.occurrence().referenceAstNodeId()),ref);
-        boolean complete=report.gaps().stream().noneMatch(g->g.category()==ResolutionAnalysisReport.GapCategory.INPUT);
         for(var unit:frontend.compilationUnit().programUnits()) {
+            boolean complete=report.inputComplete(unit.id());
             var coverage=new HashMap<Integer,SemanticCoverage.Finding>();
             for(var finding:frontend.coverageByProgramUnit().get(unit.id()).findings())coverage.put(finding.astNodeId(),finding);
             var nodes=new HashMap<Integer,Ast.Node>();var pending=new ArrayDeque<Ast.Node>();pending.push(unit.program());

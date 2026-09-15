@@ -100,9 +100,8 @@ public final class ScalarMoveSemantics {
         Map<NodeKey, Ast.CallStatement> callTargets = new HashMap<>();
         Map<NodeKey, Call> calls = new HashMap<>();
         long[] counts = new long[5];
-        boolean inputComplete = report.gaps().stream()
-                .noneMatch(g -> g.category() == ResolutionAnalysisReport.GapCategory.INPUT);
         for (var unit : frontend.compilationUnit().programUnits()) {
+            boolean inputComplete=report.inputComplete(unit.id());
             Map<Integer, ScalarText> eligible = new HashMap<>();
             // Reuse the already immutable canonical relation index; do not rebuild it.
             Map<Integer, Integer> next = Map.of();
@@ -162,6 +161,7 @@ public final class ScalarMoveSemantics {
         for (var entry : resolution.entries()) {
             counts[2]++;
             var occurrence = entry.occurrence();
+            boolean inputComplete=report.inputComplete(occurrence.programUnitId());
             var occurrenceKey = new NodeKey(occurrence.programUnitId(), occurrence.referenceAstNodeId());
             var call = callTargets.get(occurrenceKey);
             if (call != null) {
@@ -234,7 +234,7 @@ public final class ScalarMoveSemantics {
             var basic = fact(whole, copy, moves.get(key).nextStatement());
             moves.put(key, new Move(whole, copy, basic.nextStatement(), basic.gaps(), adjustment, sourceWhole));
         }
-        var numbers=NumericControlSemantics.analyze(frontend,tables,inputComplete,components);
+        var numbers=NumericControlSemantics.analyze(frontend,tables,report::inputComplete,components);
         var ifs = IfSemantics.analyze(frontend, tables, resolution, report, declarations, moves,numbers,components);
         var goTos = GoToSemantics.analyze(frontend, tables, resolution, report,numbers);
         var completingMoves=new HashSet<NodeKey>();
@@ -254,7 +254,7 @@ public final class ScalarMoveSemantics {
         // an intrinsic activation's published completion with that ordinary fallthrough.
         // This new proof is qualified only in units containing the conditional-transfer slice.
         var conditionalUnits=goTos.conditionalUnits();
-        if(inputComplete)for(var unit:frontend.compilationUnit().programUnits())for(var division:unit.program().divisions())
+        for(var unit:frontend.compilationUnit().programUnits())if(report.inputComplete(unit.id()))for(var division:unit.program().divisions())
             if(conditionalUnits.contains(unit.id())&&division.divisionKind()==Ast.DivisionKind.PROCEDURE)for(var edge:division.ordinaryContinuations().entrySet()) {
                 var key=new NodeKey(unit.id(),edge.getKey());var move=moves.get(key);
                 if(move!=null&&move.nextStatement().isEmpty()&&!performs.intrinsicExit(unit.id(),key.node())

@@ -51,7 +51,6 @@ public final class IfSemantics {
             Map<ScalarMoveSemantics.NodeKey, ScalarMoveSemantics.Move> moves, NumericControlSemantics numbers,StorageComponents components) {
         if(!components.belongsTo(frontend))throw new IllegalArgumentException("storage components belong to another snapshot");
         long[] work = new long[5];
-        boolean input = report.gaps().stream().noneMatch(g -> g.category() == ResolutionAnalysisReport.GapCategory.INPUT);
         Map<ScalarMoveSemantics.NodeKey, ReferenceResolution.Entry> reads = new HashMap<>();
         for (var entry : resolution.entries()) {
             work[2]++;
@@ -61,6 +60,7 @@ public final class IfSemantics {
         Map<ScalarMoveSemantics.NodeKey, Facts> facts = new HashMap<>();
         Map<ResolutionContracts.ProgramUnitId, IndependentStorageSet> storage = new HashMap<>();
         for (var unit : frontend.compilationUnit().programUnits()) {
+            boolean input=report.inputComplete(unit.id());
             Map<Integer, SemanticCoverage.Finding> coverage = new HashMap<>();
             for (var f : frontend.coverageByProgramUnit().get(unit.id()).findings()) {
                 work[0]++; coverage.put(f.astNodeId(), f);

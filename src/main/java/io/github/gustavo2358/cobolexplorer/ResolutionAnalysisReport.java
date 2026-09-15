@@ -127,7 +127,7 @@ public final class ResolutionAnalysisReport {
         Objects.requireNonNull(externalClassifications, "externalClassifications");
 
         List<Gap> gaps = new ArrayList<>();
-        addInputGaps(frontendState, gaps);
+        addInputGaps(frontend, frontendState, gaps);
         addFrontendGaps(frontend, gaps);
         addCollectorGaps(frontend.compilationUnit(), occurrencesByUnit, resolution, gaps);
         ExternalProjection projection = validateExternalClassifications(
@@ -195,12 +195,12 @@ public final class ResolutionAnalysisReport {
     public long referenceCount() { return operationalMetrics.collectedReferences(); }
     public long unknownDependencyCount() { return gaps.size(); }
 
-    private static void addInputGaps(FrontendState state, List<Gap> gaps) {
+    private static void addInputGaps(CompilationUnitBuildResult frontend, FrontendState state, List<Gap> gaps) {
         for (Diagnostic diagnostic : state.unresolvedCopyDiagnostics()) {
             addGap(gaps, GapCategory.INPUT, "UNRESOLVED_COPY",
                     "COPY '" + diagnostic.offendingToken() + "' from '"
                             + diagnostic.file() + "' could not be expanded",
-                    null, "copyStatement", diagnostic.line(), -1);
+                    copyOwner(frontend,diagnostic), "copyStatement", diagnostic.line(), -1);
         }
         if (state.preprocessorErrors() > 0)
             addGap(gaps, GapCategory.INPUT, "PREPROCESSOR_ERROR",
@@ -223,6 +223,21 @@ public final class ResolutionAnalysisReport {
         }
     }
 
+    private static ResolutionContracts.ProgramUnitId copyOwner(CompilationUnitBuildResult frontend, Diagnostic diagnostic) {
+        var owners=frontend.compilationUnit().programUnits().stream()
+            .filter(u->u.program().inputProof().copies().contains(diagnostic)).toList();
+        return owners.size()==1?owners.get(0).id():null;
+    }
+    public boolean inputComplete(ResolutionContracts.ProgramUnitId unit) {
+        return gaps.stream().noneMatch(g->g.category()==GapCategory.INPUT&&appliesTo(g,unit));
+    }
+    /** A gap in a containing unit also affects nested units; siblings are not ancestors. */
+    public static boolean appliesTo(Gap gap,ResolutionContracts.ProgramUnitId unit) {
+        var scope=gap.programUnitId();if(scope==null)return true;
+        var path=scope.structuralPath();var current=unit.structuralPath();
+        return scope.compilationUnitId().equals(unit.compilationUnitId())&&current.size()>=path.size()
+            &&current.subList(0,path.size()).equals(path);
+    }
     private static void addFrontendGaps(CompilationUnitBuildResult frontend, List<Gap> gaps) {
         for (CompilationUnitModel.ProgramUnit unit : frontend.compilationUnit().programUnits()) {
             SemanticCoverage.Report report = frontend.coverageByProgramUnit().get(unit.id());
@@ -393,11 +408,9 @@ public final class ResolutionAnalysisReport {
     private static List<ProgramUnitSummary> programSummaries(
             CompilationUnitModel model, ReferenceResolution resolution, List<Gap> gaps,
             FrontendState frontendState) {
-        boolean globalInputGap = frontendState.unresolvedCopies() > 0
-                || frontendState.preprocessorErrors() > 0 || frontendState.lexerErrors() > 0
-                || frontendState.parserErrors() > 0 || !frontendState.diagnostics().isEmpty();
         List<ProgramUnitSummary> result = new ArrayList<>();
         for (CompilationUnitModel.ProgramUnit unit : model.programUnits()) {
+            boolean globalInputGap=gaps.stream().anyMatch(g->g.category()==GapCategory.INPUT&&appliesTo(g,unit.id()));
             List<ReferenceResolution.Entry> entries = resolution.entries().stream()
                     .filter(entry -> entry.occurrence().programUnitId().equals(unit.id())).toList();
             List<Gap> unitGapEntries = gaps.stream().filter(gap -> gap.programUnitId() != null

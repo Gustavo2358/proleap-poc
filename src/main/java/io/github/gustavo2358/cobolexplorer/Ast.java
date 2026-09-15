@@ -82,10 +82,14 @@ public final class Ast {
     }
 
     public record Program(Meta meta, String name, ProgramAttributes attributes,
-                          List<Division> divisions) implements Node {
+                          List<Division> divisions, UnitInputProof inputProof) implements Node {
         public Program {
             attributes = Objects.requireNonNull(attributes, "attributes");
+            inputProof = Objects.requireNonNull(inputProof, "inputProof");
             divisions = List.copyOf(divisions);
+        }
+        public Program(Meta meta, String name, ProgramAttributes attributes, List<Division> divisions) {
+            this(meta, name, attributes, divisions, UnitInputProof.unknown());
         }
         public Program(Meta meta, String name, List<Division> divisions) {
             this(meta, name, ProgramAttributes.none(), divisions);
@@ -391,8 +395,12 @@ public final class Ast {
 
     public record ModeledStatement(Meta meta, String grammarRule, String writtenText,
                                    List<StatementOperand> operands,
-                                   List<StatementClause> clauses) implements Statement {
+                                   List<StatementClause> clauses, Optional<StatementEffectSummary> effects) implements Statement {
+        public ModeledStatement(Meta meta,String grammarRule,String writtenText,List<StatementOperand> operands,List<StatementClause> clauses) {
+            this(meta,grammarRule,writtenText,operands,clauses,Optional.empty());
+        }
         public ModeledStatement {
+            Objects.requireNonNull(effects);
             operands = List.copyOf(operands);
             clauses = List.copyOf(clauses);
         }
@@ -400,8 +408,12 @@ public final class Ast {
 
     public record PreservedStatement(Meta meta, String grammarRule, String writtenText,
                                      List<StatementOperand> operands,
-                                     List<StatementClause> clauses) implements Statement {
+                                     List<StatementClause> clauses, Optional<StatementEffectSummary> effects) implements Statement {
+        public PreservedStatement(Meta meta,String grammarRule,String writtenText,List<StatementOperand> operands,List<StatementClause> clauses) {
+            this(meta,grammarRule,writtenText,operands,clauses,Optional.empty());
+        }
         public PreservedStatement {
+            Objects.requireNonNull(effects);
             operands = List.copyOf(operands);
             clauses = List.copyOf(clauses);
         }

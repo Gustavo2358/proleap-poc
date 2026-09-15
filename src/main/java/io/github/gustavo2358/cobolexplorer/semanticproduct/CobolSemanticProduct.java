@@ -500,8 +500,11 @@ public final class CobolSemanticProduct {
     }
 
     public record DataReference(OperandId id, OperandRole role,
-                                NominalBinding binding, Provenance provenance, Optional<WholeItemAccess> wholeItemAccess, Optional<RegionalAccess> regionalAccess) implements CallTarget, MoveSource {
+                                NominalBinding binding, Provenance provenance, Optional<WholeItemAccess> wholeItemAccess, Optional<RegionalAccess> regionalAccess, List<RegionalAccess> regionalAlternatives) implements CallTarget, MoveSource {
         public DataReference {
+            regionalAlternatives=List.copyOf(regionalAlternatives);
+            require(regionalAlternatives.isEmpty()||role==OperandRole.CALL_TARGET&&binding.status()==ResolutionStatus.AMBIGUOUS
+                &&regionalAccess.isEmpty()&&wholeItemAccess.isEmpty(),"physical alternatives require an ambiguous CALL target");
             Objects.requireNonNull(regionalAccess);
             wholeItemAccess = Objects.requireNonNull(wholeItemAccess);
             if (wholeItemAccess.isPresent()) require(binding.selected().equals(Optional.of(wholeItemAccess.get().data())),
@@ -510,6 +513,9 @@ public final class CobolSemanticProduct {
             role = Objects.requireNonNull(role, "role");
             binding = Objects.requireNonNull(binding, "binding");
             provenance = Objects.requireNonNull(provenance, "provenance");
+        }
+        public DataReference(OperandId id, OperandRole role, NominalBinding binding, Provenance provenance, Optional<WholeItemAccess> wholeItemAccess, Optional<RegionalAccess> regionalAccess) {
+            this(id,role,binding,provenance,wholeItemAccess,regionalAccess,List.of());
         }
         public DataReference(OperandId id, OperandRole role, NominalBinding binding, Provenance provenance, Optional<WholeItemAccess> wholeItemAccess) {
             this(id, role, binding, provenance, wholeItemAccess, Optional.empty());
@@ -597,22 +603,25 @@ public final class CobolSemanticProduct {
         }
     }
     public enum StorageEntryMode { UNKNOWN, INITIAL, PRESERVED }
-    public enum InitialStorageKind { LITERAL_BYTES, PRESERVE, UNKNOWN }
-    /** Source entry proof, versioned by storage 1.4.0. */
-    public enum InitialStorageProof { NONE, EXPLICIT_INITIAL, EXPLICIT_PRESERVED, PROGRAM_INITIAL, DECLARATIVE_INVARIANT }
+    public enum InitialStorageKind { LITERAL_BYTES, POSSIBLE_LITERAL_BYTES, PRESERVE, UNKNOWN }
+    /** Source entry proof, versioned by storage 1.5.0. */
+    public enum InitialStorageProof { NONE, EXPLICIT_INITIAL, EXPLICIT_PRESERVED, PROGRAM_INITIAL, DECLARATIVE_INVARIANT, DECLARATIVE_POSSIBILITY }
     public record StorageInitialCondition(StorageNodeId node,InitialStorageKind kind,List<Integer> bytes,List<String> gapCodes,Provenance provenance,InitialStorageProof proof) {
         public StorageInitialCondition {
             Objects.requireNonNull(proof);
             Objects.requireNonNull(node);Objects.requireNonNull(kind);Objects.requireNonNull(provenance);bytes=List.copyOf(bytes);gapCodes=List.copyOf(gapCodes);
             require(bytes.stream().allMatch(b->b>=0&&b<=255),"invalid initial octet");
-            require(kind==InitialStorageKind.LITERAL_BYTES||bytes.isEmpty(),"only literal initialization carries bytes");
-            require((kind==InitialStorageKind.UNKNOWN)==!gapCodes.isEmpty(),"unknown initial state requires gaps");
+            require(kind==InitialStorageKind.LITERAL_BYTES||kind==InitialStorageKind.POSSIBLE_LITERAL_BYTES||bytes.isEmpty(),"only literal entry facts carry bytes");
+            require(kind!=InitialStorageKind.POSSIBLE_LITERAL_BYTES||!bytes.isEmpty(),"possible literal bytes must not be empty");
+            require((kind==InitialStorageKind.UNKNOWN||kind==InitialStorageKind.POSSIBLE_LITERAL_BYTES)==!gapCodes.isEmpty(),"unknown or possible initial state requires gaps");
+            require(kind!=InitialStorageKind.POSSIBLE_LITERAL_BYTES||gapCodes.contains("ENTRY_STATE_NOT_PROVEN"),"possible entry requires lifecycle remainder");
             require(kind==InitialStorageKind.UNKNOWN?proof==InitialStorageProof.NONE:kind==InitialStorageKind.PRESERVE?proof==InitialStorageProof.EXPLICIT_PRESERVED
+                :kind==InitialStorageKind.POSSIBLE_LITERAL_BYTES?proof==InitialStorageProof.DECLARATIVE_POSSIBILITY
                 :Set.of(InitialStorageProof.EXPLICIT_INITIAL,InitialStorageProof.PROGRAM_INITIAL,InitialStorageProof.DECLARATIVE_INVARIANT).contains(proof),"initial kind contradicts proof");
             gapCodes.forEach(g->requireText(g,"initial storage gap"));
         }
         public StorageInitialCondition(StorageNodeId node,InitialStorageKind kind,List<Integer> bytes,List<String> gapCodes,Provenance provenance) {
-            this(node,kind,bytes,gapCodes,provenance,kind==InitialStorageKind.UNKNOWN?InitialStorageProof.NONE:kind==InitialStorageKind.PRESERVE?InitialStorageProof.EXPLICIT_PRESERVED:InitialStorageProof.EXPLICIT_INITIAL);
+            this(node,kind,bytes,gapCodes,provenance,kind==InitialStorageKind.UNKNOWN?InitialStorageProof.NONE:kind==InitialStorageKind.PRESERVE?InitialStorageProof.EXPLICIT_PRESERVED:kind==InitialStorageKind.POSSIBLE_LITERAL_BYTES?InitialStorageProof.DECLARATIVE_POSSIBILITY:InitialStorageProof.EXPLICIT_INITIAL);
         }
     }
     public record StorageEntryState(StorageEntryMode mode,List<StorageInitialCondition> conditions) {
@@ -1089,16 +1098,52 @@ public final class CobolSemanticProduct {
         }
     }
 
-    /** A visible statement whose family or shape is not modeled by this capability. */
+    public enum EffectBound { NONE, ALL }
+    public enum EnvironmentEffect { OUTPUT, INPUT, UNKNOWN }
+    public enum EffectValueTransform { NONE, UNKNOWN }
+    public enum EffectProof { DISPLAY_SIMPLE, INITIALIZE_TARGETS, ACCEPT_TARGET, SET_TARGETS, ARITHMETIC_TARGETS, STRING_TARGETS, UNSTRING_TARGETS, INSPECT_TARGETS }
+    public record EffectSummary(List<OperandId> knownReads,List<OperandId> mayWrites,List<OperandId> mustOverwrite,
+            List<OperandId> exposedRegions,EffectBound unknownReadBound,EffectBound unknownWriteBound,
+            EffectBound unknownExposureBound,EnvironmentEffect environment,EffectValueTransform values,EffectProof proof) {
+        public EffectSummary {
+            knownReads=List.copyOf(knownReads);mayWrites=List.copyOf(mayWrites);mustOverwrite=List.copyOf(mustOverwrite);
+            exposedRegions=List.copyOf(exposedRegions);Objects.requireNonNull(unknownReadBound);Objects.requireNonNull(unknownWriteBound);
+            Objects.requireNonNull(unknownExposureBound);Objects.requireNonNull(environment);Objects.requireNonNull(values);Objects.requireNonNull(proof);
+            require(mayWrites.containsAll(mustOverwrite),"MUST must be a known write");
+        }
+    }
+    /** A visible statement whose value/control shape is not modeled by this capability. */
     public record ObservedStatement(StatementHeader header, String observedKind,
                                     String observedShape,
-                                    String gapCode, NormalContinuation normalContinuation, List<DataReference> knownReferences) implements StatementFact {
+                                    String gapCode, NormalContinuation normalContinuation, List<DataReference> knownReferences,
+                                    Optional<EffectSummary> effects) implements StatementFact {
+        public ObservedStatement(StatementHeader header,String observedKind,String observedShape,String gapCode,
+                NormalContinuation normalContinuation,List<DataReference> knownReferences) {
+            this(header,observedKind,observedShape,gapCode,normalContinuation,knownReferences,Optional.empty());
+        }
         public ObservedStatement(StatementHeader header, String observedKind, String observedShape, String gapCode) {
             this(header, observedKind, observedShape, gapCode, NormalContinuation.unavailable(header.provenance()), List.of());
         }
         public ObservedStatement {
+            Objects.requireNonNull(effects);
             header = Objects.requireNonNull(header, "header");
             Objects.requireNonNull(normalContinuation); knownReferences=List.copyOf(knownReferences);
+            if(effects.isPresent()) {
+                var e=effects.orElseThrow();var refs=new java.util.HashMap<OperandId,DataReference>();knownReferences.forEach(r->refs.put(r.id(),r));
+                for(var ids:List.of(e.knownReads(),e.mayWrites(),e.mustOverwrite(),e.exposedRegions())) {
+                    require(new java.util.HashSet<>(ids).size()==ids.size(),"duplicate effect operand");
+                    require(refs.keySet().containsAll(ids),"effect must reference an owned operand");
+                }
+                require(e.mayWrites().stream().allMatch(id->refs.get(id).role()==OperandRole.WRITE),"effect write role");
+                require(e.mustOverwrite().isEmpty()||e.proof()==EffectProof.INITIALIZE_TARGETS,"only exact INITIALIZE is MUST in this slice");
+                require(e.mustOverwrite().stream().allMatch(id->refs.get(id).regionalAccess().isPresent()),"MUST requires a physical access");
+                if(e.proof()!=EffectProof.DISPLAY_SIMPLE)require(e.values()==EffectValueTransform.UNKNOWN
+                    &&(e.unknownWriteBound()!=EffectBound.NONE||!e.mayWrites().isEmpty()),"receiver effect must retain writes or unknown bound");
+                require(e.knownReads().stream().allMatch(id->refs.get(id).role()==OperandRole.READ),"effect read role");
+                if(e.proof()==EffectProof.DISPLAY_SIMPLE)require(e.mayWrites().isEmpty()&&e.mustOverwrite().isEmpty()&&e.exposedRegions().isEmpty()
+                    &&e.unknownWriteBound()==EffectBound.NONE&&e.unknownExposureBound()==EffectBound.NONE
+                    &&e.environment()==EnvironmentEffect.OUTPUT&&e.values()==EffectValueTransform.NONE,"DISPLAY proof shape");
+            }
             observedKind = requireText(observedKind, "observedKind");
             observedShape = requireText(observedShape, "observedShape");
             gapCode = requireText(gapCode, "gapCode");
@@ -1237,12 +1282,32 @@ public final class CobolSemanticProduct {
                 require(ov.base().equals(tv.base())&&ov.offset().equals(tv.offset()),"proved overlay must share base and start");
             }
         }
-        if(inventory.relations().stream().anyMatch(r->r.status()==StorageRelationStatus.UNPROVEN)) {
-            require(inventory.bases().stream().noneMatch(b->b.allocation()==AllocationProof.INDEPENDENT_LOCAL_WORKING_STORAGE),
-                "unproved storage relation contradicts allocation independence");
-            require(declarations.stream().allMatch(d->d.scalarText().isEmpty()&&d.scalarInteger().isEmpty()),
-                "unproved storage relation contradicts standalone scalar proof");
+        var uncertainBases=new HashSet<StorageBaseId>();
+        boolean unboundedRelation=false;
+        for(var relation:inventory.relations())if(relation.status()==StorageRelationStatus.UNPROVEN) {
+            var owner=nodes.get(relation.owner());
+            if(owner.parent().isEmpty())unboundedRelation=true;
+            else uncertainBases.add(views.get(owner.id()).base());
         }
+        if(unboundedRelation) {
+            require(inventory.bases().stream().noneMatch(b->b.allocation()==AllocationProof.INDEPENDENT_LOCAL_WORKING_STORAGE),
+                "unproved root relation contradicts allocation independence");
+            require(declarations.stream().allMatch(d->d.scalarText().isEmpty()&&d.scalarInteger().isEmpty()),
+                "unproved root relation contradicts standalone scalar proof");
+        }
+        // The physical parent chain bounds a subordinate overlay to its record.
+        // Do not infer endpoints or precise views inside that uncertain component.
+        for(var base:uncertainBases)require(bases.get(base).extent().value().isEmpty(),
+            "unproved subordinate relation requires unknown component extent");
+        var uncertainData=new HashSet<DataItemId>();
+        for(var view:views.values())if(uncertainBases.contains(view.base())) {
+            require(view.extent().value().isEmpty()&&view.codec().isEmpty(),
+                "unproved subordinate relation cannot certify component views");
+            nodes.get(view.node()).data().ifPresent(uncertainData::add);
+        }
+        require(declarations.stream().filter(d->uncertainData.contains(d.id()))
+            .allMatch(d->d.scalarText().isEmpty()&&d.scalarInteger().isEmpty()),
+            "uncertain component contradicts scalar proof");
         for (var n : inventory.nodes()) n.parent().ifPresent(parent -> {
             var p = nodes.get(parent); var pv = views.get(parent); var v = views.get(n.id());
             require(p.kind() != PhysicalKind.ELEMENTARY && pv.base().equals(v.base()), "child must share parent storage base");
@@ -1261,13 +1326,24 @@ public final class CobolSemanticProduct {
                     &&bases.get(view.base()).extent().value().isPresent(),"precise initial condition needs exact provenance and bounded supported view");
                 boolean mode=condition.proof()==InitialStorageProof.EXPLICIT_INITIAL?inventory.entryState().mode()==StorageEntryMode.INITIAL
                     :condition.proof()==InitialStorageProof.EXPLICIT_PRESERVED?inventory.entryState().mode()==StorageEntryMode.PRESERVED:inventory.entryState().mode()==StorageEntryMode.UNKNOWN;
-                require(mode&&(condition.kind()!=InitialStorageKind.LITERAL_BYTES||view.extent().value().get().equals(BigInteger.valueOf(condition.bytes().size()))),
+                require(mode&&((condition.kind()!=InitialStorageKind.LITERAL_BYTES&&condition.kind()!=InitialStorageKind.POSSIBLE_LITERAL_BYTES)||view.extent().value().get().equals(BigInteger.valueOf(condition.bytes().size()))),
                     "initial condition contradicts entry mode or extent");
-                require(condition.proof()!=InitialStorageProof.DECLARATIVE_INVARIANT||bases.get(view.base()).allocation()==AllocationProof.INDEPENDENT_LOCAL_WORKING_STORAGE,
+                require((condition.proof()!=InitialStorageProof.DECLARATIVE_INVARIANT&&condition.proof()!=InitialStorageProof.DECLARATIVE_POSSIBILITY)||bases.get(view.base()).allocation()==AllocationProof.INDEPENDENT_LOCAL_WORKING_STORAGE,
                     "declarative invariant needs local independent storage");
             }
         }
         for (var statement : statements) {
+            for(var ref:references(statement)) {
+                var seenAlternatives=new HashSet<StorageNodeId>();
+                for(var alternative:ref.regionalAlternatives()) {
+                    var view=views.get(alternative.view());var node=nodes.get(alternative.view());
+                    require(view!=null&&node!=null&&node.data().isPresent()&&ref.binding().candidates().stream().anyMatch(c->c.id().equals(node.data().get()))
+                        &&seenAlternatives.add(node.id()),"physical alternatives must retain distinct nominal candidates");
+                    require(alternative.slice().isEmpty()&&node.kind()==PhysicalKind.ELEMENTARY&&view.codec().isPresent()
+                        &&view.offset().value().isPresent()&&view.extent().value().isPresent()&&view.extent().value().get().signum()>0
+                        &&bases.get(view.base()).extent().value().isPresent(),"alternative requires canonical bounded whole text view");
+                }
+            }
             for (var ref : references(statement)) ref.regionalAccess().ifPresent(access -> {
                 var view = views.get(access.view()); var node = nodes.get(access.view());
                 require(view != null && node != null && ref.binding().status() == ResolutionStatus.RESOLVED

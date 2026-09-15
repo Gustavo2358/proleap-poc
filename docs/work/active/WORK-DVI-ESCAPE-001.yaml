@@ -1,0 +1,8 @@
+id: WORK-DVI-ESCAPE-001
+title: Candidate-specific physical CALL USING exposure for declarative VALUE inference
+status: IN_PROGRESS
+scope:
+  - DVI-E0 through DVI-E2; frontend physical mutation and escape inventory
+  - Preserve unknown exposures, aliases, writes and independent foreign blockers
+  - Keep SP 2.15.0/storage 1.4.0 and downstream production unchanged
+notes: READY FOR HUMAN REVIEW. E01–E17 qualified with 23 focal tests, one local FAST (293 tests), and 9 selected production CLI E2Es. E18 PENDING_SOURCE; no claims about the four real sites. See docs/evals/dvi-call-escape.md. No merge or auto-merge; IN_PROGRESS until reviewed and merged.

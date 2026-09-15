@@ -26,7 +26,7 @@ import java.util.Objects;
  */
 public final class SemanticProductJsonWriter {
     public static final String SCHEMA = "cobol-semantic-product";
-    public static final String CONTRACT_VERSION = "2.15.0";
+    public static final String CONTRACT_VERSION = "2.18.0";
 
     private static final ObjectMapper JSON = JsonMapper.builder()
             .enable(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY)
@@ -74,8 +74,20 @@ public final class SemanticProductJsonWriter {
                 new StructureDocument(port.rootStatements().stream()
                         .map(SemanticProductJsonWriter::statementHandle).toList(),
                         List.copyOf(branches)), gaps, coverage(port.coverage()),
-                entryInventory(port.entryInventory()), storageIndependence(port.storageIndependence()), storage(port.storage()));
+                entryInventory(port.entryInventory()), storageIndependence(port.storageIndependence()), storage(port.storage()),
+                port.statements().stream().filter(CobolSemanticProduct.ObservedStatement.class::isInstance)
+                    .map(CobolSemanticProduct.ObservedStatement.class::cast).filter(s->s.effects().isPresent())
+                    .map(s->effectDocument(s.header().id(),s.effects().orElseThrow())).toList());
     }
+
+    private static EffectDocument effectDocument(CobolSemanticProduct.StatementId statement,CobolSemanticProduct.EffectSummary e) {
+        return new EffectDocument("1.0.0",statementHandle(statement),e.knownReads().stream().map(SemanticProductJsonWriter::operandHandle).toList(),
+            e.mayWrites().stream().map(SemanticProductJsonWriter::operandHandle).toList(),e.mustOverwrite().stream().map(SemanticProductJsonWriter::operandHandle).toList(),
+            e.exposedRegions().stream().map(SemanticProductJsonWriter::operandHandle).toList(),e.unknownReadBound(),e.unknownWriteBound(),e.unknownExposureBound(),e.environment(),e.values(),e.proof());
+    }
+    private record EffectDocument(String version,String statement,List<String> knownReads,List<String> mayWrites,List<String> mustOverwrite,List<String> exposedRegions,
+            CobolSemanticProduct.EffectBound unknownReadBound,CobolSemanticProduct.EffectBound unknownWriteBound,CobolSemanticProduct.EffectBound unknownExposureBound,
+            CobolSemanticProduct.EnvironmentEffect environment,CobolSemanticProduct.EffectValueTransform values,CobolSemanticProduct.EffectProof proof) { }
 
     private static String storageNodeHandle(CobolSemanticProduct.StorageNodeId id) { return "storage-node:" + id.localId(); }
     private static String storageBaseHandle(CobolSemanticProduct.StorageBaseId id) { return "storage-base:" + id.localId(); }
@@ -83,7 +95,7 @@ public final class SemanticProductJsonWriter {
         return new StorageMeasureDocument(m.value().map(Object::toString).orElse(null),m.gapCodes());
     }
     private static StorageDocument storage(CobolSemanticProduct.StorageInventory storage) {
-        return new StorageDocument("1.4.0",storage.profile(),storage.profileId().orElse(null),storage.runtimeCodec().orElse(null),
+        return new StorageDocument("1.5.0",storage.profile(),storage.profileId().orElse(null),storage.runtimeCodec().orElse(null),
             storage.nodes().stream().map(n->new PhysicalNodeDocument(storageNodeHandle(n.id()),n.parent().map(SemanticProductJsonWriter::storageNodeHandle).orElse(null),
                 n.order(),n.filler(),n.kind(),n.data().map(SemanticProductJsonWriter::dataHandle).orElse(null),measure(n.extent()),provenance(n.provenance()))).toList(),
             storage.bases().stream().map(b->new StorageBaseDocument(storageBaseHandle(b.id()),measure(b.extent()),b.allocation(),provenance(b.provenance()))).toList(),
@@ -264,7 +276,8 @@ public final class SemanticProductJsonWriter {
         return new DataReferenceDocument(operandHandle(reference.id()), reference.role(),
                 binding(reference.binding()), provenance(reference.provenance()), reference.wholeItemAccess()
                         .map(access -> new WholeItemDocument(dataHandle(access.data()))).orElse(null),
-                reference.regionalAccess().map(a->new RegionalAccessDocument(storageNodeHandle(a.view()),a.slice().map(s->new RegionalSliceDocument(s.offset().toString(),s.extent().toString())).orElse(null))).orElse(null));
+                reference.regionalAccess().map(a->new RegionalAccessDocument(storageNodeHandle(a.view()),a.slice().map(s->new RegionalSliceDocument(s.offset().toString(),s.extent().toString())).orElse(null))).orElse(null),
+                reference.regionalAlternatives().stream().map(a->new RegionalAccessDocument(storageNodeHandle(a.view()),null)).toList());
     }
 
     private static BindingDocument binding(CobolSemanticProduct.NominalBinding binding) {
@@ -361,7 +374,7 @@ public final class SemanticProductJsonWriter {
             StructureDocument structure,
             List<GapDocument> gaps,
             CoverageDocument coverage,
-            EntryInventoryDocument entryInventory, IndependentStorageDocument storageIndependence, StorageDocument storage) { }
+            EntryInventoryDocument entryInventory, IndependentStorageDocument storageIndependence, StorageDocument storage,List<EffectDocument> statementEffects) { }
 
     private record EntryInventoryDocument(CobolSemanticProduct.InventoryStatus status,
                                           CobolSemanticProduct.EntryInventoryScope scope,
@@ -523,7 +536,7 @@ public final class SemanticProductJsonWriter {
 
     private record DataReferenceDocument(String id, CobolSemanticProduct.OperandRole role,
                                          BindingDocument binding,
-                                         ProvenanceDocument provenance, WholeItemDocument wholeItemAccess, RegionalAccessDocument regionalAccess) { }
+                                         ProvenanceDocument provenance, WholeItemDocument wholeItemAccess, RegionalAccessDocument regionalAccess, List<RegionalAccessDocument> regionalAlternatives) { }
 
     private record BindingDocument(
             CobolSemanticProduct.ResolutionStatus status,

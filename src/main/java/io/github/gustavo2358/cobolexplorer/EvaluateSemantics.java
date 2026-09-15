@@ -28,9 +28,9 @@ public final class EvaluateSemantics {
         var refs = new HashMap<ScalarMoveSemantics.NodeKey, ReferenceResolution.Entry>();
         for (var ref : resolution.entries()) refs.put(new ScalarMoveSemantics.NodeKey(
                 ref.occurrence().programUnitId(), ref.occurrence().referenceAstNodeId()), ref);
-        boolean input = report.gaps().stream().noneMatch(g -> g.category() == ResolutionAnalysisReport.GapCategory.INPUT);
         var result = new HashMap<ScalarMoveSemantics.NodeKey, Facts>();
         for (var unit : frontend.compilationUnit().programUnits()) {
+            boolean input=report.inputComplete(unit.id());
             Map<Integer,Integer> next = Map.of();
             for (var d : unit.program().divisions()) if (d.divisionKind() == Ast.DivisionKind.PROCEDURE) next = d.normalContinuations();
             var pending = new ArrayDeque<Ast.Node>(); pending.push(unit.program());

@@ -24,7 +24,7 @@ class W1CompatibilityW2ATest {
             byte[] currentBytes = SemanticProductJsonWriter.serialize(port);
             var current = (ObjectNode) json.readTree(currentBytes);
             assertEquals("1.3.0", old.path("contractVersion").asText());
-            assertEquals("2.15.0", current.path("contractVersion").asText());
+            assertEquals("2.18.0", current.path("contractVersion").asText());
             assertEquals("UNAVAILABLE", current.path("storageIndependence").path("availability").asText());
             assertTrue(current.path("storageIndependence").path("members").isEmpty());
             for (var statement : current.path("statements")) if (statement.path("variant").asText().equals("MOVE")) {
@@ -40,6 +40,8 @@ class W1CompatibilityW2ATest {
             assertEquals("UNSPECIFIED", current.path("storage").path("profile").asText());
             assertTrue(current.path("storage").path("nodes").isEmpty());
             removeOnlyAbsentRegionalFacts(current);
+            assertTrue(current.path("statementEffects").isArray()&&current.path("statementEffects").isEmpty());
+            current.remove("statementEffects");
             current.remove("storage");
             current.remove("storageIndependence"); current.remove("contractVersion"); old.remove("contractVersion");
             assertEquals(old, current, name + ": all W1 facts, IDs, bindings, origins, provenance, fitting, gaps and readiness must match");
@@ -50,6 +52,10 @@ class W1CompatibilityW2ATest {
     }
     private static void removeOnlyAbsentRegionalFacts(com.fasterxml.jackson.databind.JsonNode node) {
         if (node instanceof ObjectNode object) {
+            if(object.has("regionalAlternatives")) {
+                assertTrue(object.path("regionalAlternatives").isArray()&&object.path("regionalAlternatives").isEmpty(),"legacy input has no alternative storage proof");
+                object.remove("regionalAlternatives");
+            }
             for (var key : java.util.List.of("regionalAccess", "regionalMove")) if (object.has(key)) {
                 assertTrue(object.path(key).isNull(), "legacy publications without storage input gain no regional proof");
                 object.remove(key);

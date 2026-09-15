@@ -29,6 +29,7 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
     private final CobolParser parser;
     private final UnicodeText indexedSource;
     private final SourceMap sourceMap;
+    private final Map<CobolParser.ProgramUnitContext,UnitInputProof> inputProofs=new IdentityHashMap<>();
     private final IdentityHashMap<ParseTree, Integer> parseIds;
     private final IdentityHashMap<ParseTree, Integer> parseSubtreeSizes;
     private final List<CoverageDraft> coverageDrafts = new ArrayList<>();
@@ -138,7 +139,7 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
         if (context.environmentDivision() != null) divisions.add((Ast.Division) visit(context.environmentDivision()));
         if (context.dataDivision() != null) divisions.add((Ast.Division) visit(context.dataDivision()));
         if (context.procedureDivision() != null) divisions.add((Ast.Division) visit(context.procedureDivision()));
-        return new Ast.Program(meta, clean(sourceText(programId.programName())), programAttributes(programId), divisions);
+        return new Ast.Program(meta, clean(sourceText(programId.programName())), programAttributes(programId), divisions, unitInputProof(context));
     }
 
     @Override public Ast.Node visitIdentificationDivision(CobolParser.IdentificationDivisionContext ctx) { return buildIdentification(ctx); }
@@ -616,10 +617,36 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
         return null;
     }
 
+    private UnitInputProof unitInputProof(CobolParser.ProgramUnitContext program) {
+        return inputProofs.computeIfAbsent(program,this::computeUnitInputProof);
+    }
+    private UnitInputProof computeUnitInputProof(CobolParser.ProgramUnitContext program) {
+        if (!(program.getParent() instanceof CobolParser.CompilationUnitContext)
+                || program.endProgramStatement() == null) return UnitInputProof.unknown();
+        int start=program.getStart().getStartIndex(), end=program.endProgramStatement().getStop().getStopIndex()+1;
+        Set<Diagnostic> qualified=Collections.newSetFromMap(new IdentityHashMap<>());
+        Set<Diagnostic> rejected=Collections.newSetFromMap(new IdentityHashMap<>());
+        for(var region:sourceMap.inputGapRegions()) {
+            if(region.start()>=start && region.end()<=end)qualified.add(region.inputGap());
+            else rejected.add(region.inputGap());
+        }
+        qualified.removeIf(rejected::contains);
+        // Preserve SourceMap occurrence order; never infer ownership from diagnostic text/line.
+        return new UnitInputProof(sourceMap.inputGapRegions().stream().map(SourceMap.Segment::inputGap)
+            .filter(qualified::contains).distinct().toList());
+    }
+    private List<Diagnostic> separateUnitCopies(CobolParser.ProgramUnitContext program) {
+        if(sourceMap.inputGapRegions().isEmpty())return List.of();
+        if (!(program.getParent() instanceof CobolParser.CompilationUnitContext compilation)
+                || program.endProgramStatement() == null) return List.of();
+        return compilation.programUnit().stream().filter(p->p!=program)
+            .flatMap(p->unitInputProof(p).copies().stream()).toList();
+    }
     private EntryInputProof entryInputProof(CobolParser.ProcedureDivisionContext procedure) {
         var unit = procedure.getParent();
-        if (!(unit instanceof CobolParser.ProgramUnitContext program) || program.dataDivision() == null)
+        if (!(unit instanceof CobolParser.ProgramUnitContext program))
             return new EntryInputProof(List.of());
+        if(program.dataDivision() == null)return new EntryInputProof(List.of(),separateUnitCopies(program));
         var data = program.dataDivision();
         int dataStart = data.DOT_FS().getSymbol().getStopIndex() + 1;
         int procedureStart = procedure.getStart().getStartIndex();
@@ -631,7 +658,7 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
             else rejected.add(region.inputGap());
         }
         qualified.removeIf(rejected::contains);
-        return new EntryInputProof(List.copyOf(qualified));
+        return new EntryInputProof(List.copyOf(qualified),separateUnitCopies(program));
     }
 
     private Ast.ProcedureSignature buildProcedureSignature(CobolParser.ProcedureDivisionContext context) {
@@ -926,12 +953,91 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
     private Ast.Statement buildStructuredStatement(ParserRuleContext context, boolean preserved) {
         Ast.Meta meta = meta(context);
         List<Ast.StatementOperand> operands = new ArrayList<>();
-        collectStatementOperands(context, context, operands);
+        var operandNodes=new java.util.IdentityHashMap<ParserRuleContext,Ast.Node>();
+        collectStatementOperands(context, context, operands,operandNodes);
         List<Ast.StatementClause> clauses = nearestDescendants(context, AstBuilder::isFlowClauseContext).stream()
                 .map(this::buildStatementClause).toList();
+        var effects=statementEffects(context,operands,clauses,operandNodes);
         return preserved
-                ? new Ast.PreservedStatement(meta, rule(context), sourceText(context).strip(), operands, clauses)
-                : new Ast.ModeledStatement(meta, rule(context), sourceText(context).strip(), operands, clauses);
+                ? new Ast.PreservedStatement(meta, rule(context), sourceText(context).strip(), operands, clauses,effects)
+                : new Ast.ModeledStatement(meta, rule(context), sourceText(context).strip(), operands, clauses,effects);
+    }
+
+    private static Optional<StatementEffectSummary> statementEffects(ParserRuleContext context,List<Ast.StatementOperand> operands,
+            List<Ast.StatementClause> clauses,Map<ParserRuleContext,Ast.Node> nodes) {
+        if(context instanceof CobolParser.DisplayStatementContext)return displayEffects(context,operands,clauses);
+        var targets=new ArrayList<ParserRuleContext>();StatementEffectSummary.Proof proof;
+        boolean closed=clauses.isEmpty();
+        var environment=StatementEffectSummary.Environment.UNKNOWN;
+        if(context instanceof CobolParser.InitializeStatementContext x) {
+            proof=StatementEffectSummary.Proof.INITIALIZE_TARGETS;targets.addAll(x.identifier());closed&=x.initializeReplacingPhrase()==null;
+        } else if(context instanceof CobolParser.AcceptStatementContext x) {
+            proof=StatementEffectSummary.Proof.ACCEPT_TARGET;targets.add(x.identifier());environment=StatementEffectSummary.Environment.INPUT;
+            closed&=x.acceptFromEscapeKeyStatement()==null&&x.acceptFromMnemonicStatement()==null&&x.acceptMessageCountStatement()==null;
+        } else if(context instanceof CobolParser.AddStatementContext x) {
+            proof=StatementEffectSummary.Proof.ARITHMETIC_TARGETS;
+            if(x.addToStatement()!=null)x.addToStatement().addTo().forEach(t->targets.add(t.identifier()));
+            else if(x.addToGivingStatement()!=null)x.addToGivingStatement().addGiving().forEach(t->targets.add(t.identifier()));
+            else return Optional.empty();
+        } else if(context instanceof CobolParser.ComputeStatementContext x) {
+            proof=StatementEffectSummary.Proof.ARITHMETIC_TARGETS;x.computeStore().forEach(t->targets.add(t.identifier()));
+        } else if(context instanceof CobolParser.SetStatementContext x) {
+            proof=StatementEffectSummary.Proof.SET_TARGETS;
+            x.setToStatement().forEach(t->t.setTo().forEach(d->targets.add(d.identifier())));
+            if(x.setUpDownByStatement()!=null)x.setUpDownByStatement().setTo().forEach(t->targets.add(t.identifier()));
+            // Pointer/condition/index effects need further binding/storage proof;
+            // source ADDRESS/function forms never imply a bounded exposure.
+        } else if(context instanceof CobolParser.StringStatementContext x) {
+            proof=StatementEffectSummary.Proof.STRING_TARGETS;targets.add(x.stringIntoPhrase().identifier());
+            if(x.stringWithPointerPhrase()!=null)targets.add(x.stringWithPointerPhrase().qualifiedDataName());
+        } else if(context instanceof CobolParser.UnstringStatementContext x) {
+            proof=StatementEffectSummary.Proof.UNSTRING_TARGETS;
+            x.unstringIntoPhrase().unstringInto().forEach(t->{targets.add(t.identifier());
+                if(t.unstringDelimiterIn()!=null)targets.add(t.unstringDelimiterIn().identifier());
+                if(t.unstringCountIn()!=null)targets.add(t.unstringCountIn().identifier());});
+            if(x.unstringWithPointerPhrase()!=null)targets.add(x.unstringWithPointerPhrase().qualifiedDataName());
+            if(x.unstringTallyingPhrase()!=null)targets.add(x.unstringTallyingPhrase().qualifiedDataName());
+        } else if(context instanceof CobolParser.InspectStatementContext x) {
+            proof=StatementEffectSummary.Proof.INSPECT_TARGETS;
+            if(x.inspectReplacingPhrase()!=null||x.inspectConvertingPhrase()!=null||x.inspectTallyingReplacingPhrase()!=null)targets.add(x.identifier());
+            if(x.inspectTallyingPhrase()!=null)x.inspectTallyingPhrase().inspectFor().forEach(t->targets.add(t.identifier()));
+            if(x.inspectTallyingReplacingPhrase()!=null)x.inspectTallyingReplacingPhrase().inspectFor().forEach(t->targets.add(t.identifier()));
+        } else return Optional.empty();
+        var writes=new ArrayList<Ast.DataReference>();var writeIds=new HashSet<Integer>();
+        for(var target:targets) {
+            if(nodes.get(target) instanceof Ast.DataReference r){writes.add(r);writeIds.add(r.meta().id());}
+            else closed=false;
+        }
+        var reads=new ArrayList<Ast.DataReference>();
+        for(var operand:operands) {
+            if(operand.value() instanceof Ast.LiteralExpression)continue;
+            if(operand.value() instanceof Ast.DataReference r&&r.understanding()==Ast.ReferenceUnderstanding.STRUCTURED
+                    &&r.subscriptGroups().isEmpty()&&r.referenceModification()==null) {
+                if(!writeIds.contains(r.meta().id()))reads.add(r);
+            } else closed=false;
+        }
+        // This footprint bounds writes only. Receiver reads/value transforms are
+        // deliberately open (ADD/INSPECT/STRING may read their old destination).
+        return Optional.of(new StatementEffectSummary(reads,writes,List.of(),List.of(),StatementEffectSummary.Bound.ALL,
+            closed?StatementEffectSummary.Bound.NONE:StatementEffectSummary.Bound.ALL,
+            closed?StatementEffectSummary.Bound.NONE:StatementEffectSummary.Bound.ALL,
+            environment,StatementEffectSummary.ValueTransform.UNKNOWN,proof));
+    }
+
+    private static Optional<StatementEffectSummary> displayEffects(ParserRuleContext context,
+            List<Ast.StatementOperand> operands,List<Ast.StatementClause> clauses) {
+        if(!(context instanceof CobolParser.DisplayStatementContext d)||d.displayAt()!=null
+                ||d.displayUpon()!=null||!clauses.isEmpty()||operands.isEmpty())return Optional.empty();
+        var reads=new ArrayList<Ast.DataReference>();
+        for(var operand:operands) {
+            if(operand.value() instanceof Ast.LiteralExpression)continue;
+            if(!(operand.value() instanceof Ast.DataReference r)||r.understanding()!=Ast.ReferenceUnderstanding.STRUCTURED
+                    ||!r.subscriptGroups().isEmpty()||r.referenceModification()!=null)return Optional.empty();
+            reads.add(r);
+        }
+        return Optional.of(new StatementEffectSummary(reads,List.of(),List.of(),List.of(),
+            StatementEffectSummary.Bound.NONE,StatementEffectSummary.Bound.NONE,StatementEffectSummary.Bound.NONE,
+            StatementEffectSummary.Environment.OUTPUT,StatementEffectSummary.ValueTransform.NONE,StatementEffectSummary.Proof.DISPLAY_SIMPLE));
     }
 
     private Ast.SearchStatement buildSearch(CobolParser.SearchStatementContext context) {
@@ -958,15 +1064,16 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
     }
 
     private void collectStatementOperands(ParserRuleContext root, ParserRuleContext context,
-                                          List<Ast.StatementOperand> output) {
+                                          List<Ast.StatementOperand> output,Map<ParserRuleContext,Ast.Node> nodes) {
         for (ParserRuleContext child : directRuleChildren(context)) {
             if (child != root && child instanceof CobolParser.StatementContext) continue;
             if (isStatementOperandContext(child)) {
                 Ast.Meta operandMeta = meta(child);
+                var value=statementOperand(child);nodes.put(child,value);
                 output.add(new Ast.StatementOperand(operandMeta, rule(context),
-                        statementOperandContext(root, context), statementOperand(child)));
+                        statementOperandContext(root, context), value));
             } else {
-                collectStatementOperands(root, child, output);
+                collectStatementOperands(root, child, output,nodes);
             }
         }
     }

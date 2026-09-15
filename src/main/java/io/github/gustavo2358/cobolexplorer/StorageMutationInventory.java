@@ -7,13 +7,26 @@ import static io.github.gustavo2358.cobolexplorer.StorageLayoutSemantics.*;
 /** Lifetime write/escape proof over canonical syntax and physical accesses; not a value solver. */
 final class StorageMutationInventory {
     private record Interval(BigInteger start,BigInteger end) { }
-    private final List<StorageInitialSemantics.Reason> gaps;
+    private final List<StorageInitialSemantics.Reason> globalBlockers;
     private final Map<Key,List<Interval>> writes;
+    private final Map<Key,List<Interval>> exposedRegions;
+    private final Set<Key> unknownExposures;
+    private final Set<Key> independentBases;
 
-    private StorageMutationInventory(Set<StorageInitialSemantics.Reason> gaps,Map<Key,List<Interval>> writes) {
-        this.gaps=List.copyOf(gaps);
+    private StorageMutationInventory(Set<StorageInitialSemantics.Reason> gaps,Map<Key,List<Interval>> writes,
+            Map<Key,List<Interval>> exposedRegions,Set<Key> unknownExposures,Map<Key,Base> bases) {
+        this.globalBlockers=List.copyOf(gaps);
+        this.writes=index(writes);
+        this.exposedRegions=index(exposedRegions);
+        this.unknownExposures=Set.copyOf(unknownExposures);
+        var independent=new HashSet<Key>();
+        bases.forEach((key,base)->{if(base.independent())independent.add(key);});
+        this.independentBases=Set.copyOf(independent);
+    }
+
+    private static Map<Key,List<Interval>> index(Map<Key,List<Interval>> regions) {
         var index=new HashMap<Key,List<Interval>>();
-        writes.forEach((base,intervals)->{
+        regions.forEach((base,intervals)->{
             intervals.sort(Comparator.comparing(Interval::start));
             var merged=new ArrayList<Interval>();
             for(var interval:intervals) {
@@ -22,23 +35,33 @@ final class StorageMutationInventory {
             }
             index.put(base,List.copyOf(merged));
         });
-        this.writes=Map.copyOf(index);
+        return Map.copyOf(index);
     }
 
     List<StorageInitialSemantics.Reason> blockers(View candidate) {
-        if(!gaps.isEmpty())return gaps;
-        var intervals=writes.getOrDefault(candidate.base(),List.of());
+        var blockers=new LinkedHashSet<>(globalBlockers);
+        if(overlaps(writes,candidate))blockers.add(StorageInitialSemantics.Reason.OVERLAPPING_WRITE);
+        // All indexed exposures have independent allocation. A different base is
+        // disjoint only if the candidate also carries that allocation proof.
+        if(!unknownExposures.isEmpty()||overlaps(exposedRegions,candidate)
+                ||!independentBases.contains(candidate.base())&&!exposedRegions.isEmpty())
+            blockers.add(StorageInitialSemantics.Reason.FOREIGN_MUTATION_OR_ESCAPE);
+        return List.copyOf(blockers);
+    }
+
+    private static boolean overlaps(Map<Key,List<Interval>> regions,View candidate) {
+        var intervals=regions.getOrDefault(candidate.base(),List.of());
         var start=candidate.offset().value().orElseThrow();var end=start.add(candidate.extent().value().orElseThrow());
         int lo=0,hi=intervals.size();
         while(lo<hi){int mid=(lo+hi)>>>1;if(intervals.get(mid).end().compareTo(start)<=0)lo=mid+1;else hi=mid;}
-        return lo<intervals.size()&&intervals.get(lo).start().compareTo(end)<0
-            ?List.of(StorageInitialSemantics.Reason.OVERLAPPING_WRITE):List.of();
+        return lo<intervals.size()&&intervals.get(lo).start().compareTo(end)<0;
     }
 
     static StorageMutationInventory analyze(CompilationUnitBuildResult frontend,CompilationUnitModel.ProgramUnit unit,
             Layout layout,Map<Key,StorageAccessSemantics.Access> accesses,
-            Map<Key,List<StorageAccessSemantics.Move>> moves,CicsProgramControlAnalyzer.Contribution cics) {
+            Map<Key,List<StorageAccessSemantics.Move>> moves,Map<Key,StatementEffectSummary> effects,CicsProgramControlAnalyzer.Contribution cics) {
         var gaps=new LinkedHashSet<StorageInitialSemantics.Reason>();var writes=new HashMap<Key,List<Interval>>();
+        var exposedRegions=new HashMap<Key,List<Interval>>();var unknownExposures=new LinkedHashSet<Key>();
         var bases=new HashMap<Key,Base>();layout.bases().forEach(b->bases.put(b.id(),b));
         var coverage=new HashMap<Integer,SemanticCoverage.Finding>();
         frontend.coverageByProgramUnit().get(unit.id()).findings().forEach(f->coverage.put(f.astNodeId(),f));
@@ -61,10 +84,16 @@ final class StorageMutationInventory {
             if(node instanceof Ast.Program) {gaps.add(StorageInitialSemantics.Reason.FOREIGN_MUTATION_OR_ESCAPE);continue;}
             if(node instanceof Ast.Statement statement) {
                 var finding=coverage.get(node.meta().id());
+                var summary=Optional.ofNullable(effects.get(new Key(unit.id(),node.meta().id())));
+                boolean bounded=summary.filter(StatementEffectSummary::completeMutationBound).isPresent();
                 boolean embeddedInputOnly=cics.localStorageInputOnly(unit.id(),node);
-                if(finding==null||(!embeddedInputOnly&&finding.coverage()!=SemanticCoverage.ConstructionCoverage.MODELED))
+                if(finding==null||(!embeddedInputOnly&&!bounded&&finding.coverage()!=SemanticCoverage.ConstructionCoverage.MODELED))
                     gaps.add(StorageInitialSemantics.Reason.INCOMPLETE_WRITE_INVENTORY);
-                if(statement instanceof Ast.MoveStatement move) {
+                if(bounded) {
+                    var effect=summary.orElseThrow();
+                    for(var target:effect.mayWrites())addWrite(accesses.get(new Key(unit.id(),target.meta().id())),bases,writes,gaps);
+                    if(!effect.exposedRegions().isEmpty())unknownExposures.add(new Key(unit.id(),node.meta().id()));
+                } else if(statement instanceof Ast.MoveStatement move) {
                     if(move.corresponding()) {
                         var sequence=moves.getOrDefault(new Key(unit.id(),move.meta().id()),List.of());
                         if(sequence.isEmpty())gaps.add(StorageInitialSemantics.Reason.WRITE_NOT_PROVEN);
@@ -74,9 +103,10 @@ final class StorageMutationInventory {
                         for(var target:move.targets())addWrite(accesses.get(new Key(unit.id(),target.meta().id())),bases,writes,gaps);
                     }
                 } else if(statement instanceof Ast.CallStatement call) {
-                    // Local, non-GLOBAL/non-EXTERNAL bytes are inaccessible to an argument-free callee.
-                    // Any argument can expose storage in this first slice, including unresolved modes.
-                    if(call.surface().using()||!call.arguments().isEmpty())gaps.add(StorageInitialSemantics.Reason.FOREIGN_MUTATION_OR_ESCAPE);
+                    // A missing argument inventory is unknown, never an empty exposure set.
+                    if(call.surface().using()&&call.arguments().isEmpty())unknownExposures.add(new Key(unit.id(),call.meta().id()));
+                    for(var argument:call.arguments())
+                        addExposure(unit,argument,accesses,bases,exposedRegions,unknownExposures);
                     if(call.returning()!=null)addWrite(accesses.get(new Key(unit.id(),call.returning().meta().id())),bases,writes,gaps);
                     else if(call.surface().returning())gaps.add(StorageInitialSemantics.Reason.WRITE_NOT_PROVEN);
                 } else if(statement instanceof Ast.EmbeddedLanguageStatement) {
@@ -97,7 +127,30 @@ final class StorageMutationInventory {
                 gaps.add(StorageInitialSemantics.Reason.UNKNOWN_STORAGE_EFFECT);
             Ast.children(node).forEach(pending::push);
         }
-        return new StorageMutationInventory(gaps,writes);
+        return new StorageMutationInventory(gaps,writes,exposedRegions,unknownExposures,bases);
+    }
+
+    private static void addExposure(CompilationUnitModel.ProgramUnit unit,Ast.CallArgument argument,
+            Map<Key,StorageAccessSemantics.Access> accesses,Map<Key,Base> bases,
+            Map<Key,List<Interval>> exposedRegions,Set<Key> unknownExposures) {
+        // VALUE here is the argument form, not BY VALUE. Only ordinary data items
+        // passed BY REFERENCE (including the typed default) are admitted.
+        if(argument.passingMode()==Ast.PassingMode.REFERENCE&&argument.argumentKind()==Ast.CallArgumentKind.VALUE
+                &&argument.value() instanceof Ast.DataReference reference) {
+            var access=accesses.get(new Key(unit.id(),reference.meta().id()));
+            if(access!=null&&access.role()==StorageAccessSemantics.Role.CALL_ARGUMENT) {
+                var view=access.view();var base=bases.get(view.base());
+                if(base!=null&&base.independent()) {
+                    var start=view.offset().value().orElseThrow();
+                    exposedRegions.computeIfAbsent(view.base(),k->new ArrayList<>())
+                        .add(new Interval(start,start.add(view.extent().value().orElseThrow())));
+                    return;
+                }
+            }
+        }
+        // Unresolved binding/layout, dynamic slices, addresses, other modes and
+        // expressions cannot prove disjunction from any candidate's bytes.
+        unknownExposures.add(new Key(unit.id(),argument.meta().id()));
     }
 
     private static void addWrite(StorageAccessSemantics.Access access,Map<Key,Base> bases,Map<Key,List<Interval>> writes,
