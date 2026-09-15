@@ -93,7 +93,10 @@ class StorageOverlayTest {
         for(var data:List.of("01 WS-AREA.\n05 RAW-PART PIC X(4).\n04 OTHER-PART REDEFINES RAW-PART PIC X(8).\n04 LAST-PART REDEFINES RAW-PART PIC X(12).",
                 "01 WS-AREA.\n05 RAW-PART PIC X(4).\n06 OTHER-PART REDEFINES RAW-PART PIC X(8).")) {
             var f=fixture(data);assertTrue(f.layout().reasons().contains(Reason.OVERLAY_NOT_PROVEN));
-            assertTrue(f.layout().bases().stream().noneMatch(Base::independent));
+            assertTrue(f.layout().relations().stream().anyMatch(r->!r.proved()));
+            assertTrue(f.layout().bases().stream().allMatch(b->b.extent().value().isEmpty()));
+            assertTrue(f.layout().views().stream().allMatch(v->v.extent().value().isEmpty()&&!v.textual()),
+                "unknown subordinate relation never proves component offsets, extents or codecs");
         }
     }
     @Test void explicitProfileAndOrdinaryAllocationRemainIndependentRequirements() {
