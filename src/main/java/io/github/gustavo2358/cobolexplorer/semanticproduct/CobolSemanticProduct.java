@@ -1276,12 +1276,32 @@ public final class CobolSemanticProduct {
                 require(ov.base().equals(tv.base())&&ov.offset().equals(tv.offset()),"proved overlay must share base and start");
             }
         }
-        if(inventory.relations().stream().anyMatch(r->r.status()==StorageRelationStatus.UNPROVEN)) {
-            require(inventory.bases().stream().noneMatch(b->b.allocation()==AllocationProof.INDEPENDENT_LOCAL_WORKING_STORAGE),
-                "unproved storage relation contradicts allocation independence");
-            require(declarations.stream().allMatch(d->d.scalarText().isEmpty()&&d.scalarInteger().isEmpty()),
-                "unproved storage relation contradicts standalone scalar proof");
+        var uncertainBases=new HashSet<StorageBaseId>();
+        boolean unboundedRelation=false;
+        for(var relation:inventory.relations())if(relation.status()==StorageRelationStatus.UNPROVEN) {
+            var owner=nodes.get(relation.owner());
+            if(owner.parent().isEmpty())unboundedRelation=true;
+            else uncertainBases.add(views.get(owner.id()).base());
         }
+        if(unboundedRelation) {
+            require(inventory.bases().stream().noneMatch(b->b.allocation()==AllocationProof.INDEPENDENT_LOCAL_WORKING_STORAGE),
+                "unproved root relation contradicts allocation independence");
+            require(declarations.stream().allMatch(d->d.scalarText().isEmpty()&&d.scalarInteger().isEmpty()),
+                "unproved root relation contradicts standalone scalar proof");
+        }
+        // The physical parent chain bounds a subordinate overlay to its record.
+        // Do not infer endpoints or precise views inside that uncertain component.
+        for(var base:uncertainBases)require(bases.get(base).extent().value().isEmpty(),
+            "unproved subordinate relation requires unknown component extent");
+        var uncertainData=new HashSet<DataItemId>();
+        for(var view:views.values())if(uncertainBases.contains(view.base())) {
+            require(view.extent().value().isEmpty()&&view.codec().isEmpty(),
+                "unproved subordinate relation cannot certify component views");
+            nodes.get(view.node()).data().ifPresent(uncertainData::add);
+        }
+        require(declarations.stream().filter(d->uncertainData.contains(d.id()))
+            .allMatch(d->d.scalarText().isEmpty()&&d.scalarInteger().isEmpty()),
+            "uncertain component contradicts scalar proof");
         for (var n : inventory.nodes()) n.parent().ifPresent(parent -> {
             var p = nodes.get(parent); var pv = views.get(parent); var v = views.get(n.id());
             require(p.kind() != PhysicalKind.ELEMENTARY && pv.base().equals(v.base()), "child must share parent storage base");

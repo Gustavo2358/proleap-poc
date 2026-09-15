@@ -66,12 +66,15 @@ public final class StorageLayoutSemantics {
                 }
             var ordered=physical.positions();var roots=physical.roots();
             visits+=ordered.size();declarations+=ordered.size();
-            boolean environment=reasons.isEmpty();
+            // An unproved subordinate REDEFINES stays inside its enclosing record.
+            // Its root extent/views become unknown, but root allocation is a separate proof.
+            boolean environment=reasons.stream().allMatch(r->r==Reason.OVERLAY_NOT_PROVEN&&physical.rootRelationsProven());
             var extents=new HashMap<Integer,Measure>();var shapes=new HashMap<Integer,Shape>();var footprints=new HashMap<Integer,Measure>();
             for(int i=ordered.size()-1;i>=0;i--) {
                 var data=ordered.get(i).data();visits++;var shape=shape(data,coverage,duplicates);shapes.put(data.meta().id(),shape);
                 Measure extent;
                 if(!environment)extent=Measure.unknown(reasons.iterator().next());
+                else if(physical.uncertainRoots().contains(ordered.get(i).root()))extent=Measure.unknown(Reason.OVERLAY_NOT_PROVEN);
                 else if(!shape.supported())extent=Measure.unknown(Reason.UNSUPPORTED_DECLARATION);
                 else if(shape.kind()==Kind.ELEMENTARY)extent=Measure.known(shape.leafExtent().orElseThrow());
                 else {
@@ -88,7 +91,7 @@ public final class StorageLayoutSemantics {
             }
             for(var component:physical.rootComponents())footprints.put(component.representative(),footprint(component,extents));
             var offsets=new HashMap<Integer,Measure>();var permitted=new HashMap<Integer,Boolean>();
-            for(var root:roots){offsets.put(root.meta().id(),Measure.known(BigInteger.ZERO));permitted.put(root.meta().id(),environment);}
+            for(var root:roots){offsets.put(root.meta().id(),Measure.known(BigInteger.ZERO));permitted.put(root.meta().id(),environment&&!physical.uncertainRoots().contains(root.meta().id()));}
             var nodes=new ArrayList<Node>();var views=new ArrayList<View>();var bases=new ArrayList<Base>();
             for(var position:ordered) {
                 var data=position.data();var shape=shapes.get(data.meta().id());var key=new Key(unit.id(),data.meta().id());visits++;
@@ -108,7 +111,9 @@ public final class StorageLayoutSemantics {
             var renames=StorageRenames.prove(unit.id(),physical,resolution,entities,coverage,nodes,views);
             if(renames.stream().anyMatch(r->!r.proved())) {
                 reasons.add(Reason.RENAMES_NOT_PROVEN);
-                bases.replaceAll(b->new Base(b.id(),b.extent(),false,b.origin()));
+                // RENAMES has no allocation. Its unknown view retains the owning record
+                // base; this does not prove any particular endpoint, offset or disjunction
+                // inside the record. Writes/escapes through that view remain conservative.
             }
             layouts.put(unit.id(),new Layout(profile,nodes,bases,views,List.copyOf(reasons),physical.relations(),renames));
         }

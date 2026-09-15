@@ -26,3 +26,19 @@ is OBSERVED_ONLY with UNKNOWN reachability and an open remainder. Computed names
 are not evaluated here. There is no edges array and no claim of runtime callee
 resolution. This separate inventory survives a blocked lowering/entry admission;
 consumers must keep it distinct from `dependencies.json` reachable edges.
+
+
+A subordinate unresolved REDEFINES has the record bound established by its canonical
+physical parent chain. It makes that component's extent and views unknown; allocation
+of other independent local WORKING-STORAGE roots survives. An unresolved root relation
+has no such bound and retains the global allocation blocker. Producer and lower reader
+check this distinction with the existing parent/base/relation fields. No endpoint or
+alias disjunction is inferred from an unresolved binding. RENAMES creates no allocation;
+an unproved RENAMES view keeps its record base and unknown offset/extent. An access
+through an unresolved view still cannot prove exact writes or exposures.
+
+Semantic basis: IBM Enterprise COBOL 6.4 [REDEFINES clause](https://www.ibm.com/docs/en/cobol-zos/6.4.0?topic=entry-redefines-clause)
+(same hierarchy level and enclosing record) and [RENAMES clause](https://www.ibm.com/docs/en/cobol-zos/6.3?topic=entry-renames-clause)
+(endpoints in the associated level-01 record; no allocation). This is a refinement of
+proof admission using existing SP fields, not a new wire shape. No layout is invented
+for missing DATA input or an unbounded root relationship.

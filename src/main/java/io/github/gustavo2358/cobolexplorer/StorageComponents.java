@@ -14,16 +14,17 @@ public final class StorageComponents {
     public record Unit(List<Position> positions, List<Ast.DataEntry> roots,
                        Map<Integer,Component> componentOf, Map<Integer,List<Component>> children,
                        List<Component> rootComponents, List<Relation> relations, List<Position> renames,
-                       boolean structureProven, boolean allocationProven, boolean relationsProven) {
+                       boolean structureProven, boolean allocationProven, boolean relationsProven,
+                       boolean rootRelationsProven,Set<Integer> uncertainRoots) {
         public Unit {
-            positions=List.copyOf(positions);roots=List.copyOf(roots);componentOf=Map.copyOf(componentOf);
+            uncertainRoots=Set.copyOf(uncertainRoots);positions=List.copyOf(positions);roots=List.copyOf(roots);componentOf=Map.copyOf(componentOf);
             var copy=new HashMap<Integer,List<Component>>();children.forEach((k,v)->copy.put(k,List.copyOf(v)));children=Map.copyOf(copy);
             rootComponents=List.copyOf(rootComponents);relations=List.copyOf(relations);renames=List.copyOf(renames);
         }
         /** No separate Cell is safe for any root participating in an overlay, including a later declaration. */
         public boolean standaloneIndependent(int node) {
             var c=componentOf.get(node);
-            return structureProven&&allocationProven&&relationsProven&&c!=null&&c.parent().isEmpty()&&c.members().size()==1
+            return structureProven&&allocationProven&&rootRelationsProven&&!uncertainRoots.contains(node)&&c!=null&&c.parent().isEmpty()&&c.members().size()==1
                 &&renames.stream().noneMatch(p->p.root()==node);
         }
     }
@@ -62,7 +63,14 @@ public final class StorageComponents {
             var rootComponents=components(roots,Optional.empty(),coverage,byNode,relations);
             for(var p:positions)children.put(p.data().meta().id(),components(p.data().children(),Optional.of(p.data().meta().id()),coverage,byNode,relations));
             boolean proved=relations.stream().allMatch(Relation::proved);
-            units.put(unit.id(),new Unit(positions,roots,byNode,children,rootComponents,relations,renames,structure,allocation,proved));
+            var positionsByNode=new HashMap<Integer,Position>();positions.forEach(p->positionsByNode.put(p.data().meta().id(),p));
+            var uncertainRoots=new HashSet<Integer>();boolean rootRelations=true;
+            for(var relation:relations)if(!relation.proved()) {
+                var owner=positionsByNode.get(relation.owner());
+                if(owner.parent().isEmpty())rootRelations=false;
+                else uncertainRoots.add(owner.root());
+            }
+            units.put(unit.id(),new Unit(positions,roots,byNode,children,rootComponents,relations,renames,structure,allocation,proved,rootRelations,uncertainRoots));
         }
         return new StorageComponents(frontend,units);
     }
