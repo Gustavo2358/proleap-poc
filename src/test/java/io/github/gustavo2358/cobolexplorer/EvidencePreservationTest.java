@@ -1,0 +1,91 @@
+package io.github.gustavo2358.cobolexplorer;
+
+import java.util.*;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
+import static io.github.gustavo2358.cobolexplorer.DeclarativeValueInferenceTest.*;
+
+/** EP laws: source support and proof of precision are separate obligations. */
+class EvidencePreservationTest {
+    private static final List<Integer> PROGA = List.of(215,217,214,199,193,64,64,64);
+
+    @Test void preservedDeclarationCannotEraseIndependentSourceEvidence() {
+        for (var declaration : List.of(
+                "77 PARTIAL-AREA PIC S9(9) COMP SYNC.",
+                "77 PARTIAL-AREA PIC S9(9) COMP SYNCHRONIZED.",
+                "77 PARTIAL-AREA PIC X(8) JUSTIFIED.",
+                "77 PARTIAL-AREA PIC 9(8) BLANK WHEN ZERO.",
+                "77 PARTIAL-AREA PIC S9(8) SIGN LEADING SEPARATE.")) {
+            var p = product(VALUE + declaration + "\n01 ARG PIC X(20).\n", "CALL LIT-PGM USING ARG.");
+            var c = condition(p);
+            assertEquals(PROGA, c.bytes(), declaration + ": " + c.gapCodes());
+            assertEquals("POSSIBLE_LITERAL_BYTES", c.kind().name());
+            assertEquals("DECLARATIVE_POSSIBILITY", c.proof().name());
+            assertFalse(c.gapCodes().isEmpty());
+        }
+    }
+
+    @Test void unknownBaseExtentCannotEraseKnownDeclarationValue() {
+        var c = condition(product("01 WS-AREA.\n05 LIT-PGM PIC X(8) VALUE 'PROGA'.\n05 PARTIAL-AREA PIC S9(9) COMP.\n", "CALL LIT-PGM."));
+        assertEquals(PROGA, c.bytes(), c.gapCodes().toString());
+        assertEquals("POSSIBLE_LITERAL_BYTES", c.kind().name());
+        assertFalse(c.gapCodes().isEmpty());
+    }
+
+    @Test void unknownOffsetCannotEraseKnownDeclarationValue() {
+        var c = condition(product("01 WS-AREA.\n05 PARTIAL-AREA PIC S9(9) COMP.\n05 LIT-PGM PIC X(8) VALUE 'PROGA'.\n", "CALL LIT-PGM."));
+        assertEquals(PROGA, c.bytes(), c.gapCodes().toString());
+        assertEquals("POSSIBLE_LITERAL_BYTES", c.kind().name());
+        assertFalse(c.gapCodes().isEmpty());
+    }
+
+    @Test void unknownStatementAndCallOperandsPreserveSourceEvidence() {
+        for (var code : List.of("EXHIBIT LIT-PGM.\nCALL LIT-PGM.",
+                "DISPLAY LIT-PGM.\nCALL LIT-PGM USING MISSING-ARG.",
+                "CALL 'OTHER' RETURNING LIT-PGM.\nCALL LIT-PGM.")) {
+            var c = condition(product(VALUE, code));
+            assertEquals(PROGA, c.bytes(), code);
+            assertEquals("POSSIBLE_LITERAL_BYTES", c.kind().name());
+        }
+    }
+
+    @Test void sourceEvidenceRequiresAnActualValidLiteral() {
+        assertTrue(product(VALUE.replace(" VALUE 'PROGA'", ""), "CALL LIT-PGM.").storage().entryState().conditions().isEmpty());
+        assertTrue(condition(product("01 LIT-PGM PIC X(2) VALUE 'TOO-LONG'.\n", "CALL LIT-PGM.")).bytes().isEmpty());
+    }
+
+    @Test void sourceEvidenceDoesNotClaimLifetimeInvarianceAcrossMustWrite() {
+        var p = product(VALUE, "MOVE 'PROGB' TO LIT-PGM.\nCALL LIT-PGM.");
+        assertEquals(PROGA, condition(p).bytes());
+        assertEquals("DECLARATIVE_POSSIBILITY", condition(p).proof().name());
+        assertEquals(1, p.moves().size());
+    }
+
+    @Test void futureArbitraryClauseHasNoAuthorityToEraseSupportedValue() {
+        // Build a typed partial node at the AST boundary. JOHNDOE has no grammar or keyword semantics.
+        var original = AstBoundaryTestSupport.analyze(source(VALUE + "77 PARTIAL-AREA PIC X(3) USAGE DISPLAY.\n", "CALL LIT-PGM."), "future-construct.cbl");
+        int replaced = AstBoundaryTestSupport.nodes(original, Ast.UsageClause.class).get(0).meta().id();
+        var model = new CompilationUnitModel(original.model().compilationUnitId(), original.model().programUnits().stream()
+                .map(u -> new CompilationUnitModel.ProgramUnit(u.id(), u.parentId(), (Ast.Program) replace(u.program(), replaced))).toList());
+        var coverage = new LinkedHashMap<ResolutionContracts.ProgramUnitId, SemanticCoverage.Report>();
+        original.build().coverageByProgramUnit().forEach((unit, report) -> coverage.put(unit, new SemanticCoverage.Report(report.findings().stream()
+                .map(f -> f.astNodeId() == replaced ? new SemanticCoverage.Finding(f.id(), "futureArbitraryClause", f.meta(), "JOHNDOE", SemanticCoverage.ConstructionCoverage.PRESERVED_UNINTERPRETED, f.dependencyKnowledge(), "EP synthetic unknown construction", f.astNodeId()) : f).toList())));
+        var build = new CompilationUnitBuildResult(model, coverage, original.build().diagnosticsByProgramUnit());
+        var tables = new CompilationUnitSymbolTableBuilder().build(model);
+        var layout = StorageLayoutSemantics.analyze(build, tables, original.resolution(), original.report(), StorageLayoutSemantics.Profile.IBM_ENTERPRISE_6_4_FIXED_DISPLAY_1047);
+        var facts = StorageAccessSemantics.analyze(build, original.resolution(), layout).initial().facts(model.programUnits().get(0).id());
+        var c = facts.conditions().get(0);
+        assertEquals(PROGA, c.bytes(), "JOHNDOE is not a MUST write: " + c.reasons());
+        assertEquals(StorageInitialSemantics.Kind.POSSIBLE_LITERAL_BYTES, c.kind());
+        assertTrue(layout.layout(model.programUnits().get(0).id()).nodes().stream().anyMatch(n -> n.extent().value().isEmpty()), "unknown must remain explicit");
+    }
+
+    private static Ast.Node replace(Ast.Node node, int replaced) {
+        if (node.meta().id() == replaced) return new Ast.PreservedDataClause(node.meta(), "futureArbitraryClause", "JOHNDOE", List.of());
+        if (node instanceof Ast.Program p) return new Ast.Program(p.meta(), p.name(), p.attributes(), p.divisions().stream().map(d -> (Ast.Division) replace(d, replaced)).toList(), p.inputProof());
+        if (node instanceof Ast.Division d) return new Ast.Division(d.meta(), d.divisionKind(), d.children().stream().map(n -> replace(n, replaced)).toList(), d.procedureEntry(), d.normalContinuations(), d.ordinaryContinuations(), d.embeddedContinuations(), d.embeddedOrdinaryContinuations());
+        if (node instanceof Ast.Section s) return new Ast.Section(s.meta(), s.name(), s.dataSectionKind(), s.children().stream().map(n -> replace(n, replaced)).toList());
+        if (node instanceof Ast.DataEntry d) return new Ast.DataEntry(d.meta(), d.level(), d.levelKind(), d.name(), d.filler(), d.visibility(), d.declaration(), d.clauses().stream().map(n -> (Ast.DataClause) replace(n, replaced)).toList(), d.children().stream().map(n -> (Ast.DataEntry) replace(n, replaced)).toList());
+        return node;
+    }
+}
