@@ -1,5 +1,9 @@
 # Declarative Value Inference — SP 2.16.0 / storage 1.5.0
 
+Historical precision contract. [EP-W1 / SP 2.19.0](evidence-preserving-entry.md)
+supersedes the possibility admission restrictions below: layout and allocation
+proofs upgrade precision and do not gate recognized logical source evidence.
+
 The configured `ibm-enterprise-6.4-fixed-display-1047@1` profile is still required.
 Ordinary WORKING-STORAGE persists; the default CLI remains `unknown`. A VALUE
 declaration alone never changes the global entry policy to INITIAL.

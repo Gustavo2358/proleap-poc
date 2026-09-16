@@ -604,7 +604,7 @@ public final class CobolSemanticProduct {
     }
     public enum StorageEntryMode { UNKNOWN, INITIAL, PRESERVED }
     public enum InitialStorageKind { LITERAL_BYTES, POSSIBLE_LITERAL_BYTES, PRESERVE, UNKNOWN }
-    /** Source entry proof, versioned by storage 1.5.0. */
+    /** Source entry proof, versioned by storage 1.6.0. */
     public enum InitialStorageProof { NONE, EXPLICIT_INITIAL, EXPLICIT_PRESERVED, PROGRAM_INITIAL, DECLARATIVE_INVARIANT, DECLARATIVE_POSSIBILITY }
     public record StorageInitialCondition(StorageNodeId node,InitialStorageKind kind,List<Integer> bytes,List<String> gapCodes,Provenance provenance,InitialStorageProof proof) {
         public StorageInitialCondition {
@@ -1320,7 +1320,11 @@ public final class CobolSemanticProduct {
         var initialNodes=new HashSet<StorageNodeId>();
         for(var condition:inventory.entryState().conditions()) {
             require(nodes.containsKey(condition.node())&&initialNodes.add(condition.node()),"initial condition needs unique existing physical node");
-            if(condition.kind()!=InitialStorageKind.UNKNOWN) {
+            if(condition.kind()==InitialStorageKind.POSSIBLE_LITERAL_BYTES) {
+                require(condition.provenance().exact()&&inventory.profile()==StorageProfile.IBM_ENTERPRISE_6_4_FIXED_DISPLAY_1047,
+                    "possible source bytes require source provenance and explicit representation profile");
+                require(inventory.entryState().mode()!=StorageEntryMode.PRESERVED,"preserved entry cannot assert a declaration possibility");
+            } else if(condition.kind()!=InitialStorageKind.UNKNOWN) {
                 var view=views.get(condition.node());
                 require(condition.provenance().exact()&&view.codec().isPresent()&&view.offset().value().isPresent()&&view.extent().value().isPresent()
                     &&bases.get(view.base()).extent().value().isPresent(),"precise initial condition needs exact provenance and bounded supported view");
