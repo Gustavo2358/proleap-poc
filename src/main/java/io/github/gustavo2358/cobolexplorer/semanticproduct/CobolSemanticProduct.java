@@ -608,22 +608,26 @@ public final class CobolSemanticProduct {
         }
     }
     public enum StorageEntryMode { UNKNOWN, INITIAL, PRESERVED }
-    public enum InitialStorageKind { LITERAL_BYTES, POSSIBLE_LITERAL_BYTES, PRESERVE, UNKNOWN }
+    public enum InitialStorageKind { LITERAL_BYTES, POSSIBLE_LITERAL_BYTES, POSSIBLE_LOGICAL_TEXT, PRESERVE, UNKNOWN }
     /** Source entry proof, versioned by storage 1.6.0. */
     public enum InitialStorageProof { NONE, EXPLICIT_INITIAL, EXPLICIT_PRESERVED, PROGRAM_INITIAL, DECLARATIVE_INVARIANT, DECLARATIVE_POSSIBILITY }
-    public record StorageInitialCondition(StorageNodeId node,InitialStorageKind kind,List<Integer> bytes,List<String> gapCodes,Provenance provenance,InitialStorageProof proof) {
+    public record StorageInitialCondition(StorageNodeId node,InitialStorageKind kind,List<Integer> bytes,List<String> gapCodes,Provenance provenance,InitialStorageProof proof,Optional<String> logicalText) {
         public StorageInitialCondition {
+            Objects.requireNonNull(logicalText);require((kind==InitialStorageKind.POSSIBLE_LOGICAL_TEXT)==logicalText.isPresent(),"logical source text has its own initial kind");
             Objects.requireNonNull(proof);
             Objects.requireNonNull(node);Objects.requireNonNull(kind);Objects.requireNonNull(provenance);bytes=List.copyOf(bytes);gapCodes=List.copyOf(gapCodes);
             require(bytes.stream().allMatch(b->b>=0&&b<=255),"invalid initial octet");
             require(kind==InitialStorageKind.LITERAL_BYTES||kind==InitialStorageKind.POSSIBLE_LITERAL_BYTES||bytes.isEmpty(),"only literal entry facts carry bytes");
             require(kind!=InitialStorageKind.POSSIBLE_LITERAL_BYTES||!bytes.isEmpty(),"possible literal bytes must not be empty");
-            require((kind==InitialStorageKind.UNKNOWN||kind==InitialStorageKind.POSSIBLE_LITERAL_BYTES)==!gapCodes.isEmpty(),"unknown or possible initial state requires gaps");
-            require(kind!=InitialStorageKind.POSSIBLE_LITERAL_BYTES||gapCodes.contains("ENTRY_STATE_NOT_PROVEN"),"possible entry requires lifecycle remainder");
+            require((kind==InitialStorageKind.UNKNOWN||kind==InitialStorageKind.POSSIBLE_LITERAL_BYTES||kind==InitialStorageKind.POSSIBLE_LOGICAL_TEXT)==!gapCodes.isEmpty(),"unknown or possible initial state requires gaps");
+            require((kind!=InitialStorageKind.POSSIBLE_LITERAL_BYTES&&kind!=InitialStorageKind.POSSIBLE_LOGICAL_TEXT)||gapCodes.contains("ENTRY_STATE_NOT_PROVEN"),"possible entry requires lifecycle remainder");
             require(kind==InitialStorageKind.UNKNOWN?proof==InitialStorageProof.NONE:kind==InitialStorageKind.PRESERVE?proof==InitialStorageProof.EXPLICIT_PRESERVED
-                :kind==InitialStorageKind.POSSIBLE_LITERAL_BYTES?proof==InitialStorageProof.DECLARATIVE_POSSIBILITY
+                :(kind==InitialStorageKind.POSSIBLE_LITERAL_BYTES||kind==InitialStorageKind.POSSIBLE_LOGICAL_TEXT)?proof==InitialStorageProof.DECLARATIVE_POSSIBILITY
                 :Set.of(InitialStorageProof.EXPLICIT_INITIAL,InitialStorageProof.PROGRAM_INITIAL,InitialStorageProof.DECLARATIVE_INVARIANT).contains(proof),"initial kind contradicts proof");
             gapCodes.forEach(g->requireText(g,"initial storage gap"));
+        }
+        public StorageInitialCondition(StorageNodeId node,InitialStorageKind kind,List<Integer> bytes,List<String> gapCodes,Provenance provenance,InitialStorageProof proof) {
+            this(node,kind,bytes,gapCodes,provenance,proof,Optional.empty());
         }
         public StorageInitialCondition(StorageNodeId node,InitialStorageKind kind,List<Integer> bytes,List<String> gapCodes,Provenance provenance) {
             this(node,kind,bytes,gapCodes,provenance,kind==InitialStorageKind.UNKNOWN?InitialStorageProof.NONE:kind==InitialStorageKind.PRESERVE?InitialStorageProof.EXPLICIT_PRESERVED:kind==InitialStorageKind.POSSIBLE_LITERAL_BYTES?InitialStorageProof.DECLARATIVE_POSSIBILITY:InitialStorageProof.EXPLICIT_INITIAL);
@@ -1325,7 +1329,9 @@ public final class CobolSemanticProduct {
         var initialNodes=new HashSet<StorageNodeId>();
         for(var condition:inventory.entryState().conditions()) {
             require(nodes.containsKey(condition.node())&&initialNodes.add(condition.node()),"initial condition needs unique existing physical node");
-            if(condition.kind()==InitialStorageKind.POSSIBLE_LITERAL_BYTES) {
+            if(condition.kind()==InitialStorageKind.POSSIBLE_LOGICAL_TEXT) {
+                require(condition.provenance().exact()&&inventory.entryState().mode()!=StorageEntryMode.PRESERVED,"logical source evidence requires provenance and an open entry");
+            } else if(condition.kind()==InitialStorageKind.POSSIBLE_LITERAL_BYTES) {
                 require(condition.provenance().exact()&&inventory.profile()==StorageProfile.IBM_ENTERPRISE_6_4_FIXED_DISPLAY_1047,
                     "possible source bytes require source provenance and explicit representation profile");
                 require(inventory.entryState().mode()!=StorageEntryMode.PRESERVED,"preserved entry cannot assert a declaration possibility");

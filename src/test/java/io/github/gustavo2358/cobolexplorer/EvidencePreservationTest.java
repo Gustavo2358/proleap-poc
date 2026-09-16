@@ -15,6 +15,7 @@ class EvidencePreservationTest {
         var layout=StorageLayoutSemantics.analyze(a.build(),tables,a.resolution(),a.report(),StorageLayoutSemantics.Profile.UNSPECIFIED);
         var condition=StorageAccessSemantics.analyze(a.build(),a.resolution(),layout).initial().facts(a.model().programUnits().get(0).id()).conditions().get(0);
         assertEquals("POSSIBLE_LOGICAL_TEXT",condition.kind().name(),"a logical VALUE does not require inventing a byte codec");
+        assertEquals(Optional.of("PROGA   "),condition.logicalText());
         assertTrue(condition.bytes().isEmpty(),"no invented encoding");
         assertFalse(condition.reasons().isEmpty());
     }

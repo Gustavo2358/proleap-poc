@@ -5,7 +5,7 @@ import java.util.*;
 
 /** Recognized declaration value support. Never proves lifetime, allocation or alias separation. */
 final class DeclarativeValueEvidence {
-    record Fact(List<Integer> bytes) {
+    record Fact(String logicalText,List<Integer> bytes) {
         Fact { bytes=List.copyOf(bytes); }
     }
     private DeclarativeValueEvidence() { }
@@ -25,11 +25,16 @@ final class DeclarativeValueEvidence {
         // A positively known non-DISPLAY representation is not text-byte evidence.
         // An unrelated or uninterpreted clause does not decide candidate visibility.
         if(declaration.clauses().stream().filter(Ast.UsageClause.class::isInstance).map(Ast.UsageClause.class::cast).anyMatch(u->!u.display()))return Optional.empty();
-        var encoded=values.get(0).logicalText().flatMap(t->StorageAccessSemantics.encode(t.value(),profile));
+        var text=values.get(0).logicalText();
+        if(text.isEmpty()||BigInteger.valueOf(text.get().value().codePointCount(0,text.get().value().length())).compareTo(extent.get())>0)return Optional.empty();
+        int logicalLength=extent.get().intValueExact();
+        String logical=text.get().value()+" ".repeat(logicalLength-text.get().value().codePointCount(0,text.get().value().length()));
+        if(profile==StorageLayoutSemantics.Profile.UNSPECIFIED)return Optional.of(new Fact(logical,List.of()));
+        var encoded=StorageAccessSemantics.encode(text.get().value(),profile);
         if(encoded.isEmpty()||BigInteger.valueOf(encoded.get().size()).compareTo(extent.get())>0)return Optional.empty();
         var fitted=new ArrayList<>(encoded.get());int length=extent.get().intValueExact();
         while(fitted.size()<length)fitted.add(0x40);
-        return Optional.of(new Fact(fitted));
+        return Optional.of(new Fact(logical,fitted));
     }
 
     private static boolean modeled(Ast.Node node,Map<Integer,SemanticCoverage.Finding> coverage) {

@@ -4,12 +4,12 @@ import static io.github.gustavo2358.cobolexplorer.StorageLayoutSemantics.*;
 /** Explicit source entry profile and VALUE conditions, separate from executable writes. */
 public final class StorageInitialSemantics {
     public enum EntryMode { UNKNOWN, INITIAL, PRESERVED }
-    public enum Kind { LITERAL_BYTES, POSSIBLE_LITERAL_BYTES, PRESERVE, UNKNOWN }
+    public enum Kind { LITERAL_BYTES, POSSIBLE_LITERAL_BYTES, POSSIBLE_LOGICAL_TEXT, PRESERVE, UNKNOWN }
     public enum Proof { NONE, EXPLICIT_INITIAL, EXPLICIT_PRESERVED, PROGRAM_INITIAL, DECLARATIVE_INVARIANT, DECLARATIVE_POSSIBILITY }
     public enum Reason { ENTRY_STATE_NOT_PROVEN, STORAGE_NOT_PROVEN, VALUE_NOT_PROVEN, VALUE_ON_REDEFINITION, NESTED_VALUE,
         STORAGE_NOT_LOCAL, INCOMPLETE_WRITE_INVENTORY, OVERLAPPING_WRITE, WRITE_NOT_PROVEN, UNKNOWN_STORAGE_EFFECT, FOREIGN_MUTATION_OR_ESCAPE }
-    public record Condition(Key declaration,Optional<View> view,Kind kind,List<Integer> bytes,List<Reason> reasons,Ast.SourceProvenance origin,Proof proof) {
-        public Condition {view=Objects.requireNonNull(view);bytes=List.copyOf(bytes);reasons=List.copyOf(reasons);}
+    public record Condition(Key declaration,Optional<View> view,Kind kind,List<Integer> bytes,List<Reason> reasons,Ast.SourceProvenance origin,Proof proof,Optional<String> logicalText) {
+        public Condition {logicalText=Objects.requireNonNull(logicalText);view=Objects.requireNonNull(view);bytes=List.copyOf(bytes);reasons=List.copyOf(reasons);}
     }
     public record Facts(EntryMode mode,List<Condition> conditions) {public Facts {conditions=List.copyOf(conditions);}}
     private final Map<ResolutionContracts.ProgramUnitId,Facts> units;
@@ -70,12 +70,14 @@ public final class StorageInitialSemantics {
                     candidate!=null&&candidate.textual()?candidate.extent().value():Optional.empty());
                 boolean invalidSource=flags.redefined()||flags.value()||descendantValues.get(data.meta().id())>values.size()
                     ||data.clauses().stream().anyMatch(Ast.RedefinesClause.class::isInstance);
-                Kind kind=Kind.UNKNOWN;List<Integer> bytes=List.of();Proof proof=Proof.NONE;
+                Kind kind=Kind.UNKNOWN;List<Integer> bytes=List.of();Proof proof=Proof.NONE;Optional<String> logicalText=Optional.empty();
                 if(!invalidSource&&mode==EntryMode.PRESERVED&&known) {
                     kind=Kind.PRESERVE;proof=Proof.EXPLICIT_PRESERVED;reasons.clear();
                 } else if(!invalidSource&&mode!=EntryMode.PRESERVED&&evidence.isPresent()) {
                     bytes=evidence.get().bytes();
-                    if(known&&mode==EntryMode.INITIAL) {kind=Kind.LITERAL_BYTES;proof=Proof.EXPLICIT_INITIAL;}
+                    if(bytes.isEmpty()) {
+                        logicalText=Optional.of(evidence.get().logicalText());kind=Kind.POSSIBLE_LOGICAL_TEXT;proof=Proof.DECLARATIVE_POSSIBILITY;reasons.add(Reason.ENTRY_STATE_NOT_PROVEN);
+                    } else if(known&&mode==EntryMode.INITIAL) {kind=Kind.LITERAL_BYTES;proof=Proof.EXPLICIT_INITIAL;}
                     else if(known&&unit.program().attributes().initial()) {kind=Kind.LITERAL_BYTES;proof=Proof.PROGRAM_INITIAL;}
                     else {
                         if(known) {
@@ -87,7 +89,7 @@ public final class StorageInitialSemantics {
                     }
                 } else if(evidence.isEmpty())reasons.add(Reason.VALUE_NOT_PROVEN);
                 if(kind==Kind.UNKNOWN&&mode==EntryMode.UNKNOWN)reasons.add(Reason.ENTRY_STATE_NOT_PROVEN);
-                conditions.add(new Condition(new Key(unit.id(),data.meta().id()),view,kind,bytes,reasons,values.get(0).meta().provenance(),kind==Kind.UNKNOWN?Proof.NONE:proof));
+                conditions.add(new Condition(new Key(unit.id(),data.meta().id()),view,kind,bytes,reasons,values.get(0).meta().provenance(),kind==Kind.UNKNOWN?Proof.NONE:proof,logicalText));
             }
             units.put(unit.id(),new Facts(mode,conditions));
         }

@@ -4,6 +4,14 @@ Current writer: SP **2.19.0**, storage **1.6.0**. This changes the admission
 meaning of `POSSIBLE_LITERAL_BYTES`; older consumers must not silently accept
 the new document as storage 1.5.0.
 
+Every initial condition also carries nullable `logicalText`. The new
+`POSSIBLE_LOGICAL_TEXT` kind uses this field when the byte profile is unspecified;
+it carries no bytes, uses `DECLARATIVE_POSSIBILITY`, and keeps
+`ENTRY_STATE_NOT_PROVEN`. Other kinds have null `logicalText`. This preserves
+recognized logical text without choosing a byte encoding. A selected profile
+that positively cannot encode a literal retains the existing unsupported-value
+limit. Logical text evidence does not assert physical layout or an entry constant.
+
 ## Source authority
 
 `DeclarativeValueEvidence` recognizes one modeled textual VALUE and its logical
