@@ -128,7 +128,7 @@ class EvidencePreservationTest {
         assertTrue(layout.layout(model.programUnits().get(0).id()).nodes().stream().anyMatch(n -> n.extent().value().isEmpty()), "unknown must remain explicit");
     }
 
-    private static Ast.Node replace(Ast.Node node, int replaced) {
+    static Ast.Node replace(Ast.Node node, int replaced) {
         if (node.meta().id() == replaced) return new Ast.PreservedDataClause(node.meta(), "futureArbitraryClause", "JOHNDOE", List.of());
         if (node instanceof Ast.Program p) return new Ast.Program(p.meta(), p.name(), p.attributes(), p.divisions().stream().map(d -> (Ast.Division) replace(d, replaced)).toList(), p.inputProof());
         if (node instanceof Ast.Division d) return new Ast.Division(d.meta(), d.divisionKind(), d.children().stream().map(n -> replace(n, replaced)).toList(), d.procedureEntry(), d.normalContinuations(), d.ordinaryContinuations(), d.embeddedContinuations(), d.embeddedOrdinaryContinuations());
