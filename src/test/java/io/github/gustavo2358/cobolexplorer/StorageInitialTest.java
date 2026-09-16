@@ -19,9 +19,9 @@ class StorageInitialTest {
     @Test void preservedPremiseAndPerConditionInferenceKeepTheirDistinctModes() {
         for(var mode:List.of(EntryMode.PRESERVED,EntryMode.UNKNOWN)) {
             var f=initial("01 PGM-TEXT PIC X(8) VALUE 'PGM00001'.",mode);assertEquals(mode,f.mode());assertEquals(1,f.conditions().size());
-            var c=f.conditions().get(0);assertEquals(mode==EntryMode.PRESERVED?Kind.PRESERVE:Kind.LITERAL_BYTES,c.kind());
-            assertEquals(mode==EntryMode.PRESERVED?Proof.EXPLICIT_PRESERVED:Proof.DECLARATIVE_INVARIANT,c.proof());
-            assertEquals(mode==EntryMode.PRESERVED,c.bytes().isEmpty());
+            var c=f.conditions().get(0);assertEquals(mode==EntryMode.PRESERVED?Kind.POSSIBLE_LITERAL_BYTES:Kind.LITERAL_BYTES,c.kind());
+            assertEquals(mode==EntryMode.PRESERVED?Proof.DECLARATIVE_POSSIBILITY:Proof.DECLARATIVE_INVARIANT,c.proof());
+            assertFalse(c.bytes().isEmpty());assertEquals(mode==EntryMode.PRESERVED,c.reasons().contains(Reason.ENTRY_STATE_NOT_PROVEN));
         }
     }
     @Test void invalidTooLongAndUnmodeledLiteralsAreNotMoveTruncation() {

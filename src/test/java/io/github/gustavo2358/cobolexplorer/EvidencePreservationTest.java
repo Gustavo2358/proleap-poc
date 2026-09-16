@@ -83,6 +83,19 @@ class EvidencePreservationTest {
         assertTrue(c.bytes().isEmpty());assertTrue(c.logicalText().isEmpty());
     }
 
+    @Test void lifecycleProfileCannotDecideWhetherSourcePossibilityExists() {
+        var c=StorageInitialTest.initial(VALUE,StorageInitialSemantics.EntryMode.PRESERVED).conditions().get(0);
+        assertEquals(PROGA,c.bytes(),"preserving previous storage does not prove the declared value impossible");
+        assertEquals(StorageInitialSemantics.Kind.POSSIBLE_LITERAL_BYTES,c.kind());
+        assertEquals(StorageInitialSemantics.Proof.DECLARATIVE_POSSIBILITY,c.proof());
+    }
+
+    @Test void initialLifecycleDoesNotUpgradeUnprovedAllocation() {
+        var c=StorageInitialTest.initial(VALUE+"77 PARTIAL-AREA PIC X(8) JUSTIFIED.\n",StorageInitialSemantics.EntryMode.INITIAL).conditions().get(0);
+        assertEquals(PROGA,c.bytes());
+        assertEquals(StorageInitialSemantics.Kind.POSSIBLE_LITERAL_BYTES,c.kind(),"entry lifecycle alone does not close layout/storage proof");
+    }
+
     @Test void sourceEvidenceDoesNotClaimLifetimeInvarianceAcrossMustWrite() {
         var p = product(VALUE, "MOVE 'PROGB' TO LIT-PGM.\nCALL LIT-PGM.");
         assertEquals(PROGA, condition(p).bytes());

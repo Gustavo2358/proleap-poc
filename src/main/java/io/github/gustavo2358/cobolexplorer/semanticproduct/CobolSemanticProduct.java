@@ -1330,13 +1330,13 @@ public final class CobolSemanticProduct {
         for(var condition:inventory.entryState().conditions()) {
             require(nodes.containsKey(condition.node())&&initialNodes.add(condition.node()),"initial condition needs unique existing physical node");
             if(condition.kind()==InitialStorageKind.POSSIBLE_LOGICAL_TEXT) {
-                require(condition.provenance().exact()&&inventory.entryState().mode()!=StorageEntryMode.PRESERVED,"logical source evidence requires provenance and an open entry");
+                require(condition.provenance().exact(),"logical source evidence requires exact provenance");
             } else if(condition.kind()==InitialStorageKind.POSSIBLE_LITERAL_BYTES) {
                 require(condition.provenance().exact()&&inventory.profile()==StorageProfile.IBM_ENTERPRISE_6_4_FIXED_DISPLAY_1047,
                     "possible source bytes require source provenance and explicit representation profile");
-                require(inventory.entryState().mode()!=StorageEntryMode.PRESERVED,"preserved entry cannot assert a declaration possibility");
             } else if(condition.kind()!=InitialStorageKind.UNKNOWN) {
                 var view=views.get(condition.node());
+                require(condition.kind()!=InitialStorageKind.LITERAL_BYTES||bases.get(view.base()).allocation()==AllocationProof.INDEPENDENT_LOCAL_WORKING_STORAGE,"strong initial bytes require proved allocation");
                 require(condition.provenance().exact()&&view.codec().isPresent()&&view.offset().value().isPresent()&&view.extent().value().isPresent()
                     &&bases.get(view.base()).extent().value().isPresent(),"precise initial condition needs exact provenance and bounded supported view");
                 boolean mode=condition.proof()==InitialStorageProof.EXPLICIT_INITIAL?inventory.entryState().mode()==StorageEntryMode.INITIAL

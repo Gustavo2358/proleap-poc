@@ -71,7 +71,9 @@ class DeclarativeValueInferenceTest {
         var wire=new ObjectMapper().readTree(SemanticProductJsonWriter.serialize(automatic));
         assertEquals("PROGRAM_INITIAL",wire.path("storage").path("entryState").path("conditions").get(0).path("proof").asText());
         var preserved=StorageInitialProductTest.initialSource(s,StorageInitialSemantics.EntryMode.PRESERVED);
-        assertEquals(InitialStorageKind.PRESERVE,condition(preserved).kind());
+        assertEquals(StorageEntryMode.PRESERVED,preserved.storage().entryState().mode());
+        assertEquals(InitialStorageKind.POSSIBLE_LITERAL_BYTES,condition(preserved).kind());
+        assertEquals(InitialStorageProof.DECLARATIVE_POSSIBILITY,condition(preserved).proof());
     }
     @Test void mixedRuntimeBranchDoesNotTurnWritableTargetIntoInvariant() {
         var p=product(VALUE+"01 TARGET-PGM PIC X(8) VALUE 'BEFORE'.\n01 INPUT-PGM PIC X(8).\n01 FLAG PIC X.\n",

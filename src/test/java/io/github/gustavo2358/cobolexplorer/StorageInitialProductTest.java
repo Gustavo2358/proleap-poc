@@ -31,7 +31,8 @@ class StorageInitialProductTest {
     @Test void ordinaryEntryPossibilityAndPreservedProfileDoNotClaimStrongLiteral() {
         for(var mode:List.of(StorageInitialSemantics.EntryMode.UNKNOWN,StorageInitialSemantics.EntryMode.PRESERVED)) {
             var p=initial(mode);assertEquals(mode.name(),p.storage().entryState().mode().name());
-            assertEquals(mode==StorageInitialSemantics.EntryMode.UNKNOWN?InitialStorageKind.POSSIBLE_LITERAL_BYTES:InitialStorageKind.PRESERVE,p.storage().entryState().conditions().get(0).kind());
+            assertEquals(InitialStorageKind.POSSIBLE_LITERAL_BYTES,p.storage().entryState().conditions().get(0).kind());
+            assertTrue(p.storage().entryState().conditions().get(0).gapCodes().contains("ENTRY_STATE_NOT_PROVEN"));
         }
         assertThrows(IllegalArgumentException.class,()->ExplorerMain.entryStorageState("first-ish"));
     }

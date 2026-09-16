@@ -74,22 +74,24 @@ public final class StorageInitialSemantics {
                 boolean invalidSource=flags.redefined()||flags.value()||descendantValues.get(data.meta().id())>values.size()
                     ||data.clauses().stream().anyMatch(Ast.RedefinesClause.class::isInstance);
                 Kind kind=Kind.UNKNOWN;List<Integer> bytes=List.of();Proof proof=Proof.NONE;Optional<String> logicalText=Optional.empty();
-                if(!invalidSource&&mode==EntryMode.PRESERVED&&known) {
-                    kind=Kind.PRESERVE;proof=Proof.EXPLICIT_PRESERVED;reasons.clear();
-                } else if(!invalidSource&&mode!=EntryMode.PRESERVED&&evidence.isPresent()) {
+                if(!invalidSource&&evidence.isPresent()) {
                     bytes=evidence.get().bytes();
+                    boolean precise=known&&bases.get(candidate.base()).independent();
+                    if(known&&!precise)reasons.add(Reason.STORAGE_NOT_LOCAL);
                     if(bytes.isEmpty()) {
                         logicalText=Optional.of(evidence.get().logicalText());kind=Kind.POSSIBLE_LOGICAL_TEXT;proof=Proof.DECLARATIVE_POSSIBILITY;reasons.add(Reason.ENTRY_STATE_NOT_PROVEN);
-                    } else if(known&&mode==EntryMode.INITIAL) {kind=Kind.LITERAL_BYTES;proof=Proof.EXPLICIT_INITIAL;}
-                    else if(known&&unit.program().attributes().initial()) {kind=Kind.LITERAL_BYTES;proof=Proof.PROGRAM_INITIAL;}
+                    } else if(mode==EntryMode.PRESERVED) {kind=Kind.POSSIBLE_LITERAL_BYTES;proof=Proof.DECLARATIVE_POSSIBILITY;reasons.add(Reason.ENTRY_STATE_NOT_PROVEN);}
+                    else if(precise&&mode==EntryMode.INITIAL) {kind=Kind.LITERAL_BYTES;proof=Proof.EXPLICIT_INITIAL;}
+                    else if(precise&&unit.program().attributes().initial()) {kind=Kind.LITERAL_BYTES;proof=Proof.PROGRAM_INITIAL;}
                     else {
                         if(known) {
-                            if(!bases.get(candidate.base()).independent())reasons.add(Reason.STORAGE_NOT_LOCAL);
                             if(inventory!=null)reasons.addAll(inventory.blockers(candidate));
                         }
-                        if(known&&reasons.isEmpty()&&inventory!=null) {kind=Kind.LITERAL_BYTES;proof=Proof.DECLARATIVE_INVARIANT;}
+                        if(precise&&reasons.isEmpty()&&inventory!=null) {kind=Kind.LITERAL_BYTES;proof=Proof.DECLARATIVE_INVARIANT;}
                         else {kind=Kind.POSSIBLE_LITERAL_BYTES;proof=Proof.DECLARATIVE_POSSIBILITY;reasons.add(Reason.ENTRY_STATE_NOT_PROVEN);}
                     }
+                } else if(!invalidSource&&mode==EntryMode.PRESERVED&&known) {
+                    kind=Kind.PRESERVE;proof=Proof.EXPLICIT_PRESERVED;reasons.clear();
                 } else if(evidence.isEmpty())reasons.add(Reason.VALUE_NOT_PROVEN);
                 if(kind==Kind.UNKNOWN&&mode==EntryMode.UNKNOWN)reasons.add(Reason.ENTRY_STATE_NOT_PROVEN);
                 conditions.add(new Condition(new Key(unit.id(),data.meta().id()),view,kind,bytes,reasons,values.get(0).meta().provenance(),kind==Kind.UNKNOWN?Proof.NONE:proof,logicalText));

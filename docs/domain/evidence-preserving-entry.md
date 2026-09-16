@@ -44,8 +44,11 @@ It proves neither the value, type, allocation nor alias separation of that item.
 `StorageInitialSemantics` separately checks a bounded textual view and lifecycle
 or invariant proof. Explicit INITIAL, PROGRAM INITIAL and a closed mutation
 inventory can upgrade supported evidence to `LITERAL_BYTES` under their existing
-obligations. DVI failure produces a possibility with remainder. PRESERVED remains
-a distinct explicit entry profile and never claims an initial literal.
+obligations, including proved allocation. DVI failure produces a possibility with
+remainder. PRESERVED remains a distinct explicit entry profile: it preserves prior
+unknown contents and never claims a mandatory initial literal. Recognized VALUE
+evidence still contributes a possibility because preserving earlier storage does
+not prove that value impossible. A lifecycle choice cannot suppress source support.
 
 Lowering must use a bounded physical place only when supported. Otherwise it
 must retain the typed logical declaration with an unknown binding and publish
