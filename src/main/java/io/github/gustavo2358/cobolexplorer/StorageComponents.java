@@ -11,20 +11,51 @@ public final class StorageComponents {
         public Component { members=List.copyOf(members); }
     }
     public record Relation(int owner, Optional<Integer> target, Ast.RedefinesClause clause, boolean proved) { }
+    public enum UncertaintyScope { DECLARATION, RECORD, UNIT }
+    public enum Dimension { LAYOUT, ALLOCATION, ALIAS, LIFETIME }
+    public enum Reason { NONLOCAL_VISIBILITY, UNINTERPRETED_DATA_CLAUSE, UNPROVED_OVERLAY }
+    public record Uncertainty(int owner,int root,UncertaintyScope scope,Set<Dimension> dimensions,
+                              Reason reason,Ast.SourceProvenance origin) {
+        public Uncertainty { dimensions=Set.copyOf(dimensions);Objects.requireNonNull(scope);Objects.requireNonNull(reason);Objects.requireNonNull(origin); }
+    }
+    public record AllocationAssessment(List<Uncertainty> unitRemainder,List<Uncertainty> rootRemainder) {
+        public AllocationAssessment { unitRemainder=List.copyOf(unitRemainder);rootRemainder=List.copyOf(rootRemainder); }
+        public boolean proved() { return unitRemainder.isEmpty()&&rootRemainder.isEmpty(); }
+    }
+    public record UncertaintyIndex(List<Uncertainty> records,List<Uncertainty> unitAllocation,Map<Integer,List<Uncertainty>> rootAllocation) {
+        public UncertaintyIndex {
+            records=List.copyOf(records);unitAllocation=List.copyOf(unitAllocation);
+            var roots=new HashMap<Integer,List<Uncertainty>>();rootAllocation.forEach((key,value)->roots.put(key,List.copyOf(value)));rootAllocation=Map.copyOf(roots);
+        }
+        static UncertaintyIndex of(List<Uncertainty> records) {
+            var broad=new ArrayList<Uncertainty>();var roots=new HashMap<Integer,List<Uncertainty>>();
+            for(var u:records)if(u.dimensions().contains(Dimension.ALLOCATION)) {
+                if(u.scope()==UncertaintyScope.UNIT)broad.add(u);else roots.computeIfAbsent(u.root(),ignored->new ArrayList<>()).add(u);
+            }
+            roots.replaceAll((key,value)->List.copyOf(value));return new UncertaintyIndex(records,broad,roots);
+        }
+        AllocationAssessment allocation(int root) { return new AllocationAssessment(unitAllocation,rootAllocation.getOrDefault(root,List.of())); }
+    }
     public record Unit(List<Position> positions, List<Ast.DataEntry> roots,
                        Map<Integer,Component> componentOf, Map<Integer,List<Component>> children,
                        List<Component> rootComponents, List<Relation> relations, List<Position> renames,
-                       boolean structureProven, boolean allocationProven, boolean relationsProven,
+                       boolean structureProven, UncertaintyIndex uncertaintyIndex, boolean relationsProven,
                        boolean rootRelationsProven,Set<Integer> uncertainRoots) {
         public Unit {
             uncertainRoots=Set.copyOf(uncertainRoots);positions=List.copyOf(positions);roots=List.copyOf(roots);componentOf=Map.copyOf(componentOf);
             var copy=new HashMap<Integer,List<Component>>();children.forEach((k,v)->copy.put(k,List.copyOf(v)));children=Map.copyOf(copy);
             rootComponents=List.copyOf(rootComponents);relations=List.copyOf(relations);renames=List.copyOf(renames);
         }
+        public List<Uncertainty> uncertainties() { return uncertaintyIndex.records(); }
+        public AllocationAssessment allocation(int root) {
+            var component=componentOf.get(root);
+            if(component==null||component.parent().isPresent())throw new IllegalArgumentException("allocation requires a declared root");
+            return uncertaintyIndex.allocation(root);
+        }
         /** No separate Cell is safe for any root participating in an overlay, including a later declaration. */
         public boolean standaloneIndependent(int node) {
             var c=componentOf.get(node);
-            return structureProven&&allocationProven&&rootRelationsProven&&!uncertainRoots.contains(node)&&c!=null&&c.parent().isEmpty()&&c.members().size()==1
+            return structureProven&&c!=null&&c.parent().isEmpty()&&allocation(node).proved()&&rootRelationsProven&&!uncertainRoots.contains(node)&&c.members().size()==1
                 &&renames.stream().noneMatch(p->p.root()==node);
         }
     }
@@ -49,14 +80,22 @@ public final class StorageComponents {
             if(report==null)structure=false;else for(var f:report.findings())coverage.put(f.astNodeId(),f);
             var positions=new ArrayList<Position>();var renames=new ArrayList<Position>();var pending=new ArrayDeque<Position>();
             for(int i=roots.size()-1;i>=0;i--)pending.push(new Position(roots.get(i),Optional.empty(),i,roots.get(i).meta().id()));
-            var identities=new HashSet<Integer>();boolean allocation=true;
+            var identities=new HashSet<Integer>();var uncertainties=new ArrayList<Uncertainty>();
             while(!pending.isEmpty()) {
                 var p=pending.pop();var data=p.data();
                 if(data.levelKind()==Ast.DataLevelKind.RENAMES_66&&p.parent().isPresent()){renames.add(p);continue;}
                 positions.add(p);
                 if(!identities.add(data.meta().id()))throw new IllegalArgumentException("duplicate physical declaration identity");
-                allocation&=data.visibility()==Ast.DeclarationVisibility.LOCAL;
-                for(var clause:data.clauses())if(clause instanceof Ast.RenamesClause||clause instanceof Ast.PreservedDataClause)allocation=false;
+                if(data.visibility()!=Ast.DeclarationVisibility.LOCAL)uncertainties.add(new Uncertainty(data.meta().id(),p.root(),UncertaintyScope.UNIT,
+                    Set.of(Dimension.ALLOCATION,Dimension.ALIAS,Dimension.LIFETIME),Reason.NONLOCAL_VISIBILITY,data.meta().provenance()));
+                for(var clause:data.clauses())if(clause instanceof Ast.RenamesClause||clause instanceof Ast.PreservedDataClause) {
+                    // The declaration owns the layout gap; absent an alias bound, separation
+                    // remains open for the unit. Neither record controls source VALUE support.
+                    uncertainties.add(new Uncertainty(data.meta().id(),p.root(),UncertaintyScope.DECLARATION,
+                        Set.of(Dimension.LAYOUT),Reason.UNINTERPRETED_DATA_CLAUSE,clause.meta().provenance()));
+                    uncertainties.add(new Uncertainty(data.meta().id(),p.root(),UncertaintyScope.UNIT,
+                        Set.of(Dimension.ALLOCATION,Dimension.ALIAS,Dimension.LIFETIME),Reason.UNINTERPRETED_DATA_CLAUSE,clause.meta().provenance()));
+                }
                 for(int i=data.children().size()-1;i>=0;i--)pending.push(new Position(data.children().get(i),Optional.of(data.meta().id()),i,p.root()));
             }
             var byNode=new HashMap<Integer,Component>();var children=new HashMap<Integer,List<Component>>();var relations=new ArrayList<Relation>();
@@ -67,10 +106,17 @@ public final class StorageComponents {
             var uncertainRoots=new HashSet<Integer>();boolean rootRelations=true;
             for(var relation:relations)if(!relation.proved()) {
                 var owner=positionsByNode.get(relation.owner());
-                if(owner.parent().isEmpty())rootRelations=false;
-                else uncertainRoots.add(owner.root());
+                if(owner.parent().isEmpty()) {
+                    rootRelations=false;
+                    uncertainties.add(new Uncertainty(relation.owner(),owner.root(),UncertaintyScope.UNIT,
+                        Set.of(Dimension.LAYOUT,Dimension.ALLOCATION,Dimension.ALIAS),Reason.UNPROVED_OVERLAY,relation.clause().meta().provenance()));
+                } else {
+                    uncertainRoots.add(owner.root());
+                    uncertainties.add(new Uncertainty(relation.owner(),owner.root(),UncertaintyScope.RECORD,
+                        Set.of(Dimension.LAYOUT,Dimension.ALIAS),Reason.UNPROVED_OVERLAY,relation.clause().meta().provenance()));
+                }
             }
-            units.put(unit.id(),new Unit(positions,roots,byNode,children,rootComponents,relations,renames,structure,allocation,proved,rootRelations,uncertainRoots));
+            units.put(unit.id(),new Unit(positions,roots,byNode,children,rootComponents,relations,renames,structure,UncertaintyIndex.of(uncertainties),proved,rootRelations,uncertainRoots));
         }
         return new StorageComponents(frontend,units);
     }

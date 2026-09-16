@@ -114,6 +114,12 @@ class EvidencePreservationTest {
                 .map(f -> f.astNodeId() == replaced ? new SemanticCoverage.Finding(f.id(), "futureArbitraryClause", f.meta(), "JOHNDOE", SemanticCoverage.ConstructionCoverage.PRESERVED_UNINTERPRETED, f.dependencyKnowledge(), "EP synthetic unknown construction", f.astNodeId()) : f).toList())));
         var build = new CompilationUnitBuildResult(model, coverage, original.build().diagnosticsByProgramUnit());
         var tables = new CompilationUnitSymbolTableBuilder().build(model);
+        var components=StorageComponents.analyze(build).unit(model.programUnits().get(0).id());
+        var clause=components.uncertainties().stream().filter(u->u.reason()==StorageComponents.Reason.UNINTERPRETED_DATA_CLAUSE).toList();
+        assertEquals(2,clause.size(),"generic clause retains both its layout owner and unbounded allocation remainder");
+        assertTrue(clause.stream().allMatch(u->u.origin().exact()));
+        assertEquals(Set.of(StorageComponents.UncertaintyScope.DECLARATION,StorageComponents.UncertaintyScope.UNIT),
+            clause.stream().map(StorageComponents.Uncertainty::scope).collect(java.util.stream.Collectors.toSet()));
         var layout = StorageLayoutSemantics.analyze(build, tables, original.resolution(), original.report(), StorageLayoutSemantics.Profile.IBM_ENTERPRISE_6_4_FIXED_DISPLAY_1047);
         var facts = StorageAccessSemantics.analyze(build, original.resolution(), layout).initial().facts(model.programUnits().get(0).id());
         var c = facts.conditions().get(0);
