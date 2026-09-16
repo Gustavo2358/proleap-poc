@@ -25,6 +25,14 @@ remain available and cannot be cleared to claim exactness.
 
 ## Precision authority
 
+SP 2.19 also requires the nullable `logicalWholeItem` field on data references.
+It identifies the complete logical declaration accessed by this occurrence,
+independently of a physical view or the older `scalarText` storage profile.
+The producer requires exact source shape, no subscripts/reference modification,
+and a resolved binding to that declaration. It currently emits the fact for
+CALL targets. Consumers cannot derive it from a name or nominal binding alone.
+It proves neither the value, type, allocation nor alias separation of that item.
+
 `StorageInitialSemantics` separately checks a bounded textual view and lifecycle
 or invariant proof. Explicit INITIAL, PROGRAM INITIAL and a closed mutation
 inventory can upgrade supported evidence to `LITERAL_BYTES` under their existing

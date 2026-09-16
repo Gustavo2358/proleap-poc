@@ -33,10 +33,22 @@ class EvidencePreservationTest {
     }
 
     @Test void unknownOffsetCannotEraseKnownDeclarationValue() {
-        var c = condition(product("01 WS-AREA.\n05 PARTIAL-AREA PIC S9(9) COMP.\n05 LIT-PGM PIC X(8) VALUE 'PROGA'.\n", "CALL LIT-PGM."));
+        var p = product("01 WS-AREA.\n05 PARTIAL-AREA PIC S9(9) COMP.\n05 LIT-PGM PIC X(8) VALUE 'PROGA'.\n", "CALL LIT-PGM.");
+        var c = condition(p);
         assertEquals(PROGA, c.bytes(), c.gapCodes().toString());
         assertEquals("POSSIBLE_LITERAL_BYTES", c.kind().name());
         assertFalse(c.gapCodes().isEmpty());
+        var call=(io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.DataReference)p.calls().get(0).target();
+        assertEquals(call.binding().selected(),call.logicalWholeItem(),"whole logical access is independent of physical layout");
+        assertTrue(call.regionalAccess().isEmpty());
+    }
+
+    @Test void logicalWholeItemDoesNotInventASliceOrArrayRead() {
+        for(var target:List.of("LIT-PGM(1:3)","LIT-PGM(1)")) {
+            var p=product(VALUE,"CALL "+target+".");
+            var ref=(io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.DataReference)p.calls().get(0).target();
+            assertTrue(ref.logicalWholeItem().isEmpty(),target);
+        }
     }
 
     @Test void unknownStatementAndCallOperandsPreserveSourceEvidence() {

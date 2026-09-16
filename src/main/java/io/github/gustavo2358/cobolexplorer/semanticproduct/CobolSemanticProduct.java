@@ -500,8 +500,10 @@ public final class CobolSemanticProduct {
     }
 
     public record DataReference(OperandId id, OperandRole role,
-                                NominalBinding binding, Provenance provenance, Optional<WholeItemAccess> wholeItemAccess, Optional<RegionalAccess> regionalAccess, List<RegionalAccess> regionalAlternatives) implements CallTarget, MoveSource {
+                                NominalBinding binding, Provenance provenance, Optional<WholeItemAccess> wholeItemAccess, Optional<RegionalAccess> regionalAccess, List<RegionalAccess> regionalAlternatives, Optional<DataItemId> logicalWholeItem) implements CallTarget, MoveSource {
         public DataReference {
+            Objects.requireNonNull(logicalWholeItem);
+            if(logicalWholeItem.isPresent())require(binding.selected().equals(logicalWholeItem), "logical whole item must agree with nominal selection");
             regionalAlternatives=List.copyOf(regionalAlternatives);
             require(regionalAlternatives.isEmpty()||role==OperandRole.CALL_TARGET&&binding.status()==ResolutionStatus.AMBIGUOUS
                 &&regionalAccess.isEmpty()&&wholeItemAccess.isEmpty(),"physical alternatives require an ambiguous CALL target");
@@ -513,6 +515,9 @@ public final class CobolSemanticProduct {
             role = Objects.requireNonNull(role, "role");
             binding = Objects.requireNonNull(binding, "binding");
             provenance = Objects.requireNonNull(provenance, "provenance");
+        }
+        public DataReference(OperandId id, OperandRole role, NominalBinding binding, Provenance provenance, Optional<WholeItemAccess> wholeItemAccess, Optional<RegionalAccess> regionalAccess, List<RegionalAccess> regionalAlternatives) {
+            this(id,role,binding,provenance,wholeItemAccess,regionalAccess,regionalAlternatives,Optional.empty());
         }
         public DataReference(OperandId id, OperandRole role, NominalBinding binding, Provenance provenance, Optional<WholeItemAccess> wholeItemAccess, Optional<RegionalAccess> regionalAccess) {
             this(id,role,binding,provenance,wholeItemAccess,regionalAccess,List.of());
@@ -1474,6 +1479,7 @@ public final class CobolSemanticProduct {
                     + " ".repeat(adjustment.receiverExtent() - source.logicalExtent())), "padding must preserve source and append spaces");
         }
         for (DataReference reference : references(statement)) {
+            reference.logicalWholeItem().ifPresent(data -> require(declarations.containsKey(data), "logical whole item needs a published declaration"));
             reference.wholeItemAccess().ifPresent(access -> {
                 var declaration = declarations.get(access.data());
                 require(declaration != null && (declaration.scalarText().isPresent()||declaration.scalarInteger().isPresent()), "whole item requires scalar declaration");

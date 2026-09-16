@@ -1031,7 +1031,9 @@ public final class CobolSemanticProductProjector {
                 target = new DataReference(new OperandId(statementId, 0), OperandRole.CALL_TARGET, binding,
                         provenance(reference.meta().provenance()), access, regionalAccess(inputs, reference.meta().id()),
                         inputs.products().storage().map(st->st.alternatives(new StorageLayoutSemantics.Key(inputs.unitId(),reference.meta().id()))
-                            .stream().map(a->new RegionalAccess(storageNode(inputs,a.view().node()),Optional.empty())).toList()).orElse(List.of()));
+                            .stream().map(a->new RegionalAccess(storageNode(inputs,a.view().node()),Optional.empty())).toList()).orElse(List.of()),
+                        reference.subscriptGroups().isEmpty() && reference.referenceModification()==null && reference.meta().provenance().exact()
+                            ? binding.selected() : Optional.empty());
                 if (access.isEmpty()) gaps.add(capabilityGap(statementId, "CALL_WHOLE_ITEM_NOT_PROVEN",
                         "nominal binding does not prove whole scalar access", target.provenance()));
             } else {

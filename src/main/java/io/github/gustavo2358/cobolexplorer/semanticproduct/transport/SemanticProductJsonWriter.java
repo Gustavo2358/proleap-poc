@@ -277,7 +277,7 @@ public final class SemanticProductJsonWriter {
                 binding(reference.binding()), provenance(reference.provenance()), reference.wholeItemAccess()
                         .map(access -> new WholeItemDocument(dataHandle(access.data()))).orElse(null),
                 reference.regionalAccess().map(a->new RegionalAccessDocument(storageNodeHandle(a.view()),a.slice().map(s->new RegionalSliceDocument(s.offset().toString(),s.extent().toString())).orElse(null))).orElse(null),
-                reference.regionalAlternatives().stream().map(a->new RegionalAccessDocument(storageNodeHandle(a.view()),null)).toList());
+                reference.regionalAlternatives().stream().map(a->new RegionalAccessDocument(storageNodeHandle(a.view()),null)).toList(), reference.logicalWholeItem().map(SemanticProductJsonWriter::dataHandle).orElse(null));
     }
 
     private static BindingDocument binding(CobolSemanticProduct.NominalBinding binding) {
@@ -536,7 +536,7 @@ public final class SemanticProductJsonWriter {
 
     private record DataReferenceDocument(String id, CobolSemanticProduct.OperandRole role,
                                          BindingDocument binding,
-                                         ProvenanceDocument provenance, WholeItemDocument wholeItemAccess, RegionalAccessDocument regionalAccess, List<RegionalAccessDocument> regionalAlternatives) { }
+                                         ProvenanceDocument provenance, WholeItemDocument wholeItemAccess, RegionalAccessDocument regionalAccess, List<RegionalAccessDocument> regionalAlternatives, String logicalWholeItem) { }
 
     private record BindingDocument(
             CobolSemanticProduct.ResolutionStatus status,
