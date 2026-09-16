@@ -22,14 +22,18 @@ Comece pelo brief e [W0](https://github.com/Gustavo2358/analysis-cfg/blob/feat/f
 
 Contrato SP de W0: declaração/owner/FD-SD/assignment variante e alvo source-level,
 opcionalidade, organização/acesso/keys/status, record ownership, visibilidade,
-origens e disponibilidade por dimensão. Sem uso não há READ inventado. Tipos e
+origens e disponibilidade por dimensão. ASSIGN IBM publica assignment-name/
+external file name conhecido (sourceKind ASSIGNMENT_NAME), sem inferir DD allocation
+ou criar bindingMechanism, inclusive UNKNOWN; definição canônica no brief/contratos.
+Sem uso não há READ inventado. Tipos e
 versão final seguem [política semântica](../engineering/semantic-analysis-policy.md)
 e evolução coordenada do decoder lower; nenhum cálculo de valor no projector.
 
 ## Semântica a consultar
 
 O [perfil e as fontes](https://github.com/Gustavo2358/analysis-cfg/blob/feat/file-dependencies/docs/product/file-dependencies/profiles.md)
-selecionam IBM z/OS 6.4, CICS TS 5.6 e subset GnuCOBOL 3.2. Cobertura, non-goals,
+selecionam IBM z/OS 6.4 + CICS TS 5.6 como core obrigatório; subset GnuCOBOL 3.2
+é extensão posterior por decisão humana H4, sem bloquear W0 ou W11. Cobertura, non-goals,
 casos e invariantes ficam somente no brief/matriz canônicos. Não importar regra
 de DYNAMIC para assignment-name IBM. Origem COPY inclui expansão e include site.
 
