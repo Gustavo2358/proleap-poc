@@ -1,6 +1,6 @@
 # EP-W1 — source evidence and precision proof
 
-Current writer: SP **2.19.0**, storage **1.6.0**. This changes the admission
+Current writer: SP **2.20.0**, storage **1.7.0**. This changes the admission
 meaning of `POSSIBLE_LITERAL_BYTES`; older consumers must not silently accept
 the new document as storage 1.5.0.
 
