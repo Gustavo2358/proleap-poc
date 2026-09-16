@@ -136,4 +136,17 @@ class EvidencePreservationTest {
         if (node instanceof Ast.DataEntry d) return new Ast.DataEntry(d.meta(), d.level(), d.levelKind(), d.name(), d.filler(), d.visibility(), d.declaration(), d.clauses().stream().map(n -> (Ast.DataClause) replace(n, replaced)).toList(), d.children().stream().map(n -> (Ast.DataEntry) replace(n, replaced)).toList());
         return node;
     }
+    @Test void logicalCopyDoesNotRequirePhysicalSourceOffsetButDoesRequireSeparation() {
+        String data="01 SOURCE-AREA.\n05 PREFIX-A PIC S9(9) COMP.\n05 SRC-A PIC X(8) VALUE 'PROGA'.\n77 LIT-PGM PIC X(8).\n";
+        var p=product(data,"MOVE SRC-A TO LIT-PGM.\nCALL LIT-PGM.");
+        var move=p.moves().get(0);
+        assertEquals("LOGICAL_FIT_TEXT",move.regionalMove().orElseThrow().kind().name());
+        var source=(io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.DataReference)move.source();
+        assertEquals(source.binding().selected(),source.logicalWholeItem());assertTrue(source.regionalAccess().isEmpty());
+        for(String extra:List.of("77 UNKNOWN-A PIC X JUSTIFIED.\n","")) {
+            var negative=product(data+(extra.isEmpty()?"77 OTHER-A PIC X.\n":extra),extra.isEmpty()?"MOVE SRC-A(1:2) TO LIT-PGM.\nCALL LIT-PGM.":"MOVE SRC-A TO LIT-PGM.\nCALL LIT-PGM.");
+            assertNotEquals("LOGICAL_FIT_TEXT",negative.moves().get(0).regionalMove().orElseThrow().kind().name());
+        }
+    }
+
 }

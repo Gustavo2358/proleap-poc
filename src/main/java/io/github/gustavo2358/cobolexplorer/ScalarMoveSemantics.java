@@ -242,7 +242,7 @@ public final class ScalarMoveSemantics {
         storage.ifPresent(s->s.moves().forEach(move->{
             var sequence=s.sequence(move.statement());
             if(!sequence.isEmpty()&&sequence.stream().allMatch(t->t.origin().exact()&&switch(t.kind()) {
-                case LITERAL_BYTES,FITTED_LITERAL_BYTES,COPY_BYTES,FIT_TEXT->true;
+                case LITERAL_BYTES,FITTED_LITERAL_BYTES,COPY_BYTES,FIT_TEXT,LOGICAL_FIT_TEXT->true;
                 case MUST_UNKNOWN,UNAVAILABLE->false;
             }))completingMoves.add(new NodeKey(move.statement().unit(),move.statement().node()));
         }));

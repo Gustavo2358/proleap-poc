@@ -26,7 +26,7 @@ import java.util.Objects;
  */
 public final class SemanticProductJsonWriter {
     public static final String SCHEMA = "cobol-semantic-product";
-    public static final String CONTRACT_VERSION = "2.19.0";
+    public static final String CONTRACT_VERSION = "2.20.0";
 
     private static final ObjectMapper JSON = JsonMapper.builder()
             .enable(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY)
@@ -95,7 +95,7 @@ public final class SemanticProductJsonWriter {
         return new StorageMeasureDocument(m.value().map(Object::toString).orElse(null),m.gapCodes());
     }
     private static StorageDocument storage(CobolSemanticProduct.StorageInventory storage) {
-        return new StorageDocument("1.6.0",storage.profile(),storage.profileId().orElse(null),storage.runtimeCodec().orElse(null),
+        return new StorageDocument("1.7.0",storage.profile(),storage.profileId().orElse(null),storage.runtimeCodec().orElse(null),
             storage.nodes().stream().map(n->new PhysicalNodeDocument(storageNodeHandle(n.id()),n.parent().map(SemanticProductJsonWriter::storageNodeHandle).orElse(null),
                 n.order(),n.filler(),n.kind(),n.data().map(SemanticProductJsonWriter::dataHandle).orElse(null),measure(n.extent()),provenance(n.provenance()))).toList(),
             storage.bases().stream().map(b->new StorageBaseDocument(storageBaseHandle(b.id()),measure(b.extent()),b.allocation(),provenance(b.provenance()))).toList(),

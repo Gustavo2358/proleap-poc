@@ -17,7 +17,7 @@ class PerformUntilTest {
                 var source=Files.readAllLines(path).stream().map(line->line.substring(7)).collect(java.util.stream.Collectors.joining("\n"));
                 var bytes=SemanticProductJsonWriter.serialize(ScalarMoveCheckpoint4ATest.publish(source));
                 var sp=new ObjectMapper().readTree(bytes);var facts=PerformFamilyTest.ranges(sp);
-                assertFalse(facts.isEmpty(),name);assertEquals("2.19.0",sp.path("contractVersion").asText());
+                assertFalse(facts.isEmpty(),name);assertEquals("2.20.0",sp.path("contractVersion").asText());
                 for(var p:facts) {
                     assertEquals(!partial.contains(name),p.path("gapCodes").isEmpty(),name+": "+p.path("gapCodes"));
                     if(name.equals("until-mixed")&&p.path("loop").isNull())continue;

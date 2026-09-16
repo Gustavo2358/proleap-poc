@@ -561,7 +561,7 @@ public final class CobolSemanticProduct {
     public enum StorageProfile { UNSPECIFIED, IBM_ENTERPRISE_6_4_FIXED_DISPLAY_1047 }
     public enum PhysicalKind { GROUP, ELEMENTARY, OPAQUE }
     public enum AllocationProof { INDEPENDENT_LOCAL_WORKING_STORAGE, UNPROVEN }
-    public enum RegionalMoveKind { LITERAL_BYTES, FITTED_LITERAL_BYTES, COPY_BYTES, FIT_TEXT, MUST_UNKNOWN, UNAVAILABLE }
+    public enum RegionalMoveKind { LITERAL_BYTES, FITTED_LITERAL_BYTES, COPY_BYTES, FIT_TEXT, LOGICAL_FIT_TEXT, MUST_UNKNOWN, UNAVAILABLE }
     public record StorageMeasure(Optional<BigInteger> value, List<String> gapCodes) {
         public StorageMeasure {
             Objects.requireNonNull(value); gapCodes = List.copyOf(gapCodes);
@@ -1242,11 +1242,12 @@ public final class CobolSemanticProduct {
         for (var d : declarations) declared.add(d.id());
         var nodes = new HashMap<StorageNodeId, PhysicalNode>();
         var dataNodes = new HashSet<DataItemId>();
+        var byData = new HashMap<DataItemId,PhysicalNode>();
         var siblings = new HashMap<Optional<StorageNodeId>, Set<Integer>>();
         for (var n : inventory.nodes()) {
             require(n.id().unit().equals(unit) && nodes.put(n.id(),n) == null, "duplicate or foreign physical node");
             require(siblings.computeIfAbsent(n.parent(),ignored->new HashSet<>()).add(n.order()), "duplicate physical sibling order");
-            n.data().ifPresent(id->require(declared.contains(id) && dataNodes.add(id), "physical DATA must exist and have one node"));
+            n.data().ifPresent(id->{require(declared.contains(id) && dataNodes.add(id), "physical DATA must exist and have one node");byData.put(id,n);});
             require(inventory.profile() != StorageProfile.UNSPECIFIED || n.extent().value().isEmpty(), "known layout requires an explicit environment");
         }
         // Iterative forest closure: no recursive ancestry traversal or quadratic pair scan.
@@ -1378,6 +1379,13 @@ public final class CobolSemanticProduct {
                 if (effect.kind() == RegionalMoveKind.LITERAL_BYTES || effect.kind() == RegionalMoveKind.FITTED_LITERAL_BYTES) {
                     require(transfer.source() instanceof LiteralSource literal && literal.logicalValue().isPresent(), "byte literal write requires logical literal source");
                     require(dest.extent().value().get().equals(BigInteger.valueOf(effect.bytes().size())), "literal bytes must fill the exact destination");
+                }
+                if(effect.kind()==RegionalMoveKind.LOGICAL_FIT_TEXT) {
+                    require(move.additionalTransfers().isEmpty()&&transfer.source() instanceof DataReference r&&r.logicalWholeItem().isPresent(),"logical copy needs one whole elementary source");
+                    var data=((DataReference)transfer.source()).logicalWholeItem().orElseThrow();
+                    var node=Objects.requireNonNull(byData.get(data));var source=views.get(node.id());
+                    require(node.kind()==PhysicalKind.ELEMENTARY&&source.codec().equals(dest.codec())&&source.codec().isPresent()&&source.extent().value().filter(n->n.signum()>0).isPresent(),"logical copy needs proved textual shape");
+                    require(!source.base().equals(dest.base())&&bases.get(source.base()).allocation()==AllocationProof.INDEPENDENT_LOCAL_WORKING_STORAGE&&bases.get(dest.base()).allocation()==AllocationProof.INDEPENDENT_LOCAL_WORKING_STORAGE,"logical copy requires positive base separation");
                 }
                 if (effect.kind() == RegionalMoveKind.COPY_BYTES || effect.kind() == RegionalMoveKind.FIT_TEXT) {
                     require(transfer.source() instanceof DataReference source && source.regionalAccess().isPresent(), "byte copy needs exact source access");

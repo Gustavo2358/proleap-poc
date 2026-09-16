@@ -71,3 +71,22 @@ unknown clauses (including synthetic JOHNDOE), unknown offset/base, statement
 effects, source-invalid controls, and a later MUST assignment. These prove source
 transport, not downstream survival. W1 remains open until lower/analysis
 boundaries and selected E2Es are qualified. Confidential real case: NOT AVAILABLE.
+
+## EP-W5: logical copy across open physical layout
+
+SP 2.20.0 / storage 1.7.0 adds `LOGICAL_FIT_TEXT` for a single elementary text
+receiver with a bounded physical write and a resolved whole elementary text
+sender whose logical extent/codec are known but whose physical offset may be open.
+`source.logicalWholeItem` is mandatory; `source.regionalAccess` is absent when no
+bounded physical range is proved. Both bases must have positive independent
+allocation proof and be distinct. Neither names, IDs alone, nor source order prove
+that separation. Multiple receivers, slices, unknown alias and unsupported own
+clauses do not acquire this precise transfer. Existing generic fallback remains.
+
+The transfer preserves the sending logical value, fitted to the receiving extent;
+it does not export an initial literal as a current value. Lower must capture Read
+at the operation, retain open storage/codec proof and partial validation, and never
+manufacture a source byte interval. Source VALUE may contribute a candidate only
+through the ordinary entry state and existing solver. A later source assignment
+cannot alter the captured receiver. This is a refinement of the existing MOVE
+relation where layout was its only missing prerequisite, not a new COBOL form.
