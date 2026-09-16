@@ -9,6 +9,16 @@ import static io.github.gustavo2358.cobolexplorer.DeclarativeValueInferenceTest.
 class EvidencePreservationTest {
     private static final List<Integer> PROGA = List.of(215,217,214,199,193,64,64,64);
 
+    @Test void missingPhysicalEncodingDoesNotEraseLogicalSourceSupport() {
+        var a=AstBoundaryTestSupport.analyze(source(VALUE,"CALL LIT-PGM."),"no-layout-profile.cbl");
+        var tables=new CompilationUnitSymbolTableBuilder().build(a.model());
+        var layout=StorageLayoutSemantics.analyze(a.build(),tables,a.resolution(),a.report(),StorageLayoutSemantics.Profile.UNSPECIFIED);
+        var condition=StorageAccessSemantics.analyze(a.build(),a.resolution(),layout).initial().facts(a.model().programUnits().get(0).id()).conditions().get(0);
+        assertEquals("POSSIBLE_LOGICAL_TEXT",condition.kind().name(),"a logical VALUE does not require inventing a byte codec");
+        assertTrue(condition.bytes().isEmpty(),"no invented encoding");
+        assertFalse(condition.reasons().isEmpty());
+    }
+
     @Test void preservedDeclarationCannotEraseIndependentSourceEvidence() {
         for (var declaration : List.of(
                 "77 PARTIAL-AREA PIC S9(9) COMP SYNC.",
