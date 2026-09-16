@@ -77,6 +77,12 @@ class EvidencePreservationTest {
         assertTrue(condition(product("01 LIT-PGM PIC X(2) VALUE 'TOO-LONG'.\n", "CALL LIT-PGM.")).bytes().isEmpty());
     }
 
+    @Test void repeatedParentDoesNotTurnAnElementValueIntoAWholeObjectValue() {
+        var c=condition(product("01 TABLE-AREA OCCURS 2.\n05 LIT-PGM PIC X(8) VALUE 'PROGA'.\n","CALL LIT-PGM."));
+        assertEquals("UNKNOWN",c.kind().name(),"positive multiplicity does not support a scalar whole-object entry fact");
+        assertTrue(c.bytes().isEmpty());assertTrue(c.logicalText().isEmpty());
+    }
+
     @Test void sourceEvidenceDoesNotClaimLifetimeInvarianceAcrossMustWrite() {
         var p = product(VALUE, "MOVE 'PROGB' TO LIT-PGM.\nCALL LIT-PGM.");
         assertEquals(PROGA, condition(p).bytes());

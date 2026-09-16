@@ -15,7 +15,7 @@ public final class StorageInitialSemantics {
     private final Map<ResolutionContracts.ProgramUnitId,Facts> units;
     private StorageInitialSemantics(Map<ResolutionContracts.ProgramUnitId,Facts> units) {this.units=Map.copyOf(units);}
     public Facts facts(ResolutionContracts.ProgramUnitId unit) {return Objects.requireNonNull(units.get(unit));}
-    private record Flags(boolean value,boolean redefined) { }
+    private record Flags(boolean value,boolean redefined,boolean repeated) { }
     private record Visit(Ast.Node node,Flags flags) { }
     public static StorageInitialSemantics analyze(CompilationUnitBuildResult frontend,ReferenceResolution resolution,StorageLayoutSemantics layout,EntryMode mode) {
         return StorageAccessSemantics.analyze(frontend,resolution,layout,mode).initial();
@@ -32,7 +32,7 @@ public final class StorageInitialSemantics {
             var inventory=mode==EntryMode.UNKNOWN&&!unit.program().attributes().initial()
                 ?StorageMutationInventory.analyze(frontend,unit,physical,accesses,moves,effects,cics):null;
             var declarations=new ArrayList<Ast.DataEntry>();var inherited=new HashMap<Integer,Flags>();
-            var pending=new ArrayDeque<Visit>();pending.push(new Visit(unit.program(),new Flags(false,false)));
+            var pending=new ArrayDeque<Visit>();pending.push(new Visit(unit.program(),new Flags(false,false,false)));
             while(!pending.isEmpty()) {
                 var visit=pending.pop();var node=visit.node();if(node instanceof Ast.Program&&node!=unit.program())continue;
                 var flags=visit.flags();
@@ -40,7 +40,8 @@ public final class StorageInitialSemantics {
                     if(data.levelKind()==Ast.DataLevelKind.CONDITION_88||data.levelKind()==Ast.DataLevelKind.RENAMES_66)continue;
                     declarations.add(data);inherited.put(data.meta().id(),flags);
                     flags=new Flags(flags.value()||data.clauses().stream().anyMatch(Ast.ValueClause.class::isInstance),
-                        flags.redefined()||data.clauses().stream().anyMatch(Ast.RedefinesClause.class::isInstance));
+                        flags.redefined()||data.clauses().stream().anyMatch(Ast.RedefinesClause.class::isInstance),
+                        flags.repeated()||data.clauses().stream().anyMatch(Ast.OccursClause.class::isInstance));
                 }
                 var children=Ast.children(node);for(int i=children.size()-1;i>=0;i--)pending.push(new Visit(children.get(i),flags));
             }
@@ -66,7 +67,9 @@ public final class StorageInitialSemantics {
                 if(flags.redefined()||data.clauses().stream().anyMatch(Ast.RedefinesClause.class::isInstance))reasons.add(Reason.VALUE_ON_REDEFINITION);
                 if(flags.value()||descendantValues.get(data.meta().id())>values.size())reasons.add(Reason.NESTED_VALUE);
                 // Source support is extracted before precision obligations are considered.
-                var evidence=DeclarativeValueEvidence.extract(data,physical.profile(),coverage,
+                // An inherited OCCURS is positive multiplicity evidence: this VALUE belongs
+                // to an element, not to a scalar whole-object fact for the declaration.
+                var evidence=flags.repeated()?Optional.<DeclarativeValueEvidence.Fact>empty():DeclarativeValueEvidence.extract(data,physical.profile(),coverage,
                     candidate!=null&&candidate.textual()?candidate.extent().value():Optional.empty());
                 boolean invalidSource=flags.redefined()||flags.value()||descendantValues.get(data.meta().id())>values.size()
                     ||data.clauses().stream().anyMatch(Ast.RedefinesClause.class::isInstance);
