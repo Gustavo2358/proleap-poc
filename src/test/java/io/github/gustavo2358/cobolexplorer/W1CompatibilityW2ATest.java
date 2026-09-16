@@ -52,6 +52,12 @@ class W1CompatibilityW2ATest {
     }
     private static void removeOnlyAbsentRegionalFacts(com.fasterxml.jackson.databind.JsonNode node) {
         if (node instanceof ObjectNode object) {
+            if(object.has("logicalWholeItem")) {
+                if(object.path("role").asText().equals("CALL_TARGET"))
+                    assertEquals(object.path("binding").path("selected"),object.path("logicalWholeItem"),"new logical support uses only the already-selected declaration");
+                else assertTrue(object.path("logicalWholeItem").isNull());
+                object.remove("logicalWholeItem");
+            }
             if(object.has("regionalAlternatives")) {
                 assertTrue(object.path("regionalAlternatives").isArray()&&object.path("regionalAlternatives").isEmpty(),"legacy input has no alternative storage proof");
                 object.remove("regionalAlternatives");
