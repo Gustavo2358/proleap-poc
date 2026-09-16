@@ -49,6 +49,8 @@ class RecallFirstEntryTest {
             assertEquals("UNKNOWN",c.kind().name());assertTrue(c.bytes().isEmpty());
         }
         var p=StorageInitialProductTest.initialSource(source(VALUE,"CALL LIT-PGM."),StorageInitialSemantics.EntryMode.PRESERVED);
-        assertEquals("PRESERVE",condition(p).kind().name());assertTrue(condition(p).bytes().isEmpty());
+        assertEquals("PRESERVED",p.storage().entryState().mode().name());
+        assertEquals("POSSIBLE_LITERAL_BYTES",condition(p).kind().name());assertFalse(condition(p).bytes().isEmpty());
+        assertTrue(condition(p).gapCodes().contains("ENTRY_STATE_NOT_PROVEN"));
     }
 }

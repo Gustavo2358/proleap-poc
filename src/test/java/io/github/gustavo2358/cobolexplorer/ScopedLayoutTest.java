@@ -21,11 +21,15 @@ class ScopedLayoutTest {
         assertTrue(f.view("NAMED-AREA").offset().value().isEmpty());
         invariant(data,"CALL LIT-PGM.");
     }
-    @Test void rootAliasAndOwnUnknownLayoutStillPreventMaterialization() {
+    @Test void rootAliasAndOwnUnknownLayoutPreventInvariantButPreserveSourcePossibility() {
         var root=product(VALUE+"01 ALIAS-A REDEFINES MISSING-A PIC X(8).\n","CALL LIT-PGM.");
-        assertEquals("UNKNOWN",condition(root).kind().name());
         var own=product("01 MAIN-AREA.\n05 LIT-PGM PIC X(8) VALUE 'PROGA'.\n05 ALIAS-A REDEFINES MISSING-A PIC X(8).\n","CALL LIT-PGM.");
-        assertEquals("UNKNOWN",condition(own).kind().name());
+        for(var p:java.util.List.of(root,own)) {
+            assertEquals("POSSIBLE_LITERAL_BYTES",condition(p).kind().name());
+            assertEquals("DECLARATIVE_POSSIBILITY",condition(p).proof().name());
+            assertTrue(condition(p).gapCodes().contains("ENTRY_STATE_NOT_PROVEN"));
+            assertFalse(condition(p).bytes().isEmpty());
+        }
     }
     @Test void unknownNumericExtentNeverBecomesZeroOrContaminatesIndependentRoot() {
         invariant(VALUE+"01 PARAM-AREA.\n05 NUMBER-A PIC 9(8) COMP.\n05 TAIL-A PIC X(8).\n","CALL LIT-PGM.");

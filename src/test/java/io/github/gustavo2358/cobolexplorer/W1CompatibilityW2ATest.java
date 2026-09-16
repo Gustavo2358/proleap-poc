@@ -24,7 +24,7 @@ class W1CompatibilityW2ATest {
             byte[] currentBytes = SemanticProductJsonWriter.serialize(port);
             var current = (ObjectNode) json.readTree(currentBytes);
             assertEquals("1.3.0", old.path("contractVersion").asText());
-            assertEquals("2.18.0", current.path("contractVersion").asText());
+            assertEquals("2.20.0", current.path("contractVersion").asText());
             assertEquals("UNAVAILABLE", current.path("storageIndependence").path("availability").asText());
             assertTrue(current.path("storageIndependence").path("members").isEmpty());
             for (var statement : current.path("statements")) if (statement.path("variant").asText().equals("MOVE")) {
@@ -52,6 +52,12 @@ class W1CompatibilityW2ATest {
     }
     private static void removeOnlyAbsentRegionalFacts(com.fasterxml.jackson.databind.JsonNode node) {
         if (node instanceof ObjectNode object) {
+            if(object.has("logicalWholeItem")) {
+                if(object.path("role").asText().equals("CALL_TARGET"))
+                    assertEquals(object.path("binding").path("selected"),object.path("logicalWholeItem"),"new logical support uses only the already-selected declaration");
+                else assertTrue(object.path("logicalWholeItem").isNull());
+                object.remove("logicalWholeItem");
+            }
             if(object.has("regionalAlternatives")) {
                 assertTrue(object.path("regionalAlternatives").isArray()&&object.path("regionalAlternatives").isEmpty(),"legacy input has no alternative storage proof");
                 object.remove("regionalAlternatives");

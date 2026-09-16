@@ -71,7 +71,9 @@ class DeclarativeValueInferenceTest {
         var wire=new ObjectMapper().readTree(SemanticProductJsonWriter.serialize(automatic));
         assertEquals("PROGRAM_INITIAL",wire.path("storage").path("entryState").path("conditions").get(0).path("proof").asText());
         var preserved=StorageInitialProductTest.initialSource(s,StorageInitialSemantics.EntryMode.PRESERVED);
-        assertEquals(InitialStorageKind.PRESERVE,condition(preserved).kind());
+        assertEquals(StorageEntryMode.PRESERVED,preserved.storage().entryState().mode());
+        assertEquals(InitialStorageKind.POSSIBLE_LITERAL_BYTES,condition(preserved).kind());
+        assertEquals(InitialStorageProof.DECLARATIVE_POSSIBILITY,condition(preserved).proof());
     }
     @Test void mixedRuntimeBranchDoesNotTurnWritableTargetIntoInvariant() {
         var p=product(VALUE+"01 TARGET-PGM PIC X(8) VALUE 'BEFORE'.\n01 INPUT-PGM PIC X(8).\n01 FLAG PIC X.\n",
@@ -128,8 +130,8 @@ class DeclarativeValueInferenceTest {
         assertEquals(InitialStorageProof.DECLARATIVE_INVARIANT,c.proof());
         assertThrows(IllegalArgumentException.class,()->new StorageInitialCondition(c.node(),c.kind(),c.bytes(),c.gapCodes(),c.provenance(),InitialStorageProof.NONE));
         var wire=new ObjectMapper().readTree(SemanticProductJsonWriter.serialize(p));
-        assertEquals("2.18.0",wire.path("contractVersion").asText());
-        assertEquals("1.5.0",wire.path("storage").path("version").asText());
+        assertEquals("2.20.0",wire.path("contractVersion").asText());
+        assertEquals("1.7.0",wire.path("storage").path("version").asText());
         assertEquals("DECLARATIVE_INVARIANT",wire.path("storage").path("entryState").path("conditions").get(0).path("proof").asText());
     }
 

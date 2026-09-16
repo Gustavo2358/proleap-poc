@@ -23,7 +23,7 @@ class StorageInitialProductTest {
         assertEquals(PerformProfile.BASIC_PROCEDURE_PERFORM,p.performs().get(0).profile());
         var c=p.storage().entryState().conditions().get(0);assertEquals(InitialStorageKind.LITERAL_BYTES,c.kind());assertTrue(c.provenance().exact());
         var bytes=SemanticProductJsonWriter.serialize(p);var d=new ObjectMapper().readTree(bytes);
-        assertEquals("2.18.0",d.path("contractVersion").asText());assertEquals("1.5.0",d.path("storage").path("version").asText());
+        assertEquals("2.20.0",d.path("contractVersion").asText());assertEquals("1.7.0",d.path("storage").path("version").asText());
         assertEquals("INITIAL",d.path("storage").path("entryState").path("mode").asText());
         assertEquals(8,d.path("storage").path("entryState").path("conditions").get(0).path("bytes").size());
         if(System.getProperty("storage.fixture.output")!=null)java.nio.file.Files.write(java.nio.file.Path.of(System.getProperty("storage.fixture.output")),bytes);
@@ -31,7 +31,8 @@ class StorageInitialProductTest {
     @Test void ordinaryEntryPossibilityAndPreservedProfileDoNotClaimStrongLiteral() {
         for(var mode:List.of(StorageInitialSemantics.EntryMode.UNKNOWN,StorageInitialSemantics.EntryMode.PRESERVED)) {
             var p=initial(mode);assertEquals(mode.name(),p.storage().entryState().mode().name());
-            assertEquals(mode==StorageInitialSemantics.EntryMode.UNKNOWN?InitialStorageKind.POSSIBLE_LITERAL_BYTES:InitialStorageKind.PRESERVE,p.storage().entryState().conditions().get(0).kind());
+            assertEquals(InitialStorageKind.POSSIBLE_LITERAL_BYTES,p.storage().entryState().conditions().get(0).kind());
+            assertTrue(p.storage().entryState().conditions().get(0).gapCodes().contains("ENTRY_STATE_NOT_PROVEN"));
         }
         assertThrows(IllegalArgumentException.class,()->ExplorerMain.entryStorageState("first-ish"));
     }

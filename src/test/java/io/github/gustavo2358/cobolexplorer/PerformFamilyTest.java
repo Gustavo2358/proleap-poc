@@ -25,7 +25,7 @@ class PerformFamilyTest {
     @Test void thruRangeIdentitiesCompletionAndIndependentResumes() throws Exception {
         var sp=publish(source("PERFORM A THRU C.\nPERFORM A THROUGH C.",
             "A.\nMOVE 'PROGA' TO WS-PGM.\nB.\nMOVE 'PROGB' TO WS-PGM.\nC.\nMOVE 'PROGC' TO WS-PGM.\n"));
-        var facts=ranges(sp);assertEquals(2,facts.size());assertEquals("2.18.0",sp.path("contractVersion").asText());
+        var facts=ranges(sp);assertEquals(2,facts.size());assertEquals("2.20.0",sp.path("contractVersion").asText());
         for(var p:facts) {
             assertTrue(p.path("gapCodes").isEmpty(),p.toString());assertEquals(3,p.path("procedures").size());
             assertEquals(p.path("start").path("id"),p.path("procedures").get(0).path("id"));

@@ -101,7 +101,7 @@ public final class StorageLayoutSemantics {
                     data.filler()||duplicates.contains(data.meta().id())?Optional.empty():Optional.ofNullable(entities.get(data.meta().id())),extent,data.meta().provenance()));
                 int base=physical.componentOf().get(position.root()).representative();
                 views.add(new View(key,new Key(unit.id(),base),offset,extent,allowed&&extent.value().isPresent(),data.meta().provenance()));
-                if(position.parent().isEmpty()&&base==data.meta().id())bases.add(new Base(key,footprints.get(base),environment&&physical.allocationProven(),data.meta().provenance()));
+                if(position.parent().isEmpty()&&base==data.meta().id())bases.add(new Base(key,footprints.get(base),environment&&physical.allocation(base).proved(),data.meta().provenance()));
                 var cursor=allowed?offset:Measure.unknown(Reason.UNKNOWN_OFFSET);
                 for(var component:physical.children().get(data.meta().id())) {
                     for(var child:component.members()){offsets.put(child,cursor);permitted.put(child,allowed);}

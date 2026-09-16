@@ -8,7 +8,7 @@ public final class StorageAccessSemantics {
     public enum Role { READ, WRITE, CALL_TARGET, CALL_ARGUMENT }
     public record Access(Key reference,Key statement,ResolutionContracts.SemanticEntityId entity,
                          View view,Role role,boolean sliced,Ast.SourceProvenance origin) { }
-    public enum MoveKind { LITERAL_BYTES, FITTED_LITERAL_BYTES, COPY_BYTES, FIT_TEXT, MUST_UNKNOWN, UNAVAILABLE }
+    public enum MoveKind { LITERAL_BYTES, FITTED_LITERAL_BYTES, COPY_BYTES, FIT_TEXT, LOGICAL_FIT_TEXT, MUST_UNKNOWN, UNAVAILABLE }
     public enum Reason { ACCESS_NOT_PROVEN, SOURCE_NOT_PROVEN, EXTENT_MISMATCH, UNREPRESENTABLE_TEXT, OVERLAPPING_COPY, MOVE_FORM_NOT_SUPPORTED }
     public record Move(Key statement,Optional<Access> destination,Optional<Access> source,MoveKind kind,
                        List<Integer> bytes,List<Reason> reasons,Ast.SourceProvenance origin) {
@@ -44,6 +44,7 @@ public final class StorageAccessSemantics {
         if(!layout.belongsTo(frontend,resolution))throw new IllegalArgumentException("layout and binding proof belong to another snapshot");
         var bindings=new HashMap<Key,ReferenceResolution.Entry>();
         for(var entry:resolution.entries())bindings.put(new Key(entry.occurrence().programUnitId(),entry.occurrence().referenceAstNodeId()),entry);
+        var logicalReads=new HashMap<Key,Access>();
         var accesses=new LinkedHashMap<Key,Access>();var moves=new LinkedHashMap<Key,Move>();var sequences=new LinkedHashMap<Key,List<Move>>();
         var summaries=new LinkedHashMap<Key,StatementEffectSummary>();
         var alternatives=new LinkedHashMap<Key,List<Access>>();
@@ -85,6 +86,9 @@ public final class StorageAccessSemantics {
                         var role=role(binding.occurrence().role());
                         boolean sliced=reference.referenceModification()!=null;
                         if(sliced)view=slice(view,reference.referenceModification(),physical.profile());
+                        if(!sliced&&role==Role.READ&&view!=null&&view.textual()&&view.extent().value().filter(n->n.signum()>0).isPresent()
+                                &&nodes.get(view.node()).kind()==Kind.ELEMENTARY&&reference.meta().provenance().exact())
+                            logicalReads.put(key,new Access(key,new Key(unit.id(),owner.meta().id()),entity,view,role,false,reference.meta().provenance()));
                         if(role!=null&&view!=null&&view.textual()&&view.offset().value().isPresent()&&view.extent().value().isPresent()
                                 &&bases.get(view.base()).extent().value().isPresent()
                                 &&(role!=Role.CALL_TARGET||sliced||nodes.get(view.node()).kind()==Kind.ELEMENTARY))
@@ -126,7 +130,13 @@ public final class StorageAccessSemantics {
                 var effects=new ArrayList<Move>();
                 for(var target:node.targets()) {
                     var destination=Optional.ofNullable(accesses.get(new Key(unit.id(),target.meta().id()))).filter(a->a.role()==Role.WRITE);
-                    effects.add(effect(statement,destination,source,node.source(),physical.profile(),bases,node.meta().provenance()));
+                    var effect=effect(statement,destination,source,node.source(),physical.profile(),bases,node.meta().provenance());
+                    var logical=logicalReads.get(new Key(unit.id(),node.source().meta().id()));
+                    if(node.targets().size()==1&&effect.reasons().equals(List.of(Reason.SOURCE_NOT_PROVEN))&&logical!=null&&destination.isPresent()
+                            &&!logical.view().base().equals(destination.get().view().base())&&bases.get(logical.view().base()).independent()
+                            &&bases.get(destination.get().view().base()).independent())
+                        effect=new Move(statement,destination,Optional.of(logical),MoveKind.LOGICAL_FIT_TEXT,List.of(),List.of(),node.meta().provenance());
+                    effects.add(effect);
                 }
                 // A receiver may invalidate all later source reads. Never publish concrete
                 // values for the remaining receivers of an overlapping source statement.

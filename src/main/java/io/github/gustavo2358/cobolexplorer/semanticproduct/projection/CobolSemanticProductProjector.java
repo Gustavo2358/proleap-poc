@@ -216,7 +216,7 @@ public final class CobolSemanticProductProjector {
         var facts=inputs.products().storage().orElseThrow().initial().facts(inputs.unitId());
         return new StorageEntryState(StorageEntryMode.valueOf(facts.mode().name()),facts.conditions().stream().map(c->
             new StorageInitialCondition(storageNode(inputs,c.declaration()),InitialStorageKind.valueOf(c.kind().name()),c.bytes(),
-                c.reasons().stream().map(Enum::name).toList(),provenance(c.origin()),InitialStorageProof.valueOf(c.proof().name()))).toList());
+                c.reasons().stream().map(Enum::name).toList(),provenance(c.origin()),InitialStorageProof.valueOf(c.proof().name()),c.logicalText())).toList());
     }
     private static Optional<RegionalAccess> regionalAccess(ProjectionInputs inputs, int reference) {
         return inputs.products().storage().flatMap(s->s.access(new StorageLayoutSemantics.Key(inputs.unitId(),reference)))
@@ -952,7 +952,9 @@ public final class CobolSemanticProductProjector {
                 source = new DataReference(new OperandId(statementId, 0), OperandRole.READ,
                         nominalBinding(read, dataIds), provenance(move.source().meta().provenance()),
                         semantic.sourceWholeItem().map(entity -> new WholeItemAccess(
-                                Objects.requireNonNull(dataIds.get(entity), "source whole item must be published"))), regionalAccess(inputs, move.source().meta().id()));
+                                Objects.requireNonNull(dataIds.get(entity), "source whole item must be published"))), regionalAccess(inputs, move.source().meta().id()),List.of(),
+                        inputs.products().storage().map(st->st.move(new StorageLayoutSemantics.Key(inputs.unitId(),move.meta().id())))
+                            .filter(m->m.kind()==StorageAccessSemantics.MoveKind.LOGICAL_FIT_TEXT).flatMap(m->m.source().map(a->dataIds.get(a.entity()))));
                 bindingCoverage = weakest(bindingCoverage, bindingCoverage(read));
             }
             CobolSemanticProduct.CoverageStatus coverage = weakest(
@@ -1031,7 +1033,9 @@ public final class CobolSemanticProductProjector {
                 target = new DataReference(new OperandId(statementId, 0), OperandRole.CALL_TARGET, binding,
                         provenance(reference.meta().provenance()), access, regionalAccess(inputs, reference.meta().id()),
                         inputs.products().storage().map(st->st.alternatives(new StorageLayoutSemantics.Key(inputs.unitId(),reference.meta().id()))
-                            .stream().map(a->new RegionalAccess(storageNode(inputs,a.view().node()),Optional.empty())).toList()).orElse(List.of()));
+                            .stream().map(a->new RegionalAccess(storageNode(inputs,a.view().node()),Optional.empty())).toList()).orElse(List.of()),
+                        reference.subscriptGroups().isEmpty() && reference.referenceModification()==null && reference.meta().provenance().exact()
+                            ? binding.selected() : Optional.empty());
                 if (access.isEmpty()) gaps.add(capabilityGap(statementId, "CALL_WHOLE_ITEM_NOT_PROVEN",
                         "nominal binding does not prove whole scalar access", target.provenance()));
             } else {

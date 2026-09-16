@@ -500,8 +500,10 @@ public final class CobolSemanticProduct {
     }
 
     public record DataReference(OperandId id, OperandRole role,
-                                NominalBinding binding, Provenance provenance, Optional<WholeItemAccess> wholeItemAccess, Optional<RegionalAccess> regionalAccess, List<RegionalAccess> regionalAlternatives) implements CallTarget, MoveSource {
+                                NominalBinding binding, Provenance provenance, Optional<WholeItemAccess> wholeItemAccess, Optional<RegionalAccess> regionalAccess, List<RegionalAccess> regionalAlternatives, Optional<DataItemId> logicalWholeItem) implements CallTarget, MoveSource {
         public DataReference {
+            Objects.requireNonNull(logicalWholeItem);
+            if(logicalWholeItem.isPresent())require(binding.selected().equals(logicalWholeItem), "logical whole item must agree with nominal selection");
             regionalAlternatives=List.copyOf(regionalAlternatives);
             require(regionalAlternatives.isEmpty()||role==OperandRole.CALL_TARGET&&binding.status()==ResolutionStatus.AMBIGUOUS
                 &&regionalAccess.isEmpty()&&wholeItemAccess.isEmpty(),"physical alternatives require an ambiguous CALL target");
@@ -513,6 +515,9 @@ public final class CobolSemanticProduct {
             role = Objects.requireNonNull(role, "role");
             binding = Objects.requireNonNull(binding, "binding");
             provenance = Objects.requireNonNull(provenance, "provenance");
+        }
+        public DataReference(OperandId id, OperandRole role, NominalBinding binding, Provenance provenance, Optional<WholeItemAccess> wholeItemAccess, Optional<RegionalAccess> regionalAccess, List<RegionalAccess> regionalAlternatives) {
+            this(id,role,binding,provenance,wholeItemAccess,regionalAccess,regionalAlternatives,Optional.empty());
         }
         public DataReference(OperandId id, OperandRole role, NominalBinding binding, Provenance provenance, Optional<WholeItemAccess> wholeItemAccess, Optional<RegionalAccess> regionalAccess) {
             this(id,role,binding,provenance,wholeItemAccess,regionalAccess,List.of());
@@ -556,7 +561,7 @@ public final class CobolSemanticProduct {
     public enum StorageProfile { UNSPECIFIED, IBM_ENTERPRISE_6_4_FIXED_DISPLAY_1047 }
     public enum PhysicalKind { GROUP, ELEMENTARY, OPAQUE }
     public enum AllocationProof { INDEPENDENT_LOCAL_WORKING_STORAGE, UNPROVEN }
-    public enum RegionalMoveKind { LITERAL_BYTES, FITTED_LITERAL_BYTES, COPY_BYTES, FIT_TEXT, MUST_UNKNOWN, UNAVAILABLE }
+    public enum RegionalMoveKind { LITERAL_BYTES, FITTED_LITERAL_BYTES, COPY_BYTES, FIT_TEXT, LOGICAL_FIT_TEXT, MUST_UNKNOWN, UNAVAILABLE }
     public record StorageMeasure(Optional<BigInteger> value, List<String> gapCodes) {
         public StorageMeasure {
             Objects.requireNonNull(value); gapCodes = List.copyOf(gapCodes);
@@ -603,22 +608,26 @@ public final class CobolSemanticProduct {
         }
     }
     public enum StorageEntryMode { UNKNOWN, INITIAL, PRESERVED }
-    public enum InitialStorageKind { LITERAL_BYTES, POSSIBLE_LITERAL_BYTES, PRESERVE, UNKNOWN }
-    /** Source entry proof, versioned by storage 1.5.0. */
+    public enum InitialStorageKind { LITERAL_BYTES, POSSIBLE_LITERAL_BYTES, POSSIBLE_LOGICAL_TEXT, PRESERVE, UNKNOWN }
+    /** Source entry proof, versioned by storage 1.6.0. */
     public enum InitialStorageProof { NONE, EXPLICIT_INITIAL, EXPLICIT_PRESERVED, PROGRAM_INITIAL, DECLARATIVE_INVARIANT, DECLARATIVE_POSSIBILITY }
-    public record StorageInitialCondition(StorageNodeId node,InitialStorageKind kind,List<Integer> bytes,List<String> gapCodes,Provenance provenance,InitialStorageProof proof) {
+    public record StorageInitialCondition(StorageNodeId node,InitialStorageKind kind,List<Integer> bytes,List<String> gapCodes,Provenance provenance,InitialStorageProof proof,Optional<String> logicalText) {
         public StorageInitialCondition {
+            Objects.requireNonNull(logicalText);require((kind==InitialStorageKind.POSSIBLE_LOGICAL_TEXT)==logicalText.isPresent(),"logical source text has its own initial kind");
             Objects.requireNonNull(proof);
             Objects.requireNonNull(node);Objects.requireNonNull(kind);Objects.requireNonNull(provenance);bytes=List.copyOf(bytes);gapCodes=List.copyOf(gapCodes);
             require(bytes.stream().allMatch(b->b>=0&&b<=255),"invalid initial octet");
             require(kind==InitialStorageKind.LITERAL_BYTES||kind==InitialStorageKind.POSSIBLE_LITERAL_BYTES||bytes.isEmpty(),"only literal entry facts carry bytes");
             require(kind!=InitialStorageKind.POSSIBLE_LITERAL_BYTES||!bytes.isEmpty(),"possible literal bytes must not be empty");
-            require((kind==InitialStorageKind.UNKNOWN||kind==InitialStorageKind.POSSIBLE_LITERAL_BYTES)==!gapCodes.isEmpty(),"unknown or possible initial state requires gaps");
-            require(kind!=InitialStorageKind.POSSIBLE_LITERAL_BYTES||gapCodes.contains("ENTRY_STATE_NOT_PROVEN"),"possible entry requires lifecycle remainder");
+            require((kind==InitialStorageKind.UNKNOWN||kind==InitialStorageKind.POSSIBLE_LITERAL_BYTES||kind==InitialStorageKind.POSSIBLE_LOGICAL_TEXT)==!gapCodes.isEmpty(),"unknown or possible initial state requires gaps");
+            require((kind!=InitialStorageKind.POSSIBLE_LITERAL_BYTES&&kind!=InitialStorageKind.POSSIBLE_LOGICAL_TEXT)||gapCodes.contains("ENTRY_STATE_NOT_PROVEN"),"possible entry requires lifecycle remainder");
             require(kind==InitialStorageKind.UNKNOWN?proof==InitialStorageProof.NONE:kind==InitialStorageKind.PRESERVE?proof==InitialStorageProof.EXPLICIT_PRESERVED
-                :kind==InitialStorageKind.POSSIBLE_LITERAL_BYTES?proof==InitialStorageProof.DECLARATIVE_POSSIBILITY
+                :(kind==InitialStorageKind.POSSIBLE_LITERAL_BYTES||kind==InitialStorageKind.POSSIBLE_LOGICAL_TEXT)?proof==InitialStorageProof.DECLARATIVE_POSSIBILITY
                 :Set.of(InitialStorageProof.EXPLICIT_INITIAL,InitialStorageProof.PROGRAM_INITIAL,InitialStorageProof.DECLARATIVE_INVARIANT).contains(proof),"initial kind contradicts proof");
             gapCodes.forEach(g->requireText(g,"initial storage gap"));
+        }
+        public StorageInitialCondition(StorageNodeId node,InitialStorageKind kind,List<Integer> bytes,List<String> gapCodes,Provenance provenance,InitialStorageProof proof) {
+            this(node,kind,bytes,gapCodes,provenance,proof,Optional.empty());
         }
         public StorageInitialCondition(StorageNodeId node,InitialStorageKind kind,List<Integer> bytes,List<String> gapCodes,Provenance provenance) {
             this(node,kind,bytes,gapCodes,provenance,kind==InitialStorageKind.UNKNOWN?InitialStorageProof.NONE:kind==InitialStorageKind.PRESERVE?InitialStorageProof.EXPLICIT_PRESERVED:kind==InitialStorageKind.POSSIBLE_LITERAL_BYTES?InitialStorageProof.DECLARATIVE_POSSIBILITY:InitialStorageProof.EXPLICIT_INITIAL);
@@ -1233,11 +1242,12 @@ public final class CobolSemanticProduct {
         for (var d : declarations) declared.add(d.id());
         var nodes = new HashMap<StorageNodeId, PhysicalNode>();
         var dataNodes = new HashSet<DataItemId>();
+        var byData = new HashMap<DataItemId,PhysicalNode>();
         var siblings = new HashMap<Optional<StorageNodeId>, Set<Integer>>();
         for (var n : inventory.nodes()) {
             require(n.id().unit().equals(unit) && nodes.put(n.id(),n) == null, "duplicate or foreign physical node");
             require(siblings.computeIfAbsent(n.parent(),ignored->new HashSet<>()).add(n.order()), "duplicate physical sibling order");
-            n.data().ifPresent(id->require(declared.contains(id) && dataNodes.add(id), "physical DATA must exist and have one node"));
+            n.data().ifPresent(id->{require(declared.contains(id) && dataNodes.add(id), "physical DATA must exist and have one node");byData.put(id,n);});
             require(inventory.profile() != StorageProfile.UNSPECIFIED || n.extent().value().isEmpty(), "known layout requires an explicit environment");
         }
         // Iterative forest closure: no recursive ancestry traversal or quadratic pair scan.
@@ -1320,8 +1330,14 @@ public final class CobolSemanticProduct {
         var initialNodes=new HashSet<StorageNodeId>();
         for(var condition:inventory.entryState().conditions()) {
             require(nodes.containsKey(condition.node())&&initialNodes.add(condition.node()),"initial condition needs unique existing physical node");
-            if(condition.kind()!=InitialStorageKind.UNKNOWN) {
+            if(condition.kind()==InitialStorageKind.POSSIBLE_LOGICAL_TEXT) {
+                require(condition.provenance().exact(),"logical source evidence requires exact provenance");
+            } else if(condition.kind()==InitialStorageKind.POSSIBLE_LITERAL_BYTES) {
+                require(condition.provenance().exact()&&inventory.profile()==StorageProfile.IBM_ENTERPRISE_6_4_FIXED_DISPLAY_1047,
+                    "possible source bytes require source provenance and explicit representation profile");
+            } else if(condition.kind()!=InitialStorageKind.UNKNOWN) {
                 var view=views.get(condition.node());
+                require(condition.kind()!=InitialStorageKind.LITERAL_BYTES||bases.get(view.base()).allocation()==AllocationProof.INDEPENDENT_LOCAL_WORKING_STORAGE,"strong initial bytes require proved allocation");
                 require(condition.provenance().exact()&&view.codec().isPresent()&&view.offset().value().isPresent()&&view.extent().value().isPresent()
                     &&bases.get(view.base()).extent().value().isPresent(),"precise initial condition needs exact provenance and bounded supported view");
                 boolean mode=condition.proof()==InitialStorageProof.EXPLICIT_INITIAL?inventory.entryState().mode()==StorageEntryMode.INITIAL
@@ -1363,6 +1379,13 @@ public final class CobolSemanticProduct {
                 if (effect.kind() == RegionalMoveKind.LITERAL_BYTES || effect.kind() == RegionalMoveKind.FITTED_LITERAL_BYTES) {
                     require(transfer.source() instanceof LiteralSource literal && literal.logicalValue().isPresent(), "byte literal write requires logical literal source");
                     require(dest.extent().value().get().equals(BigInteger.valueOf(effect.bytes().size())), "literal bytes must fill the exact destination");
+                }
+                if(effect.kind()==RegionalMoveKind.LOGICAL_FIT_TEXT) {
+                    require(move.additionalTransfers().isEmpty()&&transfer.source() instanceof DataReference r&&r.logicalWholeItem().isPresent(),"logical copy needs one whole elementary source");
+                    var data=((DataReference)transfer.source()).logicalWholeItem().orElseThrow();
+                    var node=Objects.requireNonNull(byData.get(data));var source=views.get(node.id());
+                    require(node.kind()==PhysicalKind.ELEMENTARY&&source.codec().equals(dest.codec())&&source.codec().isPresent()&&source.extent().value().filter(n->n.signum()>0).isPresent(),"logical copy needs proved textual shape");
+                    require(!source.base().equals(dest.base())&&bases.get(source.base()).allocation()==AllocationProof.INDEPENDENT_LOCAL_WORKING_STORAGE&&bases.get(dest.base()).allocation()==AllocationProof.INDEPENDENT_LOCAL_WORKING_STORAGE,"logical copy requires positive base separation");
                 }
                 if (effect.kind() == RegionalMoveKind.COPY_BYTES || effect.kind() == RegionalMoveKind.FIT_TEXT) {
                     require(transfer.source() instanceof DataReference source && source.regionalAccess().isPresent(), "byte copy needs exact source access");
@@ -1470,6 +1493,7 @@ public final class CobolSemanticProduct {
                     + " ".repeat(adjustment.receiverExtent() - source.logicalExtent())), "padding must preserve source and append spaces");
         }
         for (DataReference reference : references(statement)) {
+            reference.logicalWholeItem().ifPresent(data -> require(declarations.containsKey(data), "logical whole item needs a published declaration"));
             reference.wholeItemAccess().ifPresent(access -> {
                 var declaration = declarations.get(access.data());
                 require(declaration != null && (declaration.scalarText().isPresent()||declaration.scalarInteger().isPresent()), "whole item requires scalar declaration");
