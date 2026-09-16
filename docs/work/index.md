@@ -1,5 +1,7 @@
 # Trabalho ativo e backlog
 
+[FILE-DEPENDENCIES — FD-H0–H4 / waves futuras](../domain/file-dependencies.md): preparação source-only; STOP humano antes de W0.
+
 [WORK-STORAGE-W6-W8](WORK-STORAGE-W6-W8.json): W6/W7 G2 and W8 G3 qualified; IN_PROGRESS pending human review/merge. Extends the accepted W0–W5 work item without reopening it.
 
 Work items delimitam a mudança em execução; o [backlog](backlog.md) registra trabalho futuro ainda sem autorização de início. Não use tasklists históricas como contexto padrão.
@@ -64,3 +66,5 @@ como registros/handoffs cross-repo para `air-java`, `cobol-lower` e
 - [WORK-SEMANTIC-PRODUCT-008](active/WORK-SEMANTIC-PRODUCT-008.yaml): CP6 multi-CALL composition, DONE / MERGED #39, `ff3704911e53b3d8b337fc610cf84343cdc5fe90`.
 
 - [WORK-SEMANTIC-PRODUCT-009](active/WORK-SEMANTIC-PRODUCT-009.yaml): SP1.8 compositionality and partial publication; coordinated with WORK-CFG-038.
+
+[WORK-FD-HARNESS](active/WORK-FD-HARNESS.json): IN_PROGRESS; preparação para revisão, sem merge.
