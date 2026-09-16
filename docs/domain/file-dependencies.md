@@ -3,7 +3,7 @@
 FD-H0–H4 prepara; FD-W0 ainda TODO, condicionado à revisão humana H4.
 [Campanha canônica](https://github.com/Gustavo2358/analysis-cfg/blob/feat/file-dependencies/docs/product/file-dependencies/README.md)
 (workspace: `../analysis-cfg/docs/product/file-dependencies/README.md`).
-Comece pelo brief e [W0](https://github.com/Gustavo2358/analysis-cfg/blob/feat/file-dependencies/docs/work/file-dependencies/FD-W0.yaml).
+Comece pelo brief e [W0](https://github.com/Gustavo2358/analysis-cfg/blob/feat/file-dependencies/docs/work/active/FD-W0.yaml).
 
 ## Pontos de intervenção W0
 
