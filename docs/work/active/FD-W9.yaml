@@ -1,0 +1,8 @@
+id: FD-W9
+title: Publicar unidades e capturas canônicas para FILE e CALL
+status: IN_PROGRESS
+scope: [file-dependencies, compilation-product]
+rule: IBM6.4 SC27-8713-03 update2026-04-28 cap7pp63–66; GLOBAL/EXTERNAL e resolver canônico.
+oracle: FileScopeContractTest; owners, captura, shadowing, EXTERNAL, unidade parcial e CICS contido.
+contract: Produto de compilação versionado; SP unitário compatível, parentage/capturas por identidade.
+evidence: RED antes da produção em .harness-results/fd-w9; harness canônico W9.

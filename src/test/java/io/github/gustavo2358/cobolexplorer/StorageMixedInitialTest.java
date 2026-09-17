@@ -15,7 +15,7 @@ class StorageMixedInitialTest {
         assertEquals(1,p.dataDeclarations().stream().filter(d->d.scalarInteger().isPresent()).count());
         assertTrue(p.storage().bases().stream().anyMatch(b->b.extent().value().isEmpty()));
         assertTrue(p.storage().views().stream().anyMatch(v->v.codec().isEmpty()));
-        assertTrue(p.storage().bases().stream().allMatch(b->b.allocation()==AllocationProof.INDEPENDENT_LOCAL_WORKING_STORAGE));
+        assertTrue(p.storage().bases().stream().allMatch(b->b.allocation()==AllocationProof.INDEPENDENT_LOCAL_STORAGE));
         assertTrue(p.calls().get(2).target() instanceof LiteralCallTarget);
         if(System.getProperty("storage.fixture.output")!=null)java.nio.file.Files.write(java.nio.file.Path.of(System.getProperty("storage.fixture.output")),SemanticProductJsonWriter.serialize(p));
     }

@@ -13,7 +13,7 @@ public final class StorageComponents {
     public record Relation(int owner, Optional<Integer> target, Ast.RedefinesClause clause, boolean proved) { }
     public enum UncertaintyScope { DECLARATION, RECORD, UNIT }
     public enum Dimension { LAYOUT, ALLOCATION, ALIAS, LIFETIME }
-    public enum Reason { NONLOCAL_VISIBILITY, UNINTERPRETED_DATA_CLAUSE, UNPROVED_OVERLAY }
+    public enum Reason { NONLOCAL_VISIBILITY, UNINTERPRETED_DATA_CLAUSE, UNPROVED_OVERLAY, FILE_ALLOCATION_NOT_PROVEN }
     public record Uncertainty(int owner,int root,UncertaintyScope scope,Set<Dimension> dimensions,
                               Reason reason,Ast.SourceProvenance origin) {
         public Uncertainty { dimensions=Set.copyOf(dimensions);Objects.requireNonNull(scope);Objects.requireNonNull(reason);Objects.requireNonNull(origin); }
@@ -64,23 +64,38 @@ public final class StorageComponents {
     private StorageComponents(CompilationUnitBuildResult owner,Map<ResolutionContracts.ProgramUnitId,Unit> units) { this.owner=owner;this.units=Map.copyOf(units); }
     boolean belongsTo(CompilationUnitBuildResult frontend) { return owner==frontend; }
     public Unit unit(ResolutionContracts.ProgramUnitId unit) { return Objects.requireNonNull(units.get(unit),"foreign unit"); }
-    public static StorageComponents analyze(CompilationUnitBuildResult frontend) {
+    public static StorageComponents analyze(CompilationUnitBuildResult frontend) { return analyze(frontend,null,null); }
+    public static StorageComponents analyze(CompilationUnitBuildResult frontend,CompilationUnitSymbolTables tables,ReferenceResolution resolution) {
         var units=new LinkedHashMap<ResolutionContracts.ProgramUnitId,Unit>();
+        var fileBindings=new HashMap<ResolutionContracts.ProgramUnitId,Map<Integer,ReferenceResolution.Entry>>();
+        if(resolution!=null)for(var entry:resolution.entries())if(entry.occurrence().kind()==ResolutionContracts.ReferenceKind.FILE)
+            fileBindings.computeIfAbsent(entry.occurrence().programUnitId(),ignored->new HashMap<>()).put(entry.occurrence().referenceAstNodeId(),entry);
         for(var unit:frontend.compilationUnit().programUnits()) {
-            var sections=new ArrayList<Ast.Section>();
+            var sections=new ArrayList<Ast.Section>();var fileSections=new ArrayList<Ast.Section>();
             for(var division:unit.program().divisions())if(division.divisionKind()==Ast.DivisionKind.DATA)
-                for(var child:division.children())if(child instanceof Ast.Section s&&s.dataSectionKind()==Ast.DataSectionKind.WORKING_STORAGE)sections.add(s);
-            var roots=new ArrayList<Ast.DataEntry>();boolean structure=sections.size()==1;
+                for(var child:division.children())if(child instanceof Ast.Section section) {
+                    if(section.dataSectionKind()==Ast.DataSectionKind.WORKING_STORAGE)sections.add(section);
+                    if(section.dataSectionKind()==Ast.DataSectionKind.FILE)fileSections.add(section);
+                }
+            var roots=new ArrayList<Ast.DataEntry>();boolean structure=sections.size()<=1&&fileSections.size()<=1&&! (sections.isEmpty()&&fileSections.isEmpty());
             for(var section:sections)for(var child:section.children()) {
                 if(child instanceof Ast.DataEntry d){roots.add(d);structure&=level(d)==1||level(d)==77;}
                 else structure=false;
             }
+            var workingRoots=List.copyOf(roots);var descriptions=new ArrayList<Ast.FileDescription>();
+            for(var section:fileSections)for(var child:section.children()) {
+                if(child instanceof Ast.FileDescription fd){descriptions.add(fd);for(var record:fd.entries()){roots.add(record);structure&=level(record)==1;}}
+                else structure=false;
+            }
+            var fileGroups=FileStorageGroups.build(unit,descriptions,tables,fileBindings.getOrDefault(unit.id(),Map.of()));
             var coverage=new HashMap<Integer,SemanticCoverage.Finding>();
             var report=frontend.coverageByProgramUnit().get(unit.id());
             if(report==null)structure=false;else for(var f:report.findings())coverage.put(f.astNodeId(),f);
             var positions=new ArrayList<Position>();var renames=new ArrayList<Position>();var pending=new ArrayDeque<Position>();
             for(int i=roots.size()-1;i>=0;i--)pending.push(new Position(roots.get(i),Optional.empty(),i,roots.get(i).meta().id()));
             var identities=new HashSet<Integer>();var uncertainties=new ArrayList<Uncertainty>();
+            if(!fileGroups.allocationProved())for(var root:roots)uncertainties.add(new Uncertainty(root.meta().id(),root.meta().id(),UncertaintyScope.UNIT,
+                Set.of(Dimension.ALLOCATION,Dimension.ALIAS),Reason.FILE_ALLOCATION_NOT_PROVEN,root.meta().provenance()));
             while(!pending.isEmpty()) {
                 var p=pending.pop();var data=p.data();
                 if(data.levelKind()==Ast.DataLevelKind.RENAMES_66&&p.parent().isPresent()){renames.add(p);continue;}
@@ -99,7 +114,8 @@ public final class StorageComponents {
                 for(int i=data.children().size()-1;i>=0;i--)pending.push(new Position(data.children().get(i),Optional.of(data.meta().id()),i,p.root()));
             }
             var byNode=new HashMap<Integer,Component>();var children=new HashMap<Integer,List<Component>>();var relations=new ArrayList<Relation>();
-            var rootComponents=components(roots,Optional.empty(),coverage,byNode,relations);
+            var rootComponents=new ArrayList<>(components(workingRoots,Optional.empty(),coverage,byNode,relations));
+            for(var group:fileGroups.components()){rootComponents.add(group);for(var member:group.members())byNode.put(member,group);}
             for(var p:positions)children.put(p.data().meta().id(),components(p.data().children(),Optional.of(p.data().meta().id()),coverage,byNode,relations));
             boolean proved=relations.stream().allMatch(Relation::proved);
             var positionsByNode=new HashMap<Integer,Position>();positions.forEach(p->positionsByNode.put(p.data().meta().id(),p));

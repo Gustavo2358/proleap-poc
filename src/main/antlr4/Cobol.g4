@@ -327,15 +327,15 @@ ioControlParagraph
    ;
 
 ioControlClause
-   : rerunClause | sameClause | multipleFileClause | commitmentControlClause
+   : rerunClause | sameClause | multipleFileClause | commitmentControlClause | applyWriteOnlyClause
    ;
 
 rerunClause
-   : RERUN (ON (assignmentName | fileName))? EVERY (rerunEveryRecords | rerunEveryOf | rerunEveryClock)
+   : RERUN ON? assignmentName (EVERY (rerunEveryRecords | rerunEveryOf | rerunEveryClock))?
    ;
 
 rerunEveryRecords
-   : integerLiteral RECORDS
+   : integerLiteral RECORDS (OF? fileName)?
    ;
 
 rerunEveryOf
@@ -356,6 +356,10 @@ multipleFileClause
 
 multipleFilePosition
    : fileName (POSITION integerLiteral)?
+   ;
+
+applyWriteOnlyClause
+   : APPLY WRITE_ONLY ON? fileName+
    ;
 
 commitmentControlClause
@@ -1985,7 +1989,7 @@ setByValue
 // sort statement
 
 sortStatement
-   : SORT fileName sortOnKeyClause+ sortDuplicatesPhrase? sortCollatingSequencePhrase? sortInputProcedurePhrase? sortUsing* sortOutputProcedurePhrase? sortGivingPhrase*
+   : SORT (fileName | identifier) sortOnKeyClause* sortDuplicatesPhrase? sortCollatingSequencePhrase? sortInputProcedurePhrase? sortUsing* sortOutputProcedurePhrase? sortGivingPhrase*
    ;
 
 sortOnKeyClause
@@ -2719,6 +2723,9 @@ COL : C O L;
 COLUMN : C O L U M N;
 COM_REG : C O M MINUSCHAR R E G;
 COMMA : C O M M A;
+APPLY : A P P L Y;
+WRITE_ONLY : W R I T E MINUSCHAR O N L Y;
+
 COMMITMENT : C O M M I T M E N T;
 COMMON : C O M M O N;
 COMMUNICATION : C O M M U N I C A T I O N;

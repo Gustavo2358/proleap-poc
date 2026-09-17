@@ -32,7 +32,7 @@ public final class Ast {
         }
     }
 
-    public sealed interface Node permits Program, Division, Section, FileBinding, FileDescription,
+    public sealed interface Node permits Program, Division, Section, FileBinding, FileDescription, FileAreaSharing, FileRecordClause, FileAuxiliary, UseClause,
             DataEntry, Paragraph, Sentence, CallArgument, EvaluateBranch, DataQualifier,
             SubscriptGroup, ReferenceModification, ProcedureQualifier, ProcedureReference,
             ProcedureSignature, ProcedureParameter, StatementOperand, StatementClause, SearchWhen,
@@ -65,7 +65,7 @@ public final class Ast {
     public enum ReferenceUnderstanding { STRUCTURED, PRESERVED }
     public enum OperationCategory { RELATIONAL, OTHER }
     /** Semantic context supplied by the typed statement production; this is not a binding result. */
-    public enum StatementOperandContext { DEFAULT, SET_CONDITION_TARGET, SET_DATA_OR_INDEX }
+    public enum StatementOperandContext { DEFAULT, SET_CONDITION_TARGET, SET_DATA_OR_INDEX, FILE_RECORD, FILE_INTO, FILE_FROM, FILE_KEY, FILE_ADVANCING }
     /** Context of a WHEN selector derived from its typed evaluateCondition and matching subject position. */
     public enum EvaluateSelectorContext { BOOLEAN_SUBJECT_NOMINAL, VALUE_COMPARISON, SIMPLE_LITERAL, OTHER }
     public enum DataSectionKind { FILE, DATABASE, WORKING_STORAGE, LINKAGE, COMMUNICATION, LOCAL_STORAGE, SCREEN, REPORT, PROGRAM_LIBRARY }
@@ -113,7 +113,7 @@ public final class Ast {
     public record Division(Meta meta, DivisionKind divisionKind, List<Node> children,
                            Optional<ProcedureEntry> procedureEntry, Map<Integer, Integer> normalContinuations,
                            Map<Integer,Integer> ordinaryContinuations,Map<Integer,Integer> embeddedContinuations,
-                           Map<Integer,Integer> embeddedOrdinaryContinuations) implements Node {
+                           Map<Integer,Integer> embeddedOrdinaryContinuations, Set<Integer> normalCompletionStatements) implements Node {
         public Division {
             children = List.copyOf(children);
             procedureEntry = Objects.requireNonNull(procedureEntry, "procedureEntry");
@@ -121,9 +121,11 @@ public final class Ast {
             ordinaryContinuations = Map.copyOf(ordinaryContinuations);
             embeddedContinuations = Map.copyOf(embeddedContinuations);
             embeddedOrdinaryContinuations = Map.copyOf(embeddedOrdinaryContinuations);
+            normalCompletionStatements=Set.copyOf(normalCompletionStatements);
             if (procedureEntry.isPresent() && divisionKind != DivisionKind.PROCEDURE)
                 throw new IllegalArgumentException("only PROCEDURE DIVISION has an executable entry");
         }
+        public Division(Meta meta,DivisionKind kind,List<Node> children,Optional<ProcedureEntry> entry,Map<Integer,Integer> normal,Map<Integer,Integer> ordinary,Map<Integer,Integer> embedded,Map<Integer,Integer> embeddedOrdinary) {this(meta,kind,children,entry,normal,ordinary,embedded,embeddedOrdinary,Set.of());}
         public Division(Meta meta,DivisionKind kind,List<Node> children,Optional<ProcedureEntry> entry,Map<Integer,Integer> normal,Map<Integer,Integer> ordinary) {this(meta,kind,children,entry,normal,ordinary,Map.of(),Map.of());}
         /** Paragraph-local completion stays distinct from ordinary flow across paragraph boundaries. */
         public Division(Meta meta, DivisionKind kind, List<Node> children,Optional<ProcedureEntry> entry,Map<Integer,Integer> next) {
@@ -138,16 +140,60 @@ public final class Ast {
         }
     }
 
+    public enum UseKind { AFTER_EXCEPTION, DEBUGGING }
+    /** USE is declarative metadata, never an executable statement. */
+    public record UseClause(Meta meta,UseKind kind,boolean global,FileOpenMode mode,List<FileReference> files) implements Node {
+        public UseClause {files=List.copyOf(files);}
+    }
+
     public record Section(Meta meta, String name, DataSectionKind dataSectionKind, List<Node> children) implements Node {
         public Section { children = List.copyOf(children); }
         public Section(Meta meta, String name, List<Node> children) { this(meta, name, null, children); }
     }
 
-    public record FileBinding(Meta meta, String logicalName, String assignment) implements Node {}
+    public enum FileAuxKind { RERUN, SAME_AREA, SAME_RECORD_AREA, SAME_SORT_AREA, SAME_SORT_MERGE_AREA,
+        MULTIPLE_FILE, APPLY_WRITE_ONLY, COMMITMENT_CONTROL, RESERVE, PADDING, RECORD_DELIMITER,
+        PASSWORD, BLOCK, RECORD, LABEL_RECORDS, VALUE_OF, DATA_RECORDS, LINAGE, RECORDING_MODE, CODE_SET, REPORT }
+    public enum FileTrigger { NONE, SORT_MERGE, RECORD_COUNT, END_VOLUME, UNSUPPORTED }
+    public record FileAuxParameter(String role,String value) { }
+    public record FileAuxData(String role,DataReference reference) { }
+    public record FileAuxiliary(Meta meta,FileAuxKind kind,List<FileReference> files,List<FileAuxData> data,
+            List<FileAuxParameter> parameters,Optional<FileAssignment> checkpoint,FileTrigger trigger) implements Node {
+        public FileAuxiliary {files=List.copyOf(files);data=List.copyOf(data);parameters=List.copyOf(parameters);}
+    }
+    public enum FileAreaKind { AREA, RECORD, SORT, SORT_MERGE }
+    public record FileAreaSharing(Meta meta,FileAreaKind kind,List<FileReference> files) implements Node {
+        public FileAreaSharing { files=List.copyOf(files); }
+    }
+    public enum FileKind { FD, SD, UNKNOWN }
+    public enum FileOrganization { SEQUENTIAL, LINE_SEQUENTIAL, INDEXED, RELATIVE, UNSPECIFIED, UNSUPPORTED }
+    public enum FileAccessMode { SEQUENTIAL, RANDOM, DYNAMIC, UNSPECIFIED, UNSUPPORTED }
+    public enum FileReferenceRole { RECORD_KEY, ALTERNATE_RECORD_KEY, RELATIVE_KEY, FILE_STATUS, ADDITIONAL_STATUS }
+    public enum AssignmentForm { IBM_NAME, OUTSIDE_N_LR, MISSING }
+    public record FileAssignment(AssignmentForm form, String original, String externalFileName) { }
+    public record FileClauseReference(FileReferenceRole role, DataReference reference, boolean duplicates) { }
+    public record FileControl(boolean optional, FileAssignment assignment, FileOrganization organization,
+                              FileAccessMode accessMode, List<FileClauseReference> references,List<FileAuxiliary> auxiliary) {
+        public FileControl { references = List.copyOf(references);auxiliary=List.copyOf(auxiliary); }
+        public FileControl(boolean optional,FileAssignment assignment,FileOrganization organization,FileAccessMode accessMode,List<FileClauseReference> references){this(optional,assignment,organization,accessMode,references,List.of());}
+    }
+    public record FileBinding(Meta meta, String logicalName, String assignment, FileControl control) implements Node {
+        public FileBinding(Meta meta, String logicalName, String assignment) { this(meta, logicalName, assignment, null); }
+    }
 
-    public record FileDescription(Meta meta, String fileName, DeclarationVisibility visibility,
-                                  List<DataEntry> entries) implements Node {
-        public FileDescription { entries = List.copyOf(entries); }
+    public enum FileRecordForm { FIXED, VARYING, RANGE }
+    public record FileRecordClause(Meta meta, FileRecordForm form, Optional<java.math.BigInteger> minimum,
+            Optional<java.math.BigInteger> maximum, Optional<DataReference> dependingOn) implements Node { }
+    public record FileDescription(Meta meta, String fileName, FileKind kind, DeclarationVisibility visibility,
+                                  List<DataEntry> entries, List<FileRecordClause> recordClauses,List<FileAuxiliary> auxiliary) implements Node {
+        public FileDescription { entries = List.copyOf(entries); recordClauses=List.copyOf(recordClauses);auxiliary=List.copyOf(auxiliary); }
+        public FileDescription(Meta meta,String fileName,FileKind kind,DeclarationVisibility visibility,List<DataEntry> entries,List<FileRecordClause> recordClauses){this(meta,fileName,kind,visibility,entries,recordClauses,List.of());}
+        public FileDescription(Meta meta, String fileName, FileKind kind, DeclarationVisibility visibility, List<DataEntry> entries) {
+            this(meta,fileName,kind,visibility,entries,List.of());
+        }
+        public FileDescription(Meta meta, String fileName, DeclarationVisibility visibility, List<DataEntry> entries) {
+            this(meta, fileName, FileKind.UNKNOWN, visibility, entries);
+        }
         public FileDescription(Meta meta, String fileName, List<DataEntry> entries) {
             this(meta, fileName, DeclarationVisibility.LOCAL, entries);
         }
@@ -393,14 +439,44 @@ public final class Ast {
         }
     }
 
+    public enum FileCommand { OPEN, READ, WRITE, REWRITE, DELETE_RECORD, START, CLOSE, RELEASE, RETURN, SORT, MERGE }
+    public enum FileOpenMode { INPUT, OUTPUT, IO, EXTEND, UNSPECIFIED }
+    public enum FileSyntaxProfile { N_LR, UNSUPPORTED }
+    public enum FileOption { NEXT, REVERSED, NO_REWIND, LOCK, REEL, UNIT, FOR_REMOVAL, BEFORE_ADVANCING, AFTER_ADVANCING, PAGE }
+    public enum FileKeyRelation { UNSPECIFIED, EQUAL, GREATER, GREATER_OR_EQUAL }
+    public enum FileOperandRole { RECORD, INTO, FROM, KEY, ADVANCING }
+    public enum FileHandlerKind { AT_END, NOT_AT_END, INVALID_KEY, NOT_INVALID_KEY, AT_END_OF_PAGE, NOT_AT_END_OF_PAGE }
+    public enum FileRole { DIRECT, WORK, INPUT, OUTPUT }
+    public enum FileProcedurePhase { INPUT, OUTPUT }
+    public record FileProcedureSurface(FileProcedurePhase phase,ProcedureReference start,Optional<ProcedureReference> end) {
+        public FileProcedureSurface {Objects.requireNonNull(phase);Objects.requireNonNull(start);Objects.requireNonNull(end);}
+    }
+    public record FileIoOperand(Node reference, FileOpenMode mode, List<FileOption> options,FileRole role) {
+        public FileIoOperand(Node reference,FileOpenMode mode,List<FileOption> options){this(reference,mode,options,FileRole.DIRECT);}
+        public FileIoOperand { options=List.copyOf(options); }
+    }
+    public record FileDataOperand(FileOperandRole role, Node value) { }
+    public record FileHandler(FileHandlerKind kind, StatementClause clause) { }
+    /** Aliases existing operand/clause nodes; traversal visits their original owners exactly once. */
+    public record FileIoSurface(FileCommand command, List<FileIoOperand> files, FileSyntaxProfile profile,
+            List<FileDataOperand> operands, List<FileOption> options, FileKeyRelation keyRelation,
+            boolean explicitTerminator, List<FileHandler> handlers,List<FileProcedureSurface> procedures,List<String> gapCodes) {
+        public FileIoSurface(FileCommand command,List<FileIoOperand> files,FileSyntaxProfile profile,List<FileDataOperand> operands,List<FileOption> options,FileKeyRelation keyRelation,boolean explicitTerminator,List<FileHandler> handlers){this(command,files,profile,operands,options,keyRelation,explicitTerminator,handlers,List.of(),List.of());}
+        public FileIoSurface { files=List.copyOf(files);operands=List.copyOf(operands);options=List.copyOf(options);handlers=List.copyOf(handlers);procedures=List.copyOf(procedures);gapCodes=List.copyOf(gapCodes); }
+    }
+
     public record ModeledStatement(Meta meta, String grammarRule, String writtenText,
                                    List<StatementOperand> operands,
-                                   List<StatementClause> clauses, Optional<StatementEffectSummary> effects) implements Statement {
+                                   List<StatementClause> clauses, Optional<StatementEffectSummary> effects,
+                                   Optional<FileIoSurface> fileIo) implements Statement {
+        public ModeledStatement(Meta meta,String grammarRule,String writtenText,List<StatementOperand> operands,List<StatementClause> clauses,Optional<StatementEffectSummary> effects) {
+            this(meta,grammarRule,writtenText,operands,clauses,effects,Optional.empty());
+        }
         public ModeledStatement(Meta meta,String grammarRule,String writtenText,List<StatementOperand> operands,List<StatementClause> clauses) {
             this(meta,grammarRule,writtenText,operands,clauses,Optional.empty());
         }
         public ModeledStatement {
-            Objects.requireNonNull(effects);
+            Objects.requireNonNull(effects);Objects.requireNonNull(fileIo);
             operands = List.copyOf(operands);
             clauses = List.copyOf(clauses);
         }
@@ -408,12 +484,16 @@ public final class Ast {
 
     public record PreservedStatement(Meta meta, String grammarRule, String writtenText,
                                      List<StatementOperand> operands,
-                                     List<StatementClause> clauses, Optional<StatementEffectSummary> effects) implements Statement {
+                                     List<StatementClause> clauses, Optional<StatementEffectSummary> effects,
+                                   Optional<FileIoSurface> fileIo) implements Statement {
+        public PreservedStatement(Meta meta,String grammarRule,String writtenText,List<StatementOperand> operands,List<StatementClause> clauses,Optional<StatementEffectSummary> effects) {
+            this(meta,grammarRule,writtenText,operands,clauses,effects,Optional.empty());
+        }
         public PreservedStatement(Meta meta,String grammarRule,String writtenText,List<StatementOperand> operands,List<StatementClause> clauses) {
             this(meta,grammarRule,writtenText,operands,clauses,Optional.empty());
         }
         public PreservedStatement {
-            Objects.requireNonNull(effects);
+            Objects.requireNonNull(effects);Objects.requireNonNull(fileIo);
             operands = List.copyOf(operands);
             clauses = List.copyOf(clauses);
         }
@@ -605,7 +685,12 @@ public final class Ast {
         if (node instanceof Program n) return n.divisions();
         if (node instanceof Division n) return n.children();
         if (node instanceof Section n) return n.children();
-        if (node instanceof FileDescription n) return n.entries();
+        if (node instanceof FileDescription n) { var result=new ArrayList<Node>(n.recordClauses());result.addAll(n.auxiliary());result.addAll(n.entries());return result; }
+        if (node instanceof FileRecordClause n) return n.dependingOn().stream().toList();
+        if (node instanceof UseClause u) return List.copyOf(u.files());
+        if (node instanceof FileAreaSharing n) return n.files();
+        if(node instanceof FileAuxiliary n){var children=new ArrayList<Node>(n.files());n.data().forEach(d->children.add(d.reference()));return children;}
+        if (node instanceof FileBinding n) {var children=new ArrayList<Node>();if(n.control()!=null){n.control().references().forEach(r->children.add(r.reference()));children.addAll(n.control().auxiliary());}return children;}
         if (node instanceof DataEntry n) {
             List<Node> result = new ArrayList<>(n.clauses());
             result.addAll(n.children());

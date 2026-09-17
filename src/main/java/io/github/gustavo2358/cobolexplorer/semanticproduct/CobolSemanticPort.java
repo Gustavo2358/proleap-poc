@@ -31,6 +31,8 @@ public interface CobolSemanticPort {
 
     default CobolSemanticProduct.StorageInventory storage() { return CobolSemanticProduct.StorageInventory.unavailable(); }
 
+    default CobolSemanticProduct.FileInventory fileInventory() { return CobolSemanticProduct.FileInventory.unavailable(); }
+
     List<CobolSemanticProduct.DataDeclaration> dataDeclarations();
 
     List<CobolSemanticProduct.StatementFact> statements();
@@ -86,6 +88,8 @@ final class MaterializedCobolSemanticPort implements CobolSemanticPort {
     private final List<CobolSemanticProduct.CallFact> calls;
     private final List<CobolSemanticProduct.IfFact> ifs;
     private final List<CobolSemanticProduct.ObservedStatement> observedStatements;
+
+    @Override public CobolSemanticProduct.FileInventory fileInventory() { return state.fileInventory(); }
 
     MaterializedCobolSemanticPort(CobolSemanticProduct.State state) {
         this.state = Objects.requireNonNull(state, "state");

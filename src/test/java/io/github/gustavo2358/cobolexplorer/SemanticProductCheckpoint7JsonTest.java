@@ -31,10 +31,10 @@ class SemanticProductCheckpoint7JsonTest {
     private static final ObjectMapper JSON = new ObjectMapper();
     private static final List<String> ROOT_FIELD_ORDER = List.of(
             "schema", "contractVersion", "unit", "policy", "dataDeclarations",
-            "statements", "structure", "gaps", "coverage", "entryInventory", "storageIndependence", "storage", "statementEffects");
+            "statements", "structure", "gaps", "coverage", "entryInventory", "storageIndependence", "storage", "statementEffects", "fileInventory");
     private static final Set<String> ROOT_FIELDS = Set.of(
             "schema", "contractVersion", "unit", "policy", "dataDeclarations",
-            "statements", "structure", "gaps", "coverage", "entryInventory", "storageIndependence", "storage", "statementEffects");
+            "statements", "structure", "gaps", "coverage", "entryInventory", "storageIndependence", "storage", "statementEffects", "fileInventory");
     private static final Set<String> VOLATILE_FIELDS = Set.of(
             "timestamp", "elapsedms", "thread", "objectid", "memoryaddress",
             "generatedat", "nonce");
@@ -63,7 +63,7 @@ class SemanticProductCheckpoint7JsonTest {
         assertEquals(ROOT_FIELDS, fieldSet(document));
         assertEquals(ROOT_FIELD_ORDER, fieldList(document));
         assertEquals("cobol-semantic-product", document.path("schema").asText());
-        assertEquals("2.20.0", document.path("contractVersion").asText());
+        assertEquals("2.28.0", document.path("contractVersion").asText());
         assertEquals("SEMANTIC-TARGET",
                 document.path("unit").path("canonicalProgramName").asText());
         assertEquals(List.of(0), integerValues(document.path("unit").path("structuralPath")));

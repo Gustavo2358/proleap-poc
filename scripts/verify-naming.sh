@@ -26,19 +26,35 @@ if ((${#paths[@]})); then
   exit 1
 fi
 
-mapfile -t contents < <(
-  rg -l -i --text "${legacy_vendor}|${legacy_purpose}" . \
-    --glob '!src/main/antlr4/Cobol.g4' \
-    --glob '!src/main/antlr4/CobolPreprocessor.g4' \
-    --glob '!THIRD_PARTY_NOTICES.md' \
-    --glob '!specs/**' \
-    --glob '!docs/history/**'
-)
+# Python is already required by the harness. A missing optional search binary
+# must never become success through a Bash process substitution.
+python3 - "$legacy_vendor" "$legacy_purpose" <<'PY'
+from pathlib import Path
+import re
+import subprocess
+import sys
 
-if ((${#contents[@]})); then
-  printf 'Legacy identifier found in content:\n' >&2
-  printf '  %s\n' "${contents[@]}" >&2
-  exit 1
-fi
+vendor, purpose = sys.argv[1:]
+forbidden = re.compile(re.escape(vendor) + '|' + re.escape(purpose), re.IGNORECASE)
+repository = re.compile(r'(?<!\w)' + re.escape(vendor) + r'-poc(?!\w)')
+excluded = {'src/main/antlr4/Cobol.g4', 'src/main/antlr4/CobolPreprocessor.g4', 'THIRD_PARTY_NOTICES.md'}
+paths = subprocess.check_output(['git', 'ls-files', '--cached', '--others', '--exclude-standard', '-z'])
+contents = []
+for name in sorted(set(paths.decode().split('\0')) - {''}):
+    if name in excluded or name.startswith(('specs/', 'docs/history/')):
+        continue
+    path = Path(name)
+    if path.is_symlink() or not path.is_file():
+        continue  # Match the original search: no symlink following or deleted files.
+    content = path.read_text(errors='replace')
+    if name.startswith('docs/') and name.endswith('.md'):
+        # Exact repository identity in documentary evidence only.
+        content = repository.sub('', content)
+    if forbidden.search(content):
+        contents.append(name)
+if contents:
+    print('Legacy identifier found in content:', *contents, sep='\n  ', file=sys.stderr)
+    raise SystemExit(1)
+PY
 
 printf 'Naming verification passed.\n'

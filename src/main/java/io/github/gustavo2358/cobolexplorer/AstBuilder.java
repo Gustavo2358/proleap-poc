@@ -190,9 +190,75 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
             ParserRuleContext assign = firstDescendant(entry, CobolParser.AssignClauseContext.class);
             children.add(new Ast.FileBinding(entryMeta,
                     fileName == null ? "<unknown>" : clean(sourceText(fileName)),
-                    assign == null ? "" : compact(sourceText(assign))));
+                    assign == null ? "" : compact(sourceText(assign)), fileControl(entry)));
         }
+        for(var clause:nearestDescendants(context,CobolParser.SameClauseContext.class)) {
+            var kind=clause.RECORD()!=null?Ast.FileAreaKind.RECORD:clause.SORT()!=null?Ast.FileAreaKind.SORT:
+                clause.SORT_MERGE()!=null?Ast.FileAreaKind.SORT_MERGE:Ast.FileAreaKind.AREA;
+            children.add(new Ast.FileAreaSharing(meta(clause),kind,clause.fileName().stream()
+                .map(f->new Ast.FileReference(meta(f),clean(sourceText(f)),sourceText(f).strip())).toList()));
+        }
+        for(var clause:nearestDescendants(context,CobolParser.IoControlClauseContext.class))if(clause.sameClause()==null)
+            children.addAll(auxiliarySyntax().clauses(clause));
         return new Ast.Division(meta, Ast.DivisionKind.ENVIRONMENT, children);
+    }
+
+    private Ast.FileControl fileControl(CobolParser.FileControlEntryContext entry) {
+        var assignment = firstDescendant(entry, CobolParser.AssignClauseContext.class);
+        Ast.FileAssignment name;
+        if (assignment == null) name = new Ast.FileAssignment(Ast.AssignmentForm.MISSING, "", null);
+        else if (assignment.DYNAMIC() != null || assignment.EXTERNAL() != null || assignment.assignmentName() == null && assignment.literal() == null)
+            name = new Ast.FileAssignment(Ast.AssignmentForm.OUTSIDE_N_LR, compact(sourceText(assignment)), null);
+        else name = FileDeclarationSemantics.assignmentName(sourceText(assignment.assignmentName() != null ? assignment.assignmentName() : assignment.literal()));
+        var org = firstDescendant(entry, CobolParser.OrganizationClauseContext.class);
+        var organization = org == null ? Ast.FileOrganization.UNSPECIFIED
+                : org.BINARY() != null || org.RECORD() != null ? Ast.FileOrganization.UNSUPPORTED
+                : org.LINE() != null ? Ast.FileOrganization.LINE_SEQUENTIAL
+                : org.INDEXED() != null ? Ast.FileOrganization.INDEXED
+                : org.RELATIVE() != null ? Ast.FileOrganization.RELATIVE : Ast.FileOrganization.SEQUENTIAL;
+        var access = firstDescendant(entry, CobolParser.AccessModeClauseContext.class);
+        var mode = access == null ? Ast.FileAccessMode.UNSPECIFIED : access.EXCLUSIVE() != null ? Ast.FileAccessMode.UNSUPPORTED
+                : access.RANDOM() != null ? Ast.FileAccessMode.RANDOM : access.DYNAMIC() != null ? Ast.FileAccessMode.DYNAMIC : Ast.FileAccessMode.SEQUENTIAL;
+        var refs = new ArrayList<Ast.FileClauseReference>();
+        for (var clause : entry.fileControlClause()) {
+            if (clause.recordKeyClause() != null) {
+                var key = clause.recordKeyClause();
+                refs.add(new Ast.FileClauseReference(Ast.FileReferenceRole.RECORD_KEY, dataReference(key.qualifiedDataName()), key.DUPLICATES() != null));
+            }
+            if (clause.alternateRecordKeyClause() != null) {
+                var key = clause.alternateRecordKeyClause();
+                refs.add(new Ast.FileClauseReference(Ast.FileReferenceRole.ALTERNATE_RECORD_KEY, dataReference(key.qualifiedDataName()), key.DUPLICATES() != null));
+            }
+            if (clause.relativeKeyClause() != null) refs.add(new Ast.FileClauseReference(Ast.FileReferenceRole.RELATIVE_KEY,
+                    dataReference(clause.relativeKeyClause().qualifiedDataName()), false));
+            if (clause.fileStatusClause() != null) {
+                int index = 0;
+                for (var status : clause.fileStatusClause().qualifiedDataName()) refs.add(new Ast.FileClauseReference(index++ == 0
+                        ? Ast.FileReferenceRole.FILE_STATUS : Ast.FileReferenceRole.ADDITIONAL_STATUS, dataReference(status), false));
+            }
+        }
+        return new Ast.FileControl(entry.selectClause().OPTIONAL() != null, name, organization, mode, refs,auxiliarySyntax().clauses(entry));
+    }
+
+    private FileAuxiliarySyntax auxiliarySyntax(){return new FileAuxiliarySyntax(this::meta,this::dataReference,this::sourceText);}
+
+    private Ast.FileRecordClause fileRecordClause(CobolParser.RecordContainsClauseContext clause) {
+        CobolParser.IntegerLiteralContext minimum=null,maximum=null;
+        CobolParser.QualifiedDataNameContext depending=null;Ast.FileRecordForm form;
+        if(clause.recordContainsClauseFormat1()!=null) {
+            form=Ast.FileRecordForm.FIXED;minimum=clause.recordContainsClauseFormat1().integerLiteral();maximum=minimum;
+        } else if(clause.recordContainsClauseFormat2()!=null) {
+            var varying=clause.recordContainsClauseFormat2();form=Ast.FileRecordForm.VARYING;
+            minimum=varying.integerLiteral();maximum=varying.recordContainsTo()==null?null:varying.recordContainsTo().integerLiteral();
+            depending=varying.qualifiedDataName();
+        } else {
+            var range=clause.recordContainsClauseFormat3();form=Ast.FileRecordForm.RANGE;
+            minimum=range.integerLiteral();maximum=range.recordContainsTo().integerLiteral();
+        }
+        return new Ast.FileRecordClause(meta(clause),form,
+            java.util.Optional.ofNullable(minimum).map(n->new java.math.BigInteger(n.getText())),
+            java.util.Optional.ofNullable(maximum).map(n->new java.math.BigInteger(n.getText())),
+            java.util.Optional.ofNullable(depending).map(this::dataReference));
     }
 
     private Ast.Division buildData(CobolParser.DataDivisionContext context) {
@@ -206,13 +272,17 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
                 for (CobolParser.FileDescriptionEntryContext fd : fileSection.fileDescriptionEntry()) {
                     Ast.Meta fdMeta = meta(fd);
                     ParserRuleContext fileName = fd.fileName();
+                    var recordClauses=fd.fileDescriptionEntryClause().stream().map(CobolParser.FileDescriptionEntryClauseContext::recordContainsClause)
+                        .filter(java.util.Objects::nonNull).map(this::fileRecordClause).toList();
+                    var auxiliary=auxiliarySyntax().clauses(fd);
                     List<Ast.DataEntry> dataEntries = new ArrayList<>();
                     dataEntries.addAll(buildDataHierarchy(fd.dataDescriptionEntry()));
                     entries.add(new Ast.FileDescription(fdMeta,
                             fileName == null ? "<unknown>" : clean(sourceText(fileName)),
+                            fd.FD() != null ? Ast.FileKind.FD : Ast.FileKind.SD,
                             declarationVisibility(fdMeta,
                                     firstDescendant(fd, CobolParser.ExternalClauseContext.class) != null,
-                                    firstDescendant(fd, CobolParser.GlobalClauseContext.class) != null), dataEntries));
+                                    firstDescendant(fd, CobolParser.GlobalClauseContext.class) != null), dataEntries,recordClauses,auxiliary));
                 }
             } else {
                 entries.addAll(buildDataHierarchy(nearestDescendants(sectionContext,
@@ -451,6 +521,8 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
         List<Ast.Node> children = new ArrayList<>();
         Ast.ProcedureSignature signature = buildProcedureSignature(context);
         if (signature != null) children.add(signature);
+        if(context.procedureDeclaratives()!=null)for(var declarative:context.procedureDeclaratives().procedureDeclarative())
+            children.add(buildDeclarative(declarative));
         CobolParser.ProcedureDivisionBodyContext body = context.procedureDivisionBody();
         if (body != null) {
             children.addAll(buildParagraphGroup(body.paragraphs()));
@@ -470,21 +542,24 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
                         context.procedureDivisionUsingClause() != null
                                 || context.procedureDivisionGivingClause() != null,
                         context.procedureDeclaratives() != null, entryInputProof(context))),
-                completions.paragraphLocal(),completions.ordinary(),completions.embedded(),completions.embeddedOrdinary());
+                completions.paragraphLocal(),completions.ordinary(),completions.embedded(),completions.embeddedOrdinary(),normalCompletionStatements);
     }
 
     /** Sequential MOVE completion within a single sentence region. Paragraph/section
      * ends and declaratives are deliberately not assigned executable successors. */
+    private final Set<Integer> normalCompletionStatements=new LinkedHashSet<>();
     private long completionStatementVisits;
     long completionStatementVisits() { return completionStatementVisits; }
 
     private record CompletionRelations(Map<Integer,Integer> paragraphLocal,Map<Integer,Integer> ordinary,Map<Integer,Integer> embedded,Map<Integer,Integer> embeddedOrdinary) { }
     private CompletionRelations completionRelations(CobolParser.ProcedureDivisionContext context) {
         var local=new LinkedHashMap<Integer,Integer>();var ordinary=new LinkedHashMap<Integer,Integer>();var embedded=new LinkedHashMap<Integer,Integer>();var embeddedOrdinary=new LinkedHashMap<Integer,Integer>();
-        if(context.procedureDeclaratives()==null&&context.procedureDivisionBody()!=null) {
+        if(context.procedureDivisionBody()!=null) {
             var body=context.procedureDivisionBody();addParagraphContinuations(body.paragraphs(),local,ordinary,embedded,embeddedOrdinary);
             for(var section:body.procedureSection())addParagraphContinuations(section.paragraphs(),local,ordinary,embedded,embeddedOrdinary);
         }
+        if(context.procedureDeclaratives()!=null)for(var declarative:context.procedureDeclaratives().procedureDeclarative())
+            addParagraphContinuations(declarative.paragraphs(),local,ordinary,embedded,embeddedOrdinary);
         return new CompletionRelations(local,ordinary,embedded,embeddedOrdinary);
     }
     /** Both relations are recorded in one grammar-region walk. An unmaterialized
@@ -516,13 +591,14 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
                         || current instanceof Ast.PerformStatement || current instanceof Ast.EvaluateStatement
                         || current instanceof Ast.GoToStatement g && g.goToKind()==Ast.GoToKind.DEPENDING_ON
                         || current instanceof Ast.CallStatement call && !call.surface().hasHandlers()
-                        || sequentialOpaque(context);
+                        || FileIoSyntax.isNativeStatement(context) || sequentialOpaque(context);
                 // Positional host boundary only; no embedded-language success/return claim.
                 if(current instanceof Ast.EmbeddedLanguageStatement) {
                     if(next!=null)embedded.put(current.meta().id(),next.meta().id());
                     if(ordinaryNext!=null)embeddedOrdinary.put(current.meta().id(),ordinaryNext.meta().id());
                 }
                 if(continues&&current!=null) {
+                    normalCompletionStatements.add(current.meta().id());
                     if(next!=null)result.put(current.meta().id(),next.meta().id());
                     if(ordinaryNext!=null)ordinary.put(current.meta().id(),ordinaryNext.meta().id());
                 }
@@ -539,6 +615,16 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
                     if (evaluate.evaluateWhenOther() != null)
                         pending.push(new CompletionRegion(evaluate.evaluateWhenOther().statement(),next,ordinaryNext));
                 }
+                if(FileIoSyntax.isNativeStatement(context))for(var clause:FileIoSyntax.handlerContexts(context)) {
+                    List<CobolParser.StatementContext> body=null;
+                    if(clause instanceof CobolParser.AtEndPhraseContext x)body=x.statement();
+                    else if(clause instanceof CobolParser.NotAtEndPhraseContext x)body=x.statement();
+                    else if(clause instanceof CobolParser.InvalidKeyPhraseContext x)body=x.statement();
+                    else if(clause instanceof CobolParser.NotInvalidKeyPhraseContext x)body=x.statement();
+                    else if(clause instanceof CobolParser.WriteAtEndOfPagePhraseContext x)body=x.statement();
+                    else if(clause instanceof CobolParser.WriteNotAtEndOfPagePhraseContext x)body=x.statement();
+                    if(body!=null)pending.push(new CompletionRegion(body,next,ordinaryNext));
+                }
                 // An unmaterialized direct statement is a barrier, never skipped.
                 next = current;ordinaryNext=current;
             }
@@ -550,6 +636,7 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
      * Handler bodies are barriers until their control is independently published. */
     private static boolean sequentialOpaque(CobolParser.StatementContext c) {
         return c.continueStatement() != null
+            || c.exitStatement()!=null&&c.exitStatement().PROGRAM()==null
             || c.displayStatement() != null && c.displayStatement().onExceptionClause() == null && c.displayStatement().notOnExceptionClause() == null
             || c.readStatement() != null && c.readStatement().atEndPhrase() == null
                 && c.readStatement().notAtEndPhrase() == null && c.readStatement().invalidKeyPhrase() == null
@@ -689,6 +776,19 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
                 + (giving == null ? "" : " " + sourceText(giving).strip());
         return new Ast.ProcedureSignature(meta, using != null && using.CHAINING() != null,
                 parameters, returning, writtenText);
+    }
+
+    private Ast.Section buildDeclarative(CobolParser.ProcedureDeclarativeContext context) {
+        var sectionMeta=meta(context);var use=context.useStatement();var useMeta=meta(use);var after=use.useAfterClause();
+        var refs=new ArrayList<Ast.FileReference>();var mode=Ast.FileOpenMode.UNSPECIFIED;
+        if(after!=null) {
+            var on=after.useAfterOn();
+            mode=on.INPUT()!=null?Ast.FileOpenMode.INPUT:on.OUTPUT()!=null?Ast.FileOpenMode.OUTPUT:on.I_O()!=null?Ast.FileOpenMode.IO:on.EXTEND()!=null?Ast.FileOpenMode.EXTEND:Ast.FileOpenMode.UNSPECIFIED;
+            for(var f:on.fileName())refs.add(new Ast.FileReference(meta(f),clean(sourceText(f)),sourceText(f).strip()));
+        }
+        var nodes=new ArrayList<Ast.Node>();nodes.add(new Ast.UseClause(useMeta,after==null?Ast.UseKind.DEBUGGING:Ast.UseKind.AFTER_EXCEPTION,after!=null&&after.GLOBAL()!=null,mode,refs));
+        nodes.addAll(buildParagraphGroup(context.paragraphs()));
+        return new Ast.Section(sectionMeta,clean(sourceText(context.procedureSectionHeader().sectionName())),nodes);
     }
 
     private Ast.Section buildProcedureSection(CobolParser.ProcedureSectionContext context) {
@@ -955,17 +1055,20 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
         List<Ast.StatementOperand> operands = new ArrayList<>();
         var operandNodes=new java.util.IdentityHashMap<ParserRuleContext,Ast.Node>();
         collectStatementOperands(context, context, operands,operandNodes);
-        List<Ast.StatementClause> clauses = nearestDescendants(context, AstBuilder::isFlowClauseContext).stream()
-                .map(this::buildStatementClause).toList();
+        var clauseContexts = nearestDescendants(context, AstBuilder::isFlowClauseContext);
+        List<Ast.StatementClause> clauses = clauseContexts.stream().map(this::buildStatementClause).toList();
+        var fileIo = FileIoSyntax.project(context, operandNodes, clauseContexts, clauses);
         var effects=statementEffects(context,operands,clauses,operandNodes);
         return preserved
-                ? new Ast.PreservedStatement(meta, rule(context), sourceText(context).strip(), operands, clauses,effects)
-                : new Ast.ModeledStatement(meta, rule(context), sourceText(context).strip(), operands, clauses,effects);
+                ? new Ast.PreservedStatement(meta, rule(context), sourceText(context).strip(), operands, clauses,effects,fileIo)
+                : new Ast.ModeledStatement(meta, rule(context), sourceText(context).strip(), operands, clauses,effects,fileIo);
     }
 
     private static Optional<StatementEffectSummary> statementEffects(ParserRuleContext context,List<Ast.StatementOperand> operands,
             List<Ast.StatementClause> clauses,Map<ParserRuleContext,Ast.Node> nodes) {
         if(context instanceof CobolParser.DisplayStatementContext)return displayEffects(context,operands,clauses);
+        if(context instanceof CobolParser.ContinueStatementContext||context instanceof CobolParser.ExitStatementContext e&&e.PROGRAM()==null)
+            return Optional.of(new StatementEffectSummary(List.of(),List.of(),List.of(),List.of(),StatementEffectSummary.Bound.NONE,StatementEffectSummary.Bound.NONE,StatementEffectSummary.Bound.NONE,StatementEffectSummary.Environment.NONE,StatementEffectSummary.ValueTransform.NONE,StatementEffectSummary.Proof.NO_OP));
         var targets=new ArrayList<ParserRuleContext>();StatementEffectSummary.Proof proof;
         boolean closed=clauses.isEmpty();
         var environment=StatementEffectSummary.Environment.UNKNOWN;
@@ -1071,7 +1174,7 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
                 Ast.Meta operandMeta = meta(child);
                 var value=statementOperand(child);nodes.put(child,value);
                 output.add(new Ast.StatementOperand(operandMeta, rule(context),
-                        statementOperandContext(root, context), value));
+                        statementOperandContext(root, context, child), value));
             } else {
                 collectStatementOperands(root, child, output,nodes);
             }
@@ -1079,10 +1182,17 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
     }
 
     private Ast.Node statementOperand(ParserRuleContext context) {
+        // A native record-name is a qualified DATA reference. The nominal resolver
+        // retains its declaration identity; FD ownership is a separate declaration fact.
+        if (context instanceof CobolParser.RecordNameContext record)
+            return dataReference(record.qualifiedDataName());
         if (context instanceof CobolParser.IdentifierContext
                 || context instanceof CobolParser.QualifiedDataNameContext)
             return expression(context, "statement operand");
         if (context instanceof CobolParser.ProcedureNameContext) return procedureReference(context);
+        if (context instanceof CobolParser.FileNameContext
+                &&context.getParent() instanceof CobolParser.SortStatementContext sort&&FileIoSyntax.tableSort(sort))
+            return simpleDataReference(context);
         if (context instanceof CobolParser.FileNameContext)
             return new Ast.FileReference(meta(context), clean(sourceText(context)), sourceText(context).strip());
         if (context instanceof CobolParser.IndexNameContext)
@@ -1092,7 +1202,9 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
     }
 
     private static Ast.StatementOperandContext statementOperandContext(ParserRuleContext root,
-                                                                        ParserRuleContext parent) {
+                                                                        ParserRuleContext parent, ParserRuleContext operand) {
+        var fileRole = FileIoSyntax.operandRole(root, operand);
+        if (fileRole != null) return Ast.StatementOperandContext.valueOf("FILE_"+fileRole.name());
         if (!(root instanceof CobolParser.SetStatementContext)) return Ast.StatementOperandContext.DEFAULT;
         if (parent instanceof CobolParser.SetToContext setTo) {
             ParserRuleContext statement = setTo.getParent();

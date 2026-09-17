@@ -517,7 +517,7 @@ class DataAndIndexReferenceResolverTest {
                 ResolutionContracts.ReferenceRole.SUBSCRIPT, ResolutionContracts.ResolutionStatus.RESOLVED,
                 ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION, 1);
         ReferenceResolution.Entry setTarget = assertEntry(analysis.resolution(), unit, "TABLE-IDX",
-                ResolutionContracts.ReferenceRole.CONTEXT_DEPENDENT,
+                ResolutionContracts.ReferenceRole.VALUE_WRITE,
                 ResolutionContracts.ResolutionStatus.RESOLVED,
                 ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION, 1);
         ReferenceResolution.Entry comparison = assertEntry(analysis.resolution(), unit, "TABLE-IDX",
@@ -583,7 +583,7 @@ class DataAndIndexReferenceResolverTest {
         ResolutionContracts.ProgramUnitId unit = analysis.model().programUnits().get(0).id();
 
         List<ReferenceResolution.Entry> conditions = analysis.resolution().find(unit, "STATUS-OPEN",
-                ResolutionContracts.ReferenceRole.CONTEXT_DEPENDENT);
+                ResolutionContracts.ReferenceRole.VALUE_WRITE);
         assertEquals(2, conditions.size());
         assertTrue(conditions.stream().allMatch(entry -> entry.occurrence().kind()
                 == ResolutionContracts.ReferenceKind.CONDITION));
@@ -592,8 +592,8 @@ class DataAndIndexReferenceResolverTest {
         assertTrue(conditions.stream().allMatch(entry -> entry.status()
                 == ResolutionContracts.ResolutionStatus.RESOLVED));
 
-        List<ReferenceResolution.Entry> collision = analysis.resolution().find(unit, "FLAG-DATA",
-                ResolutionContracts.ReferenceRole.CONTEXT_DEPENDENT);
+        List<ReferenceResolution.Entry> collision = new java.util.ArrayList<>(analysis.resolution().find(unit, "FLAG-DATA",ResolutionContracts.ReferenceRole.VALUE_WRITE));
+        collision.addAll(analysis.resolution().find(unit,"FLAG-DATA",ResolutionContracts.ReferenceRole.VALUE_READ));
         assertEquals(2, collision.size());
         ReferenceResolution.Entry conditionTarget = collision.stream().filter(entry -> entry.occurrence().kind()
                 == ResolutionContracts.ReferenceKind.CONDITION).findFirst().orElseThrow();
@@ -604,12 +604,12 @@ class DataAndIndexReferenceResolverTest {
         assertEquals(ResolutionContracts.ReferenceKind.DATA, dataValue.selectedCandidate().orElseThrow().kind());
 
         ReferenceResolution.Entry dataSet = assertEntry(analysis.resolution(), unit, "SOURCE-VALUE",
-                ResolutionContracts.ReferenceRole.CONTEXT_DEPENDENT, ResolutionContracts.ResolutionStatus.RESOLVED,
+                ResolutionContracts.ReferenceRole.VALUE_WRITE, ResolutionContracts.ResolutionStatus.RESOLVED,
                 ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION, 1);
         assertEquals(EnumSet.of(ResolutionContracts.ReferenceKind.DATA, ResolutionContracts.ReferenceKind.INDEX),
                 dataSet.occurrence().admissibleKinds());
         ReferenceResolution.Entry indexSet = assertEntry(analysis.resolution(), unit, "TABLE-IDX",
-                ResolutionContracts.ReferenceRole.CONTEXT_DEPENDENT, ResolutionContracts.ResolutionStatus.RESOLVED,
+                ResolutionContracts.ReferenceRole.VALUE_WRITE, ResolutionContracts.ResolutionStatus.RESOLVED,
                 ResolutionContracts.ResolutionReason.UNIQUE_VISIBLE_DECLARATION, 1);
         assertEquals(ResolutionContracts.ReferenceKind.INDEX, indexSet.selectedCandidate().orElseThrow().kind());
     }

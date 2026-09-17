@@ -1,0 +1,10 @@
+id: FD-W8
+title: Publicar CICS File Control tipado em SP2.28
+status: IN_PROGRESS
+scope: [file-dependencies, cics-parser, semantic-product]
+rule: CICS TS for z/OS5.6 API/SPI; autoridade e hashes no harness canônico analysis-cfg w8-implementation.md.
+product: Dez comandos API e dois SPI, target direction, typed host roles/literal/integer, origins e gaps; consumer CALL separado.
+oracle: CicsFileControlTest, Program Control, multiplicidade 1/2/5/40, LENGTH OF sem identidades AST descartadas.
+evidence: .harness-results/fd-w8; sp-7 45 PASS; projector-1 36 PASS; fast-3 345 PASS; qualification-2 938 testes / um skip histórico e source-normalizer full PASS.
+checkpoint: QUALIFIED_LOCAL produtor; integração bilateral/consumer W8 pendente; PR54 Draft/unmerged.
+limits: Host expression não referencial sem binding permanece gap; não avaliar filenames, buffers ou configuração externa no projector.

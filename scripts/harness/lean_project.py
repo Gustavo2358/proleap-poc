@@ -7,7 +7,7 @@ import sys
 import xml.etree.ElementTree as ET
 from lean import require_local
 
-FAST_TESTS = ('EvidenceMetamorphicTest', 'ScopedStorageEvidenceTest', 'EvidencePreservationTest', 'AmbiguousCallStorageTest', 'ScopedInputTest', 'ScopedLayoutTest', 'ObservedDependenciesTest', 'RecallFirstEntryTest', 'StatementEffectSummaryTest', 'PartialWriteEffectsTest', 'ExecDliOpaqueTest', 'DeclarativeValueInferenceTest', 'CicsProgramControlTest', 'ArchitectureBoundaryTest', 'HarnessDocsTest', 'SemanticProductEntryGobackTest', 'SemanticProductCheckpoint7JsonTest', 'W1CompatibilityW2ATest', 'LocalizedInputCompletenessContractTest',
+FAST_TESTS = ('FileScopeContractTest', 'EvidenceMetamorphicTest', 'ScopedStorageEvidenceTest', 'EvidencePreservationTest', 'AmbiguousCallStorageTest', 'ScopedInputTest', 'ScopedLayoutTest', 'ObservedDependenciesTest', 'RecallFirstEntryTest', 'StatementEffectSummaryTest', 'PartialWriteEffectsTest', 'ExecDliOpaqueTest', 'DeclarativeValueInferenceTest', 'CicsProgramControlTest', 'CicsFileControlTest', 'ArchitectureBoundaryTest', 'HarnessDocsTest', 'SemanticProductEntryGobackTest', 'SemanticProductCheckpoint7JsonTest', 'W1CompatibilityW2ATest', 'LocalizedInputCompletenessContractTest',
               'ScalarMoveCheckpoint4ATest', 'MoveDataSourceTest', 'PerformDiscoveryTest', 'PerformBasicTest', 'PerformFamilyTest', 'PerformUntilTest', 'PerformTimesTest', 'PerformVaryingTest', 'MultiCallProgramTest', 'CompositionalityContractTest', 'EvaluateFirstSliceTest', 'GoToFirstSliceTest', 'ConditionalGoToTest', 'PartialProgramFactsTest', 'CallCheckpointW1ATest', 'IfCheckpointW2ATest',
               'IfCanonicalProofTest', 'SemanticProductMoveCallContractTest', 'StorageLayoutTest', 'StorageAccessTest', 'StorageProductTest', 'StorageOverlayTest', 'StorageOverlayProductTest', 'StorageLocalEligibilityTest', 'StorageRenamesTest', 'StorageRenamesProductTest', 'StorageReferenceModificationTest', 'StorageSliceProductTest', 'StorageCorrespondenceTest', 'StorageCorrespondenceProductTest', 'StorageMoveAdjustmentTest', 'StorageMoveSequenceProductTest', 'StorageInitialTest', 'StorageInitialProductTest', 'StorageValueLayoutTest', 'StorageMixedInitialTest')
 
@@ -47,6 +47,7 @@ def maven(*args):
 
 
 def technical_fast(root):
+    subprocess.run([sys.executable, '-B', 'scripts/harness/test_naming.py'], cwd=root, check=True)
     subprocess.run(maven('clean', '-Dtest=' + ','.join(FAST_TESTS), 'test'), cwd=root, check=True)
     reports = root / 'target/surefire-reports'
     observed = {}
@@ -62,6 +63,7 @@ def technical_fast(root):
 
 def full_local(root):
     require_local()
+    subprocess.run([sys.executable, '-B', 'scripts/harness/test_naming.py'], cwd=root, check=True)
     subprocess.run(maven('test'), cwd=root, check=True)
     subprocess.run(['bash', 'scripts/source-normalizer-regression.sh', 'full'], cwd=root, check=True)
     subprocess.run(['bash', 'scripts/verify-naming.sh'], cwd=root, check=True)

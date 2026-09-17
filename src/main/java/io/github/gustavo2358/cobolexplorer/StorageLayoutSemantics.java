@@ -29,16 +29,18 @@ public final class StorageLayoutSemantics {
     private final Map<String,Long> metrics;
     private final CompilationUnitBuildResult owner;
     private final ReferenceResolution bindings;
+    private final CompilationUnitSymbolTables symbolTables;
     private StorageLayoutSemantics(Map<ResolutionContracts.ProgramUnitId,Layout> layouts,Map<String,Long> metrics,
-            CompilationUnitBuildResult owner,ReferenceResolution bindings) {
-        this.layouts=Map.copyOf(layouts);this.metrics=Map.copyOf(metrics);this.owner=owner;this.bindings=bindings;
+            CompilationUnitBuildResult owner,ReferenceResolution bindings,CompilationUnitSymbolTables symbolTables) {
+        this.layouts=Map.copyOf(layouts);this.metrics=Map.copyOf(metrics);this.owner=owner;this.bindings=bindings;this.symbolTables=symbolTables;
     }
+    CompilationUnitSymbolTables symbolTables(){return symbolTables;}
     boolean belongsTo(CompilationUnitBuildResult owner,ReferenceResolution bindings){return this.owner==owner&&this.bindings==bindings;}
     public Layout layout(ResolutionContracts.ProgramUnitId unit){return Objects.requireNonNull(layouts.get(unit),"foreign unit");}
     public Map<String,Long> metrics(){return metrics;}
     public static StorageLayoutSemantics analyze(CompilationUnitBuildResult frontend,CompilationUnitSymbolTables tables,
             ReferenceResolution resolution,ResolutionAnalysisReport report,Profile profile) {
-        return analyze(frontend,tables,resolution,report,profile,StorageComponents.analyze(frontend));
+        return analyze(frontend,tables,resolution,report,profile,StorageComponents.analyze(frontend,tables,resolution));
     }
     public static StorageLayoutSemantics analyze(CompilationUnitBuildResult frontend,CompilationUnitSymbolTables tables,
             ReferenceResolution resolution,ResolutionAnalysisReport report,Profile profile,StorageComponents components) {
@@ -117,7 +119,7 @@ public final class StorageLayoutSemantics {
             }
             layouts.put(unit.id(),new Layout(profile,nodes,bases,views,List.copyOf(reasons),physical.relations(),renames));
         }
-        return new StorageLayoutSemantics(layouts,Map.of("declarations",declarations,"layoutVisits",visits,"objectPairs",0L),frontend,resolution);
+        return new StorageLayoutSemantics(layouts,Map.of("declarations",declarations,"layoutVisits",visits,"objectPairs",0L),frontend,resolution,tables);
     }
     private static Measure footprint(StorageComponents.Component component,Map<Integer,Measure> extents) {
         BigInteger max=BigInteger.ZERO;

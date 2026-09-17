@@ -43,7 +43,7 @@ public final class IfSemantics {
             ReferenceResolution resolution, ResolutionAnalysisReport report,
             Map<ResolutionContracts.SemanticEntityId, ScalarMoveSemantics.ScalarText> scalars,
             Map<ScalarMoveSemantics.NodeKey, ScalarMoveSemantics.Move> moves, NumericControlSemantics numbers) {
-        return analyze(frontend,tables,resolution,report,scalars,moves,numbers,StorageComponents.analyze(frontend));
+        return analyze(frontend,tables,resolution,report,scalars,moves,numbers,StorageComponents.analyze(frontend,tables,resolution));
     }
     static IfSemantics analyze(CompilationUnitBuildResult frontend, CompilationUnitSymbolTables tables,
             ReferenceResolution resolution, ResolutionAnalysisReport report,

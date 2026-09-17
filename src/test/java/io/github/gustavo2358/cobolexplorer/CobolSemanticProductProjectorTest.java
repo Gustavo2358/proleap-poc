@@ -669,7 +669,7 @@ class CobolSemanticProductProjectorTest {
         assertFalse(source.contains("findLast"));
         assertFalse(source.contains("single("));
         // Written spelling is forwarded as metadata only, never inspected for semantics.
-        assertFalse(source.replace("literal.writtenText(),", "").contains("writtenText"));
+        assertFalse(source.replace("literal.writtenText(),", "").replace("Optional.of(n.writtenText())", "").contains("writtenText"));
         assertFalse(source.contains("rawLexeme"));
         assertFalse(source.contains("grammarRule"));
         assertFalse(source.contains("SourceMap"));
@@ -705,7 +705,7 @@ class CobolSemanticProductProjectorTest {
 
     private static CobolSemanticProduct.State portState(CobolSemanticPort port) {
         return new CobolSemanticProduct.State(port.unit(), port.policy(),
-                port.dataDeclarations(), port.statements(), port.gaps(), port.coverage(), port.entryInventory(), port.storageIndependence());
+                port.dataDeclarations(), port.statements(), port.gaps(), port.coverage(), port.entryInventory(), port.storageIndependence(),port.storage(),port.fileInventory());
     }
 
     private static CobolSemanticProduct.StatementId statementId(

@@ -44,7 +44,7 @@ public final class CobolSemanticProduct {
 
     public enum ReadinessStatus { SUFFICIENT, PARTIAL, BLOCKED, NOT_APPLICABLE }
 
-    public enum Branch { ROOT, THEN, ELSE, EVALUATE_ARM, UNKNOWN }
+    public enum Branch { ROOT, THEN, ELSE, EVALUATE_ARM, FILE_HANDLER, UNKNOWN }
 
     public enum OperandRole { READ, WRITE, CALL_TARGET }
 
@@ -442,10 +442,10 @@ public final class CobolSemanticProduct {
         public Containment {
             parent = Objects.requireNonNull(parent, "parent");
             branch = Objects.requireNonNull(branch, "branch");
-            boolean requiresParent = branch == Branch.THEN || branch == Branch.ELSE || branch == Branch.EVALUATE_ARM;
+            boolean requiresParent = branch == Branch.THEN || branch == Branch.ELSE || branch == Branch.EVALUATE_ARM || branch==Branch.FILE_HANDLER;
             if (requiresParent != parent.isPresent())
                 throw new IllegalArgumentException(
-                        "THEN/ELSE require a parent; ROOT/UNKNOWN must omit it");
+                        "structural arms require a parent; ROOT/UNKNOWN must omit it");
         }
 
         public static Containment root() {
@@ -560,7 +560,9 @@ public final class CobolSemanticProduct {
     }
     public enum StorageProfile { UNSPECIFIED, IBM_ENTERPRISE_6_4_FIXED_DISPLAY_1047 }
     public enum PhysicalKind { GROUP, ELEMENTARY, OPAQUE }
-    public enum AllocationProof { INDEPENDENT_LOCAL_WORKING_STORAGE, UNPROVEN }
+    public enum AllocationProof { INDEPENDENT_LOCAL_WORKING_STORAGE, INDEPENDENT_LOCAL_STORAGE, UNPROVEN;
+        public boolean proved(){return this!=UNPROVEN;}
+    }
     public enum RegionalMoveKind { LITERAL_BYTES, FITTED_LITERAL_BYTES, COPY_BYTES, FIT_TEXT, LOGICAL_FIT_TEXT, MUST_UNKNOWN, UNAVAILABLE }
     public record StorageMeasure(Optional<BigInteger> value, List<String> gapCodes) {
         public StorageMeasure {
@@ -758,7 +760,7 @@ public final class CobolSemanticProduct {
     }
 
     /** Adding a fact type extends this inventory without changing the State envelope. */
-    public sealed interface StatementFact permits MoveFact, CallFact, CicsFact, IfFact,
+    public sealed interface StatementFact permits MoveFact, CallFact, CicsFact, CicsFileFact, IfFact,
             ObservedStatement, GobackFact, PerformFact, EvaluateFact, GoToFact, ConditionalGoToFact, ProcedurePerformFact {
         StatementHeader header();
     }
@@ -781,6 +783,37 @@ public final class CobolSemanticProduct {
             require(header.coverage()!=CoverageStatus.MODELED,"CICS effects/signature remain partial");
             for(var option:options)require(option.end()<=rawText.length(),"CICS option outside payload");
             target.ifPresent(t->require(t.id().statement().equals(header.id()),"CICS operand owner"));
+        }
+    }
+
+    public enum CicsFileTargetMode { INPUT, OUTPUT, BROWSE_START, BROWSE_END }
+    public enum CicsFileRole { READ, WRITE, READ_WRITE, NONE, UNKNOWN }
+    public record CicsFileOption(String name,String canonicalName,Optional<String> operand,int start,int end,
+            CicsFileRole role,Optional<DataReference> reference,Optional<String> literal,Optional<java.math.BigInteger> integer) {
+        public CicsFileOption {
+            name=requireText(name,"option name");canonicalName=requireText(canonicalName,"canonical option");
+            Objects.requireNonNull(operand);Objects.requireNonNull(role);Objects.requireNonNull(reference);Objects.requireNonNull(literal);Objects.requireNonNull(integer);
+            require(start>=0&&end>=start,"CICS FILE offsets");
+            require((reference.isPresent()?1:0)+(literal.isPresent()?1:0)+(integer.isPresent()?1:0)<=1,"CICS FILE operand has one typed value");
+            reference.ifPresent(r->require(r.role()==(role==CicsFileRole.WRITE?OperandRole.WRITE:OperandRole.READ),"CICS FILE reference role agrees with direction"));
+        }
+    }
+    public record CicsFileFact(StatementHeader header,String command,String rawText,CicsFileTargetMode targetMode,
+            Optional<CallTarget> target,List<CicsFileOption> options,CicsConditions conditions,
+            NormalContinuation localContinuation,NormalContinuation ordinaryContinuation,String nameProfile,List<String> gapCodes) implements StatementFact {
+        public CicsFileFact {
+            Objects.requireNonNull(header);Objects.requireNonNull(rawText);Objects.requireNonNull(targetMode);Objects.requireNonNull(target);
+            require(Set.of("READ","WRITE","REWRITE","DELETE","STARTBR","READNEXT","READPREV","RESETBR","ENDBR","UNLOCK","INQUIRE","SET").contains(command),"CICS FILE command");
+            options=List.copyOf(options);gapCodes=List.copyOf(gapCodes);Objects.requireNonNull(conditions);
+            Objects.requireNonNull(localContinuation);Objects.requireNonNull(ordinaryContinuation);
+            require(nameProfile.equals("cics-ts.file@1"),"CICS FILE name profile");
+            require(targetMode==CicsFileTargetMode.INPUT||target.isEmpty(),"CICS FILE output/browse has no input target");
+            require(targetMode==CicsFileTargetMode.INPUT||command.equals("INQUIRE"),"Only INQUIRE has an output/browse target mode");
+            require(conditions!=CicsConditions.DEFAULT_ENTRY_PREFIX,"FILE handler entry premise not published");
+            require(conditions!=CicsConditions.LOCAL_CONDITION||options.stream().anyMatch(o->o.canonicalName().equals("NOHANDLE")||o.canonicalName().equals("RESP")),"local FILE conditions require RESP or NOHANDLE");
+            require(localContinuation.statement().isEmpty()||localContinuation.statement().equals(ordinaryContinuation.statement()),"FILE local continuation agrees with ordinary continuation");
+            for(var option:options)require(option.end()<=rawText.length(),"CICS FILE option outside payload");
+            target.ifPresent(t->require(t.id().statement().equals(header.id()),"CICS FILE target owner"));
         }
     }
 
@@ -1108,9 +1141,9 @@ public final class CobolSemanticProduct {
     }
 
     public enum EffectBound { NONE, ALL }
-    public enum EnvironmentEffect { OUTPUT, INPUT, UNKNOWN }
+    public enum EnvironmentEffect { OUTPUT, INPUT, UNKNOWN, NONE }
     public enum EffectValueTransform { NONE, UNKNOWN }
-    public enum EffectProof { DISPLAY_SIMPLE, INITIALIZE_TARGETS, ACCEPT_TARGET, SET_TARGETS, ARITHMETIC_TARGETS, STRING_TARGETS, UNSTRING_TARGETS, INSPECT_TARGETS }
+    public enum EffectProof { NO_OP, DISPLAY_SIMPLE, INITIALIZE_TARGETS, ACCEPT_TARGET, SET_TARGETS, ARITHMETIC_TARGETS, STRING_TARGETS, UNSTRING_TARGETS, INSPECT_TARGETS }
     public record EffectSummary(List<OperandId> knownReads,List<OperandId> mayWrites,List<OperandId> mustOverwrite,
             List<OperandId> exposedRegions,EffectBound unknownReadBound,EffectBound unknownWriteBound,
             EffectBound unknownExposureBound,EnvironmentEffect environment,EffectValueTransform values,EffectProof proof) {
@@ -1146,9 +1179,10 @@ public final class CobolSemanticProduct {
                 require(e.mayWrites().stream().allMatch(id->refs.get(id).role()==OperandRole.WRITE),"effect write role");
                 require(e.mustOverwrite().isEmpty()||e.proof()==EffectProof.INITIALIZE_TARGETS,"only exact INITIALIZE is MUST in this slice");
                 require(e.mustOverwrite().stream().allMatch(id->refs.get(id).regionalAccess().isPresent()),"MUST requires a physical access");
-                if(e.proof()!=EffectProof.DISPLAY_SIMPLE)require(e.values()==EffectValueTransform.UNKNOWN
+                if(e.proof()!=EffectProof.DISPLAY_SIMPLE&&e.proof()!=EffectProof.NO_OP)require(e.values()==EffectValueTransform.UNKNOWN
                     &&(e.unknownWriteBound()!=EffectBound.NONE||!e.mayWrites().isEmpty()),"receiver effect must retain writes or unknown bound");
                 require(e.knownReads().stream().allMatch(id->refs.get(id).role()==OperandRole.READ),"effect read role");
+                if(e.proof()==EffectProof.NO_OP)require(e.knownReads().isEmpty()&&e.mayWrites().isEmpty()&&e.mustOverwrite().isEmpty()&&e.exposedRegions().isEmpty()&&e.unknownReadBound()==EffectBound.NONE&&e.unknownWriteBound()==EffectBound.NONE&&e.unknownExposureBound()==EffectBound.NONE&&e.environment()==EnvironmentEffect.NONE&&e.values()==EffectValueTransform.NONE,"NO_OP proof shape");
                 if(e.proof()==EffectProof.DISPLAY_SIMPLE)require(e.mayWrites().isEmpty()&&e.mustOverwrite().isEmpty()&&e.exposedRegions().isEmpty()
                     &&e.unknownWriteBound()==EffectBound.NONE&&e.unknownExposureBound()==EffectBound.NONE
                     &&e.environment()==EnvironmentEffect.OUTPUT&&e.values()==EffectValueTransform.NONE,"DISPLAY proof shape");
@@ -1190,11 +1224,269 @@ public final class CobolSemanticProduct {
         }
     }
 
+    public enum FileKind { FD, SD, UNKNOWN }
+    public enum FileOrganization { SEQUENTIAL, LINE_SEQUENTIAL, INDEXED, RELATIVE, UNSPECIFIED, UNSUPPORTED }
+    public enum FileAccessMode { SEQUENTIAL, RANDOM, DYNAMIC, UNSPECIFIED, UNSUPPORTED }
+    public enum FileVisibility { LOCAL, GLOBAL, EXTERNAL, CONFLICTING }
+    public enum FileReferenceRole { RECORD_KEY, ALTERNATE_RECORD_KEY, RELATIVE_KEY, FILE_STATUS, ADDITIONAL_STATUS }
+    public enum FileNameSource { ASSIGNMENT_NAME, SORT_COMMENT, UNSUPPORTED, ABSENT }
+    public record FileId(UnitId unit, int localId) {
+        public FileId { Objects.requireNonNull(unit); require(localId >= 0, "negative file id"); }
+    }
+    public record FileAssignment(Availability availability, String profile, String original,
+                                 FileNameSource sourceKind, Optional<String> externalFileName, List<String> gapCodes) {
+        public FileAssignment {
+            Objects.requireNonNull(availability); requireText(profile, "file profile"); Objects.requireNonNull(original);
+            Objects.requireNonNull(sourceKind); Objects.requireNonNull(externalFileName); gapCodes = List.copyOf(gapCodes);
+            require(externalFileName.isPresent() == (sourceKind == FileNameSource.ASSIGNMENT_NAME), "external name/source kind mismatch");
+            externalFileName.ifPresent(n -> requireText(n, "external name"));
+            require(availability == Availability.KNOWN ? gapCodes.isEmpty() : !gapCodes.isEmpty(), "assignment availability/gaps mismatch");
+            require(!externalFileName.isPresent() || availability == Availability.KNOWN, "unproved exact external name");
+        }
+    }
+    public record FileReference(FileReferenceRole role, NominalBinding binding, boolean duplicates, Provenance provenance) {
+        public FileReference { Objects.requireNonNull(role); Objects.requireNonNull(binding); Objects.requireNonNull(provenance); }
+    }
+    public record FileDeclaration(FileId id, UnitId owner, String logicalFile, FileKind kind,
+            Optional<Boolean> optional, FileAssignment assignment, FileOrganization organization, FileAccessMode accessMode,
+            FileVisibility visibility, List<DataItemId> records, List<FileReference> references,
+            List<Provenance> origins, List<String> gapCodes) {
+        public FileDeclaration {
+            Objects.requireNonNull(id); Objects.requireNonNull(owner); require(id.unit().equals(owner), "file owner mismatch");
+            requireText(logicalFile, "logicalFile"); Objects.requireNonNull(kind); Objects.requireNonNull(optional);
+            Objects.requireNonNull(assignment); Objects.requireNonNull(organization); Objects.requireNonNull(accessMode); Objects.requireNonNull(visibility);
+            records = List.copyOf(records); references = List.copyOf(references); origins = List.copyOf(origins); gapCodes = List.copyOf(gapCodes);
+            require(!origins.isEmpty(), "file declaration needs origin");
+            require(kind != FileKind.SD || assignment.externalFileName().isEmpty(), "SD name is a comment");
+            require(new HashSet<>(records).size() == records.size(), "duplicate file record");
+        }
+    }
+    public enum FileCommand { OPEN, READ, WRITE, REWRITE, DELETE_RECORD, START, CLOSE, RELEASE, RETURN, SORT, MERGE }
+    public enum FileRole { DIRECT, WORK, INPUT, OUTPUT }
+    public enum FileOpenMode { INPUT, OUTPUT, IO, EXTEND, UNSPECIFIED }
+    public enum FileSyntaxProfile { N_LR, UNSUPPORTED }
+    public enum FileOption { NEXT, REVERSED, NO_REWIND, LOCK, REEL, UNIT, FOR_REMOVAL, BEFORE_ADVANCING, AFTER_ADVANCING, PAGE }
+    public enum FileKeyRelation { UNSPECIFIED, EQUAL, GREATER, GREATER_OR_EQUAL }
+    public enum FileOperandRole { RECORD, INTO, FROM, KEY, ADVANCING }
+    public enum FileOperandForm { REFERENCE, LITERAL, MNEMONIC, UNSUPPORTED }
+    public enum FileHandlerKind { AT_END, NOT_AT_END, INVALID_KEY, NOT_INVALID_KEY, AT_END_OF_PAGE, NOT_AT_END_OF_PAGE }
+    public record FileOperand(FileOperandRole role, FileOperandForm form, List<OperandId> references,
+            Optional<String> writtenValue, Provenance provenance, List<String> gapCodes) {
+        public FileOperand { Objects.requireNonNull(role);Objects.requireNonNull(form);references=List.copyOf(references);
+            Objects.requireNonNull(writtenValue);Objects.requireNonNull(provenance);gapCodes=List.copyOf(gapCodes); }
+    }
+    public record FileHandler(FileHandlerKind kind, List<StatementId> statements, Provenance provenance) {
+        public FileHandler { Objects.requireNonNull(kind);statements=List.copyOf(statements);Objects.requireNonNull(provenance); }
+    }
+    public enum FileEffectOutcome { SUCCESS, END, INVALID_KEY, OTHER_ERROR }
+    public enum FileMemoryRole { RECORD, INTO, FROM_RECORD, FILE_STATUS, ADDITIONAL_STATUS, RELATIVE_KEY, RECORD_LENGTH }
+    public enum FileMemoryKind { MAY_UNKNOWN, MUST_UNKNOWN, COPY_BYTES, FIT_TEXT }
+    public record FileMemoryTarget(Optional<DataItemId> data,Optional<RegionalAccess> regional,boolean wholeBase,
+            Optional<OperandId> reference,Provenance provenance) {
+        public FileMemoryTarget {Objects.requireNonNull(data);Objects.requireNonNull(regional);Objects.requireNonNull(reference);Objects.requireNonNull(provenance);
+            require(data.isPresent()||regional.isPresent(),"file memory target needs canonical DATA or storage");
+            require(!wholeBase||regional.isEmpty()||regional.orElseThrow().slice().isEmpty(),"whole base cannot carry a precise slice");}
+    }
+    public record FileMemoryStep(FileMemoryRole role,FileMemoryKind kind,FileMemoryTarget destination,
+            Optional<FileMemoryTarget> source,List<String> gapCodes,Provenance provenance) {
+        public FileMemoryStep {Objects.requireNonNull(role);Objects.requireNonNull(kind);Objects.requireNonNull(destination);Objects.requireNonNull(source);gapCodes=List.copyOf(gapCodes);Objects.requireNonNull(provenance);
+            require(kind!=FileMemoryKind.COPY_BYTES&&kind!=FileMemoryKind.FIT_TEXT||source.isPresent()&&gapCodes.isEmpty(),"precise transfer requires source and proof");
+            require(kind==FileMemoryKind.MAY_UNKNOWN||!destination.wholeBase()&&destination.regional().isPresent()&&gapCodes.isEmpty(),"strong effect requires an exact receiving view and proof");
+            require(kind!=FileMemoryKind.MUST_UNKNOWN||role==FileMemoryRole.INTO||role==FileMemoryRole.FILE_STATUS,"MUST is not implied by the I/O verb");
+            require(source.isEmpty()||role==FileMemoryRole.FROM_RECORD,"source belongs only to FROM transfer");
+            require(kind!=FileMemoryKind.COPY_BYTES&&kind!=FileMemoryKind.FIT_TEXT||role==FileMemoryRole.FROM_RECORD,"precise transfer belongs before I/O");}
+    }
+    public record FileOutcomeEffects(FileEffectOutcome outcome,List<FileMemoryStep> steps) {
+        public FileOutcomeEffects {Objects.requireNonNull(outcome);steps=List.copyOf(steps);
+            int prior=-1;var seen=java.util.EnumSet.noneOf(FileMemoryRole.class);
+            for(var step:steps) {
+                require(step.role()!=FileMemoryRole.FROM_RECORD,"FROM belongs before I/O");
+                require(step.role()==FileMemoryRole.RECORD||seen.add(step.role()),"duplicate receiver role");
+                require(outcome==FileEffectOutcome.SUCCESS||step.role()!=FileMemoryRole.INTO&&step.role()!=FileMemoryRole.RELATIVE_KEY&&step.role()!=FileMemoryRole.RECORD_LENGTH,"READ receiving effects require success");
+                int rank=switch(step.role()){case RECORD,FROM_RECORD->0;case RELATIVE_KEY->1;case RECORD_LENGTH->2;case FILE_STATUS->3;case ADDITIONAL_STATUS->4;case INTO->5;};
+                require(rank>=prior,"file memory steps out of order");prior=rank;
+            }}
+    }
+    public record FileEffectPlan(Availability availability,List<FileMemoryTarget> ioReads,List<FileMemoryStep> before,
+            List<FileOutcomeEffects> outcomes,boolean unknownReadBound,boolean unknownWriteBound,List<String> gapCodes) {
+        public FileEffectPlan {Objects.requireNonNull(availability);ioReads=List.copyOf(ioReads);before=List.copyOf(before);outcomes=List.copyOf(outcomes);gapCodes=List.copyOf(gapCodes);
+            require(outcomes.stream().map(FileOutcomeEffects::outcome).distinct().count()==outcomes.size(),"duplicate file effect outcome");
+            require(availability!=Availability.KNOWN&&availability!=Availability.PARTIAL||outcomes.size()==FileEffectOutcome.values().length,"conditional effects must preserve every outcome");
+            require(before.stream().allMatch(s->s.role()==FileMemoryRole.FROM_RECORD),"only FROM belongs before I/O");
+            require(availability!=Availability.KNOWN||!unknownReadBound&&!unknownWriteBound&&gapCodes.isEmpty(),"known effect bounds require no gap");
+            require(availability==Availability.KNOWN||!gapCodes.isEmpty(),"unavailable/partial file effects require reasons");
+            require(availability!=Availability.UNAVAILABLE||ioReads.isEmpty()&&before.isEmpty()&&outcomes.isEmpty(),"unavailable effects cannot assert a plan");}
+        public static FileEffectPlan unavailable(){return new FileEffectPlan(Availability.UNAVAILABLE,List.of(),List.of(),List.of(),true,true,List.of("FILE_MEMORY_EFFECTS_UNAVAILABLE"));}
+    }
+    public enum FileUseKind { AFTER_EXCEPTION, DEBUGGING }
+    public enum FileControlEvent { SUCCESS, END, INVALID_KEY, OTHER_ERROR, END_OF_PAGE }
+    public enum FileDestinationKind { CONTINUE, HANDLER, USE }
+    public record FileDeclarative(String id,UnitId owner,FileUseKind kind,boolean global,FileOpenMode mode,List<FileId> files,
+            List<StatementId> roots,Optional<StatementId> entry,List<StatementId> completions,List<String> gapCodes,Provenance provenance) {
+        public FileDeclarative {Objects.requireNonNull(id);Objects.requireNonNull(owner);Objects.requireNonNull(kind);Objects.requireNonNull(mode);files=List.copyOf(files);roots=List.copyOf(roots);Objects.requireNonNull(entry);completions=List.copyOf(completions);gapCodes=List.copyOf(gapCodes);Objects.requireNonNull(provenance);
+            require(entry.equals(roots.isEmpty()?Optional.empty():Optional.of(roots.get(0))),"USE entry must be its first published root");}
+    }
+    public record FileDestination(FileDestinationKind kind,Optional<FileHandlerKind> handler,Optional<String> declarative) {
+        public FileDestination {Objects.requireNonNull(kind);Objects.requireNonNull(handler);Objects.requireNonNull(declarative);
+            require(handler.isPresent()==(kind==FileDestinationKind.HANDLER)&&declarative.isPresent()==(kind==FileDestinationKind.USE),"file route destination shape");}
+    }
+    public record FileControlRoute(FileControlEvent event,FileEffectOutcome effects,List<FileDestination> destinations,boolean criticalExit) {
+        public FileControlRoute {Objects.requireNonNull(event);Objects.requireNonNull(effects);destinations=List.copyOf(destinations);require(!destinations.isEmpty(),"file event requires destination");
+            require(effects==switch(event){case SUCCESS,END_OF_PAGE->FileEffectOutcome.SUCCESS;case END->FileEffectOutcome.END;case INVALID_KEY->FileEffectOutcome.INVALID_KEY;case OTHER_ERROR->FileEffectOutcome.OTHER_ERROR;},"event/effect outcome mismatch");}
+    }
+    public record FileControlPlan(Availability availability,Optional<StatementId> continuation,List<FileControlRoute> routes,List<String> gapCodes) {
+        public FileControlPlan {Objects.requireNonNull(availability);Objects.requireNonNull(continuation);routes=List.copyOf(routes);gapCodes=List.copyOf(gapCodes);
+            require(routes.stream().map(FileControlRoute::event).distinct().count()==routes.size(),"duplicate file control event");
+            require(availability!=Availability.KNOWN||gapCodes.isEmpty()&&!routes.isEmpty(),"known control requires routes and no gaps");
+            require(availability==Availability.KNOWN||!gapCodes.isEmpty(),"partial/unavailable control requires gap");}
+        public static FileControlPlan unavailable(){return new FileControlPlan(Availability.UNAVAILABLE,Optional.empty(),List.of(),List.of("FILE_CONTROL_UNAVAILABLE"));}
+    }
+    public record FileUse(StatementId statement, int ordinal, FileCommand command, FileOpenMode mode,
+            FileSyntaxProfile profile, ResolutionStatus bindingStatus, List<FileId> candidates,
+            Provenance provenance, List<String> gapCodes, List<FileOperand> operands, List<FileOption> options,
+            FileKeyRelation keyRelation, boolean explicitTerminator, List<FileHandler> handlers,FileEffectPlan effects,FileControlPlan control,FileRole role) {
+        public FileUse {
+            Objects.requireNonNull(statement);require(ordinal>=0,"file use ordinal");Objects.requireNonNull(command);Objects.requireNonNull(mode);
+            Objects.requireNonNull(role);
+            Objects.requireNonNull(profile);Objects.requireNonNull(bindingStatus);candidates=List.copyOf(candidates);
+            Objects.requireNonNull(provenance);gapCodes=List.copyOf(gapCodes);
+            operands=List.copyOf(operands);options=List.copyOf(options);Objects.requireNonNull(keyRelation);handlers=List.copyOf(handlers);Objects.requireNonNull(effects);Objects.requireNonNull(control);
+            require(bindingStatus!=ResolutionStatus.RESOLVED||candidates.size()==1,"resolved file use needs unique identity");
+        }
+    }
+    public record FileOperations(Availability availability,List<FileUse> uses,List<String> gapCodes) {
+        public FileOperations { Objects.requireNonNull(availability);uses=List.copyOf(uses);gapCodes=List.copyOf(gapCodes); }
+        public static FileOperations unavailable(){return new FileOperations(Availability.UNAVAILABLE,List.of(),List.of("FILE_OPERATIONS_UNAVAILABLE"));}
+    }
+    public enum FileProcedurePhase { INPUT, OUTPUT }
+    public record FileProcedureLink(StatementId from,StatementId to) {public FileProcedureLink {Objects.requireNonNull(from);Objects.requireNonNull(to);require(!from.equals(to),"local procedure link cannot be self");}}
+    public record FileProcedurePlan(FileProcedurePhase phase,Optional<PerformTarget> start,Optional<PerformTarget> end,
+            List<StatementId> roots,Optional<StatementId> entry,List<StatementId> completions,List<FileProcedureLink> links,List<String> gapCodes) {
+        public FileProcedurePlan {Objects.requireNonNull(phase);Objects.requireNonNull(start);Objects.requireNonNull(end);roots=List.copyOf(roots);Objects.requireNonNull(entry);completions=List.copyOf(completions);links=List.copyOf(links);gapCodes=List.copyOf(gapCodes);
+            require(entry.equals(roots.isEmpty()?Optional.empty():Optional.of(roots.get(0))),"procedure entry must be first root");
+            require(!gapCodes.isEmpty()||start.isPresent()&&end.isPresent(),"known procedure requires endpoints");}
+    }
+    public record FileSortPlan(StatementId statement,Availability availability,int work,List<Integer> inputs,List<Integer> outputs,List<FileProcedurePlan> procedures,List<String> gapCodes) {
+        public FileSortPlan {Objects.requireNonNull(statement);Objects.requireNonNull(availability);inputs=List.copyOf(inputs);outputs=List.copyOf(outputs);procedures=List.copyOf(procedures);gapCodes=List.copyOf(gapCodes);
+            require(availability==Availability.KNOWN?gapCodes.isEmpty()&&work>=0:!gapCodes.isEmpty(),"sort availability/gaps disagree");
+            require(procedures.stream().map(FileProcedurePlan::phase).distinct().count()==procedures.size(),"duplicate sort procedure phase");}
+    }
+    public enum FileAuxKind { RERUN, SAME_AREA, SAME_RECORD_AREA, SAME_SORT_AREA, SAME_SORT_MERGE_AREA,
+        MULTIPLE_FILE, APPLY_WRITE_ONLY, COMMITMENT_CONTROL, RESERVE, PADDING, RECORD_DELIMITER,
+        PASSWORD, BLOCK, RECORD, LABEL_RECORDS, VALUE_OF, DATA_RECORDS, LINAGE, RECORDING_MODE, CODE_SET, REPORT }
+    public enum FileAuxEffect { DOCUMENTARY, RECORD_ALIAS, CONDITIONAL_RECORD_ALIAS, BUFFER_ALLOCATION, RECORD_LAYOUT,
+        PAGE_CONTROL, ACCESS_CHECK, CHECKPOINT, OUTSIDE_N_LR }
+    public enum FileTrigger { NONE, SORT_MERGE, RECORD_COUNT, END_VOLUME, UNSUPPORTED }
+    public record FileAuxParameter(String role,String value){public FileAuxParameter{requireText(role,"aux parameter role");Objects.requireNonNull(value);}}
+    public record FileAuxData(String role,NominalBinding binding,Provenance provenance){public FileAuxData{requireText(role,"aux data role");Objects.requireNonNull(binding);Objects.requireNonNull(provenance);}}
+    public enum FileAccessMethod { QSAM, VSAM, LINE_SEQUENTIAL, UNKNOWN }
+    public record FileAuxReference(ResolutionStatus status,List<FileId> candidates,FileAccessMethod accessMethod,Provenance provenance){public FileAuxReference{Objects.requireNonNull(accessMethod);Objects.requireNonNull(status);candidates=List.copyOf(candidates);Objects.requireNonNull(provenance);require(status!=ResolutionStatus.RESOLVED||candidates.size()==1,"aux resolved file cardinality");}}
+    public record FileAuxClause(String id,FileAuxKind kind,FileAuxEffect effect,List<FileAuxReference> fileReferences,List<FileAuxData> dataReferences,
+            List<FileAuxParameter> parameters,Optional<FileAssignment> checkpoint,FileTrigger trigger,List<String> gapCodes,Provenance provenance){
+        public FileAuxClause{requireText(id,"aux id");Objects.requireNonNull(kind);Objects.requireNonNull(effect);fileReferences=List.copyOf(fileReferences);dataReferences=List.copyOf(dataReferences);parameters=List.copyOf(parameters);Objects.requireNonNull(checkpoint);Objects.requireNonNull(trigger);gapCodes=List.copyOf(gapCodes);Objects.requireNonNull(provenance);
+            require((kind==FileAuxKind.RERUN)==(trigger!=FileTrigger.NONE),"aux trigger/kind mismatch");require(kind==FileAuxKind.RERUN||checkpoint.isEmpty(),"checkpoint on non-RERUN");
+            require(effect!=FileAuxEffect.OUTSIDE_N_LR||!gapCodes.isEmpty(),"unsupported auxiliary without gap");}}
+    public record FileAuxiliaryInventory(Availability availability,List<FileAuxClause> clauses,List<String> gapCodes){public FileAuxiliaryInventory{Objects.requireNonNull(availability);clauses=List.copyOf(clauses);gapCodes=List.copyOf(gapCodes);require(availability!=Availability.UNAVAILABLE||clauses.isEmpty(),"unavailable auxiliary clauses");require(availability==Availability.KNOWN?gapCodes.isEmpty():!gapCodes.isEmpty(),"aux inventory gaps");require(clauses.stream().map(FileAuxClause::id).distinct().count()==clauses.size(),"duplicate auxiliary id");}
+        public static FileAuxiliaryInventory unavailable(){return new FileAuxiliaryInventory(Availability.UNAVAILABLE,List.of(),List.of("FILE_AUXILIARY_UNAVAILABLE"));}}
+    public record FileInventory(Availability availability, List<FileDeclaration> declarations, List<String> gapCodes, FileOperations operations,List<FileDeclarative> declaratives,List<FileSortPlan> sortPlans,Availability sortAvailability,FileAuxiliaryInventory auxiliary) {
+        public FileInventory(Availability availability,List<FileDeclaration> declarations,List<String> gapCodes,FileOperations operations,List<FileDeclarative> declaratives,List<FileSortPlan> sortPlans,Availability sortAvailability){this(availability,declarations,gapCodes,operations,declaratives,sortPlans,sortAvailability,FileAuxiliaryInventory.unavailable());}
+        public FileInventory(Availability availability,List<FileDeclaration> declarations,List<String> gapCodes,FileOperations operations,List<FileDeclarative> declaratives){this(availability,declarations,gapCodes,operations,declaratives,List.of(),Availability.UNAVAILABLE);}
+        public FileInventory(Availability availability,List<FileDeclaration> declarations,List<String> gapCodes,FileOperations operations){this(availability,declarations,gapCodes,operations,List.of());}
+        public FileInventory(Availability availability,List<FileDeclaration> declarations,List<String> gapCodes){this(availability,declarations,gapCodes,FileOperations.unavailable());}
+        public FileInventory {
+            Objects.requireNonNull(availability); declarations = List.copyOf(declarations); gapCodes = List.copyOf(gapCodes);Objects.requireNonNull(operations);declaratives=List.copyOf(declaratives);
+            Objects.requireNonNull(auxiliary);sortPlans=List.copyOf(sortPlans);Objects.requireNonNull(sortAvailability);require(sortAvailability!=Availability.UNAVAILABLE||sortPlans.isEmpty(),"unavailable sort inventory has plans");
+            require(availability == Availability.KNOWN ? gapCodes.isEmpty() : !gapCodes.isEmpty(), "file inventory availability/gaps mismatch");
+            require(availability != Availability.UNAVAILABLE || declarations.isEmpty(), "unavailable file inventory has declarations");
+        }
+        public static FileInventory unavailable() { return new FileInventory(Availability.UNAVAILABLE, List.of(), List.of("FILE_INVENTORY_UNAVAILABLE")); }
+    }
+    private static void validateFiles(UnitId unit, List<DataDeclaration> declarations, FileInventory inventory,List<StatementFact> statements,StorageInventory storage) {
+        var data = new HashSet<DataItemId>(); for (var d : declarations) data.add(d.id());
+        var files = new HashSet<FileId>(); var owned = new HashSet<DataItemId>();
+        for (var file : inventory.declarations()) {
+            require(file.owner().equals(unit) && files.add(file.id()), "duplicate or foreign file");
+            for (var record : file.records()) require(data.contains(record) && owned.add(record), "missing or multiply owned file record");
+            for (var ref : file.references()) for (var candidate : ref.binding().candidates())
+                require(data.contains(candidate.id()), "file reference has no data declaration");
+        }
+        for(var clause:inventory.auxiliary().clauses()){
+            for(var ref:clause.fileReferences())for(var id:ref.candidates())require(!id.unit().equals(unit)||files.contains(id),"auxiliary file absent");
+            for(var ref:clause.dataReferences())for(var candidate:ref.binding().candidates())require(data.contains(candidate.id()),"auxiliary data absent");
+        }
+        var ids=new HashSet<StatementId>();for(var statement:statements)ids.add(statement.header().id());
+        var declarativeIds=new HashSet<String>();
+        for(var d:inventory.declaratives()) {
+            require(d.owner().equals(unit)&&declarativeIds.add(d.id()),"duplicate/foreign USE declaration");
+            require(ids.containsAll(d.roots())&&ids.containsAll(d.completions()),"USE body references absent statements");
+            require(new HashSet<>(d.roots()).size()==d.roots().size()&&new HashSet<>(d.completions()).size()==d.completions().size(),"duplicate USE members");
+        }
+        var refs=new HashSet<OperandId>();
+        var sortStatements=new HashSet<StatementId>();
+        var usesByStatement=inventory.operations().uses().stream().collect(java.util.stream.Collectors.groupingBy(FileUse::statement));
+        for(var plan:inventory.sortPlans()) {
+            require(ids.contains(plan.statement())&&sortStatements.add(plan.statement()),"duplicate/missing sort statement");
+            var participants=usesByStatement.getOrDefault(plan.statement(),List.of());
+            var listed=new HashSet<Integer>(plan.inputs());require(listed.size()==plan.inputs().size(),"duplicate sort input");
+            for(var ordinal:plan.outputs())require(listed.add(ordinal),"duplicate sort output");if(plan.work()>=0)require(listed.add(plan.work()),"duplicate sort work");
+            require(listed.equals(participants.stream().map(FileUse::ordinal).collect(java.util.stream.Collectors.toSet())),"sort participant omitted");
+            for(var use:participants){require(use.command()==FileCommand.SORT||use.command()==FileCommand.MERGE,"sort plan attached to non-sort statement");require(use.role()==(use.ordinal()==plan.work()?FileRole.WORK:plan.inputs().contains(use.ordinal())?FileRole.INPUT:FileRole.OUTPUT),"sort role mismatch");}
+            for(var procedure:plan.procedures()) {
+                require(ids.containsAll(procedure.roots())&&ids.containsAll(procedure.completions()),"sort procedure statement absent");
+                for(var link:procedure.links())require(ids.contains(link.from())&&ids.contains(link.to()),"sort procedure link absent");
+            }
+        }
+        if(inventory.sortAvailability()!=Availability.UNAVAILABLE)for(var use:inventory.operations().uses())if(use.command()==FileCommand.SORT||use.command()==FileCommand.MERGE)require(sortStatements.contains(use.statement()),"sort plan missing");
+        var nodes=new HashMap<StorageNodeId,PhysicalNode>();storage.nodes().forEach(n->nodes.put(n.id(),n));
+        var views=new HashMap<StorageNodeId,StorageView>();storage.views().forEach(v->views.put(v.node(),v));
+        for(var s:statements)if(s instanceof ObservedStatement o)o.knownReferences().forEach(r->refs.add(r.id()));
+        var statementFacts=new HashMap<StatementId,StatementFact>();statements.forEach(s->statementFacts.put(s.header().id(),s));
+        var handlerMembers=new HashSet<StatementId>();
+        var uses=new HashSet<java.util.Map.Entry<StatementId,Integer>>();
+        for(var use:inventory.operations().uses()) {
+            require(ids.contains(use.statement())&&use.statement().unit().equals(unit),"file use statement absent or foreign");
+            require(uses.add(java.util.Map.entry(use.statement(),use.ordinal())),"duplicate file use ordinal");
+            require(new HashSet<>(use.candidates()).size()==use.candidates().size(),"duplicate file candidates");
+            for(var candidate:use.candidates())require(!candidate.unit().equals(unit)||files.contains(candidate),"missing local file candidate");
+            for(var operand:use.operands())for(var ref:operand.references())require(ref.statement().equals(use.statement())&&refs.contains(ref),"file operand outside observed statement");
+            var kinds=new HashSet<FileHandlerKind>();var bodies=new HashSet<StatementId>();
+            for(var handler:use.handlers()) {
+                require(kinds.add(handler.kind()),"duplicate file handler kind");
+                for(var body:handler.statements()) {
+                    require(ids.contains(body)&&!body.equals(use.statement())&&bodies.add(body),"invalid file handler body");
+                    require(statementFacts.get(body).header().containment().equals(Containment.childOf(use.statement(),Branch.FILE_HANDLER)),"file handler direct body containment mismatch");
+                    handlerMembers.add(body);
+                }
+            }
+            use.control().continuation().ifPresent(id->require(ids.contains(id)&&!id.equals(use.statement()),"file continuation absent/self"));
+            for(var route:use.control().routes())for(var destination:route.destinations()) {
+                destination.handler().ifPresent(h->require(kinds.contains(h),"file route handler absent"));
+                destination.declarative().ifPresent(id->require(declarativeIds.contains(id),"file route USE absent"));
+            }
+            var targets=new ArrayList<>(use.effects().ioReads());var steps=new ArrayList<>(use.effects().before());use.effects().outcomes().forEach(c->steps.addAll(c.steps()));
+            for(var step:steps){targets.add(step.destination());step.source().ifPresent(targets::add);}
+            for(var target:targets) {
+                target.data().ifPresent(id->require(data.contains(id),"file effect DATA missing or foreign"));
+                target.reference().ifPresent(id->require(id.statement().equals(use.statement())&&refs.contains(id),"file effect occurrence outside observed statement"));
+                target.regional().ifPresent(region->{
+                    var node=nodes.get(region.view());var view=views.get(region.view());require(node!=null&&view!=null,"file effect view missing or foreign");
+                    require(target.data().isEmpty()||node.data().equals(target.data()),"file effect DATA/view disagree");
+                    region.slice().ifPresent(slice->{
+                        require(view.offset().value().isPresent()&&view.extent().value().isPresent(),"file slice requires known view");
+                        var start=view.offset().value().orElseThrow();require(slice.offset().compareTo(start)>=0&&slice.offset().add(slice.extent()).compareTo(start.add(view.extent().value().orElseThrow()))<=0,"file slice outside declared view");
+                    });
+                });
+            }
+        }
+        for(var s:statements)if(s.header().containment().branch()==Branch.FILE_HANDLER)
+            require(handlerMembers.contains(s.header().id()),"FILE_HANDLER child absent from file surface");
+    }
+
     /** One immutable, closed publication with a cardinality-independent envelope. */
     public record State(UnitId unit, Policy policy,
                         List<DataDeclaration> dataDeclarations,
                         List<StatementFact> statements,
-                        List<Gap> gaps, CoverageSummary coverage, EntryInventory entryInventory, IndependentStorageSet storageIndependence, StorageInventory storage) {
+                        List<Gap> gaps, CoverageSummary coverage, EntryInventory entryInventory, IndependentStorageSet storageIndependence, StorageInventory storage, FileInventory fileInventory) {
         public State {
             unit = Objects.requireNonNull(unit, "unit");
             policy = Objects.requireNonNull(policy, "policy");
@@ -1206,6 +1498,7 @@ public final class CobolSemanticProduct {
             validateState(unit, dataDeclarations, statements, gaps, coverage);
             validateEntries(unit, statements, entryInventory);
             validateStorage(unit, dataDeclarations, statements, Objects.requireNonNull(storage));
+            validateFiles(unit, dataDeclarations, Objects.requireNonNull(fileInventory),statements,storage);
             Objects.requireNonNull(storageIndependence);
             Map<DataItemId, DataDeclaration> storageDeclarations = new HashMap<>();
             for (var declaration : dataDeclarations) storageDeclarations.put(declaration.id(), declaration);
@@ -1215,6 +1508,11 @@ public final class CobolSemanticProduct {
                         && declaration.provenance().exact() && declaration.coverage() == CoverageStatus.MODELED,
                         "independent member requires published, complete scalar declaration and origin");
             }
+        }
+        public State(UnitId unit, Policy policy, List<DataDeclaration> dataDeclarations,
+                     List<StatementFact> statements, List<Gap> gaps, CoverageSummary coverage, EntryInventory entryInventory,
+                     IndependentStorageSet storageIndependence, StorageInventory storage) {
+            this(unit, policy, dataDeclarations, statements, gaps, coverage, entryInventory, storageIndependence, storage, FileInventory.unavailable());
         }
         public State(UnitId unit, Policy policy, List<DataDeclaration> dataDeclarations,
                      List<StatementFact> statements, List<Gap> gaps, CoverageSummary coverage, EntryInventory entryInventory, IndependentStorageSet storageIndependence) {
@@ -1300,7 +1598,7 @@ public final class CobolSemanticProduct {
             else uncertainBases.add(views.get(owner.id()).base());
         }
         if(unboundedRelation) {
-            require(inventory.bases().stream().noneMatch(b->b.allocation()==AllocationProof.INDEPENDENT_LOCAL_WORKING_STORAGE),
+            require(inventory.bases().stream().noneMatch(b->b.allocation().proved()),
                 "unproved root relation contradicts allocation independence");
             require(declarations.stream().allMatch(d->d.scalarText().isEmpty()&&d.scalarInteger().isEmpty()),
                 "unproved root relation contradicts standalone scalar proof");
@@ -1337,14 +1635,14 @@ public final class CobolSemanticProduct {
                     "possible source bytes require source provenance and explicit representation profile");
             } else if(condition.kind()!=InitialStorageKind.UNKNOWN) {
                 var view=views.get(condition.node());
-                require(condition.kind()!=InitialStorageKind.LITERAL_BYTES||bases.get(view.base()).allocation()==AllocationProof.INDEPENDENT_LOCAL_WORKING_STORAGE,"strong initial bytes require proved allocation");
+                require(condition.kind()!=InitialStorageKind.LITERAL_BYTES||bases.get(view.base()).allocation().proved(),"strong initial bytes require proved allocation");
                 require(condition.provenance().exact()&&view.codec().isPresent()&&view.offset().value().isPresent()&&view.extent().value().isPresent()
                     &&bases.get(view.base()).extent().value().isPresent(),"precise initial condition needs exact provenance and bounded supported view");
                 boolean mode=condition.proof()==InitialStorageProof.EXPLICIT_INITIAL?inventory.entryState().mode()==StorageEntryMode.INITIAL
                     :condition.proof()==InitialStorageProof.EXPLICIT_PRESERVED?inventory.entryState().mode()==StorageEntryMode.PRESERVED:inventory.entryState().mode()==StorageEntryMode.UNKNOWN;
                 require(mode&&((condition.kind()!=InitialStorageKind.LITERAL_BYTES&&condition.kind()!=InitialStorageKind.POSSIBLE_LITERAL_BYTES)||view.extent().value().get().equals(BigInteger.valueOf(condition.bytes().size()))),
                     "initial condition contradicts entry mode or extent");
-                require((condition.proof()!=InitialStorageProof.DECLARATIVE_INVARIANT&&condition.proof()!=InitialStorageProof.DECLARATIVE_POSSIBILITY)||bases.get(view.base()).allocation()==AllocationProof.INDEPENDENT_LOCAL_WORKING_STORAGE,
+                require((condition.proof()!=InitialStorageProof.DECLARATIVE_INVARIANT&&condition.proof()!=InitialStorageProof.DECLARATIVE_POSSIBILITY)||bases.get(view.base()).allocation().proved(),
                     "declarative invariant needs local independent storage");
             }
         }
@@ -1385,7 +1683,7 @@ public final class CobolSemanticProduct {
                     var data=((DataReference)transfer.source()).logicalWholeItem().orElseThrow();
                     var node=Objects.requireNonNull(byData.get(data));var source=views.get(node.id());
                     require(node.kind()==PhysicalKind.ELEMENTARY&&source.codec().equals(dest.codec())&&source.codec().isPresent()&&source.extent().value().filter(n->n.signum()>0).isPresent(),"logical copy needs proved textual shape");
-                    require(!source.base().equals(dest.base())&&bases.get(source.base()).allocation()==AllocationProof.INDEPENDENT_LOCAL_WORKING_STORAGE&&bases.get(dest.base()).allocation()==AllocationProof.INDEPENDENT_LOCAL_WORKING_STORAGE,"logical copy requires positive base separation");
+                    require(!source.base().equals(dest.base())&&bases.get(source.base()).allocation().proved()&&bases.get(dest.base()).allocation().proved(),"logical copy requires positive base separation");
                 }
                 if (effect.kind() == RegionalMoveKind.COPY_BYTES || effect.kind() == RegionalMoveKind.FIT_TEXT) {
                     require(transfer.source() instanceof DataReference source && source.regionalAccess().isPresent(), "byte copy needs exact source access");
@@ -1396,8 +1694,8 @@ public final class CobolSemanticProduct {
                         var left = source.offset().value().get(); var right = dest.offset().value().get();
                         disjoint = left.add(source.extent().value().get()).compareTo(right) <= 0
                             || right.add(dest.extent().value().get()).compareTo(left) <= 0;
-                    } else disjoint = bases.get(source.base()).allocation() == AllocationProof.INDEPENDENT_LOCAL_WORKING_STORAGE
-                            && bases.get(dest.base()).allocation() == AllocationProof.INDEPENDENT_LOCAL_WORKING_STORAGE;
+                    } else disjoint = bases.get(source.base()).allocation().proved()
+                            && bases.get(dest.base()).allocation().proved();
                     require(disjoint, "COBOL byte copy requires proved disjoint ranges");
                 }
                 }
@@ -1515,6 +1813,7 @@ public final class CobolSemanticProduct {
             var result=new ArrayList<DataReference>();if(move.source() instanceof DataReference r)result.add(r);result.add(move.target());
             for(var t:move.additionalTransfers()){if(t.source() instanceof DataReference r)result.add(r);result.add(t.target());}return List.copyOf(result);
         }
+        if (statement instanceof CicsFileFact cics) return java.util.stream.Stream.concat(cics.target().filter(DataReference.class::isInstance).map(DataReference.class::cast).stream(),cics.options().stream().flatMap(o->o.reference().stream())).toList();
         if (statement instanceof CicsFact cics) return java.util.stream.Stream.concat(cics.target().filter(DataReference.class::isInstance).map(DataReference.class::cast).stream(),cics.options().stream().flatMap(o->o.reference().stream())).toList();
         if (statement instanceof CallFact call) return call.target() instanceof DataReference data ? List.of(data) : List.of();
         if (statement instanceof IfFact branch) return branch.condition().references();
@@ -1532,6 +1831,8 @@ public final class CobolSemanticProduct {
             if (statement instanceof MoveFact move) {
                 var all=new ArrayList<OperandId>();all.add(move.source().id());all.add(move.target().id());
                 for(var t:move.additionalTransfers()){all.add(t.source().id());all.add(t.target().id());}operands=List.copyOf(all);
+            } else if (statement instanceof CicsFileFact cics) {
+                operands=java.util.stream.Stream.concat(cics.target().stream().map(CallTarget::id),cics.options().stream().flatMap(o->o.reference().stream()).map(DataReference::id)).toList();
             } else if (statement instanceof CicsFact cics) {
                 operands=java.util.stream.Stream.concat(cics.target().stream().map(CallTarget::id),cics.options().stream().flatMap(o->o.reference().stream()).map(DataReference::id)).toList();
             } else if (statement instanceof CallFact call) {
@@ -1662,6 +1963,9 @@ public final class CobolSemanticProduct {
                         "CALL continuation must reference a published statement in the same unit");
                 require(!next.equals(call.header().id()), "CALL cannot continue to itself");
             });
+            if(statement instanceof CicsFileFact cics)for(var continuation:List.of(cics.localContinuation(),cics.ordinaryContinuation()))continuation.statement().ifPresent(next -> {
+                require(next.unit().equals(statement.header().id().unit())&&statements.containsKey(next)&&!next.equals(statement.header().id()),"CICS FILE continuation belongs to this unit");
+            });
             if(statement instanceof CicsFact cics)for(var continuation:List.of(cics.localContinuation(),cics.ordinaryContinuation()))continuation.statement().ifPresent(next -> {
                 require(next.unit().equals(statement.header().id().unit()) && statements.containsKey(next) && !next.equals(statement.header().id()),
                     "CICS lexical continuation references a different published statement in the same unit");
@@ -1673,8 +1977,9 @@ public final class CobolSemanticProduct {
             StatementHeader header = statement.header();
             header.containment().parent().ifPresent(parentId -> {
                 StatementFact parent = statements.get(parentId);
-                require(parent instanceof IfFact && header.containment().branch()!=Branch.EVALUATE_ARM
-                        || parent instanceof EvaluateFact && header.containment().branch()==Branch.EVALUATE_ARM,
+                require(parent instanceof IfFact && (header.containment().branch()==Branch.THEN||header.containment().branch()==Branch.ELSE)
+                        || parent instanceof EvaluateFact && header.containment().branch()==Branch.EVALUATE_ARM
+                        || parent instanceof ObservedStatement && header.containment().branch()==Branch.FILE_HANDLER,
                         "branch parent must be a published IF fact");
                 require(parent.header().point().ordinal() < header.point().ordinal(),
                         "branch parent must precede its structural child");

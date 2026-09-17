@@ -1,5 +1,7 @@
 # Índice de conhecimento
 
+[FILE-DEPENDENCIES — FD-H0–H4 / waves futuras](domain/file-dependencies.md): preparação source-only; STOP humano antes de W0.
+
 Este diretório é a memória canônica do projeto. Ele separa o contrato atual do subsistema, as decisões arquiteturais, a prática de engenharia, o trabalho em andamento e a evidência histórica.
 
 ## Modelo de autoridade

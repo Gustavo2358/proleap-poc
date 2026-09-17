@@ -26,7 +26,7 @@ class ResolutionAnalysisReportTest {
         assertTrue(report.statusCounts().get(ResolutionContracts.ResolutionStatus.UNSUPPORTED) > 0);
         assertTrue(report.reasonCounts().containsKey(ResolutionContracts.ResolutionReason.MULTIPLE_VALID_CANDIDATES));
         assertTrue(report.reasonCounts().containsKey(ResolutionContracts.ResolutionReason.DECLARATION_NOT_FOUND));
-        assertTrue(report.reasonCounts().containsKey(ResolutionContracts.ResolutionReason.UNSUPPORTED_GRAMMAR_FORM));
+        assertTrue(report.reasonCounts().containsKey(ResolutionContracts.ResolutionReason.UNSUPPORTED_DIALECT_OPTION));
         assertFalse(report.completeness().referenceBindingComplete());
         assertFalse(report.completeness().dependencyAnalysisReady());
         assertEquals(ResolutionAnalysisReport.AnalysisClaim.INCOMPLETE, report.analysisClaim());

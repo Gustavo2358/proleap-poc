@@ -10,9 +10,9 @@ public record StatementEffectSummary(List<Ast.DataReference> knownReads,
         Bound unknownWriteBound, Bound unknownExposureBound, Environment environment,
         ValueTransform values, Proof proof) {
     public enum Bound { NONE, ALL }
-    public enum Environment { OUTPUT, INPUT, UNKNOWN }
+    public enum Environment { OUTPUT, INPUT, UNKNOWN, NONE }
     public enum ValueTransform { NONE, UNKNOWN }
-    public enum Proof { DISPLAY_SIMPLE, INITIALIZE_TARGETS, ACCEPT_TARGET, SET_TARGETS, ARITHMETIC_TARGETS, STRING_TARGETS, UNSTRING_TARGETS, INSPECT_TARGETS }
+    public enum Proof { NO_OP, DISPLAY_SIMPLE, INITIALIZE_TARGETS, ACCEPT_TARGET, SET_TARGETS, ARITHMETIC_TARGETS, STRING_TARGETS, UNSTRING_TARGETS, INSPECT_TARGETS }
     public StatementEffectSummary {
         knownReads=List.copyOf(knownReads);mayWrites=List.copyOf(mayWrites);
         mustOverwrite=List.copyOf(mustOverwrite);exposedRegions=List.copyOf(exposedRegions);

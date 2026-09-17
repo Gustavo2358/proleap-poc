@@ -74,6 +74,7 @@ COBOL	rerunEveryClock	ENVIRONMENT_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY
 COBOL	sameClause	ENVIRONMENT_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Environment declaration is only partially represented by the current semantic model.
 COBOL	multipleFileClause	ENVIRONMENT_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Environment declaration is only partially represented by the current semantic model.
 COBOL	multipleFilePosition	ENVIRONMENT_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Environment declaration is only partially represented by the current semantic model.
+COBOL	applyWriteOnlyClause	ENVIRONMENT_DECLARATION	MODELED	REFERENCE_READY	N-LR typed auxiliary clause preserves file references and buffer-allocation metadata without runtime lookup.
 COBOL	commitmentControlClause	ENVIRONMENT_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Environment declaration is only partially represented by the current semantic model.
 COBOL	dataDivision	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
 COBOL	dataDivisionSection	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.

@@ -76,7 +76,7 @@ public final class ScalarMoveSemantics {
     public static ScalarMoveSemantics analyze(CompilationUnitBuildResult frontend,
             CompilationUnitSymbolTables tables, ReferenceResolution resolution,
             ResolutionAnalysisReport report) {
-        return analyze(frontend,tables,resolution,report,StorageComponents.analyze(frontend));
+        return analyze(frontend,tables,resolution,report,StorageComponents.analyze(frontend,tables,resolution));
     }
     public static ScalarMoveSemantics analyze(CompilationUnitBuildResult frontend,
             CompilationUnitSymbolTables tables,ReferenceResolution resolution,
