@@ -760,7 +760,7 @@ public final class CobolSemanticProduct {
     }
 
     /** Adding a fact type extends this inventory without changing the State envelope. */
-    public sealed interface StatementFact permits MoveFact, CallFact, CicsFact, IfFact,
+    public sealed interface StatementFact permits MoveFact, CallFact, CicsFact, CicsFileFact, IfFact,
             ObservedStatement, GobackFact, PerformFact, EvaluateFact, GoToFact, ConditionalGoToFact, ProcedurePerformFact {
         StatementHeader header();
     }
@@ -783,6 +783,37 @@ public final class CobolSemanticProduct {
             require(header.coverage()!=CoverageStatus.MODELED,"CICS effects/signature remain partial");
             for(var option:options)require(option.end()<=rawText.length(),"CICS option outside payload");
             target.ifPresent(t->require(t.id().statement().equals(header.id()),"CICS operand owner"));
+        }
+    }
+
+    public enum CicsFileTargetMode { INPUT, OUTPUT, BROWSE_START, BROWSE_END }
+    public enum CicsFileRole { READ, WRITE, READ_WRITE, NONE, UNKNOWN }
+    public record CicsFileOption(String name,String canonicalName,Optional<String> operand,int start,int end,
+            CicsFileRole role,Optional<DataReference> reference,Optional<String> literal,Optional<java.math.BigInteger> integer) {
+        public CicsFileOption {
+            name=requireText(name,"option name");canonicalName=requireText(canonicalName,"canonical option");
+            Objects.requireNonNull(operand);Objects.requireNonNull(role);Objects.requireNonNull(reference);Objects.requireNonNull(literal);Objects.requireNonNull(integer);
+            require(start>=0&&end>=start,"CICS FILE offsets");
+            require((reference.isPresent()?1:0)+(literal.isPresent()?1:0)+(integer.isPresent()?1:0)<=1,"CICS FILE operand has one typed value");
+            reference.ifPresent(r->require(r.role()==(role==CicsFileRole.WRITE?OperandRole.WRITE:OperandRole.READ),"CICS FILE reference role agrees with direction"));
+        }
+    }
+    public record CicsFileFact(StatementHeader header,String command,String rawText,CicsFileTargetMode targetMode,
+            Optional<CallTarget> target,List<CicsFileOption> options,CicsConditions conditions,
+            NormalContinuation localContinuation,NormalContinuation ordinaryContinuation,String nameProfile,List<String> gapCodes) implements StatementFact {
+        public CicsFileFact {
+            Objects.requireNonNull(header);Objects.requireNonNull(rawText);Objects.requireNonNull(targetMode);Objects.requireNonNull(target);
+            require(Set.of("READ","WRITE","REWRITE","DELETE","STARTBR","READNEXT","READPREV","RESETBR","ENDBR","UNLOCK","INQUIRE","SET").contains(command),"CICS FILE command");
+            options=List.copyOf(options);gapCodes=List.copyOf(gapCodes);Objects.requireNonNull(conditions);
+            Objects.requireNonNull(localContinuation);Objects.requireNonNull(ordinaryContinuation);
+            require(nameProfile.equals("cics-ts.file@1"),"CICS FILE name profile");
+            require(targetMode==CicsFileTargetMode.INPUT||target.isEmpty(),"CICS FILE output/browse has no input target");
+            require(targetMode==CicsFileTargetMode.INPUT||command.equals("INQUIRE"),"Only INQUIRE has an output/browse target mode");
+            require(conditions!=CicsConditions.DEFAULT_ENTRY_PREFIX,"FILE handler entry premise not published");
+            require(conditions!=CicsConditions.LOCAL_CONDITION||options.stream().anyMatch(o->o.canonicalName().equals("NOHANDLE")||o.canonicalName().equals("RESP")),"local FILE conditions require RESP or NOHANDLE");
+            require(localContinuation.statement().isEmpty()||localContinuation.statement().equals(ordinaryContinuation.statement()),"FILE local continuation agrees with ordinary continuation");
+            for(var option:options)require(option.end()<=rawText.length(),"CICS FILE option outside payload");
+            target.ifPresent(t->require(t.id().statement().equals(header.id()),"CICS FILE target owner"));
         }
     }
 
@@ -1782,6 +1813,7 @@ public final class CobolSemanticProduct {
             var result=new ArrayList<DataReference>();if(move.source() instanceof DataReference r)result.add(r);result.add(move.target());
             for(var t:move.additionalTransfers()){if(t.source() instanceof DataReference r)result.add(r);result.add(t.target());}return List.copyOf(result);
         }
+        if (statement instanceof CicsFileFact cics) return java.util.stream.Stream.concat(cics.target().filter(DataReference.class::isInstance).map(DataReference.class::cast).stream(),cics.options().stream().flatMap(o->o.reference().stream())).toList();
         if (statement instanceof CicsFact cics) return java.util.stream.Stream.concat(cics.target().filter(DataReference.class::isInstance).map(DataReference.class::cast).stream(),cics.options().stream().flatMap(o->o.reference().stream())).toList();
         if (statement instanceof CallFact call) return call.target() instanceof DataReference data ? List.of(data) : List.of();
         if (statement instanceof IfFact branch) return branch.condition().references();
@@ -1799,6 +1831,8 @@ public final class CobolSemanticProduct {
             if (statement instanceof MoveFact move) {
                 var all=new ArrayList<OperandId>();all.add(move.source().id());all.add(move.target().id());
                 for(var t:move.additionalTransfers()){all.add(t.source().id());all.add(t.target().id());}operands=List.copyOf(all);
+            } else if (statement instanceof CicsFileFact cics) {
+                operands=java.util.stream.Stream.concat(cics.target().stream().map(CallTarget::id),cics.options().stream().flatMap(o->o.reference().stream()).map(DataReference::id)).toList();
             } else if (statement instanceof CicsFact cics) {
                 operands=java.util.stream.Stream.concat(cics.target().stream().map(CallTarget::id),cics.options().stream().flatMap(o->o.reference().stream()).map(DataReference::id)).toList();
             } else if (statement instanceof CallFact call) {
@@ -1928,6 +1962,9 @@ public final class CobolSemanticProduct {
                 require(next.unit().equals(call.header().id().unit()) && statements.containsKey(next),
                         "CALL continuation must reference a published statement in the same unit");
                 require(!next.equals(call.header().id()), "CALL cannot continue to itself");
+            });
+            if(statement instanceof CicsFileFact cics)for(var continuation:List.of(cics.localContinuation(),cics.ordinaryContinuation()))continuation.statement().ifPresent(next -> {
+                require(next.unit().equals(statement.header().id().unit())&&statements.containsKey(next)&&!next.equals(statement.header().id()),"CICS FILE continuation belongs to this unit");
             });
             if(statement instanceof CicsFact cics)for(var continuation:List.of(cics.localContinuation(),cics.ordinaryContinuation()))continuation.statement().ifPresent(next -> {
                 require(next.unit().equals(statement.header().id().unit()) && statements.containsKey(next) && !next.equals(statement.header().id()),

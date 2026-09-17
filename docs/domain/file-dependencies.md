@@ -1,6 +1,6 @@
 # FILE-DEPENDENCIES — frontend / SP
 
-H4 aprovado; core N+C autorizado em 2026-09-16. W0–W5 qualificadas local; W6 em implementação; W10 não autorizado.
+H4 aprovado; core N+C autorizado em 2026-09-16. W0–W7 qualificadas local; W8 em implementação; W10 não autorizado.
 [Campanha canônica](https://github.com/Gustavo2358/analysis-cfg/blob/feat/file-dependencies/docs/product/file-dependencies/README.md)
 (workspace: `../analysis-cfg/docs/product/file-dependencies/README.md`).
 Comece pelo brief e pelo item atual indicado no estado canônico.
@@ -287,3 +287,40 @@ LR pp138/141–143/146–147; não habilita filenames/DYNAMIC do perfil D. Méto
 acesso source-level por referência auxiliar (QSAM/VSAM/LINE_SEQUENTIAL/UNKNOWN)
 sustenta classificação SAME bilateral; não é bindingMechanism ou allocation.
 Oracle original excessivamente aberto corrigido pela autoridade antes do delta.
+
+## FD-W8 — entrada CICS File Control
+
+Autoridade, decisões e oráculos em `../analysis-cfg/docs/product/file-dependencies/w8-implementation.md`.
+C-FC5.6: dez comandos API e INQUIRE/SET FILE; FILE computado usa W7.
+Reutilizar parser embedded/host binding, sem misturar Program Control ou inventar
+MUST/footprints. Contrato SP/decoder será fechado bilateralmente antes de emissão.
+
+### W8 — scanner e papéis C-FC (em implementação)
+
+Regra: API CICS TS5.6 pp351–377 (READ/browse),419(RESETBR),436–437(REWRITE),
+542–545(STARTBR),569–570(UNLOCK),674–677(WRITE),115–118(DELETE),149(ENDBR);
+SPI5.6 pp19–21/359–368(INQUIRE),672–674(SET/aliases). PDFs/hashes no harness CFG
+`w8-implementation.md`. FILE é entrada exceto INQUIRE NEXT (saída), START/END
+(sem nome individual). DATASET/OBJECTNAME são aliases comprovados de SET FILE.
+TOKEN é saída em READ/READNEXT/READPREV e entrada em REWRITE/DELETE/UNLOCK.
+LENGTH é entrada+saída nos reads; RIDFLD é entrada+saída em browse e READ
+(GENERIC/NOTFND pode limpar), saída em WRITE RBA/XRBA, entrada nas demais formas.
+
+Algoritmo: scanner linear compartilhado para payload CICS, aspas duplicadas e
+parênteses; classificadores canônicos separados para Program e File Control.
+Catálogo fechado por comando, direção tipada; unknown option retém ocorrência/gap.
+Projector não reinterpreta texto. Host reference passa pela gramática COBOL existente.
+Sem solver, lookup ou estado externo. Tempo O(payload+opções), memória O(opções).
+Oráculo independente `CicsFileControlTest`:12 comandos, negativos por comando,
+papéis, aliases, browse output, preservação offsets e separação queues/journals.
+RED inicial: classe ausente em testCompile, log `.harness-results/fd-w8/parser-red.log`.
+Nenhuma qualificação W8 afirmada neste ponto; downstream/pins ainda W6/W7.
+
+Checkpoint produtor W8: SP2.28 (`fileInventory1.6`/`storage1.8` inalterados), nove
+oráculos FILE, Program Control10, multiplicidade1/2/5/40. FAST345 PASS; Q-SHARED938
+com um skip histórico previsto e source-normalizer full PASS. 33SPs de fronteira
+em fd-w8/sp-7; testes não derivam expected do consumer. Gaps por dimensão preservados.
+O FAST revelou LENGTH OF descartado após alocar AST ID: contraprova mínima e correção
+na bridge antes da alocação; corpusCOACTUPC voltou a passar sem enfraquecer integridade.
+Qualification revelou seleção findFirst no projector: agora exige identidade única
+como o contrato anterior de Program Control. Logs anteriores permanecem evidência.

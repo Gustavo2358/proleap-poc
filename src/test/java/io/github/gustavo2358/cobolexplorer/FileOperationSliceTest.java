@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class FileOperationSliceTest {
     @Test void staticOpenReadClosePreserveStatementAndFileIds() throws Exception {
         var p=FileDeclarationContractTest.publish("SELECT F ASSIGN TO CLIENTDD.","FD F.\n01 R PIC X(8).","","OPEN INPUT F.\nREAD F.\nCLOSE F.\nGOBACK.");
-        assertEquals("2.27.0",p.path("contractVersion").asText());
+        assertEquals("2.28.0",p.path("contractVersion").asText());
         var operations=p.path("fileInventory").path("operations");
         assertEquals("PARTIAL",operations.path("availability").asText());
         var uses=operations.path("uses");assertEquals(3,uses.size());

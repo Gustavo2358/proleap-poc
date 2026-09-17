@@ -859,6 +859,48 @@ public final class CobolSemanticProductProjector {
         CobolSemanticProduct.Containment containment = containment(
                 plan.position(), statementIds);
 
+        var cicsFile=inputs.products().cics().flatMap(c->c.fileFact(inputs.unitId(),plan.position().statement().meta().id()));
+        if(cicsFile.isPresent()) {
+            var source=cicsFile.orElseThrow();var codes=new LinkedHashSet<>(source.gaps());codes.add("CICS_FILE_OUTCOME_VALUES_UNKNOWN");
+            var embedded=(Ast.EmbeddedLanguageStatement)plan.position().statement();
+            Optional<CallTarget> target=source.literal().map(value->new LiteralCallTarget(new OperandId(statementId,0),value,
+                source.options().stream().filter(o->o.canonicalName().equals("FILE")).reduce((left,right)->{throw new IllegalArgumentException("CICS FILE contribution must have one identity at this position");}).orElseThrow().syntax().operand().orElseThrow(),Optional.of(new TextValue(value)),statementProvenance));
+            var options=new ArrayList<CicsFileOption>();int optionOrdinal=1;
+            for(var option:source.options()) {
+                var syntax=option.syntax();Optional<DataReference> ref=Optional.empty();
+                var host=embedded.hostOperands().stream().filter(h->h.optionStart()==syntax.start()).reduce((left,right)->{throw new IllegalArgumentException("CICS FILE contribution must have one identity at this position");});
+                if(host.isPresent()) {
+                    var h=host.get();var entry=inputs.entryFor(h.reference());
+                    if(projectableDataBinding(entry,inputs))ref=Optional.of(new DataReference(new OperandId(statementId,optionOrdinal++),
+                        h.role()==Ast.EmbeddedHostRole.WRITE?OperandRole.WRITE:OperandRole.READ,nominalBinding(entry,dataIds),
+                        provenance(h.reference().meta().provenance()),Optional.empty(),regionalAccess(inputs,h.reference().meta().id())));
+                }
+                if(option.canonicalName().equals("FILE")&&source.targetMode()==io.github.gustavo2358.cobolexplorer.CicsFileControlAnalyzer.TargetMode.INPUT) {
+                    if(target.isEmpty()&&source.host().isPresent()&&ref.isPresent())target=Optional.of(ref.get());
+                    ref=Optional.empty();
+                } else if(option.role()!=io.github.gustavo2358.cobolexplorer.CicsFileControlAnalyzer.Role.NONE&&syntax.operand().isPresent()
+                        &&ref.isEmpty()&&option.literal().isEmpty()&&option.integer().isEmpty())codes.add("CICS_FILE_HOST_BINDING_UNAVAILABLE");
+                options.add(new CicsFileOption(syntax.name(),option.canonicalName(),syntax.operand(),syntax.start(),syntax.end(),
+                    CicsFileRole.valueOf(option.role().name()),ref,option.literal(),option.integer()));
+            }
+            if(source.targetMode()==io.github.gustavo2358.cobolexplorer.CicsFileControlAnalyzer.TargetMode.INPUT&&target.isEmpty())codes.add("CICS_FILE_TARGET_UNKNOWN");
+            var condition=source.boundedLocal()?CicsConditions.LOCAL_CONDITION:CicsConditions.UNKNOWN;
+            if(condition==CicsConditions.UNKNOWN)codes.add("CICS_FILE_HANDLER_STATE_UNKNOWN");
+            var nextId=inputs.selectedSource().unit().program().divisions().stream().filter(d->d.divisionKind()==Ast.DivisionKind.PROCEDURE)
+                .map(d->d.embeddedContinuations().get(plan.position().statement().meta().id())).filter(Objects::nonNull).reduce((left,right)->{throw new IllegalArgumentException("CICS FILE contribution must have one identity at this position");});
+            var nextStatement=canonicalStatement(nextId,inputs,statementIds);
+            var next=new NormalContinuation(nextStatement.isPresent()?ContinuationAvailability.KNOWN:inputs.products().scalarMoves().procedurePerforms().completion(inputs.unitId(),plan.position().statement().meta().id())?ContinuationAvailability.NONE:ContinuationAvailability.UNAVAILABLE,nextStatement,statementProvenance);
+            var ordinaryId=inputs.selectedSource().unit().program().divisions().stream().filter(d->d.divisionKind()==Ast.DivisionKind.PROCEDURE)
+                .map(d->d.embeddedOrdinaryContinuations().get(plan.position().statement().meta().id())).filter(Objects::nonNull).reduce((left,right)->{throw new IllegalArgumentException("CICS FILE contribution must have one identity at this position");});
+            var ordinaryStatement=canonicalStatement(ordinaryId,inputs,statementIds);
+            var ordinary=new NormalContinuation(ordinaryStatement.isPresent()?ContinuationAvailability.KNOWN:ContinuationAvailability.UNAVAILABLE,ordinaryStatement,statementProvenance);
+            statements.add(new CicsFileFact(header(statementId,plan.position().ordinal(),containment,statementProvenance,CoverageStatus.PARTIAL,
+                readiness(ReadinessStatus.PARTIAL,"CICS FILE typed target/options",ReadinessStatus.PARTIAL,"CICS condition control",ReadinessStatus.PARTIAL,"CICS effects depend on outcomes and operand footprints")),
+                source.command().name(),source.raw(),CicsFileTargetMode.valueOf(source.targetMode().name()),target,options,condition,next,ordinary,"cics-ts.file@1",List.copyOf(codes)));
+            for(var code:codes)gaps.add(capabilityGap(statementId,code,"CICS FILE dimension remains partial",statementProvenance));
+            addContainmentGap(containment,statementId,statementProvenance,gaps);return;
+        }
+
         var cics=inputs.products().cics().flatMap(c->c.fact(inputs.unitId(),plan.position().statement().meta().id()));
         if(cics.isPresent()) {
             var source=cics.orElseThrow();var codes=new LinkedHashSet<>(source.gaps());codes.add("CICS_EFFECTS_SIGNATURE_PARTIAL");

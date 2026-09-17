@@ -18,7 +18,9 @@ public final class CicsProgramControlAnalyzer {
         private final CompilationUnitBuildResult owner;
         private final Map<Key,Fact> facts;
         private final Set<Key> defaultHandlers;
-        private Contribution(CompilationUnitBuildResult owner, Map<Key,Fact> facts,Set<Key> defaultHandlers) { this.owner=owner;this.facts=Map.copyOf(facts);this.defaultHandlers=Set.copyOf(defaultHandlers); }
+        private final Optional<CicsFileControlAnalyzer.Contribution> files;
+        private Contribution(CompilationUnitBuildResult owner, Map<Key,Fact> facts,Set<Key> defaultHandlers,boolean enabled) { this.owner=owner;this.facts=Map.copyOf(facts);this.defaultHandlers=Set.copyOf(defaultHandlers);this.files=enabled?Optional.of(new CicsFileControlAnalyzer().analyze(owner)):Optional.empty(); }
+        public Optional<CicsFileControlAnalyzer.Fact> fileFact(ResolutionContracts.ProgramUnitId unit,int statement){return files.flatMap(f->f.fact(unit,statement));}
         public boolean defaultHandlers(ResolutionContracts.ProgramUnitId unit,int statement){return defaultHandlers.contains(new Key(unit,statement));}
         public boolean belongsTo(CompilationUnitBuildResult frontend) { return owner==frontend; }
         public Optional<Fact> fact(ResolutionContracts.ProgramUnitId unit,int statement) { return Optional.ofNullable(facts.get(new Key(unit,statement))); }
@@ -34,7 +36,7 @@ public final class CicsProgramControlAnalyzer {
                 &&embedded.hostOperands().get(0).role()==Ast.EmbeddedHostRole.READ;
         }
         boolean boundedLocal(ResolutionContracts.ProgramUnitId unit,Ast.Node node) {
-            return node!=null&&fact(unit,node.meta().id()).filter(f->f.gaps().isEmpty()&&f.options().stream().anyMatch(o->o.name().equals("RESP")||o.name().equals("NOHANDLE"))).isPresent();
+            return node!=null&&(fileFact(unit,node.meta().id()).filter(CicsFileControlAnalyzer.Fact::boundedLocal).isPresent()||fact(unit,node.meta().id()).filter(f->f.gaps().isEmpty()&&f.options().stream().anyMatch(o->o.name().equals("RESP")||o.name().equals("NOHANDLE"))).isPresent());
         }
         /** Physical provenance remains inexact; only the active typed contribution bounds CICS control. */
         boolean boundedRegion(ResolutionContracts.ProgramUnitId unit,Ast.Node node) {
@@ -46,7 +48,7 @@ public final class CicsProgramControlAnalyzer {
     public Contribution analyze(CompilationUnitBuildResult frontend) {return analyze(frontend,null);}
     public Contribution analyze(CompilationUnitBuildResult frontend,ResolutionAnalysisReport report) {return analyze(frontend,report,EntryMode.UNKNOWN);}
     public Contribution analyze(CompilationUnitBuildResult frontend,ResolutionAnalysisReport report,EntryMode mode) {
-        if(mode==EntryMode.DISABLED)return new Contribution(frontend,Map.of(),Set.of());
+        if(mode==EntryMode.DISABLED)return new Contribution(frontend,Map.of(),Set.of(),false);
         var facts=new LinkedHashMap<Key,Fact>();
         for(var unit:frontend.compilationUnit().programUnits()) {
             var pending=new ArrayDeque<Ast.Node>();pending.push(unit.program());
@@ -75,66 +77,30 @@ public final class CicsProgramControlAnalyzer {
                     current=division.get().normalContinuations().get(current);
                 }
             }
-        return new Contribution(frontend,facts,defaults);
+        return new Contribution(frontend,facts,defaults,true);
     }
     public Optional<Fact> parse(String raw) {
-        var cursor=new Cursor(raw);cursor.space();
-        if(cursor.at("*>EXECCICS")){cursor.position+=10;cursor.space();}
-        if(!cursor.word().equalsIgnoreCase("EXEC")||!cursor.word().equalsIgnoreCase("CICS"))return Optional.empty();
-        String name=cursor.word().toUpperCase(Locale.ROOT);
-        if(!name.equals("LINK")&&!name.equals("XCTL"))return Optional.empty();
-        var command=Command.valueOf(name);var options=new ArrayList<Option>();var gaps=new LinkedHashSet<String>();
-        boolean ended=false;
-        while(cursor.position<raw.length()) {
-            cursor.space();int start=cursor.position;String option=cursor.word().toUpperCase(Locale.ROOT);
-            if(option.equals("END-EXEC")){ended=true;break;}
-            if(option.isEmpty()){gaps.add("CICS_INVALID_OPTION_SYNTAX");break;}
-            cursor.space();Optional<String> operand=Optional.empty();
-            if(cursor.at("(")) {
-                int begin=++cursor.position;int depth=1;char quote=0;
-                while(cursor.position<raw.length()&&depth>0) {
-                    char c=raw.charAt(cursor.position++);
-                    if(quote!=0) { if(c==quote) { if(cursor.position<raw.length()&&raw.charAt(cursor.position)==quote)cursor.position++;else quote=0; } }
-                    else if(c=='\''||c=='"')quote=c;
-                    else if(c=='(')depth++;else if(c==')')depth--;
-                }
-                if(depth!=0||quote!=0){gaps.add("CICS_TRUNCATED_OPERAND");break;}
-                operand=Optional.of(raw.substring(begin,cursor.position-1));
-            }
-            options.add(new Option(option,operand,start,cursor.position));
+        var syntax=CicsCommandSyntax.parse(raw);
+        if(syntax.isEmpty()||!Set.of("LINK","XCTL").contains(syntax.get().name()))return Optional.empty();
+        var command=Command.valueOf(syntax.get().name());var options=new ArrayList<Option>();
+        var gaps=new LinkedHashSet<>(syntax.get().gaps());boolean ended=syntax.get().ended();
+        for(var source:syntax.get().options()) {
+            var option=source.name();var operand=source.operand();
+            options.add(new Option(option,operand,source.start(),source.end()));
             if(!Set.of("PROGRAM","COMMAREA","LENGTH","CHANNEL","RESP","RESP2","NOHANDLE","INPUTMSG","INPUTMSGLEN","SYSID","SYNCONRETURN","TRANSID","DATALENGTH").contains(option))gaps.add("CICS_UNMODELED_OPTION");
             if(command==Command.XCTL&&Set.of("SYSID","SYNCONRETURN","TRANSID","DATALENGTH").contains(option))gaps.add("CICS_OPTION_INVALID_FOR_COMMAND");
             if((option.equals("NOHANDLE")||option.equals("SYNCONRETURN"))==operand.isPresent())gaps.add("CICS_OPTION_OPERAND_SHAPE");
         }
-        cursor.space();if(cursor.at(".")){cursor.position++;cursor.space();}
-        if(!ended||cursor.position!=raw.length())gaps.add("CICS_INCOMPLETE_PAYLOAD");
         var targets=options.stream().filter(o->o.name().equals("PROGRAM")).toList();
         Optional<String> literal=Optional.empty(),host=Optional.empty();int start=0,end=0;
         if(targets.size()!=1)gaps.add(targets.isEmpty()?"CICS_PROGRAM_MISSING":"CICS_PROGRAM_DUPLICATED");
         else if(targets.get(0).operand().isPresent()) {
             var option=targets.get(0);start=option.start();end=option.end();String value=option.operand().orElseThrow().strip();
             if(value.startsWith("'")||value.startsWith("\"")) {
-                var decoded=literal(value);if(decoded.isPresent())literal=decoded;else gaps.add("CICS_INVALID_PROGRAM_LITERAL");
+                var decoded=CicsCommandSyntax.literal(value);if(decoded.isPresent())literal=decoded;else gaps.add("CICS_INVALID_PROGRAM_LITERAL");
             } else if(!value.isEmpty())host=Optional.of(value);else gaps.add("CICS_EMPTY_PROGRAM");
         } else gaps.add("CICS_PROGRAM_OPERAND_MISSING");
         if(!ended||gaps.contains("CICS_TRUNCATED_OPERAND")){literal=Optional.empty();host=Optional.empty();}
         return Optional.of(new Fact(command,raw,options,literal,host,start,end,List.copyOf(gaps)));
-    }
-    private static Optional<String> literal(String value) {
-        char quote=value.charAt(0);var decoded=new StringBuilder();
-        for(int i=1;i<value.length();i++) {
-            char c=value.charAt(i);
-            if(c!=quote){decoded.append(c);continue;}
-            if(i+1<value.length()&&value.charAt(i+1)==quote){decoded.append(c);i++;continue;}
-            return i==value.length()-1?Optional.of(decoded.toString()):Optional.empty();
-        }
-        return Optional.empty();
-    }
-    private static final class Cursor {
-        final String raw;int position;
-        Cursor(String raw){this.raw=Objects.requireNonNull(raw);}
-        void space(){while(position<raw.length()&&Character.isWhitespace(raw.charAt(position)))position++;}
-        boolean at(String text){return raw.regionMatches(true,position,text,0,text.length());}
-        String word(){space();int begin=position;while(position<raw.length()) {char c=raw.charAt(position);if(!Character.isLetterOrDigit(c)&&c!='-'&&c!='_')break;position++;}return raw.substring(begin,position);}
     }
 }

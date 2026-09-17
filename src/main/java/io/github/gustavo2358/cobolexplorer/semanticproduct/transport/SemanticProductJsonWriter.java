@@ -26,7 +26,7 @@ import java.util.Objects;
  */
 public final class SemanticProductJsonWriter {
     public static final String SCHEMA = "cobol-semantic-product";
-    public static final String CONTRACT_VERSION = "2.27.0";
+    public static final String CONTRACT_VERSION = "2.28.0";
 
     private static final ObjectMapper JSON = JsonMapper.builder()
             .enable(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY)
@@ -289,6 +289,8 @@ public final class SemanticProductJsonWriter {
                                     new TextValueDocument(a.result().logicalDomain(), a.result().value(), a.result().logicalExtent()),
                                     provenance(a.provenance()))).orElse(null), move.regionalMove().map(m->new RegionalMoveDocument(m.kind(),m.bytes(),m.gapCodes())).orElse(null),move.additionalTransfers().stream().map(t->new MoveTransferDocument(moveSource(t.source()),dataReference(t.target()),new RegionalMoveDocument(t.effect().kind(),t.effect().bytes(),t.effect().gapCodes()))).toList());
         }
+        if (fact instanceof CobolSemanticProduct.CicsFileFact cics) return new CicsFileDocument(header(cics.header()),cics.command(),cics.rawText(),cics.targetMode(),cics.target().map(SemanticProductJsonWriter::callTarget).orElse(null),
+            cics.options().stream().map(o->new CicsFileOptionDocument(o.name(),o.canonicalName(),o.operand().orElse(null),o.start(),o.end(),o.role(),o.reference().map(SemanticProductJsonWriter::dataReference).orElse(null),o.literal().orElse(null),o.integer().map(Object::toString).orElse(null))).toList(),cics.conditions(),continuation(cics.localContinuation()),continuation(cics.ordinaryContinuation()),cics.nameProfile(),cics.gapCodes());
         if (fact instanceof CobolSemanticProduct.CicsFact cics) return new CicsDocument(header(cics.header()),cics.command(),cics.rawText(),cics.target().map(SemanticProductJsonWriter::callTarget).orElse(null),
             cics.options().stream().map(o->new CicsOptionDocument(o.name(),o.operand().orElse(null),o.start(),o.end(),o.reference().map(SemanticProductJsonWriter::dataReference).orElse(null))).toList(),cics.conditions(),continuation(cics.localContinuation()),continuation(cics.ordinaryContinuation()),cics.nameProfile(),cics.gapCodes());
         if (fact instanceof CobolSemanticProduct.CallFact call) {
@@ -492,6 +494,7 @@ public final class SemanticProductJsonWriter {
             @JsonSubTypes.Type(value = MoveDocument.class, name = "MOVE"),
             @JsonSubTypes.Type(value = CallDocument.class, name = "CALL"),
             @JsonSubTypes.Type(value = CicsDocument.class, name = "CICS_PROGRAM_CONTROL"),
+            @JsonSubTypes.Type(value = CicsFileDocument.class, name = "CICS_FILE_CONTROL"),
             @JsonSubTypes.Type(value = IfDocument.class, name = "IF"),
             @JsonSubTypes.Type(value = GobackDocument.class, name = "GOBACK"),
             @JsonSubTypes.Type(value = PerformDocument.class, name = "PERFORM"),
@@ -501,9 +504,14 @@ public final class SemanticProductJsonWriter {
             @JsonSubTypes.Type(value = ConditionalGoToDocument.class, name = "GO_TO_DEPENDING_ON"),
             @JsonSubTypes.Type(value = ObservedDocument.class, name = "OBSERVED")
     })
-    private sealed interface StatementDocument permits MoveDocument, CallDocument, CicsDocument,
+    private sealed interface StatementDocument permits MoveDocument, CallDocument, CicsDocument, CicsFileDocument,
             IfDocument, ObservedDocument, GobackDocument, PerformDocument, EvaluateDocument, GoToDocument, ConditionalGoToDocument, ProcedurePerformDocument { }
 
+    private record CicsFileOptionDocument(String name,String canonicalName,String operand,int start,int end,
+        CobolSemanticProduct.CicsFileRole role,DataReferenceDocument reference,String literal,String integer) { }
+    private record CicsFileDocument(StatementHeaderDocument header,String command,String rawText,CobolSemanticProduct.CicsFileTargetMode targetMode,
+        CallTargetDocument target,List<CicsFileOptionDocument> options,CobolSemanticProduct.CicsConditions conditions,
+        ContinuationDocument localContinuation,ContinuationDocument ordinaryContinuation,String nameProfile,List<String> gapCodes) implements StatementDocument { }
     private record CicsOptionDocument(String name,String operand,int start,int end,DataReferenceDocument reference) { }
     private record CicsDocument(StatementHeaderDocument header,CobolSemanticProduct.CicsCommand command,String rawText,
         CallTargetDocument target,List<CicsOptionDocument> options,CobolSemanticProduct.CicsConditions conditions,
