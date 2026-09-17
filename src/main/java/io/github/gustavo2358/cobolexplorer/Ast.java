@@ -409,14 +409,27 @@ public final class Ast {
         }
     }
 
+    public enum FileCommand { OPEN, READ, CLOSE }
+    public enum FileOpenMode { INPUT, OUTPUT, IO, EXTEND, UNSPECIFIED }
+    public enum FileSyntaxProfile { N_LR, UNSUPPORTED }
+    public record FileIoOperand(FileReference reference, FileOpenMode mode) { }
+    /** Grammar-derived facts only; effects and outcomes are independent. */
+    public record FileIoSurface(FileCommand command, List<FileIoOperand> files, FileSyntaxProfile profile) {
+        public FileIoSurface { files=List.copyOf(files); }
+    }
+
     public record ModeledStatement(Meta meta, String grammarRule, String writtenText,
                                    List<StatementOperand> operands,
-                                   List<StatementClause> clauses, Optional<StatementEffectSummary> effects) implements Statement {
+                                   List<StatementClause> clauses, Optional<StatementEffectSummary> effects,
+                                   Optional<FileIoSurface> fileIo) implements Statement {
+        public ModeledStatement(Meta meta,String grammarRule,String writtenText,List<StatementOperand> operands,List<StatementClause> clauses,Optional<StatementEffectSummary> effects) {
+            this(meta,grammarRule,writtenText,operands,clauses,effects,Optional.empty());
+        }
         public ModeledStatement(Meta meta,String grammarRule,String writtenText,List<StatementOperand> operands,List<StatementClause> clauses) {
             this(meta,grammarRule,writtenText,operands,clauses,Optional.empty());
         }
         public ModeledStatement {
-            Objects.requireNonNull(effects);
+            Objects.requireNonNull(effects);Objects.requireNonNull(fileIo);
             operands = List.copyOf(operands);
             clauses = List.copyOf(clauses);
         }
@@ -424,12 +437,16 @@ public final class Ast {
 
     public record PreservedStatement(Meta meta, String grammarRule, String writtenText,
                                      List<StatementOperand> operands,
-                                     List<StatementClause> clauses, Optional<StatementEffectSummary> effects) implements Statement {
+                                     List<StatementClause> clauses, Optional<StatementEffectSummary> effects,
+                                   Optional<FileIoSurface> fileIo) implements Statement {
+        public PreservedStatement(Meta meta,String grammarRule,String writtenText,List<StatementOperand> operands,List<StatementClause> clauses,Optional<StatementEffectSummary> effects) {
+            this(meta,grammarRule,writtenText,operands,clauses,effects,Optional.empty());
+        }
         public PreservedStatement(Meta meta,String grammarRule,String writtenText,List<StatementOperand> operands,List<StatementClause> clauses) {
             this(meta,grammarRule,writtenText,operands,clauses,Optional.empty());
         }
         public PreservedStatement {
-            Objects.requireNonNull(effects);
+            Objects.requireNonNull(effects);Objects.requireNonNull(fileIo);
             operands = List.copyOf(operands);
             clauses = List.copyOf(clauses);
         }

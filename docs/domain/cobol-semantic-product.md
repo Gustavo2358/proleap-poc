@@ -1,6 +1,6 @@
 # COBOL Semantic Product
 
-Writer corrente: [declarações FILE / SP 2.21.0](file-dependencies.md), storage 1.7.0
+Writer corrente: [declarações FILE / SP 2.22.0](file-dependencies.md), storage 1.7.0
 ([source evidence](evidence-preserving-entry.md)),
 com prova tipada por condição de entrada, preservando [CICS Program Control](cics-program-control.md).
 

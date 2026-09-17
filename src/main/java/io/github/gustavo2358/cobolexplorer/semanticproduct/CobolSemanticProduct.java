@@ -1227,15 +1227,33 @@ public final class CobolSemanticProduct {
             require(new HashSet<>(records).size() == records.size(), "duplicate file record");
         }
     }
-    public record FileInventory(Availability availability, List<FileDeclaration> declarations, List<String> gapCodes) {
+    public enum FileCommand { OPEN, READ, CLOSE }
+    public enum FileOpenMode { INPUT, OUTPUT, IO, EXTEND, UNSPECIFIED }
+    public enum FileSyntaxProfile { N_LR, UNSUPPORTED }
+    public record FileUse(StatementId statement, int ordinal, FileCommand command, FileOpenMode mode,
+            FileSyntaxProfile profile, ResolutionStatus bindingStatus, List<FileId> candidates,
+            Provenance provenance, List<String> gapCodes) {
+        public FileUse {
+            Objects.requireNonNull(statement);require(ordinal>=0,"file use ordinal");Objects.requireNonNull(command);Objects.requireNonNull(mode);
+            Objects.requireNonNull(profile);Objects.requireNonNull(bindingStatus);candidates=List.copyOf(candidates);
+            Objects.requireNonNull(provenance);gapCodes=List.copyOf(gapCodes);
+            require(bindingStatus!=ResolutionStatus.RESOLVED||candidates.size()==1,"resolved file use needs unique identity");
+        }
+    }
+    public record FileOperations(Availability availability,List<FileUse> uses,List<String> gapCodes) {
+        public FileOperations { Objects.requireNonNull(availability);uses=List.copyOf(uses);gapCodes=List.copyOf(gapCodes); }
+        public static FileOperations unavailable(){return new FileOperations(Availability.UNAVAILABLE,List.of(),List.of("FILE_OPERATIONS_UNAVAILABLE"));}
+    }
+    public record FileInventory(Availability availability, List<FileDeclaration> declarations, List<String> gapCodes, FileOperations operations) {
+        public FileInventory(Availability availability,List<FileDeclaration> declarations,List<String> gapCodes){this(availability,declarations,gapCodes,FileOperations.unavailable());}
         public FileInventory {
-            Objects.requireNonNull(availability); declarations = List.copyOf(declarations); gapCodes = List.copyOf(gapCodes);
+            Objects.requireNonNull(availability); declarations = List.copyOf(declarations); gapCodes = List.copyOf(gapCodes);Objects.requireNonNull(operations);
             require(availability == Availability.KNOWN ? gapCodes.isEmpty() : !gapCodes.isEmpty(), "file inventory availability/gaps mismatch");
             require(availability != Availability.UNAVAILABLE || declarations.isEmpty(), "unavailable file inventory has declarations");
         }
         public static FileInventory unavailable() { return new FileInventory(Availability.UNAVAILABLE, List.of(), List.of("FILE_INVENTORY_UNAVAILABLE")); }
     }
-    private static void validateFiles(UnitId unit, List<DataDeclaration> declarations, FileInventory inventory) {
+    private static void validateFiles(UnitId unit, List<DataDeclaration> declarations, FileInventory inventory,List<StatementFact> statements) {
         var data = new HashSet<DataItemId>(); for (var d : declarations) data.add(d.id());
         var files = new HashSet<FileId>(); var owned = new HashSet<DataItemId>();
         for (var file : inventory.declarations()) {
@@ -1243,6 +1261,14 @@ public final class CobolSemanticProduct {
             for (var record : file.records()) require(data.contains(record) && owned.add(record), "missing or multiply owned file record");
             for (var ref : file.references()) for (var candidate : ref.binding().candidates())
                 require(data.contains(candidate.id()), "file reference has no data declaration");
+        }
+        var ids=new HashSet<StatementId>();for(var statement:statements)ids.add(statement.header().id());
+        var uses=new HashSet<java.util.Map.Entry<StatementId,Integer>>();
+        for(var use:inventory.operations().uses()) {
+            require(ids.contains(use.statement())&&use.statement().unit().equals(unit),"file use statement absent or foreign");
+            require(uses.add(java.util.Map.entry(use.statement(),use.ordinal())),"duplicate file use ordinal");
+            require(new HashSet<>(use.candidates()).size()==use.candidates().size(),"duplicate file candidates");
+            for(var candidate:use.candidates())require(!candidate.unit().equals(unit)||files.contains(candidate),"missing local file candidate");
         }
     }
 
@@ -1261,7 +1287,7 @@ public final class CobolSemanticProduct {
             entryInventory = Objects.requireNonNull(entryInventory, "entryInventory");
             validateState(unit, dataDeclarations, statements, gaps, coverage);
             validateEntries(unit, statements, entryInventory);
-            validateFiles(unit, dataDeclarations, Objects.requireNonNull(fileInventory));
+            validateFiles(unit, dataDeclarations, Objects.requireNonNull(fileInventory),statements);
             validateStorage(unit, dataDeclarations, statements, Objects.requireNonNull(storage));
             Objects.requireNonNull(storageIndependence);
             Map<DataItemId, DataDeclaration> storageDeclarations = new HashMap<>();

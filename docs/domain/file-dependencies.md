@@ -80,3 +80,19 @@ ficam no estado canônico e na evidência E2E, sem claim antecipado de qualifica
 
 `record-name` de WRITE/REWRITE usa a referência DATA qualificada canônica,
 permitindo associar o registro ao conector sem introduzir efeitos de execução.
+
+## FD-W1 — fatos de uso para o slice estático
+
+SP2.22.0/fileInventory1.1.0 acrescenta operations com disponibilidade própria.
+AstBuilder conserva FileIoSurface tipada a partir dos contextos OPEN/READ/CLOSE;
+projection publica statement/ordinal, comando, modo, perfil, binding/candidatos
+com owners completos e origem. O lower não precisa ler grammarRule/texto COBOL.
+Declarações e operações têm inventários independentes. W1 publica operações
+PARTIAL (FILE_OPERATIONS_W1_SUBSET), sem afirmar efeitos/controle: cada uso tem
+FILE_EFFECTS_CONTROL_PARTIAL. READ com cláusula readWith e CLOSE port I/O são
+fora de N-LR; não promovidos a core. ASSIGN DYNAMIC continua fora do perfil N-LR.
+
+N-LR: SC27-8713-03, 2026-04-28, seções OPEN/READ/CLOSE no PDF pinado em W0.
+Neste slice só identificação nominal/ação; efeitos/status/outcomes aguardam W3/W4.
+Oráculos FileOperationSliceTest: sequência estática, multi-file/modes, missing
+file, CALL dentro de AT END, declaração sem uso e negativo de extensão dialectal.

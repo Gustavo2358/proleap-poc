@@ -179,10 +179,10 @@ public final class CobolSemanticProductProjector {
                 inventoryStatus, statements, inputs.unitSummary());
         return new CobolSemanticProduct.State(inputs.boundaryUnit(),
                 policy(inputs.report().policy()), declarations.facts(),
-                statements, gaps, coverage, entries, storageIndependence(inputs, declarations.ids()), storage(inputs, declarations.ids()), files(inputs, declarations.ids()));
+                statements, gaps, coverage, entries, storageIndependence(inputs, declarations.ids()), storage(inputs, declarations.ids()), files(inputs, declarations.ids(), statementIds));
     }
 
-    private static FileInventory files(ProjectionInputs inputs, Map<ResolutionContracts.SemanticEntityId, DataItemId> dataIds) {
+    private static FileInventory files(ProjectionInputs inputs, Map<ResolutionContracts.SemanticEntityId, DataItemId> dataIds, Map<Ast.Statement,StatementId> statementIds) {
         var result = new ArrayList<FileDeclaration>();
         var source = inputs.selectedSource();
         var dataByAst = new HashMap<Integer, DataItemId>();
@@ -235,7 +235,32 @@ public final class CobolSemanticProductProjector {
         }
         boolean missing = !inputs.report().inputComplete(inputs.unitId());
         return new FileInventory(missing ? Availability.INPUT_MISSING : Availability.KNOWN, result,
-                missing ? List.of("FILE_INPUT_INCOMPLETE") : List.of());
+                missing ? List.of("FILE_INPUT_INCOMPLETE") : List.of(), fileOperations(inputs,statementIds));
+    }
+
+    private static FileOperations fileOperations(ProjectionInputs inputs,Map<Ast.Statement,StatementId> statementIds) {
+        var uses=new ArrayList<FileUse>();
+        for(var position:inputs.statementPositions()) {
+            var statement=position.statement();
+            var surface=statement instanceof Ast.ModeledStatement m?m.fileIo():statement instanceof Ast.PreservedStatement p?p.fileIo():Optional.<Ast.FileIoSurface>empty();
+            if(surface.isEmpty())continue;
+            int ordinal=0;
+            for(var operand:surface.get().files()) {
+                var reference=operand.reference();var entry=inputs.optionalEntryFor(reference);
+                var candidates=new ArrayList<FileId>();
+                if(entry!=null)for(var c:entry.candidates())if(c.entityId().domain()==ResolutionContracts.SemanticEntityDomain.FILE_ENTITY) {
+                    var owner=c.entityId().programUnitId();
+                    candidates.add(new FileId(new UnitId(owner.compilationUnitId(),owner.structuralPath(),owner.canonicalProgramName()),c.entityId().localId()));
+                }
+                var status=entry==null?ResolutionStatus.INPUT_MISSING:ResolutionStatus.valueOf(entry.status().name());
+                var gaps=new ArrayList<String>(List.of("FILE_EFFECTS_CONTROL_PARTIAL"));
+                if(status!=ResolutionStatus.RESOLVED)gaps.add("FILE_BINDING_NOT_PROVEN");
+                if(surface.get().profile()!=Ast.FileSyntaxProfile.N_LR)gaps.add("FILE_SYNTAX_OUTSIDE_N_LR");
+                uses.add(new FileUse(statementIds.get(statement),ordinal++,FileCommand.valueOf(surface.get().command().name()),FileOpenMode.valueOf(operand.mode().name()),
+                    FileSyntaxProfile.valueOf(surface.get().profile().name()),status,candidates,provenance(reference.meta().provenance()),gaps));
+            }
+        }
+        return new FileOperations(Availability.PARTIAL,uses,List.of("FILE_OPERATIONS_W1_SUBSET"));
     }
 
     private static StorageNodeId storageNode(ProjectionInputs inputs, StorageLayoutSemantics.Key key) {

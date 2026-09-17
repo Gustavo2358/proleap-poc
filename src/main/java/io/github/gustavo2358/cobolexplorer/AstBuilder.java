@@ -996,8 +996,34 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
                 .map(this::buildStatementClause).toList();
         var effects=statementEffects(context,operands,clauses,operandNodes);
         return preserved
-                ? new Ast.PreservedStatement(meta, rule(context), sourceText(context).strip(), operands, clauses,effects)
-                : new Ast.ModeledStatement(meta, rule(context), sourceText(context).strip(), operands, clauses,effects);
+                ? new Ast.PreservedStatement(meta, rule(context), sourceText(context).strip(), operands, clauses,effects,fileIo(context,operandNodes))
+                : new Ast.ModeledStatement(meta, rule(context), sourceText(context).strip(), operands, clauses,effects,fileIo(context,operandNodes));
+    }
+
+    private static Optional<Ast.FileIoSurface> fileIo(ParserRuleContext context,Map<ParserRuleContext,Ast.Node> nodes) {
+        Ast.FileCommand command;
+        if(context instanceof CobolParser.OpenStatementContext)command=Ast.FileCommand.OPEN;
+        else if(context instanceof CobolParser.ReadStatementContext)command=Ast.FileCommand.READ;
+        else if(context instanceof CobolParser.CloseStatementContext)command=Ast.FileCommand.CLOSE;
+        else return Optional.empty();
+        var profile=Ast.FileSyntaxProfile.N_LR;
+        if(context instanceof CobolParser.ReadStatementContext read && read.readWith()!=null)profile=Ast.FileSyntaxProfile.UNSUPPORTED;
+        if(context instanceof CobolParser.CloseStatementContext close && close.closeFile().stream().anyMatch(f->f.closePortFileIOStatement()!=null))profile=Ast.FileSyntaxProfile.UNSUPPORTED;
+        var files=new ArrayList<Ast.FileIoOperand>();
+        for(var file:nearestDescendants(context,c->c instanceof CobolParser.FileNameContext)) {
+            if(!(nodes.get(file) instanceof Ast.FileReference reference))continue;
+            var mode=Ast.FileOpenMode.UNSPECIFIED;
+            if(command==Ast.FileCommand.OPEN) {
+                for(var parent=file.getParent();parent!=null&&parent!=context;parent=parent.getParent()) {
+                    if(parent instanceof CobolParser.OpenInputStatementContext)mode=Ast.FileOpenMode.INPUT;
+                    else if(parent instanceof CobolParser.OpenOutputStatementContext)mode=Ast.FileOpenMode.OUTPUT;
+                    else if(parent instanceof CobolParser.OpenIOStatementContext)mode=Ast.FileOpenMode.IO;
+                    else if(parent instanceof CobolParser.OpenExtendStatementContext)mode=Ast.FileOpenMode.EXTEND;
+                }
+            }
+            files.add(new Ast.FileIoOperand(reference,mode));
+        }
+        return Optional.of(new Ast.FileIoSurface(command,files,profile));
     }
 
     private static Optional<StatementEffectSummary> statementEffects(ParserRuleContext context,List<Ast.StatementOperand> operands,
