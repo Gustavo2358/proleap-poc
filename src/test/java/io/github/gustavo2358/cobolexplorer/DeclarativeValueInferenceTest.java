@@ -130,7 +130,7 @@ class DeclarativeValueInferenceTest {
         assertEquals(InitialStorageProof.DECLARATIVE_INVARIANT,c.proof());
         assertThrows(IllegalArgumentException.class,()->new StorageInitialCondition(c.node(),c.kind(),c.bytes(),c.gapCodes(),c.provenance(),InitialStorageProof.NONE));
         var wire=new ObjectMapper().readTree(SemanticProductJsonWriter.serialize(p));
-        assertEquals("2.20.0",wire.path("contractVersion").asText());
+        assertEquals("2.21.0",wire.path("contractVersion").asText());
         assertEquals("1.7.0",wire.path("storage").path("version").asText());
         assertEquals("DECLARATIVE_INVARIANT",wire.path("storage").path("entryState").path("conditions").get(0).path("proof").asText());
     }

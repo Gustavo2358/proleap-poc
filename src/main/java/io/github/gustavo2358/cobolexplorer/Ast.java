@@ -143,11 +143,27 @@ public final class Ast {
         public Section(Meta meta, String name, List<Node> children) { this(meta, name, null, children); }
     }
 
-    public record FileBinding(Meta meta, String logicalName, String assignment) implements Node {}
+    public enum FileKind { FD, SD, UNKNOWN }
+    public enum FileOrganization { SEQUENTIAL, INDEXED, RELATIVE, UNSPECIFIED, UNSUPPORTED }
+    public enum FileAccessMode { SEQUENTIAL, RANDOM, DYNAMIC, UNSPECIFIED, UNSUPPORTED }
+    public enum FileReferenceRole { RECORD_KEY, ALTERNATE_RECORD_KEY, RELATIVE_KEY, FILE_STATUS, ADDITIONAL_STATUS }
+    public enum AssignmentForm { IBM_NAME, OUTSIDE_N_LR, MISSING }
+    public record FileAssignment(AssignmentForm form, String original, String externalFileName) { }
+    public record FileClauseReference(FileReferenceRole role, DataReference reference, boolean duplicates) { }
+    public record FileControl(boolean optional, FileAssignment assignment, FileOrganization organization,
+                              FileAccessMode accessMode, List<FileClauseReference> references) {
+        public FileControl { references = List.copyOf(references); }
+    }
+    public record FileBinding(Meta meta, String logicalName, String assignment, FileControl control) implements Node {
+        public FileBinding(Meta meta, String logicalName, String assignment) { this(meta, logicalName, assignment, null); }
+    }
 
-    public record FileDescription(Meta meta, String fileName, DeclarationVisibility visibility,
+    public record FileDescription(Meta meta, String fileName, FileKind kind, DeclarationVisibility visibility,
                                   List<DataEntry> entries) implements Node {
         public FileDescription { entries = List.copyOf(entries); }
+        public FileDescription(Meta meta, String fileName, DeclarationVisibility visibility, List<DataEntry> entries) {
+            this(meta, fileName, FileKind.UNKNOWN, visibility, entries);
+        }
         public FileDescription(Meta meta, String fileName, List<DataEntry> entries) {
             this(meta, fileName, DeclarationVisibility.LOCAL, entries);
         }
@@ -606,6 +622,8 @@ public final class Ast {
         if (node instanceof Division n) return n.children();
         if (node instanceof Section n) return n.children();
         if (node instanceof FileDescription n) return n.entries();
+        if (node instanceof FileBinding n) return n.control() == null ? List.of()
+                : n.control().references().stream().map(FileClauseReference::reference).toList();
         if (node instanceof DataEntry n) {
             List<Node> result = new ArrayList<>(n.clauses());
             result.addAll(n.children());

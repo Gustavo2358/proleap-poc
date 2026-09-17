@@ -1190,11 +1190,67 @@ public final class CobolSemanticProduct {
         }
     }
 
+    public enum FileKind { FD, SD, UNKNOWN }
+    public enum FileOrganization { SEQUENTIAL, INDEXED, RELATIVE, UNSPECIFIED, UNSUPPORTED }
+    public enum FileAccessMode { SEQUENTIAL, RANDOM, DYNAMIC, UNSPECIFIED, UNSUPPORTED }
+    public enum FileVisibility { LOCAL, GLOBAL, EXTERNAL, CONFLICTING }
+    public enum FileReferenceRole { RECORD_KEY, ALTERNATE_RECORD_KEY, RELATIVE_KEY, FILE_STATUS, ADDITIONAL_STATUS }
+    public enum FileNameSource { ASSIGNMENT_NAME, SORT_COMMENT, UNSUPPORTED, ABSENT }
+    public record FileId(UnitId unit, int localId) {
+        public FileId { Objects.requireNonNull(unit); require(localId >= 0, "negative file id"); }
+    }
+    public record FileAssignment(Availability availability, String profile, String original,
+                                 FileNameSource sourceKind, Optional<String> externalFileName, List<String> gapCodes) {
+        public FileAssignment {
+            Objects.requireNonNull(availability); requireText(profile, "file profile"); Objects.requireNonNull(original);
+            Objects.requireNonNull(sourceKind); Objects.requireNonNull(externalFileName); gapCodes = List.copyOf(gapCodes);
+            require(externalFileName.isPresent() == (sourceKind == FileNameSource.ASSIGNMENT_NAME), "external name/source kind mismatch");
+            externalFileName.ifPresent(n -> requireText(n, "external name"));
+            require(availability == Availability.KNOWN ? gapCodes.isEmpty() : !gapCodes.isEmpty(), "assignment availability/gaps mismatch");
+            require(!externalFileName.isPresent() || availability == Availability.KNOWN, "unproved exact external name");
+        }
+    }
+    public record FileReference(FileReferenceRole role, NominalBinding binding, boolean duplicates, Provenance provenance) {
+        public FileReference { Objects.requireNonNull(role); Objects.requireNonNull(binding); Objects.requireNonNull(provenance); }
+    }
+    public record FileDeclaration(FileId id, UnitId owner, String logicalFile, FileKind kind,
+            Optional<Boolean> optional, FileAssignment assignment, FileOrganization organization, FileAccessMode accessMode,
+            FileVisibility visibility, List<DataItemId> records, List<FileReference> references,
+            List<Provenance> origins, List<String> gapCodes) {
+        public FileDeclaration {
+            Objects.requireNonNull(id); Objects.requireNonNull(owner); require(id.unit().equals(owner), "file owner mismatch");
+            requireText(logicalFile, "logicalFile"); Objects.requireNonNull(kind); Objects.requireNonNull(optional);
+            Objects.requireNonNull(assignment); Objects.requireNonNull(organization); Objects.requireNonNull(accessMode); Objects.requireNonNull(visibility);
+            records = List.copyOf(records); references = List.copyOf(references); origins = List.copyOf(origins); gapCodes = List.copyOf(gapCodes);
+            require(!origins.isEmpty(), "file declaration needs origin");
+            require(kind != FileKind.SD || assignment.externalFileName().isEmpty(), "SD name is a comment");
+            require(new HashSet<>(records).size() == records.size(), "duplicate file record");
+        }
+    }
+    public record FileInventory(Availability availability, List<FileDeclaration> declarations, List<String> gapCodes) {
+        public FileInventory {
+            Objects.requireNonNull(availability); declarations = List.copyOf(declarations); gapCodes = List.copyOf(gapCodes);
+            require(availability == Availability.KNOWN ? gapCodes.isEmpty() : !gapCodes.isEmpty(), "file inventory availability/gaps mismatch");
+            require(availability != Availability.UNAVAILABLE || declarations.isEmpty(), "unavailable file inventory has declarations");
+        }
+        public static FileInventory unavailable() { return new FileInventory(Availability.UNAVAILABLE, List.of(), List.of("FILE_INVENTORY_UNAVAILABLE")); }
+    }
+    private static void validateFiles(UnitId unit, List<DataDeclaration> declarations, FileInventory inventory) {
+        var data = new HashSet<DataItemId>(); for (var d : declarations) data.add(d.id());
+        var files = new HashSet<FileId>(); var owned = new HashSet<DataItemId>();
+        for (var file : inventory.declarations()) {
+            require(file.owner().equals(unit) && files.add(file.id()), "duplicate or foreign file");
+            for (var record : file.records()) require(data.contains(record) && owned.add(record), "missing or multiply owned file record");
+            for (var ref : file.references()) for (var candidate : ref.binding().candidates())
+                require(data.contains(candidate.id()), "file reference has no data declaration");
+        }
+    }
+
     /** One immutable, closed publication with a cardinality-independent envelope. */
     public record State(UnitId unit, Policy policy,
                         List<DataDeclaration> dataDeclarations,
                         List<StatementFact> statements,
-                        List<Gap> gaps, CoverageSummary coverage, EntryInventory entryInventory, IndependentStorageSet storageIndependence, StorageInventory storage) {
+                        List<Gap> gaps, CoverageSummary coverage, EntryInventory entryInventory, IndependentStorageSet storageIndependence, StorageInventory storage, FileInventory fileInventory) {
         public State {
             unit = Objects.requireNonNull(unit, "unit");
             policy = Objects.requireNonNull(policy, "policy");
@@ -1205,6 +1261,7 @@ public final class CobolSemanticProduct {
             entryInventory = Objects.requireNonNull(entryInventory, "entryInventory");
             validateState(unit, dataDeclarations, statements, gaps, coverage);
             validateEntries(unit, statements, entryInventory);
+            validateFiles(unit, dataDeclarations, Objects.requireNonNull(fileInventory));
             validateStorage(unit, dataDeclarations, statements, Objects.requireNonNull(storage));
             Objects.requireNonNull(storageIndependence);
             Map<DataItemId, DataDeclaration> storageDeclarations = new HashMap<>();
@@ -1215,6 +1272,11 @@ public final class CobolSemanticProduct {
                         && declaration.provenance().exact() && declaration.coverage() == CoverageStatus.MODELED,
                         "independent member requires published, complete scalar declaration and origin");
             }
+        }
+        public State(UnitId unit, Policy policy, List<DataDeclaration> dataDeclarations,
+                     List<StatementFact> statements, List<Gap> gaps, CoverageSummary coverage, EntryInventory entryInventory,
+                     IndependentStorageSet storageIndependence, StorageInventory storage) {
+            this(unit, policy, dataDeclarations, statements, gaps, coverage, entryInventory, storageIndependence, storage, FileInventory.unavailable());
         }
         public State(UnitId unit, Policy policy, List<DataDeclaration> dataDeclarations,
                      List<StatementFact> statements, List<Gap> gaps, CoverageSummary coverage, EntryInventory entryInventory, IndependentStorageSet storageIndependence) {

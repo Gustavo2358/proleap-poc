@@ -44,6 +44,11 @@ final class ReferenceOccurrenceCollector {
 
     private void visit(Ast.Node node, ResolutionContracts.ReferenceRole role,
                        ReferenceOccurrences.Preservation preservation) {
+        if (node instanceof Ast.FileBinding binding) {
+            for (Ast.Node reference : Ast.children(binding)) visit(reference,
+                    ResolutionContracts.ReferenceRole.DECLARATION_RELATION, preservation);
+            return;
+        }
         if (node instanceof Ast.DataReference reference) {
             if (role == ResolutionContracts.ReferenceRole.SUBSCRIPT) {
                 addDataReference(reference, role, preservation, ResolutionContracts.ReferenceKind.INDEX,

@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.IdentityHashMap;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -178,7 +179,63 @@ public final class CobolSemanticProductProjector {
                 inventoryStatus, statements, inputs.unitSummary());
         return new CobolSemanticProduct.State(inputs.boundaryUnit(),
                 policy(inputs.report().policy()), declarations.facts(),
-                statements, gaps, coverage, entries, storageIndependence(inputs, declarations.ids()), storage(inputs, declarations.ids()));
+                statements, gaps, coverage, entries, storageIndependence(inputs, declarations.ids()), storage(inputs, declarations.ids()), files(inputs, declarations.ids()));
+    }
+
+    private static FileInventory files(ProjectionInputs inputs, Map<ResolutionContracts.SemanticEntityId, DataItemId> dataIds) {
+        var result = new ArrayList<FileDeclaration>();
+        var source = inputs.selectedSource();
+        var dataByAst = new HashMap<Integer, DataItemId>();
+        for (var symbol : source.table().symbols()) if (symbol.namespace() == SymbolTable.Namespace.DATA) {
+            var id = dataIds.get(new ResolutionContracts.SemanticEntityId(inputs.unitId(), ResolutionContracts.SemanticEntityDomain.DATA_SYMBOL, symbol.id()));
+            if (id != null) dataByAst.put(symbol.declarationAstNodeId(), id);
+        }
+        for (var entity : source.table().entities()) {
+            if (entity.kind() != SymbolTable.EntityKind.FILE) continue;
+            var controls = new ArrayList<Ast.FileBinding>(); var descriptions = new ArrayList<Ast.FileDescription>();
+            var origins = new ArrayList<Provenance>(); var gaps = new ArrayList<String>();
+            for (var symbolId : entity.declarationSymbolIds()) {
+                var symbol = source.table().symbols().get(symbolId);
+                var node = source.nodes().get(symbol.declarationAstNodeId());
+                origins.add(provenance(node.meta().provenance()));
+                if (node instanceof Ast.FileBinding b) controls.add(b);
+                if (node instanceof Ast.FileDescription d) descriptions.add(d);
+            }
+            if (controls.size() != 1) gaps.add(controls.isEmpty() ? "FILE_SELECT_MISSING" : "FILE_SELECT_AMBIGUOUS");
+            if (descriptions.size() != 1) gaps.add(descriptions.isEmpty() ? "FILE_DESCRIPTION_MISSING" : "FILE_DESCRIPTION_AMBIGUOUS");
+            var kind = descriptions.size() == 1 ? FileKind.valueOf(descriptions.get(0).kind().name()) : FileKind.UNKNOWN;
+            var control = controls.size() == 1 ? controls.get(0).control() : null;
+            if (controls.size() == 1 && control == null) gaps.add("FILE_CONTROL_UNAVAILABLE");
+            var assignment = control == null ? null : control.assignment();
+            var nameSource = kind == FileKind.SD ? FileNameSource.SORT_COMMENT : assignment == null || assignment.form() == Ast.AssignmentForm.MISSING
+                    ? FileNameSource.ABSENT : assignment.form() == Ast.AssignmentForm.IBM_NAME ? FileNameSource.ASSIGNMENT_NAME : FileNameSource.UNSUPPORTED;
+            var nameGaps = nameSource == FileNameSource.ABSENT ? List.of("ASSIGN_MISSING") : nameSource == FileNameSource.UNSUPPORTED
+                    ? List.of("ASSIGN_OUTSIDE_N_LR") : List.<String>of();
+            var name = new FileAssignment(nameGaps.isEmpty() ? Availability.KNOWN : Availability.UNAVAILABLE,
+                    "ibm-enterprise-cobol-6.4-n-lr@2026-04-28", assignment == null ? "" : assignment.original(), nameSource,
+                    nameSource == FileNameSource.ASSIGNMENT_NAME ? Optional.of(assignment.externalFileName()) : Optional.empty(), nameGaps);
+            var records = new ArrayList<DataItemId>();
+            for (var description : descriptions) for (var record : description.entries()) {
+                var id = dataByAst.get(record.meta().id());
+                if (id != null && (record.level().equals("01") || record.level().equals("1"))) records.add(id);
+                else gaps.add("FILE_RECORD_OWNER_UNAVAILABLE");
+            }
+            var refs = new ArrayList<FileReference>();
+            if (control != null) for (var reference : control.references()) {
+                var entry = inputs.resolutionsByAst().get(new OccurrenceAstKey(inputs.unitId(), reference.reference().meta().id()));
+                var binding = entry == null ? NominalBinding.incomplete(ResolutionStatus.INPUT_MISSING, ResolutionReason.INPUT_INCOMPLETE, List.of())
+                        : nominalBinding(entry, dataIds);
+                refs.add(new FileReference(FileReferenceRole.valueOf(reference.role().name()), binding, reference.duplicates(), provenance(reference.reference().meta().provenance())));
+            }
+            result.add(new FileDeclaration(new FileId(inputs.boundaryUnit(), entity.id()), inputs.boundaryUnit(), entity.canonicalName(), kind,
+                    control == null ? Optional.empty() : Optional.of(control.optional()), name,
+                    control == null ? FileOrganization.UNSPECIFIED : FileOrganization.valueOf(control.organization().name()),
+                    control == null ? FileAccessMode.UNSPECIFIED : FileAccessMode.valueOf(control.accessMode().name()),
+                    FileVisibility.valueOf(entity.attributes().getOrDefault("visibility", "LOCAL")), records, refs, origins, gaps));
+        }
+        boolean missing = !inputs.report().inputComplete(inputs.unitId());
+        return new FileInventory(missing ? Availability.INPUT_MISSING : Availability.KNOWN, result,
+                missing ? List.of("FILE_INPUT_INCOMPLETE") : List.of());
     }
 
     private static StorageNodeId storageNode(ProjectionInputs inputs, StorageLayoutSemantics.Key key) {

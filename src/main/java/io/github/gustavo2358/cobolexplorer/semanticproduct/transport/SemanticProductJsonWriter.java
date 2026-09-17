@@ -26,7 +26,7 @@ import java.util.Objects;
  */
 public final class SemanticProductJsonWriter {
     public static final String SCHEMA = "cobol-semantic-product";
-    public static final String CONTRACT_VERSION = "2.20.0";
+    public static final String CONTRACT_VERSION = "2.21.0";
 
     private static final ObjectMapper JSON = JsonMapper.builder()
             .enable(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY)
@@ -77,8 +77,25 @@ public final class SemanticProductJsonWriter {
                 entryInventory(port.entryInventory()), storageIndependence(port.storageIndependence()), storage(port.storage()),
                 port.statements().stream().filter(CobolSemanticProduct.ObservedStatement.class::isInstance)
                     .map(CobolSemanticProduct.ObservedStatement.class::cast).filter(s->s.effects().isPresent())
-                    .map(s->effectDocument(s.header().id(),s.effects().orElseThrow())).toList());
+                    .map(s->effectDocument(s.header().id(),s.effects().orElseThrow())).toList(), fileInventory(port.fileInventory()));
     }
+
+    private static FileInventoryDocument fileInventory(CobolSemanticProduct.FileInventory inventory) {
+        return new FileInventoryDocument("1.0.0", inventory.availability(), inventory.declarations().stream().map(f ->
+                new FileDeclarationDocument("file:" + f.id().localId(), unit(f.owner()), f.logicalFile(), f.kind(), f.optional().orElse(null),
+                    new FileAssignmentDocument(f.assignment().availability(), f.assignment().profile(), f.assignment().original(), f.assignment().sourceKind(),
+                        f.assignment().externalFileName().orElse(null), f.assignment().gapCodes()), f.organization(), f.accessMode(), f.visibility(),
+                    f.records().stream().map(SemanticProductJsonWriter::dataHandle).toList(), f.references().stream().map(r ->
+                        new FileReferenceDocument(r.role(), binding(r.binding()), r.duplicates(), provenance(r.provenance()))).toList(),
+                    f.origins().stream().map(SemanticProductJsonWriter::provenance).toList(), f.gapCodes())).toList(), inventory.gapCodes());
+    }
+    private record FileInventoryDocument(String version, CobolSemanticProduct.Availability availability, List<FileDeclarationDocument> declarations, List<String> gapCodes) { }
+    private record FileAssignmentDocument(CobolSemanticProduct.Availability availability, String profile, String original,
+            CobolSemanticProduct.FileNameSource sourceKind, String externalFileName, List<String> gapCodes) { }
+    private record FileReferenceDocument(CobolSemanticProduct.FileReferenceRole role, BindingDocument binding, boolean duplicates, ProvenanceDocument provenance) { }
+    private record FileDeclarationDocument(String id, UnitDocument owner, String logicalFile, CobolSemanticProduct.FileKind kind,
+            Boolean optional, FileAssignmentDocument assignment, CobolSemanticProduct.FileOrganization organization, CobolSemanticProduct.FileAccessMode accessMode,
+            CobolSemanticProduct.FileVisibility visibility, List<String> records, List<FileReferenceDocument> references, List<ProvenanceDocument> origins, List<String> gapCodes) { }
 
     private static EffectDocument effectDocument(CobolSemanticProduct.StatementId statement,CobolSemanticProduct.EffectSummary e) {
         return new EffectDocument("1.0.0",statementHandle(statement),e.knownReads().stream().map(SemanticProductJsonWriter::operandHandle).toList(),
@@ -363,7 +380,7 @@ public final class SemanticProductJsonWriter {
     }
 
     @JsonPropertyOrder({"schema", "contractVersion", "unit", "policy",
-            "dataDeclarations", "statements", "structure", "gaps", "coverage", "entryInventory", "storageIndependence", "storage"})
+            "dataDeclarations", "statements", "structure", "gaps", "coverage", "entryInventory", "storageIndependence", "storage", "statementEffects", "fileInventory"})
     private record SemanticProductDocument(
             String schema,
             String contractVersion,
@@ -374,7 +391,7 @@ public final class SemanticProductJsonWriter {
             StructureDocument structure,
             List<GapDocument> gaps,
             CoverageDocument coverage,
-            EntryInventoryDocument entryInventory, IndependentStorageDocument storageIndependence, StorageDocument storage,List<EffectDocument> statementEffects) { }
+            EntryInventoryDocument entryInventory, IndependentStorageDocument storageIndependence, StorageDocument storage,List<EffectDocument> statementEffects, FileInventoryDocument fileInventory) { }
 
     private record EntryInventoryDocument(CobolSemanticProduct.InventoryStatus status,
                                           CobolSemanticProduct.EntryInventoryScope scope,

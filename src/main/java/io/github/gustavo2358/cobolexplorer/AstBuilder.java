@@ -190,9 +190,45 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
             ParserRuleContext assign = firstDescendant(entry, CobolParser.AssignClauseContext.class);
             children.add(new Ast.FileBinding(entryMeta,
                     fileName == null ? "<unknown>" : clean(sourceText(fileName)),
-                    assign == null ? "" : compact(sourceText(assign))));
+                    assign == null ? "" : compact(sourceText(assign)), fileControl(entry)));
         }
         return new Ast.Division(meta, Ast.DivisionKind.ENVIRONMENT, children);
+    }
+
+    private Ast.FileControl fileControl(CobolParser.FileControlEntryContext entry) {
+        var assignment = firstDescendant(entry, CobolParser.AssignClauseContext.class);
+        Ast.FileAssignment name;
+        if (assignment == null) name = new Ast.FileAssignment(Ast.AssignmentForm.MISSING, "", null);
+        else if (assignment.DYNAMIC() != null || assignment.EXTERNAL() != null || assignment.assignmentName() == null && assignment.literal() == null)
+            name = new Ast.FileAssignment(Ast.AssignmentForm.OUTSIDE_N_LR, compact(sourceText(assignment)), null);
+        else name = FileDeclarationSemantics.assignmentName(sourceText(assignment.assignmentName() != null ? assignment.assignmentName() : assignment.literal()));
+        var org = firstDescendant(entry, CobolParser.OrganizationClauseContext.class);
+        var organization = org == null ? Ast.FileOrganization.UNSPECIFIED
+                : org.LINE() != null || org.BINARY() != null || org.RECORD() != null ? Ast.FileOrganization.UNSUPPORTED
+                : org.INDEXED() != null ? Ast.FileOrganization.INDEXED
+                : org.RELATIVE() != null ? Ast.FileOrganization.RELATIVE : Ast.FileOrganization.SEQUENTIAL;
+        var access = firstDescendant(entry, CobolParser.AccessModeClauseContext.class);
+        var mode = access == null ? Ast.FileAccessMode.UNSPECIFIED : access.EXCLUSIVE() != null ? Ast.FileAccessMode.UNSUPPORTED
+                : access.RANDOM() != null ? Ast.FileAccessMode.RANDOM : access.DYNAMIC() != null ? Ast.FileAccessMode.DYNAMIC : Ast.FileAccessMode.SEQUENTIAL;
+        var refs = new ArrayList<Ast.FileClauseReference>();
+        for (var clause : entry.fileControlClause()) {
+            if (clause.recordKeyClause() != null) {
+                var key = clause.recordKeyClause();
+                refs.add(new Ast.FileClauseReference(Ast.FileReferenceRole.RECORD_KEY, dataReference(key.qualifiedDataName()), key.DUPLICATES() != null));
+            }
+            if (clause.alternateRecordKeyClause() != null) {
+                var key = clause.alternateRecordKeyClause();
+                refs.add(new Ast.FileClauseReference(Ast.FileReferenceRole.ALTERNATE_RECORD_KEY, dataReference(key.qualifiedDataName()), key.DUPLICATES() != null));
+            }
+            if (clause.relativeKeyClause() != null) refs.add(new Ast.FileClauseReference(Ast.FileReferenceRole.RELATIVE_KEY,
+                    dataReference(clause.relativeKeyClause().qualifiedDataName()), false));
+            if (clause.fileStatusClause() != null) {
+                int index = 0;
+                for (var status : clause.fileStatusClause().qualifiedDataName()) refs.add(new Ast.FileClauseReference(index++ == 0
+                        ? Ast.FileReferenceRole.FILE_STATUS : Ast.FileReferenceRole.ADDITIONAL_STATUS, dataReference(status), false));
+            }
+        }
+        return new Ast.FileControl(entry.selectClause().OPTIONAL() != null, name, organization, mode, refs);
     }
 
     private Ast.Division buildData(CobolParser.DataDivisionContext context) {
@@ -210,6 +246,7 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
                     dataEntries.addAll(buildDataHierarchy(fd.dataDescriptionEntry()));
                     entries.add(new Ast.FileDescription(fdMeta,
                             fileName == null ? "<unknown>" : clean(sourceText(fileName)),
+                            fd.FD() != null ? Ast.FileKind.FD : Ast.FileKind.SD,
                             declarationVisibility(fdMeta,
                                     firstDescendant(fd, CobolParser.ExternalClauseContext.class) != null,
                                     firstDescendant(fd, CobolParser.GlobalClauseContext.class) != null), dataEntries));
@@ -1079,6 +1116,10 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
     }
 
     private Ast.Node statementOperand(ParserRuleContext context) {
+        // A native record-name is a qualified DATA reference. The nominal resolver
+        // retains its declaration identity; FD ownership is a separate declaration fact.
+        if (context instanceof CobolParser.RecordNameContext record)
+            return dataReference(record.qualifiedDataName());
         if (context instanceof CobolParser.IdentifierContext
                 || context instanceof CobolParser.QualifiedDataNameContext)
             return expression(context, "statement operand");

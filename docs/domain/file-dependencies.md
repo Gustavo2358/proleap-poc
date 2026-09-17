@@ -1,6 +1,6 @@
 # FILE-DEPENDENCIES — frontend / SP
 
-FD-H0–H4 prepara; FD-W0 ainda TODO, condicionado à revisão humana H4.
+H4 aprovado; core N+C autorizado em 2026-09-16. W0 em implementação; W10 não autorizado.
 [Campanha canônica](https://github.com/Gustavo2358/analysis-cfg/blob/feat/file-dependencies/docs/product/file-dependencies/README.md)
 (workspace: `../analysis-cfg/docs/product/file-dependencies/README.md`).
 Comece pelo brief e [W0](https://github.com/Gustavo2358/analysis-cfg/blob/feat/file-dependencies/docs/work/active/FD-W0.yaml).
@@ -42,3 +42,41 @@ Gates focais: `mvn -B -ntp -Dtest=ProcedureFileProgramReferenceResolverTest,Sema
 Depois de estabilizar produção: `python3 -B scripts/harness/lean.py fast`;
 qualification-local no checkpoint semântico conforme a estratégia central.
 Nesta preparação documental: `python3 -B scripts/harness/lean.py docs`.
+
+## FD-W0 — contrato declarativo em implementação
+
+Autorização core N+C recebida em 2026-09-16 após aprovação H4; W10 não autorizado.
+Writer corrente **SP 2.21.0**, com `fileInventory@1.0.0` obrigatório. A porta em
+memória representa inventário ausente como UNAVAILABLE, distinto de KNOWN vazio.
+Conector usa a entidade FILE canônica existente, owner completo e origens SELECT
++ FD/SD. `records` referencia identidades DATA publicadas; chaves/status carregam
+binding nominal completo, incluindo candidatos e ambiguidade. Visibilidade e
+organização/acesso escritos são tipados; UNSPECIFIED não inventa cláusula.
+A disponibilidade do inventário é distinta dos gaps em cada declaração/ASSIGN.
+
+Autoridade N-LR: IBM Enterprise COBOL 6.4, SC27-8713-03, **28 April 2026 update**;
+PDF oficial baixado nesta execução, SHA-256
+`22b5b8875041300484ac48cd16d8db6191fe4f17424cfe2f3a93392fb2aac0f6`.
+Seções SELECT e ASSIGN (pp. 142–143 desta revisão), FILE SECTION e FD/SD.
+ASSIGN interpreta apenas a assignment-name IBM: label documental terminada em
+hífen e componente terminal de 1–8 caracteres, inicial alfabética, uppercase.
+Palavra permite letras/dígitos; alphanumeric literal IBM também permite @/#/$.
+O literal IBM é uma grafia da assignment-name N-LR (N02), não o filename/path de
+outro dialeto em N04. Não admite DYNAMIC, EXTERNAL ou path literal de D/W10.
+Nome de SD é comentário e nunca alvo externo. Não existe bindingMechanism.
+
+Premissas: LANGUAGE_GUARANTEED para interpretação N-LR; ARCHITECTURE_GUARANTEED
+para identidade nominal e projection de AST tipada. O projector apenas associa
+entidades/declarações/referências já resolvidas; não reinterpreta fonte nem resolve
+nomes. Custo linear no inventário de símbolos, declarações e referências; sem
+cutoff. Registros não nomeáveis e declarações ausentes/duplicadas conservam gaps.
+Declarações não geram statements ou execução de I/O. Efeitos/áreas compartilhadas
+pertencem às próximas waves, assim como captures multi-unit de W9.
+
+Oráculos: `FileDeclarationContractTest` (N-LR, SD, chaves/status, nomes homônimos,
+owner, COPY/REPLACING e negativos), mais F-DECL e preservação histórica de CALL.
+RED inicial registrado em `.harness-results/fd-w0/red.log`; gates/checkpoint final
+ficam no estado canônico e na evidência E2E, sem claim antecipado de qualificação.
+
+`record-name` de WRITE/REWRITE usa a referência DATA qualificada canônica,
+permitindo associar o registro ao conector sem introduzir efeitos de execução.
