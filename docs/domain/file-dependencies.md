@@ -237,8 +237,16 @@ kind e restrições MERGE não provados. Custo O(AST + símbolos + usos + relaç
 publicadas dos ranges), sem corte de ocorrências. O projector apenas transporta.
 Retorno contextual compartilhado é uma redução conservadora documentada no lower;
 esta publicação não afirma efeitos transitivos de procedimentos como exatos.
-Oráculos FileSortContractTest cobrem 12 regras/negativos, incluindo mesmo FD em
+Oráculos FileSortContractTest cobrem 13 regras/negativos, incluindo mesmo FD em
 ambos os papéis, múltiplas chaves, USE implícito e PERFORM. Focal família156 +
 W5 final12 PASS; FAST336 PASS; qualification-local910 (um skip histórico previsto),
 normalizer/E2E/naming PASS. Logs `.harness-results/fd-w5/`; fronteira nos pins
 finais será registrada pelo consumer.
+
+
+A conferência da coorte W5 corrigiu um positivo de OUTPUT PROCEDURE vazio: RETURN
+p436 exige ao menos um RETURN nesse procedimento. FileSortControl agora publica
+FILE_OUTPUT_PROCEDURE_EMPTY para range de saída provadamente vazio; range de
+entrada vazio continua conhecido. A presença de endpoints não certifica restrições
+transitivas via CALL/GO TO/PERFORM. Focal13 e FAST336 PASS nesta correção;
+Q-SHARED910 anterior é REUSED para semântica compartilhada que não mudou.

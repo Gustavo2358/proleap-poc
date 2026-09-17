@@ -110,11 +110,17 @@ class FileSortContractTest {
         }
         save("implicit-use",p);
     }
-    @Test void performInsideInputProcedureAndEmptyOutputRetainTheLocalRange()throws Exception {
-        var p=publish("MAIN.\nSORT S ON ASCENDING KEY SK\n INPUT PROCEDURE FEED\n OUTPUT PROCEDURE DRAIN.\nCALL 'AFTER'.\nGOBACK.\nFEED.\nPERFORM FILL THRU FILL-END.\nRELEASE SR.\nDRAIN.\nFILL.\nMOVE 'SAFE0001' TO SR.\nFILL-END.\nCALL 'FILLPGM'.\nEXIT.");
+    @Test void performInsideInputProcedureRetainsTheLocalRange()throws Exception {
+        var p=publish("MAIN.\nSORT S ON ASCENDING KEY SK\n INPUT PROCEDURE FEED\n OUTPUT PROCEDURE DRAIN.\nCALL 'AFTER'.\nGOBACK.\nFEED.\nPERFORM FILL THRU FILL-END.\nRELEASE SR.\nDRAIN.\nRETURN S AT END CONTINUE END-RETURN.\nFILL.\nMOVE 'SAFE0001' TO SR.\nFILL-END.\nCALL 'FILLPGM'.\nEXIT.");
         var plan=p.path("fileInventory").path("sortPlans").get(0);assertEquals("KNOWN",plan.path("availability").asText());
-        var output=plan.path("procedures").get(1);assertEquals("OUTPUT",output.path("phase").asText());assertTrue(output.path("roots").isEmpty());assertTrue(output.path("entry").isNull());
+        var output=plan.path("procedures").get(1);assertEquals("OUTPUT",output.path("phase").asText());assertEquals(1,output.path("roots").size());assertFalse(output.path("entry").isNull());
         assertEquals(1,java.util.stream.StreamSupport.stream(p.path("statements").spliterator(),false).filter(n->n.path("variant").asText().equals("PERFORM_PROCEDURE")).count());save("perform-procedure",p);
+    }
+    @Test void emptyInputIsPermittedButEmptyOutputCannotSatisfyRequiredReturn()throws Exception {
+        var input=publish("SORT S ON ASCENDING KEY SK\n INPUT PROCEDURE EMPTY-P GIVING C.\nGOBACK.\nEMPTY-P.");
+        var valid=input.path("fileInventory").path("sortPlans").get(0);assertEquals("KNOWN",valid.path("availability").asText());assertTrue(valid.path("procedures").get(0).path("roots").isEmpty());
+        var output=publish("SORT S ON ASCENDING KEY SK USING A\n OUTPUT PROCEDURE EMPTY-P.\nGOBACK.\nEMPTY-P.");
+        var invalid=output.path("fileInventory").path("sortPlans").get(0);assertEquals("PARTIAL",invalid.path("availability").asText());assertTrue(invalid.path("gapCodes").toString().contains("FILE_OUTPUT_PROCEDURE_EMPTY"));
     }
     private static Set<String> values(JsonNode nodes,String key){var values=new HashSet<String>();for(var n:nodes)values.add(n.path(key).asText());return values;}
 }

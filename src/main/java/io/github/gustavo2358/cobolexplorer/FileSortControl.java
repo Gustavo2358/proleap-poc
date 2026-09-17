@@ -91,6 +91,9 @@ public final class FileSortControl {
                 }
             }
         }
+        // IBM RETURN p436: an OUTPUT PROCEDURE requires at least one RETURN.
+        // This proves the empty-range violation only; transitive execution is not certified here.
+        if(surface.phase()==Ast.FileProcedurePhase.OUTPUT&&start.isPresent()&&end.isPresent()&&roots.isEmpty())gaps.add("FILE_OUTPUT_PROCEDURE_EMPTY");
         return new Procedure(surface.phase(),start,end,roots,roots.isEmpty()?Optional.empty():Optional.of(roots.get(0)),completions,links,List.copyOf(gaps));
     }
     private static Optional<Endpoint> endpoint(Ast.ProcedureReference reference,ResolutionContracts.ProgramUnitId unit,
