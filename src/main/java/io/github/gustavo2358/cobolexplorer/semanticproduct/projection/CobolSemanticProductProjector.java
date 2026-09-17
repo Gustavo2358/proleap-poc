@@ -236,7 +236,12 @@ public final class CobolSemanticProductProjector {
         }
         boolean missing = !inputs.report().inputComplete(inputs.unitId());
         return new FileInventory(missing ? Availability.INPUT_MISSING : Availability.KNOWN, result,
-                missing ? List.of("FILE_INPUT_INCOMPLETE") : List.of(), fileOperations(inputs,statementIds,dataIds,result,operandIds,dataByAst),fileDeclaratives(inputs,statementIds));
+                missing ? List.of("FILE_INPUT_INCOMPLETE") : List.of(), fileOperations(inputs,statementIds,dataIds,result,operandIds,dataByAst),fileDeclaratives(inputs,statementIds),fileSorts(inputs,statementIds),inputs.products().storage().isPresent()?Availability.KNOWN:Availability.UNAVAILABLE);
+    }
+    private static List<FileSortPlan> fileSorts(ProjectionInputs inputs,Map<Ast.Statement,StatementId> statements) {
+        var ids=statementIdsByAst(statements);
+        java.util.function.Function<io.github.gustavo2358.cobolexplorer.FileSortControl.Endpoint,PerformTarget> endpoint=e->new PerformTarget(new ProcedureId(inputs.boundaryUnit(),e.id().localId()),provenance(e.referenceOrigin()),provenance(e.declarationOrigin()));
+        return inputs.products().storage().stream().flatMap(s->s.fileSort().plans().stream()).filter(p->p.statement().unit().equals(inputs.unitId())).map(p->new FileSortPlan(ids.get(p.statement().node()),p.gaps().isEmpty()?Availability.KNOWN:Availability.PARTIAL,p.work(),p.inputs(),p.outputs(),p.procedures().stream().map(r->new FileProcedurePlan(FileProcedurePhase.valueOf(r.phase().name()),r.start().map(endpoint),r.end().map(endpoint),r.roots().stream().map(ids::get).toList(),r.entry().map(ids::get),r.completions().stream().map(ids::get).toList(),r.links().stream().map(l->new FileProcedureLink(ids.get(l.from()),ids.get(l.to()))).toList(),r.gaps())).toList(),p.gaps())).toList();
     }
 
     private static String declarativeId(StorageLayoutSemantics.Key key){return "use:"+key.node();}
@@ -265,6 +270,7 @@ public final class CobolSemanticProductProjector {
         inputs.products().storage().ifPresent(storage->storage.fileControl().operations().stream().filter(p->p.statement().unit().equals(inputs.unitId())).forEach(p->controls.put(Map.entry(p.statement().node(),p.ordinal()),p)));
         var statementMap=statementIdsByAst(statementIds);
         var uses=new ArrayList<FileUse>();var owners=new HashMap<DataItemId,FileId>();
+        var fileKinds=new HashMap<FileId,FileKind>();declarations.forEach(d->fileKinds.put(d.id(),d.kind()));
         var views=new HashMap<StorageLayoutSemantics.Key,StorageLayoutSemantics.View>();
         inputs.products().storage().ifPresent(s->s.layout().layout(inputs.unitId()).views().forEach(v->views.put(v.node(),v)));
         for(var d:declarations)for(var record:d.records())owners.put(record,d.id());
@@ -300,15 +306,18 @@ public final class CobolSemanticProductProjector {
                 var status=entry==null?ResolutionStatus.INPUT_MISSING:ResolutionStatus.valueOf(entry.status().name());
                 if(status==ResolutionStatus.RESOLVED&&(missingOwner||candidates.size()!=1))status=ResolutionStatus.UNRESOLVED;
                 var gaps=new ArrayList<String>(List.of("FILE_EFFECTS_CONTROL_PARTIAL"));
+                gaps.addAll(surface.gapCodes());
                 if(status!=ResolutionStatus.RESOLVED)gaps.add("FILE_BINDING_NOT_PROVEN");
                 if(missingOwner)gaps.add("FILE_RECORD_OWNER_NOT_PROVEN");
+                var expectedKind=FileKind.valueOf(io.github.gustavo2358.cobolexplorer.FileIoMemory.expectedKind(surface,ordinal).name());
+                if(candidates.stream().anyMatch(id->fileKinds.containsKey(id)&&fileKinds.get(id)!=expectedKind))gaps.add("FILE_KIND_NOT_PROVEN");
                 if(surface.profile()!=Ast.FileSyntaxProfile.N_LR)gaps.add("FILE_SYNTAX_OUTSIDE_N_LR");
                 var options=new ArrayList<FileOption>();surface.options().forEach(o->options.add(FileOption.valueOf(o.name())));operand.options().forEach(o->options.add(FileOption.valueOf(o.name())));
                 int useOrdinal=ordinal++;
                 uses.add(new FileUse(statementIds.get(statement),useOrdinal,FileCommand.valueOf(surface.command().name()),FileOpenMode.valueOf(operand.mode().name()),
                     FileSyntaxProfile.valueOf(surface.profile().name()),status,List.copyOf(candidates),provenance(reference.meta().provenance()),gaps,operands,options,
                     FileKeyRelation.valueOf(surface.keyRelation().name()),surface.explicitTerminator(),handlers,
-                    fileEffects(inputs,new StorageLayoutSemantics.Key(inputs.unitId(),statement.meta().id()),useOrdinal,dataByAst,operandIds,views),fileControl(controls.get(Map.entry(statement.meta().id(),useOrdinal)),statementMap)));
+                    fileEffects(inputs,new StorageLayoutSemantics.Key(inputs.unitId(),statement.meta().id()),useOrdinal,dataByAst,operandIds,views),fileControl(controls.get(Map.entry(statement.meta().id(),useOrdinal)),statementMap),FileRole.valueOf(operand.role().name())));
             }
         }
         return new FileOperations(Availability.PARTIAL,uses,List.of("FILE_EFFECTS_CONTROL_PARTIAL"));
@@ -394,7 +403,7 @@ public final class CobolSemanticProductProjector {
             return NormalContinuation.unavailable(provenance(source.meta().provenance()));
         for (var division : inputs.selectedSource().unit().program().divisions()) {
             if (division.divisionKind() != Ast.DivisionKind.PROCEDURE) continue;
-            var next = canonicalStatement(Optional.ofNullable(division.normalContinuations().get(source.meta().id())), inputs, ids);
+            var next = canonicalStatement(Optional.ofNullable((fileSurface(source).isPresent()?division.ordinaryContinuations():division.normalContinuations()).get(source.meta().id())), inputs, ids);
             if (next.isPresent()) return new NormalContinuation(ContinuationAvailability.KNOWN, next, provenance(source.meta().provenance()));
         }
         return NormalContinuation.unavailable(provenance(source.meta().provenance()));

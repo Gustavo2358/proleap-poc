@@ -427,14 +427,20 @@ public final class Ast {
         }
     }
 
-    public enum FileCommand { OPEN, READ, WRITE, REWRITE, DELETE_RECORD, START, CLOSE }
+    public enum FileCommand { OPEN, READ, WRITE, REWRITE, DELETE_RECORD, START, CLOSE, RELEASE, RETURN, SORT, MERGE }
     public enum FileOpenMode { INPUT, OUTPUT, IO, EXTEND, UNSPECIFIED }
     public enum FileSyntaxProfile { N_LR, UNSUPPORTED }
     public enum FileOption { NEXT, REVERSED, NO_REWIND, LOCK, REEL, UNIT, FOR_REMOVAL, BEFORE_ADVANCING, AFTER_ADVANCING, PAGE }
     public enum FileKeyRelation { UNSPECIFIED, EQUAL, GREATER, GREATER_OR_EQUAL }
     public enum FileOperandRole { RECORD, INTO, FROM, KEY, ADVANCING }
     public enum FileHandlerKind { AT_END, NOT_AT_END, INVALID_KEY, NOT_INVALID_KEY, AT_END_OF_PAGE, NOT_AT_END_OF_PAGE }
-    public record FileIoOperand(Node reference, FileOpenMode mode, List<FileOption> options) {
+    public enum FileRole { DIRECT, WORK, INPUT, OUTPUT }
+    public enum FileProcedurePhase { INPUT, OUTPUT }
+    public record FileProcedureSurface(FileProcedurePhase phase,ProcedureReference start,Optional<ProcedureReference> end) {
+        public FileProcedureSurface {Objects.requireNonNull(phase);Objects.requireNonNull(start);Objects.requireNonNull(end);}
+    }
+    public record FileIoOperand(Node reference, FileOpenMode mode, List<FileOption> options,FileRole role) {
+        public FileIoOperand(Node reference,FileOpenMode mode,List<FileOption> options){this(reference,mode,options,FileRole.DIRECT);}
         public FileIoOperand { options=List.copyOf(options); }
     }
     public record FileDataOperand(FileOperandRole role, Node value) { }
@@ -442,8 +448,9 @@ public final class Ast {
     /** Aliases existing operand/clause nodes; traversal visits their original owners exactly once. */
     public record FileIoSurface(FileCommand command, List<FileIoOperand> files, FileSyntaxProfile profile,
             List<FileDataOperand> operands, List<FileOption> options, FileKeyRelation keyRelation,
-            boolean explicitTerminator, List<FileHandler> handlers) {
-        public FileIoSurface { files=List.copyOf(files);operands=List.copyOf(operands);options=List.copyOf(options);handlers=List.copyOf(handlers); }
+            boolean explicitTerminator, List<FileHandler> handlers,List<FileProcedureSurface> procedures,List<String> gapCodes) {
+        public FileIoSurface(FileCommand command,List<FileIoOperand> files,FileSyntaxProfile profile,List<FileDataOperand> operands,List<FileOption> options,FileKeyRelation keyRelation,boolean explicitTerminator,List<FileHandler> handlers){this(command,files,profile,operands,options,keyRelation,explicitTerminator,handlers,List.of(),List.of());}
+        public FileIoSurface { files=List.copyOf(files);operands=List.copyOf(operands);options=List.copyOf(options);handlers=List.copyOf(handlers);procedures=List.copyOf(procedures);gapCodes=List.copyOf(gapCodes); }
     }
 
     public record ModeledStatement(Meta meta, String grammarRule, String writtenText,

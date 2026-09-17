@@ -1985,7 +1985,7 @@ setByValue
 // sort statement
 
 sortStatement
-   : SORT fileName sortOnKeyClause+ sortDuplicatesPhrase? sortCollatingSequencePhrase? sortInputProcedurePhrase? sortUsing* sortOutputProcedurePhrase? sortGivingPhrase*
+   : SORT (fileName | identifier) sortOnKeyClause* sortDuplicatesPhrase? sortCollatingSequencePhrase? sortInputProcedurePhrase? sortUsing* sortOutputProcedurePhrase? sortGivingPhrase*
    ;
 
 sortOnKeyClause

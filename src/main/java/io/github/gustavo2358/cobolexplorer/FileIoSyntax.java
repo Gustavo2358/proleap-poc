@@ -9,7 +9,8 @@ final class FileIoSyntax {
     private FileIoSyntax() { }
     static boolean isNativeStatement(CobolParser.StatementContext c) {
         return c.openStatement()!=null||c.closeStatement()!=null||c.readStatement()!=null||c.writeStatement()!=null
-            ||c.rewriteStatement()!=null||c.deleteStatement()!=null||c.startStatement()!=null;
+            ||c.rewriteStatement()!=null||c.deleteStatement()!=null||c.startStatement()!=null
+            ||c.releaseStatement()!=null||c.returnStatement()!=null||c.sortStatement()!=null||c.mergeStatement()!=null;
     }
     static List<ParserRuleContext> handlerContexts(CobolParser.StatementContext root) {
         var result=new ArrayList<ParserRuleContext>();var pending=new ArrayDeque<org.antlr.v4.runtime.tree.ParseTree>();
@@ -29,14 +30,17 @@ final class FileIoSyntax {
     static Ast.FileOperandRole operandRole(ParserRuleContext root, ParserRuleContext operand) {
         if (command(root)==null) return null;
         if (operand instanceof CobolParser.RecordNameContext) return Ast.FileOperandRole.RECORD;
+        if(root instanceof CobolParser.ReleaseStatementContext&&operand instanceof CobolParser.QualifiedDataNameContext)return Ast.FileOperandRole.FROM;
         for(var p=operand.getParent();p!=null&&p!=root;p=p.getParent()) {
-            if(p instanceof CobolParser.ReadIntoContext)return Ast.FileOperandRole.INTO;
+            if(p instanceof CobolParser.ReadIntoContext||p instanceof CobolParser.ReturnIntoContext)return Ast.FileOperandRole.INTO;
             if(p instanceof CobolParser.ReadKeyContext || p instanceof CobolParser.StartKeyContext)return Ast.FileOperandRole.KEY;
+            if(p instanceof CobolParser.SortOnKeyClauseContext||p instanceof CobolParser.MergeOnKeyClauseContext)return Ast.FileOperandRole.KEY;
             if(p instanceof CobolParser.WriteFromPhraseContext || p instanceof CobolParser.RewriteFromContext)return Ast.FileOperandRole.FROM;
             if(p instanceof CobolParser.WriteAdvancingPhraseContext)return Ast.FileOperandRole.ADVANCING;
         }
         return null;
     }
+    static boolean tableSort(CobolParser.SortStatementContext s){return s.sortUsing().isEmpty()&&s.sortGivingPhrase().isEmpty()&&s.sortInputProcedurePhrase()==null&&s.sortOutputProcedurePhrase()==null;}
     private static Ast.FileCommand command(ParserRuleContext c) {
         if(c instanceof CobolParser.OpenStatementContext)return Ast.FileCommand.OPEN;
         if(c instanceof CobolParser.ReadStatementContext)return Ast.FileCommand.READ;
@@ -45,6 +49,10 @@ final class FileIoSyntax {
         if(c instanceof CobolParser.DeleteStatementContext)return Ast.FileCommand.DELETE_RECORD;
         if(c instanceof CobolParser.StartStatementContext)return Ast.FileCommand.START;
         if(c instanceof CobolParser.CloseStatementContext)return Ast.FileCommand.CLOSE;
+        if(c instanceof CobolParser.ReleaseStatementContext)return Ast.FileCommand.RELEASE;
+        if(c instanceof CobolParser.ReturnStatementContext)return Ast.FileCommand.RETURN;
+        if(c instanceof CobolParser.SortStatementContext s&&!tableSort(s))return Ast.FileCommand.SORT;
+        if(c instanceof CobolParser.MergeStatementContext)return Ast.FileCommand.MERGE;
         return null;
     }
     static Optional<Ast.FileIoSurface> project(ParserRuleContext c, Map<ParserRuleContext,Ast.Node> nodes,
@@ -54,30 +62,34 @@ final class FileIoSyntax {
         if(c instanceof CobolParser.ReadStatementContext r && r.readWith()!=null)profile=Ast.FileSyntaxProfile.UNSUPPORTED;
         if(c instanceof CobolParser.CloseStatementContext x && x.closeFile().stream().anyMatch(f->f.closePortFileIOStatement()!=null))profile=Ast.FileSyntaxProfile.UNSUPPORTED;
         if(c instanceof CobolParser.WriteStatementContext w && w.writeFromPhrase()!=null && w.writeFromPhrase().literal()!=null)profile=Ast.FileSyntaxProfile.UNSUPPORTED;
-        var files=new ArrayList<Ast.FileIoOperand>();var operands=new ArrayList<Ast.FileDataOperand>();
+        var files=new ArrayList<Ast.FileIoOperand>();var operands=new ArrayList<Ast.FileDataOperand>();var procedures=new ArrayList<Ast.FileProcedureSurface>();var gaps=new ArrayList<String>();
         // Identity map iteration is not semantic order. Token positions are unique among these operand roots.
         var entries=new ArrayList<>(nodes.entrySet());entries.sort(Comparator.comparingInt(e->e.getKey().getStart().getTokenIndex()));
         for(var e:entries) {
             var role=operandRole(c,e.getKey());if(role!=null)operands.add(new Ast.FileDataOperand(role,e.getValue()));
             if(e.getKey() instanceof CobolParser.FileNameContext || role==Ast.FileOperandRole.RECORD) {
                 var mode=Ast.FileOpenMode.UNSPECIFIED;var options=new ArrayList<Ast.FileOption>();
+                var fileRole=command==Ast.FileCommand.SORT||command==Ast.FileCommand.MERGE?Ast.FileRole.WORK:Ast.FileRole.DIRECT;
                 for(var p=e.getKey().getParent();p!=null&&p!=c;p=p.getParent()) {
                     if(p instanceof CobolParser.OpenInputStatementContext)mode=Ast.FileOpenMode.INPUT;
                     else if(p instanceof CobolParser.OpenOutputStatementContext)mode=Ast.FileOpenMode.OUTPUT;
                     else if(p instanceof CobolParser.OpenIOStatementContext)mode=Ast.FileOpenMode.IO;
                     else if(p instanceof CobolParser.OpenExtendStatementContext)mode=Ast.FileOpenMode.EXTEND;
+                    if(p instanceof CobolParser.SortUsingContext||p instanceof CobolParser.MergeUsingContext){fileRole=Ast.FileRole.INPUT;mode=Ast.FileOpenMode.INPUT;}
+                    if(p instanceof CobolParser.SortGivingContext||p instanceof CobolParser.MergeGivingContext){fileRole=Ast.FileRole.OUTPUT;mode=Ast.FileOpenMode.OUTPUT;if(p.getChildCount()>1)profile=Ast.FileSyntaxProfile.UNSUPPORTED;}
                     if(p instanceof CobolParser.OpenInputContext || p instanceof CobolParser.OpenOutputContext) options.addAll(options(p));
                     if(p instanceof CobolParser.CloseFileContext f) {
                         if(f.closeRelativeStatement()!=null)options.addAll(options(f.closeRelativeStatement()));
                         if(f.closeReelUnitStatement()!=null)options.addAll(options(f.closeReelUnitStatement()));
                     }
                 }
-                files.add(new Ast.FileIoOperand(e.getValue(),mode,options));
+                files.add(new Ast.FileIoOperand(e.getValue(),mode,options,fileRole));
             }
         }
         var options=new ArrayList<Ast.FileOption>();var relation=Ast.FileKeyRelation.UNSPECIFIED;
         boolean terminated=false;
         if(c instanceof CobolParser.ReadStatementContext r){if(r.NEXT()!=null)options.add(Ast.FileOption.NEXT);terminated=r.END_READ()!=null;}
+        if(c instanceof CobolParser.ReturnStatementContext r)terminated=r.END_RETURN()!=null;
         if(c instanceof CobolParser.DeleteStatementContext d)terminated=d.END_DELETE()!=null;
         if(c instanceof CobolParser.RewriteStatementContext r)terminated=r.END_REWRITE()!=null;
         if(c instanceof CobolParser.StartStatementContext s) {
@@ -102,8 +114,20 @@ final class FileIoSyntax {
             else if(h instanceof CobolParser.WriteNotAtEndOfPagePhraseContext)kind=Ast.FileHandlerKind.NOT_AT_END_OF_PAGE;
             if(kind!=null)handlers.add(new Ast.FileHandler(kind,clauses.get(i)));
         }
-        return Optional.of(new Ast.FileIoSurface(command,files,profile,operands,options,relation,terminated,handlers));
+        if(c instanceof CobolParser.SortStatementContext s) {
+            if(s.sortInputProcedurePhrase()!=null){var p=s.sortInputProcedurePhrase();procedures.add(procedure(Ast.FileProcedurePhase.INPUT,p.procedureName(),p.sortInputThrough()==null?null:p.sortInputThrough().procedureName(),nodes));}
+            if(s.sortOutputProcedurePhrase()!=null){var p=s.sortOutputProcedurePhrase();procedures.add(procedure(Ast.FileProcedurePhase.OUTPUT,p.procedureName(),p.sortOutputThrough()==null?null:p.sortOutputThrough().procedureName(),nodes));}
+            if(s.sortOnKeyClause().isEmpty()||s.fileName()==null)gaps.add("FILE_SORT_FORMAT_NOT_PROVEN");
+        }
+        if(c instanceof CobolParser.MergeStatementContext m&&m.mergeOutputProcedurePhrase()!=null){var p=m.mergeOutputProcedurePhrase();procedures.add(procedure(Ast.FileProcedurePhase.OUTPUT,p.procedureName(),p.mergeOutputThrough()==null?null:p.mergeOutputThrough().procedureName(),nodes));}
+        if(command==Ast.FileCommand.SORT||command==Ast.FileCommand.MERGE) {
+            long inputs=files.stream().filter(f->f.role()==Ast.FileRole.INPUT).count(),outputs=files.stream().filter(f->f.role()==Ast.FileRole.OUTPUT).count();
+            boolean inputProc=procedures.stream().anyMatch(p->p.phase()==Ast.FileProcedurePhase.INPUT),outputProc=procedures.stream().anyMatch(p->p.phase()==Ast.FileProcedurePhase.OUTPUT);
+            if((inputs>0)==inputProc||(outputs>0)==outputProc||command==Ast.FileCommand.MERGE&&inputs<2)gaps.add("FILE_SORT_PHASES_NOT_PROVEN");
+        }
+        return Optional.of(new Ast.FileIoSurface(command,files,profile,operands,options,relation,terminated,handlers,procedures,gaps));
     }
+    private static Ast.FileProcedureSurface procedure(Ast.FileProcedurePhase phase,ParserRuleContext start,ParserRuleContext end,Map<ParserRuleContext,Ast.Node> nodes){return new Ast.FileProcedureSurface(phase,(Ast.ProcedureReference)nodes.get(start),Optional.ofNullable(end).map(e->(Ast.ProcedureReference)nodes.get(e)));}
     private static List<Ast.FileOption> options(ParserRuleContext c) {
         var out=new ArrayList<Ast.FileOption>();
         if(c.getToken(CobolParser.REVERSED,0)!=null)out.add(Ast.FileOption.REVERSED);

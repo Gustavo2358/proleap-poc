@@ -19,6 +19,8 @@ public final class StorageAccessSemantics {
     private final FileIoMemory files;
     private final FileIoEffects fileEffects;
     private final FileIoControl fileControl;
+    private final FileSortControl fileSort;
+    public FileSortControl fileSort(){return fileSort;}
     public FileIoControl fileControl(){return fileControl;}
     public FileIoMemory files(){return files;}
     public FileIoEffects fileEffects(){return fileEffects;}
@@ -33,7 +35,7 @@ public final class StorageAccessSemantics {
     private final Map<Key,StatementEffectSummary> effects;
     public Optional<StatementEffectSummary> effects(Key statement){return Optional.ofNullable(effects.get(statement));}
     public List<Move> sequence(Key statement) { return sequences.getOrDefault(statement,List.of()); }
-    private StorageAccessSemantics(StorageLayoutSemantics layout,Map<Key,List<Access>> alternatives,Map<Key,Access> accesses,Map<Key,Move> moves,Map<Key,List<Move>> sequences,Map<Key,StatementEffectSummary> effects,StorageInitialSemantics initial,FileIoMemory files,FileIoControl fileControl){this.fileControl=fileControl;this.files=files;this.fileEffects=FileIoEffects.analyze(files,layout);this.alternatives=Map.copyOf(alternatives);this.initial=initial;this.layout=layout;this.accesses=Map.copyOf(accesses);this.moves=Map.copyOf(moves);this.sequences=Map.copyOf(sequences);this.effects=Map.copyOf(effects);}
+    private StorageAccessSemantics(StorageLayoutSemantics layout,Map<Key,List<Access>> alternatives,Map<Key,Access> accesses,Map<Key,Move> moves,Map<Key,List<Move>> sequences,Map<Key,StatementEffectSummary> effects,StorageInitialSemantics initial,FileIoMemory files,FileIoControl fileControl,FileSortControl fileSort){this.fileSort=fileSort;this.fileControl=fileControl;this.files=files;this.fileEffects=FileIoEffects.analyze(files,layout);this.alternatives=Map.copyOf(alternatives);this.initial=initial;this.layout=layout;this.accesses=Map.copyOf(accesses);this.moves=Map.copyOf(moves);this.sequences=Map.copyOf(sequences);this.effects=Map.copyOf(effects);}
     public Optional<Access> access(Key reference){return Optional.ofNullable(accesses.get(reference));}
     public Collection<Access> accesses(){return accesses.values();}
     public Collection<Move> moves(){return moves.values();}
@@ -152,7 +154,7 @@ public final class StorageAccessSemantics {
             }
         }
         var files=FileIoMemory.analyze(frontend,resolution,layout,accesses);
-        return new StorageAccessSemantics(layout,alternatives,accesses,moves,sequences,summaries,StorageInitialSemantics.analyze(frontend,resolution,layout,mode,accesses,sequences,summaries,cics,files),files,FileIoControl.analyze(frontend,resolution,files));
+        return new StorageAccessSemantics(layout,alternatives,accesses,moves,sequences,summaries,StorageInitialSemantics.analyze(frontend,resolution,layout,mode,accesses,sequences,summaries,cics,files),files,FileIoControl.analyze(frontend,resolution,files),FileSortControl.analyze(frontend,resolution,layout,files));
     }
     private static Move effect(Key statement,Optional<Access> destination,Optional<Access> source,Ast.Expression expression,
             Profile profile,Map<Key,Base> bases,Ast.SourceProvenance origin) {

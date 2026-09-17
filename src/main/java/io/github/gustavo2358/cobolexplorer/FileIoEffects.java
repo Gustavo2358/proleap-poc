@@ -35,9 +35,10 @@ public final class FileIoEffects {
                 var before=new ArrayList<Step>();var outcomes=new ArrayList<OutcomeCase>();var reads=new ArrayList<FileIoMemory.Target>();
                 var gaps=new LinkedHashSet<>(op.gaps());boolean unknownRead=false;
                 var file=op.file().orElse(null);
-                boolean nativeProfile=surface.profile()==Ast.FileSyntaxProfile.N_LR&&file!=null&&file.description().kind()==Ast.FileKind.FD
-                    &&file.binding().control().assignment().form()==Ast.AssignmentForm.IBM_NAME;
-                if(file!=null&&(surface.command()==Ast.FileCommand.WRITE||surface.command()==Ast.FileCommand.REWRITE))reads.addAll(file.records());
+                boolean sortRecord=FileIoMemory.expectedKind(surface,op.ordinal())==Ast.FileKind.SD;
+                boolean nativeProfile=surface.profile()==Ast.FileSyntaxProfile.N_LR&&file!=null&&file.description().kind()==(sortRecord?Ast.FileKind.SD:Ast.FileKind.FD)
+                    &&(sortRecord||file.binding().control().assignment().form()==Ast.AssignmentForm.IBM_NAME);
+                if(file!=null&&(surface.command()==Ast.FileCommand.WRITE||surface.command()==Ast.FileCommand.REWRITE||surface.command()==Ast.FileCommand.RELEASE))reads.addAll(file.records());
                 for(var operand:surface.operands())if(operand.role()==Ast.FileOperandRole.KEY||operand.role()==Ast.FileOperandRole.ADVANCING) {
                     var target=memory.target(new Key(unit,operand.value().meta().id()));if(target.isPresent()){reads.add(target.orElseThrow());if(target.orElseThrow().wholeBase())unknownRead=true;}
                     else if(!(operand.value() instanceof Ast.LiteralExpression))unknownRead=true;

@@ -30,6 +30,7 @@ public final class FileIoMemory {
     public Optional<Statement> statement(Key key){return Optional.ofNullable(statements.get(key));}
     public Collection<Statement> statements(){return statements.values();}
     public Optional<Target> target(Key reference){return Optional.ofNullable(targets.get(reference));}
+    public static Ast.FileKind expectedKind(Ast.FileIoSurface surface,int ordinal){return surface.command()==Ast.FileCommand.RELEASE||surface.command()==Ast.FileCommand.RETURN||surface.files().get(ordinal).role()==Ast.FileRole.WORK?Ast.FileKind.SD:Ast.FileKind.FD;}
 
     static FileIoMemory analyze(CompilationUnitBuildResult frontend,ReferenceResolution resolution,StorageLayoutSemantics storage,
             Map<Key,StorageAccessSemantics.Access> accesses) {
@@ -77,30 +78,32 @@ public final class FileIoMemory {
                 var surface=node instanceof Ast.ModeledStatement m?m.fileIo():node instanceof Ast.PreservedStatement p?p.fileIo():Optional.<Ast.FileIoSurface>empty();
                 if(surface.isEmpty())continue;var io=surface.orElseThrow();var operations=new ArrayList<Operation>();int ordinal=0;
                 for(var operand:io.files()) {
-                    var gaps=new LinkedHashSet<String>();var writes=new ArrayList<Write>();File file=null;
+                    var gaps=new LinkedHashSet<String>(io.gapCodes());var writes=new ArrayList<Write>();File file=null;
                     var binding=bindings.get(new Key(unit.id(),operand.reference().meta().id()));
                     if(binding!=null&&binding.status()==ResolutionContracts.ResolutionStatus.RESOLVED&&binding.candidates().size()==1) {
                         var selected=binding.candidates().get(0).entityId();
                         file=selected.domain()==ResolutionContracts.SemanticEntityDomain.FILE_ENTITY?files.get(selected):recordOwners.get(byEntity.get(selected));
                     }
                     if(io.profile()!=Ast.FileSyntaxProfile.N_LR)gaps.add("FILE_SYNTAX_OUTSIDE_N_LR");
-                    if(file==null||file.description().kind()!=Ast.FileKind.FD)gaps.add("FILE_MEMORY_BINDING_NOT_PROVEN");
+                    boolean sortRecord=expectedKind(io,ordinal)==Ast.FileKind.SD;
+                    boolean aggregate=io.command()==Ast.FileCommand.SORT||io.command()==Ast.FileCommand.MERGE;
+                    if(file==null||file.description().kind()!=expectedKind(io,ordinal))gaps.add("FILE_MEMORY_BINDING_NOT_PROVEN");
                     else {
-                        if(file.binding().control().assignment().form()!=Ast.AssignmentForm.IBM_NAME)gaps.add("FILE_ASSIGN_OUTSIDE_N_LR");
+                        if(!sortRecord&&file.binding().control().assignment().form()!=Ast.AssignmentForm.IBM_NAME)gaps.add("FILE_ASSIGN_OUTSIDE_N_LR");
                         if(file.records().isEmpty())gaps.add("FILE_RECORD_AREA_NOT_PROVEN");
-                        if(io.command()==Ast.FileCommand.READ||io.command()==Ast.FileCommand.CLOSE
-                                ||(io.command()==Ast.FileCommand.WRITE||io.command()==Ast.FileCommand.REWRITE)&&!file.sameRecordArea())
+                        if(aggregate||io.command()==Ast.FileCommand.READ||io.command()==Ast.FileCommand.RETURN||io.command()==Ast.FileCommand.CLOSE
+                                ||(io.command()==Ast.FileCommand.WRITE||io.command()==Ast.FileCommand.REWRITE||io.command()==Ast.FileCommand.RELEASE)&&!file.sameRecordArea())
                             for(var record:file.records())writes.add(new Write(Role.RECORD,record));
-                        for(var reference:file.binding().control().references()) {
+                        for(var reference:sortRecord?List.<Ast.FileClauseReference>of():file.binding().control().references()) {
                             Role role=switch(reference.role()) {
                                 case FILE_STATUS->Role.FILE_STATUS;case ADDITIONAL_STATUS->Role.ADDITIONAL_STATUS;
-                                case RELATIVE_KEY->io.command()==Ast.FileCommand.READ&&(file.binding().control().accessMode()!=Ast.FileAccessMode.RANDOM
+                                case RELATIVE_KEY->aggregate||io.command()==Ast.FileCommand.READ&&(file.binding().control().accessMode()!=Ast.FileAccessMode.RANDOM
                                     &&(file.binding().control().accessMode()!=Ast.FileAccessMode.DYNAMIC||io.options().contains(Ast.FileOption.NEXT)))?Role.RELATIVE_KEY:null;
                                 default->null;
                             };
                             if(role!=null)add(writes,gaps,role,target(unit.id(),reference.reference(),bindings,byEntity,views,accesses));
                         }
-                        if(io.command()==Ast.FileCommand.READ)for(var clause:file.description().recordClauses())
+                        if(aggregate||io.command()==Ast.FileCommand.READ||io.command()==Ast.FileCommand.RETURN)for(var clause:file.description().recordClauses())
                             clause.dependingOn().ifPresent(ref->add(writes,gaps,Role.RECORD_LENGTH,target(unit.id(),ref,bindings,byEntity,views,accesses)));
                         for(var data:io.operands())if(data.role()==Ast.FileOperandRole.INTO)
                             add(writes,gaps,Role.INTO,target(unit.id(),data.value(),bindings,byEntity,views,accesses));

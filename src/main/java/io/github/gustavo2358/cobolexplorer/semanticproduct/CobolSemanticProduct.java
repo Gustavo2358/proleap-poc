@@ -1110,9 +1110,9 @@ public final class CobolSemanticProduct {
     }
 
     public enum EffectBound { NONE, ALL }
-    public enum EnvironmentEffect { OUTPUT, INPUT, UNKNOWN }
+    public enum EnvironmentEffect { OUTPUT, INPUT, UNKNOWN, NONE }
     public enum EffectValueTransform { NONE, UNKNOWN }
-    public enum EffectProof { DISPLAY_SIMPLE, INITIALIZE_TARGETS, ACCEPT_TARGET, SET_TARGETS, ARITHMETIC_TARGETS, STRING_TARGETS, UNSTRING_TARGETS, INSPECT_TARGETS }
+    public enum EffectProof { NO_OP, DISPLAY_SIMPLE, INITIALIZE_TARGETS, ACCEPT_TARGET, SET_TARGETS, ARITHMETIC_TARGETS, STRING_TARGETS, UNSTRING_TARGETS, INSPECT_TARGETS }
     public record EffectSummary(List<OperandId> knownReads,List<OperandId> mayWrites,List<OperandId> mustOverwrite,
             List<OperandId> exposedRegions,EffectBound unknownReadBound,EffectBound unknownWriteBound,
             EffectBound unknownExposureBound,EnvironmentEffect environment,EffectValueTransform values,EffectProof proof) {
@@ -1148,9 +1148,10 @@ public final class CobolSemanticProduct {
                 require(e.mayWrites().stream().allMatch(id->refs.get(id).role()==OperandRole.WRITE),"effect write role");
                 require(e.mustOverwrite().isEmpty()||e.proof()==EffectProof.INITIALIZE_TARGETS,"only exact INITIALIZE is MUST in this slice");
                 require(e.mustOverwrite().stream().allMatch(id->refs.get(id).regionalAccess().isPresent()),"MUST requires a physical access");
-                if(e.proof()!=EffectProof.DISPLAY_SIMPLE)require(e.values()==EffectValueTransform.UNKNOWN
+                if(e.proof()!=EffectProof.DISPLAY_SIMPLE&&e.proof()!=EffectProof.NO_OP)require(e.values()==EffectValueTransform.UNKNOWN
                     &&(e.unknownWriteBound()!=EffectBound.NONE||!e.mayWrites().isEmpty()),"receiver effect must retain writes or unknown bound");
                 require(e.knownReads().stream().allMatch(id->refs.get(id).role()==OperandRole.READ),"effect read role");
+                if(e.proof()==EffectProof.NO_OP)require(e.knownReads().isEmpty()&&e.mayWrites().isEmpty()&&e.mustOverwrite().isEmpty()&&e.exposedRegions().isEmpty()&&e.unknownReadBound()==EffectBound.NONE&&e.unknownWriteBound()==EffectBound.NONE&&e.unknownExposureBound()==EffectBound.NONE&&e.environment()==EnvironmentEffect.NONE&&e.values()==EffectValueTransform.NONE,"NO_OP proof shape");
                 if(e.proof()==EffectProof.DISPLAY_SIMPLE)require(e.mayWrites().isEmpty()&&e.mustOverwrite().isEmpty()&&e.exposedRegions().isEmpty()
                     &&e.unknownWriteBound()==EffectBound.NONE&&e.unknownExposureBound()==EffectBound.NONE
                     &&e.environment()==EnvironmentEffect.OUTPUT&&e.values()==EffectValueTransform.NONE,"DISPLAY proof shape");
@@ -1229,7 +1230,8 @@ public final class CobolSemanticProduct {
             require(new HashSet<>(records).size() == records.size(), "duplicate file record");
         }
     }
-    public enum FileCommand { OPEN, READ, WRITE, REWRITE, DELETE_RECORD, START, CLOSE }
+    public enum FileCommand { OPEN, READ, WRITE, REWRITE, DELETE_RECORD, START, CLOSE, RELEASE, RETURN, SORT, MERGE }
+    public enum FileRole { DIRECT, WORK, INPUT, OUTPUT }
     public enum FileOpenMode { INPUT, OUTPUT, IO, EXTEND, UNSPECIFIED }
     public enum FileSyntaxProfile { N_LR, UNSUPPORTED }
     public enum FileOption { NEXT, REVERSED, NO_REWIND, LOCK, REEL, UNIT, FOR_REMOVAL, BEFORE_ADVANCING, AFTER_ADVANCING, PAGE }
@@ -1311,9 +1313,10 @@ public final class CobolSemanticProduct {
     public record FileUse(StatementId statement, int ordinal, FileCommand command, FileOpenMode mode,
             FileSyntaxProfile profile, ResolutionStatus bindingStatus, List<FileId> candidates,
             Provenance provenance, List<String> gapCodes, List<FileOperand> operands, List<FileOption> options,
-            FileKeyRelation keyRelation, boolean explicitTerminator, List<FileHandler> handlers,FileEffectPlan effects,FileControlPlan control) {
+            FileKeyRelation keyRelation, boolean explicitTerminator, List<FileHandler> handlers,FileEffectPlan effects,FileControlPlan control,FileRole role) {
         public FileUse {
             Objects.requireNonNull(statement);require(ordinal>=0,"file use ordinal");Objects.requireNonNull(command);Objects.requireNonNull(mode);
+            Objects.requireNonNull(role);
             Objects.requireNonNull(profile);Objects.requireNonNull(bindingStatus);candidates=List.copyOf(candidates);
             Objects.requireNonNull(provenance);gapCodes=List.copyOf(gapCodes);
             operands=List.copyOf(operands);options=List.copyOf(options);Objects.requireNonNull(keyRelation);handlers=List.copyOf(handlers);Objects.requireNonNull(effects);Objects.requireNonNull(control);
@@ -1324,11 +1327,26 @@ public final class CobolSemanticProduct {
         public FileOperations { Objects.requireNonNull(availability);uses=List.copyOf(uses);gapCodes=List.copyOf(gapCodes); }
         public static FileOperations unavailable(){return new FileOperations(Availability.UNAVAILABLE,List.of(),List.of("FILE_OPERATIONS_UNAVAILABLE"));}
     }
-    public record FileInventory(Availability availability, List<FileDeclaration> declarations, List<String> gapCodes, FileOperations operations,List<FileDeclarative> declaratives) {
+    public enum FileProcedurePhase { INPUT, OUTPUT }
+    public record FileProcedureLink(StatementId from,StatementId to) {public FileProcedureLink {Objects.requireNonNull(from);Objects.requireNonNull(to);require(!from.equals(to),"local procedure link cannot be self");}}
+    public record FileProcedurePlan(FileProcedurePhase phase,Optional<PerformTarget> start,Optional<PerformTarget> end,
+            List<StatementId> roots,Optional<StatementId> entry,List<StatementId> completions,List<FileProcedureLink> links,List<String> gapCodes) {
+        public FileProcedurePlan {Objects.requireNonNull(phase);Objects.requireNonNull(start);Objects.requireNonNull(end);roots=List.copyOf(roots);Objects.requireNonNull(entry);completions=List.copyOf(completions);links=List.copyOf(links);gapCodes=List.copyOf(gapCodes);
+            require(entry.equals(roots.isEmpty()?Optional.empty():Optional.of(roots.get(0))),"procedure entry must be first root");
+            require(!gapCodes.isEmpty()||start.isPresent()&&end.isPresent(),"known procedure requires endpoints");}
+    }
+    public record FileSortPlan(StatementId statement,Availability availability,int work,List<Integer> inputs,List<Integer> outputs,List<FileProcedurePlan> procedures,List<String> gapCodes) {
+        public FileSortPlan {Objects.requireNonNull(statement);Objects.requireNonNull(availability);inputs=List.copyOf(inputs);outputs=List.copyOf(outputs);procedures=List.copyOf(procedures);gapCodes=List.copyOf(gapCodes);
+            require(availability==Availability.KNOWN?gapCodes.isEmpty()&&work>=0:!gapCodes.isEmpty(),"sort availability/gaps disagree");
+            require(procedures.stream().map(FileProcedurePlan::phase).distinct().count()==procedures.size(),"duplicate sort procedure phase");}
+    }
+    public record FileInventory(Availability availability, List<FileDeclaration> declarations, List<String> gapCodes, FileOperations operations,List<FileDeclarative> declaratives,List<FileSortPlan> sortPlans,Availability sortAvailability) {
+        public FileInventory(Availability availability,List<FileDeclaration> declarations,List<String> gapCodes,FileOperations operations,List<FileDeclarative> declaratives){this(availability,declarations,gapCodes,operations,declaratives,List.of(),Availability.UNAVAILABLE);}
         public FileInventory(Availability availability,List<FileDeclaration> declarations,List<String> gapCodes,FileOperations operations){this(availability,declarations,gapCodes,operations,List.of());}
         public FileInventory(Availability availability,List<FileDeclaration> declarations,List<String> gapCodes){this(availability,declarations,gapCodes,FileOperations.unavailable());}
         public FileInventory {
             Objects.requireNonNull(availability); declarations = List.copyOf(declarations); gapCodes = List.copyOf(gapCodes);Objects.requireNonNull(operations);declaratives=List.copyOf(declaratives);
+            sortPlans=List.copyOf(sortPlans);Objects.requireNonNull(sortAvailability);require(sortAvailability!=Availability.UNAVAILABLE||sortPlans.isEmpty(),"unavailable sort inventory has plans");
             require(availability == Availability.KNOWN ? gapCodes.isEmpty() : !gapCodes.isEmpty(), "file inventory availability/gaps mismatch");
             require(availability != Availability.UNAVAILABLE || declarations.isEmpty(), "unavailable file inventory has declarations");
         }
@@ -1351,6 +1369,21 @@ public final class CobolSemanticProduct {
             require(new HashSet<>(d.roots()).size()==d.roots().size()&&new HashSet<>(d.completions()).size()==d.completions().size(),"duplicate USE members");
         }
         var refs=new HashSet<OperandId>();
+        var sortStatements=new HashSet<StatementId>();
+        var usesByStatement=inventory.operations().uses().stream().collect(java.util.stream.Collectors.groupingBy(FileUse::statement));
+        for(var plan:inventory.sortPlans()) {
+            require(ids.contains(plan.statement())&&sortStatements.add(plan.statement()),"duplicate/missing sort statement");
+            var participants=usesByStatement.getOrDefault(plan.statement(),List.of());
+            var listed=new HashSet<Integer>(plan.inputs());require(listed.size()==plan.inputs().size(),"duplicate sort input");
+            for(var ordinal:plan.outputs())require(listed.add(ordinal),"duplicate sort output");if(plan.work()>=0)require(listed.add(plan.work()),"duplicate sort work");
+            require(listed.equals(participants.stream().map(FileUse::ordinal).collect(java.util.stream.Collectors.toSet())),"sort participant omitted");
+            for(var use:participants){require(use.command()==FileCommand.SORT||use.command()==FileCommand.MERGE,"sort plan attached to non-sort statement");require(use.role()==(use.ordinal()==plan.work()?FileRole.WORK:plan.inputs().contains(use.ordinal())?FileRole.INPUT:FileRole.OUTPUT),"sort role mismatch");}
+            for(var procedure:plan.procedures()) {
+                require(ids.containsAll(procedure.roots())&&ids.containsAll(procedure.completions()),"sort procedure statement absent");
+                for(var link:procedure.links())require(ids.contains(link.from())&&ids.contains(link.to()),"sort procedure link absent");
+            }
+        }
+        if(inventory.sortAvailability()!=Availability.UNAVAILABLE)for(var use:inventory.operations().uses())if(use.command()==FileCommand.SORT||use.command()==FileCommand.MERGE)require(sortStatements.contains(use.statement()),"sort plan missing");
         var nodes=new HashMap<StorageNodeId,PhysicalNode>();storage.nodes().forEach(n->nodes.put(n.id(),n));
         var views=new HashMap<StorageNodeId,StorageView>();storage.views().forEach(v->views.put(v.node(),v));
         for(var s:statements)if(s instanceof ObservedStatement o)o.knownReferences().forEach(r->refs.add(r.id()));

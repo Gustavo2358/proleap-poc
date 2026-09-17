@@ -1,6 +1,6 @@
 # FILE-DEPENDENCIES — frontend / SP
 
-H4 aprovado; core N+C autorizado em 2026-09-16. W0–W3 qualificadas local; W4 em implementação; W10 não autorizado.
+H4 aprovado; core N+C autorizado em 2026-09-16. W0–W4 qualificadas local; W5 em implementação; W10 não autorizado.
 [Campanha canônica](https://github.com/Gustavo2358/analysis-cfg/blob/feat/file-dependencies/docs/product/file-dependencies/README.md)
 (workspace: `../analysis-cfg/docs/product/file-dependencies/README.md`).
 Comece pelo brief e pelo item atual indicado no estado canônico.
@@ -219,3 +219,26 @@ Checkpoint produtor W4: focal162 + GO TO7 + entrada20 PASS; FAST fixo336 PASS;
 qualification-local898, zero falhas/erros e um skip histórico previsto, normalizer/
 regressão E2E/naming PASS. SP2.25 control/handlers/USE exportados nos seis fixtures
 bilaterais. Logs `.harness-results/fd-w4/`; E-SELECTED nos pins finais segue CFG.
+
+
+## W5 — fases SORT/MERGE e SD
+
+SP2.26/fileInventory1.5 publica roles WORK/INPUT/OUTPUT e sortPlans com endpoints,
+raízes, links de parágrafos e completions canônicos. Autoridade SC27-8713-03,
+update2026-04-28: MERGE pp400–404, RELEASE pp434–435, RETURN pp435–437 e SORT
+pp452–459. Nenhum endpoint procedural é programa externo. USING/GIVING conservam
+todos os FD e seu modo implícito, inclusive USE em erro; SD nunca ganha nome externo.
+RELEASE FROM transfere antes, RETURN INTO somente em sucesso. SORT de tabela
+preserva referência DATA e não publica FILE. EXIT simples/CONTINUE têm prova NO_OP
+(sem memória/ambiente); EXIT PROGRAM não recebe essa prova (EXIT p343).
+
+FileSortControl deriva ranges da AST e do resolver, com gaps para endpoints,
+kind e restrições MERGE não provados. Custo O(AST + símbolos + usos + relações
+publicadas dos ranges), sem corte de ocorrências. O projector apenas transporta.
+Retorno contextual compartilhado é uma redução conservadora documentada no lower;
+esta publicação não afirma efeitos transitivos de procedimentos como exatos.
+Oráculos FileSortContractTest cobrem 12 regras/negativos, incluindo mesmo FD em
+ambos os papéis, múltiplas chaves, USE implícito e PERFORM. Focal família156 +
+W5 final12 PASS; FAST336 PASS; qualification-local910 (um skip histórico previsto),
+normalizer/E2E/naming PASS. Logs `.harness-results/fd-w5/`; fronteira nos pins
+finais será registrada pelo consumer.

@@ -16,7 +16,7 @@ class FileNativeOperationTest {
     private static Set<String> values(JsonNode list,String field){var out=new HashSet<String>();for(var x:list)out.add(x.path(field).asText());return out;}
     @Test void sevenNativeVerbsUseTypedCommandAndRecordOwner()throws Exception {
         var p=publish("OPEN I-O F.\nREAD F KEY K.\nWRITE R FROM OTHER-R.\nREWRITE R FROM BUF.\nDELETE F RECORD.\nSTART F KEY GREATER THAN K.\nCLOSE F.\nGOBACK.");
-        assertEquals("2.25.0",p.path("contractVersion").asText());assertEquals("1.4.0",p.path("fileInventory").path("version").asText());
+        assertEquals("2.26.0",p.path("contractVersion").asText());assertEquals("1.5.0",p.path("fileInventory").path("version").asText());
         assertEquals(Set.of("OPEN","READ","WRITE","REWRITE","DELETE_RECORD","START","CLOSE"),values(uses(p),"command"));assertEquals(7,uses(p).size());
         for(var use:uses(p)){assertEquals("N_LR",use.path("profile").asText());assertEquals("RESOLVED",use.path("bindingStatus").asText());assertEquals(file(p,"F"),use.path("candidates").get(0).path("id").asText());}
         Files.createDirectories(Path.of("target/fd-w2"));Files.writeString(Path.of("target/fd-w2/native.json"),p.toPrettyString());

@@ -57,8 +57,10 @@ public final class FileIoControl {
         }
         var result=new ArrayList<Operation>();
         for(var statement:memory.statements())for(var op:statement.operations()) {
-            var surface=statement.surface();var gaps=new LinkedHashSet<String>();
-            var available=byUnit.getOrDefault(statement.statement().unit(),List.of());var selected=new ArrayList<Declarative>();boolean modeOpen=false;
+            var surface=statement.surface();var gaps=new LinkedHashSet<String>(surface.gapCodes());
+            boolean sortRecord=FileIoMemory.expectedKind(surface,op.ordinal())==Ast.FileKind.SD;
+            boolean knownMode=surface.command()==Ast.FileCommand.OPEN||surface.command()==Ast.FileCommand.SORT||surface.command()==Ast.FileCommand.MERGE;
+            var available=sortRecord?List.<Declarative>of():byUnit.getOrDefault(statement.statement().unit(),List.of());var selected=new ArrayList<Declarative>();boolean modeOpen=false;
             var file=op.file().orElse(null);
             if(file==null)gaps.add("FILE_CONTROL_BINDING_NOT_PROVEN");
             for(var d:available)if(d.kind()==Ast.UseKind.AFTER_EXCEPTION&&file!=null&&d.files().contains(file.entity()))selected.add(d);
@@ -66,10 +68,10 @@ public final class FileIoControl {
             if(selected.isEmpty()) {
                 var mode=surface.files().get(op.ordinal()).mode();
                 for(var d:available)if(d.kind()==Ast.UseKind.AFTER_EXCEPTION&&d.mode()!=Ast.FileOpenMode.UNSPECIFIED
-                        &&(surface.command()!=Ast.FileCommand.OPEN||d.mode()==mode))selected.add(d);
-                modeOpen=!selected.isEmpty()&&surface.command()!=Ast.FileCommand.OPEN;
+                        &&(!knownMode||d.mode()==mode))selected.add(d);
+                modeOpen=!selected.isEmpty()&&!knownMode;
                 if(modeOpen)gaps.add("FILE_CURRENT_OPEN_MODE_NOT_PROVEN");
-                if(surface.command()==Ast.FileCommand.OPEN&&selected.size()>1)gaps.add("FILE_USE_SELECTION_NOT_PROVEN");
+                if(knownMode&&selected.size()>1)gaps.add("FILE_USE_SELECTION_NOT_PROVEN");
             }
             for(var d:available)if(d.kind()==Ast.UseKind.AFTER_EXCEPTION
                     &&(file==null||d.gaps().contains("FILE_USE_BINDING_NOT_PROVEN"))) {
@@ -81,18 +83,19 @@ public final class FileIoControl {
             var handlers=new EnumMap<Ast.FileHandlerKind,Ast.FileHandler>(Ast.FileHandlerKind.class);
             for(var h:surface.handlers())if(handlers.put(h.kind(),h)!=null)gaps.add("FILE_HANDLER_SELECTION_NOT_PROVEN");
             var events=new ArrayList<Event>(List.of(Event.SUCCESS));
-            if(surface.command()==Ast.FileCommand.READ) {
+            if(surface.command()==Ast.FileCommand.RETURN)events.add(Event.END);
+            else if(surface.command()==Ast.FileCommand.READ) {
                 var access=file==null?Ast.FileAccessMode.UNSPECIFIED:file.binding().control().accessMode();
                 if(file==null||access==Ast.FileAccessMode.UNSUPPORTED) {
                     events.add(Event.END);events.add(Event.INVALID_KEY);gaps.add("FILE_ACCESS_MODE_NOT_PROVEN");
                 } else events.add(access==Ast.FileAccessMode.RANDOM||access==Ast.FileAccessMode.DYNAMIC&&!surface.options().contains(Ast.FileOption.NEXT)?Event.INVALID_KEY:Event.END);
             } else if(surface.command()==Ast.FileCommand.WRITE||surface.command()==Ast.FileCommand.REWRITE||surface.command()==Ast.FileCommand.DELETE_RECORD||surface.command()==Ast.FileCommand.START)events.add(Event.INVALID_KEY);
             if(surface.command()==Ast.FileCommand.WRITE&&(handlers.containsKey(Ast.FileHandlerKind.AT_END_OF_PAGE)||handlers.containsKey(Ast.FileHandlerKind.NOT_AT_END_OF_PAGE)))events.add(Event.END_OF_PAGE);
-            events.add(Event.OTHER_ERROR);var routes=new ArrayList<Route>();
+            if(!sortRecord)events.add(Event.OTHER_ERROR);var routes=new ArrayList<Route>();
             for(var event:events) {
                 Ast.FileHandlerKind handler=switch(event) {
                     case END->Ast.FileHandlerKind.AT_END;case INVALID_KEY->Ast.FileHandlerKind.INVALID_KEY;case END_OF_PAGE->Ast.FileHandlerKind.AT_END_OF_PAGE;
-                    case SUCCESS->surface.command()==Ast.FileCommand.READ&&events.contains(Event.END)?Ast.FileHandlerKind.NOT_AT_END:
+                    case SUCCESS->(surface.command()==Ast.FileCommand.READ||surface.command()==Ast.FileCommand.RETURN)&&events.contains(Event.END)?Ast.FileHandlerKind.NOT_AT_END:
                         events.contains(Event.END_OF_PAGE)?Ast.FileHandlerKind.NOT_AT_END_OF_PAGE:Ast.FileHandlerKind.NOT_INVALID_KEY;
                     case OTHER_ERROR->null;
                 };

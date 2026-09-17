@@ -630,6 +630,7 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
      * Handler bodies are barriers until their control is independently published. */
     private static boolean sequentialOpaque(CobolParser.StatementContext c) {
         return c.continueStatement() != null
+            || c.exitStatement()!=null&&c.exitStatement().PROGRAM()==null
             || c.displayStatement() != null && c.displayStatement().onExceptionClause() == null && c.displayStatement().notOnExceptionClause() == null
             || c.readStatement() != null && c.readStatement().atEndPhrase() == null
                 && c.readStatement().notAtEndPhrase() == null && c.readStatement().invalidKeyPhrase() == null
@@ -1060,6 +1061,8 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
     private static Optional<StatementEffectSummary> statementEffects(ParserRuleContext context,List<Ast.StatementOperand> operands,
             List<Ast.StatementClause> clauses,Map<ParserRuleContext,Ast.Node> nodes) {
         if(context instanceof CobolParser.DisplayStatementContext)return displayEffects(context,operands,clauses);
+        if(context instanceof CobolParser.ContinueStatementContext||context instanceof CobolParser.ExitStatementContext e&&e.PROGRAM()==null)
+            return Optional.of(new StatementEffectSummary(List.of(),List.of(),List.of(),List.of(),StatementEffectSummary.Bound.NONE,StatementEffectSummary.Bound.NONE,StatementEffectSummary.Bound.NONE,StatementEffectSummary.Environment.NONE,StatementEffectSummary.ValueTransform.NONE,StatementEffectSummary.Proof.NO_OP));
         var targets=new ArrayList<ParserRuleContext>();StatementEffectSummary.Proof proof;
         boolean closed=clauses.isEmpty();
         var environment=StatementEffectSummary.Environment.UNKNOWN;
@@ -1181,6 +1184,9 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
                 || context instanceof CobolParser.QualifiedDataNameContext)
             return expression(context, "statement operand");
         if (context instanceof CobolParser.ProcedureNameContext) return procedureReference(context);
+        if (context instanceof CobolParser.FileNameContext
+                &&context.getParent() instanceof CobolParser.SortStatementContext sort&&FileIoSyntax.tableSort(sort))
+            return simpleDataReference(context);
         if (context instanceof CobolParser.FileNameContext)
             return new Ast.FileReference(meta(context), clean(sourceText(context)), sourceText(context).strip());
         if (context instanceof CobolParser.IndexNameContext)
