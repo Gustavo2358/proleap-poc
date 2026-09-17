@@ -212,7 +212,8 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
         else name = FileDeclarationSemantics.assignmentName(sourceText(assignment.assignmentName() != null ? assignment.assignmentName() : assignment.literal()));
         var org = firstDescendant(entry, CobolParser.OrganizationClauseContext.class);
         var organization = org == null ? Ast.FileOrganization.UNSPECIFIED
-                : org.LINE() != null || org.BINARY() != null || org.RECORD() != null ? Ast.FileOrganization.UNSUPPORTED
+                : org.BINARY() != null || org.RECORD() != null ? Ast.FileOrganization.UNSUPPORTED
+                : org.LINE() != null ? Ast.FileOrganization.LINE_SEQUENTIAL
                 : org.INDEXED() != null ? Ast.FileOrganization.INDEXED
                 : org.RELATIVE() != null ? Ast.FileOrganization.RELATIVE : Ast.FileOrganization.SEQUENTIAL;
         var access = firstDescendant(entry, CobolParser.AccessModeClauseContext.class);

@@ -1194,7 +1194,7 @@ public final class CobolSemanticProduct {
     }
 
     public enum FileKind { FD, SD, UNKNOWN }
-    public enum FileOrganization { SEQUENTIAL, INDEXED, RELATIVE, UNSPECIFIED, UNSUPPORTED }
+    public enum FileOrganization { SEQUENTIAL, LINE_SEQUENTIAL, INDEXED, RELATIVE, UNSPECIFIED, UNSUPPORTED }
     public enum FileAccessMode { SEQUENTIAL, RANDOM, DYNAMIC, UNSPECIFIED, UNSUPPORTED }
     public enum FileVisibility { LOCAL, GLOBAL, EXTERNAL, CONFLICTING }
     public enum FileReferenceRole { RECORD_KEY, ALTERNATE_RECORD_KEY, RELATIVE_KEY, FILE_STATUS, ADDITIONAL_STATUS }
@@ -1348,7 +1348,8 @@ public final class CobolSemanticProduct {
     public enum FileTrigger { NONE, SORT_MERGE, RECORD_COUNT, END_VOLUME, UNSUPPORTED }
     public record FileAuxParameter(String role,String value){public FileAuxParameter{requireText(role,"aux parameter role");Objects.requireNonNull(value);}}
     public record FileAuxData(String role,NominalBinding binding,Provenance provenance){public FileAuxData{requireText(role,"aux data role");Objects.requireNonNull(binding);Objects.requireNonNull(provenance);}}
-    public record FileAuxReference(ResolutionStatus status,List<FileId> candidates,Provenance provenance){public FileAuxReference{Objects.requireNonNull(status);candidates=List.copyOf(candidates);Objects.requireNonNull(provenance);require(status!=ResolutionStatus.RESOLVED||candidates.size()==1,"aux resolved file cardinality");}}
+    public enum FileAccessMethod { QSAM, VSAM, LINE_SEQUENTIAL, UNKNOWN }
+    public record FileAuxReference(ResolutionStatus status,List<FileId> candidates,FileAccessMethod accessMethod,Provenance provenance){public FileAuxReference{Objects.requireNonNull(accessMethod);Objects.requireNonNull(status);candidates=List.copyOf(candidates);Objects.requireNonNull(provenance);require(status!=ResolutionStatus.RESOLVED||candidates.size()==1,"aux resolved file cardinality");}}
     public record FileAuxClause(String id,FileAuxKind kind,FileAuxEffect effect,List<FileAuxReference> fileReferences,List<FileAuxData> dataReferences,
             List<FileAuxParameter> parameters,Optional<FileAssignment> checkpoint,FileTrigger trigger,List<String> gapCodes,Provenance provenance){
         public FileAuxClause{requireText(id,"aux id");Objects.requireNonNull(kind);Objects.requireNonNull(effect);fileReferences=List.copyOf(fileReferences);dataReferences=List.copyOf(dataReferences);parameters=List.copyOf(parameters);Objects.requireNonNull(checkpoint);Objects.requireNonNull(trigger);gapCodes=List.copyOf(gapCodes);Objects.requireNonNull(provenance);

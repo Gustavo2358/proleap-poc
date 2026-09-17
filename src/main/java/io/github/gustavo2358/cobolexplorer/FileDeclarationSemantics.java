@@ -9,6 +9,17 @@ import java.util.Locale;
  */
 public final class FileDeclarationSemantics {
     private FileDeclarationSemantics() { }
+    public enum AccessMethod { QSAM, VSAM, LINE_SEQUENTIAL, UNKNOWN }
+    /** LR pp138/142–143: source access-method discriminator, not a binding/allocation mechanism. */
+    public static AccessMethod accessMethod(Ast.FileControl control){
+        if(control==null||control.assignment().form()!=Ast.AssignmentForm.IBM_NAME)return AccessMethod.UNKNOWN;
+        return switch(control.organization()){
+            case INDEXED,RELATIVE->AccessMethod.VSAM;case LINE_SEQUENTIAL->AccessMethod.LINE_SEQUENTIAL;case UNSUPPORTED->AccessMethod.UNKNOWN;
+            case SEQUENTIAL,UNSPECIFIED->{var word=control.assignment().original();if(word.startsWith("'")||word.startsWith("\""))word=word.substring(1,word.length()-1);
+                int end=word.lastIndexOf('-');int start=end<0?-1:word.lastIndexOf('-',end-1);
+                yield end>=0&&word.substring(start+1,end).equalsIgnoreCase("AS")?AccessMethod.VSAM:AccessMethod.QSAM;}
+        };
+    }
     static Ast.FileAssignment assignmentName(String original) {
         boolean literal = original.length() >= 2 && (original.charAt(0) == '\'' || original.charAt(0) == '"')
                 && original.charAt(original.length() - 1) == original.charAt(0);

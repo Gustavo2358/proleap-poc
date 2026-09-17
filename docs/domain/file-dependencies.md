@@ -262,7 +262,8 @@ provenance/gaps. Metadata documental não cria statements nem escreve dados.
 
 Premissa LANGUAGE_GUARANTEED; classificação/extrator canônico antecedem projection.
 SAME AREA de INDEXED/RELATIVE permite união das bases pelo algoritmo existente;
-SEQUENTIAL mantém método de acesso indeterminado. SORT variants são documentais.
+SEQUENTIAL usa o campo AS- normativo para VSAM e S-/ausência para QSAM;
+SAME AREA QSAM é documental. Misturas não fechadas mantêm gap. SORT variants são documentais.
 PASSWORD no OPEN, LINAGE no OPEN OUTPUT/EXTEND e WRITE, comprimento DEPENDING
 na saída têm leituras conservadas; nenhum deles sobrescreve parâmetros.
 Contador LINAGE permanece valor não provado pelo motor geral, sem singleton antigo.
@@ -277,6 +278,12 @@ operandos; nomes globais de ASSIGN são indexados para a restrição de checkpoi
 Oráculos FileAuxiliaryContractTest e FileStorageLayoutTest precedem produção;
 REDs/focais em `.harness-results/fd-w6`. Lower valida porta memory/wire coordenada.
 
-Checkpoint produtor W6: focal227, FAST336 e Q-SHARED926 PASS (um skip histórico
-previsto); manifesto APPLY corrigido após primeira Q. B-SP/E-SELECTED nos pins
+Checkpoint produtor W6 final: focal230, FAST336 e Q-SHARED929 PASS (um skip histórico
+previsto); manifesto APPLY corrigido após primeira Q; refinamento N05 incluído na terceira Q. B-SP/E-SELECTED nos pins
 finais ainda em execução downstream; não são antecipados neste checkpoint.
+
+Refinamento N05 (mesma W6): LINE SEQUENTIAL IBM é enum core e preserva assignment-name.
+LR pp138/141–143/146–147; não habilita filenames/DYNAMIC do perfil D. Método de
+acesso source-level por referência auxiliar (QSAM/VSAM/LINE_SEQUENTIAL/UNKNOWN)
+sustenta classificação SAME bilateral; não é bindingMechanism ou allocation.
+Oracle original excessivamente aberto corrigido pela autoridade antes do delta.

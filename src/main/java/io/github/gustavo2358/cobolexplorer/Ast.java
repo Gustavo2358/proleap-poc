@@ -166,7 +166,7 @@ public final class Ast {
         public FileAreaSharing { files=List.copyOf(files); }
     }
     public enum FileKind { FD, SD, UNKNOWN }
-    public enum FileOrganization { SEQUENTIAL, INDEXED, RELATIVE, UNSPECIFIED, UNSUPPORTED }
+    public enum FileOrganization { SEQUENTIAL, LINE_SEQUENTIAL, INDEXED, RELATIVE, UNSPECIFIED, UNSUPPORTED }
     public enum FileAccessMode { SEQUENTIAL, RANDOM, DYNAMIC, UNSPECIFIED, UNSUPPORTED }
     public enum FileReferenceRole { RECORD_KEY, ALTERNATE_RECORD_KEY, RELATIVE_KEY, FILE_STATUS, ADDITIONAL_STATUS }
     public enum AssignmentForm { IBM_NAME, OUTSIDE_N_LR, MISSING }

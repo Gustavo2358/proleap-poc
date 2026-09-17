@@ -62,7 +62,7 @@ class FileAuxiliaryContractTest {
             var j=publish("SELECT F ASSIGN TO FIRSTDD.\nSELECT G ASSIGN TO SECONDDD.\nI-O-CONTROL. "+kind+" FOR F G.",
                 "FD F.\n01 R PIC X.\n"+(sort?"SD":"FD")+" G.\n01 GR PIC X.","","GOBACK.");
             var c=clause(j,kind.replace(' ','_').replace('-','_'));
-            assertEquals(sort?"DOCUMENTARY":kind.contains("RECORD")?"RECORD_ALIAS":"CONDITIONAL_RECORD_ALIAS",c.path("effect").asText());
+            assertEquals(sort?"DOCUMENTARY":kind.contains("RECORD")?"RECORD_ALIAS":"DOCUMENTARY",c.path("effect").asText());
             assertEquals(2,c.path("fileReferences").size());save(j,kind.replace(' ','-').toLowerCase(java.util.Locale.ROOT));
         }
     }
@@ -101,6 +101,19 @@ class FileAuxiliaryContractTest {
     @Test void endVolumeAmbiguousTargetFormDoesNotInventAnAssignmentName()throws Exception {
         var j=publish("SELECT F ASSIGN TO INPUTDD.\nI-O-CONTROL. RERUN ON F EVERY END OF REEL OF F.","FD F.\n01 R PIC X.","","GOBACK.");
         var c=clause(j,"RERUN");assertTrue(c.path("checkpoint").path("externalFileName").isNull());assertTrue(c.path("gapCodes").toString().contains("RERUN_END_VOLUME_TARGET_FORM_NOT_PROVEN"));save(j,"rerun-ambiguous");
+    }
+    @Test void ibmLineSequentialIsCoreAndKeepsAssignmentName()throws Exception {
+        var j=publish("SELECT F ASSIGN TO TEXTDD ORGANIZATION LINE SEQUENTIAL.","FD F.\n01 R PIC X(8).","","OPEN INPUT F. READ F. CLOSE F. GOBACK.");
+        assertEquals("LINE_SEQUENTIAL",j.path("fileInventory").path("declarations").get(0).path("organization").asText());
+        assertEquals("TEXTDD",j.path("fileInventory").path("declarations").get(0).path("assignment").path("externalFileName").asText());save(j,"line-sequential");
+    }
+    @Test void sameAreaSourceAccessMethodSeparatesVsamFromQsam()throws Exception {
+        for(var prefix:new String[]{"AS-","S-"}){
+            var j=publish("SELECT F ASSIGN TO "+prefix+"FIRSTDD.\nSELECT G ASSIGN TO "+prefix+"SECONDDD.\nI-O-CONTROL. SAME AREA FOR F G.","FD F.\n01 FR PIC X(8).\nFD G.\n01 GR PIC X(8).","","GOBACK.");
+            var c=clause(j,"SAME_AREA");assertEquals(prefix.equals("AS-")?"RECORD_ALIAS":"DOCUMENTARY",c.path("effect").asText());
+            for(var f:c.path("fileReferences"))assertEquals(prefix.equals("AS-")?"VSAM":"QSAM",f.path("accessMethod").asText());
+            save(j,prefix.equals("AS-")?"same-vsam-sequential":"same-qsam");
+        }
     }
     static JsonNode clause(JsonNode j,String kind) {
         for(var c:j.path("fileInventory").path("auxiliary").path("clauses"))if(c.path("kind").asText().equals(kind))return c;

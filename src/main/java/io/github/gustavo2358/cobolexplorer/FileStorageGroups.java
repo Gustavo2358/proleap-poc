@@ -19,14 +19,14 @@ final class FileStorageGroups {
                     c.form()==Ast.FileRecordForm.FIXED&&c.minimum().filter(n->n.signum()==0).isPresent()))localOwners.add(fd.meta().id());
         }
         var byEntity=new HashMap<ResolutionContracts.SemanticEntityId,List<Integer>>();
-        var vsam=new HashSet<ResolutionContracts.SemanticEntityId>();
+        var vsam=new HashSet<ResolutionContracts.SemanticEntityId>();var qsam=new HashSet<ResolutionContracts.SemanticEntityId>();
         var controls=new HashMap<Integer,Ast.FileBinding>();for(var division:unit.program().divisions())for(var child:division.children())if(child instanceof Ast.FileBinding f)controls.put(f.meta().id(),f);
         if(tables!=null) {
             var table=tables.forProgramUnit(unit.id()).orElseThrow().symbolTable();
             for(var entity:table.entities())if(entity.kind()==SymbolTable.EntityKind.FILE) {
                 var fds=new ArrayList<Integer>();
                 var entityId=new ResolutionContracts.SemanticEntityId(unit.id(),ResolutionContracts.SemanticEntityDomain.FILE_ENTITY,entity.id());
-                for(var symbol:entity.declarationSymbolIds()) {var id=table.symbols().get(symbol).declarationAstNodeId();if(records.containsKey(id))fds.add(id);if(FileAuxiliarySemantics.vsam(controls.get(id)))vsam.add(entityId);}
+                for(var symbol:entity.declarationSymbolIds()) {var id=table.symbols().get(symbol).declarationAstNodeId();if(records.containsKey(id))fds.add(id);if(FileAuxiliarySemantics.vsam(controls.get(id)))vsam.add(entityId);if(controls.containsKey(id)&&FileDeclarationSemantics.accessMethod(controls.get(id).control())==FileDeclarationSemantics.AccessMethod.QSAM)qsam.add(entityId);}
                 byEntity.put(new ResolutionContracts.SemanticEntityId(unit.id(),ResolutionContracts.SemanticEntityDomain.FILE_ENTITY,entity.id()),fds);
             }
         }
@@ -35,6 +35,7 @@ final class FileStorageGroups {
             // IBM pp156–158: SORT variants are documentary. AREA equals RECORD for
             // source-proven VSAM; sequential organization alone cannot distinguish access methods.
             if(sharing.kind()==Ast.FileAreaKind.SORT||sharing.kind()==Ast.FileAreaKind.SORT_MERGE)continue;
+            if(sharing.kind()==Ast.FileAreaKind.AREA&&sharing.files().size()>=2&&sharing.files().stream().allMatch(ref->{var b=bindings.get(ref.meta().id());return b!=null&&b.status()==ResolutionContracts.ResolutionStatus.RESOLVED&&qsam.contains(b.candidates().get(0).entityId());}))continue;
             var group=new ArrayList<Integer>();boolean valid=sharing.files().size()>=2;
             for(var reference:sharing.files()) {
                 var binding=bindings.get(reference.meta().id());

@@ -66,10 +66,14 @@ class FileStorageLayoutTest {
         assertEquals(f.view("F-REC").base(),f.view("G-REC").base());
         assertNotEquals(f.view("F-REC").base(),f.view("SAFE").base());
     }
-    @Test void sameAreaSequentialDoesNotProveQsamOrVsamAllocation() {
+    @Test void sameAreaVsamSequentialSharesRecordArea() {
+        var f=fixture("SELECT F ASSIGN TO AS-INDD.\nSELECT G ASSIGN TO AS-OUTDD.\nI-O-CONTROL.\n SAME AREA FOR F G.","FD F.\n01 F-REC PIC X(8).\nFD G.\n01 G-REC PIC X(8).","01 SAFE PIC X(8).");
+        assertEquals(f.view("F-REC").base(),f.view("G-REC").base());assertNotEquals(f.view("SAFE").base(),f.view("F-REC").base());
+    }
+    @Test void sameAreaQsamIsDocumentaryAndPreservesSeparation() {
         var f=fixture("SELECT F ASSIGN TO INDD.\nSELECT G ASSIGN TO OUTDD.\nI-O-CONTROL.\n SAME AREA FOR F G.","FD F.\n01 F-REC PIC X(8).\nFD G.\n01 G-REC PIC X(8).","01 SAFE PIC X(8).");
         assertNotEquals(f.view("F-REC").base(),f.view("G-REC").base());
-        assertTrue(f.layout().bases().stream().noneMatch(Base::independent));
+        assertTrue(f.layout().bases().stream().allMatch(Base::independent));
     }
 
 }
