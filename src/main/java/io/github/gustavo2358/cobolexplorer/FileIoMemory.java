@@ -37,8 +37,8 @@ public final class FileIoMemory {
         var bindings=new HashMap<Key,ReferenceResolution.Entry>();
         for(var entry:resolution.entries())bindings.put(new Key(entry.occurrence().programUnitId(),entry.occurrence().referenceAstNodeId()),entry);
         var result=new LinkedHashMap<Key,Statement>();var targets=new HashMap<Key,Target>();
-        var files=new HashMap<ResolutionContracts.SemanticEntityId,File>();var recordOwners=new HashMap<Integer,File>();
-        var views=new HashMap<Integer,View>();var byEntity=new HashMap<ResolutionContracts.SemanticEntityId,Integer>();
+        var files=new HashMap<ResolutionContracts.SemanticEntityId,File>();var recordOwners=new HashMap<Key,File>();
+        var views=new HashMap<Key,View>();var byEntity=new HashMap<ResolutionContracts.SemanticEntityId,Key>();
         var inventories=new LinkedHashMap<ResolutionContracts.ProgramUnitId,List<Ast.Statement>>();var allNodes=new LinkedHashMap<ResolutionContracts.ProgramUnitId,Collection<Ast.Node>>();
         for(var unit:frontend.compilationUnit().programUnits()) {
             var table=storage.symbolTables().forProgramUnit(unit.id()).orElseThrow().symbolTable();
@@ -50,13 +50,13 @@ public final class FileIoMemory {
                 var children=Ast.children(node);for(int i=children.size()-1;i>=0;i--)pending.push(children.get(i));
             }
 
-            storage.layout(unit.id()).views().forEach(v->views.put(v.node().node(),v));
+            storage.layout(unit.id()).views().forEach(v->views.put(v.node(),v));
             for(var s:table.symbols())if(s.namespace()==SymbolTable.Namespace.DATA)
-                byEntity.put(new ResolutionContracts.SemanticEntityId(unit.id(),ResolutionContracts.SemanticEntityDomain.DATA_SYMBOL,s.id()),s.declarationAstNodeId());
+                byEntity.put(new ResolutionContracts.SemanticEntityId(unit.id(),ResolutionContracts.SemanticEntityDomain.DATA_SYMBOL,s.id()),new Key(unit.id(),s.declarationAstNodeId()));
             inventories.put(unit.id(),List.copyOf(statementNodes));allNodes.put(unit.id(),List.copyOf(nodes.values()));
             var baseOwners=new HashMap<Key,Set<Integer>>();
             for(var node:nodes.values())if(node instanceof Ast.FileDescription d)for(var record:d.entries()) {
-                var view=views.get(record.meta().id());if(view!=null)baseOwners.computeIfAbsent(view.base(),ignored->new HashSet<>()).add(d.meta().id());
+                var view=views.get(new Key(unit.id(),record.meta().id()));if(view!=null)baseOwners.computeIfAbsent(view.base(),ignored->new HashSet<>()).add(d.meta().id());
             }
             for(var entity:table.entities())if(entity.kind()==SymbolTable.EntityKind.FILE) {
                 var descriptions=new ArrayList<Ast.FileDescription>();var controls=new ArrayList<Ast.FileBinding>();
@@ -67,13 +67,13 @@ public final class FileIoMemory {
                 if(descriptions.size()!=1||controls.size()!=1||controls.get(0).control()==null)continue;
                 var description=descriptions.get(0);var records=new ArrayList<Target>();boolean shared=false;
                 for(var record:description.entries())if(StorageComponents.level(record)==1) {
-                    var view=views.get(record.meta().id());
+                    var view=views.get(new Key(unit.id(),record.meta().id()));
                     records.add(new Target(new Key(unit.id(),record.meta().id()),Optional.empty(),Optional.ofNullable(view),true,record.meta().provenance()));
                     shared|=view!=null&&baseOwners.getOrDefault(view.base(),Set.of()).size()>1;
                 }
                 var id=new ResolutionContracts.SemanticEntityId(unit.id(),ResolutionContracts.SemanticEntityDomain.FILE_ENTITY,entity.id());
                 var file=new File(id,description,controls.get(0),records,shared);files.put(id,file);
-                for(var record:records)recordOwners.put(record.declaration().node(),file);
+                for(var record:records)recordOwners.put(record.declaration(),file);
             }
         }
         for(var entry:allNodes.entrySet())for(var node:entry.getValue())if(node instanceof Ast.DataReference)
@@ -134,8 +134,8 @@ public final class FileIoMemory {
         if(target.isPresent())writes.add(new Write(role,target.orElseThrow()));else gaps.add("FILE_"+role+"_TARGET_NOT_PROVEN");
     }
     private static Optional<Target> target(ResolutionContracts.ProgramUnitId unit,Ast.Node node,
-            Map<Key,ReferenceResolution.Entry> bindings,Map<ResolutionContracts.SemanticEntityId,Integer> byEntity,
-            Map<Integer,View> views,Map<Key,StorageAccessSemantics.Access> accesses) {
+            Map<Key,ReferenceResolution.Entry> bindings,Map<ResolutionContracts.SemanticEntityId,Key> byEntity,
+            Map<Key,View> views,Map<Key,StorageAccessSemantics.Access> accesses) {
         var key=new Key(unit,node.meta().id());var binding=bindings.get(key);
         if(binding==null||binding.status()!=ResolutionContracts.ResolutionStatus.RESOLVED||binding.candidates().size()!=1)return Optional.empty();
         var declaration=byEntity.get(binding.candidates().get(0).entityId());if(declaration==null)return Optional.empty();
@@ -144,6 +144,6 @@ public final class FileIoMemory {
         // exact address is evaluated by the later operation, never captured here.
         boolean broad=node instanceof Ast.DataReference r&&(!r.subscriptGroups().isEmpty()||r.referenceModification()!=null)&&access==null;
         var owner=binding.candidates().get(0).entityId().programUnitId();
-        return Optional.of(inUnit(new Target(new Key(owner,declaration),Optional.of(key),Optional.ofNullable(view),broad,node.meta().provenance()),unit));
+        return Optional.of(inUnit(new Target(declaration,Optional.of(key),Optional.ofNullable(view),broad,node.meta().provenance()),unit));
     }
 }

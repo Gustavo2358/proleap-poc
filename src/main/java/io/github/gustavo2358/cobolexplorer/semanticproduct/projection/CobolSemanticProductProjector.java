@@ -202,10 +202,10 @@ public final class CobolSemanticProductProjector {
     private static FileInventory files(ProjectionInputs inputs, Map<ResolutionContracts.SemanticEntityId, DataItemId> dataIds, Map<Ast.Statement,StatementId> statementIds,Map<Integer,OperandId> operandIds) {
         var result = new ArrayList<FileDeclaration>();
         var source = inputs.selectedSource();
-        var dataByAst = new HashMap<Integer, DataItemId>();
+        var dataByAst = new HashMap<StorageLayoutSemantics.Key, DataItemId>();
         for(var unitSource:inputs.units().entrySet())for(var symbol:unitSource.getValue().table().symbols())if(symbol.namespace()==SymbolTable.Namespace.DATA){
             var id=dataIds.get(new ResolutionContracts.SemanticEntityId(unitSource.getKey(),ResolutionContracts.SemanticEntityDomain.DATA_SYMBOL,symbol.id()));
-            if(id!=null)dataByAst.put(symbol.declarationAstNodeId(),id);
+            if(id!=null)dataByAst.put(new StorageLayoutSemantics.Key(unitSource.getKey(),symbol.declarationAstNodeId()),id);
         }
         for (var entity : source.table().entities()) {
             if (entity.kind() != SymbolTable.EntityKind.FILE) continue;
@@ -233,7 +233,7 @@ public final class CobolSemanticProductProjector {
                     nameSource == FileNameSource.ASSIGNMENT_NAME ? Optional.of(assignment.externalFileName()) : Optional.empty(), nameGaps);
             var records = new ArrayList<DataItemId>();
             for (var description : descriptions) for (var record : description.entries()) {
-                var id = dataByAst.get(record.meta().id());
+                var id = dataByAst.get(new StorageLayoutSemantics.Key(inputs.unitId(),record.meta().id()));
                 if (id != null && (record.level().equals("01") || record.level().equals("1"))) records.add(id);
                 else gaps.add("FILE_RECORD_OWNER_UNAVAILABLE");
             }
@@ -293,7 +293,7 @@ public final class CobolSemanticProductProjector {
                 new FileDestination(FileDestinationKind.valueOf(d.kind().name()),d.handler().map(h->FileHandlerKind.valueOf(h.name())),d.declarative().map(CobolSemanticProductProjector::declarativeId))).toList(),r.criticalExit())).toList(),p.gaps());
     }
     private static FileOperations fileOperations(ProjectionInputs inputs,Map<Ast.Statement,StatementId> statementIds,
-            Map<ResolutionContracts.SemanticEntityId,DataItemId> dataIds,List<FileDeclaration> declarations,Map<Integer,OperandId> operandIds,Map<Integer,DataItemId> dataByAst) {
+            Map<ResolutionContracts.SemanticEntityId,DataItemId> dataIds,List<FileDeclaration> declarations,Map<Integer,OperandId> operandIds,Map<StorageLayoutSemantics.Key,DataItemId> dataByAst) {
         var controls=new HashMap<java.util.Map.Entry<Integer,Integer>,io.github.gustavo2358.cobolexplorer.FileIoControl.Operation>();
         inputs.products().storage().ifPresent(storage->storage.fileControl().operations().stream().filter(p->p.statement().unit().equals(inputs.unitId())).forEach(p->controls.put(Map.entry(p.statement().node(),p.ordinal()),p)));
         var statementMap=statementIdsByAst(statementIds);
@@ -353,7 +353,7 @@ public final class CobolSemanticProductProjector {
     }
 
     private static FileEffectPlan fileEffects(ProjectionInputs inputs,StorageLayoutSemantics.Key statement,int ordinal,
-            Map<Integer,DataItemId> dataByAst,Map<Integer,OperandId> operandIds,Map<StorageLayoutSemantics.Key,StorageLayoutSemantics.View> views) {
+            Map<StorageLayoutSemantics.Key,DataItemId> dataByAst,Map<Integer,OperandId> operandIds,Map<StorageLayoutSemantics.Key,StorageLayoutSemantics.View> views) {
         var fact=inputs.products().storage().flatMap(s->s.fileEffects().operation(statement,ordinal));
         if(fact.isEmpty())return FileEffectPlan.unavailable();var plan=fact.orElseThrow();
         java.util.function.Function<io.github.gustavo2358.cobolexplorer.FileIoMemory.Target,FileMemoryTarget> target=t->{
@@ -364,7 +364,7 @@ public final class CobolSemanticProductProjector {
                     slice=Optional.of(new RegionalSlice(view.offset().value().orElseThrow(),view.extent().value().orElseThrow()));
                 return new RegionalAccess(storageNode(inputs,view.node()),slice);
             });
-            return new FileMemoryTarget(Optional.ofNullable(dataByAst.get(t.declaration().node())),regional,t.wholeBase(),
+            return new FileMemoryTarget(Optional.ofNullable(dataByAst.get(t.declaration())),regional,t.wholeBase(),
                 t.reference().flatMap(r->Optional.ofNullable(operandIds.get(r.node()))),provenance(t.origin()));
         };
         var gaps=new LinkedHashSet<>(plan.gaps());

@@ -11,9 +11,9 @@ class FileScopeContractTest {
     static String program(String name,String select,String fd,String ws,String body,boolean end) {
         return "IDENTIFICATION DIVISION.\nPROGRAM-ID. "+name+".\nENVIRONMENT DIVISION.\nINPUT-OUTPUT SECTION.\nFILE-CONTROL.\n"+select+"\nDATA DIVISION.\nFILE SECTION.\n"+fd+"\nWORKING-STORAGE SECTION.\n"+ws+"\nPROCEDURE DIVISION.\n"+body+"\nGOBACK.\n"+(end?"END PROGRAM "+name+".\n":"");
     }
-    static String nested(){return program("PARENT","SELECT SHARED-F ASSIGN TO PARENTDD.\nSELECT PRIVATE-F ASSIGN TO PRIVDD.","FD SHARED-F IS GLOBAL.\n01 GLOBAL-REC PIC X(8).\nFD PRIVATE-F.\n01 PRIVATE-REC PIC X(8).","01 GLOBAL-NAME IS GLOBAL PIC X(8).","CALL 'PARENTCALL'.",false)
+    static String nested(){return program("PARENT","SELECT SHARED-F ASSIGN TO PARENTDD.\nSELECT PRIVATE-F ASSIGN TO PRIVDD.","FD SHARED-F IS GLOBAL.\n01 GLOBAL-REC PIC X(8).\nFD PRIVATE-F.\n01 PRIVATE-REC PIC X(8).","01 GLOBAL-NAME IS GLOBAL PIC X(8).","CALL 'PARENTPG'.",false)
         +program("CHILD","","","","OPEN INPUT SHARED-F.\nWRITE GLOBAL-REC.\nCALL GLOBAL-NAME.\nEXEC CICS LINK PROGRAM('CHILDLNK') NOHANDLE END-EXEC.",true)
-        +program("SHADOW","SELECT SHARED-F ASSIGN TO CHILDDD.","FD SHARED-F.\n01 CHILD-REC PIC X(8).","","OPEN OUTPUT SHARED-F.\nCALL 'SHADOWCALL'.",true)+"END PROGRAM PARENT.\n";}
+        +program("SHADOW","SELECT SHARED-F ASSIGN TO CHILDDD.","FD SHARED-F.\n01 CHILD-REC PIC X(8).","","OPEN OUTPUT SHARED-F.\nCALL 'SHADOWPG'.",true)+"END PROGRAM PARENT.\n";}
     static JsonNode publish(String name,String source)throws Exception {
         var a=AstBoundaryTestSupport.analyze(source,name+".cbl");
         var p=ExplorerMain.publishCompilationSemanticProduct(a.build(),a.tables(),a.occurrences(),a.resolution(),a.report(),StorageLayoutSemantics.Profile.IBM_ENTERPRISE_6_4_FIXED_DISPLAY_1047,StorageInitialSemantics.EntryMode.UNKNOWN,CicsProgramControlAnalyzer.EntryMode.UNKNOWN);
@@ -49,7 +49,7 @@ class FileScopeContractTest {
         var a=program("COPY-A","SELECT A ASSIGN TO SAMEEXT.","COPY FDW0 REPLACING FILE-TEMPLATE BY A\n RECORD-TEMPLATE BY RA.","","WRITE RA.\nCALL 'COPYA'.",true);
         var b=program("COPY-B","SELECT B ASSIGN TO SAMEEXT.","COPY FDW0 REPLACING FILE-TEMPLATE BY B\n RECORD-TEMPLATE BY RB.","","WRITE RB.\nCALL 'COPYB'.",true);
         var root=publish("copy",a+b);assertEquals(2,root.path("units").size());
-        for(var u:root.path("units")){var d=u.path("product").path("fileInventory").path("declarations").get(0);assertEquals("SAMEEXT",d.path("assignment").path("externalFileName").asText());assertEquals(1,d.path("origins").get(1).path("includeChain").size());assertEquals(u.path("product").path("unit"),d.path("owner"));assertTrue(u.path("fileCaptures").isEmpty());}
+        for(var u:root.path("units")){var d=u.path("product").path("fileInventory").path("declarations").get(0);assertEquals("SAMEEXT",d.path("assignment").path("externalFileName").asText());assertEquals(1,d.path("origins").get(1).path("includeChain").size());assertEquals(u.path("product").path("unit"),d.path("owner"));assertTrue(u.path("fileCaptures").isEmpty());assertTrue(u.path("dataCaptures").isEmpty(),"COPY repeated AST handles must be qualified by unit");}
     }
     @Test void qualificationAndAmbiguityAreLocalAndDoNotFuseRecords()throws Exception {
         var root=publish("qualified",program("QUALIFIED","SELECT F ASSIGN TO FIRSTDD.\nSELECT G ASSIGN TO SECONDDD.","FD F.\n01 R PIC X(8).\nFD G.\n01 R PIC X(8).","","WRITE R OF F.\nWRITE R.\nCALL 'KEEP'.",true));

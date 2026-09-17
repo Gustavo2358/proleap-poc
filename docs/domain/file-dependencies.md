@@ -362,3 +362,11 @@ e focal53 anterior (resolver/storage/input) PASS. FAST352 zero skips; qualificat
 945 testes, um skip histórico, mais normalizador/naming PASS. Logs/tentativas em
 `.harness-results/fd-w9`. Integração lower/codec/consumer ainda em andamento; isto
 não qualifica a wave inteira. O PRIMARY_ONLY unitário permanece explícito.
+
+A fronteira B-SP encontrou colisão de AST localId em COPY repetido entre irmãos;
+FileIoMemory e projection usam agora Key(unidade,nó) também nesses índices.
+Novo negativo COPY e focal21 PASS. FAST final352 e qualification-local final945
+(um skip histórico) + normalizador/naming PASS: fast-5/qualification-4. Tentativa
+qualification-3 conflitou com um build focal no mesmo target; falhas brutas foram
+preservadas e os gates finais repetidos sequencialmente. Somente a execução final
+sustenta este checkpoint corrigido.
