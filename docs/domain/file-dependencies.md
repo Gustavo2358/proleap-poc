@@ -1,5 +1,9 @@
 # FILE-DEPENDENCIES — frontend / SP
 
+CORE N+C qualificado; closeout/merges autorizados. W10 DEFERRED / OPTIONAL_EXTENSION,
+NOT_PART_OF_CORE, requer nova autorização. [Estado canônico](https://github.com/Gustavo2358/analysis-cfg/blob/main/docs/product/file-dependencies/closeout.md).
+As seções abaixo registram checkpoints históricos.
+
 H4 aprovado; core N+C autorizado em 2026-09-16. W0–W9 qualificadas local; W11 em qualificação; W10 não autorizado.
 [Campanha canônica](https://github.com/Gustavo2358/analysis-cfg/blob/feat/file-dependencies/docs/product/file-dependencies/README.md)
 (workspace: `../analysis-cfg/docs/product/file-dependencies/README.md`).
