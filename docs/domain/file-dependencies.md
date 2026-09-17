@@ -401,3 +401,19 @@ exercitam rejeição de conteúdo e aceitação da referência canônica sem rip
 RED preservado; oito testes naming e FAST fixo352 PASS, zero skips (fast-3.log).
 Nenhum src/pom mudou desde aaecf8c1: qualification-local946 e bundle W11 snapshot3
 são REUSED por identidade do conteúdo produtivo. Esta correção não altera pins.
+
+## FD-W11 C06 — READ DATASET autorizado individualmente
+
+Decisão humana C06-HUMAN-20260917, canônica no harness CFG/c06-read-dataset.md:
+READ DATASET é alias legado de READ FILE no perfil CICS TS5.6. A normalização
+fica somente no classificador FILE do frontend; o scanner compartilhado continua
+conservando nome/raw/offsets. SP2.28 publica name=DATASET/canonicalName=FILE,
+mesmos operandos/efeitos/controle de READ. Sem mudança de schema ou perfil de
+nome; nenhum DSNAME/lookup, nenhum alias de outro comando antecipado.
+Três novos testes independentes: sintaxe literal/host, negativos de escopo e
+malformação/duplicação, e produto/provenance junto com Program Control. RED
+confirmado em12 testes (três falhas semânticas); restante da família preservado.
+
+C06 produtor: F-CICS22/FAST355 PASS, zero skips. Duas fixtures SP novas preservam
+DATASET/FILE e Program Control. Q compartilhada anterior REUSED: mudança restrita
+a classificação/canonicalização READ; nenhum efeito/provider/codec/controle novo.

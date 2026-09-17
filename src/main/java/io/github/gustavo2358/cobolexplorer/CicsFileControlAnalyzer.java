@@ -37,7 +37,7 @@ public final class CicsFileControlAnalyzer {
         var parsed=CicsCommandSyntax.parse(raw);if(parsed.isEmpty())return Optional.empty();var syntax=parsed.get();
         Command command;try{command=Command.valueOf(syntax.name());}catch(IllegalArgumentException ex){return Optional.empty();}
         // Other resource variants of WRITE/DELETE/INQUIRE/SET are independent capabilities.
-        if(syntax.options().stream().noneMatch(o->o.name().equals("FILE")||command==Command.SET&&o.name().equals("DATASET")))return Optional.empty();
+        if(syntax.options().stream().noneMatch(o->canonical(command,o.name()).equals("FILE")))return Optional.empty();
         var gaps=new LinkedHashSet<>(syntax.gaps());var names=new HashSet<String>();
         for(var o:syntax.options())names.add(canonical(command,o.name()));
         var mode=command!=Command.INQUIRE?TargetMode.INPUT:names.contains("NEXT")?TargetMode.OUTPUT:
@@ -98,7 +98,10 @@ public final class CicsFileControlAnalyzer {
         return new Contribution(frontend,facts);
     }
     private static String canonical(Command command,String option) {
-        if(command==Command.SET){if(option.equals("DATASET"))return "FILE";if(option.equals("OBJECTNAME"))return "DSNAME";}return option;
+        // C06-HUMAN-20260917: READ has the legacy FILE alias; no blanket CICS alias.
+        if((command==Command.READ||command==Command.SET)&&option.equals("DATASET"))return "FILE";
+        if(command==Command.SET&&option.equals("OBJECTNAME"))return "DSNAME";
+        return option;
     }
     private static Role role(Command command,TargetMode mode,String option,Set<String> names) {
         if(option.equals("FILE"))return mode==TargetMode.OUTPUT?Role.WRITE:Role.READ;

@@ -157,6 +157,49 @@ class CicsFileControlTest {
         assertTrue(fact.options().stream().filter(o->o.canonicalName().equals("LENGTH")).findFirst().orElseThrow().reference().isEmpty());
     }
 
+    @Test void legacyReadDatasetUsesFileIdentityAndPreservesSourceSpelling() {
+        // C06-HUMAN-20260917: specifically READ, independently of SET aliases.
+        for(String operand:List.of("'ACCOUNTS'","FN OF GROUP-A(1:8)")) {
+            var parsed=new CicsFileControlAnalyzer().parse("EXEC CICS READ DATASET("+operand+") INTO(B) RIDFLD(K) NOHANDLE END-EXEC");
+            assertTrue(parsed.isPresent(),"legacy READ DATASET must be an observed CICS FILE");
+            var fact=parsed.orElseThrow();var option=fact.options().get(0);
+            assertEquals("READ",fact.command().name());assertEquals("INPUT",fact.targetMode().name());
+            assertEquals("FILE",option.canonicalName());assertEquals("DATASET",option.syntax().name());
+            assertEquals("READ",option.role().name());assertTrue(fact.gaps().isEmpty(),fact.toString());
+            assertEquals("DATASET("+operand+")",fact.raw().substring(option.syntax().start(),option.syntax().end()));
+            if(operand.startsWith("'"))assertEquals("ACCOUNTS",fact.literal().orElseThrow());
+            else assertEquals(operand,fact.host().orElseThrow());
+        }
+    }
+    @Test void legacyReadDatasetDoesNotGeneralizeOrHideMalformedIdentity() {
+        var analyzer=new CicsFileControlAnalyzer();
+        for(String command:REQUIRED.keySet())if(!Set.of("READ","SET").contains(command))
+            assertTrue(analyzer.parse("EXEC CICS "+command+" DATASET('F') "+REQUIRED.get(command)+" END-EXEC").isEmpty(),command);
+        for(String bad:List.of("READ DATASET('F') FILE('G') INTO(B) RIDFLD(K)",
+            "READ DATASET INTO(B) RIDFLD(K)","READ DATASET() INTO(B) RIDFLD(K)",
+            "READ DATASET('F') INTO(B) SET(P) RIDFLD(K)","READ DATASET('F'")) {
+            var parsed=analyzer.parse("EXEC CICS "+bad+" END-EXEC");
+            assertTrue(parsed.isPresent(),"malformed authorized alias remains observed");
+            assertFalse(parsed.orElseThrow().gaps().isEmpty(),bad);
+            if(!bad.contains("SET(P)"))assertTrue(parsed.orElseThrow().literal().isEmpty(),bad);
+        }
+    }
+    @Test void legacyReadDatasetPublishesCanonicalContractAndOriginalOption() throws Exception {
+        String data="01 FN PIC X(8).\n01 BUF PIC X(8).\n01 WS-KEY PIC X(8).";
+        for(String operand:List.of("'ACCOUNTS'","FN")) {
+            var state=CicsProgramControlTest.regional(data,"MOVE 'ACCOUNTS' TO FN.\nEXEC CICS READ DATASET("+operand+")\nINTO(BUF) RIDFLD(WS-KEY) NOHANDLE END-EXEC.\nEXEC CICS LINK PROGRAM('PGM') NOHANDLE END-EXEC.\nCALL 'AFTER'.");
+            var facts=state.statements().stream().filter(io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.CicsFileFact.class::isInstance).map(io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.CicsFileFact.class::cast).toList();
+            assertEquals(1,facts.size());var fact=facts.get(0);var option=fact.options().get(0);
+            assertEquals("READ",fact.command());assertEquals("cics-ts.file@1",fact.nameProfile());
+            assertEquals("FILE",option.canonicalName());assertEquals("DATASET",option.name());
+            assertTrue(fact.rawText().substring(option.start(),option.end()).startsWith("DATASET("));
+            assertEquals("READ",option.role().name());assertTrue(fact.target().isPresent());
+            assertTrue(state.statements().stream().anyMatch(io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.CicsFact.class::isInstance));
+            var bytes=io.github.gustavo2358.cobolexplorer.semanticproduct.transport.SemanticProductJsonWriter.serialize(io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticPort.open(state));
+            emit(operand.equals("FN")?"read-dataset-computed":"read-dataset-literal",bytes);
+        }
+    }
+
     static void emit(String name,byte[] bytes)throws Exception {
         String output=System.getProperty("cics.file.fixtures.dir");if(output==null)return;
         var dir=java.nio.file.Path.of(output);java.nio.file.Files.createDirectories(dir);java.nio.file.Files.write(dir.resolve(name+".sp.json"),bytes);
