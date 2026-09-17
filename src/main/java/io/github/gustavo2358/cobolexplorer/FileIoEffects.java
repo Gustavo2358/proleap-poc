@@ -43,7 +43,7 @@ public final class FileIoEffects {
                     for(var clause:auxiliary){boolean read=clause.kind()==Ast.FileAuxKind.RECORD&&(surface.command()==Ast.FileCommand.WRITE||surface.command()==Ast.FileCommand.REWRITE||surface.command()==Ast.FileCommand.RELEASE)
                         ||clause.kind()==Ast.FileAuxKind.PASSWORD&&surface.command()==Ast.FileCommand.OPEN
                         ||clause.kind()==Ast.FileAuxKind.LINAGE&&file.description().kind()==Ast.FileKind.FD&&(surface.command()==Ast.FileCommand.WRITE||surface.command()==Ast.FileCommand.OPEN&&(surface.files().get(op.ordinal()).mode()==Ast.FileOpenMode.OUTPUT||surface.files().get(op.ordinal()).mode()==Ast.FileOpenMode.EXTEND));
-                        if(read)for(var reference:clause.data()){var target=memory.target(new Key(unit,reference.reference().meta().id()));if(target.isPresent())reads.add(target.orElseThrow());else unknownRead=true;}
+                        if(read)for(var reference:clause.data()){var target=memory.target(new Key(file.entity().programUnitId(),reference.reference().meta().id())).map(t->FileIoMemory.inUnit(t,unit));if(target.isPresent())reads.add(target.orElseThrow());else unknownRead=true;}
                     }
                 }
                 for(var operand:surface.operands())if(operand.role()==Ast.FileOperandRole.KEY||operand.role()==Ast.FileOperandRole.ADVANCING) {
@@ -52,7 +52,7 @@ public final class FileIoEffects {
                 }
                 if(file!=null&&surface.command()==Ast.FileCommand.READ)for(var reference:file.binding().control().references())
                     if(reference.role()==Ast.FileReferenceRole.RECORD_KEY||reference.role()==Ast.FileReferenceRole.RELATIVE_KEY) {
-                        var target=memory.target(new Key(unit,reference.reference().meta().id()));if(target.isPresent())reads.add(target.orElseThrow());else unknownRead=true;
+                        var target=memory.target(new Key(file.entity().programUnitId(),reference.reference().meta().id())).map(t->FileIoMemory.inUnit(t,unit));if(target.isPresent())reads.add(target.orElseThrow());else unknownRead=true;
                     }
                 for(var write:op.writes())if(write.role()==FileIoMemory.Role.FROM_RECORD) {
                     var source=surface.operands().stream().filter(o->o.role()==Ast.FileOperandRole.FROM).findFirst()
@@ -90,6 +90,7 @@ public final class FileIoEffects {
                     steps.sort(Comparator.comparingInt(s->order(s.role())));
                     outcomes.add(new OutcomeCase(outcome,steps));
                 }
+                if(file!=null&&!file.entity().programUnitId().equals(unit))gaps.add("FILE_CAPTURE_PHYSICAL_VIEW_UNAVAILABLE");
                 if(unknownRead)gaps.add("FILE_READ_BOUND_NOT_PROVEN");
                 if(!nativeProfile)gaps.add("FILE_EFFECT_PROFILE_NOT_PROVEN");
                 plans.add(new Operation(op.ordinal(),reads,before,outcomes,unknownRead||!nativeProfile,!op.bounded()||!nativeProfile,List.copyOf(gaps)));

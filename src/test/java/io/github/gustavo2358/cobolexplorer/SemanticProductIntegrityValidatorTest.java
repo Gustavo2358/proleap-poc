@@ -544,7 +544,7 @@ class SemanticProductIntegrityValidatorTest {
         int validator = source.indexOf("SemanticProductIntegrityValidator.validate(", resolver);
         int classifier = source.indexOf("new CicsIntrinsicClassifier().classify(", resolver);
         int report = source.indexOf("ResolutionAnalysisReport.compose(", resolver);
-        int projection = source.indexOf("publishSemanticProduct(primaryUnit.id()", resolver);
+        int projection = source.indexOf("publishCompilationSemanticProduct(compilationBuild", resolver);
         assertTrue(resolver >= 0 && validator > resolver && classifier > validator && report > classifier && projection > report);
         // The production call is unconditional and has no recovery before classification.
         assertEquals(".resolve(compilationUnit, symbolTables, occurrences);", source.substring(resolver, validator).trim());

@@ -52,6 +52,9 @@ public final class SemanticProductJsonWriter {
         }
     }
 
+    static Object documentValue(CobolSemanticPort port){return document(port);}
+    static Object unitValue(CobolSemanticProduct.UnitId id){return unit(id);}
+    static String dataValue(CobolSemanticProduct.DataItemId id){return dataHandle(id);}
     private static SemanticProductDocument document(CobolSemanticPort port) {
         List<DataDeclarationDocument> declarations = port.dataDeclarations().stream()
                 .map(SemanticProductJsonWriter::dataDeclaration).toList();

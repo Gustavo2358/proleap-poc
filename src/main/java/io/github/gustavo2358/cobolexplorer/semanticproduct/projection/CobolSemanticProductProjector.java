@@ -73,7 +73,10 @@ public final class CobolSemanticProductProjector {
             CompilationUnitSymbolTables symbolTables,
             Map<ResolutionContracts.ProgramUnitId, ReferenceOccurrences> occurrencesByUnit,
             ReferenceResolution resolution,
-            ResolutionAnalysisReport report, ScalarMoveSemantics scalarMoves, Optional<StorageAccessSemantics> storage, Optional<io.github.gustavo2358.cobolexplorer.CicsProgramControlAnalyzer.Contribution> cics) {
+            ResolutionAnalysisReport report, ScalarMoveSemantics scalarMoves, Optional<StorageAccessSemantics> storage, Optional<io.github.gustavo2358.cobolexplorer.CicsProgramControlAnalyzer.Contribution> cics, io.github.gustavo2358.cobolexplorer.FileScopeSemantics fileScope) {
+        public FrontendProducts(CompilationUnitBuildResult frontend, CompilationUnitSymbolTables symbolTables, Map<ResolutionContracts.ProgramUnitId, ReferenceOccurrences> occurrencesByUnit, ReferenceResolution resolution, ResolutionAnalysisReport report, ScalarMoveSemantics scalarMoves, Optional<StorageAccessSemantics> storage, Optional<io.github.gustavo2358.cobolexplorer.CicsProgramControlAnalyzer.Contribution> cics) {
+            this(frontend,symbolTables,occurrencesByUnit,resolution,report,scalarMoves,storage,cics,io.github.gustavo2358.cobolexplorer.FileScopeSemantics.analyze(symbolTables));
+        }
         public FrontendProducts(CompilationUnitBuildResult frontend, CompilationUnitSymbolTables symbolTables,
                 Map<ResolutionContracts.ProgramUnitId, ReferenceOccurrences> occurrencesByUnit, ReferenceResolution resolution,
                 ResolutionAnalysisReport report, ScalarMoveSemantics scalarMoves, Optional<StorageAccessSemantics> storage) {
@@ -108,6 +111,10 @@ public final class CobolSemanticProductProjector {
     /** Materializes the complete observed statement inventory for one selected unit. */
     public static CobolSemanticProduct.State project(
             FrontendProducts products, ResolutionContracts.ProgramUnitId unitId) {
+        return projectScoped(products,unitId).state();
+    }
+    public record ScopedProjection(CobolSemanticProduct.State state, Map<ResolutionContracts.SemanticEntityId,DataItemId> dataIds) {}
+    public static ScopedProjection projectScoped(FrontendProducts products, ResolutionContracts.ProgramUnitId unitId) {
         Objects.requireNonNull(products, "products");
         Objects.requireNonNull(unitId, "unitId");
         ProjectionInputs inputs = ProjectionInputs.index(products, unitId);
@@ -118,7 +125,7 @@ public final class CobolSemanticProductProjector {
         for (StatementPosition position : inputs.statementPositions()) {
             StatementPlan plan = plan(position, inputs);
             plans.add(plan);
-            if (plan.capability().supported()) {
+            { // Observed FILE operands also carry canonical DATA references.
                 for (ReferenceResolution.Entry entry : plan.entries()) {
                     if (!projectableDataBinding(entry, inputs)) continue;
                     for (ReferenceResolution.Candidate candidate : entry.candidates())
@@ -127,6 +134,15 @@ public final class CobolSemanticProductProjector {
             }
         }
 
+        // Implicit record/status destinations are canonical facts, not nominal source occurrences.
+        var entityByNode=new HashMap<StorageLayoutSemantics.Key,ResolutionContracts.SemanticEntityId>();
+        for(var source:inputs.units().entrySet())for(var symbol:source.getValue().table().symbols())if(symbol.namespace()==SymbolTable.Namespace.DATA&&(symbol.kind()==SymbolTable.SymbolKind.DATA_ITEM||symbol.kind()==SymbolTable.SymbolKind.RENAMES))
+            entityByNode.put(new StorageLayoutSemantics.Key(source.getKey(),symbol.declarationAstNodeId()),new ResolutionContracts.SemanticEntityId(source.getKey(),ResolutionContracts.SemanticEntityDomain.DATA_SYMBOL,symbol.id()));
+        inputs.products().storage().ifPresent(storage->{for(var fact:storage.files().statements().stream().sorted(java.util.Comparator.comparingInt(f->f.statement().node())).toList())if(fact.statement().unit().equals(inputs.unitId()))for(var op:fact.operations()){
+            var targets=new ArrayList<io.github.gustavo2358.cobolexplorer.FileIoMemory.Target>();op.file().ifPresent(f->targets.addAll(f.records()));op.writes().forEach(w->targets.add(w.target()));
+            storage.fileEffects().operation(fact.statement(),op.ordinal()).ifPresent(e->{targets.addAll(e.ioReads());e.before().forEach(b->b.source().ifPresent(targets::add));});
+            for(var target:targets){var entity=entityByNode.get(target.declaration());if(entity!=null)referencedData.add(entity);}
+        }});
         DeclarationProjection declarations = declarations(inputs, referencedData);
         List<CobolSemanticProduct.StatementFact> statements = new ArrayList<>(plans.size());
         List<CobolSemanticProduct.Gap> gaps = new ArrayList<>();
@@ -178,18 +194,18 @@ public final class CobolSemanticProductProjector {
             inventoryStatus = InventoryStatus.PARTIAL;
         CobolSemanticProduct.CoverageSummary coverage = coverage(
                 inventoryStatus, statements, inputs.unitSummary());
-        return new CobolSemanticProduct.State(inputs.boundaryUnit(),
+        return new ScopedProjection(new CobolSemanticProduct.State(inputs.boundaryUnit(),
                 policy(inputs.report().policy()), declarations.facts(),
-                statements, gaps, coverage, entries, storageIndependence(inputs, declarations.ids()), storage(inputs, declarations.ids()), files(inputs, declarations.ids(), statementIds, observedOperandIds));
+                statements, gaps, coverage, entries, storageIndependence(inputs, declarations.ids()), storage(inputs, declarations.ids()), files(inputs, declarations.ids(), statementIds, observedOperandIds)),java.util.Collections.unmodifiableMap(new LinkedHashMap<>(declarations.ids())));
     }
 
     private static FileInventory files(ProjectionInputs inputs, Map<ResolutionContracts.SemanticEntityId, DataItemId> dataIds, Map<Ast.Statement,StatementId> statementIds,Map<Integer,OperandId> operandIds) {
         var result = new ArrayList<FileDeclaration>();
         var source = inputs.selectedSource();
         var dataByAst = new HashMap<Integer, DataItemId>();
-        for (var symbol : source.table().symbols()) if (symbol.namespace() == SymbolTable.Namespace.DATA) {
-            var id = dataIds.get(new ResolutionContracts.SemanticEntityId(inputs.unitId(), ResolutionContracts.SemanticEntityDomain.DATA_SYMBOL, symbol.id()));
-            if (id != null) dataByAst.put(symbol.declarationAstNodeId(), id);
+        for(var unitSource:inputs.units().entrySet())for(var symbol:unitSource.getValue().table().symbols())if(symbol.namespace()==SymbolTable.Namespace.DATA){
+            var id=dataIds.get(new ResolutionContracts.SemanticEntityId(unitSource.getKey(),ResolutionContracts.SemanticEntityDomain.DATA_SYMBOL,symbol.id()));
+            if(id!=null)dataByAst.put(symbol.declarationAstNodeId(),id);
         }
         for (var entity : source.table().entities()) {
             if (entity.kind() != SymbolTable.EntityKind.FILE) continue;
@@ -311,7 +327,8 @@ public final class CobolSemanticProductProjector {
                         var owner=c.entityId().programUnitId();
                         candidates.add(new FileId(new UnitId(owner.compilationUnitId(),owner.structuralPath(),owner.canonicalProgramName()),c.entityId().localId()));
                     } else if(reference instanceof Ast.DataReference) {
-                        var id=dataIds.get(c.entityId());var owner=id==null?null:owners.get(id);
+                        var canonicalOwner=inputs.products().fileScope().recordOwner(c.entityId());
+                        var owner=canonicalOwner.map(o->new FileId(new UnitId(o.programUnitId().compilationUnitId(),o.programUnitId().structuralPath(),o.programUnitId().canonicalProgramName()),o.localId())).orElse(null);
                         if(owner==null)missingOwner=true;else candidates.add(owner);
                     }
                 }

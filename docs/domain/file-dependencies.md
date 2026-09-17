@@ -324,3 +324,41 @@ O FAST revelou LENGTH OF descartado após alocar AST ID: contraprova mínima e c
 na bridge antes da alocação; corpusCOACTUPC voltou a passar sem enfraquecer integridade.
 Qualification revelou seleção findFirst no projector: agora exige identidade única
 como o contrato anterior de Program Control. Logs anteriores permanecem evidência.
+
+## FD-W9 — compilação e capturas
+
+CLI publica `cobol-semantic-compilation.json` (schema cobol-semantic-compilation,
+contractVersion1.0.0) além dos arquivos SP2.28 unitários compatíveis. Envelope:
+unitInventory de IDs estruturais; inventoryStatus COMPLETE ou INPUT_MISSING;
+units com product SP, parent nullable, ownedData/globalData, dataCaptures
+(localDataId/sourceUnit/sourceDataId) e fileCaptures(owner/id). Inventário de
+unidades não afirma completude dos corpos/entradas PRIMARY_ONLY. COPY ausente
+conserva unidades observadas e marca INPUT_MISSING. Capturas particionam DATA
+local versus importado; referências FILE conservam owner original. EXTERNAL
+não é GLOBAL nem autorização para fundir por nome.
+
+Autoridade IBM6.4 SC27-8713-03 update2026-04-28: cap7pp63–66, FDpp184–185 e
+DATAp197. FileScopeSemantics indexa apenas relações canônicas de símbolos/scopes;
+resolver continua dono de qualificação/shadowing/ambiguidade. Análises de storage
+e CICS são calculadas uma vez; projeções por unidade compartilham esse snapshot.
+Memória FILE agora indexa declarações de todas as unidades antes dos usos, O(AST
++symbols+destinos). Projeção selecionada conserva limite O(unidades×snapshot)
+do indexador existente; escala observada será qualificada em W11, sem SLA.
+
+READ GLOBAL conserva bound nominal do registro capturado. Projeção unitária não
+publica intervalo físico ancestral: efeitos importados permanecem MAY e gap
+FILE_CAPTURE_PHYSICAL_VIEW_UNAVAILABLE; nenhum MUST é criado. Lower fecha alias
+com o objeto original na composição. Recursos físicos/runtime continuam fora
+do produto. Declarações COPY repetidas preservam identidade e includeChain.
+
+Oráculos FileScopeContractTest: pai/filho/shadow, EXTERNAL, COPY/REPLACING,
+qualificação/ambiguidade, input parcial e READ GLOBAL disjunto. RED de captura
+DATA observada e READ com bound excessivo preservados em fd-w9. CICS contido já
+passou sem delta produtivo nesse analyzer. Teste de ordem da composição foi
+atualizado para a nova chamada pública, preservando validação antes de consumers.
+
+Checkpoint produtor W9: 7 oráculos novos; focal90 (FILE memória/escopo e integridade)
+e focal53 anterior (resolver/storage/input) PASS. FAST352 zero skips; qualification-local
+945 testes, um skip histórico, mais normalizador/naming PASS. Logs/tentativas em
+`.harness-results/fd-w9`. Integração lower/codec/consumer ainda em andamento; isto
+não qualifica a wave inteira. O PRIMARY_ONLY unitário permanece explícito.
