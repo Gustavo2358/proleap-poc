@@ -389,3 +389,15 @@ PARTIAL explícito. Logs fd-w11/paragraph-*. FAST/Q e pins finais no harness W11
 W11 remediação estabilizada: FAST352 PASS; qualification-local946 testes,
 zero falhas e um skip histórico, normalizer/naming PASS. Evidência em
 fd-w11/fast-2.log e qualification-2.log. Sem alteração de perfil/solver/efeitos.
+
+## FD-W11 — naming gate portátil
+
+CI FAST aaecf8c1 falhou em quatro casos do naming guard antes do Maven. A falha
+foi reproduzida em PATH sem ripgrep: a process substitution Bash escondia a
+ausência do comando e aceitava conteúdo proibido. O scan usa agora Python, já
+requerido pelo harness, e os caminhos Git com as mesmas exclusões/exceção textual.
+Symlinks não são seguidos, como no scan anterior. Dois oráculos herméticos novos
+exercitam rejeição de conteúdo e aceitação da referência canônica sem ripgrep.
+RED preservado; oito testes naming e FAST fixo352 PASS, zero skips (fast-3.log).
+Nenhum src/pom mudou desde aaecf8c1: qualification-local946 e bundle W11 snapshot3
+são REUSED por identidade do conteúdo produtivo. Esta correção não altera pins.
