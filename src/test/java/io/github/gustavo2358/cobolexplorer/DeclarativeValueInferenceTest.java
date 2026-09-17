@@ -9,6 +9,17 @@ import static org.junit.jupiter.api.Assertions.*;
 import static io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.*;
 
 class DeclarativeValueInferenceTest {
+    @Test void corpusValueProvenanceCannotContradictThePublishedEvidenceContract() throws Exception {
+        var source=java.nio.file.Path.of("corpus/cbl/COACTUPC.cbl");
+        var normalized=SourceNormalizer.normalize(java.nio.file.Files.readString(source),source.getFileName().toString(),SourceNormalizer.SourceFormat.FIXED);
+        var preprocessed=new PreprocessorEngine(Bindings.cobol(),new CopybookLibrary(java.nio.file.Path.of("corpus/cpy"))).process(normalized.sourceMap(),source.getFileName().toString());
+        var a=AstBoundaryTestSupport.analyze(preprocessed,source.getFileName().toString());
+        var layout=StorageLayoutSemantics.analyze(a.build(),a.tables(),a.resolution(),a.report(),StorageLayoutSemantics.Profile.UNSPECIFIED);
+        var initial=StorageAccessSemantics.analyze(a.build(),a.resolution(),layout).initial();
+        for(var u:a.model().programUnits())for(var c:initial.facts(u.id()).conditions())
+            assertTrue(c.kind()==StorageInitialSemantics.Kind.UNKNOWN||c.origin().exact(),"approximate VALUE must remain explicit UNKNOWN: "+c.origin());
+        assertDoesNotThrow(()->ExplorerMain.publishSemanticProduct(a.model().programUnits().get(0).id(),a.build(),a.tables(),a.occurrences(),a.resolution(),a.report()));
+    }
     static final String VALUE="01 LIT-PGM PIC X(8) VALUE 'PROGA'.\n";
     static final String GROUP="01 WS-AREA.\n05 LIT-PGM PIC X(8) VALUE 'PROGA'.\n05 TAIL-PART PIC X(8).\n";
     static String source(String data,String code) {
@@ -130,8 +141,8 @@ class DeclarativeValueInferenceTest {
         assertEquals(InitialStorageProof.DECLARATIVE_INVARIANT,c.proof());
         assertThrows(IllegalArgumentException.class,()->new StorageInitialCondition(c.node(),c.kind(),c.bytes(),c.gapCodes(),c.provenance(),InitialStorageProof.NONE));
         var wire=new ObjectMapper().readTree(SemanticProductJsonWriter.serialize(p));
-        assertEquals("2.23.0",wire.path("contractVersion").asText());
-        assertEquals("1.7.0",wire.path("storage").path("version").asText());
+        assertEquals("2.24.0",wire.path("contractVersion").asText());
+        assertEquals("1.8.0",wire.path("storage").path("version").asText());
         assertEquals("DECLARATIVE_INVARIANT",wire.path("storage").path("entryState").path("conditions").get(0).path("proof").asText());
     }
 
@@ -214,7 +225,7 @@ class DeclarativeValueInferenceTest {
         var retained=new HashMap<StorageLayoutSemantics.Key,StorageAccessSemantics.Access>();
         for(var access:f.effects().accesses())if(access!=argument)retained.put(access.reference(),access);
         var inventory=StorageMutationInventory.analyze(a.build(),unit,f.effects().layout().layout(unit.id()),retained,Map.of(),Map.of(),
-            new CicsProgramControlAnalyzer().analyze(a.build()));
+            new CicsProgramControlAnalyzer().analyze(a.build()),f.effects().files());
         assertTrue(inventory.blockers(condition.view().orElseThrow()).contains(StorageInitialSemantics.Reason.FOREIGN_MUTATION_OR_ESCAPE));
     }
     @Test void everyArgumentMustProveDisjunctionRegardlessOfOrderOrOtherModes() {

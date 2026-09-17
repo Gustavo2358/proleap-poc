@@ -32,7 +32,7 @@ public final class Ast {
         }
     }
 
-    public sealed interface Node permits Program, Division, Section, FileBinding, FileDescription,
+    public sealed interface Node permits Program, Division, Section, FileBinding, FileDescription, FileAreaSharing, FileRecordClause,
             DataEntry, Paragraph, Sentence, CallArgument, EvaluateBranch, DataQualifier,
             SubscriptGroup, ReferenceModification, ProcedureQualifier, ProcedureReference,
             ProcedureSignature, ProcedureParameter, StatementOperand, StatementClause, SearchWhen,
@@ -143,6 +143,10 @@ public final class Ast {
         public Section(Meta meta, String name, List<Node> children) { this(meta, name, null, children); }
     }
 
+    public enum FileAreaKind { AREA, RECORD, SORT, SORT_MERGE }
+    public record FileAreaSharing(Meta meta,FileAreaKind kind,List<FileReference> files) implements Node {
+        public FileAreaSharing { files=List.copyOf(files); }
+    }
     public enum FileKind { FD, SD, UNKNOWN }
     public enum FileOrganization { SEQUENTIAL, INDEXED, RELATIVE, UNSPECIFIED, UNSUPPORTED }
     public enum FileAccessMode { SEQUENTIAL, RANDOM, DYNAMIC, UNSPECIFIED, UNSUPPORTED }
@@ -158,9 +162,15 @@ public final class Ast {
         public FileBinding(Meta meta, String logicalName, String assignment) { this(meta, logicalName, assignment, null); }
     }
 
+    public enum FileRecordForm { FIXED, VARYING, RANGE }
+    public record FileRecordClause(Meta meta, FileRecordForm form, Optional<java.math.BigInteger> minimum,
+            Optional<java.math.BigInteger> maximum, Optional<DataReference> dependingOn) implements Node { }
     public record FileDescription(Meta meta, String fileName, FileKind kind, DeclarationVisibility visibility,
-                                  List<DataEntry> entries) implements Node {
-        public FileDescription { entries = List.copyOf(entries); }
+                                  List<DataEntry> entries, List<FileRecordClause> recordClauses) implements Node {
+        public FileDescription { entries = List.copyOf(entries); recordClauses=List.copyOf(recordClauses); }
+        public FileDescription(Meta meta, String fileName, FileKind kind, DeclarationVisibility visibility, List<DataEntry> entries) {
+            this(meta,fileName,kind,visibility,entries,List.of());
+        }
         public FileDescription(Meta meta, String fileName, DeclarationVisibility visibility, List<DataEntry> entries) {
             this(meta, fileName, FileKind.UNKNOWN, visibility, entries);
         }
@@ -648,7 +658,9 @@ public final class Ast {
         if (node instanceof Program n) return n.divisions();
         if (node instanceof Division n) return n.children();
         if (node instanceof Section n) return n.children();
-        if (node instanceof FileDescription n) return n.entries();
+        if (node instanceof FileDescription n) { var result=new ArrayList<Node>(n.recordClauses());result.addAll(n.entries());return result; }
+        if (node instanceof FileRecordClause n) return n.dependingOn().stream().toList();
+        if (node instanceof FileAreaSharing n) return n.files();
         if (node instanceof FileBinding n) return n.control() == null ? List.of()
                 : n.control().references().stream().map(FileClauseReference::reference).toList();
         if (node instanceof DataEntry n) {

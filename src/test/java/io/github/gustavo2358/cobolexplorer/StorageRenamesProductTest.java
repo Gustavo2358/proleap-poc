@@ -12,8 +12,8 @@ class StorageRenamesProductTest {
     @Test void unusedAliasesEndpointsAndOriginsArePublishedWithoutNewAllocation() throws Exception {
         var s=state(DATA,"GOBACK.");
         var doc=new ObjectMapper().readTree(SemanticProductJsonWriter.serialize(CobolSemanticPort.open(s)));
-        assertEquals("2.23.0",doc.path("contractVersion").asText());var st=doc.path("storage");
-        assertEquals("1.7.0",st.path("version").asText());assertEquals(1,st.path("bases").size());
+        assertEquals("2.24.0",doc.path("contractVersion").asText());var st=doc.path("storage");
+        assertEquals("1.8.0",st.path("version").asText());assertEquals(1,st.path("bases").size());
         assertEquals(2,st.path("renames").size());assertEquals(5,doc.path("dataDeclarations").size());
         var range=st.path("renames").get(0);assertEquals("PROVEN",range.path("status").asText());
         assertFalse(range.path("from").isNull());assertFalse(range.path("through").isNull());

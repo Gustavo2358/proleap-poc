@@ -9,14 +9,16 @@ final class StorageMutationInventory {
     private record Interval(BigInteger start,BigInteger end) { }
     private final List<StorageInitialSemantics.Reason> globalBlockers;
     private final Map<Key,List<Interval>> writes;
+    private final Set<Key> wholeBaseWrites;
     private final Map<Key,List<Interval>> exposedRegions;
     private final Set<Key> unknownExposures;
     private final Set<Key> independentBases;
 
     private StorageMutationInventory(Set<StorageInitialSemantics.Reason> gaps,Map<Key,List<Interval>> writes,
-            Map<Key,List<Interval>> exposedRegions,Set<Key> unknownExposures,Map<Key,Base> bases) {
+            Map<Key,List<Interval>> exposedRegions,Set<Key> unknownExposures,Map<Key,Base> bases,Set<Key> wholeBaseWrites) {
         this.globalBlockers=List.copyOf(gaps);
         this.writes=index(writes);
+        this.wholeBaseWrites=Set.copyOf(wholeBaseWrites);
         this.exposedRegions=index(exposedRegions);
         this.unknownExposures=Set.copyOf(unknownExposures);
         var independent=new HashSet<Key>();
@@ -40,7 +42,7 @@ final class StorageMutationInventory {
 
     List<StorageInitialSemantics.Reason> blockers(View candidate) {
         var blockers=new LinkedHashSet<>(globalBlockers);
-        if(overlaps(writes,candidate))blockers.add(StorageInitialSemantics.Reason.OVERLAPPING_WRITE);
+        if(wholeBaseWrites.contains(candidate.base())||overlaps(writes,candidate))blockers.add(StorageInitialSemantics.Reason.OVERLAPPING_WRITE);
         // All indexed exposures have independent allocation. A different base is
         // disjoint only if the candidate also carries that allocation proof.
         if(!unknownExposures.isEmpty()||overlaps(exposedRegions,candidate)
@@ -59,8 +61,9 @@ final class StorageMutationInventory {
 
     static StorageMutationInventory analyze(CompilationUnitBuildResult frontend,CompilationUnitModel.ProgramUnit unit,
             Layout layout,Map<Key,StorageAccessSemantics.Access> accesses,
-            Map<Key,List<StorageAccessSemantics.Move>> moves,Map<Key,StatementEffectSummary> effects,CicsProgramControlAnalyzer.Contribution cics) {
+            Map<Key,List<StorageAccessSemantics.Move>> moves,Map<Key,StatementEffectSummary> effects,CicsProgramControlAnalyzer.Contribution cics,FileIoMemory files) {
         var gaps=new LinkedHashSet<StorageInitialSemantics.Reason>();var writes=new HashMap<Key,List<Interval>>();
+        var wholeBaseWrites=new HashSet<Key>();
         var exposedRegions=new HashMap<Key,List<Interval>>();var unknownExposures=new LinkedHashSet<Key>();
         var bases=new HashMap<Key,Base>();layout.bases().forEach(b->bases.put(b.id(),b));
         var coverage=new HashMap<Integer,SemanticCoverage.Finding>();
@@ -85,11 +88,20 @@ final class StorageMutationInventory {
             if(node instanceof Ast.Statement statement) {
                 var finding=coverage.get(node.meta().id());
                 var summary=Optional.ofNullable(effects.get(new Key(unit.id(),node.meta().id())));
-                boolean bounded=summary.filter(StatementEffectSummary::completeMutationBound).isPresent();
+                var file=files.statement(new Key(unit.id(),node.meta().id()));
+                boolean bounded=file.map(FileIoMemory.Statement::bounded).orElseGet(()->summary.filter(StatementEffectSummary::completeMutationBound).isPresent());
                 boolean embeddedInputOnly=cics.localStorageInputOnly(unit.id(),node);
                 if(finding==null||(!embeddedInputOnly&&!bounded&&finding.coverage()!=SemanticCoverage.ConstructionCoverage.MODELED))
                     gaps.add(StorageInitialSemantics.Reason.INCOMPLETE_WRITE_INVENTORY);
-                if(bounded) {
+                if(file.isPresent()) {
+                    if(!bounded)gaps.add(StorageInitialSemantics.Reason.WRITE_NOT_PROVEN);
+                    for(var operation:file.orElseThrow().operations())for(var write:operation.writes()) {
+                        var view=write.target().view().orElse(null);var base=view==null?null:bases.get(view.base());
+                        if(base==null||!base.independent()){gaps.add(StorageInitialSemantics.Reason.STORAGE_NOT_LOCAL);continue;}
+                        if(write.target().wholeBase()||view.offset().value().isEmpty()||view.extent().value().isEmpty())wholeBaseWrites.add(view.base());
+                        else {var start=view.offset().value().orElseThrow();writes.computeIfAbsent(view.base(),ignored->new ArrayList<>()).add(new Interval(start,start.add(view.extent().value().orElseThrow())));}
+                    }
+                } else if(bounded) {
                     var effect=summary.orElseThrow();
                     for(var target:effect.mayWrites())addWrite(accesses.get(new Key(unit.id(),target.meta().id())),bases,writes,gaps);
                     if(!effect.exposedRegions().isEmpty())unknownExposures.add(new Key(unit.id(),node.meta().id()));
@@ -127,7 +139,7 @@ final class StorageMutationInventory {
                 gaps.add(StorageInitialSemantics.Reason.UNKNOWN_STORAGE_EFFECT);
             Ast.children(node).forEach(pending::push);
         }
-        return new StorageMutationInventory(gaps,writes,exposedRegions,unknownExposures,bases);
+        return new StorageMutationInventory(gaps,writes,exposedRegions,unknownExposures,bases,wholeBaseWrites);
     }
 
     private static void addExposure(CompilationUnitModel.ProgramUnit unit,Ast.CallArgument argument,

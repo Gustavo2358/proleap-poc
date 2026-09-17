@@ -46,7 +46,7 @@ class AstSemanticBoundaryCharacterizationTest {
     }
 
     @Test
-    void allFiftyStatementAlternativesRemainOneToOneFromContextToReachableAst() throws Exception {
+    void allFiftyOneStatementAlternativesRemainOneToOneFromContextToReachableAst() throws Exception {
         Path fixture = Path.of("src/test/resources/cobol/semantic/statements.cbl");
         AstBoundaryTestSupport.Analysis analysis = AstBoundaryTestSupport.analyze(
                 Files.readString(fixture, StandardCharsets.UTF_8), fixture.getFileName().toString());
@@ -56,8 +56,9 @@ class AstSemanticBoundaryCharacterizationTest {
 
         assertAll("every recognized statement context is materialized exactly once",
                 () -> assertEquals(parseStatements, astStatements.size()),
-                () -> assertEquals(50, astStatements.stream()
+                () -> assertEquals(51, astStatements.stream()
                         .map(statement -> statement.meta().origin().grammarRule()).distinct().count()),
+                () -> assertTrue(astStatements.stream().anyMatch(s->s.meta().origin().grammarRule().equals("execDliStatement"))),
                 () -> assertEquals(astStatements.size(), countFindings(analysis, Ast.Statement.class)));
     }
 

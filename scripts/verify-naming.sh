@@ -26,7 +26,7 @@ if ((${#paths[@]})); then
   exit 1
 fi
 
-mapfile -t contents < <(
+mapfile -t candidates < <(
   rg -l -i --text "${legacy_vendor}|${legacy_purpose}" . \
     --glob '!src/main/antlr4/Cobol.g4' \
     --glob '!src/main/antlr4/CobolPreprocessor.g4' \
@@ -34,6 +34,17 @@ mapfile -t contents < <(
     --glob '!specs/**' \
     --glob '!docs/history/**'
 )
+
+contents=()
+for path in "${candidates[@]}"; do
+  # Documentation can name the actual repository/checkout in immutable evidence.
+  # This exception is one exact identifier, never a blanket docs exclusion.
+  if [[ "$path" == ./docs/*.md ]] &&
+      ! sed -E "s/(^|[^[:alnum:]_])${legacy_vendor}-poc([^[:alnum:]_]|$)/\1\2/g" "$path" | rg -q -i --text "${legacy_vendor}|${legacy_purpose}"; then
+    continue
+  fi
+  contents+=("$path")
+done
 
 if ((${#contents[@]})); then
   printf 'Legacy identifier found in content:\n' >&2

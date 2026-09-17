@@ -236,12 +236,14 @@ public final class CobolSemanticProductProjector {
         }
         boolean missing = !inputs.report().inputComplete(inputs.unitId());
         return new FileInventory(missing ? Availability.INPUT_MISSING : Availability.KNOWN, result,
-                missing ? List.of("FILE_INPUT_INCOMPLETE") : List.of(), fileOperations(inputs,statementIds,dataIds,result,operandIds));
+                missing ? List.of("FILE_INPUT_INCOMPLETE") : List.of(), fileOperations(inputs,statementIds,dataIds,result,operandIds,dataByAst));
     }
 
     private static FileOperations fileOperations(ProjectionInputs inputs,Map<Ast.Statement,StatementId> statementIds,
-            Map<ResolutionContracts.SemanticEntityId,DataItemId> dataIds,List<FileDeclaration> declarations,Map<Integer,OperandId> operandIds) {
+            Map<ResolutionContracts.SemanticEntityId,DataItemId> dataIds,List<FileDeclaration> declarations,Map<Integer,OperandId> operandIds,Map<Integer,DataItemId> dataByAst) {
         var uses=new ArrayList<FileUse>();var owners=new HashMap<DataItemId,FileId>();
+        var views=new HashMap<StorageLayoutSemantics.Key,StorageLayoutSemantics.View>();
+        inputs.products().storage().ifPresent(s->s.layout().layout(inputs.unitId()).views().forEach(v->views.put(v.node(),v)));
         for(var d:declarations)for(var record:d.records())owners.put(record,d.id());
         for(var position:inputs.statementPositions()) {
             var statement=position.statement();
@@ -279,12 +281,40 @@ public final class CobolSemanticProductProjector {
                 if(missingOwner)gaps.add("FILE_RECORD_OWNER_NOT_PROVEN");
                 if(surface.profile()!=Ast.FileSyntaxProfile.N_LR)gaps.add("FILE_SYNTAX_OUTSIDE_N_LR");
                 var options=new ArrayList<FileOption>();surface.options().forEach(o->options.add(FileOption.valueOf(o.name())));operand.options().forEach(o->options.add(FileOption.valueOf(o.name())));
-                uses.add(new FileUse(statementIds.get(statement),ordinal++,FileCommand.valueOf(surface.command().name()),FileOpenMode.valueOf(operand.mode().name()),
+                int useOrdinal=ordinal++;
+                uses.add(new FileUse(statementIds.get(statement),useOrdinal,FileCommand.valueOf(surface.command().name()),FileOpenMode.valueOf(operand.mode().name()),
                     FileSyntaxProfile.valueOf(surface.profile().name()),status,List.copyOf(candidates),provenance(reference.meta().provenance()),gaps,operands,options,
-                    FileKeyRelation.valueOf(surface.keyRelation().name()),surface.explicitTerminator(),handlers));
+                    FileKeyRelation.valueOf(surface.keyRelation().name()),surface.explicitTerminator(),handlers,
+                    fileEffects(inputs,new StorageLayoutSemantics.Key(inputs.unitId(),statement.meta().id()),useOrdinal,dataByAst,operandIds,views)));
             }
         }
         return new FileOperations(Availability.PARTIAL,uses,List.of("FILE_EFFECTS_CONTROL_PARTIAL"));
+    }
+
+    private static FileEffectPlan fileEffects(ProjectionInputs inputs,StorageLayoutSemantics.Key statement,int ordinal,
+            Map<Integer,DataItemId> dataByAst,Map<Integer,OperandId> operandIds,Map<StorageLayoutSemantics.Key,StorageLayoutSemantics.View> views) {
+        var fact=inputs.products().storage().flatMap(s->s.fileEffects().operation(statement,ordinal));
+        if(fact.isEmpty())return FileEffectPlan.unavailable();var plan=fact.orElseThrow();
+        java.util.function.Function<io.github.gustavo2358.cobolexplorer.FileIoMemory.Target,FileMemoryTarget> target=t->{
+            var regional=t.view().map(view->{
+                var declared=views.get(view.node());require(declared!=null,"file effect view must be published");
+                Optional<RegionalSlice> slice=Optional.empty();
+                if(!t.wholeBase()&&(!view.offset().equals(declared.offset())||!view.extent().equals(declared.extent())))
+                    slice=Optional.of(new RegionalSlice(view.offset().value().orElseThrow(),view.extent().value().orElseThrow()));
+                return new RegionalAccess(storageNode(inputs,view.node()),slice);
+            });
+            return new FileMemoryTarget(Optional.ofNullable(dataByAst.get(t.declaration().node())),regional,t.wholeBase(),
+                t.reference().flatMap(r->Optional.ofNullable(operandIds.get(r.node()))),provenance(t.origin()));
+        };
+        var gaps=new LinkedHashSet<>(plan.gaps());
+        java.util.function.Function<io.github.gustavo2358.cobolexplorer.FileIoEffects.Step,FileMemoryStep> step=s->{
+            gaps.addAll(s.gaps());return new FileMemoryStep(FileMemoryRole.valueOf(s.role().name()),FileMemoryKind.valueOf(s.kind().name()),
+                target.apply(s.destination()),s.source().map(target),s.gaps(),provenance(s.origin()));
+        };
+        var before=plan.before().stream().map(step).toList();var outcomes=plan.outcomes().stream()
+            .map(c->new FileOutcomeEffects(FileEffectOutcome.valueOf(c.outcome().name()),c.steps().stream().map(step).toList())).toList();
+        return new FileEffectPlan(gaps.isEmpty()?Availability.KNOWN:Availability.PARTIAL,plan.ioReads().stream().map(target).toList(),before,outcomes,
+            plan.unknownReadBound(),plan.unknownWriteBound(),List.copyOf(gaps));
     }
 
     private static StorageNodeId storageNode(ProjectionInputs inputs, StorageLayoutSemantics.Key key) {
@@ -306,7 +336,7 @@ public final class CobolSemanticProductProjector {
                     PhysicalKind.valueOf(n.kind().name()),n.entity().map(id->Objects.requireNonNull(dataIds.get(id),"physical DATA must be published")),
                     storageMeasure(n.extent()),provenance(n.origin()))).toList(),
                 layout.bases().stream().map(b->new StorageBase(storageBase(inputs,b.id()),storageMeasure(b.extent()),
-                    b.independent()?AllocationProof.INDEPENDENT_LOCAL_WORKING_STORAGE:AllocationProof.UNPROVEN,provenance(b.origin()))).toList(),
+                    b.independent()?AllocationProof.INDEPENDENT_LOCAL_STORAGE:AllocationProof.UNPROVEN,provenance(b.origin()))).toList(),
                 layout.views().stream().map(v->new StorageView(storageNode(inputs,v.node()),storageBase(inputs,v.base()),
                     storageMeasure(v.offset()),storageMeasure(v.extent()),v.textual()?Optional.of("text.ebcdic.ibm1047@1"):Optional.empty(),provenance(v.origin()))).toList(),
                 layout.reasons().stream().map(Enum::name).toList(),layout.relations().stream().map(r->new StorageRelation(
@@ -1025,9 +1055,9 @@ public final class CobolSemanticProductProjector {
                         OBSERVED_INPUT_MISSING_GAP,
                         finding.reason(), statementProvenance));
             addContainmentGap(containment, statementId, statementProvenance, gaps);
-            if (!plan.entries().isEmpty())
-                addReportGaps(statementId, plan.entries().get(0).occurrence(), inputs,
-                        statementProvenance, gaps);
+            for (var entry:plan.entries())
+                addReportGaps(statementId, entry.occurrence(), inputs,
+                        provenance(entry.occurrence().meta().provenance()), gaps);
             return;
         }
 

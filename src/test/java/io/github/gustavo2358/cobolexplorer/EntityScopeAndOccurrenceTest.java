@@ -80,7 +80,7 @@ class EntityScopeAndOccurrenceTest {
                         "VALUE_READ:LINAGE-COUNTER IN BOTH-FILE",
                         "QUALIFIER_COMPONENT:BOTH-FILE",
                         "VALUE_WRITE:WS-TARGET",
-                        "CONTEXT_DEPENDENT:WS-TARGET"),
+                        "VALUE_READ:WS-TARGET"), // DISPLAY consumes its source
                 occurrences.stream().map(occurrence -> occurrence.role() + ":" + occurrence.writtenText()).toList(),
                 "the fixture is an exact loss/duplication oracle, not a minimum-count assertion");
         assertEquals(occurrences.size(), occurrences.stream()
@@ -116,9 +116,9 @@ class EntityScopeAndOccurrenceTest {
                 .noneMatch(occurrence -> occurrence.role() == ResolutionContracts.ReferenceRole.VALUE_READ),
                 "qualifiers narrow a reference; they are not independent reads");
         assertTrue(occurrences.stream().anyMatch(occurrence -> occurrence.writtenText().equals("WS-TARGET")
-                        && occurrence.role() == ResolutionContracts.ReferenceRole.CONTEXT_DEPENDENT
+                        && occurrence.role() == ResolutionContracts.ReferenceRole.VALUE_READ
                         && occurrence.preservation() == ReferenceOccurrences.Preservation.PRESERVED_CONTAINER),
-                "a reference retained by a preserved statement remains explicit and conservative");
+                "DISPLAY retains its observed container and its proved source-read role");
         assertTrue(occurrences.stream().allMatch(occurrence -> occurrence.scopeId() == scopes.scopeIdForAstNodeId(
                 occurrence.referenceAstNodeId())));
         assertEquals("NOT_PERFORMED", result.bindingStatus());
@@ -138,7 +138,7 @@ class EntityScopeAndOccurrenceTest {
         ReferenceOccurrences.Occurrence goTo = assertOccurrence(result.occurrences(), "FINISH-FIRST",
                 ResolutionContracts.ReferenceRole.GO_TO_TARGET);
         assertEquals(ResolutionContracts.ReferenceKind.PROCEDURE, goTo.kind());
-        assertOccurrence(result.occurrences(), "WS-VALUE", ResolutionContracts.ReferenceRole.CONTEXT_DEPENDENT);
+        assertOccurrence(result.occurrences(), "WS-VALUE", ResolutionContracts.ReferenceRole.VALUE_WRITE); // READ INTO receiver
         assertEquals("NOT_PERFORMED", result.bindingStatus());
     }
 

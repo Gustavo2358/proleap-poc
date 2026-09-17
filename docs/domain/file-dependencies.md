@@ -1,9 +1,9 @@
 # FILE-DEPENDENCIES — frontend / SP
 
-H4 aprovado; core N+C autorizado em 2026-09-16. W0 em implementação; W10 não autorizado.
+H4 aprovado; core N+C autorizado em 2026-09-16. W0–W2 qualificadas local; W3 em implementação; W10 não autorizado.
 [Campanha canônica](https://github.com/Gustavo2358/analysis-cfg/blob/feat/file-dependencies/docs/product/file-dependencies/README.md)
 (workspace: `../analysis-cfg/docs/product/file-dependencies/README.md`).
-Comece pelo brief e [W0](https://github.com/Gustavo2358/analysis-cfg/blob/feat/file-dependencies/docs/work/active/FD-W0.yaml).
+Comece pelo brief e pelo item atual indicado no estado canônico.
 
 ## Pontos de intervenção W0
 
@@ -133,3 +133,60 @@ PASS, zero skips; FAST fixo 335 PASS. SP2.23/fileInventory1.2 exportado e fixtur
 native/delete-handlers idênticas aos bytes consumidos pelo lower. Efeitos e
 controle continuam explicitamente parciais; integração CLI qualificada no
 checkpoint canônico cross-repo, sem antecipar W3/W4.
+
+## FD-W3 — entrada / primeiro oracle de storage
+
+W2 qualificada; efeitos W3 em execução. Autoridade/tabela em
+`../analysis-cfg/docs/product/file-dependencies/d-effect.md` no worktree sibling.
+Primeiro delta C4: FILE SECTION entra no inventário físico geral. READ p431
+(SC27-8713-03, 2026-04-28) faz descrições01 do mesmo FD compartilharem área;
+SAME RECORD AREA p157 une somente arquivos nominalmente resolvidos, nunca seus
+ResourceIds. Footprint é máximo, não soma. SORT AREA não equivale a RECORD AREA.
+WORKING-STORAGE provadamente separado conserva identidade/independência mesmo
+com tamanho opaco dentro do FD. Não muda valores, MUST ou controle neste delta.
+Oracle FileStorageLayoutTest antes da produção: cinco casos positivos/negativos;
+RED válido por ausência dos nós FILE no inventário físico. Algoritmo: componentes
+existentes + união de grupos declarados por ID; sem pares de objetos, parsing no
+projector, lookup externo ou cutoff. Q-SHARED obrigatório no fechamento de W3.
+
+W3 em progresso: `FileIoMemory` usa binding canônico e views gerais, indexados por
+unidade/AST; inventário de mutações une destinos possíveis sem afirmar MUST.
+`FileIoEffects` conserva FROM anterior ao I/O e efeitos condicionados ao resultado;
+READ completo sem INTO (incluindo status) precede o MOVE implícito, p430. Status
+primário textual exato e receptor INTO com classe/endereço/disjunção provados têm
+MUST; buffer READ nunca ganha MUST pela grafia do verbo. EOF/INVALID KEY/erro não
+executam INTO; REWRITE INVALID KEY conserva o MOVE FROM anterior. Endereço variável
+conserva bound da área e gap, sem captura antes de READ. Formas fora de N-LR não
+recebem provas fortes. Cópia FROM reaproveita a regra geral de MOVE/fit.
+
+SP2.24/fileInventory1.3 publica esses fatos; storage1.8 acrescenta prova geral
+INDEPENDENT_LOCAL_STORAGE para WS/FILE. A tabela condicional não certifica outcomes
+alcançáveis nem seleção de handler (W4). Varreduras/indexação O(AST+binding+layout)
+e O(destinos de efeitos), sem solver, fixpoint novo ou cutoff. Focais e REDs em
+`.harness-results/fd-w3/`; qualificação/pin bilateral ainda pendentes.
+
+Q-SHARED W3 encontrou dez falhas de expectativas também reproduzidas no HEAD W2
+isolado (`git archive b559292`): gramática DLI já existente (51 alternativas/630
+regras), papéis tipados SET/DISPLAY/READ INTO, facade omitindo storage/FILE e
+metadata de mnemonic. Os testes agora preservam esses contratos explícitos;
+o fixture de quatro estados usa QUALIFY não especificado como UNSUPPORTED real.
+Não houve ampliação de dialeto/capability. O oracle futuro de condições permanece
+condicionado por `semantic.condition.required`, skip histórico explícito.
+
+A qualificação de COACTUPC também reproduziu no W2 uma contradição entre VALUE
+multilinha de COPY com origem aproximada e a exigência de proveniência exata do
+contrato de entrada. `StorageInitialSemantics` conserva esse item como UNKNOWN /
+SOURCE_PROVENANCE_NOT_PROVEN, sem abortar a publicação nem relaxar o validador.
+O contracaso do corpus e os valores com origem exata são testados conjuntamente.
+
+O último gate de naming também bloqueava o nome real do repositório em URLs e
+evidências históricas. Nenhuma evidência foi reescrita: a regra aceita somente o
+identificador exato do repositório em Markdown de docs. Seis testes protegem essa
+exceção, nomes parecidos, conteúdo misto, código e paths; rodam em FAST/full.
+
+Checkpoint produtor W3: FAST fixo 336 PASS; qualification-local 887 testes,
+zero falhas/erros e um skip histórico condicionado, normalizer/naming PASS.
+Focal final FROM/contrato/CALL 111 PASS. FROM não resolvido preserva gap nominal
+e leitura aberta; alias preserva leitura mesmo quando cópia é MAY. Logs finais:
+`.harness-results/fd-w3/{fast-4,qualification-local-5,from-read-bound-green}.log`.
+Pins e E-SELECTED são fechados no checkpoint canônico após commit dos produtores.

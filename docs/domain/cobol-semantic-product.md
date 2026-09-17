@@ -1,6 +1,6 @@
 # COBOL Semantic Product
 
-Writer corrente: [operações nativas FILE / SP 2.23.0](file-dependencies.md), storage 1.7.0
+Writer corrente: [memória condicional FILE / SP 2.24.0](file-dependencies.md), storage 1.8.0
 ([source evidence](evidence-preserving-entry.md)),
 com prova tipada por condição de entrada, preservando [CICS Program Control](cics-program-control.md).
 

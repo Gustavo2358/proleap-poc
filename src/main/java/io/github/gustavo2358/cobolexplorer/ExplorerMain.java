@@ -309,7 +309,7 @@ public final class ExplorerMain {
     static CobolSemanticPort publishSemanticProduct(ResolutionContracts.ProgramUnitId unitId,CompilationUnitBuildResult frontend,
             CompilationUnitSymbolTables symbolTables,Map<ResolutionContracts.ProgramUnitId,ReferenceOccurrences> occurrences,
             ReferenceResolution resolution,ResolutionAnalysisReport report,StorageLayoutSemantics.Profile storageProfile,StorageInitialSemantics.EntryMode entryMode,CicsProgramControlAnalyzer.EntryMode cicsMode) {
-        var components=StorageComponents.analyze(frontend);
+        var components=StorageComponents.analyze(frontend,symbolTables,resolution);
         var layout = StorageLayoutSemantics.analyze(frontend, symbolTables, resolution, report, storageProfile,components);
         var cics=new CicsProgramControlAnalyzer().analyze(frontend,report,cicsMode);
         var storage = StorageAccessSemantics.analyze(frontend, resolution, layout,entryMode,cics);

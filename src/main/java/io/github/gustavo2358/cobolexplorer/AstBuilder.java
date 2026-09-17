@@ -192,6 +192,12 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
                     fileName == null ? "<unknown>" : clean(sourceText(fileName)),
                     assign == null ? "" : compact(sourceText(assign)), fileControl(entry)));
         }
+        for(var clause:nearestDescendants(context,CobolParser.SameClauseContext.class)) {
+            var kind=clause.RECORD()!=null?Ast.FileAreaKind.RECORD:clause.SORT()!=null?Ast.FileAreaKind.SORT:
+                clause.SORT_MERGE()!=null?Ast.FileAreaKind.SORT_MERGE:Ast.FileAreaKind.AREA;
+            children.add(new Ast.FileAreaSharing(meta(clause),kind,clause.fileName().stream()
+                .map(f->new Ast.FileReference(meta(f),clean(sourceText(f)),sourceText(f).strip())).toList()));
+        }
         return new Ast.Division(meta, Ast.DivisionKind.ENVIRONMENT, children);
     }
 
@@ -231,6 +237,25 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
         return new Ast.FileControl(entry.selectClause().OPTIONAL() != null, name, organization, mode, refs);
     }
 
+    private Ast.FileRecordClause fileRecordClause(CobolParser.RecordContainsClauseContext clause) {
+        CobolParser.IntegerLiteralContext minimum=null,maximum=null;
+        CobolParser.QualifiedDataNameContext depending=null;Ast.FileRecordForm form;
+        if(clause.recordContainsClauseFormat1()!=null) {
+            form=Ast.FileRecordForm.FIXED;minimum=clause.recordContainsClauseFormat1().integerLiteral();maximum=minimum;
+        } else if(clause.recordContainsClauseFormat2()!=null) {
+            var varying=clause.recordContainsClauseFormat2();form=Ast.FileRecordForm.VARYING;
+            minimum=varying.integerLiteral();maximum=varying.recordContainsTo()==null?null:varying.recordContainsTo().integerLiteral();
+            depending=varying.qualifiedDataName();
+        } else {
+            var range=clause.recordContainsClauseFormat3();form=Ast.FileRecordForm.RANGE;
+            minimum=range.integerLiteral();maximum=range.recordContainsTo().integerLiteral();
+        }
+        return new Ast.FileRecordClause(meta(clause),form,
+            java.util.Optional.ofNullable(minimum).map(n->new java.math.BigInteger(n.getText())),
+            java.util.Optional.ofNullable(maximum).map(n->new java.math.BigInteger(n.getText())),
+            java.util.Optional.ofNullable(depending).map(this::dataReference));
+    }
+
     private Ast.Division buildData(CobolParser.DataDivisionContext context) {
         Ast.Meta meta = meta(context);
         List<Ast.Node> sections = new ArrayList<>();
@@ -242,6 +267,8 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
                 for (CobolParser.FileDescriptionEntryContext fd : fileSection.fileDescriptionEntry()) {
                     Ast.Meta fdMeta = meta(fd);
                     ParserRuleContext fileName = fd.fileName();
+                    var recordClauses=fd.fileDescriptionEntryClause().stream().map(CobolParser.FileDescriptionEntryClauseContext::recordContainsClause)
+                        .filter(java.util.Objects::nonNull).map(this::fileRecordClause).toList();
                     List<Ast.DataEntry> dataEntries = new ArrayList<>();
                     dataEntries.addAll(buildDataHierarchy(fd.dataDescriptionEntry()));
                     entries.add(new Ast.FileDescription(fdMeta,
@@ -249,7 +276,7 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
                             fd.FD() != null ? Ast.FileKind.FD : Ast.FileKind.SD,
                             declarationVisibility(fdMeta,
                                     firstDescendant(fd, CobolParser.ExternalClauseContext.class) != null,
-                                    firstDescendant(fd, CobolParser.GlobalClauseContext.class) != null), dataEntries));
+                                    firstDescendant(fd, CobolParser.GlobalClauseContext.class) != null), dataEntries,recordClauses));
                 }
             } else {
                 entries.addAll(buildDataHierarchy(nearestDescendants(sectionContext,

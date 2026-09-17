@@ -560,7 +560,9 @@ public final class CobolSemanticProduct {
     }
     public enum StorageProfile { UNSPECIFIED, IBM_ENTERPRISE_6_4_FIXED_DISPLAY_1047 }
     public enum PhysicalKind { GROUP, ELEMENTARY, OPAQUE }
-    public enum AllocationProof { INDEPENDENT_LOCAL_WORKING_STORAGE, UNPROVEN }
+    public enum AllocationProof { INDEPENDENT_LOCAL_WORKING_STORAGE, INDEPENDENT_LOCAL_STORAGE, UNPROVEN;
+        public boolean proved(){return this!=UNPROVEN;}
+    }
     public enum RegionalMoveKind { LITERAL_BYTES, FITTED_LITERAL_BYTES, COPY_BYTES, FIT_TEXT, LOGICAL_FIT_TEXT, MUST_UNKNOWN, UNAVAILABLE }
     public record StorageMeasure(Optional<BigInteger> value, List<String> gapCodes) {
         public StorageMeasure {
@@ -1243,15 +1245,55 @@ public final class CobolSemanticProduct {
     public record FileHandler(FileHandlerKind kind, List<StatementId> statements, Provenance provenance) {
         public FileHandler { Objects.requireNonNull(kind);statements=List.copyOf(statements);Objects.requireNonNull(provenance); }
     }
+    public enum FileEffectOutcome { SUCCESS, END, INVALID_KEY, OTHER_ERROR }
+    public enum FileMemoryRole { RECORD, INTO, FROM_RECORD, FILE_STATUS, ADDITIONAL_STATUS, RELATIVE_KEY, RECORD_LENGTH }
+    public enum FileMemoryKind { MAY_UNKNOWN, MUST_UNKNOWN, COPY_BYTES, FIT_TEXT }
+    public record FileMemoryTarget(Optional<DataItemId> data,Optional<RegionalAccess> regional,boolean wholeBase,
+            Optional<OperandId> reference,Provenance provenance) {
+        public FileMemoryTarget {Objects.requireNonNull(data);Objects.requireNonNull(regional);Objects.requireNonNull(reference);Objects.requireNonNull(provenance);
+            require(data.isPresent()||regional.isPresent(),"file memory target needs canonical DATA or storage");
+            require(!wholeBase||regional.isEmpty()||regional.orElseThrow().slice().isEmpty(),"whole base cannot carry a precise slice");}
+    }
+    public record FileMemoryStep(FileMemoryRole role,FileMemoryKind kind,FileMemoryTarget destination,
+            Optional<FileMemoryTarget> source,List<String> gapCodes,Provenance provenance) {
+        public FileMemoryStep {Objects.requireNonNull(role);Objects.requireNonNull(kind);Objects.requireNonNull(destination);Objects.requireNonNull(source);gapCodes=List.copyOf(gapCodes);Objects.requireNonNull(provenance);
+            require(kind!=FileMemoryKind.COPY_BYTES&&kind!=FileMemoryKind.FIT_TEXT||source.isPresent()&&gapCodes.isEmpty(),"precise transfer requires source and proof");
+            require(kind==FileMemoryKind.MAY_UNKNOWN||!destination.wholeBase()&&destination.regional().isPresent()&&gapCodes.isEmpty(),"strong effect requires an exact receiving view and proof");
+            require(kind!=FileMemoryKind.MUST_UNKNOWN||role==FileMemoryRole.INTO||role==FileMemoryRole.FILE_STATUS,"MUST is not implied by the I/O verb");
+            require(source.isEmpty()||role==FileMemoryRole.FROM_RECORD,"source belongs only to FROM transfer");
+            require(kind!=FileMemoryKind.COPY_BYTES&&kind!=FileMemoryKind.FIT_TEXT||role==FileMemoryRole.FROM_RECORD,"precise transfer belongs before I/O");}
+    }
+    public record FileOutcomeEffects(FileEffectOutcome outcome,List<FileMemoryStep> steps) {
+        public FileOutcomeEffects {Objects.requireNonNull(outcome);steps=List.copyOf(steps);
+            int prior=-1;var seen=java.util.EnumSet.noneOf(FileMemoryRole.class);
+            for(var step:steps) {
+                require(step.role()!=FileMemoryRole.FROM_RECORD,"FROM belongs before I/O");
+                require(step.role()==FileMemoryRole.RECORD||seen.add(step.role()),"duplicate receiver role");
+                require(outcome==FileEffectOutcome.SUCCESS||step.role()!=FileMemoryRole.INTO&&step.role()!=FileMemoryRole.RELATIVE_KEY&&step.role()!=FileMemoryRole.RECORD_LENGTH,"READ receiving effects require success");
+                int rank=switch(step.role()){case RECORD,FROM_RECORD->0;case RELATIVE_KEY->1;case RECORD_LENGTH->2;case FILE_STATUS->3;case ADDITIONAL_STATUS->4;case INTO->5;};
+                require(rank>=prior,"file memory steps out of order");prior=rank;
+            }}
+    }
+    public record FileEffectPlan(Availability availability,List<FileMemoryTarget> ioReads,List<FileMemoryStep> before,
+            List<FileOutcomeEffects> outcomes,boolean unknownReadBound,boolean unknownWriteBound,List<String> gapCodes) {
+        public FileEffectPlan {Objects.requireNonNull(availability);ioReads=List.copyOf(ioReads);before=List.copyOf(before);outcomes=List.copyOf(outcomes);gapCodes=List.copyOf(gapCodes);
+            require(outcomes.stream().map(FileOutcomeEffects::outcome).distinct().count()==outcomes.size(),"duplicate file effect outcome");
+            require(availability!=Availability.KNOWN&&availability!=Availability.PARTIAL||outcomes.size()==FileEffectOutcome.values().length,"conditional effects must preserve every outcome");
+            require(before.stream().allMatch(s->s.role()==FileMemoryRole.FROM_RECORD),"only FROM belongs before I/O");
+            require(availability!=Availability.KNOWN||!unknownReadBound&&!unknownWriteBound&&gapCodes.isEmpty(),"known effect bounds require no gap");
+            require(availability==Availability.KNOWN||!gapCodes.isEmpty(),"unavailable/partial file effects require reasons");
+            require(availability!=Availability.UNAVAILABLE||ioReads.isEmpty()&&before.isEmpty()&&outcomes.isEmpty(),"unavailable effects cannot assert a plan");}
+        public static FileEffectPlan unavailable(){return new FileEffectPlan(Availability.UNAVAILABLE,List.of(),List.of(),List.of(),true,true,List.of("FILE_MEMORY_EFFECTS_UNAVAILABLE"));}
+    }
     public record FileUse(StatementId statement, int ordinal, FileCommand command, FileOpenMode mode,
             FileSyntaxProfile profile, ResolutionStatus bindingStatus, List<FileId> candidates,
             Provenance provenance, List<String> gapCodes, List<FileOperand> operands, List<FileOption> options,
-            FileKeyRelation keyRelation, boolean explicitTerminator, List<FileHandler> handlers) {
+            FileKeyRelation keyRelation, boolean explicitTerminator, List<FileHandler> handlers,FileEffectPlan effects) {
         public FileUse {
             Objects.requireNonNull(statement);require(ordinal>=0,"file use ordinal");Objects.requireNonNull(command);Objects.requireNonNull(mode);
             Objects.requireNonNull(profile);Objects.requireNonNull(bindingStatus);candidates=List.copyOf(candidates);
             Objects.requireNonNull(provenance);gapCodes=List.copyOf(gapCodes);
-            operands=List.copyOf(operands);options=List.copyOf(options);Objects.requireNonNull(keyRelation);handlers=List.copyOf(handlers);
+            operands=List.copyOf(operands);options=List.copyOf(options);Objects.requireNonNull(keyRelation);handlers=List.copyOf(handlers);Objects.requireNonNull(effects);
             require(bindingStatus!=ResolutionStatus.RESOLVED||candidates.size()==1,"resolved file use needs unique identity");
         }
     }
@@ -1268,7 +1310,7 @@ public final class CobolSemanticProduct {
         }
         public static FileInventory unavailable() { return new FileInventory(Availability.UNAVAILABLE, List.of(), List.of("FILE_INVENTORY_UNAVAILABLE")); }
     }
-    private static void validateFiles(UnitId unit, List<DataDeclaration> declarations, FileInventory inventory,List<StatementFact> statements) {
+    private static void validateFiles(UnitId unit, List<DataDeclaration> declarations, FileInventory inventory,List<StatementFact> statements,StorageInventory storage) {
         var data = new HashSet<DataItemId>(); for (var d : declarations) data.add(d.id());
         var files = new HashSet<FileId>(); var owned = new HashSet<DataItemId>();
         for (var file : inventory.declarations()) {
@@ -1279,6 +1321,8 @@ public final class CobolSemanticProduct {
         }
         var ids=new HashSet<StatementId>();for(var statement:statements)ids.add(statement.header().id());
         var refs=new HashSet<OperandId>();
+        var nodes=new HashMap<StorageNodeId,PhysicalNode>();storage.nodes().forEach(n->nodes.put(n.id(),n));
+        var views=new HashMap<StorageNodeId,StorageView>();storage.views().forEach(v->views.put(v.node(),v));
         for(var s:statements)if(s instanceof ObservedStatement o)o.knownReferences().forEach(r->refs.add(r.id()));
         var uses=new HashSet<java.util.Map.Entry<StatementId,Integer>>();
         for(var use:inventory.operations().uses()) {
@@ -1291,6 +1335,20 @@ public final class CobolSemanticProduct {
             for(var handler:use.handlers()) {
                 require(kinds.add(handler.kind()),"duplicate file handler kind");
                 for(var body:handler.statements())require(ids.contains(body)&&!body.equals(use.statement())&&bodies.add(body),"invalid file handler body");
+            }
+            var targets=new ArrayList<>(use.effects().ioReads());var steps=new ArrayList<>(use.effects().before());use.effects().outcomes().forEach(c->steps.addAll(c.steps()));
+            for(var step:steps){targets.add(step.destination());step.source().ifPresent(targets::add);}
+            for(var target:targets) {
+                target.data().ifPresent(id->require(data.contains(id),"file effect DATA missing or foreign"));
+                target.reference().ifPresent(id->require(id.statement().equals(use.statement())&&refs.contains(id),"file effect occurrence outside observed statement"));
+                target.regional().ifPresent(region->{
+                    var node=nodes.get(region.view());var view=views.get(region.view());require(node!=null&&view!=null,"file effect view missing or foreign");
+                    require(target.data().isEmpty()||node.data().equals(target.data()),"file effect DATA/view disagree");
+                    region.slice().ifPresent(slice->{
+                        require(view.offset().value().isPresent()&&view.extent().value().isPresent(),"file slice requires known view");
+                        var start=view.offset().value().orElseThrow();require(slice.offset().compareTo(start)>=0&&slice.offset().add(slice.extent()).compareTo(start.add(view.extent().value().orElseThrow()))<=0,"file slice outside declared view");
+                    });
+                });
             }
         }
     }
@@ -1310,8 +1368,8 @@ public final class CobolSemanticProduct {
             entryInventory = Objects.requireNonNull(entryInventory, "entryInventory");
             validateState(unit, dataDeclarations, statements, gaps, coverage);
             validateEntries(unit, statements, entryInventory);
-            validateFiles(unit, dataDeclarations, Objects.requireNonNull(fileInventory),statements);
             validateStorage(unit, dataDeclarations, statements, Objects.requireNonNull(storage));
+            validateFiles(unit, dataDeclarations, Objects.requireNonNull(fileInventory),statements,storage);
             Objects.requireNonNull(storageIndependence);
             Map<DataItemId, DataDeclaration> storageDeclarations = new HashMap<>();
             for (var declaration : dataDeclarations) storageDeclarations.put(declaration.id(), declaration);
@@ -1411,7 +1469,7 @@ public final class CobolSemanticProduct {
             else uncertainBases.add(views.get(owner.id()).base());
         }
         if(unboundedRelation) {
-            require(inventory.bases().stream().noneMatch(b->b.allocation()==AllocationProof.INDEPENDENT_LOCAL_WORKING_STORAGE),
+            require(inventory.bases().stream().noneMatch(b->b.allocation().proved()),
                 "unproved root relation contradicts allocation independence");
             require(declarations.stream().allMatch(d->d.scalarText().isEmpty()&&d.scalarInteger().isEmpty()),
                 "unproved root relation contradicts standalone scalar proof");
@@ -1448,14 +1506,14 @@ public final class CobolSemanticProduct {
                     "possible source bytes require source provenance and explicit representation profile");
             } else if(condition.kind()!=InitialStorageKind.UNKNOWN) {
                 var view=views.get(condition.node());
-                require(condition.kind()!=InitialStorageKind.LITERAL_BYTES||bases.get(view.base()).allocation()==AllocationProof.INDEPENDENT_LOCAL_WORKING_STORAGE,"strong initial bytes require proved allocation");
+                require(condition.kind()!=InitialStorageKind.LITERAL_BYTES||bases.get(view.base()).allocation().proved(),"strong initial bytes require proved allocation");
                 require(condition.provenance().exact()&&view.codec().isPresent()&&view.offset().value().isPresent()&&view.extent().value().isPresent()
                     &&bases.get(view.base()).extent().value().isPresent(),"precise initial condition needs exact provenance and bounded supported view");
                 boolean mode=condition.proof()==InitialStorageProof.EXPLICIT_INITIAL?inventory.entryState().mode()==StorageEntryMode.INITIAL
                     :condition.proof()==InitialStorageProof.EXPLICIT_PRESERVED?inventory.entryState().mode()==StorageEntryMode.PRESERVED:inventory.entryState().mode()==StorageEntryMode.UNKNOWN;
                 require(mode&&((condition.kind()!=InitialStorageKind.LITERAL_BYTES&&condition.kind()!=InitialStorageKind.POSSIBLE_LITERAL_BYTES)||view.extent().value().get().equals(BigInteger.valueOf(condition.bytes().size()))),
                     "initial condition contradicts entry mode or extent");
-                require((condition.proof()!=InitialStorageProof.DECLARATIVE_INVARIANT&&condition.proof()!=InitialStorageProof.DECLARATIVE_POSSIBILITY)||bases.get(view.base()).allocation()==AllocationProof.INDEPENDENT_LOCAL_WORKING_STORAGE,
+                require((condition.proof()!=InitialStorageProof.DECLARATIVE_INVARIANT&&condition.proof()!=InitialStorageProof.DECLARATIVE_POSSIBILITY)||bases.get(view.base()).allocation().proved(),
                     "declarative invariant needs local independent storage");
             }
         }
@@ -1496,7 +1554,7 @@ public final class CobolSemanticProduct {
                     var data=((DataReference)transfer.source()).logicalWholeItem().orElseThrow();
                     var node=Objects.requireNonNull(byData.get(data));var source=views.get(node.id());
                     require(node.kind()==PhysicalKind.ELEMENTARY&&source.codec().equals(dest.codec())&&source.codec().isPresent()&&source.extent().value().filter(n->n.signum()>0).isPresent(),"logical copy needs proved textual shape");
-                    require(!source.base().equals(dest.base())&&bases.get(source.base()).allocation()==AllocationProof.INDEPENDENT_LOCAL_WORKING_STORAGE&&bases.get(dest.base()).allocation()==AllocationProof.INDEPENDENT_LOCAL_WORKING_STORAGE,"logical copy requires positive base separation");
+                    require(!source.base().equals(dest.base())&&bases.get(source.base()).allocation().proved()&&bases.get(dest.base()).allocation().proved(),"logical copy requires positive base separation");
                 }
                 if (effect.kind() == RegionalMoveKind.COPY_BYTES || effect.kind() == RegionalMoveKind.FIT_TEXT) {
                     require(transfer.source() instanceof DataReference source && source.regionalAccess().isPresent(), "byte copy needs exact source access");
@@ -1507,8 +1565,8 @@ public final class CobolSemanticProduct {
                         var left = source.offset().value().get(); var right = dest.offset().value().get();
                         disjoint = left.add(source.extent().value().get()).compareTo(right) <= 0
                             || right.add(dest.extent().value().get()).compareTo(left) <= 0;
-                    } else disjoint = bases.get(source.base()).allocation() == AllocationProof.INDEPENDENT_LOCAL_WORKING_STORAGE
-                            && bases.get(dest.base()).allocation() == AllocationProof.INDEPENDENT_LOCAL_WORKING_STORAGE;
+                    } else disjoint = bases.get(source.base()).allocation().proved()
+                            && bases.get(dest.base()).allocation().proved();
                     require(disjoint, "COBOL byte copy requires proved disjoint ranges");
                 }
                 }
