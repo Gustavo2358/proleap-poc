@@ -992,38 +992,13 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
         List<Ast.StatementOperand> operands = new ArrayList<>();
         var operandNodes=new java.util.IdentityHashMap<ParserRuleContext,Ast.Node>();
         collectStatementOperands(context, context, operands,operandNodes);
-        List<Ast.StatementClause> clauses = nearestDescendants(context, AstBuilder::isFlowClauseContext).stream()
-                .map(this::buildStatementClause).toList();
+        var clauseContexts = nearestDescendants(context, AstBuilder::isFlowClauseContext);
+        List<Ast.StatementClause> clauses = clauseContexts.stream().map(this::buildStatementClause).toList();
+        var fileIo = FileIoSyntax.project(context, operandNodes, clauseContexts, clauses);
         var effects=statementEffects(context,operands,clauses,operandNodes);
         return preserved
-                ? new Ast.PreservedStatement(meta, rule(context), sourceText(context).strip(), operands, clauses,effects,fileIo(context,operandNodes))
-                : new Ast.ModeledStatement(meta, rule(context), sourceText(context).strip(), operands, clauses,effects,fileIo(context,operandNodes));
-    }
-
-    private static Optional<Ast.FileIoSurface> fileIo(ParserRuleContext context,Map<ParserRuleContext,Ast.Node> nodes) {
-        Ast.FileCommand command;
-        if(context instanceof CobolParser.OpenStatementContext)command=Ast.FileCommand.OPEN;
-        else if(context instanceof CobolParser.ReadStatementContext)command=Ast.FileCommand.READ;
-        else if(context instanceof CobolParser.CloseStatementContext)command=Ast.FileCommand.CLOSE;
-        else return Optional.empty();
-        var profile=Ast.FileSyntaxProfile.N_LR;
-        if(context instanceof CobolParser.ReadStatementContext read && read.readWith()!=null)profile=Ast.FileSyntaxProfile.UNSUPPORTED;
-        if(context instanceof CobolParser.CloseStatementContext close && close.closeFile().stream().anyMatch(f->f.closePortFileIOStatement()!=null))profile=Ast.FileSyntaxProfile.UNSUPPORTED;
-        var files=new ArrayList<Ast.FileIoOperand>();
-        for(var file:nearestDescendants(context,c->c instanceof CobolParser.FileNameContext)) {
-            if(!(nodes.get(file) instanceof Ast.FileReference reference))continue;
-            var mode=Ast.FileOpenMode.UNSPECIFIED;
-            if(command==Ast.FileCommand.OPEN) {
-                for(var parent=file.getParent();parent!=null&&parent!=context;parent=parent.getParent()) {
-                    if(parent instanceof CobolParser.OpenInputStatementContext)mode=Ast.FileOpenMode.INPUT;
-                    else if(parent instanceof CobolParser.OpenOutputStatementContext)mode=Ast.FileOpenMode.OUTPUT;
-                    else if(parent instanceof CobolParser.OpenIOStatementContext)mode=Ast.FileOpenMode.IO;
-                    else if(parent instanceof CobolParser.OpenExtendStatementContext)mode=Ast.FileOpenMode.EXTEND;
-                }
-            }
-            files.add(new Ast.FileIoOperand(reference,mode));
-        }
-        return Optional.of(new Ast.FileIoSurface(command,files,profile));
+                ? new Ast.PreservedStatement(meta, rule(context), sourceText(context).strip(), operands, clauses,effects,fileIo)
+                : new Ast.ModeledStatement(meta, rule(context), sourceText(context).strip(), operands, clauses,effects,fileIo);
     }
 
     private static Optional<StatementEffectSummary> statementEffects(ParserRuleContext context,List<Ast.StatementOperand> operands,
@@ -1134,7 +1109,7 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
                 Ast.Meta operandMeta = meta(child);
                 var value=statementOperand(child);nodes.put(child,value);
                 output.add(new Ast.StatementOperand(operandMeta, rule(context),
-                        statementOperandContext(root, context), value));
+                        statementOperandContext(root, context, child), value));
             } else {
                 collectStatementOperands(root, child, output,nodes);
             }
@@ -1159,7 +1134,9 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
     }
 
     private static Ast.StatementOperandContext statementOperandContext(ParserRuleContext root,
-                                                                        ParserRuleContext parent) {
+                                                                        ParserRuleContext parent, ParserRuleContext operand) {
+        var fileRole = FileIoSyntax.operandRole(root, operand);
+        if (fileRole != null) return Ast.StatementOperandContext.valueOf("FILE_"+fileRole.name());
         if (!(root instanceof CobolParser.SetStatementContext)) return Ast.StatementOperandContext.DEFAULT;
         if (parent instanceof CobolParser.SetToContext setTo) {
             ParserRuleContext statement = setTo.getParent();

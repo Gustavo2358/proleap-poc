@@ -1227,16 +1227,31 @@ public final class CobolSemanticProduct {
             require(new HashSet<>(records).size() == records.size(), "duplicate file record");
         }
     }
-    public enum FileCommand { OPEN, READ, CLOSE }
+    public enum FileCommand { OPEN, READ, WRITE, REWRITE, DELETE_RECORD, START, CLOSE }
     public enum FileOpenMode { INPUT, OUTPUT, IO, EXTEND, UNSPECIFIED }
     public enum FileSyntaxProfile { N_LR, UNSUPPORTED }
+    public enum FileOption { NEXT, REVERSED, NO_REWIND, LOCK, REEL, UNIT, FOR_REMOVAL, BEFORE_ADVANCING, AFTER_ADVANCING, PAGE }
+    public enum FileKeyRelation { UNSPECIFIED, EQUAL, GREATER, GREATER_OR_EQUAL }
+    public enum FileOperandRole { RECORD, INTO, FROM, KEY, ADVANCING }
+    public enum FileOperandForm { REFERENCE, LITERAL, MNEMONIC, UNSUPPORTED }
+    public enum FileHandlerKind { AT_END, NOT_AT_END, INVALID_KEY, NOT_INVALID_KEY, AT_END_OF_PAGE, NOT_AT_END_OF_PAGE }
+    public record FileOperand(FileOperandRole role, FileOperandForm form, List<OperandId> references,
+            Optional<String> writtenValue, Provenance provenance, List<String> gapCodes) {
+        public FileOperand { Objects.requireNonNull(role);Objects.requireNonNull(form);references=List.copyOf(references);
+            Objects.requireNonNull(writtenValue);Objects.requireNonNull(provenance);gapCodes=List.copyOf(gapCodes); }
+    }
+    public record FileHandler(FileHandlerKind kind, List<StatementId> statements, Provenance provenance) {
+        public FileHandler { Objects.requireNonNull(kind);statements=List.copyOf(statements);Objects.requireNonNull(provenance); }
+    }
     public record FileUse(StatementId statement, int ordinal, FileCommand command, FileOpenMode mode,
             FileSyntaxProfile profile, ResolutionStatus bindingStatus, List<FileId> candidates,
-            Provenance provenance, List<String> gapCodes) {
+            Provenance provenance, List<String> gapCodes, List<FileOperand> operands, List<FileOption> options,
+            FileKeyRelation keyRelation, boolean explicitTerminator, List<FileHandler> handlers) {
         public FileUse {
             Objects.requireNonNull(statement);require(ordinal>=0,"file use ordinal");Objects.requireNonNull(command);Objects.requireNonNull(mode);
             Objects.requireNonNull(profile);Objects.requireNonNull(bindingStatus);candidates=List.copyOf(candidates);
             Objects.requireNonNull(provenance);gapCodes=List.copyOf(gapCodes);
+            operands=List.copyOf(operands);options=List.copyOf(options);Objects.requireNonNull(keyRelation);handlers=List.copyOf(handlers);
             require(bindingStatus!=ResolutionStatus.RESOLVED||candidates.size()==1,"resolved file use needs unique identity");
         }
     }
@@ -1263,12 +1278,20 @@ public final class CobolSemanticProduct {
                 require(data.contains(candidate.id()), "file reference has no data declaration");
         }
         var ids=new HashSet<StatementId>();for(var statement:statements)ids.add(statement.header().id());
+        var refs=new HashSet<OperandId>();
+        for(var s:statements)if(s instanceof ObservedStatement o)o.knownReferences().forEach(r->refs.add(r.id()));
         var uses=new HashSet<java.util.Map.Entry<StatementId,Integer>>();
         for(var use:inventory.operations().uses()) {
             require(ids.contains(use.statement())&&use.statement().unit().equals(unit),"file use statement absent or foreign");
             require(uses.add(java.util.Map.entry(use.statement(),use.ordinal())),"duplicate file use ordinal");
             require(new HashSet<>(use.candidates()).size()==use.candidates().size(),"duplicate file candidates");
             for(var candidate:use.candidates())require(!candidate.unit().equals(unit)||files.contains(candidate),"missing local file candidate");
+            for(var operand:use.operands())for(var ref:operand.references())require(ref.statement().equals(use.statement())&&refs.contains(ref),"file operand outside observed statement");
+            var kinds=new HashSet<FileHandlerKind>();var bodies=new HashSet<StatementId>();
+            for(var handler:use.handlers()) {
+                require(kinds.add(handler.kind()),"duplicate file handler kind");
+                for(var body:handler.statements())require(ids.contains(body)&&!body.equals(use.statement())&&bodies.add(body),"invalid file handler body");
+            }
         }
     }
 

@@ -26,7 +26,7 @@ import java.util.Objects;
  */
 public final class SemanticProductJsonWriter {
     public static final String SCHEMA = "cobol-semantic-product";
-    public static final String CONTRACT_VERSION = "2.22.0";
+    public static final String CONTRACT_VERSION = "2.23.0";
 
     private static final ObjectMapper JSON = JsonMapper.builder()
             .enable(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY)
@@ -81,19 +81,23 @@ public final class SemanticProductJsonWriter {
     }
 
     private static FileInventoryDocument fileInventory(CobolSemanticProduct.FileInventory inventory) {
-        return new FileInventoryDocument("1.1.0", inventory.availability(), inventory.declarations().stream().map(f ->
+        return new FileInventoryDocument("1.2.0", inventory.availability(), inventory.declarations().stream().map(f ->
                 new FileDeclarationDocument("file:" + f.id().localId(), unit(f.owner()), f.logicalFile(), f.kind(), f.optional().orElse(null),
                     new FileAssignmentDocument(f.assignment().availability(), f.assignment().profile(), f.assignment().original(), f.assignment().sourceKind(),
                         f.assignment().externalFileName().orElse(null), f.assignment().gapCodes()), f.organization(), f.accessMode(), f.visibility(),
                     f.records().stream().map(SemanticProductJsonWriter::dataHandle).toList(), f.references().stream().map(r ->
                         new FileReferenceDocument(r.role(), binding(r.binding()), r.duplicates(), provenance(r.provenance()))).toList(),
                     f.origins().stream().map(SemanticProductJsonWriter::provenance).toList(), f.gapCodes())).toList(), inventory.gapCodes(), new FileOperationsDocument(inventory.operations().availability(),inventory.operations().uses().stream().map(u->new FileUseDocument(statementHandle(u.statement()),u.ordinal(),u.command(),u.mode(),u.profile(),u.bindingStatus(),
-                    u.candidates().stream().map(c->new FileCandidateDocument("file:"+c.localId(),unit(c.unit()))).toList(),provenance(u.provenance()),u.gapCodes())).toList(),inventory.operations().gapCodes()));
+                    u.candidates().stream().map(c->new FileCandidateDocument("file:"+c.localId(),unit(c.unit()))).toList(),provenance(u.provenance()),u.gapCodes(),u.operands().stream().map(o->new FileOperandDocument(o.role(),o.form(),o.references().stream().map(SemanticProductJsonWriter::operandHandle).toList(),o.writtenValue().orElse(null),provenance(o.provenance()),o.gapCodes())).toList(),u.options(),u.keyRelation(),u.explicitTerminator(),
+                    u.handlers().stream().map(h->new FileHandlerDocument(h.kind(),h.statements().stream().map(SemanticProductJsonWriter::statementHandle).toList(),provenance(h.provenance()))).toList())).toList(),inventory.operations().gapCodes()));
     }
     private record FileInventoryDocument(String version, CobolSemanticProduct.Availability availability, List<FileDeclarationDocument> declarations, List<String> gapCodes, FileOperationsDocument operations) { }
     private record FileOperationsDocument(CobolSemanticProduct.Availability availability,List<FileUseDocument> uses,List<String> gapCodes) {}
     private record FileCandidateDocument(String id,UnitDocument owner) {}
-    private record FileUseDocument(String statement,int ordinal,CobolSemanticProduct.FileCommand command,CobolSemanticProduct.FileOpenMode mode,CobolSemanticProduct.FileSyntaxProfile profile,CobolSemanticProduct.ResolutionStatus bindingStatus,List<FileCandidateDocument> candidates,ProvenanceDocument provenance,List<String> gapCodes) {}
+    private record FileUseDocument(String statement,int ordinal,CobolSemanticProduct.FileCommand command,CobolSemanticProduct.FileOpenMode mode,CobolSemanticProduct.FileSyntaxProfile profile,CobolSemanticProduct.ResolutionStatus bindingStatus,List<FileCandidateDocument> candidates,ProvenanceDocument provenance,List<String> gapCodes,
+            List<FileOperandDocument> operands,List<CobolSemanticProduct.FileOption> options,CobolSemanticProduct.FileKeyRelation keyRelation,boolean explicitTerminator,List<FileHandlerDocument> handlers) {}
+    private record FileOperandDocument(CobolSemanticProduct.FileOperandRole role,CobolSemanticProduct.FileOperandForm form,List<String> references,String writtenValue,ProvenanceDocument provenance,List<String> gapCodes) {}
+    private record FileHandlerDocument(CobolSemanticProduct.FileHandlerKind kind,List<String> statements,ProvenanceDocument provenance) {}
     private record FileAssignmentDocument(CobolSemanticProduct.Availability availability, String profile, String original,
             CobolSemanticProduct.FileNameSource sourceKind, String externalFileName, List<String> gapCodes) { }
     private record FileReferenceDocument(CobolSemanticProduct.FileReferenceRole role, BindingDocument binding, boolean duplicates, ProvenanceDocument provenance) { }

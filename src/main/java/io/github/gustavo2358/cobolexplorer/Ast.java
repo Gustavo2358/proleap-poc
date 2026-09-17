@@ -65,7 +65,7 @@ public final class Ast {
     public enum ReferenceUnderstanding { STRUCTURED, PRESERVED }
     public enum OperationCategory { RELATIONAL, OTHER }
     /** Semantic context supplied by the typed statement production; this is not a binding result. */
-    public enum StatementOperandContext { DEFAULT, SET_CONDITION_TARGET, SET_DATA_OR_INDEX }
+    public enum StatementOperandContext { DEFAULT, SET_CONDITION_TARGET, SET_DATA_OR_INDEX, FILE_RECORD, FILE_INTO, FILE_FROM, FILE_KEY, FILE_ADVANCING }
     /** Context of a WHEN selector derived from its typed evaluateCondition and matching subject position. */
     public enum EvaluateSelectorContext { BOOLEAN_SUBJECT_NOMINAL, VALUE_COMPARISON, SIMPLE_LITERAL, OTHER }
     public enum DataSectionKind { FILE, DATABASE, WORKING_STORAGE, LINKAGE, COMMUNICATION, LOCAL_STORAGE, SCREEN, REPORT, PROGRAM_LIBRARY }
@@ -409,13 +409,23 @@ public final class Ast {
         }
     }
 
-    public enum FileCommand { OPEN, READ, CLOSE }
+    public enum FileCommand { OPEN, READ, WRITE, REWRITE, DELETE_RECORD, START, CLOSE }
     public enum FileOpenMode { INPUT, OUTPUT, IO, EXTEND, UNSPECIFIED }
     public enum FileSyntaxProfile { N_LR, UNSUPPORTED }
-    public record FileIoOperand(FileReference reference, FileOpenMode mode) { }
-    /** Grammar-derived facts only; effects and outcomes are independent. */
-    public record FileIoSurface(FileCommand command, List<FileIoOperand> files, FileSyntaxProfile profile) {
-        public FileIoSurface { files=List.copyOf(files); }
+    public enum FileOption { NEXT, REVERSED, NO_REWIND, LOCK, REEL, UNIT, FOR_REMOVAL, BEFORE_ADVANCING, AFTER_ADVANCING, PAGE }
+    public enum FileKeyRelation { UNSPECIFIED, EQUAL, GREATER, GREATER_OR_EQUAL }
+    public enum FileOperandRole { RECORD, INTO, FROM, KEY, ADVANCING }
+    public enum FileHandlerKind { AT_END, NOT_AT_END, INVALID_KEY, NOT_INVALID_KEY, AT_END_OF_PAGE, NOT_AT_END_OF_PAGE }
+    public record FileIoOperand(Node reference, FileOpenMode mode, List<FileOption> options) {
+        public FileIoOperand { options=List.copyOf(options); }
+    }
+    public record FileDataOperand(FileOperandRole role, Node value) { }
+    public record FileHandler(FileHandlerKind kind, StatementClause clause) { }
+    /** Aliases existing operand/clause nodes; traversal visits their original owners exactly once. */
+    public record FileIoSurface(FileCommand command, List<FileIoOperand> files, FileSyntaxProfile profile,
+            List<FileDataOperand> operands, List<FileOption> options, FileKeyRelation keyRelation,
+            boolean explicitTerminator, List<FileHandler> handlers) {
+        public FileIoSurface { files=List.copyOf(files);operands=List.copyOf(operands);options=List.copyOf(options);handlers=List.copyOf(handlers); }
     }
 
     public record ModeledStatement(Meta meta, String grammarRule, String writtenText,

@@ -283,6 +283,10 @@ final class ReferenceOccurrenceCollector {
             ResolutionContracts.ReferenceRole role = operand.value() instanceof Ast.FileReference
                     ? ResolutionContracts.ReferenceRole.FILE_OPERATION
                     : ResolutionContracts.ReferenceRole.CONTEXT_DEPENDENT;
+            if (operand.context() == Ast.StatementOperandContext.FILE_INTO) role=ResolutionContracts.ReferenceRole.VALUE_WRITE;
+            else if (operand.context() == Ast.StatementOperandContext.FILE_RECORD || operand.context() == Ast.StatementOperandContext.FILE_FROM
+                    || operand.context() == Ast.StatementOperandContext.FILE_KEY || operand.context() == Ast.StatementOperandContext.FILE_ADVANCING)
+                role=ResolutionContracts.ReferenceRole.VALUE_READ;
             if(writes.contains(operand.value().meta().id()))role=ResolutionContracts.ReferenceRole.VALUE_WRITE;
             else if(reads.contains(operand.value().meta().id()))role=ResolutionContracts.ReferenceRole.VALUE_READ;
             if (operand.context() == Ast.StatementOperandContext.SET_CONDITION_TARGET

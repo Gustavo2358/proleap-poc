@@ -96,3 +96,40 @@ N-LR: SC27-8713-03, 2026-04-28, seções OPEN/READ/CLOSE no PDF pinado em W0.
 Neste slice só identificação nominal/ação; efeitos/status/outcomes aguardam W3/W4.
 Oráculos FileOperationSliceTest: sequência estática, multi-file/modes, missing
 file, CALL dentro de AT END, declaração sem uso e negativo de extensão dialectal.
+
+## FD-W2 — regra e oracle antes da implementação
+
+Entrada: W1 qualificado, SP2.22 e consumer2.0; ampliação coordenada SP2.23 /
+fileInventory1.2 para família nativa N19–N25. Não há mudança AIR prevista.
+Autoridade lida no PDF SC27-8713-03, revisão 2026-04-28: CLOSE pp328–329,
+DELETE pp332–333, OPEN pp413–415, READ pp429–434, REWRITE pp437–439,
+START pp460–461, WRITE pp476–480. Premissas LANGUAGE_GUARANTEED abaixo.
+
+WRITE/REWRITE usam record-name qualificado de FD; FROM pode ser registro de outro
+FD e não seleciona o arquivo alvo. DELETE remove RECORD de arquivo indexed ou
+relative, sem semântica de remoção física de recurso. START posiciona; não lê
+conteúdo. READ NEXT/KEY/INTO e WRITE FROM/ADVANCING têm papéis sintáticos distintos.
+FROM literal aceito pela gramática multi-dialeto não pertence à sintaxe N-LR
+consultada. READ com lock/WAIT e CLOSE port I/O continuam fora de N-LR.
+
+AST conserva opções por arquivo em OPEN/CLOSE, papel dos operandos, relação KEY,
+terminador explícito e corpos de AT END/INVALID KEY/EOP e suas formas NOT.
+Nenhuma cópia de AST, parsing de grammarRule no lower ou inferência por FROM.
+Resolver DATA/FILE canônico governa binding; projector associa record DATA ao
+inventário FD existente. Se o owner não for provado, conserva gap, sem escolher
+primeiro candidato. Tipo de referência não afirma MUST nem ordem de efeitos.
+
+Oracles planejados FileNativeOperationTest: sete verbos, WRITE/REWRITE com FROM
+em outro FD, ambiguidade/WS sem FD, NEXT/INTO/KEY, START relação, OPEN/CLOSE opções,
+DELETE único uso e handlers com CALL inventariado uma vez. Negativos incluem
+FROM literal, READ lock e CLOSE port I/O. Lower exercitará associação, targets,
+composição existente e callbacks não incondicionais. W3/W4 fecharão efeitos e
+outcomes; a representação W2 deve conservar essa estrutura com incompletude.
+Algoritmo: índice record-id→file-id e associação de ocorrências resolvidas, O(fatos + operandos), com ordenação O(operandos log operandos)
+por posição sintática; traversal de cada corpo uma vez, sem cutoff.
+
+Checkpoint produtor W2: 12 oráculos nativos novos; F-DECL ampliado 147 testes
+PASS, zero skips; FAST fixo 335 PASS. SP2.23/fileInventory1.2 exportado e fixtures
+native/delete-handlers idênticas aos bytes consumidos pelo lower. Efeitos e
+controle continuam explicitamente parciais; integração CLI qualificada no
+checkpoint canônico cross-repo, sem antecipar W3/W4.
