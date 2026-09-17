@@ -515,6 +515,8 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
         List<Ast.Node> children = new ArrayList<>();
         Ast.ProcedureSignature signature = buildProcedureSignature(context);
         if (signature != null) children.add(signature);
+        if(context.procedureDeclaratives()!=null)for(var declarative:context.procedureDeclaratives().procedureDeclarative())
+            children.add(buildDeclarative(declarative));
         CobolParser.ProcedureDivisionBodyContext body = context.procedureDivisionBody();
         if (body != null) {
             children.addAll(buildParagraphGroup(body.paragraphs()));
@@ -534,21 +536,24 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
                         context.procedureDivisionUsingClause() != null
                                 || context.procedureDivisionGivingClause() != null,
                         context.procedureDeclaratives() != null, entryInputProof(context))),
-                completions.paragraphLocal(),completions.ordinary(),completions.embedded(),completions.embeddedOrdinary());
+                completions.paragraphLocal(),completions.ordinary(),completions.embedded(),completions.embeddedOrdinary(),normalCompletionStatements);
     }
 
     /** Sequential MOVE completion within a single sentence region. Paragraph/section
      * ends and declaratives are deliberately not assigned executable successors. */
+    private final Set<Integer> normalCompletionStatements=new LinkedHashSet<>();
     private long completionStatementVisits;
     long completionStatementVisits() { return completionStatementVisits; }
 
     private record CompletionRelations(Map<Integer,Integer> paragraphLocal,Map<Integer,Integer> ordinary,Map<Integer,Integer> embedded,Map<Integer,Integer> embeddedOrdinary) { }
     private CompletionRelations completionRelations(CobolParser.ProcedureDivisionContext context) {
         var local=new LinkedHashMap<Integer,Integer>();var ordinary=new LinkedHashMap<Integer,Integer>();var embedded=new LinkedHashMap<Integer,Integer>();var embeddedOrdinary=new LinkedHashMap<Integer,Integer>();
-        if(context.procedureDeclaratives()==null&&context.procedureDivisionBody()!=null) {
+        if(context.procedureDivisionBody()!=null) {
             var body=context.procedureDivisionBody();addParagraphContinuations(body.paragraphs(),local,ordinary,embedded,embeddedOrdinary);
             for(var section:body.procedureSection())addParagraphContinuations(section.paragraphs(),local,ordinary,embedded,embeddedOrdinary);
         }
+        if(context.procedureDeclaratives()!=null)for(var declarative:context.procedureDeclaratives().procedureDeclarative())
+            addParagraphContinuations(declarative.paragraphs(),local,ordinary,embedded,embeddedOrdinary);
         return new CompletionRelations(local,ordinary,embedded,embeddedOrdinary);
     }
     /** Both relations are recorded in one grammar-region walk. An unmaterialized
@@ -580,13 +585,14 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
                         || current instanceof Ast.PerformStatement || current instanceof Ast.EvaluateStatement
                         || current instanceof Ast.GoToStatement g && g.goToKind()==Ast.GoToKind.DEPENDING_ON
                         || current instanceof Ast.CallStatement call && !call.surface().hasHandlers()
-                        || sequentialOpaque(context);
+                        || FileIoSyntax.isNativeStatement(context) || sequentialOpaque(context);
                 // Positional host boundary only; no embedded-language success/return claim.
                 if(current instanceof Ast.EmbeddedLanguageStatement) {
                     if(next!=null)embedded.put(current.meta().id(),next.meta().id());
                     if(ordinaryNext!=null)embeddedOrdinary.put(current.meta().id(),ordinaryNext.meta().id());
                 }
                 if(continues&&current!=null) {
+                    normalCompletionStatements.add(current.meta().id());
                     if(next!=null)result.put(current.meta().id(),next.meta().id());
                     if(ordinaryNext!=null)ordinary.put(current.meta().id(),ordinaryNext.meta().id());
                 }
@@ -602,6 +608,16 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
                         pending.push(new CompletionRegion(arm.statement(),next,ordinaryNext));
                     if (evaluate.evaluateWhenOther() != null)
                         pending.push(new CompletionRegion(evaluate.evaluateWhenOther().statement(),next,ordinaryNext));
+                }
+                if(FileIoSyntax.isNativeStatement(context))for(var clause:FileIoSyntax.handlerContexts(context)) {
+                    List<CobolParser.StatementContext> body=null;
+                    if(clause instanceof CobolParser.AtEndPhraseContext x)body=x.statement();
+                    else if(clause instanceof CobolParser.NotAtEndPhraseContext x)body=x.statement();
+                    else if(clause instanceof CobolParser.InvalidKeyPhraseContext x)body=x.statement();
+                    else if(clause instanceof CobolParser.NotInvalidKeyPhraseContext x)body=x.statement();
+                    else if(clause instanceof CobolParser.WriteAtEndOfPagePhraseContext x)body=x.statement();
+                    else if(clause instanceof CobolParser.WriteNotAtEndOfPagePhraseContext x)body=x.statement();
+                    if(body!=null)pending.push(new CompletionRegion(body,next,ordinaryNext));
                 }
                 // An unmaterialized direct statement is a barrier, never skipped.
                 next = current;ordinaryNext=current;
@@ -753,6 +769,19 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
                 + (giving == null ? "" : " " + sourceText(giving).strip());
         return new Ast.ProcedureSignature(meta, using != null && using.CHAINING() != null,
                 parameters, returning, writtenText);
+    }
+
+    private Ast.Section buildDeclarative(CobolParser.ProcedureDeclarativeContext context) {
+        var sectionMeta=meta(context);var use=context.useStatement();var useMeta=meta(use);var after=use.useAfterClause();
+        var refs=new ArrayList<Ast.FileReference>();var mode=Ast.FileOpenMode.UNSPECIFIED;
+        if(after!=null) {
+            var on=after.useAfterOn();
+            mode=on.INPUT()!=null?Ast.FileOpenMode.INPUT:on.OUTPUT()!=null?Ast.FileOpenMode.OUTPUT:on.I_O()!=null?Ast.FileOpenMode.IO:on.EXTEND()!=null?Ast.FileOpenMode.EXTEND:Ast.FileOpenMode.UNSPECIFIED;
+            for(var f:on.fileName())refs.add(new Ast.FileReference(meta(f),clean(sourceText(f)),sourceText(f).strip()));
+        }
+        var nodes=new ArrayList<Ast.Node>();nodes.add(new Ast.UseClause(useMeta,after==null?Ast.UseKind.DEBUGGING:Ast.UseKind.AFTER_EXCEPTION,after!=null&&after.GLOBAL()!=null,mode,refs));
+        nodes.addAll(buildParagraphGroup(context.paragraphs()));
+        return new Ast.Section(sectionMeta,clean(sourceText(context.procedureSectionHeader().sectionName())),nodes);
     }
 
     private Ast.Section buildProcedureSection(CobolParser.ProcedureSectionContext context) {

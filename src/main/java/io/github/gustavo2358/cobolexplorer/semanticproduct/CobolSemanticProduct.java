@@ -44,7 +44,7 @@ public final class CobolSemanticProduct {
 
     public enum ReadinessStatus { SUFFICIENT, PARTIAL, BLOCKED, NOT_APPLICABLE }
 
-    public enum Branch { ROOT, THEN, ELSE, EVALUATE_ARM, UNKNOWN }
+    public enum Branch { ROOT, THEN, ELSE, EVALUATE_ARM, FILE_HANDLER, UNKNOWN }
 
     public enum OperandRole { READ, WRITE, CALL_TARGET }
 
@@ -442,10 +442,10 @@ public final class CobolSemanticProduct {
         public Containment {
             parent = Objects.requireNonNull(parent, "parent");
             branch = Objects.requireNonNull(branch, "branch");
-            boolean requiresParent = branch == Branch.THEN || branch == Branch.ELSE || branch == Branch.EVALUATE_ARM;
+            boolean requiresParent = branch == Branch.THEN || branch == Branch.ELSE || branch == Branch.EVALUATE_ARM || branch==Branch.FILE_HANDLER;
             if (requiresParent != parent.isPresent())
                 throw new IllegalArgumentException(
-                        "THEN/ELSE require a parent; ROOT/UNKNOWN must omit it");
+                        "structural arms require a parent; ROOT/UNKNOWN must omit it");
         }
 
         public static Containment root() {
@@ -1285,15 +1285,38 @@ public final class CobolSemanticProduct {
             require(availability!=Availability.UNAVAILABLE||ioReads.isEmpty()&&before.isEmpty()&&outcomes.isEmpty(),"unavailable effects cannot assert a plan");}
         public static FileEffectPlan unavailable(){return new FileEffectPlan(Availability.UNAVAILABLE,List.of(),List.of(),List.of(),true,true,List.of("FILE_MEMORY_EFFECTS_UNAVAILABLE"));}
     }
+    public enum FileUseKind { AFTER_EXCEPTION, DEBUGGING }
+    public enum FileControlEvent { SUCCESS, END, INVALID_KEY, OTHER_ERROR, END_OF_PAGE }
+    public enum FileDestinationKind { CONTINUE, HANDLER, USE }
+    public record FileDeclarative(String id,UnitId owner,FileUseKind kind,boolean global,FileOpenMode mode,List<FileId> files,
+            List<StatementId> roots,Optional<StatementId> entry,List<StatementId> completions,List<String> gapCodes,Provenance provenance) {
+        public FileDeclarative {Objects.requireNonNull(id);Objects.requireNonNull(owner);Objects.requireNonNull(kind);Objects.requireNonNull(mode);files=List.copyOf(files);roots=List.copyOf(roots);Objects.requireNonNull(entry);completions=List.copyOf(completions);gapCodes=List.copyOf(gapCodes);Objects.requireNonNull(provenance);
+            require(entry.equals(roots.isEmpty()?Optional.empty():Optional.of(roots.get(0))),"USE entry must be its first published root");}
+    }
+    public record FileDestination(FileDestinationKind kind,Optional<FileHandlerKind> handler,Optional<String> declarative) {
+        public FileDestination {Objects.requireNonNull(kind);Objects.requireNonNull(handler);Objects.requireNonNull(declarative);
+            require(handler.isPresent()==(kind==FileDestinationKind.HANDLER)&&declarative.isPresent()==(kind==FileDestinationKind.USE),"file route destination shape");}
+    }
+    public record FileControlRoute(FileControlEvent event,FileEffectOutcome effects,List<FileDestination> destinations,boolean criticalExit) {
+        public FileControlRoute {Objects.requireNonNull(event);Objects.requireNonNull(effects);destinations=List.copyOf(destinations);require(!destinations.isEmpty(),"file event requires destination");
+            require(effects==switch(event){case SUCCESS,END_OF_PAGE->FileEffectOutcome.SUCCESS;case END->FileEffectOutcome.END;case INVALID_KEY->FileEffectOutcome.INVALID_KEY;case OTHER_ERROR->FileEffectOutcome.OTHER_ERROR;},"event/effect outcome mismatch");}
+    }
+    public record FileControlPlan(Availability availability,Optional<StatementId> continuation,List<FileControlRoute> routes,List<String> gapCodes) {
+        public FileControlPlan {Objects.requireNonNull(availability);Objects.requireNonNull(continuation);routes=List.copyOf(routes);gapCodes=List.copyOf(gapCodes);
+            require(routes.stream().map(FileControlRoute::event).distinct().count()==routes.size(),"duplicate file control event");
+            require(availability!=Availability.KNOWN||gapCodes.isEmpty()&&!routes.isEmpty(),"known control requires routes and no gaps");
+            require(availability==Availability.KNOWN||!gapCodes.isEmpty(),"partial/unavailable control requires gap");}
+        public static FileControlPlan unavailable(){return new FileControlPlan(Availability.UNAVAILABLE,Optional.empty(),List.of(),List.of("FILE_CONTROL_UNAVAILABLE"));}
+    }
     public record FileUse(StatementId statement, int ordinal, FileCommand command, FileOpenMode mode,
             FileSyntaxProfile profile, ResolutionStatus bindingStatus, List<FileId> candidates,
             Provenance provenance, List<String> gapCodes, List<FileOperand> operands, List<FileOption> options,
-            FileKeyRelation keyRelation, boolean explicitTerminator, List<FileHandler> handlers,FileEffectPlan effects) {
+            FileKeyRelation keyRelation, boolean explicitTerminator, List<FileHandler> handlers,FileEffectPlan effects,FileControlPlan control) {
         public FileUse {
             Objects.requireNonNull(statement);require(ordinal>=0,"file use ordinal");Objects.requireNonNull(command);Objects.requireNonNull(mode);
             Objects.requireNonNull(profile);Objects.requireNonNull(bindingStatus);candidates=List.copyOf(candidates);
             Objects.requireNonNull(provenance);gapCodes=List.copyOf(gapCodes);
-            operands=List.copyOf(operands);options=List.copyOf(options);Objects.requireNonNull(keyRelation);handlers=List.copyOf(handlers);Objects.requireNonNull(effects);
+            operands=List.copyOf(operands);options=List.copyOf(options);Objects.requireNonNull(keyRelation);handlers=List.copyOf(handlers);Objects.requireNonNull(effects);Objects.requireNonNull(control);
             require(bindingStatus!=ResolutionStatus.RESOLVED||candidates.size()==1,"resolved file use needs unique identity");
         }
     }
@@ -1301,10 +1324,11 @@ public final class CobolSemanticProduct {
         public FileOperations { Objects.requireNonNull(availability);uses=List.copyOf(uses);gapCodes=List.copyOf(gapCodes); }
         public static FileOperations unavailable(){return new FileOperations(Availability.UNAVAILABLE,List.of(),List.of("FILE_OPERATIONS_UNAVAILABLE"));}
     }
-    public record FileInventory(Availability availability, List<FileDeclaration> declarations, List<String> gapCodes, FileOperations operations) {
+    public record FileInventory(Availability availability, List<FileDeclaration> declarations, List<String> gapCodes, FileOperations operations,List<FileDeclarative> declaratives) {
+        public FileInventory(Availability availability,List<FileDeclaration> declarations,List<String> gapCodes,FileOperations operations){this(availability,declarations,gapCodes,operations,List.of());}
         public FileInventory(Availability availability,List<FileDeclaration> declarations,List<String> gapCodes){this(availability,declarations,gapCodes,FileOperations.unavailable());}
         public FileInventory {
-            Objects.requireNonNull(availability); declarations = List.copyOf(declarations); gapCodes = List.copyOf(gapCodes);Objects.requireNonNull(operations);
+            Objects.requireNonNull(availability); declarations = List.copyOf(declarations); gapCodes = List.copyOf(gapCodes);Objects.requireNonNull(operations);declaratives=List.copyOf(declaratives);
             require(availability == Availability.KNOWN ? gapCodes.isEmpty() : !gapCodes.isEmpty(), "file inventory availability/gaps mismatch");
             require(availability != Availability.UNAVAILABLE || declarations.isEmpty(), "unavailable file inventory has declarations");
         }
@@ -1320,10 +1344,18 @@ public final class CobolSemanticProduct {
                 require(data.contains(candidate.id()), "file reference has no data declaration");
         }
         var ids=new HashSet<StatementId>();for(var statement:statements)ids.add(statement.header().id());
+        var declarativeIds=new HashSet<String>();
+        for(var d:inventory.declaratives()) {
+            require(d.owner().equals(unit)&&declarativeIds.add(d.id()),"duplicate/foreign USE declaration");
+            require(ids.containsAll(d.roots())&&ids.containsAll(d.completions()),"USE body references absent statements");
+            require(new HashSet<>(d.roots()).size()==d.roots().size()&&new HashSet<>(d.completions()).size()==d.completions().size(),"duplicate USE members");
+        }
         var refs=new HashSet<OperandId>();
         var nodes=new HashMap<StorageNodeId,PhysicalNode>();storage.nodes().forEach(n->nodes.put(n.id(),n));
         var views=new HashMap<StorageNodeId,StorageView>();storage.views().forEach(v->views.put(v.node(),v));
         for(var s:statements)if(s instanceof ObservedStatement o)o.knownReferences().forEach(r->refs.add(r.id()));
+        var statementFacts=new HashMap<StatementId,StatementFact>();statements.forEach(s->statementFacts.put(s.header().id(),s));
+        var handlerMembers=new HashSet<StatementId>();
         var uses=new HashSet<java.util.Map.Entry<StatementId,Integer>>();
         for(var use:inventory.operations().uses()) {
             require(ids.contains(use.statement())&&use.statement().unit().equals(unit),"file use statement absent or foreign");
@@ -1334,7 +1366,16 @@ public final class CobolSemanticProduct {
             var kinds=new HashSet<FileHandlerKind>();var bodies=new HashSet<StatementId>();
             for(var handler:use.handlers()) {
                 require(kinds.add(handler.kind()),"duplicate file handler kind");
-                for(var body:handler.statements())require(ids.contains(body)&&!body.equals(use.statement())&&bodies.add(body),"invalid file handler body");
+                for(var body:handler.statements()) {
+                    require(ids.contains(body)&&!body.equals(use.statement())&&bodies.add(body),"invalid file handler body");
+                    require(statementFacts.get(body).header().containment().equals(Containment.childOf(use.statement(),Branch.FILE_HANDLER)),"file handler direct body containment mismatch");
+                    handlerMembers.add(body);
+                }
+            }
+            use.control().continuation().ifPresent(id->require(ids.contains(id)&&!id.equals(use.statement()),"file continuation absent/self"));
+            for(var route:use.control().routes())for(var destination:route.destinations()) {
+                destination.handler().ifPresent(h->require(kinds.contains(h),"file route handler absent"));
+                destination.declarative().ifPresent(id->require(declarativeIds.contains(id),"file route USE absent"));
             }
             var targets=new ArrayList<>(use.effects().ioReads());var steps=new ArrayList<>(use.effects().before());use.effects().outcomes().forEach(c->steps.addAll(c.steps()));
             for(var step:steps){targets.add(step.destination());step.source().ifPresent(targets::add);}
@@ -1351,6 +1392,8 @@ public final class CobolSemanticProduct {
                 });
             }
         }
+        for(var s:statements)if(s.header().containment().branch()==Branch.FILE_HANDLER)
+            require(handlerMembers.contains(s.header().id()),"FILE_HANDLER child absent from file surface");
     }
 
     /** One immutable, closed publication with a cardinality-independent envelope. */
@@ -1842,8 +1885,9 @@ public final class CobolSemanticProduct {
             StatementHeader header = statement.header();
             header.containment().parent().ifPresent(parentId -> {
                 StatementFact parent = statements.get(parentId);
-                require(parent instanceof IfFact && header.containment().branch()!=Branch.EVALUATE_ARM
-                        || parent instanceof EvaluateFact && header.containment().branch()==Branch.EVALUATE_ARM,
+                require(parent instanceof IfFact && (header.containment().branch()==Branch.THEN||header.containment().branch()==Branch.ELSE)
+                        || parent instanceof EvaluateFact && header.containment().branch()==Branch.EVALUATE_ARM
+                        || parent instanceof ObservedStatement && header.containment().branch()==Branch.FILE_HANDLER,
                         "branch parent must be a published IF fact");
                 require(parent.header().point().ordinal() < header.point().ordinal(),
                         "branch parent must precede its structural child");

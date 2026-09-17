@@ -44,6 +44,10 @@ final class ReferenceOccurrenceCollector {
 
     private void visit(Ast.Node node, ResolutionContracts.ReferenceRole role,
                        ReferenceOccurrences.Preservation preservation) {
+        if(node instanceof Ast.UseClause use) {
+            for(var reference:use.files())visit(reference,ResolutionContracts.ReferenceRole.DECLARATION_RELATION,preservation);
+            return;
+        }
         if (node instanceof Ast.FileAreaSharing sharing) {
             for(var reference:sharing.files())visit(reference,ResolutionContracts.ReferenceRole.DECLARATION_RELATION,preservation);
             return;

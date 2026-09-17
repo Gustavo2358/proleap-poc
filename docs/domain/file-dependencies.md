@@ -1,6 +1,6 @@
 # FILE-DEPENDENCIES — frontend / SP
 
-H4 aprovado; core N+C autorizado em 2026-09-16. W0–W2 qualificadas local; W3 em implementação; W10 não autorizado.
+H4 aprovado; core N+C autorizado em 2026-09-16. W0–W3 qualificadas local; W4 em implementação; W10 não autorizado.
 [Campanha canônica](https://github.com/Gustavo2358/analysis-cfg/blob/feat/file-dependencies/docs/product/file-dependencies/README.md)
 (workspace: `../analysis-cfg/docs/product/file-dependencies/README.md`).
 Comece pelo brief e pelo item atual indicado no estado canônico.
@@ -190,3 +190,32 @@ Focal final FROM/contrato/CALL 111 PASS. FROM não resolvido preserva gap nomina
 e leitura aberta; alias preserva leitura mesmo quando cópia é MAY. Logs finais:
 `.harness-results/fd-w3/{fast-4,qualification-local-5,from-read-bound-green}.log`.
 Pins e E-SELECTED são fechados no checkpoint canônico após commit dos produtores.
+
+
+## FD-W4 — dispatch / SP2.25, fileInventory1.4
+
+Autoridade adicional: mesmo SC27-8713-03 de 2026-04-28, Declaratives pp264–265,
+status p299, INVALID KEY pp303–304, READ AT END p432, WRITE EOP p480 e USE pp714–715.
+Ast.UseClause é metadata; corpo declarativo entra uma vez no inventário e nunca
+como prefixo da entrada primária. FileIoControl deriva seleção por arquivo/modo,
+rotas SUCCESS/END/INVALID_KEY/OTHER_ERROR/EOP e completions a partir da AST e do
+binding canônico. Projector somente transporta. FILE_HANDLER separa os corpos
+condicionais, inclusive IF/EVALUATE/nested I/O; período e END-* delimitam a saída.
+Status precede handlers/USE; EOP utiliza efeitos de WRITE executado. Normal não
+prova00. Explicit END/INVALID KEY domina USE; READ OTHER_ERROR sem USE pode alcançar
+NOT AT END, sem INTO. OPEN fornece modo; depois dele não se infere modo por ordem
+textual: possíveis USE por modo + alternativa sem USE, gap explícito. Binding
+incerto conserva corpos plausíveis e os eventos não excluídos pela prova.
+
+Completions reconhecem término normal; GOBACK/GO TO e outras saídas não são
+forçadas a retornar. DEBUGGING é inventariado com gap, não USE de erro. Seleção
+GLOBAL ancestral integra W9. Custo O(AST + bindings + operações × declarações USE
+visíveis + tamanho das rotas), sem corte por quantidade; não é um solver de arquivos.
+Oráculos FileControlPlanTest/ContractTest precedem a implementação; fixtures reais
+cobrem seleção, status, handlers, recursão/saídas, negativos e transporte bilateral.
+
+
+Checkpoint produtor W4: focal162 + GO TO7 + entrada20 PASS; FAST fixo336 PASS;
+qualification-local898, zero falhas/erros e um skip histórico previsto, normalizer/
+regressão E2E/naming PASS. SP2.25 control/handlers/USE exportados nos seis fixtures
+bilaterais. Logs `.harness-results/fd-w4/`; E-SELECTED nos pins finais segue CFG.

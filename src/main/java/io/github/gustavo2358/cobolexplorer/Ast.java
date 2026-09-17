@@ -32,7 +32,7 @@ public final class Ast {
         }
     }
 
-    public sealed interface Node permits Program, Division, Section, FileBinding, FileDescription, FileAreaSharing, FileRecordClause,
+    public sealed interface Node permits Program, Division, Section, FileBinding, FileDescription, FileAreaSharing, FileRecordClause, UseClause,
             DataEntry, Paragraph, Sentence, CallArgument, EvaluateBranch, DataQualifier,
             SubscriptGroup, ReferenceModification, ProcedureQualifier, ProcedureReference,
             ProcedureSignature, ProcedureParameter, StatementOperand, StatementClause, SearchWhen,
@@ -113,7 +113,7 @@ public final class Ast {
     public record Division(Meta meta, DivisionKind divisionKind, List<Node> children,
                            Optional<ProcedureEntry> procedureEntry, Map<Integer, Integer> normalContinuations,
                            Map<Integer,Integer> ordinaryContinuations,Map<Integer,Integer> embeddedContinuations,
-                           Map<Integer,Integer> embeddedOrdinaryContinuations) implements Node {
+                           Map<Integer,Integer> embeddedOrdinaryContinuations, Set<Integer> normalCompletionStatements) implements Node {
         public Division {
             children = List.copyOf(children);
             procedureEntry = Objects.requireNonNull(procedureEntry, "procedureEntry");
@@ -121,9 +121,11 @@ public final class Ast {
             ordinaryContinuations = Map.copyOf(ordinaryContinuations);
             embeddedContinuations = Map.copyOf(embeddedContinuations);
             embeddedOrdinaryContinuations = Map.copyOf(embeddedOrdinaryContinuations);
+            normalCompletionStatements=Set.copyOf(normalCompletionStatements);
             if (procedureEntry.isPresent() && divisionKind != DivisionKind.PROCEDURE)
                 throw new IllegalArgumentException("only PROCEDURE DIVISION has an executable entry");
         }
+        public Division(Meta meta,DivisionKind kind,List<Node> children,Optional<ProcedureEntry> entry,Map<Integer,Integer> normal,Map<Integer,Integer> ordinary,Map<Integer,Integer> embedded,Map<Integer,Integer> embeddedOrdinary) {this(meta,kind,children,entry,normal,ordinary,embedded,embeddedOrdinary,Set.of());}
         public Division(Meta meta,DivisionKind kind,List<Node> children,Optional<ProcedureEntry> entry,Map<Integer,Integer> normal,Map<Integer,Integer> ordinary) {this(meta,kind,children,entry,normal,ordinary,Map.of(),Map.of());}
         /** Paragraph-local completion stays distinct from ordinary flow across paragraph boundaries. */
         public Division(Meta meta, DivisionKind kind, List<Node> children,Optional<ProcedureEntry> entry,Map<Integer,Integer> next) {
@@ -136,6 +138,12 @@ public final class Ast {
         public Division(Meta meta, DivisionKind divisionKind, List<Node> children) {
             this(meta, divisionKind, children, Optional.empty(), Map.of());
         }
+    }
+
+    public enum UseKind { AFTER_EXCEPTION, DEBUGGING }
+    /** USE is declarative metadata, never an executable statement. */
+    public record UseClause(Meta meta,UseKind kind,boolean global,FileOpenMode mode,List<FileReference> files) implements Node {
+        public UseClause {files=List.copyOf(files);}
     }
 
     public record Section(Meta meta, String name, DataSectionKind dataSectionKind, List<Node> children) implements Node {
@@ -660,6 +668,7 @@ public final class Ast {
         if (node instanceof Section n) return n.children();
         if (node instanceof FileDescription n) { var result=new ArrayList<Node>(n.recordClauses());result.addAll(n.entries());return result; }
         if (node instanceof FileRecordClause n) return n.dependingOn().stream().toList();
+        if (node instanceof UseClause u) return List.copyOf(u.files());
         if (node instanceof FileAreaSharing n) return n.files();
         if (node instanceof FileBinding n) return n.control() == null ? List.of()
                 : n.control().references().stream().map(FileClauseReference::reference).toList();

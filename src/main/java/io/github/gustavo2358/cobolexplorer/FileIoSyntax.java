@@ -7,6 +7,25 @@ import java.util.*;
 /** Native N-LR syntax facts. Uses parser identities, never statement text or runtime assumptions. */
 final class FileIoSyntax {
     private FileIoSyntax() { }
+    static boolean isNativeStatement(CobolParser.StatementContext c) {
+        return c.openStatement()!=null||c.closeStatement()!=null||c.readStatement()!=null||c.writeStatement()!=null
+            ||c.rewriteStatement()!=null||c.deleteStatement()!=null||c.startStatement()!=null;
+    }
+    static List<ParserRuleContext> handlerContexts(CobolParser.StatementContext root) {
+        var result=new ArrayList<ParserRuleContext>();var pending=new ArrayDeque<org.antlr.v4.runtime.tree.ParseTree>();
+        for(int i=0;i<root.getChildCount();i++)pending.addLast(root.getChild(i));
+        while(!pending.isEmpty()) {
+            var node=pending.removeFirst();if(node instanceof CobolParser.StatementContext)continue;
+            if(node instanceof CobolParser.AtEndPhraseContext||node instanceof CobolParser.NotAtEndPhraseContext
+                ||node instanceof CobolParser.InvalidKeyPhraseContext||node instanceof CobolParser.NotInvalidKeyPhraseContext
+                ||node instanceof CobolParser.WriteAtEndOfPagePhraseContext||node instanceof CobolParser.WriteNotAtEndOfPagePhraseContext) {
+                result.add((ParserRuleContext)node);continue;
+            }
+            for(int i=0;i<node.getChildCount();i++)pending.addLast(node.getChild(i));
+        }
+        return List.copyOf(result);
+    }
+
     static Ast.FileOperandRole operandRole(ParserRuleContext root, ParserRuleContext operand) {
         if (command(root)==null) return null;
         if (operand instanceof CobolParser.RecordNameContext) return Ast.FileOperandRole.RECORD;

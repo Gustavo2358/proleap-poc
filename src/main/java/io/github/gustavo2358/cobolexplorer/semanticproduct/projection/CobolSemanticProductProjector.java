@@ -236,11 +236,34 @@ public final class CobolSemanticProductProjector {
         }
         boolean missing = !inputs.report().inputComplete(inputs.unitId());
         return new FileInventory(missing ? Availability.INPUT_MISSING : Availability.KNOWN, result,
-                missing ? List.of("FILE_INPUT_INCOMPLETE") : List.of(), fileOperations(inputs,statementIds,dataIds,result,operandIds,dataByAst));
+                missing ? List.of("FILE_INPUT_INCOMPLETE") : List.of(), fileOperations(inputs,statementIds,dataIds,result,operandIds,dataByAst),fileDeclaratives(inputs,statementIds));
     }
 
+    private static String declarativeId(StorageLayoutSemantics.Key key){return "use:"+key.node();}
+    private static Map<Integer,StatementId> statementIdsByAst(Map<Ast.Statement,StatementId> ids) {
+        var result=new HashMap<Integer,StatementId>();ids.forEach((node,id)->result.put(node.meta().id(),id));return result;
+    }
+    private static List<FileDeclarative> fileDeclaratives(ProjectionInputs inputs,Map<Ast.Statement,StatementId> statementIds) {
+        var control=inputs.products().storage().map(io.github.gustavo2358.cobolexplorer.StorageAccessSemantics::fileControl).orElse(null);
+        if(control==null)return List.of();var statements=statementIdsByAst(statementIds);var result=new ArrayList<FileDeclarative>();
+        for(var d:control.declaratives())if(d.section().unit().equals(inputs.unitId())) {
+            var files=d.files().stream().map(f->new FileId(new UnitId(f.programUnitId().compilationUnitId(),f.programUnitId().structuralPath(),f.programUnitId().canonicalProgramName()),f.localId())).toList();
+            result.add(new FileDeclarative(declarativeId(d.section()),inputs.boundaryUnit(),FileUseKind.valueOf(d.kind().name()),d.global(),FileOpenMode.valueOf(d.mode().name()),files,
+                d.roots().stream().map(statements::get).toList(),d.entry().map(statements::get),d.completions().stream().map(statements::get).toList(),d.gaps(),provenance(d.origin())));
+        }
+        return List.copyOf(result);
+    }
+    private static FileControlPlan fileControl(io.github.gustavo2358.cobolexplorer.FileIoControl.Operation p,Map<Integer,StatementId> statements) {
+        if(p==null)return FileControlPlan.unavailable();
+        return new FileControlPlan(p.gaps().isEmpty()?Availability.KNOWN:Availability.PARTIAL,p.continuation().map(statements::get),p.routes().stream().map(r->
+            new FileControlRoute(FileControlEvent.valueOf(r.event().name()),FileEffectOutcome.valueOf(r.effects().name()),r.destinations().stream().map(d->
+                new FileDestination(FileDestinationKind.valueOf(d.kind().name()),d.handler().map(h->FileHandlerKind.valueOf(h.name())),d.declarative().map(CobolSemanticProductProjector::declarativeId))).toList(),r.criticalExit())).toList(),p.gaps());
+    }
     private static FileOperations fileOperations(ProjectionInputs inputs,Map<Ast.Statement,StatementId> statementIds,
             Map<ResolutionContracts.SemanticEntityId,DataItemId> dataIds,List<FileDeclaration> declarations,Map<Integer,OperandId> operandIds,Map<Integer,DataItemId> dataByAst) {
+        var controls=new HashMap<java.util.Map.Entry<Integer,Integer>,io.github.gustavo2358.cobolexplorer.FileIoControl.Operation>();
+        inputs.products().storage().ifPresent(storage->storage.fileControl().operations().stream().filter(p->p.statement().unit().equals(inputs.unitId())).forEach(p->controls.put(Map.entry(p.statement().node(),p.ordinal()),p)));
+        var statementMap=statementIdsByAst(statementIds);
         var uses=new ArrayList<FileUse>();var owners=new HashMap<DataItemId,FileId>();
         var views=new HashMap<StorageLayoutSemantics.Key,StorageLayoutSemantics.View>();
         inputs.products().storage().ifPresent(s->s.layout().layout(inputs.unitId()).views().forEach(v->views.put(v.node(),v)));
@@ -285,7 +308,7 @@ public final class CobolSemanticProductProjector {
                 uses.add(new FileUse(statementIds.get(statement),useOrdinal,FileCommand.valueOf(surface.command().name()),FileOpenMode.valueOf(operand.mode().name()),
                     FileSyntaxProfile.valueOf(surface.profile().name()),status,List.copyOf(candidates),provenance(reference.meta().provenance()),gaps,operands,options,
                     FileKeyRelation.valueOf(surface.keyRelation().name()),surface.explicitTerminator(),handlers,
-                    fileEffects(inputs,new StorageLayoutSemantics.Key(inputs.unitId(),statement.meta().id()),useOrdinal,dataByAst,operandIds,views)));
+                    fileEffects(inputs,new StorageLayoutSemantics.Key(inputs.unitId(),statement.meta().id()),useOrdinal,dataByAst,operandIds,views),fileControl(controls.get(Map.entry(statement.meta().id(),useOrdinal)),statementMap)));
             }
         }
         return new FileOperations(Availability.PARTIAL,uses,List.of("FILE_EFFECTS_CONTROL_PARTIAL"));
@@ -394,7 +417,7 @@ public final class CobolSemanticProductProjector {
         boolean entryInputKnown = origin != null && origin.inputProof().unaffectedBy(inputs.report().frontendState());
         Availability unavailable = inputMissing ? Availability.INPUT_MISSING : Availability.UNAVAILABLE;
         Optional<StatementId> start = Optional.empty();
-        if (origin != null && entryInputKnown && !declaratives && origin.startStatementId().isPresent()) {
+        if (origin != null && entryInputKnown && origin.startStatementId().isPresent()) {
             Ast.Node target = inputs.selectedSource().nodes().get(origin.startStatementId().get());
             require(target instanceof Ast.Statement, "canonical entry target is not a unit statement");
             StatementId id = statementIds.get((Ast.Statement) target);
@@ -447,7 +470,7 @@ public final class CobolSemanticProductProjector {
                         "primary entry start only; no sequence or reachability claim",
                         ReadinessStatus.BLOCKED, "entry state, storage and effects are not published"), gaps);
         List<String> inventoryGaps = new ArrayList<>(List.of("ALTERNATE_ENTRIES_NOT_PROJECTED"));
-        if (declaratives) inventoryGaps.add("DECLARATIVES_NOT_PROJECTED");
+        if (declaratives && inputs.products().storage().isEmpty()) inventoryGaps.add("DECLARATIVES_NOT_PROJECTED");
         if (inputMissing) inventoryGaps.add("ENTRY_INPUT_INCOMPLETE");
         return new EntryInventory(inputMissing ? InventoryStatus.INPUT_MISSING : InventoryStatus.PARTIAL,
                 List.of(entry), inventoryGaps);
@@ -1435,6 +1458,8 @@ public final class CobolSemanticProductProjector {
                     "direct IF child must retain its canonical branch");
             return CobolSemanticProduct.Containment.childOf(parent, position.branch());
         }
+        if(position.parent()!=null&&fileSurface(position.parent()).isPresent()&&position.branch()==Branch.FILE_HANDLER)
+            return CobolSemanticProduct.Containment.childOf(statementIds.get(position.parent()),Branch.FILE_HANDLER);
         return CobolSemanticProduct.Containment.unknown();
     }
 
@@ -1456,7 +1481,8 @@ public final class CobolSemanticProductProjector {
         } else if (position.parent() == null) {
             result = ContinuationProjection.end();
         } else if (position.parent() instanceof Ast.IfStatement
-                || position.parent() instanceof Ast.EvaluateStatement && position.branch()==Branch.EVALUATE_ARM) {
+                || position.parent() instanceof Ast.EvaluateStatement && position.branch()==Branch.EVALUATE_ARM
+                || position.parent()!=null&&fileSurface(position.parent()).isPresent()&&position.branch()==Branch.FILE_HANDLER) {
             StatementPosition parent = positionsByStatement.get(position.parent());
             require(parent != null, "IF parent has no canonical structural position");
             result = continuation(parent, statementIds, positionsByStatement, continuations);
@@ -2171,6 +2197,9 @@ public final class CobolSemanticProductProjector {
         for (Ast.Node child : Ast.children(node)) collectNodes(child, output);
     }
 
+    private static Optional<Ast.FileIoSurface> fileSurface(Ast.Statement s) {
+        return s instanceof Ast.ModeledStatement m?m.fileIo():s instanceof Ast.PreservedStatement p?p.fileIo():Optional.empty();
+    }
     private static List<StatementPosition> statements(Ast.Program program, EvaluateSemantics evaluates, ResolutionContracts.ProgramUnitId unit) {
         List<Ast.Statement> roots = new ArrayList<>();
         collectDirectStatements(program, roots);
@@ -2196,6 +2225,9 @@ public final class CobolSemanticProductProjector {
                         CobolSemanticProduct.Branch.ELSE, output, evaluates, unit);
             } else if (statement instanceof Ast.EvaluateStatement e && evaluates.fact(unit, e.meta().id()).supportedShape()) {
                 for (var arm : e.branches()) collectStatementGroup(arm.statements(), e, Branch.EVALUATE_ARM, output, evaluates, unit);
+            } else if(fileSurface(statement).isPresent()) {
+                for(var handler:fileSurface(statement).orElseThrow().handlers())
+                    collectStatementGroup(handler.clause().nestedStatements(),statement,Branch.FILE_HANDLER,output,evaluates,unit);
             } else {
                 List<Ast.Statement> nested = new ArrayList<>();
                 for (Ast.Node child : Ast.children(statement))

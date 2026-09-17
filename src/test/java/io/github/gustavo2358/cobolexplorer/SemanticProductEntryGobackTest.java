@@ -71,7 +71,7 @@ class SemanticProductEntryGobackTest {
         assertArrayEquals(bytes, SemanticProductJsonWriter.serialize(publish(source)));
         JsonNode json = new ObjectMapper().readTree(bytes);
         assertEquals("cobol-semantic-product", json.path("schema").asText());
-        assertEquals("2.24.0", json.path("contractVersion").asText());
+        assertEquals("2.25.0", json.path("contractVersion").asText());
         assertEquals("AIR-FIRST", json.path("unit").path("canonicalProgramName").asText());
         var entry = json.path("entryInventory").path("entries").get(0);
         var terminal = json.path("statements").get(0);
@@ -323,7 +323,7 @@ class SemanticProductEntryGobackTest {
     }
 
     @Test
-    void declarativesKeepInventoryAndStartOpen() {
+    void declarativesAreInventoriedAndPrimaryStartsOutsideTheirBody() {
         var port = publish(program("""
                 DECLARATIVES.
                 DEBUG-SECTION SECTION.
@@ -333,10 +333,14 @@ class SemanticProductEntryGobackTest {
                 END DECLARATIVES.
                     GOBACK.
                 """));
+        // This historical in-memory helper omits StorageAccessSemantics and its
+        // dispatch facts; entry identity is nevertheless proved by the typed AST.
         assertTrue(port.entryInventory().gapCodes().contains("DECLARATIVES_NOT_PROJECTED"));
         assertEquals(InventoryStatus.PARTIAL, port.coverage().inventoryStatus());
-        assertTrue(port.entries().get(0).start().statement().isEmpty());
-        assertEquals(ReadinessStatus.BLOCKED, port.entries().get(0).readiness().cfg().status());
+        var goback=port.statements().stream().filter(GobackFact.class::isInstance).findFirst().orElseThrow();
+        assertEquals(Optional.of(goback.header().id()),port.entries().get(0).start().statement());
+        assertEquals(ReadinessStatus.SUFFICIENT, port.entries().get(0).readiness().cfg().status());
+        assertTrue(port.fileInventory().declaratives().isEmpty());
     }
 
     @Test
