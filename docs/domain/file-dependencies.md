@@ -1,6 +1,6 @@
 # FILE-DEPENDENCIES — frontend / SP
 
-H4 aprovado; core N+C autorizado em 2026-09-16. W0–W7 qualificadas local; W8 em implementação; W10 não autorizado.
+H4 aprovado; core N+C autorizado em 2026-09-16. W0–W9 qualificadas local; W11 em qualificação; W10 não autorizado.
 [Campanha canônica](https://github.com/Gustavo2358/analysis-cfg/blob/feat/file-dependencies/docs/product/file-dependencies/README.md)
 (workspace: `../analysis-cfg/docs/product/file-dependencies/README.md`).
 Comece pelo brief e pelo item atual indicado no estado canônico.
@@ -370,3 +370,22 @@ Novo negativo COPY e focal21 PASS. FAST final352 e qualification-local final945
 qualification-3 conflitou com um build focal no mesmo target; falhas brutas foram
 preservadas e os gates finais repetidos sequencialmente. Somente a execução final
 sustenta este checkpoint corrigido.
+
+## FD-W11 — continuação FILE ao completar um parágrafo
+
+Corpus CBSTM03A.CBL demonstrou duas recusas no contrato PERFORM: o fact OBSERVED
+que representa o WRITE publicava ordinary como normalContinuation intrínseca.
+A correção usa a relação normal canônica do AST; o plano fileInventory.control
+continua publicando ordinary por outcome. Nenhum sucessor é reconstruído por
+posição, texto ou nome; contrato SP2.28/compilation1.0 e capability inalterados.
+
+Oracle reduzido: PERFORM WRITE-P THRU WRITE-END; WRITE REC FROM DEST ao fim de
+WRITE-P, EXIT no parágrafo seguinte. Intrinsic não atravessa o parágrafo; ordinary
+permanece explícita no plano FILE. RED antes da correção; focal32 PASS incluindo
+FILE control/sort/scope. Lower tem positivo bilateral e negativo de aresta ordinary
+indevidamente marcada intrinsic. Probe real CBSTM03A passa as quatro CLIs com
+PARTIAL explícito. Logs fd-w11/paragraph-*. FAST/Q e pins finais no harness W11.
+
+W11 remediação estabilizada: FAST352 PASS; qualification-local946 testes,
+zero falhas e um skip histórico, normalizer/naming PASS. Evidência em
+fd-w11/fast-2.log e qualification-2.log. Sem alteração de perfil/solver/efeitos.

@@ -432,7 +432,9 @@ public final class CobolSemanticProductProjector {
             return NormalContinuation.unavailable(provenance(source.meta().provenance()));
         for (var division : inputs.selectedSource().unit().program().divisions()) {
             if (division.divisionKind() != Ast.DivisionKind.PROCEDURE) continue;
-            var next = canonicalStatement(Optional.ofNullable((fileSurface(source).isPresent()?division.ordinaryContinuations():division.normalContinuations()).get(source.meta().id())), inputs, ids);
+            // Intrinsic completion is paragraph-local, including native FILE surfaces.
+            // The FILE outcome plan carries the separate ordinary continuation.
+            var next = canonicalStatement(Optional.ofNullable(division.normalContinuations().get(source.meta().id())), inputs, ids);
             if (next.isPresent()) return new NormalContinuation(ContinuationAvailability.KNOWN, next, provenance(source.meta().provenance()));
         }
         return NormalContinuation.unavailable(provenance(source.meta().provenance()));

@@ -7,6 +7,19 @@ import static io.github.gustavo2358.cobolexplorer.FileEffectsContractTest.publis
 import static io.github.gustavo2358.cobolexplorer.FileControlPlanTest.*;
 
 class FileControlContractTest {
+    @Test void paragraphFileCompletionKeepsIntrinsicAndOrdinaryContinuationsDistinct()throws Exception {
+        var p=publish(source("", "MAIN.\nPERFORM WRITE-P THRU WRITE-END.\nCALL 'AFTER'.\nGOBACK.\nWRITE-P.\nWRITE REC FROM DEST.\nWRITE-END.\nEXIT."));
+        var use=p.path("fileInventory").path("operations").path("uses").get(0);
+        var id=use.path("statement");
+        var statement=java.util.stream.StreamSupport.stream(p.path("statements").spliterator(),false)
+            .filter(s->s.path("header").path("id").equals(id)).findFirst().orElseThrow();
+        assertTrue(statement.path("normalContinuation").path("statement").isNull(),
+            "intrinsic paragraph completion cannot point into WRITE-END");
+        assertFalse(use.path("control").path("continuation").isNull(),
+            "ordinary FILE outcome continuation still reaches the next paragraph");
+        Files.createDirectories(Path.of("target/fd-w11"));
+        Files.writeString(Path.of("target/fd-w11/perform-file-paragraph.json"),p.toPrettyString());
+    }
     @Test void useBodyAndPrimaryEntrySurviveTransportWithConditionalDispatch()throws Exception {
         var p=publish(source(FILE_USE,"READ F INTO DEST\n AT END CALL 'EOFPGM' END-READ.\nCALL 'AFTER'."));
         assertEquals("2.28.0",p.path("contractVersion").asText());var inventory=p.path("fileInventory");assertEquals("1.6.0",inventory.path("version").asText());

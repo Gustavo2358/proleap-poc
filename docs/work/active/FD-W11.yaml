@@ -1,0 +1,8 @@
+id: FD-W11
+title: Corrigir continuação intrínseca FILE no limite de parágrafo PERFORM
+status: IN_PROGRESS
+scope: [file-dependencies, semantic-product]
+rule: O fact OBSERVED conserva continuação intrínseca; fileInventory.control publica separadamente continuação ordinária por outcome.
+oracle: FileControlContractTest.paragraphFileCompletionKeepsIntrinsicAndOrdinaryContinuationsDistinct; corpus CBSTM03A.CBL.
+motivation: W11 demonstrou recusa bilateral em dois WRITE no fim de parágrafo; ordinary foi emitida no campo intrinsic.
+evidence: RED/GREEN em .harness-results/fd-w11; qualificação e pins descendentes exigem atualização.
