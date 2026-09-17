@@ -1340,13 +1340,30 @@ public final class CobolSemanticProduct {
             require(availability==Availability.KNOWN?gapCodes.isEmpty()&&work>=0:!gapCodes.isEmpty(),"sort availability/gaps disagree");
             require(procedures.stream().map(FileProcedurePlan::phase).distinct().count()==procedures.size(),"duplicate sort procedure phase");}
     }
-    public record FileInventory(Availability availability, List<FileDeclaration> declarations, List<String> gapCodes, FileOperations operations,List<FileDeclarative> declaratives,List<FileSortPlan> sortPlans,Availability sortAvailability) {
+    public enum FileAuxKind { RERUN, SAME_AREA, SAME_RECORD_AREA, SAME_SORT_AREA, SAME_SORT_MERGE_AREA,
+        MULTIPLE_FILE, APPLY_WRITE_ONLY, COMMITMENT_CONTROL, RESERVE, PADDING, RECORD_DELIMITER,
+        PASSWORD, BLOCK, RECORD, LABEL_RECORDS, VALUE_OF, DATA_RECORDS, LINAGE, RECORDING_MODE, CODE_SET, REPORT }
+    public enum FileAuxEffect { DOCUMENTARY, RECORD_ALIAS, CONDITIONAL_RECORD_ALIAS, BUFFER_ALLOCATION, RECORD_LAYOUT,
+        PAGE_CONTROL, ACCESS_CHECK, CHECKPOINT, OUTSIDE_N_LR }
+    public enum FileTrigger { NONE, SORT_MERGE, RECORD_COUNT, END_VOLUME, UNSUPPORTED }
+    public record FileAuxParameter(String role,String value){public FileAuxParameter{requireText(role,"aux parameter role");Objects.requireNonNull(value);}}
+    public record FileAuxData(String role,NominalBinding binding,Provenance provenance){public FileAuxData{requireText(role,"aux data role");Objects.requireNonNull(binding);Objects.requireNonNull(provenance);}}
+    public record FileAuxReference(ResolutionStatus status,List<FileId> candidates,Provenance provenance){public FileAuxReference{Objects.requireNonNull(status);candidates=List.copyOf(candidates);Objects.requireNonNull(provenance);require(status!=ResolutionStatus.RESOLVED||candidates.size()==1,"aux resolved file cardinality");}}
+    public record FileAuxClause(String id,FileAuxKind kind,FileAuxEffect effect,List<FileAuxReference> fileReferences,List<FileAuxData> dataReferences,
+            List<FileAuxParameter> parameters,Optional<FileAssignment> checkpoint,FileTrigger trigger,List<String> gapCodes,Provenance provenance){
+        public FileAuxClause{requireText(id,"aux id");Objects.requireNonNull(kind);Objects.requireNonNull(effect);fileReferences=List.copyOf(fileReferences);dataReferences=List.copyOf(dataReferences);parameters=List.copyOf(parameters);Objects.requireNonNull(checkpoint);Objects.requireNonNull(trigger);gapCodes=List.copyOf(gapCodes);Objects.requireNonNull(provenance);
+            require((kind==FileAuxKind.RERUN)==(trigger!=FileTrigger.NONE),"aux trigger/kind mismatch");require(kind==FileAuxKind.RERUN||checkpoint.isEmpty(),"checkpoint on non-RERUN");
+            require(effect!=FileAuxEffect.OUTSIDE_N_LR||!gapCodes.isEmpty(),"unsupported auxiliary without gap");}}
+    public record FileAuxiliaryInventory(Availability availability,List<FileAuxClause> clauses,List<String> gapCodes){public FileAuxiliaryInventory{Objects.requireNonNull(availability);clauses=List.copyOf(clauses);gapCodes=List.copyOf(gapCodes);require(availability!=Availability.UNAVAILABLE||clauses.isEmpty(),"unavailable auxiliary clauses");require(availability==Availability.KNOWN?gapCodes.isEmpty():!gapCodes.isEmpty(),"aux inventory gaps");require(clauses.stream().map(FileAuxClause::id).distinct().count()==clauses.size(),"duplicate auxiliary id");}
+        public static FileAuxiliaryInventory unavailable(){return new FileAuxiliaryInventory(Availability.UNAVAILABLE,List.of(),List.of("FILE_AUXILIARY_UNAVAILABLE"));}}
+    public record FileInventory(Availability availability, List<FileDeclaration> declarations, List<String> gapCodes, FileOperations operations,List<FileDeclarative> declaratives,List<FileSortPlan> sortPlans,Availability sortAvailability,FileAuxiliaryInventory auxiliary) {
+        public FileInventory(Availability availability,List<FileDeclaration> declarations,List<String> gapCodes,FileOperations operations,List<FileDeclarative> declaratives,List<FileSortPlan> sortPlans,Availability sortAvailability){this(availability,declarations,gapCodes,operations,declaratives,sortPlans,sortAvailability,FileAuxiliaryInventory.unavailable());}
         public FileInventory(Availability availability,List<FileDeclaration> declarations,List<String> gapCodes,FileOperations operations,List<FileDeclarative> declaratives){this(availability,declarations,gapCodes,operations,declaratives,List.of(),Availability.UNAVAILABLE);}
         public FileInventory(Availability availability,List<FileDeclaration> declarations,List<String> gapCodes,FileOperations operations){this(availability,declarations,gapCodes,operations,List.of());}
         public FileInventory(Availability availability,List<FileDeclaration> declarations,List<String> gapCodes){this(availability,declarations,gapCodes,FileOperations.unavailable());}
         public FileInventory {
             Objects.requireNonNull(availability); declarations = List.copyOf(declarations); gapCodes = List.copyOf(gapCodes);Objects.requireNonNull(operations);declaratives=List.copyOf(declaratives);
-            sortPlans=List.copyOf(sortPlans);Objects.requireNonNull(sortAvailability);require(sortAvailability!=Availability.UNAVAILABLE||sortPlans.isEmpty(),"unavailable sort inventory has plans");
+            Objects.requireNonNull(auxiliary);sortPlans=List.copyOf(sortPlans);Objects.requireNonNull(sortAvailability);require(sortAvailability!=Availability.UNAVAILABLE||sortPlans.isEmpty(),"unavailable sort inventory has plans");
             require(availability == Availability.KNOWN ? gapCodes.isEmpty() : !gapCodes.isEmpty(), "file inventory availability/gaps mismatch");
             require(availability != Availability.UNAVAILABLE || declarations.isEmpty(), "unavailable file inventory has declarations");
         }
@@ -1360,6 +1377,10 @@ public final class CobolSemanticProduct {
             for (var record : file.records()) require(data.contains(record) && owned.add(record), "missing or multiply owned file record");
             for (var ref : file.references()) for (var candidate : ref.binding().candidates())
                 require(data.contains(candidate.id()), "file reference has no data declaration");
+        }
+        for(var clause:inventory.auxiliary().clauses()){
+            for(var ref:clause.fileReferences())for(var id:ref.candidates())require(!id.unit().equals(unit)||files.contains(id),"auxiliary file absent");
+            for(var ref:clause.dataReferences())for(var candidate:ref.binding().candidates())require(data.contains(candidate.id()),"auxiliary data absent");
         }
         var ids=new HashSet<StatementId>();for(var statement:statements)ids.add(statement.header().id());
         var declarativeIds=new HashSet<String>();

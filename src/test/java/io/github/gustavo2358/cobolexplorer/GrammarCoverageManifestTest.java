@@ -46,9 +46,9 @@ class GrammarCoverageManifestTest {
         Map<GrammarCoverageManifest.RuleKey, GrammarCoverageManifest.Entry> indexed = entries.stream()
                 .collect(Collectors.toMap(GrammarCoverageManifest.Entry::key, Function.identity()));
 
-        assertEquals(599, expected.stream().filter(key -> key.grammar() == GrammarCoverageManifest.Grammar.COBOL).count());
+        assertEquals(600, expected.stream().filter(key -> key.grammar() == GrammarCoverageManifest.Grammar.COBOL).count());
         assertEquals(31, expected.stream().filter(key -> key.grammar() == GrammarCoverageManifest.Grammar.PREPROCESSOR).count());
-        assertEquals(630, entries.size());
+        assertEquals(631, entries.size());
         assertEquals(entries.size(), indexed.size(), "manifest cannot contain duplicate grammar/rule keys");
         assertEquals(expected, indexed.keySet(), "grammar changes must be explicitly classified in the manifest");
         assertFalse(entries.stream().anyMatch(entry -> entry.rationale().isBlank()));

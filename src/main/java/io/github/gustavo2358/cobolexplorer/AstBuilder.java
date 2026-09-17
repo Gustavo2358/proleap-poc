@@ -198,6 +198,8 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
             children.add(new Ast.FileAreaSharing(meta(clause),kind,clause.fileName().stream()
                 .map(f->new Ast.FileReference(meta(f),clean(sourceText(f)),sourceText(f).strip())).toList()));
         }
+        for(var clause:nearestDescendants(context,CobolParser.IoControlClauseContext.class))if(clause.sameClause()==null)
+            children.addAll(auxiliarySyntax().clauses(clause));
         return new Ast.Division(meta, Ast.DivisionKind.ENVIRONMENT, children);
     }
 
@@ -234,8 +236,10 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
                         ? Ast.FileReferenceRole.FILE_STATUS : Ast.FileReferenceRole.ADDITIONAL_STATUS, dataReference(status), false));
             }
         }
-        return new Ast.FileControl(entry.selectClause().OPTIONAL() != null, name, organization, mode, refs);
+        return new Ast.FileControl(entry.selectClause().OPTIONAL() != null, name, organization, mode, refs,auxiliarySyntax().clauses(entry));
     }
+
+    private FileAuxiliarySyntax auxiliarySyntax(){return new FileAuxiliarySyntax(this::meta,this::dataReference,this::sourceText);}
 
     private Ast.FileRecordClause fileRecordClause(CobolParser.RecordContainsClauseContext clause) {
         CobolParser.IntegerLiteralContext minimum=null,maximum=null;
@@ -269,6 +273,7 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
                     ParserRuleContext fileName = fd.fileName();
                     var recordClauses=fd.fileDescriptionEntryClause().stream().map(CobolParser.FileDescriptionEntryClauseContext::recordContainsClause)
                         .filter(java.util.Objects::nonNull).map(this::fileRecordClause).toList();
+                    var auxiliary=auxiliarySyntax().clauses(fd);
                     List<Ast.DataEntry> dataEntries = new ArrayList<>();
                     dataEntries.addAll(buildDataHierarchy(fd.dataDescriptionEntry()));
                     entries.add(new Ast.FileDescription(fdMeta,
@@ -276,7 +281,7 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
                             fd.FD() != null ? Ast.FileKind.FD : Ast.FileKind.SD,
                             declarationVisibility(fdMeta,
                                     firstDescendant(fd, CobolParser.ExternalClauseContext.class) != null,
-                                    firstDescendant(fd, CobolParser.GlobalClauseContext.class) != null), dataEntries,recordClauses));
+                                    firstDescendant(fd, CobolParser.GlobalClauseContext.class) != null), dataEntries,recordClauses,auxiliary));
                 }
             } else {
                 entries.addAll(buildDataHierarchy(nearestDescendants(sectionContext,

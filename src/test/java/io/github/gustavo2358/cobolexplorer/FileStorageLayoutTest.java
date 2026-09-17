@@ -61,4 +61,15 @@ class FileStorageLayoutTest {
         assertTrue(f.source().resolution().entries().stream().anyMatch(e->e.occurrence().writtenText().equals("REC-LENGTH")
             &&e.occurrence().role()==ResolutionContracts.ReferenceRole.DECLARATION_RELATION&&e.status()==ResolutionContracts.ResolutionStatus.RESOLVED));
     }
+    @Test void sameAreaOnIndexedFilesHasVsamRecordAliasSemantics() {
+        var f=fixture("SELECT F ASSIGN TO INDD ORGANIZATION INDEXED\n RECORD KEY FK.\nSELECT G ASSIGN TO OUTDD\n ORGANIZATION INDEXED RECORD KEY GK.\nI-O-CONTROL.\n SAME AREA FOR F G.","FD F.\n01 F-REC.\n 02 FK PIC X(8).\nFD G.\n01 G-REC.\n 02 GK PIC X(8).","01 SAFE PIC X(8).");
+        assertEquals(f.view("F-REC").base(),f.view("G-REC").base());
+        assertNotEquals(f.view("F-REC").base(),f.view("SAFE").base());
+    }
+    @Test void sameAreaSequentialDoesNotProveQsamOrVsamAllocation() {
+        var f=fixture("SELECT F ASSIGN TO INDD.\nSELECT G ASSIGN TO OUTDD.\nI-O-CONTROL.\n SAME AREA FOR F G.","FD F.\n01 F-REC PIC X(8).\nFD G.\n01 G-REC PIC X(8).","01 SAFE PIC X(8).");
+        assertNotEquals(f.view("F-REC").base(),f.view("G-REC").base());
+        assertTrue(f.layout().bases().stream().noneMatch(Base::independent));
+    }
+
 }

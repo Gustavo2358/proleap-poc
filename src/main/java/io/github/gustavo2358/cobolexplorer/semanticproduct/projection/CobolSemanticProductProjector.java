@@ -236,7 +236,19 @@ public final class CobolSemanticProductProjector {
         }
         boolean missing = !inputs.report().inputComplete(inputs.unitId());
         return new FileInventory(missing ? Availability.INPUT_MISSING : Availability.KNOWN, result,
-                missing ? List.of("FILE_INPUT_INCOMPLETE") : List.of(), fileOperations(inputs,statementIds,dataIds,result,operandIds,dataByAst),fileDeclaratives(inputs,statementIds),fileSorts(inputs,statementIds),inputs.products().storage().isPresent()?Availability.KNOWN:Availability.UNAVAILABLE);
+                missing ? List.of("FILE_INPUT_INCOMPLETE") : List.of(), fileOperations(inputs,statementIds,dataIds,result,operandIds,dataByAst),fileDeclaratives(inputs,statementIds),fileSorts(inputs,statementIds),inputs.products().storage().isPresent()?Availability.KNOWN:Availability.UNAVAILABLE,fileAuxiliary(inputs,dataIds));
+    }
+    private static FileAuxiliaryInventory fileAuxiliary(ProjectionInputs inputs,Map<ResolutionContracts.SemanticEntityId,DataItemId> dataIds){
+        if(inputs.products().storage().isEmpty())return FileAuxiliaryInventory.unavailable();
+        var result=new ArrayList<FileAuxClause>();
+        for(var c:inputs.products().storage().orElseThrow().fileAuxiliary().clauses())if(c.id().unit().equals(inputs.unitId())){
+            var files=c.files().stream().map(f->new FileAuxReference(ResolutionStatus.valueOf(f.status().name()),f.candidates().stream().map(id->new FileId(new UnitId(id.programUnitId().compilationUnitId(),id.programUnitId().structuralPath(),id.programUnitId().canonicalProgramName()),id.localId())).toList(),provenance(f.origin()))).toList();
+            var data=new ArrayList<FileAuxData>();for(var d:c.data()){var entry=inputs.resolutionsByAst().get(new OccurrenceAstKey(inputs.unitId(),d.reference().meta().id()));
+                data.add(new FileAuxData(d.role(),entry==null?NominalBinding.incomplete(ResolutionStatus.INPUT_MISSING,ResolutionReason.INPUT_INCOMPLETE,List.of()):nominalBinding(entry,dataIds),provenance(d.reference().meta().provenance())));}
+            var assignment=c.checkpoint().map(n->new FileAssignment(n.form()==Ast.AssignmentForm.IBM_NAME?Availability.KNOWN:Availability.UNAVAILABLE,"ibm-enterprise-cobol-6.4-n-lr@2026-04-28",n.original(),n.form()==Ast.AssignmentForm.IBM_NAME?FileNameSource.ASSIGNMENT_NAME:n.form()==Ast.AssignmentForm.MISSING?FileNameSource.ABSENT:FileNameSource.UNSUPPORTED,Optional.ofNullable(n.externalFileName()),n.form()==Ast.AssignmentForm.IBM_NAME?List.of():List.of(n.form()==Ast.AssignmentForm.MISSING?"CHECKPOINT_TARGET_FORM_NOT_PROVEN":"ASSIGN_OUTSIDE_N_LR")));
+            result.add(new FileAuxClause("file-aux:"+c.id().node(),FileAuxKind.valueOf(c.kind().name()),FileAuxEffect.valueOf(c.effect().name()),files,data,c.parameters().stream().map(p->new FileAuxParameter(p.role(),p.value())).toList(),assignment,FileTrigger.valueOf(c.trigger().name()),c.gaps(),provenance(c.origin())));
+        }
+        return new FileAuxiliaryInventory(inputs.report().inputComplete(inputs.unitId())?Availability.KNOWN:Availability.INPUT_MISSING,result,inputs.report().inputComplete(inputs.unitId())?List.of():List.of("FILE_AUXILIARY_INPUT_INCOMPLETE"));
     }
     private static List<FileSortPlan> fileSorts(ProjectionInputs inputs,Map<Ast.Statement,StatementId> statements) {
         var ids=statementIdsByAst(statements);

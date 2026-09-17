@@ -1,6 +1,6 @@
 # FILE-DEPENDENCIES — frontend / SP
 
-H4 aprovado; core N+C autorizado em 2026-09-16. W0–W4 qualificadas local; W5 em implementação; W10 não autorizado.
+H4 aprovado; core N+C autorizado em 2026-09-16. W0–W5 qualificadas local; W6 em implementação; W10 não autorizado.
 [Campanha canônica](https://github.com/Gustavo2358/analysis-cfg/blob/feat/file-dependencies/docs/product/file-dependencies/README.md)
 (workspace: `../analysis-cfg/docs/product/file-dependencies/README.md`).
 Comece pelo brief e pelo item atual indicado no estado canônico.
@@ -250,3 +250,33 @@ FILE_OUTPUT_PROCEDURE_EMPTY para range de saída provadamente vazio; range de
 entrada vazio continua conhecido. A presença de endpoints não certifica restrições
 transitivas via CALL/GO TO/PERFORM. Focal13 e FAST336 PASS nesta correção;
 Q-SHARED910 anterior é REUSED para semântica compartilhada que não mudou.
+
+## FD-W6 — auxiliares N-LR / SP2.27
+
+Entrada W5 qualificada; oracle/regra em `../analysis-cfg/docs/product/file-dependencies/w6-implementation.md`.
+N-LR SC27-8713-03, 2026-04-28: RERUN/SAME/MULTIPLE/APPLY pp154–158,
+RESERVE/PADDING/DELIMITER/PASSWORD pp146–152, FD auxiliares pp181–192;
+LINAGE-COUNTER pp23–24. `fileInventory@1.6` conserva inventário auxiliar tipado:
+kind/effect, binding de arquivo/dados, parâmetros por papel, checkpoint/trigger,
+provenance/gaps. Metadata documental não cria statements nem escreve dados.
+
+Premissa LANGUAGE_GUARANTEED; classificação/extrator canônico antecedem projection.
+SAME AREA de INDEXED/RELATIVE permite união das bases pelo algoritmo existente;
+SEQUENTIAL mantém método de acesso indeterminado. SORT variants são documentais.
+PASSWORD no OPEN, LINAGE no OPEN OUTPUT/EXTEND e WRITE, comprimento DEPENDING
+na saída têm leituras conservadas; nenhum deles sobrescreve parâmetros.
+Contador LINAGE permanece valor não provado pelo motor geral, sem singleton antigo.
+RERUN sem EVERY preserva checkpoint sem SELECT e trigger SORT_MERGE. A forma
+END_VOLUME com primeiro nome também nominalmente FILE mantém target-form não
+provada, sem inventar assignment-name ou promover a OUT_OF_PROFILE. Outras
+restrições observáveis (recursive/contained/collision/profile) são gaps locais.
+
+Algoritmo: traversal/índices por unidade/identidade, união de componentes existente;
+sem lookup externo, parser downstream ou cutoff. Cada cláusula cresce com seus
+operandos; nomes globais de ASSIGN são indexados para a restrição de checkpoint.
+Oráculos FileAuxiliaryContractTest e FileStorageLayoutTest precedem produção;
+REDs/focais em `.harness-results/fd-w6`. Lower valida porta memory/wire coordenada.
+
+Checkpoint produtor W6: focal227, FAST336 e Q-SHARED926 PASS (um skip histórico
+previsto); manifesto APPLY corrigido após primeira Q. B-SP/E-SELECTED nos pins
+finais ainda em execução downstream; não são antecipados neste checkpoint.

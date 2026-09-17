@@ -46,7 +46,7 @@ class CicsProgramControlTest {
         var bytes=io.github.gustavo2358.cobolexplorer.semanticproduct.transport.SemanticProductJsonWriter.serialize(
             io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticPort.open(state));
         var json=new com.fasterxml.jackson.databind.ObjectMapper().readTree(bytes);
-        assertEquals("2.26.0",json.path("contractVersion").asText());assertEquals("CICS_PROGRAM_CONTROL",json.path("statements").get(0).path("variant").asText());
+        assertEquals("2.27.0",json.path("contractVersion").asText());assertEquals("CICS_PROGRAM_CONTROL",json.path("statements").get(0).path("variant").asText());
         var disabled=io.github.gustavo2358.cobolexplorer.semanticproduct.projection.CobolSemanticProductProjector.project(source,unit);
         assertTrue(disabled.statements().get(0) instanceof io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.ObservedStatement);
         if(System.getProperty("cics.fixture.output")!=null)java.nio.file.Files.write(java.nio.file.Path.of(System.getProperty("cics.fixture.output")),bytes);

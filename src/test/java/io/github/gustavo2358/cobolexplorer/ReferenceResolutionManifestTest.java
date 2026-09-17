@@ -21,7 +21,7 @@ class ReferenceResolutionManifestTest {
         Map<GrammarCoverageManifest.RuleKey, ReferenceResolutionManifest.Entry> indexed = entries.stream()
                 .collect(Collectors.toMap(ReferenceResolutionManifest.Entry::key, Function.identity()));
 
-        assertEquals(630, entries.size()); // includes the two existing bounded DLI grammar rules
+        assertEquals(631, entries.size()); // includes DLI and the N-LR APPLY WRITE-ONLY rule
         assertEquals(entries.size(), indexed.size());
         assertEquals(GrammarCoverageManifest.entries().stream().map(GrammarCoverageManifest.Entry::key).toList(),
                 entries.stream().map(ReferenceResolutionManifest.Entry::key).toList());

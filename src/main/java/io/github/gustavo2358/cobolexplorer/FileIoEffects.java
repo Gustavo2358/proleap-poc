@@ -39,6 +39,13 @@ public final class FileIoEffects {
                 boolean nativeProfile=surface.profile()==Ast.FileSyntaxProfile.N_LR&&file!=null&&file.description().kind()==(sortRecord?Ast.FileKind.SD:Ast.FileKind.FD)
                     &&(sortRecord||file.binding().control().assignment().form()==Ast.AssignmentForm.IBM_NAME);
                 if(file!=null&&(surface.command()==Ast.FileCommand.WRITE||surface.command()==Ast.FileCommand.REWRITE||surface.command()==Ast.FileCommand.RELEASE))reads.addAll(file.records());
+                if(file!=null){var auxiliary=new ArrayList<Ast.FileAuxiliary>(file.binding().control().auxiliary());auxiliary.addAll(file.description().auxiliary());
+                    for(var clause:auxiliary){boolean read=clause.kind()==Ast.FileAuxKind.RECORD&&(surface.command()==Ast.FileCommand.WRITE||surface.command()==Ast.FileCommand.REWRITE||surface.command()==Ast.FileCommand.RELEASE)
+                        ||clause.kind()==Ast.FileAuxKind.PASSWORD&&surface.command()==Ast.FileCommand.OPEN
+                        ||clause.kind()==Ast.FileAuxKind.LINAGE&&file.description().kind()==Ast.FileKind.FD&&(surface.command()==Ast.FileCommand.WRITE||surface.command()==Ast.FileCommand.OPEN&&(surface.files().get(op.ordinal()).mode()==Ast.FileOpenMode.OUTPUT||surface.files().get(op.ordinal()).mode()==Ast.FileOpenMode.EXTEND));
+                        if(read)for(var reference:clause.data()){var target=memory.target(new Key(unit,reference.reference().meta().id()));if(target.isPresent())reads.add(target.orElseThrow());else unknownRead=true;}
+                    }
+                }
                 for(var operand:surface.operands())if(operand.role()==Ast.FileOperandRole.KEY||operand.role()==Ast.FileOperandRole.ADVANCING) {
                     var target=memory.target(new Key(unit,operand.value().meta().id()));if(target.isPresent()){reads.add(target.orElseThrow());if(target.orElseThrow().wholeBase())unknownRead=true;}
                     else if(!(operand.value() instanceof Ast.LiteralExpression))unknownRead=true;

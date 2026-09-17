@@ -19,27 +19,31 @@ final class FileStorageGroups {
                     c.form()==Ast.FileRecordForm.FIXED&&c.minimum().filter(n->n.signum()==0).isPresent()))localOwners.add(fd.meta().id());
         }
         var byEntity=new HashMap<ResolutionContracts.SemanticEntityId,List<Integer>>();
+        var vsam=new HashSet<ResolutionContracts.SemanticEntityId>();
+        var controls=new HashMap<Integer,Ast.FileBinding>();for(var division:unit.program().divisions())for(var child:division.children())if(child instanceof Ast.FileBinding f)controls.put(f.meta().id(),f);
         if(tables!=null) {
             var table=tables.forProgramUnit(unit.id()).orElseThrow().symbolTable();
             for(var entity:table.entities())if(entity.kind()==SymbolTable.EntityKind.FILE) {
                 var fds=new ArrayList<Integer>();
-                for(var symbol:entity.declarationSymbolIds()) {var id=table.symbols().get(symbol).declarationAstNodeId();if(records.containsKey(id))fds.add(id);}
+                var entityId=new ResolutionContracts.SemanticEntityId(unit.id(),ResolutionContracts.SemanticEntityDomain.FILE_ENTITY,entity.id());
+                for(var symbol:entity.declarationSymbolIds()) {var id=table.symbols().get(symbol).declarationAstNodeId();if(records.containsKey(id))fds.add(id);if(FileAuxiliarySemantics.vsam(controls.get(id)))vsam.add(entityId);}
                 byEntity.put(new ResolutionContracts.SemanticEntityId(unit.id(),ResolutionContracts.SemanticEntityDomain.FILE_ENTITY,entity.id()),fds);
             }
         }
         var named=new HashSet<Integer>();
         for(var division:unit.program().divisions())for(var child:division.children())if(child instanceof Ast.FileAreaSharing sharing) {
-            // SORT/SORT-MERGE AREA do not establish record aliasing. AREA may share buffers
-            // depending on profile; until W6 it cannot certify allocation separation.
+            // IBM pp156–158: SORT variants are documentary. AREA equals RECORD for
+            // source-proven VSAM; sequential organization alone cannot distinguish access methods.
             if(sharing.kind()==Ast.FileAreaKind.SORT||sharing.kind()==Ast.FileAreaKind.SORT_MERGE)continue;
-            if(sharing.kind()!=Ast.FileAreaKind.RECORD){proved=false;continue;}
             var group=new ArrayList<Integer>();boolean valid=sharing.files().size()>=2;
             for(var reference:sharing.files()) {
                 var binding=bindings.get(reference.meta().id());
                 var owners=binding!=null&&binding.status()==ResolutionContracts.ResolutionStatus.RESOLVED
                     ?byEntity.getOrDefault(binding.candidates().get(0).entityId(),List.of()):List.<Integer>of();
                 if(owners.size()!=1){valid=false;continue;}
-                var owner=owners.get(0);if(!named.add(owner)||!localOwners.contains(owner))valid=false;group.add(owner);
+                var owner=owners.get(0);if(!named.add(owner)||!localOwners.contains(owner))valid=false;
+                if(sharing.kind()==Ast.FileAreaKind.AREA&&!vsam.contains(binding.candidates().get(0).entityId()))valid=false;
+                group.add(owner);
             }
             if(valid)for(int i=1;i<group.size();i++)union(parent,group.get(0),group.get(i));else proved=false;
         }

@@ -15,7 +15,7 @@ class FileDeclarationContractTest {
     @Test void selectAndFdAreOneDeclarationWithoutExecution() throws Exception {
         var json = publish("SELECT OPTIONAL CLIENTES ASSIGN TO CLIENTDD.",
                 "FD CLIENTES.\n01 REC PIC X(8).", "");
-        assertEquals("2.26.0", json.path("contractVersion").asText());
+        assertEquals("2.27.0", json.path("contractVersion").asText());
         var inventory = json.path("fileInventory");
         assertEquals("KNOWN", inventory.path("availability").asText());
         assertEquals(1, inventory.path("declarations").size());
