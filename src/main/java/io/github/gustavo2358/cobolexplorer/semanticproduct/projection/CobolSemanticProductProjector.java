@@ -407,7 +407,9 @@ public final class CobolSemanticProductProjector {
                     new StorageRelationId(inputs.boundaryUnit(),r.clause().meta().id()),storageNode(inputs,r.owner()),
                     r.from().map(id->storageNode(inputs,id)),r.through().map(id->storageNode(inputs,id)),
                     r.proved()?StorageRelationStatus.PROVEN:StorageRelationStatus.UNPROVEN,provenance(r.clause().meta().provenance()),
-                    r.proved()?List.of():List.of("RENAMES_NOT_PROVEN"))).toList(),initialStorage(inputs));
+                    r.proved()?List.of():List.of("RENAMES_NOT_PROVEN"))).toList(),initialStorage(inputs),
+                inputs.products().storage().get().layout().logicalViews().stream().filter(v->v.node().unit().equals(inputs.unitId()))
+                    .map(v->new LogicalTextView(storageNode(inputs,v.node()),storageNode(inputs,v.root()),v.start(),v.length())).toList());
     }
     private static StorageEntryState initialStorage(ProjectionInputs inputs) {
         var facts=inputs.products().storage().orElseThrow().initial().facts(inputs.unitId());
@@ -1219,7 +1221,8 @@ public final class CobolSemanticProductProjector {
                                     ReadinessStatus.PARTIAL, "general effects and dataflow are not published"))),
                     source,
                     new DataReference(new OperandId(statementId, 1), OperandRole.WRITE, binding,
-                            provenance(((Ast.DataReference) move.targets().get(0)).meta().provenance()), access, regionalAccess(inputs, move.targets().get(0).meta().id())),
+                            provenance(((Ast.DataReference) move.targets().get(0)).meta().provenance()), access, regionalAccess(inputs, move.targets().get(0).meta().id()),List.of(),
+                            inputs.products().storage().flatMap(st->st.logicalWholeItem(new StorageLayoutSemantics.Key(inputs.unitId(),move.targets().get(0).meta().id()))).map(dataIds::get)),
                     copy, continuation, semantic.adjustment().map(adjustment -> new TextAdjustment(
                             TextAdjustmentRule.RIGHT_PAD_SPACE, adjustment.receiverExtent(),
                             new TextValue(adjustment.result()), statementProvenance)), regionalMove(inputs, move.meta().id()));

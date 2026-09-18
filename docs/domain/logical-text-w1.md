@@ -1,0 +1,17 @@
+# Logical text W1 — contract proposal
+
+Status: IN_PROGRESS. Source-owned logical coordinates, independent of physical storage profile.
+
+An optional logical text inventory proves ordinary WORKING-STORAGE roots made exclusively of fixed PIC X/DISPLAY leaves and structural groups. Coordinates count logical character positions; they are not byte offsets, allocate no physical storage and imply no encoding. REDEFINES, RENAMES, OCCURS, opaque clauses, numeric/national/DBCS storage and uncertain input disqualify the affected root. Existing physical facts and guards remain unchanged.
+
+Each view retains the canonical storage node identity, root identity, nonnegative start and positive length. Parent and child extents come from the same canonical hierarchy and shape proof as StorageLayoutSemantics. No downstream component reconstructs COBOL layout.
+
+W1 translation uses existing AIR cells: each elementary item owns one logical cell; a literal written to an eligible parent is fitted to the parent's total length then sliced at the published child coordinates. No child-to-child group copy is authorized. Split literal assignments are adjacent in one sequence and evaluate no mutable source; no source-level observation is inserted between them. A group is never cached as a whole string that could become stale after a child write.
+
+Unknown writes/exposure to a parent must include its descendant cells; lack of precise access is uncertainty, never an empty effect. VALUE content remains subject to existing entry-state authority. W2 group copy/aliases require a separate capture/correlation decision.
+
+Authority: IBM Enterprise COBOL MOVE/group move rules, recorded in the campaign C0-C1. Logical text lengths use existing typed PIC X facts, not runtime bytes. Algorithm is two linear passes over canonical positions using existing shape and children indexes. Oracles: parent literal→child read, partial child write, overwrite, branch union; negative overlays/representation-sensitive declarations; scaling irrelevant roots.
+
+Opt-in: `--storage-profile unspecified --logical-text enabled`. Mixing logical mode with a selected physical profile is rejected. Disabled mode retains SP 2.28/storage 1.8. A nonempty logical proof publishes SP 2.29/storage 1.9, adding `logicalTextViews` (`node`, `root`, `start`, `length`) and precise operand `logicalWholeItem`. This is an SP extension, not an AIR schema change. The matching lower reader validates the hierarchy and complete leaf partition before admitting nested scalar cells. Old readers reject the new version rather than misinterpret it.
+
+W1 is locally qualified and ready for human review; lifecycle remains IN_PROGRESS until merge. On 2026-09-18 the user removed corporate execution as a blocking acceptance gate: the new semantic property is demonstrated by synthetic E2E fixtures, while the reported corporate ON/OFF experiment motivates the policy boundary. No corporate rerun or nine-target measurement is claimed. The product pivot makes downstream logical-only operational by default and physical propagation experimental/opt-in, with no automatic physical fallback. Open control remains explicit. The 10,000 irrelevant-group experiment is NOT_MEASURED_FOR_ANALYSIS because upstream AIR serialization exhausted its heap; it is not a W1 analysis blocker. No W2 or merge is authorized by this result.

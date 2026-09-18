@@ -31,6 +31,9 @@ public final class ExplorerMain {
                 argument(args, "--copybooks", "corpus/cpy,corpus/cpy-bms"));
         Path output = project.resolve(argument(args, "--output", "dist"));
         var storageProfile = storageProfile(argument(args, "--storage-profile", "unspecified"));
+        boolean logicalText=switch(argument(args,"--logical-text","disabled")) {
+            case "enabled"->true;case "disabled"->false;default->throw new IllegalArgumentException("unsupported --logical-text mode");
+        };
         var entryMode=entryStorageState(argument(args,"--entry-storage-state","unknown"));
         var cicsMode=cicsEntryMode(argument(args,"--cics-entry-mode","unknown"));
 
@@ -39,7 +42,7 @@ public final class ExplorerMain {
         try (AnalysisLogContext logContext = AnalysisLogContext.open(source)) {
             LOG.info("event=analysis_started phase=ANALYSIS output={}", output);
             try {
-                analyze(source, copybooks, output, logContext, progress, analysisStarted, storageProfile,entryMode,cicsMode);
+                analyze(source, copybooks, output, logContext, progress, analysisStarted, storageProfile,entryMode,cicsMode,logicalText);
             } catch (Exception exception) {
                 LOG.error("event=analysis_failed phase={} elapsedMs={} reason={} impact=NO_RESULT",
                         progress.phase, elapsedMs(analysisStarted), exception.getClass().getSimpleName(), exception);
@@ -50,7 +53,7 @@ public final class ExplorerMain {
 
     private static void analyze(Path source, List<Path> copybooks, Path output,
                                 AnalysisLogContext logContext, AnalysisProgress progress,
-                                long analysisStarted, StorageLayoutSemantics.Profile storageProfile,StorageInitialSemantics.EntryMode entryMode,CicsProgramControlAnalyzer.EntryMode cicsMode) throws Exception {
+                                long analysisStarted, StorageLayoutSemantics.Profile storageProfile,StorageInitialSemantics.EntryMode entryMode,CicsProgramControlAnalyzer.EntryMode cicsMode,boolean logicalText) throws Exception {
 
         GrammarBinding binding = Bindings.cobol();
         List<Diagnostic> diagnostics = new ArrayList<>();
@@ -217,7 +220,7 @@ public final class ExplorerMain {
                 output.resolve("observed-dependencies.json"));
         progress.phase = "SEMANTIC_PRODUCT";
         long semanticProductStarted = System.nanoTime();
-        var compilationProduct=publishCompilationSemanticProduct(compilationBuild,symbolTables,occurrences,resolution,resolutionReport,storageProfile,entryMode,cicsMode);
+        var compilationProduct=io.github.gustavo2358.cobolexplorer.semanticproduct.projection.CompilationSemanticProductProjector.project(semanticProducts(compilationBuild,symbolTables,occurrences,resolution,resolutionReport,storageProfile,entryMode,cicsMode,logicalText));
         io.github.gustavo2358.cobolexplorer.semanticproduct.transport.CompilationSemanticProductJsonWriter.write(compilationProduct,output.resolve("cobol-semantic-compilation.json"));
         CobolSemanticPort semanticProduct=compilationProduct.units().get(0).product();
         SemanticProductJsonWriter.write(semanticProduct,
@@ -316,8 +319,11 @@ public final class ExplorerMain {
         return io.github.gustavo2358.cobolexplorer.semanticproduct.projection.CompilationSemanticProductProjector.project(semanticProducts(frontend,symbolTables,occurrences,resolution,report,storageProfile,entryMode,cicsMode));
     }
     private static CobolSemanticProductProjector.FrontendProducts semanticProducts(CompilationUnitBuildResult frontend,CompilationUnitSymbolTables symbolTables,Map<ResolutionContracts.ProgramUnitId,ReferenceOccurrences> occurrences,ReferenceResolution resolution,ResolutionAnalysisReport report,StorageLayoutSemantics.Profile storageProfile,StorageInitialSemantics.EntryMode entryMode,CicsProgramControlAnalyzer.EntryMode cicsMode){
+        return semanticProducts(frontend,symbolTables,occurrences,resolution,report,storageProfile,entryMode,cicsMode,false);
+    }
+    private static CobolSemanticProductProjector.FrontendProducts semanticProducts(CompilationUnitBuildResult frontend,CompilationUnitSymbolTables symbolTables,Map<ResolutionContracts.ProgramUnitId,ReferenceOccurrences> occurrences,ReferenceResolution resolution,ResolutionAnalysisReport report,StorageLayoutSemantics.Profile storageProfile,StorageInitialSemantics.EntryMode entryMode,CicsProgramControlAnalyzer.EntryMode cicsMode,boolean logicalText){
         var components=StorageComponents.analyze(frontend,symbolTables,resolution);
-        var layout=StorageLayoutSemantics.analyze(frontend,symbolTables,resolution,report,storageProfile,components);
+        var layout=StorageLayoutSemantics.analyze(frontend,symbolTables,resolution,report,storageProfile,components,logicalText);
         var cics=new CicsProgramControlAnalyzer().analyze(frontend,report,cicsMode);
         var storage=StorageAccessSemantics.analyze(frontend,resolution,layout,entryMode,cics);
         return new CobolSemanticProductProjector.FrontendProducts(frontend,symbolTables,occurrences,resolution,report,
