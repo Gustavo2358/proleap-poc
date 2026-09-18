@@ -1202,8 +1202,10 @@ public final class CobolSemanticProductProjector {
                         nominalBinding(read, dataIds), provenance(move.source().meta().provenance()),
                         semantic.sourceWholeItem().map(entity -> new WholeItemAccess(
                                 Objects.requireNonNull(dataIds.get(entity), "source whole item must be published"))), regionalAccess(inputs, move.source().meta().id()),List.of(),
-                        inputs.products().storage().map(st->st.move(new StorageLayoutSemantics.Key(inputs.unitId(),move.meta().id())))
-                            .filter(m->m.kind()==StorageAccessSemantics.MoveKind.LOGICAL_FIT_TEXT).flatMap(m->m.source().map(a->dataIds.get(a.entity()))));
+                        inputs.products().storage().flatMap(st -> st.logicalWholeItem(new StorageLayoutSemantics.Key(inputs.unitId(),move.source().meta().id()))
+                            .or(() -> Optional.of(st.move(new StorageLayoutSemantics.Key(inputs.unitId(),move.meta().id())))
+                                .filter(m->m.kind()==StorageAccessSemantics.MoveKind.LOGICAL_FIT_TEXT).flatMap(m->m.source().map(StorageAccessSemantics.Access::entity))))
+                            .map(dataIds::get));
                 bindingCoverage = weakest(bindingCoverage, bindingCoverage(read));
             }
             CobolSemanticProduct.CoverageStatus coverage = weakest(

@@ -121,7 +121,11 @@ public final class StorageLayoutSemantics {
                 }
             }
             if(logicalText&&input&&!attributes.initial()&&!attributes.recursive()&&!attributes.common()&&!attributes.library()&&!attributes.definition())
-                logicalViews.addAll(logical(unit.id(),physical,shapes));
+                {
+                var textViews=logical(unit.id(),physical,shapes);
+                logicalViews.addAll(textViews);
+                logicalViews.addAll(StorageRenames.logical(unit.id(),physical,resolution,entities,coverage,nodes,textViews));
+            }
             var renames=StorageRenames.prove(unit.id(),physical,resolution,entities,coverage,nodes,views);
             if(renames.stream().anyMatch(r->!r.proved())) {
                 reasons.add(Reason.RENAMES_NOT_PROVEN);
@@ -134,31 +138,32 @@ public final class StorageLayoutSemantics {
         return new StorageLayoutSemantics(layouts,Map.of("declarations",declarations,"layoutVisits",visits,"objectPairs",0L),frontend,resolution,tables,logicalViews);
     }
     private static List<LogicalView> logical(ResolutionContracts.ProgramUnitId unit,StorageComponents.Unit structure,Map<Integer,Shape> shapes) {
-        // Reuse canonical positions, components and shape proofs. No AST rebuild, aliases or codec.
+        // The same source components/shape/footprint algorithm, in character coordinates only.
         var excluded=new HashSet<Integer>();
-        for(var p:structure.renames())excluded.add(p.root());
-        for(var p:structure.positions()) {
-            var shape=shapes.get(p.data().meta().id());
-            if(!shape.supported()||p.data().clauses().stream().anyMatch(c->c instanceof Ast.RedefinesClause)
-                    ||structure.componentOf().get(p.data().meta().id()).members().size()!=1)excluded.add(p.root());
-        }
+        for(var p:structure.positions())if(!shapes.get(p.data().meta().id()).supported()||structure.uncertainRoots().contains(p.root()))excluded.add(p.root());
         var accepted=new HashSet<Integer>();
-        for(var root:structure.roots())if(!excluded.contains(root.meta().id())&&structure.standaloneIndependent(root.meta().id()))accepted.add(root.meta().id());
-        var lengths=new HashMap<Integer,BigInteger>();var ordered=structure.positions();
+        for(var c:structure.rootComponents())if(structure.structureProven()&&structure.rootRelationsProven()
+                &&c.members().stream().noneMatch(excluded::contains)&&c.members().stream().allMatch(id->structure.allocation(id).proved()))accepted.addAll(c.members());
+        var extents=new HashMap<Integer,Measure>();var ordered=structure.positions();
         for(int i=ordered.size()-1;i>=0;i--) {
             var p=ordered.get(i);if(!accepted.contains(p.root()))continue;
-            int id=p.data().meta().id();var shape=shapes.get(id);
-            var length=shape.leafExtent().orElse(BigInteger.ZERO);
-            if(shape.kind()==Kind.GROUP)for(var child:structure.children().get(id))length=length.add(lengths.get(child.representative()));
-            lengths.put(id,length);
+            int id=p.data().meta().id();var shape=shapes.get(id);var length=shape.leafExtent().orElse(BigInteger.ZERO);
+            if(shape.kind()==Kind.GROUP)for(var c:structure.children().get(id))length=length.add(footprint(c,extents).value().orElseThrow());
+            extents.put(id,Measure.known(length));
+        }
+        var families=new HashMap<Integer,Integer>();
+        for(var c:structure.rootComponents())if(accepted.contains(c.representative())) {
+            int root=c.members().stream().max(Comparator.<Integer,BigInteger>comparing(id->extents.get(id).value().orElseThrow()).thenComparing(Comparator.reverseOrder())).orElseThrow();
+            for(int member:c.members())families.put(member,root);
         }
         var starts=new HashMap<Integer,BigInteger>();for(int root:accepted)starts.put(root,BigInteger.ZERO);
         var result=new ArrayList<LogicalView>();
         for(var p:ordered) {
             if(!accepted.contains(p.root()))continue;int id=p.data().meta().id();var start=starts.get(id);
-            result.add(new LogicalView(new Key(unit,id),new Key(unit,p.root()),start,lengths.get(id)));
-            var cursor=start;for(var child:structure.children().get(id)) {
-                starts.put(child.representative(),cursor);cursor=cursor.add(lengths.get(child.representative()));
+            result.add(new LogicalView(new Key(unit,id),new Key(unit,families.get(p.root())),start,extents.get(id).value().orElseThrow()));
+            var cursor=start;for(var c:structure.children().get(id)) {
+                for(var child:c.members())starts.put(child,cursor);
+                cursor=cursor.add(footprint(c,extents).value().orElseThrow());
             }
         }
         return result;

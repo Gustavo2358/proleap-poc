@@ -17,6 +17,20 @@ class LogicalTextDefaultTest {
         ExplorerMain.main(args.toArray(String[]::new));
         return new ObjectMapper().readTree(out.resolve("cobol-semantic-product.json").toFile());
     }
+    @Test void groupAndRenamesSourcesPublishWholeLogicalReference() throws Exception {
+        var source=work.resolve("sources.cbl");
+        var program=ScalarMoveCheckpoint4ATest.program("01 REC-A.\n05 PART-A PIC X(4).\n05 PART-B PIC X(4).\n66 RANGE-A RENAMES PART-A THRU PART-B.\n01 DEST-A PIC X(8).",
+            "MOVE REC-A TO DEST-A.\nMOVE RANGE-A TO DEST-A.\nGOBACK.");
+        Files.writeString(source,program.lines().map(line->"       "+line).collect(java.util.stream.Collectors.joining("\n","","\n")));
+        var out=work.resolve("sources");
+        ExplorerMain.main(new String[]{"--source",source.toString(),"--copybooks",work.toString(),"--output",out.toString()});
+        var sp=new ObjectMapper().readTree(out.resolve("cobol-semantic-product.json").toFile());
+        for(int i=0;i<2;i++) {
+            var ref=sp.path("statements").get(i).path("source").path("reference");
+            assertEquals(ref.path("binding").path("selected").asText(),ref.path("logicalWholeItem").asText());
+            assertTrue(ref.path("regionalAccess").isNull());
+        }
+    }
     @Test void normalCommandPublishesLogicalProof() throws Exception {
         var sp=run("default");
         assertEquals("UNSPECIFIED",sp.path("storage").path("profile").asText());
