@@ -31,7 +31,8 @@ public final class ExplorerMain {
                 argument(args, "--copybooks", "corpus/cpy,corpus/cpy-bms"));
         Path output = project.resolve(argument(args, "--output", "dist"));
         var storageProfile = storageProfile(argument(args, "--storage-profile", "unspecified"));
-        boolean logicalText=switch(argument(args,"--logical-text","disabled")) {
+        boolean logicalText=switch(argument(args,"--logical-text","auto")) {
+            case "auto"->storageProfile==StorageLayoutSemantics.Profile.UNSPECIFIED;
             case "enabled"->true;case "disabled"->false;default->throw new IllegalArgumentException("unsupported --logical-text mode");
         };
         var entryMode=entryStorageState(argument(args,"--entry-storage-state","unknown"));
