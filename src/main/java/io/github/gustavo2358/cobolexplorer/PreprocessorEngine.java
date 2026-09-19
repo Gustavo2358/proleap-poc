@@ -48,8 +48,10 @@ final class PreprocessorEngine {
                    List<CompilerOption> compilerOptions,
                    ResolutionContracts.PgmnameMode pgmnameMode,
                    ResolutionContracts.DynamMode dynamMode,
-                   ResolutionContracts.DllMode dllMode, SourceMap sourceMap) {
+                   ResolutionContracts.DllMode dllMode, SourceMap sourceMap, List<SourceDependencyFact> sourceDependencies, List<String> sourceDependencyGaps) {
         Outcome {
+            sourceDependencies = List.copyOf(sourceDependencies);
+            sourceDependencyGaps=List.copyOf(sourceDependencyGaps);
             diagnostics = List.copyOf(diagnostics);
             compilerOptions = List.copyOf(compilerOptions);
             pgmnameMode = Objects.requireNonNull(pgmnameMode, "pgmnameMode");
@@ -68,13 +70,19 @@ final class PreprocessorEngine {
     private static final class LogSummary {
         private int cycles;
         private int ioFailures;
+        private final Set<String> sourceDependencyGaps = new TreeSet<>();
     }
 
     private final GrammarBinding binding;
     private final CopybookLibrary library;
+    private final SourceArtifactInventory inventory;
 
     PreprocessorEngine(GrammarBinding binding, CopybookLibrary library) {
-        this.binding = binding; this.library = library;
+        this(binding,library,SourceArtifactInventory.empty());
+    }
+
+    PreprocessorEngine(GrammarBinding binding, CopybookLibrary library, SourceArtifactInventory inventory) {
+        this.binding=binding;this.library=library;this.inventory=inventory;
     }
 
     Outcome process(SourceMap normalized, String file) {
@@ -82,9 +90,10 @@ final class PreprocessorEngine {
         List<CompilerOption> compilerOptions = new ArrayList<>();
         int[] toleratedPreprocessorDiagnostics = {0};
         LogSummary logSummary = new LogSummary();
+        List<SourceDependencyFact> sourceDependencies = new ArrayList<>();
         SourceMap document = processRecursive(normalized, file,
                 diagnostics, compilerOptions, toleratedPreprocessorDiagnostics,
-                new HashSet<>(), logSummary);
+                new HashSet<>(), logSummary, sourceDependencies, List.of(), null);
         long errors = diagnostics.stream().filter(d -> d.phase() == Diagnostic.Phase.PREPROCESSOR)
                 .count() - toleratedPreprocessorDiagnostics[0];
         ResolutionContracts.PgmnameMode pgmnameMode = compilerOptions.stream()
@@ -117,13 +126,14 @@ final class PreprocessorEngine {
                     file, logSummary.ioFailures);
         }
         return new Outcome(document.text(), Math.toIntExact(errors),
-                diagnostics, compilerOptions, pgmnameMode, dynamMode, dllMode, document);
+                diagnostics, compilerOptions, pgmnameMode, dynamMode, dllMode, document, sourceDependencies, List.copyOf(logSummary.sourceDependencyGaps));
     }
 
     private SourceMap processRecursive(SourceMap document, String file, List<Diagnostic> diagnostics,
                                        List<CompilerOption> compilerOptions,
                                        int[] toleratedPreprocessorDiagnostics,
-                                       Set<Path> expansionStack, LogSummary logSummary) {
+                                       Set<Path> expansionStack, LogSummary logSummary, List<SourceDependencyFact> sourceDependencies,
+                                       List<Ast.CopyFrame> includeChain, Ast.SourceLocation rootSite) {
         String source = document.text();
         UnicodeText indexedSource = new UnicodeText(source);
         Lexer lexer = binding.preprocessorLexer(CharStreams.fromString(source, file));
@@ -177,7 +187,17 @@ final class PreprocessorEngine {
                 edits.add(new Edit(start, end, document.transformedSlice(
                         start, end, blankPreservingLineBreaks(original))));
             } else if (policy == PreprocessorPolicy.EXPAND_COPY) {
+                if (!proved(context)) throw new IllegalArgumentException("Unproved COPY occurrence");
                 String requested = copySourceName(context, parser.getRuleNames(), indexedSource);
+                var copySourceContext = directRuleChild(context, parser.getRuleNames(), "copySource");
+                var qualifier = directRuleChild(copySourceContext, parser.getRuleNames(), "copyLibrary");
+                String qualification = qualifier == null ? "" : unquote(sourceText(qualifier, indexedSource).trim());
+                var originalProvenance = document.provenance(start, end);
+                var dependencyProvenance = new Ast.SourceProvenance(originalProvenance.expanded(), originalProvenance.original(), includeChain, originalProvenance.exact());
+                var dependencyRoot = rootSite == null ? originalProvenance.original() : rootSite;
+                int occurrenceIndex = sourceDependencies.size();
+                sourceDependencies.add(new SourceDependencyFact(SourceDependencyFact.Kind.COPYBOOK, requested, qualification,
+                    SourceDependencyFact.Resolution.UNRESOLVED, "", "COPY_SYNTAX", dependencyProvenance, dependencyRoot));
                 Optional<Path> path = library.resolve(requested);
                 if (path.isEmpty()) {
                     LOG.trace("event=copy_resolution source={} phase=PREPROCESSING requested={} line={} status=UNRESOLVED reason=NOT_FOUND fallback=KEEP_UNRESOLVED_PLACEHOLDER",
@@ -193,6 +213,8 @@ final class PreprocessorEngine {
                             "*> UNRESOLVED COPY " + requested + "\n").withInputGap(missing)));
                 } else if (!expansionStack.add(path.get().toAbsolutePath().normalize())) {
                     logSummary.cycles++;
+                    sourceDependencies.set(occurrenceIndex, new SourceDependencyFact(SourceDependencyFact.Kind.COPYBOOK, requested, qualification,
+                        SourceDependencyFact.Resolution.CYCLIC, "", "COPY_SYNTAX", dependencyProvenance, dependencyRoot));
                     LOG.trace("event=copy_resolution source={} phase=PREPROCESSING requested={} line={} status=CYCLIC reason=EXPANSION_CYCLE fallback=KEEP_CYCLIC_PLACEHOLDER",
                             file, requested, startToken.getLine());
                     toleratedPreprocessorDiagnostics[0]++;
@@ -206,9 +228,14 @@ final class PreprocessorEngine {
                         LOG.trace("event=copy_resolved source={} phase=PREPROCESSING requested={} line={} includedFile={}",
                                 file, requested, startToken.getLine(), includedFile);
                         SourceMap copySource = library.readNormalized(path.get());
+                        var nestedChain = new ArrayList<>(includeChain);
+                        nestedChain.add(new Ast.CopyFrame(file, requested, includedFile, originalProvenance.original().startLine()));
+                        sourceDependencies.set(occurrenceIndex, new SourceDependencyFact(SourceDependencyFact.Kind.COPYBOOK, requested, qualification,
+                            qualification.isEmpty() ? SourceDependencyFact.Resolution.RESOLVED : SourceDependencyFact.Resolution.UNRESOLVED,
+                            qualification.isEmpty() ? includedFile : "", "COPY_SYNTAX", dependencyProvenance, dependencyRoot));
                         SourceMap copyText = processRecursive(copySource, includedFile,
                                 diagnostics, compilerOptions,
-                                toleratedPreprocessorDiagnostics, expansionStack, logSummary);
+                                toleratedPreprocessorDiagnostics, expansionStack, logSummary, sourceDependencies, nestedChain, dependencyRoot);
                         List<CopyReplacement> replacements = copyReplacements(
                                 context, parser.getRuleNames(), indexedSource);
                         for (CopyReplacement replacement : replacements) {
@@ -224,6 +251,8 @@ final class PreprocessorEngine {
                         edits.add(new Edit(start, end, copyText.withCopyFrame(frame)));
                     } catch (IOException e) {
                         logSummary.ioFailures++;
+                        sourceDependencies.set(occurrenceIndex, new SourceDependencyFact(SourceDependencyFact.Kind.COPYBOOK, requested, qualification,
+                            SourceDependencyFact.Resolution.IO_ERROR, "", "COPY_SYNTAX", dependencyProvenance, dependencyRoot));
                         LOG.trace("event=copy_resolution source={} phase=PREPROCESSING requested={} line={} status=IO_FAILURE reason={}",
                                 file, requested, startToken.getLine(), e.getClass().getSimpleName());
                         diagnostics.add(sourceDiagnostic(document, Diagnostic.Phase.IO,
@@ -235,6 +264,24 @@ final class PreprocessorEngine {
                     }
                 }
             } else if (policy == PreprocessorPolicy.PRESERVE_EMBEDDED_LANGUAGE) {
+                if (rule.equals("execSqlStatement")) {
+                    var significant = tokens.getTokens(startToken.getTokenIndex(), stopToken.getTokenIndex()).stream()
+                        .filter(t -> t.getChannel()==Token.DEFAULT_CHANNEL && !t.getText().isBlank()).toList();
+                    int count = significant.size();
+                    if(count>0 && significant.get(count-1).getText().equals("."))count--;
+                    if(proved(context) && count==5 && significant.get(2).getText().equalsIgnoreCase("INCLUDE")
+                            && "IDENTIFIER".equals(parser.getVocabulary().getSymbolicName(significant.get(3).getType()))
+                            && significant.get(4).getText().equalsIgnoreCase("END-EXEC")) {
+                        String name = SourceDependencyFact.canonical(significant.get(3).getText());
+                        var p = document.provenance(start,end);
+                        boolean builtin = name.equals("SQLCA")||name.equals("SQLDA");
+                        sourceDependencies.add(inventory.classify(new SourceDependencyFact(SourceDependencyFact.Kind.SQL_INCLUDE,name,"",
+                            SourceDependencyFact.Resolution.UNRESOLVED,"",builtin?"BUILTIN_SQL_INCLUDE":"UNKNOWN",
+                            new Ast.SourceProvenance(p.expanded(),p.original(),includeChain,p.exact()),rootSite==null?p.original():rootSite)));
+                    } else if(count>2 && significant.get(2).getText().equalsIgnoreCase("INCLUDE")) {
+                        logSummary.sourceDependencyGaps.add("SQL_INCLUDE_FORM_UNPROVED");
+                    }
+                }
                 if (rule.equals("execDliStatement")) {
                     // A lexer-owned real token is the oracle, never a recovered END-EXEC.
                     if (context.getChildCount() != 1 || !(context.getChild(0) instanceof TerminalNode terminal)
@@ -281,6 +328,14 @@ final class PreprocessorEngine {
         return document.replaceAll(edits.stream()
                 .map(edit -> new SourceMap.Replacement(edit.start(), edit.end(), edit.replacement()))
                 .toList());
+    }
+
+    private static boolean proved(ParseTree tree) {
+        if(tree instanceof ErrorNode)return false;
+        if(tree instanceof TerminalNode terminal && terminal.getSymbol().getTokenIndex()<0)return false;
+        if(tree instanceof ParserRuleContext context && context.exception!=null)return false;
+        for(int i=0;i<tree.getChildCount();i++)if(!proved(tree.getChild(i)))return false;
+        return true;
     }
 
     private Diagnostic sourceDiagnostic(SourceMap document, Diagnostic.Phase phase,

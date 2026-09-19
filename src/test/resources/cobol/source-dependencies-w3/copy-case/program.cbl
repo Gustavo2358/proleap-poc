@@ -1,0 +1,8 @@
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID. PROGA.
+       DATA DIVISION.
+       WORKING-STORAGE SECTION.
+       copy cpy001.
+       COPY CPY001.
+       PROCEDURE DIVISION.
+           GOBACK.

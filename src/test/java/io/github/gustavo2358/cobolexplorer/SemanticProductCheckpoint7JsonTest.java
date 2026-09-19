@@ -323,7 +323,14 @@ class SemanticProductCheckpoint7JsonTest {
         Path artifact = output.resolve("semantic-product.json");
         assertTrue(Files.isRegularFile(artifact));
         byte[] actual = Files.readAllBytes(artifact);
-        assertArrayEquals(SemanticProductJsonWriter.serialize(publishFixture()), actual);
+        var legacy=publishFixture();
+        var completeSource=io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticPort.open(
+            new io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.State(
+                legacy.unit(),legacy.policy(),legacy.dataDeclarations(),legacy.statements(),legacy.gaps(),legacy.coverage(),
+                legacy.entryInventory(),legacy.storageIndependence(),legacy.storage(),legacy.fileInventory(),
+                new io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.SourceDependencyInventory(
+                    io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.Availability.KNOWN,List.of(),List.of())));
+        assertArrayEquals(SemanticProductJsonWriter.serialize(completeSource), actual);
         assertInternalReferences(parse(actual));
     }
 
