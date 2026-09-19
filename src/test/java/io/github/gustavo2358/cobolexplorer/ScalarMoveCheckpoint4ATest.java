@@ -124,7 +124,9 @@ class ScalarMoveCheckpoint4ATest {
             var port = publish(program(c[0], "MOVE 'PROGA' TO " + c[1] + ".\nGOBACK."));
             assertEquals(1, port.moves().size(), Arrays.toString(c));
             assertTrue(port.moves().get(0).target().wholeItemAccess().isEmpty(), Arrays.toString(c));
-            assertEquals(CopySemantics.UNAVAILABLE, port.moves().get(0).copySemantics(), Arrays.toString(c));
+            var possible=Set.of(2,3,4).contains(cases.indexOf(c));
+            assertEquals(possible?CopySemantics.POSSIBLE_TEXT:CopySemantics.UNAVAILABLE, port.moves().get(0).copySemantics(), Arrays.toString(c));
+            if(possible){assertTrue(port.moves().get(0).target().logicalWholeItem().isPresent());assertEquals("PROGA",port.moves().get(0).textAdjustment().orElseThrow().result().value());}
         }
         for (var storage : List.of("LINKAGE", "LOCAL-STORAGE")) {
             var port = publish(program("01 WS-X PIC X(5).", "MOVE 'PROGA' TO WS-X.\nGOBACK.").replace("WORKING-STORAGE", storage));
@@ -249,7 +251,8 @@ class ScalarMoveCheckpoint4ATest {
                 a.build(), a.tables(), a.occurrences(), a.resolution(), report, semantics), a.model().programUnits().get(0).id());
         assertTrue(port.dataDeclarations().get(0).scalarText().isEmpty());
         assertTrue(port.moves().get(0).target().wholeItemAccess().isEmpty());
-        assertEquals(CopySemantics.UNAVAILABLE, port.moves().get(0).copySemantics());
+        assertEquals(CopySemantics.POSSIBLE_TEXT, port.moves().get(0).copySemantics());
+        assertTrue(port.moves().get(0).target().logicalWholeItem().isPresent());
         assertEquals(ContinuationAvailability.UNAVAILABLE, port.moves().get(0).normalContinuation().availability());
     }
 

@@ -16,7 +16,7 @@ class StorageProductTest {
         var f=a.source();
         return CobolSemanticProductProjector.project(new CobolSemanticProductProjector.FrontendProducts(
             f.build(),f.tables(),f.occurrences(),f.resolution(),f.report(),
-            ScalarMoveSemantics.analyze(f.build(),f.tables(),f.resolution(),f.report()),Optional.of(a.effects())),f.model().programUnits().get(0).id());
+            ScalarMoveSemantics.analyze(f.build(),f.tables(),f.resolution(),f.report(),StorageComponents.analyze(f.build(),f.tables(),f.resolution()),Optional.of(a.effects())),Optional.of(a.effects())),f.model().programUnits().get(0).id());
     }
     static State state(String data,String code) { return state(data,code,StorageLayoutSemantics.Profile.IBM_ENTERPRISE_6_4_FIXED_DISPLAY_1047); }
     static State group() { return state("01 WS-AREA.\n05 PREFIX-PART PIC X(2).\n05 FILLER PIC X(2).\n05 WS-PGM PIC X(4).", "MOVE 'ABCDEFGH' TO WS-AREA.\nCALL WS-PGM."); }
@@ -124,7 +124,7 @@ class StorageProductTest {
         var a=StorageAccessTest.fixture("01 WS-PGM PIC X(4).","CALL WS-PGM.");
         var b=StorageAccessTest.fixture("01 WS-PGM PIC X(8).","CALL WS-PGM.");var f=a.source();
         assertThrows(IllegalArgumentException.class,()->new CobolSemanticProductProjector.FrontendProducts(f.build(),f.tables(),f.occurrences(),f.resolution(),f.report(),
-            ScalarMoveSemantics.analyze(f.build(),f.tables(),f.resolution(),f.report()),Optional.of(b.effects())));
+            ScalarMoveSemantics.analyze(f.build(),f.tables(),f.resolution(),f.report(),StorageComponents.analyze(f.build(),f.tables(),f.resolution()),Optional.of(a.effects())),Optional.of(b.effects())));
         var p=ExplorerMain.publishSemanticProduct(f.model().programUnits().get(0).id(),f.build(),f.tables(),f.occurrences(),f.resolution(),f.report(),
             StorageLayoutSemantics.Profile.IBM_ENTERPRISE_6_4_FIXED_DISPLAY_1047);
         assertTrue(((DataReference)p.calls().get(0).target()).regionalAccess().isPresent());

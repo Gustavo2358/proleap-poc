@@ -318,7 +318,7 @@ public final class CobolSemanticProduct {
     }
     /** FULL_IDENTITY guarantees mandatory whole receiving-item overwrite without
      * conversion, padding or truncation. UNAVAILABLE makes no copy claim. */
-    public enum CopySemantics { FULL_IDENTITY, FITTED_TEXT, UNAVAILABLE }
+    public enum CopySemantics { FULL_IDENTITY, FITTED_TEXT, POSSIBLE_TEXT, UNAVAILABLE }
     public enum TextAdjustmentRule { RIGHT_PAD_SPACE }
     public record TextAdjustment(TextAdjustmentRule rule, int receiverExtent,
                                  TextValue result, Provenance provenance) {
@@ -1012,11 +1012,18 @@ public final class CobolSemanticProduct {
             Objects.requireNonNull(regionalMove);
             copySemantics = Objects.requireNonNull(copySemantics);
             textAdjustment = Objects.requireNonNull(textAdjustment);
-            require((copySemantics == CopySemantics.FITTED_TEXT) == textAdjustment.isPresent(),
+            require((copySemantics == CopySemantics.FITTED_TEXT || copySemantics == CopySemantics.POSSIBLE_TEXT) == textAdjustment.isPresent(),
                     "fitted copy requires adjustment; identity/unavailable omit it");
             if (copySemantics == CopySemantics.FITTED_TEXT)
                 require(source instanceof LiteralSource literal && literal.logicalValue().isPresent() && target.wholeItemAccess().isPresent(),
                         "fitting requires logical source and whole scalar target");
+            if(copySemantics==CopySemantics.POSSIBLE_TEXT) {
+                require(source instanceof LiteralSource literal&&literal.logicalValue().isPresent()&&target.logicalWholeItem().isPresent(),"possible text requires a whole logical receiver and literal");
+                var text=((LiteralSource)source).logicalValue().orElseThrow();
+                var adjustment=textAdjustment.orElseThrow();
+                require(text.logicalExtent()<=adjustment.receiverExtent(),"possible text cannot truncate");
+                require(adjustment.result().value().equals(text.value()+" ".repeat(adjustment.receiverExtent()-text.logicalExtent())),"possible text requires exact right padding");
+            }
             normalContinuation = Objects.requireNonNull(normalContinuation);
             if (copySemantics == CopySemantics.FULL_IDENTITY)
                 require((source instanceof LiteralSource literal && literal.logicalValue().isPresent()
@@ -1831,7 +1838,7 @@ public final class CobolSemanticProduct {
             }
             require(declaration.scalarText().orElseThrow().logicalExtent() == extent, "identity copy requires equal extents");
         }
-        if (statement instanceof MoveFact move && move.textAdjustment().isPresent()) {
+        if (statement instanceof MoveFact move && move.copySemantics()==CopySemantics.FITTED_TEXT) {
             var adjustment = move.textAdjustment().orElseThrow();
             var declaration = declarations.get(move.target().wholeItemAccess().orElseThrow().data());
             require(declaration != null && declaration.scalarText().isPresent(), "fitting requires scalar declaration");
