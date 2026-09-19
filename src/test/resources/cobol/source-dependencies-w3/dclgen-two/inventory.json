@@ -1,0 +1,15 @@
+{
+  "version": "1.0.0",
+  "artifacts": [
+    {
+      "name": "DCLCLI",
+      "kind": "DCLGEN",
+      "artifact": "copybooks/DCLCLI.cpy"
+    },
+    {
+      "name": "DCLCTA",
+      "kind": "DCLGEN",
+      "artifact": "copybooks/DCLCTA.cpy"
+    }
+  ]
+}

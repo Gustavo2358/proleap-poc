@@ -1,0 +1,12 @@
+{
+  "tables": [],
+  "remainder": true,
+  "sqlStatements": 1,
+  "locations": [
+    {
+      "file": "program.cbl",
+      "line": 7,
+      "relationship": "DIRECT"
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "tables": [
+    "CLIENTE:SELECT:READ",
+    "CLIENTE:SELECT:READ"
+  ],
+  "remainder": false,
+  "sqlStatements": 2,
+  "locations": [
+    {
+      "file": "program.cbl",
+      "line": 7,
+      "relationship": "DIRECT"
+    },
+    {
+      "file": "program.cbl",
+      "line": 10,
+      "relationship": "DIRECT"
+    }
+  ]
+}

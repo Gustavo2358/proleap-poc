@@ -73,7 +73,19 @@ public final class CobolSemanticProductProjector {
             CompilationUnitSymbolTables symbolTables,
             Map<ResolutionContracts.ProgramUnitId, ReferenceOccurrences> occurrencesByUnit,
             ReferenceResolution resolution,
-            ResolutionAnalysisReport report, ScalarMoveSemantics scalarMoves, Optional<StorageAccessSemantics> storage, Optional<io.github.gustavo2358.cobolexplorer.CicsProgramControlAnalyzer.Contribution> cics, io.github.gustavo2358.cobolexplorer.FileScopeSemantics fileScope) {
+            ResolutionAnalysisReport report, ScalarMoveSemantics scalarMoves, Optional<StorageAccessSemantics> storage, Optional<io.github.gustavo2358.cobolexplorer.CicsProgramControlAnalyzer.Contribution> cics, io.github.gustavo2358.cobolexplorer.FileScopeSemantics fileScope,
+            Map<ResolutionContracts.ProgramUnitId,io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.SourceDependencyInventory> sourceDependencies) {
+        public FrontendProducts(CompilationUnitBuildResult frontend, CompilationUnitSymbolTables symbolTables,
+                Map<ResolutionContracts.ProgramUnitId, ReferenceOccurrences> occurrencesByUnit, ReferenceResolution resolution,
+                ResolutionAnalysisReport report, ScalarMoveSemantics scalarMoves, Optional<StorageAccessSemantics> storage,
+                Optional<io.github.gustavo2358.cobolexplorer.CicsProgramControlAnalyzer.Contribution> cics,
+                io.github.gustavo2358.cobolexplorer.FileScopeSemantics fileScope) {
+            this(frontend,symbolTables,occurrencesByUnit,resolution,report,scalarMoves,storage,cics,fileScope,Map.of());
+        }
+        public FrontendProducts withSourceDependencies(List<io.github.gustavo2358.cobolexplorer.SourceDependencyFact> facts,List<String> gaps) {
+            return new FrontendProducts(frontend,symbolTables,occurrencesByUnit,resolution,report,scalarMoves,storage,cics,fileScope,
+                io.github.gustavo2358.cobolexplorer.SourceDependencySemantics.associate(frontend,facts,gaps));
+        }
         public FrontendProducts(CompilationUnitBuildResult frontend, CompilationUnitSymbolTables symbolTables, Map<ResolutionContracts.ProgramUnitId, ReferenceOccurrences> occurrencesByUnit, ReferenceResolution resolution, ResolutionAnalysisReport report, ScalarMoveSemantics scalarMoves, Optional<StorageAccessSemantics> storage, Optional<io.github.gustavo2358.cobolexplorer.CicsProgramControlAnalyzer.Contribution> cics) {
             this(frontend,symbolTables,occurrencesByUnit,resolution,report,scalarMoves,storage,cics,io.github.gustavo2358.cobolexplorer.FileScopeSemantics.analyze(symbolTables));
         }
@@ -88,6 +100,7 @@ public final class CobolSemanticProductProjector {
             this(frontend, symbolTables, occurrencesByUnit, resolution, report, scalarMoves, Optional.empty());
         }
         public FrontendProducts {
+            sourceDependencies=Map.copyOf(sourceDependencies);
             Objects.requireNonNull(cics);
             if(cics.isPresent()&&!cics.get().belongsTo(frontend))throw new IllegalArgumentException("CICS snapshot belongs to another frontend");
             Objects.requireNonNull(storage);
@@ -196,7 +209,7 @@ public final class CobolSemanticProductProjector {
                 inventoryStatus, statements, inputs.unitSummary());
         return new ScopedProjection(new CobolSemanticProduct.State(inputs.boundaryUnit(),
                 policy(inputs.report().policy()), declarations.facts(),
-                statements, gaps, coverage, entries, storageIndependence(inputs, declarations.ids()), storage(inputs, declarations.ids()), files(inputs, declarations.ids(), statementIds, observedOperandIds)),java.util.Collections.unmodifiableMap(new LinkedHashMap<>(declarations.ids())));
+                statements, gaps, coverage, entries, storageIndependence(inputs, declarations.ids()), storage(inputs, declarations.ids()), files(inputs, declarations.ids(), statementIds, observedOperandIds),products.sourceDependencies().getOrDefault(unitId,io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.SourceDependencyInventory.unavailable())),java.util.Collections.unmodifiableMap(new LinkedHashMap<>(declarations.ids())));
     }
 
     private static FileInventory files(ProjectionInputs inputs, Map<ResolutionContracts.SemanticEntityId, DataItemId> dataIds, Map<Ast.Statement,StatementId> statementIds,Map<Integer,OperandId> operandIds) {
