@@ -23,7 +23,7 @@ final class Db2SourceExtractor {
     static Result extract(String sql) {
         try {
             var x=new Db2SourceExtractor(tokenize(sql));
-            if(x.tokens.isEmpty())fail();
+            if(x.tokens.isEmpty()||x.tokens.stream().anyMatch(t->t.text().equals(";")))fail();
             if(x.at(0,"PREPARE")||x.at(0,"EXECUTE"))throw new Unproved("DYNAMIC_SQL_NOT_ANALYZED");
             // Existing INCLUDE classification remains the sole authority for these facts.
             if((x.at(0,"BEGIN")||x.at(0,"END"))&&x.tokens.size()==3&&x.at(1,"DECLARE")&&x.at(2,"SECTION"))return new Result(List.of(),List.of());
@@ -121,7 +121,7 @@ final class Db2SourceExtractor {
         while(i<sql.length()) {
             char c=sql.charAt(i);if(Character.isWhitespace(c)){i++;continue;}
             if(c=='-'&&i+1<sql.length()&&sql.charAt(i+1)=='-'){while(i<sql.length()&&sql.charAt(i)!='\n')i++;continue;}
-            if(c=='/'&&i+1<sql.length()&&sql.charAt(i+1)=='*'){int stop=sql.indexOf("*/",i+2);if(stop<0)fail();i=stop+2;continue;}
+            if(c=='/'&&i+1<sql.length()&&sql.charAt(i+1)=='*'){int stop=sql.indexOf("*/",i+2);if(stop<0)fail();int nested=sql.indexOf("/*",i+2);if(nested>=0&&nested<stop)throw new Unproved("DB2_NESTED_COMMENT_UNSUPPORTED");i=stop+2;continue;}
             if(c=='\''||c=='"') {
                 char quote=c;i++;boolean closed=false;while(i<sql.length()){if(sql.charAt(i++)==quote){if(i<sql.length()&&sql.charAt(i)==quote){i++;continue;}closed=true;break;}}
                 if(!closed)fail();if(quote=='"')throw new Unproved("DB2_DELIMITED_IDENTIFIER_UNSUPPORTED");result.add(new Token("<literal>",false));continue;

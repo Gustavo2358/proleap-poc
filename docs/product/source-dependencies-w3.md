@@ -138,3 +138,5 @@ Producer qualification: focused extractor/provenance tests and full FAST PASS (3
 Initial implementation checkpoint extraction median at 10/100/1000 statements: 0.133/0.364/1.933 ms; 1000 occurrences/100 unique: 1.923 ms.
 
 Adversarial closeout: empty/comment-only SQL and unknown BEGIN compounds are incomplete; only exact BEGIN/END DECLARE SECTION markers are classified as non-query delimiters.
+
+Lexical boundary: nested bracketed comments open DB2_NESTED_COMMENT_UNSUPPORTED, rather than exposing their internal text as SQL. Multiple semicolon-separated statements within one EXEC SQL region are unsupported and incomplete. Two additional source adversarial fixtures cover these boundaries.

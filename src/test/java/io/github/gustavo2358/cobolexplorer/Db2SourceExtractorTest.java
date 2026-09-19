@@ -40,6 +40,7 @@ class Db2SourceExtractorTest {
         for(int i=0;i<1000;i++)tables("SELECT * FROM T"+i,"T"+i+":SELECT:READ");
         tables("WITH A AS (SELECT * FROM REALTABLE) SELECT * FROM A","REALTABLE:SELECT:READ");
         tables("SELECT * FROM A","A:SELECT:READ");
+        gap("SELECT * FROM REALTABLE /* /* */ JOIN FAKE ON 1=1 */");gap("COMMIT; SELECT * FROM HIDDEN");
         gap("");gap("/* FROM FAKE */");gap("BEGIN ATOMIC SELECT * FROM HIDDEN END");
         tables("BEGIN DECLARE SECTION");tables("END DECLARE SECTION");
         gap("WITH RECURSIVE A AS (SELECT * FROM A) SELECT * FROM A");
