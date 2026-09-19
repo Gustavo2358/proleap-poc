@@ -23,10 +23,11 @@ final class Db2SourceExtractor {
     static Result extract(String sql) {
         try {
             var x=new Db2SourceExtractor(tokenize(sql));
-            if(x.tokens.isEmpty())return new Result(List.of(),List.of());
+            if(x.tokens.isEmpty())fail();
             if(x.at(0,"PREPARE")||x.at(0,"EXECUTE"))throw new Unproved("DYNAMIC_SQL_NOT_ANALYZED");
             // Existing INCLUDE classification remains the sole authority for these facts.
-            if(x.at(0,"INCLUDE")||x.at(0,"BEGIN")||x.at(0,"END")||x.at(0,"WHENEVER")||x.at(0,"COMMIT")||x.at(0,"ROLLBACK")||x.at(0,"OPEN")||x.at(0,"CLOSE")||x.at(0,"FETCH"))return new Result(List.of(),List.of());
+            if((x.at(0,"BEGIN")||x.at(0,"END"))&&x.tokens.size()==3&&x.at(1,"DECLARE")&&x.at(2,"SECTION"))return new Result(List.of(),List.of());
+            if(x.at(0,"INCLUDE")||x.at(0,"WHENEVER")||x.at(0,"COMMIT")||x.at(0,"ROLLBACK")||x.at(0,"OPEN")||x.at(0,"CLOSE")||x.at(0,"FETCH"))return new Result(List.of(),List.of());
             x.statement(0,x.tokens.size(),Set.of(),0);
             return new Result(List.copyOf(x.tables),List.of());
         } catch(Unproved e){return new Result(List.of(),List.of(e.gap));}

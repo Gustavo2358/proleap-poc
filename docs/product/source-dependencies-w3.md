@@ -135,4 +135,6 @@ Primary language references: [IBM CTE](https://www.ibm.com/docs/en/db2-for-zos/1
 
 Producer qualification: focused extractor/provenance tests and full FAST PASS (382 tests).
 31 source DB2 fixtures traversed the real pipeline successfully; final repeated integrated qualification is recorded in the stacked PR.
-Extraction median at 10/100/1000 statements: 0.133/0.364/1.933 ms; 1000 occurrences/100 unique: 1.923 ms.
+Initial implementation checkpoint extraction median at 10/100/1000 statements: 0.133/0.364/1.933 ms; 1000 occurrences/100 unique: 1.923 ms.
+
+Adversarial closeout: empty/comment-only SQL and unknown BEGIN compounds are incomplete; only exact BEGIN/END DECLARE SECTION markers are classified as non-query delimiters.
