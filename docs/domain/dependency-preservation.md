@@ -56,3 +56,12 @@ canonical CICS whole reference, and exclusion of repeated/sliced/JUSTIFIED recei
 `StorageProductTest` supplies the same physical access facts to scalar analysis and
 projection as the production pipeline; strong regional contracts retain their version.
 These tests are included in FAST.
+
+## Unknown layout and REDEFINES
+
+For B REDEFINES A, MOVE PROGA to B followed by MOVE PROGB to A does not give the
+nominal fallback physical alias/overwrite authority. With unavailable layout, B's
+PROGA remains a possibility with remainder; PROGB is not copied to B merely because
+of source names or a REDEFINES clause. UnknownBinding retains the unenumerated
+alias effect. Strong physical proof may refine this result, but is not invented.
+The frontend and lower-produced AIR consumer fixture freeze this boundary.

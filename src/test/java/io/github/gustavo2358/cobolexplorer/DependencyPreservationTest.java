@@ -25,4 +25,17 @@ class DependencyPreservationTest {
             assertTrue(target.logicalWholeItem().isEmpty());
         }
     }
+    @Test void redefinesWithoutLayoutRetainsSeparateNominalEvidence() throws Exception {
+        var state=CicsProgramControlTest.regional("COPY MISSINGDP.\n01 A PIC X(8).\n01 B REDEFINES A PIC X(8).",
+            "MOVE 'PROGA' TO B.\nMOVE 'PROGB' TO A.\nEXEC CICS XCTL PROGRAM(B) END-EXEC.");
+        var first=(MoveFact)state.statements().get(0);var second=(MoveFact)state.statements().get(1);
+        assertEquals(CopySemantics.POSSIBLE_TEXT,first.copySemantics());
+        assertEquals(CopySemantics.POSSIBLE_TEXT,second.copySemantics());
+        assertNotEquals(first.target().logicalWholeItem(),second.target().logicalWholeItem());
+        assertTrue(first.target().regionalAccess().isEmpty());assertTrue(second.target().regionalAccess().isEmpty());
+        var target=(DataReference)((CicsFact)state.statements().get(2)).target().orElseThrow();
+        assertEquals(first.target().logicalWholeItem(),target.logicalWholeItem());
+        CicsProgramControlTest.emit("dependency-preservation-redefines",state);
+    }
+
 }
