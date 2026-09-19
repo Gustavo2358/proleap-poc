@@ -11,17 +11,17 @@ public final class SourceDependencySemantics {
             CompilationUnitBuildResult frontend,List<SourceDependencyFact> facts,List<String> sourceGaps) {
         var collected=new LinkedHashMap<ResolutionContracts.ProgramUnitId,List<SourceDependencyInventory.Occurrence>>();
         var units=frontend.compilationUnit().programUnits();
-        var byFile=new HashMap<String,TreeMap<Integer,CompilationUnitModel.ProgramUnit>>();
+        var byFile=new HashMap<String,TreeMap<Long,CompilationUnitModel.ProgramUnit>>();
         for(var unit:units) {
             collected.put(unit.id(),new ArrayList<>());
             var location=unit.program().meta().provenance().original();
-            byFile.computeIfAbsent(location.file(),unused->new TreeMap<>()).put(location.startLine(),unit);
+            byFile.computeIfAbsent(location.file(),unused->new TreeMap<>()).put(position(location.startLine(),location.startColumn()),unit);
         }
         for(var fact:facts) {
             var source=fact.rootSite();var index=byFile.get(source.file());
-            var entry=index==null?null:index.floorEntry(source.startLine());
+            var entry=index==null?null:index.floorEntry(position(source.startLine(),source.startColumn()));
             var owner=entry==null?null:entry.getValue();
-            while(owner!=null && source.endLine()>owner.program().meta().provenance().original().endLine())
+            while(owner!=null && position(source.endLine(),source.endColumn())>end(owner.program().meta().provenance().original()))
                 owner=owner.parentId()==null?null:frontend.compilationUnit().find(owner.parentId()).orElse(null);
             if(owner==null)throw new IllegalArgumentException("SOURCE_DEPENDENCY_OWNER_UNPROVED: nominal occurrence cannot be assigned safely");
             var target=collected.get(owner.id());var p=fact.provenance();
@@ -42,5 +42,7 @@ public final class SourceDependencySemantics {
         }
         return Map.copyOf(result);
     }
+    private static long position(int line,int column){return ((long)line<<32)+(column&0xffffffffL);}
+    private static long end(Ast.SourceLocation p){return position(p.endLine(),p.endColumn());}
     private static Location location(Ast.SourceLocation p){return new Location(p.file(),p.startLine(),p.startColumn(),p.endLine(),p.endColumn());}
 }

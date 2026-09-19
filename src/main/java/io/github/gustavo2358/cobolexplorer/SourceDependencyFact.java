@@ -13,6 +13,11 @@ public record SourceDependencyFact(Kind kind, String name, String qualification,
         name=canonical(name); qualification=canonical(qualification);
         Objects.requireNonNull(artifact); Objects.requireNonNull(authority);
         Objects.requireNonNull(provenance); Objects.requireNonNull(rootSite);
+        // This directive no longer exists after expansion. Name its local normalized
+        // snapshot explicitly, rather than claiming a position in the final global text.
+        var local=provenance.expanded();
+        provenance=new Ast.SourceProvenance(new Ast.SourceLocation("preprocessing:"+provenance.original().file(),
+            local.startLine(),local.startColumn(),local.endLine(),local.endColumn()),provenance.original(),provenance.includeChain(),provenance.exact());
         if(name.isBlank()||authority.isBlank())throw new IllegalArgumentException("source dependency needs name and authority");
         if((kind==Kind.DCLGEN)!=authority.equals("CONFIGURED_DCLGEN"))throw new IllegalArgumentException("DCLGEN requires positive inventory authority");
         if((resolution==Resolution.RESOLVED)==artifact.isBlank())throw new IllegalArgumentException("resolved dependency needs artifact");

@@ -25,6 +25,8 @@ class SourceDependencyProducerTest {
         assertEquals(List.of("A","B"),facts.stream().map(SourceDependencyFact::name).toList());
         assertEquals("program.cbl",facts.get(0).provenance().original().file());
         assertEquals("A.cpy",facts.get(1).provenance().original().file());
+        assertEquals("preprocessing:program.cbl",facts.get(0).provenance().expanded().file());
+        assertEquals("preprocessing:A.cpy",facts.get(1).provenance().expanded().file());
         assertEquals("A",facts.get(1).provenance().includeChain().get(0).requestedName());
         assertTrue(facts.stream().allMatch(f->f.resolution()==SourceDependencyFact.Resolution.RESOLVED));
     }
@@ -77,5 +79,27 @@ class SourceDependencyProducerTest {
         var outcome=process("EXEC SQL INCLUDE 'FAKE' END-EXEC\nEXEC SQL INCLUDE A B END-EXEC\n");
         assertTrue(outcome.sourceDependencies().isEmpty());
         assertEquals(List.of("SQL_INCLUDE_FORM_UNPROVED"),outcome.sourceDependencyGaps());
+    }
+    @Test void sourceOwnershipDistinguishesProgramsOnTheSamePhysicalLine() {
+        var a=new ResolutionContracts.ProgramUnitId("source",List.of(0),"A");
+        var b=new ResolutionContracts.ProgramUnitId("source",List.of(1),"B");
+        var pa=program("A",0,40);var pb=program("B",41,80);
+        var model=new CompilationUnitModel("source",List.of(new CompilationUnitModel.ProgramUnit(a,null,pa),new CompilationUnitModel.ProgramUnit(b,null,pb)));
+        var coverage=new HashMap<ResolutionContracts.ProgramUnitId,SemanticCoverage.Report>();coverage.put(a,null);coverage.put(b,null);
+        var frontend=new CompilationUnitBuildResult(model,coverage,Map.of(a,List.of(),b,List.of()));
+        var la=new Ast.SourceLocation("program.cbl",1,20,1,25);var lb=new Ast.SourceLocation("program.cbl",1,60,1,65);
+        var facts=List.of(fact("CA",la),fact("CB",lb));
+        var result=SourceDependencySemantics.associate(frontend,facts,List.of());
+        assertEquals("CA",result.get(a).occurrences().get(0).name());
+        assertEquals("CB",result.get(b).occurrences().get(0).name());
+        var outside=new Ast.SourceLocation("outside.cbl",1,0,1,5);
+        assertThrows(IllegalArgumentException.class,()->SourceDependencySemantics.associate(frontend,List.of(fact("X",outside)),List.of()));
+    }
+    private static SourceDependencyFact fact(String name,Ast.SourceLocation location) {
+        return new SourceDependencyFact(SourceDependencyFact.Kind.COPYBOOK,name,"",SourceDependencyFact.Resolution.UNRESOLVED,"","COPY_SYNTAX",new Ast.SourceProvenance(location,location,List.of(),true),location);
+    }
+    private static Ast.Program program(String name,int start,int end) {
+        var location=new Ast.SourceLocation("program.cbl",1,start,1,end);
+        return new Ast.Program(new Ast.Meta(start,new Ast.SourceSpan(1,start,1,end,0,0),new Ast.ParseTreeOrigin(0,"programUnit",1),new Ast.SourceProvenance(location,location,List.of(),true)),name,List.of());
     }
 }

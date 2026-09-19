@@ -73,6 +73,9 @@ Nested COPY is program-centric with original source ownership: PROGRAM -> A is
 DIRECT; A -> B is represented by B's occurrence in A, with include chain A and
 TRANSITIVE program relationship downstream. Repeated expansions retain distinct
 occurrence identities and supports; nominal aggregation happens downstream.
+The expanded field names a local normalized snapshot `preprocessing:<source>`,
+not a position in the final expanded compilation where the directive no longer
+exists. Snapshots from different files have distinct artifact identities.
 Original line/span is captured before replacing the COPY directive, not recovered
 from expanded content. Provenance exactness has its existing SourceMap meaning.
 
