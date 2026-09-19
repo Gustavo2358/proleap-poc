@@ -29,13 +29,13 @@ public final class SourceDependencySemantics {
                 SourceDependencyInventory.Kind.valueOf(fact.kind().name()),fact.name(),fact.qualification(),
                 SourceDependencyInventory.Resolution.valueOf(fact.resolution().name()),fact.artifact(),fact.authority(),
                 new Provenance(location(p.expanded()),location(p.original()),p.includeChain().stream()
-                    .map(i->new IncludeFrame(i.includingFile(),i.requestedName(),i.includedFile(),i.includeLine())).toList(),p.exact())));
+                    .map(i->new IncludeFrame(i.includingFile(),i.requestedName(),i.includedFile(),i.includeLine())).toList(),p.exact()),SourceDependencyInventory.Operation.valueOf(fact.operation()),SourceDependencyInventory.Access.valueOf(fact.access())));
         }
         var result=new LinkedHashMap<ResolutionContracts.ProgramUnitId,SourceDependencyInventory>();
         for(var entry:collected.entrySet()) {
             var gaps=new TreeSet<String>(sourceGaps);
             for(var f:entry.getValue()) {
-                if(f.resolution()!=SourceDependencyInventory.Resolution.RESOLVED)gaps.add("SOURCE_ARTIFACT_"+f.resolution());
+                if(f.resolution()!=SourceDependencyInventory.Resolution.RESOLVED&&f.resolution()!=SourceDependencyInventory.Resolution.NOT_APPLICABLE)gaps.add("SOURCE_ARTIFACT_"+f.resolution());
                 if(f.authority().equals("UNKNOWN"))gaps.add("SQL_INCLUDE_CLASSIFICATION_UNKNOWN");
             }
             result.put(entry.getKey(),new SourceDependencyInventory(gaps.isEmpty()?Availability.KNOWN:Availability.PARTIAL,entry.getValue(),List.copyOf(gaps)));

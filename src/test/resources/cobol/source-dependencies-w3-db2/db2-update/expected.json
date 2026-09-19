@@ -1,0 +1,14 @@
+{
+  "tables": [
+    "CONTA:UPDATE:WRITE"
+  ],
+  "remainder": false,
+  "sqlStatements": 1,
+  "locations": [
+    {
+      "file": "program.cbl",
+      "line": 7,
+      "relationship": "DIRECT"
+    }
+  ]
+}

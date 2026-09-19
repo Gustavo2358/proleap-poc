@@ -1492,17 +1492,23 @@ public final class CobolSemanticProduct {
 
     /** Source occurrences, independent from statement/runtime semantics. */
     public record SourceDependencyInventory(Availability availability, List<Occurrence> occurrences, List<String> gapCodes) {
-        public enum Kind { COPYBOOK, DCLGEN, SQL_INCLUDE }
-        public enum Resolution { RESOLVED, UNRESOLVED, CYCLIC, IO_ERROR }
+        public enum Kind { COPYBOOK, DCLGEN, SQL_INCLUDE, DB2_TABLE }
+        public enum Resolution { RESOLVED, UNRESOLVED, CYCLIC, IO_ERROR, NOT_APPLICABLE }
+        public enum Operation { NONE, SELECT, INSERT, UPDATE, DELETE, MERGE }
+        public enum Access { NONE, READ, WRITE, READ_WRITE }
         public record Occurrence(String id,Kind kind,String name,String qualification,Resolution resolution,
-                String artifact,String authority,Provenance provenance) {
+                String artifact,String authority,Provenance provenance,Operation operation,Access access) {
+            public Occurrence(String id,Kind kind,String name,String qualification,Resolution resolution,String artifact,String authority,Provenance provenance){this(id,kind,name,qualification,resolution,artifact,authority,provenance,Operation.NONE,Access.NONE);}
             public Occurrence {
                 Objects.requireNonNull(id);Objects.requireNonNull(kind);Objects.requireNonNull(resolution);
                 Objects.requireNonNull(name);Objects.requireNonNull(qualification);Objects.requireNonNull(artifact);
-                Objects.requireNonNull(authority);Objects.requireNonNull(provenance);
+                Objects.requireNonNull(authority);Objects.requireNonNull(provenance);Objects.requireNonNull(operation);Objects.requireNonNull(access);
+                if((kind==Kind.DB2_TABLE)!=authority.equals("STATIC_SQL_TABLE_POSITION")||(kind==Kind.DB2_TABLE)!=(resolution==Resolution.NOT_APPLICABLE))throw new IllegalArgumentException("DB2 authority/resolution");
+                boolean usage=operation==Operation.SELECT&&access==Access.READ||Set.of(Operation.INSERT,Operation.UPDATE,Operation.DELETE).contains(operation)&&access==Access.WRITE||operation==Operation.MERGE&&(access==Access.READ||access==Access.READ_WRITE);
+                if(kind==Kind.DB2_TABLE?!usage:operation!=Operation.NONE||access!=Access.NONE)throw new IllegalArgumentException("Invalid source usage");
                 if(id.isBlank()||name.isBlank()||!name.equals(name.toUpperCase(java.util.Locale.ROOT))||!qualification.equals(qualification.toUpperCase(java.util.Locale.ROOT)))
                     throw new IllegalArgumentException("Source dependency needs canonical identity");
-                if(!Set.of("COPY_SYNTAX","CONFIGURED_DCLGEN","CONFIGURED_SQL_INCLUDE","BUILTIN_SQL_INCLUDE","UNKNOWN").contains(authority))throw new IllegalArgumentException("Unknown source authority");
+                if(!Set.of("COPY_SYNTAX","CONFIGURED_DCLGEN","CONFIGURED_SQL_INCLUDE","BUILTIN_SQL_INCLUDE","UNKNOWN","STATIC_SQL_TABLE_POSITION").contains(authority))throw new IllegalArgumentException("Unknown source authority");
                 if((kind==Kind.COPYBOOK)!=authority.equals("COPY_SYNTAX"))throw new IllegalArgumentException("COPY authority mismatch");
                 if(kind==Kind.DCLGEN&&Set.of("SQLCA","SQLDA").contains(name))throw new IllegalArgumentException("Builtins are not DCLGEN");
                 if((kind==Kind.DCLGEN)!=authority.equals("CONFIGURED_DCLGEN"))throw new IllegalArgumentException("DCLGEN requires inventory evidence");

@@ -16,7 +16,7 @@ are builtin SQL includes, never DCLGENs. Generic/unclassified includes remain
 `SQL_INCLUDE`; unknown classification opens remainder. SQL INCLUDE payloads other
 than the supported single unquoted member form are not guessed. An INCLUDE-shaped
 but unproved form opens `SQL_INCLUDE_FORM_UNPROVED`, without inventing a name.
-Other SQL statements stay opaque: no DB2 table extraction.
+Runtime SQL remains opaque. Static table dependencies are extracted separately as described below.
 
 Primary references checked for this change:
 [IBM COBOL COPY](https://www.ibm.com/docs/en/cobol-zos/6.5.0?topic=statements-copy-statement),
@@ -105,4 +105,34 @@ qualification, casing, comments/literals, explicit inventory, SQLCA rejection,
 malformed/unproved forms and generic/unknown SQL includes.
 `src/test/resources/cobol/source-dependencies-w3/` contains synthetic source E2E
 fixtures; expected names/support counts are independent oracles. Corporate source
-NOT USED; corporate execution NOT AN ACCEPTANCE GATE. No W4 implementation.
+NOT USED; corporate execution NOT AN ACCEPTANCE GATE. DB2 continuation stays within this W3 campaign.
+
+## DB2 TABLE continuation
+
+The previous COPYBOOK/DCLGEN/SQL_INCLUDE qualification remains a completed checkpoint.
+DB2 TABLE qualification is now required before the campaign returns to READY_FOR_REVIEW.
+Same branch and PR; no new administrative W4, no AIR/runtime/physical engine changes.
+
+## DB2 TABLE source dependencies
+
+Static SQL is extracted before embedded-language framing, from the normalized original EXEC SQL region and its existing SourceMap span. A lightweight tokenizer neutralizes SQL strings, host variables, `--` and `/* */` comments; paired parentheses are indexed once. A deterministic structural scanner recognizes table positions and scoped CTEs without constructing SQL grammar/AST/IR or evaluating expressions. Each region has independent state. Unsupported/malformed supported structure rejects all tentative table facts for that region and opens a gap.
+
+Supported: SELECT FROM/JOIN (including multiple and comma joins), schema qualification, INSERT target and INSERT SELECT, UPDATE/DELETE targets and nested SELECT, MERGE target and nominal/derived USING, CTE definitions, derived SELECT, UNION/EXCEPT/INTERSECT branches, and simple DECLARE name CURSOR FOR SELECT. Aliases are consumed at relation boundaries. Local CTE names are indexed before traversing definitions; recursive/forward CTE references conservatively open DB2_RECURSIVE_CTE_UNSUPPORTED. SQL expression validity, column binding and catalog object kinds are not certified: DB2_TABLE denotes a syntactic relation reference, which a catalog could resolve to a table/view/alias. No catalog resolution is attempted.
+
+Identity: uppercase ordinary identifier name plus explicit qualification; CLIENTE and DBPROD.CLIENTE remain distinct. Delimited identifiers are tokenized but conservatively rejected with DB2_DELIMITED_IDENTIFIER_UNSUPPORTED because the current source identity contract folds case. Table functions, VALUES-derived relations, DDL, stored procedures, unfamiliar relation constructs, and unsupported cursor options open explicit gaps. Nesting beyond 128 levels opens a gap. No inference from DCLGEN or INCLUDE names/content.
+
+SP 2.31.0 adds DB2_TABLE and typed operation/access per occurrence. Non-DB2 occurrences use NONE/NONE. SELECT uses READ; INSERT/UPDATE/DELETE use WRITE; MERGE target uses MERGE/READ_WRITE and nominal USING uses MERGE/READ (derived SELECT uses SELECT/READ). Authority STATIC_SQL_TABLE_POSITION is required. Resolution NOT_APPLICABLE is exclusive to DB2_TABLE: catalog lookup is outside this product and no physical artifact identity is fabricated. This nominal completeness is separate from source artifact resolution.
+
+PREPARE and EXECUTE, including EXECUTE IMMEDIATE literals, emit DYNAMIC_SQL_NOT_ANALYZED with remainder=true and no invented table. PossibleValues is never invoked. Other unsupported SQL shapes remain open. Existing source gap transport is conservative at compilation scope; no statement-level SQL gap provenance type is introduced in this continuation.
+
+Each support retains original EXEC SQL span, program association, sourceOwner and include chain. SQL in A.cpy is TRANSITIVE to the program and points into A.cpy. Repeated SELECT/UPDATE of the same qualified table aggregate into one dependency with separate usage-bearing supports. Source aggregation uses maps and canonical sorting, no CFG/reachability/RD/values/physical inputs. Runtime SQL stays opaque in its existing path.
+
+AIR stays unchanged at 646ca3ab1687d43f7d2063fc2a8f3837ab3cf9fa. Existing LiteralTarget category source-db2_table and ResourceDeclaration classification source.NOT_APPLICABLE carry nominal references; nameSource source.STATIC_SQL_<operation>_<access>@1 carries a closed usage profile. No runtime uses, objects or operations are added. The dependency wire is 2.5.0, with operation/access on every source support; 2.4.0 readers reject it. The new reader retains explicit support for older wires; lower upgrades legacy SP2.30 NONE usage only after rejecting DB2/new fields in that old envelope.
+
+Scope remains source-only, physical default OFF with NO AUTOMATIC FALLBACK. Existing cyclic COPY primary-entry admission limitation remains unchanged. Corporate NOT EXECUTED / NOT AN ACCEPTANCE GATE / NO CORPORATE SOURCE USED.
+
+Primary language references: [IBM CTE](https://www.ibm.com/docs/en/db2-for-zos/12.0.0?topic=statement-common-table-expression), [identifiers](https://www.ibm.com/docs/en/db2/12.1.x?topic=elements-identifiers), [tokens/comments](https://www.ibm.com/docs/en/db2-as-a-service?topic=elements-tokens). Scope is deliberately smaller than the SQL language.
+
+Producer qualification: focused extractor/provenance tests and full FAST PASS (382 tests).
+31 source DB2 fixtures traversed the real pipeline successfully; final repeated integrated qualification is recorded in the stacked PR.
+Extraction median at 10/100/1000 statements: 0.133/0.364/1.933 ms; 1000 occurrences/100 unique: 1.923 ms.

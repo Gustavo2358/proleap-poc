@@ -281,6 +281,19 @@ final class PreprocessorEngine {
                     } else if(count>2 && significant.get(2).getText().equalsIgnoreCase("INCLUDE")) {
                         logSummary.sourceDependencyGaps.add("SQL_INCLUDE_FORM_UNPROVED");
                     }
+                    if(count>2 && !significant.get(2).getText().equalsIgnoreCase("INCLUDE")) {
+                        if(!proved(context)||!significant.get(count-1).getText().equalsIgnoreCase("END-EXEC"))logSummary.sourceDependencyGaps.add("DB2_STATIC_SQL_UNPROVED");
+                        else {
+                            int sqlStart=significant.get(1).getStopIndex()+1-start;
+                            int sqlEnd=significant.get(count-1).getStartIndex()-start;
+                            var extracted=Db2SourceExtractor.extract(original.substring(sqlStart,sqlEnd));
+                            logSummary.sourceDependencyGaps.addAll(extracted.gaps());
+                            var p=document.provenance(start,end);
+                            for(var table:extracted.tables())sourceDependencies.add(new SourceDependencyFact(SourceDependencyFact.Kind.DB2_TABLE,table.name(),table.schema(),
+                                SourceDependencyFact.Resolution.NOT_APPLICABLE,"","STATIC_SQL_TABLE_POSITION",
+                                new Ast.SourceProvenance(p.expanded(),p.original(),includeChain,p.exact()),rootSite==null?p.original():rootSite,table.operation(),table.access()));
+                        }
+                    }
                 }
                 if (rule.equals("execDliStatement")) {
                     // A lexer-owned real token is the oracle, never a recovered END-EXEC.

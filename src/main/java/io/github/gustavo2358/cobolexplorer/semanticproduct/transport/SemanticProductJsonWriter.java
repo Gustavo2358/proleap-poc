@@ -76,7 +76,7 @@ public final class SemanticProductJsonWriter {
             addBranch(port, branches, branch.header().id(), CobolSemanticProduct.Branch.ELSE);
         }
 
-        return new SemanticProductDocument(SCHEMA, port.sourceDependencies().availability()!=CobolSemanticProduct.Availability.UNAVAILABLE?"2.30.0":port.storage().logicalTextViews().isEmpty()?CONTRACT_VERSION:"2.29.0",
+        return new SemanticProductDocument(SCHEMA, port.sourceDependencies().availability()!=CobolSemanticProduct.Availability.UNAVAILABLE?"2.31.0":port.storage().logicalTextViews().isEmpty()?CONTRACT_VERSION:"2.29.0",
                 unit(port.unit()), policy(port.policy()), declarations, statements,
                 new StructureDocument(port.rootStatements().stream()
                         .map(SemanticProductJsonWriter::statementHandle).toList(),
