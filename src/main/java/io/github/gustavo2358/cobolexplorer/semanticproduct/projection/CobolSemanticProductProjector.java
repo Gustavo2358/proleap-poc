@@ -425,7 +425,9 @@ public final class CobolSemanticProductProjector {
                     r.proved()?StorageRelationStatus.PROVEN:StorageRelationStatus.UNPROVEN,provenance(r.clause().meta().provenance()),
                     r.proved()?List.of():List.of("RENAMES_NOT_PROVEN"))).toList(),initialStorage(inputs),
                 inputs.products().storage().get().layout().logicalViews().stream().filter(v->v.node().unit().equals(inputs.unitId()))
-                    .map(v->new LogicalTextView(storageNode(inputs,v.node()),storageNode(inputs,v.root()),v.start(),v.length())).toList());
+                    .map(v->new LogicalTextView(storageNode(inputs,v.node()),storageNode(inputs,v.root()),v.start(),v.length())).toList(),
+                inputs.products().storage().get().layout().logicalExactViews().stream().filter(v->v.node().unit().equals(inputs.unitId()))
+                    .map(v->new LogicalExactView(storageNode(inputs,v.node()),storageNode(inputs,v.representative()),v.length())).toList());
     }
     private static StorageEntryState initialStorage(ProjectionInputs inputs) {
         var facts=inputs.products().storage().orElseThrow().initial().facts(inputs.unitId());

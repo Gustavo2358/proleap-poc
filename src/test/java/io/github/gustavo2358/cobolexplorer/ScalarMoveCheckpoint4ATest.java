@@ -239,7 +239,7 @@ class ScalarMoveCheckpoint4ATest {
         var none = new NormalContinuation(ContinuationAvailability.NONE, Optional.empty(), move.header().provenance());
         assertTrue(none.statement().isEmpty()); // Representable; never inferred from physical end by this profile.
     }
-    @Test void inputIncompleteDoesNotProveWholeCopyOrContinuation() {
+    @Test void inputIncompleteDoesNotProveWholeCopyButKeepsParsedContinuation() {
         var a = AstBoundaryTestSupport.analyze(program("01 WS-X PIC X(5).", "MOVE 'PROGA' TO WS-X.\nGOBACK."), "scalar.cbl");
         var incomplete = new ResolutionAnalysisReport.FrontendState(0, 0, 0, List.of(new Diagnostic("COBOL",
                 Diagnostic.Phase.PREPROCESSOR, Diagnostic.Code.UNRESOLVED_COPY, "scalar.cbl", 3, 0,
@@ -252,7 +252,8 @@ class ScalarMoveCheckpoint4ATest {
         assertTrue(port.moves().get(0).target().wholeItemAccess().isEmpty());
         assertEquals(CopySemantics.POSSIBLE_TEXT, port.moves().get(0).copySemantics());
         assertTrue(port.moves().get(0).target().logicalWholeItem().isPresent());
-        assertEquals(ContinuationAvailability.UNAVAILABLE, port.moves().get(0).normalContinuation().availability());
+        assertEquals(ContinuationAvailability.KNOWN, port.moves().get(0).normalContinuation().availability());
+        assertTrue(port.moves().get(0).normalContinuation().statement().isPresent());
     }
 
     @Test void baselineCp3PayloadRemainsCompatibleAcrossMinorVersion() throws Exception {

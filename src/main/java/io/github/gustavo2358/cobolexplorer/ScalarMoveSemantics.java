@@ -156,8 +156,9 @@ public final class ScalarMoveSemantics {
                 if (node instanceof Ast.MoveStatement move) {
                     counts[4]++;
                     var key = new NodeKey(unit.id(), move.meta().id());
+                    // The parser publishes this structural edge independently of COPY expansion.
                     moves.put(key, fact(Optional.empty(), Copy.UNAVAILABLE,
-                            inputComplete ? Optional.ofNullable(next.get(move.meta().id())) : Optional.empty()));
+                            Optional.ofNullable(next.get(move.meta().id()))));
                     if (!move.corresponding() && (move.source() instanceof Ast.LiteralExpression || move.source() instanceof Ast.DataReference)
                             && move.targets().size() == 1 && move.targets().get(0) instanceof Ast.DataReference target)
                         targets.put(new NodeKey(unit.id(), target.meta().id()), move);

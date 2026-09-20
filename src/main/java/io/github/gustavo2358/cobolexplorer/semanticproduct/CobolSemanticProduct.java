@@ -643,14 +643,23 @@ public final class CobolSemanticProduct {
         public LogicalTextView {Objects.requireNonNull(node);Objects.requireNonNull(root);Objects.requireNonNull(start);Objects.requireNonNull(length);
             require(node.unit().equals(root.unit())&&start.signum()>=0&&length.signum()>0,"positive logical character range in one unit");}
     }
+    /** Complete, equivalent TEXT views of one locally proved logical storage component. */
+    public record LogicalExactView(StorageNodeId node,StorageNodeId representative,BigInteger length) {
+        public LogicalExactView {Objects.requireNonNull(node);Objects.requireNonNull(representative);Objects.requireNonNull(length);
+            require(node.unit().equals(representative.unit())&&length.signum()>0,"positive exact logical view in one unit");}
+    }
     public record StorageInventory(StorageProfile profile, List<PhysicalNode> nodes, List<StorageBase> bases,
-            List<StorageView> views, List<String> gapCodes, List<StorageRelation> relations, List<StorageRenames> renames,StorageEntryState entryState,List<LogicalTextView> logicalTextViews) {
+            List<StorageView> views, List<String> gapCodes, List<StorageRelation> relations, List<StorageRenames> renames,StorageEntryState entryState,List<LogicalTextView> logicalTextViews,List<LogicalExactView> logicalExactViews) {
         public StorageInventory {
             logicalTextViews=List.copyOf(logicalTextViews);
+            logicalExactViews=List.copyOf(logicalExactViews);
             Objects.requireNonNull(entryState);Objects.requireNonNull(profile); nodes = List.copyOf(nodes); bases = List.copyOf(bases);
             views = List.copyOf(views); gapCodes = List.copyOf(gapCodes); relations=List.copyOf(relations);renames=List.copyOf(renames);
             gapCodes.forEach(code -> requireText(code, "storage gap"));
             require(profile != StorageProfile.UNSPECIFIED || !gapCodes.isEmpty(), "absent environment requires a gap");
+        }
+        public StorageInventory(StorageProfile profile,List<PhysicalNode> nodes,List<StorageBase> bases,List<StorageView> views,List<String> gapCodes,List<StorageRelation> relations,List<StorageRenames> renames,StorageEntryState entryState,List<LogicalTextView> logicalTextViews) {
+            this(profile,nodes,bases,views,gapCodes,relations,renames,entryState,logicalTextViews,List.of());
         }
         public StorageInventory(StorageProfile profile,List<PhysicalNode> nodes,List<StorageBase> bases,List<StorageView> views,List<String> gapCodes,List<StorageRelation> relations,List<StorageRenames> renames,StorageEntryState entryState) {
             this(profile,nodes,bases,views,gapCodes,relations,renames,entryState,List.of());

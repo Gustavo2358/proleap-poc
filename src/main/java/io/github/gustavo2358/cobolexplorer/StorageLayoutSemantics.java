@@ -27,16 +27,21 @@ public final class StorageLayoutSemantics {
     }
     /** Character positions only. This fact grants no physical extent, allocation or codec. */
     public record LogicalView(Key node,Key root,BigInteger start,BigInteger length) { }
+    /** A complete local TEXT view; unlike LogicalView, it does not close a whole layout family. */
+    public record LogicalExactView(Key node,Key representative,BigInteger length) { }
     private final List<LogicalView> logicalViews;
     public List<LogicalView> logicalViews(){return logicalViews;}
+    private final List<LogicalExactView> logicalExactViews;
+    public List<LogicalExactView> logicalExactViews(){return logicalExactViews;}
     private final Map<ResolutionContracts.ProgramUnitId,Layout> layouts;
     private final Map<String,Long> metrics;
     private final CompilationUnitBuildResult owner;
     private final ReferenceResolution bindings;
     private final CompilationUnitSymbolTables symbolTables;
     private StorageLayoutSemantics(Map<ResolutionContracts.ProgramUnitId,Layout> layouts,Map<String,Long> metrics,
-            CompilationUnitBuildResult owner,ReferenceResolution bindings,CompilationUnitSymbolTables symbolTables,List<LogicalView> logicalViews) {
+            CompilationUnitBuildResult owner,ReferenceResolution bindings,CompilationUnitSymbolTables symbolTables,List<LogicalView> logicalViews,List<LogicalExactView> logicalExactViews) {
         this.logicalViews=List.copyOf(logicalViews);
+        this.logicalExactViews=List.copyOf(logicalExactViews);
         this.layouts=Map.copyOf(layouts);this.metrics=Map.copyOf(metrics);this.owner=owner;this.bindings=bindings;this.symbolTables=symbolTables;
     }
     CompilationUnitSymbolTables symbolTables(){return symbolTables;}
@@ -56,7 +61,7 @@ public final class StorageLayoutSemantics {
         Objects.requireNonNull(profile);Objects.requireNonNull(resolution);
         if(logicalText&&profile!=Profile.UNSPECIFIED)throw new IllegalArgumentException("logical text W1 requires unspecified physical profile");
         if(!components.belongsTo(frontend))throw new IllegalArgumentException("storage components belong to another snapshot");
-        var layouts=new LinkedHashMap<ResolutionContracts.ProgramUnitId,Layout>();var logicalViews=new ArrayList<LogicalView>();long declarations=0,visits=0;
+        var layouts=new LinkedHashMap<ResolutionContracts.ProgramUnitId,Layout>();var logicalViews=new ArrayList<LogicalView>();var logicalExactViews=new ArrayList<LogicalExactView>();long declarations=0,visits=0;
         for(var unit:frontend.compilationUnit().programUnits()) {
             boolean input=report.inputComplete(unit.id());
             var reasons=new LinkedHashSet<Reason>();
@@ -126,6 +131,8 @@ public final class StorageLayoutSemantics {
                 logicalViews.addAll(textViews);
                 logicalViews.addAll(StorageRenames.logical(unit.id(),physical,resolution,entities,coverage,nodes,textViews));
             }
+            if(!attributes.initial()&&!attributes.recursive()&&!attributes.common()&&!attributes.library()&&!attributes.definition())
+                logicalExactViews.addAll(exactLocalText(unit,physical,shapes));
             var renames=StorageRenames.prove(unit.id(),physical,resolution,entities,coverage,nodes,views);
             if(renames.stream().anyMatch(r->!r.proved())) {
                 reasons.add(Reason.RENAMES_NOT_PROVEN);
@@ -135,7 +142,31 @@ public final class StorageLayoutSemantics {
             }
             layouts.put(unit.id(),new Layout(profile,nodes,bases,views,List.copyOf(reasons),physical.relations(),renames));
         }
-        return new StorageLayoutSemantics(layouts,Map.of("declarations",declarations,"layoutVisits",visits,"objectPairs",0L),frontend,resolution,tables,logicalViews);
+        return new StorageLayoutSemantics(layouts,Map.of("declarations",declarations,"layoutVisits",visits,"objectPairs",0L),frontend,resolution,tables,logicalViews,logicalExactViews);
+    }
+    private static List<LogicalExactView> exactLocalText(CompilationUnitModel.ProgramUnit unit,StorageComponents.Unit structure,Map<Integer,Shape> shapes) {
+        var working=new HashSet<Integer>();
+        for(var division:unit.program().divisions())if(division.divisionKind()==Ast.DivisionKind.DATA)
+            for(var child:division.children())if(child instanceof Ast.Section section&&section.dataSectionKind()==Ast.DataSectionKind.WORKING_STORAGE)
+                for(var entry:section.children())if(entry instanceof Ast.DataEntry data)working.add(data.meta().id());
+        var result=new ArrayList<LogicalExactView>();
+        var relations=new HashMap<Integer,StorageComponents.Relation>();
+        for(var relation:structure.relations())relations.put(relation.owner(),relation);
+        for(var component:structure.rootComponents()) {
+            if(component.members().size()<2||!working.containsAll(component.members()))continue;
+            var members=component.members();var first=shapes.get(members.get(0));
+            if(first==null||!first.supported()||first.kind()!=Kind.ELEMENTARY||first.leafExtent().isEmpty())continue;
+            boolean exact=true;
+            for(int i=0;i<members.size();i++) {
+                int id=members.get(i);var shape=shapes.get(id);
+                exact&=shape!=null&&shape.supported()&&shape.kind()==Kind.ELEMENTARY&&shape.leafExtent().equals(first.leafExtent())
+                    &&structure.children().getOrDefault(id,List.of()).isEmpty();
+                if(i>0) {var relation=relations.get(id);exact&=relation!=null&&relation.proved()&&relation.target().isPresent()&&members.contains(relation.target().get());}
+            }
+            if(!exact)continue;
+            for(int id:members)result.add(new LogicalExactView(new Key(unit.id(),id),new Key(unit.id(),component.representative()),first.leafExtent().orElseThrow()));
+        }
+        return result;
     }
     private static List<LogicalView> logical(ResolutionContracts.ProgramUnitId unit,StorageComponents.Unit structure,Map<Integer,Shape> shapes) {
         // The same source components/shape/footprint algorithm, in character coordinates only.

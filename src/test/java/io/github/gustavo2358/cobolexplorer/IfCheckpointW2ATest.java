@@ -188,7 +188,8 @@ class IfCheckpointW2ATest {
             assertEquals("UNKNOWN", one(d, "IF").path("elseArm").path("presence").asText());
             assertEquals("INPUT_MISSING", one(d, "IF").path("elseArm").path("contentAvailability").asText());
             assertEquals("UNAVAILABLE", one(d, "IF").path("normalContinuation").path("availability").asText());
-            assertEquals("UNAVAILABLE", one(d, "MOVE").path("normalContinuation").path("availability").asText());
+            assertEquals("KNOWN", one(d, "MOVE").path("normalContinuation").path("availability").asText());
+            assertTrue(one(d, "MOVE").path("normalContinuation").path("statement").isTextual());
         }
     }
     @Test void nestedOwnershipAndCompletionAreNeverFlattened() throws Exception {

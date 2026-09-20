@@ -82,7 +82,7 @@ public final class SemanticProductJsonWriter {
             || s instanceof CobolSemanticProduct.CicsFileFact c && c.target().filter(t -> t instanceof CobolSemanticProduct.DataReference d && d.logicalWholeItem().isPresent()).isPresent());
         boolean structuredUnknownEvaluate=port.statements().stream().anyMatch(s -> s instanceof CobolSemanticProduct.EvaluateFact e
             && e.arms().stream().anyMatch(a -> a.selection().isEmpty()));
-        return new SemanticProductDocument(SCHEMA, structuredUnknownEvaluate?"2.33.0":preservation?"2.32.0":port.sourceDependencies().availability()!=CobolSemanticProduct.Availability.UNAVAILABLE?"2.31.0":port.storage().logicalTextViews().isEmpty()?CONTRACT_VERSION:"2.29.0",
+        return new SemanticProductDocument(SCHEMA, !port.storage().logicalExactViews().isEmpty()?"2.34.0":structuredUnknownEvaluate?"2.33.0":preservation?"2.32.0":port.sourceDependencies().availability()!=CobolSemanticProduct.Availability.UNAVAILABLE?"2.31.0":port.storage().logicalTextViews().isEmpty()?CONTRACT_VERSION:"2.29.0",
                 unit(port.unit()), policy(port.policy()), declarations, statements,
                 new StructureDocument(port.rootStatements().stream()
                         .map(SemanticProductJsonWriter::statementHandle).toList(),
@@ -172,7 +172,7 @@ public final class SemanticProductJsonWriter {
         return new StorageMeasureDocument(m.value().map(Object::toString).orElse(null),m.gapCodes());
     }
     private static StorageDocument storage(CobolSemanticProduct.StorageInventory storage) {
-        return new StorageDocument(storage.logicalTextViews().isEmpty()?"1.8.0":"1.9.0",storage.profile(),storage.profileId().orElse(null),storage.runtimeCodec().orElse(null),
+        return new StorageDocument(!storage.logicalExactViews().isEmpty()?"1.10.0":storage.logicalTextViews().isEmpty()?"1.8.0":"1.9.0",storage.profile(),storage.profileId().orElse(null),storage.runtimeCodec().orElse(null),
             storage.nodes().stream().map(n->new PhysicalNodeDocument(storageNodeHandle(n.id()),n.parent().map(SemanticProductJsonWriter::storageNodeHandle).orElse(null),
                 n.order(),n.filler(),n.kind(),n.data().map(SemanticProductJsonWriter::dataHandle).orElse(null),measure(n.extent()),provenance(n.provenance()))).toList(),
             storage.bases().stream().map(b->new StorageBaseDocument(storageBaseHandle(b.id()),measure(b.extent()),b.allocation(),provenance(b.provenance()))).toList(),
@@ -184,9 +184,11 @@ public final class SemanticProductJsonWriter {
             storage.renames().stream().sorted(java.util.Comparator.comparingInt(r->r.id().localId())).map(r->new StorageRenamesDocument(
                 "storage-relation:"+r.id().localId(),storageNodeHandle(r.owner()),r.from().map(SemanticProductJsonWriter::storageNodeHandle).orElse(null),
                 r.through().map(SemanticProductJsonWriter::storageNodeHandle).orElse(null),r.status(),provenance(r.provenance()),r.gapCodes())).toList(),new StorageEntryDocument(storage.entryState().mode(),
-            storage.entryState().conditions().stream().map(c->new StorageInitialDocument(storageNodeHandle(c.node()),c.kind(),c.bytes(),c.gapCodes(),provenance(c.provenance()),c.proof(),c.logicalText().orElse(null))).toList()),storage.logicalTextViews().stream().map(v->new LogicalTextViewDocument(storageNodeHandle(v.node()),storageNodeHandle(v.root()),v.start().toString(),v.length().toString())).toList());
+            storage.entryState().conditions().stream().map(c->new StorageInitialDocument(storageNodeHandle(c.node()),c.kind(),c.bytes(),c.gapCodes(),provenance(c.provenance()),c.proof(),c.logicalText().orElse(null))).toList()),storage.logicalTextViews().stream().map(v->new LogicalTextViewDocument(storageNodeHandle(v.node()),storageNodeHandle(v.root()),v.start().toString(),v.length().toString())).toList(),
+            storage.logicalExactViews().stream().map(v->new LogicalExactViewDocument(storageNodeHandle(v.node()),storageNodeHandle(v.representative()),v.length().toString())).toList());
     }
     private record LogicalTextViewDocument(String node,String root,String start,String length) { }
+    private record LogicalExactViewDocument(String node,String representative,String length) { }
     private record StorageMeasureDocument(String value,List<String> gapCodes) { }
     private record PhysicalNodeDocument(String id,String parent,int order,boolean filler,CobolSemanticProduct.PhysicalKind kind,
         String data,StorageMeasureDocument extent,ProvenanceDocument provenance) { }
@@ -195,7 +197,7 @@ public final class SemanticProductJsonWriter {
     private record StorageRelationDocument(String id,String owner,String target,CobolSemanticProduct.StorageRelationStatus status,ProvenanceDocument provenance,List<String> gapCodes) { }
     private record StorageRenamesDocument(String id,String owner,String from,String through,CobolSemanticProduct.StorageRelationStatus status,ProvenanceDocument provenance,List<String> gapCodes) { }
     private record StorageDocument(String version,CobolSemanticProduct.StorageProfile profile,String profileId,String runtimeCodec,
-        List<PhysicalNodeDocument> nodes,List<StorageBaseDocument> bases,List<StorageViewDocument> views,List<String> gapCodes,List<StorageRelationDocument> relations,List<StorageRenamesDocument> renames,StorageEntryDocument entryState,@JsonInclude(JsonInclude.Include.NON_EMPTY) List<LogicalTextViewDocument> logicalTextViews) { }
+        List<PhysicalNodeDocument> nodes,List<StorageBaseDocument> bases,List<StorageViewDocument> views,List<String> gapCodes,List<StorageRelationDocument> relations,List<StorageRenamesDocument> renames,StorageEntryDocument entryState,@JsonInclude(JsonInclude.Include.NON_EMPTY) List<LogicalTextViewDocument> logicalTextViews,@JsonInclude(JsonInclude.Include.NON_EMPTY) List<LogicalExactViewDocument> logicalExactViews) { }
     private record StorageEntryDocument(CobolSemanticProduct.StorageEntryMode mode,List<StorageInitialDocument> conditions) { }
     private record StorageInitialDocument(String node,CobolSemanticProduct.InitialStorageKind kind,List<Integer> bytes,List<String> gapCodes,ProvenanceDocument provenance,CobolSemanticProduct.InitialStorageProof proof,String logicalText) { }
     private record RegionalSliceDocument(String offset,String extent) { }

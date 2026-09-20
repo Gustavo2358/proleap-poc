@@ -549,3 +549,21 @@ and publishes `conditionReads` and `conditionOrigin`; see
 arm shape is present. Other SP versions and supported literal arms retain their
 existing wire shape. Missing interpretation stays in coverage and does not imply
 global memory or control effects.
+
+## W3-R1 — SP 2.34.0 / storage 1.10.0
+
+`storage.logicalExactViews` transports local, complete TEXT view identity as
+`node`, `representative`, `length` in logical characters. It does not publish
+physical bytes, codec, offset, extent or allocation. The producer emits a group
+only when recognized WORKING-STORAGE declarations belong to one proved storage
+component and every member is elementary, locally modeled, has the same logical
+length and interpretation, and the relation chain is proved. A missing COPY
+remains `INPUT_MISSING`; it does not suppress this local declaration proof.
+
+The lower validates member closure, shared source component, positive relations,
+and compatibility with any published text transfer. It may bind distinct AIR
+objects to the same logical Cell. Silence in this field is not alias proof.
+SP 2.34.0 is emitted only when this fact is present; storage version is 1.10.0.
+The earlier `logicalTextViews` inventory and physical layout contracts retain
+their own admission rules. The parser's recognized MOVE continuation is published
+even if another source artifact is missing; it is not inferred from array order.
