@@ -30,9 +30,9 @@ class EvidencePreservationTest {
             var p = product(VALUE + declaration + "\n01 ARG PIC X(20).\n", "CALL LIT-PGM USING ARG.");
             var c = condition(p);
             assertEquals(PROGA, c.bytes(), declaration + ": " + c.gapCodes());
-            assertEquals("POSSIBLE_LITERAL_BYTES", c.kind().name());
-            assertEquals("DECLARATIVE_POSSIBILITY", c.proof().name());
-            assertFalse(c.gapCodes().isEmpty());
+            assertEquals("LITERAL_BYTES", c.kind().name());
+            assertEquals("DECLARATIVE_INVARIANT", c.proof().name());
+            assertTrue(c.gapCodes().isEmpty(),"unrelated representation diagnostic does not weaken known invariant");
         }
     }
 
@@ -90,10 +90,10 @@ class EvidencePreservationTest {
         assertEquals(StorageInitialSemantics.Proof.DECLARATIVE_POSSIBILITY,c.proof());
     }
 
-    @Test void initialLifecycleDoesNotUpgradeUnprovedAllocation() {
+    @Test void initialLifecycleUsesSupportedAllocationDespiteRepresentationDiagnostic() {
         var c=StorageInitialTest.initial(VALUE+"77 PARTIAL-AREA PIC X(8) JUSTIFIED.\n",StorageInitialSemantics.EntryMode.INITIAL).conditions().get(0);
         assertEquals(PROGA,c.bytes());
-        assertEquals(StorageInitialSemantics.Kind.POSSIBLE_LITERAL_BYTES,c.kind(),"entry lifecycle alone does not close layout/storage proof");
+        assertEquals(StorageInitialSemantics.Kind.LITERAL_BYTES,c.kind(),"omitted representation does not invalidate supported allocation");
     }
 
     @Test void sourceEvidenceDoesNotClaimLifetimeInvarianceAcrossMustWrite() {
@@ -116,16 +116,17 @@ class EvidencePreservationTest {
         var tables = new CompilationUnitSymbolTableBuilder().build(model);
         var components=StorageComponents.analyze(build).unit(model.programUnits().get(0).id());
         var clause=components.uncertainties().stream().filter(u->u.reason()==StorageComponents.Reason.UNINTERPRETED_DATA_CLAUSE).toList();
-        assertEquals(2,clause.size(),"generic clause retains both its layout owner and unbounded allocation remainder");
+        assertEquals(1,clause.size(),"generic clause retains coverage at its owner without fabricated allocation remainder");
         assertTrue(clause.stream().allMatch(u->u.origin().exact()));
-        assertEquals(Set.of(StorageComponents.UncertaintyScope.DECLARATION,StorageComponents.UncertaintyScope.UNIT),
+        assertEquals(Set.of(StorageComponents.UncertaintyScope.DECLARATION),
             clause.stream().map(StorageComponents.Uncertainty::scope).collect(java.util.stream.Collectors.toSet()));
         var layout = StorageLayoutSemantics.analyze(build, tables, original.resolution(), original.report(), StorageLayoutSemantics.Profile.IBM_ENTERPRISE_6_4_FIXED_DISPLAY_1047);
         var facts = StorageAccessSemantics.analyze(build, original.resolution(), layout).initial().facts(model.programUnits().get(0).id());
         var c = facts.conditions().get(0);
         assertEquals(PROGA, c.bytes(), "JOHNDOE is not a MUST write: " + c.reasons());
-        assertEquals(StorageInitialSemantics.Kind.POSSIBLE_LITERAL_BYTES, c.kind());
-        assertTrue(layout.layout(model.programUnits().get(0).id()).nodes().stream().anyMatch(n -> n.extent().value().isEmpty()), "unknown must remain explicit");
+        assertEquals(StorageInitialSemantics.Kind.LITERAL_BYTES, c.kind());
+        assertTrue(layout.layout(model.programUnits().get(0).id()).nodes().stream().allMatch(n -> n.extent().value().isPresent()), "known text widths survive an arbitrary omitted aspect");
+        assertTrue(coverage.values().stream().flatMap(r->r.findings().stream()).anyMatch(f->f.astNodeId()==replaced&&f.coverage()==SemanticCoverage.ConstructionCoverage.PRESERVED_UNINTERPRETED), "omitted aspect remains in source coverage");
     }
 
     static Ast.Node replace(Ast.Node node, int replaced) {
@@ -136,17 +137,17 @@ class EvidencePreservationTest {
         if (node instanceof Ast.DataEntry d) return new Ast.DataEntry(d.meta(), d.level(), d.levelKind(), d.name(), d.filler(), d.visibility(), d.declaration(), d.clauses().stream().map(n -> (Ast.DataClause) replace(n, replaced)).toList(), d.children().stream().map(n -> (Ast.DataEntry) replace(n, replaced)).toList());
         return node;
     }
-    @Test void logicalCopyDoesNotRequirePhysicalSourceOffsetButDoesRequireSeparation() {
+    @Test void logicalCopyDoesNotRequirePhysicalSourceOffsetAndIgnoresRepresentationDiagnostics() {
         String data="01 SOURCE-AREA.\n05 PREFIX-A PIC S9(9) COMP.\n05 SRC-A PIC X(8) VALUE 'PROGA'.\n77 LIT-PGM PIC X(8).\n";
         var p=product(data,"MOVE SRC-A TO LIT-PGM.\nCALL LIT-PGM.");
         var move=p.moves().get(0);
         assertEquals("LOGICAL_FIT_TEXT",move.regionalMove().orElseThrow().kind().name());
         var source=(io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.DataReference)move.source();
         assertEquals(source.binding().selected(),source.logicalWholeItem());assertTrue(source.regionalAccess().isEmpty());
-        for(String extra:List.of("77 UNKNOWN-A PIC X JUSTIFIED.\n","")) {
-            var negative=product(data+(extra.isEmpty()?"77 OTHER-A PIC X.\n":extra),extra.isEmpty()?"MOVE SRC-A(1:2) TO LIT-PGM.\nCALL LIT-PGM.":"MOVE SRC-A TO LIT-PGM.\nCALL LIT-PGM.");
-            assertNotEquals("LOGICAL_FIT_TEXT",negative.moves().get(0).regionalMove().orElseThrow().kind().name());
-        }
+        var diagnostic=product(data+"77 UNKNOWN-A PIC X JUSTIFIED.\n","MOVE SRC-A TO LIT-PGM.\nCALL LIT-PGM.");
+        assertEquals("LOGICAL_FIT_TEXT",diagnostic.moves().get(0).regionalMove().orElseThrow().kind().name());
+        var unsupportedSlice=product(data+"77 OTHER-A PIC X.\n","MOVE SRC-A(1:2) TO LIT-PGM.\nCALL LIT-PGM.");
+        assertNotEquals("LOGICAL_FIT_TEXT",unsupportedSlice.moves().get(0).regionalMove().orElseThrow().kind().name());
     }
 
 }

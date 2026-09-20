@@ -22,3 +22,5 @@ embarcadas e descoberta final de dependências também não devem ser apresentad
 como domínio atual sem contrato materializado.
 
 - Current [SP1.8 compositional/partial boundary](../architecture/compositional-partial-lowering.md) and [BASIC PERFORM](perform-basic.md).
+
+- [Positive memory topology and storage coverage](scoped-storage-uncertainty.md): POSITIVE_MEMORY_TOPOLOGY W1 supported textual projection.

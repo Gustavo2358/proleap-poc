@@ -118,8 +118,7 @@ class ScalarMoveCheckpoint4ATest {
                 new String[]{"01 WS-X PIC X(5).", "WS-X(1:5)"},
                 new String[]{"01 WS-X PIC X(5).", "WS-X(1)"},
                 new String[]{"01 WS-X PIC X(5) EXTERNAL.", "WS-X"},
-                new String[]{"01 WS-X PIC X(5) GLOBAL.", "WS-X"},
-                new String[]{"01 WS-X PIC X(5) JUSTIFIED RIGHT.", "WS-X"});
+                new String[]{"01 WS-X PIC X(5) GLOBAL.", "WS-X"});
         for (var c : cases) {
             var port = publish(program(c[0], "MOVE 'PROGA' TO " + c[1] + ".\nGOBACK."));
             assertEquals(1, port.moves().size(), Arrays.toString(c));

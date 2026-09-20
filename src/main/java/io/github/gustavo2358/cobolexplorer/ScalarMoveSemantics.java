@@ -312,12 +312,12 @@ public final class ScalarMoveSemantics {
     }
 
     private static Optional<ScalarText> possibleReceiver(Ast.DataEntry entry) {
-        if(!entry.children().isEmpty()||entry.filler()||!entry.meta().provenance().exact())return Optional.empty();
+        if(!entry.children().isEmpty()||entry.filler()||entry.visibility()!=Ast.DeclarationVisibility.LOCAL||!entry.meta().provenance().exact())return Optional.empty();
         Optional<Integer> extent=Optional.empty();int pictures=0,usages=0;
         for(var clause:entry.clauses()) {
             if(clause instanceof Ast.PictureClause picture){pictures++;extent=picture.textExtent();}
             else if(clause instanceof Ast.UsageClause usage&&usage.display())usages++;
-            else if(!(clause instanceof Ast.ValueClause)&&!(clause instanceof Ast.RedefinesClause))return Optional.empty();
+            else if(!(clause instanceof Ast.ValueClause)&&!(clause instanceof Ast.RedefinesClause)&&!(clause instanceof Ast.PreservedDataClause))return Optional.empty();
         }
         return pictures==1&&usages<=1?extent.map(ScalarText::new):Optional.empty();
     }
@@ -332,7 +332,7 @@ public final class ScalarMoveSemantics {
             counts[0]++;
             if (clause instanceof Ast.PictureClause picture) { pictures++; extent = picture.textExtent(); }
             else if (clause instanceof Ast.UsageClause usage && usage.display()) usages++;
-            else return Optional.empty();
+            else if(!(clause instanceof Ast.PreservedDataClause))return Optional.empty();
         }
         return pictures == 1 && usages <= 1 ? extent.map(ScalarText::new) : Optional.empty();
     }

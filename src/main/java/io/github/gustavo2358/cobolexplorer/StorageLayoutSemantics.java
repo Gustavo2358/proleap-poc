@@ -3,7 +3,7 @@ package io.github.gustavo2358.cobolexplorer;
 import java.math.BigInteger;
 import java.util.*;
 
-/** Canonical physical layout facts; no SP, AIR, downstream analysis or runtime inference. */
+/** Canonical layout of the supported projection; no source-completeness or runtime inference. */
 public final class StorageLayoutSemantics {
     public enum Profile { UNSPECIFIED, IBM_ENTERPRISE_6_4_FIXED_DISPLAY_1047 }
     public static final String PROFILE_ID="ibm-enterprise-6.4-fixed-display-1047@1";
@@ -186,6 +186,9 @@ public final class StorageLayoutSemantics {
             &&modeled(data,coverage);
         int pictures=0,usages=0;Optional<BigInteger> extent=Optional.empty();
         for(var clause:data.clauses()) {
+            // Preserved clauses have no implemented contribution to the projected
+            // layout. Their canonical coverage finding survives independently.
+            if(clause instanceof Ast.PreservedDataClause)continue;
             known&=modeled(clause,coverage);
             if(clause instanceof Ast.PictureClause picture){pictures++;extent=picture.textExtent().map(BigInteger::valueOf);}
             else if(clause instanceof Ast.UsageClause usage&&usage.display())usages++;

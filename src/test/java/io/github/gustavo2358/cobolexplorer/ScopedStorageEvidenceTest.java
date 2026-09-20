@@ -17,19 +17,19 @@ class ScopedStorageEvidenceTest {
         assertEquals("LITERAL_BYTES",ScopedInputTest.product(a,0).storage().entryState().conditions().get(0).kind().name());
         assertEquals(1,ScopedInputTest.product(a,1).calls().size());
     }
-    @Test void broadAliasRemainderRetainsItsOwnerAndDoesNotPoisonKnownBounds() {
+    @Test void representationDiagnosticRetainsItsOwnerWithoutInventingAliasRemainder() {
         var f=fixture(VALUE+"77 PARTIAL-AREA PIC X(3) JUSTIFIED.\n");
         var unit=StorageComponents.analyze(f.source().build()).unit(f.source().model().programUnits().get(0).id());
         int owner=f.view("PARTIAL-AREA").node().node(),target=f.view("LIT-PGM").node().node();
         var assessment=unit.allocation(target);
-        assertFalse(assessment.proved());assertTrue(assessment.rootRemainder().isEmpty());
-        assertTrue(assessment.unitRemainder().stream().allMatch(u->u.owner()==owner&&u.root()==owner&&u.origin().exact()));
-        assertTrue(assessment.unitRemainder().stream().allMatch(u->u.scope()==StorageComponents.UncertaintyScope.UNIT&&u.dimensions().contains(StorageComponents.Dimension.ALIAS)));
+        assertTrue(assessment.proved());assertTrue(assessment.rootRemainder().isEmpty());
+        assertTrue(assessment.unitRemainder().isEmpty());
+        assertTrue(unit.uncertainties().stream().allMatch(u->u.owner()==owner&&u.root()==owner&&u.origin().exact()));
         assertTrue(unit.uncertainties().stream().anyMatch(u->u.scope()==StorageComponents.UncertaintyScope.DECLARATION&&u.dimensions().equals(Set.of(StorageComponents.Dimension.LAYOUT))));
         known(0,f.view("LIT-PGM").offset());known(8,f.view("LIT-PGM").extent());
-        assertTrue(f.view("PARTIAL-AREA").extent().value().isEmpty());
+        known(3,f.view("PARTIAL-AREA").extent());
         var value=condition(product(VALUE+"77 PARTIAL-AREA PIC X(3) JUSTIFIED.\n","CALL LIT-PGM."));
-        assertEquals("POSSIBLE_LITERAL_BYTES",value.kind().name());assertFalse(value.bytes().isEmpty());
+        assertEquals("LITERAL_BYTES",value.kind().name());assertFalse(value.bytes().isEmpty());
     }
     @Test void nestedUnknownRelationIsRecordScopedAndDoesNotInventEndpoints() {
         var f=fixture(VALUE+"01 PARTIAL-AREA.\n05 KNOWN-PART PIC X(3).\n05 UNKNOWN-PART REDEFINES MISSING PIC X(3).\n");
@@ -40,13 +40,13 @@ class ScopedStorageEvidenceTest {
         assertTrue(f.view("UNKNOWN-PART").offset().value().isEmpty());
         known(8,f.view("LIT-PGM").extent());
     }
-    @Test void declarationNamesAndOrderDoNotCreateSeparationProof() {
+    @Test void declarationNamesAndOrderDoNotTurnCoverageIntoAllocationEffects() {
         for(String partial:List.of("A-FIRST","Z-LAST"))for(boolean before:List.of(false,true)) {
             String declaration="77 "+partial+" PIC X(3) JUSTIFIED.\n";
             var f=fixture(before?declaration+VALUE:VALUE+declaration);
             var unit=StorageComponents.analyze(f.source().build()).unit(f.source().model().programUnits().get(0).id());
-            assertFalse(unit.allocation(f.view("LIT-PGM").node().node()).proved());
-            assertFalse(f.layout().bases().stream().anyMatch(StorageLayoutSemantics.Base::independent));
+            assertTrue(unit.allocation(f.view("LIT-PGM").node().node()).proved());
+            assertTrue(f.layout().bases().stream().allMatch(StorageLayoutSemantics.Base::independent));
             assertFalse(condition(product(before?declaration+VALUE:VALUE+declaration,"CALL LIT-PGM.")).bytes().isEmpty());
         }
     }

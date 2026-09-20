@@ -6,6 +6,15 @@ O registro local é WORK-STORAGE-FRONTEND-001, promoção dos fatos fonte de
 BACKLOG-SP-008/BACKLOG-DF-001 e do contexto de BACKLOG-EXT-002. RD/values
 continuam nos consumidores. Review humano ocorre após W5; nenhum merge autorizado.
 
+## Current positive projection (POSITIVE_MEMORY_TOPOLOGY W1)
+
+The historical ST-W0–W5 rules below describe their original rollout. For the
+current producer, [positive topology and coverage](scoped-storage-uncertainty.md)
+supersedes the blanket claim that every preserved clause opens allocation or
+disables its textual family. Known PIC X/group widths, REDEFINES/RENAMES and
+transfers survive omitted representation aspects in the supported abstraction.
+Omitted aspects remain source coverage, without asserting full COBOL fidelity.
+
 ## Autoridade e ambiente
 
 As regras fonte vêm do Enterprise COBOL for z/OS 6.4:
@@ -59,9 +68,10 @@ Origins de copybooks são preservados, inclusive em nós anônimos.
 OCCURS/ODO, RENAMES, VALUE/inicialização regional, reference modification,
 MOVE CORRESPONDING, NATIONAL/DBCS/UTF-8, uso numérico/COMP, SIGN/SYNC/JUSTIFIED,
 GLOBAL/EXTERNAL, LINKAGE/LOCAL-STORAGE e programas INITIAL/RECURSIVE ficam fora
-da prova precisa. Cláusula preservada/sem interpretação não é inocente. Uma raiz
-desconhecida só permite precisão em outra raiz quando a prova de alocação separada
-é independente da cláusula desconhecida. Caso contrário, o efeito fica aberto.
+da prova precisa. Na projeção positiva vigente, cláusula preservada/sem interpretação permanece
+no relatório de cobertura. Ela não abre alocação nem invalida a representação
+textual já suportada. Extensão realmente não representada continua explícita,
+sem fabricar zero ou codec.
 
 ## Produto canônico e SP 2.7
 

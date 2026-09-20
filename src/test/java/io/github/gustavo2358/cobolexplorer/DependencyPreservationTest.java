@@ -20,7 +20,8 @@ class DependencyPreservationTest {
         for(String declaration:new String[]{"05 TARGET-PGM PIC X(8) OCCURS 2.","05 TARGET-PGM PIC X(8) JUSTIFIED RIGHT."}) {
             var state=CicsProgramControlTest.regional("COPY MISSINGDP.\n01 REC.\n"+declaration,
                 "MOVE 'PROGA' TO TARGET-PGM.\nEXEC CICS XCTL PROGRAM(TARGET-PGM(2:4)) END-EXEC.");
-            assertNotEquals("POSSIBLE_TEXT",((MoveFact)state.statements().get(0)).copySemantics().name());
+            if(declaration.contains("OCCURS"))assertNotEquals("POSSIBLE_TEXT",((MoveFact)state.statements().get(0)).copySemantics().name());
+            else assertEquals("POSSIBLE_TEXT",((MoveFact)state.statements().get(0)).copySemantics().name(),"omitted representation does not erase literal transfer");
             var target=(DataReference)((CicsFact)state.statements().get(1)).target().orElseThrow();
             assertTrue(target.logicalWholeItem().isEmpty());
         }

@@ -31,7 +31,8 @@ class EvidenceMetamorphicTest {
             var before=condition(baseline);var after=condition(partial);
             if(!physical)assertEquals(before.logicalText(),after.logicalText());assertEquals(before.bytes(),after.bytes());
             assertTrue(after.logicalText().filter("PROGA   "::equals).isPresent()||!after.bytes().isEmpty());
-            assertEquals("DECLARATIVE_POSSIBILITY",after.proof().name());assertFalse(after.gapCodes().isEmpty());
+            assertEquals(before.proof(),after.proof(),"coverage-only addition cannot weaken entry authority");
+            assertEquals(before.gapCodes(),after.gapCodes(),"coverage belongs to the omitted clause, not the entry value");
             assertEquals(1,partial.calls().size());assertTrue(after.provenance().exact());
             var folder=out.resolve(String.format("case-%02d",count++));Files.createDirectories(folder);
             Files.writeString(folder.resolve("source.cbl"),source);

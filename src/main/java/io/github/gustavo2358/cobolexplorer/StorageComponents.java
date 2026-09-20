@@ -2,7 +2,7 @@ package io.github.gustavo2358.cobolexplorer;
 
 import java.util.*;
 
-/** Source allocation proof shared by physical layout and legacy scalar eligibility.
+/** Supported allocation topology shared by physical layout and scalar eligibility.
  * Relations resolve only inside the preceding contiguous sibling component.
  * Nominal visibility outside that component cannot prove a REDEFINES location. */
 public final class StorageComponents {
@@ -104,12 +104,10 @@ public final class StorageComponents {
                 if(data.visibility()!=Ast.DeclarationVisibility.LOCAL)uncertainties.add(new Uncertainty(data.meta().id(),p.root(),UncertaintyScope.UNIT,
                     Set.of(Dimension.ALLOCATION,Dimension.ALIAS,Dimension.LIFETIME),Reason.NONLOCAL_VISIBILITY,data.meta().provenance()));
                 for(var clause:data.clauses())if(clause instanceof Ast.RenamesClause||clause instanceof Ast.PreservedDataClause) {
-                    // The declaration owns the layout gap; absent an alias bound, separation
-                    // remains open for the unit. Neither record controls source VALUE support.
+                    // An omitted aspect describes source coverage, not an allocation or alias.
+                    // Known declaration structure remains in the supported projection.
                     uncertainties.add(new Uncertainty(data.meta().id(),p.root(),UncertaintyScope.DECLARATION,
                         Set.of(Dimension.LAYOUT),Reason.UNINTERPRETED_DATA_CLAUSE,clause.meta().provenance()));
-                    uncertainties.add(new Uncertainty(data.meta().id(),p.root(),UncertaintyScope.UNIT,
-                        Set.of(Dimension.ALLOCATION,Dimension.ALIAS,Dimension.LIFETIME),Reason.UNINTERPRETED_DATA_CLAUSE,clause.meta().provenance()));
                 }
                 for(int i=data.children().size()-1;i>=0;i--)pending.push(new Position(data.children().get(i),Optional.of(data.meta().id()),i,p.root()));
             }
