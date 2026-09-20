@@ -907,7 +907,9 @@ public final class CobolSemanticProductProjector {
                     var h=host.get();var entry=inputs.entryFor(h.reference());
                     if(projectableDataBinding(entry,inputs))ref=Optional.of(new DataReference(new OperandId(statementId,optionOrdinal++),
                         h.role()==Ast.EmbeddedHostRole.WRITE?OperandRole.WRITE:OperandRole.READ,nominalBinding(entry,dataIds),
-                        provenance(h.reference().meta().provenance()),Optional.empty(),regionalAccess(inputs,h.reference().meta().id())));
+                        provenance(h.reference().meta().provenance()),Optional.empty(),regionalAccess(inputs,h.reference().meta().id()),List.of(),
+                        h.reference().understanding()==Ast.ReferenceUnderstanding.STRUCTURED&&h.reference().subscriptGroups().isEmpty()&&h.reference().referenceModification()==null
+                            ?nominalBinding(entry,dataIds).selected():Optional.empty()));
                 }
                 if(option.canonicalName().equals("FILE")&&source.targetMode()==io.github.gustavo2358.cobolexplorer.CicsFileControlAnalyzer.TargetMode.INPUT) {
                     if(target.isEmpty()&&source.host().isPresent()&&ref.isPresent())target=Optional.of(ref.get());
@@ -946,7 +948,9 @@ public final class CobolSemanticProductProjector {
                 if(host.isPresent()) {
                     var reference=host.orElseThrow().reference();var entry=inputs.entryFor(reference);
                     if(projectableDataBinding(entry,inputs))target=Optional.of(new DataReference(new OperandId(statementId,0),OperandRole.READ,
-                        nominalBinding(entry,dataIds),provenance(reference.meta().provenance()),Optional.empty(),regionalAccess(inputs,reference.meta().id())));
+                        nominalBinding(entry,dataIds),provenance(reference.meta().provenance()),Optional.empty(),regionalAccess(inputs,reference.meta().id()),List.of(),
+                        reference.understanding()==Ast.ReferenceUnderstanding.STRUCTURED&&reference.subscriptGroups().isEmpty()&&reference.referenceModification()==null
+                            ?nominalBinding(entry,dataIds).selected():Optional.empty()));
                 }
             }
             if(target.isEmpty())codes.add(source.host().isPresent()?"CICS_HOST_BINDING_UNAVAILABLE":"CICS_TARGET_UNKNOWN");
@@ -957,7 +961,9 @@ public final class CobolSemanticProductProjector {
                 if(!option.name().equals("PROGRAM")&&host.isPresent()) {
                     var h=host.orElseThrow();var entry=inputs.entryFor(h.reference());
                     if(projectableDataBinding(entry,inputs))ref=Optional.of(new DataReference(new OperandId(statementId,optionOrdinal++),h.role()==Ast.EmbeddedHostRole.WRITE?OperandRole.WRITE:OperandRole.READ,
-                        nominalBinding(entry,dataIds),provenance(h.reference().meta().provenance()),Optional.empty(),regionalAccess(inputs,h.reference().meta().id())));
+                        nominalBinding(entry,dataIds),provenance(h.reference().meta().provenance()),Optional.empty(),regionalAccess(inputs,h.reference().meta().id()),List.of(),
+                        h.reference().understanding()==Ast.ReferenceUnderstanding.STRUCTURED&&h.reference().subscriptGroups().isEmpty()&&h.reference().referenceModification()==null
+                            ?nominalBinding(entry,dataIds).selected():Optional.empty()));
                 }
                 options.add(new CicsOption(option.name(),option.operand(),option.start(),option.end(),ref));
             }
@@ -1201,7 +1207,7 @@ public final class CobolSemanticProductProjector {
             });
             NormalContinuation continuation = new NormalContinuation(next.isPresent()
                     ? ContinuationAvailability.KNOWN : intrinsicEnd ? ContinuationAvailability.NONE : ContinuationAvailability.UNAVAILABLE, next, statementProvenance);
-            Optional<WholeItemAccess> access = semantic.wholeItem().map(entity ->
+            Optional<WholeItemAccess> access = semantic.wholeItem().filter(entity -> copy != CopySemantics.POSSIBLE_TEXT).map(entity ->
                     new WholeItemAccess(Objects.requireNonNull(dataIds.get(entity), "whole item must be published")));
             MoveSource source;
             if (move.source() instanceof Ast.LiteralExpression literal) {
@@ -1237,7 +1243,7 @@ public final class CobolSemanticProductProjector {
                     source,
                     new DataReference(new OperandId(statementId, 1), OperandRole.WRITE, binding,
                             provenance(((Ast.DataReference) move.targets().get(0)).meta().provenance()), access, regionalAccess(inputs, move.targets().get(0).meta().id()),List.of(),
-                            inputs.products().storage().flatMap(st->st.logicalWholeItem(new StorageLayoutSemantics.Key(inputs.unitId(),move.targets().get(0).meta().id()))).map(dataIds::get)),
+                            semantic.copy()==ScalarMoveSemantics.Copy.POSSIBLE_TEXT?semantic.wholeItem().map(dataIds::get):inputs.products().storage().flatMap(st->st.logicalWholeItem(new StorageLayoutSemantics.Key(inputs.unitId(),move.targets().get(0).meta().id()))).map(dataIds::get)),
                     copy, continuation, semantic.adjustment().map(adjustment -> new TextAdjustment(
                             TextAdjustmentRule.RIGHT_PAD_SPACE, adjustment.receiverExtent(),
                             new TextValue(adjustment.result()), statementProvenance)), regionalMove(inputs, move.meta().id()));

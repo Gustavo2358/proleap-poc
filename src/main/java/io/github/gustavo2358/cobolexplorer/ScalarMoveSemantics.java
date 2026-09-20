@@ -10,7 +10,7 @@ public final class ScalarMoveSemantics {
     public record ScalarText(int extent) {
         public ScalarText { if (extent <= 0) throw new IllegalArgumentException("positive extent required"); }
     }
-    public enum Copy { FULL_IDENTITY, FITTED_TEXT, UNAVAILABLE }
+    public enum Copy { FULL_IDENTITY, FITTED_TEXT, POSSIBLE_TEXT, UNAVAILABLE }
     public record TextAdjustment(int receiverExtent, String result) { }
     public record Call(Optional<ResolutionContracts.SemanticEntityId> wholeItem,
                        Optional<Integer> nextStatement, boolean inputComplete) { }
@@ -96,6 +96,7 @@ public final class ScalarMoveSemantics {
         if(!components.belongsTo(frontend))throw new IllegalArgumentException("storage components belong to another snapshot");
         Map<ResolutionContracts.SemanticEntityId, ScalarText> declarations = new HashMap<>();
         Map<NodeKey, Ast.MoveStatement> targets = new HashMap<>();
+        Map<ResolutionContracts.SemanticEntityId, ScalarText> possibleText = new HashMap<>();
         Map<NodeKey, Move> moves = new HashMap<>();
         Map<NodeKey, Ast.CallStatement> callTargets = new HashMap<>();
         Map<NodeKey, Call> calls = new HashMap<>();
@@ -103,6 +104,15 @@ public final class ScalarMoveSemantics {
         for (var unit : frontend.compilationUnit().programUnits()) {
             boolean inputComplete=report.inputComplete(unit.id());
             Map<Integer, ScalarText> eligible = new HashMap<>();
+            var localText=new HashMap<Integer,ScalarText>();
+            var repeated=new HashSet<Integer>();
+            for(var position:components.unit(unit.id()).positions()) {
+                var declaration=position.data();
+                boolean repeat=position.parent().filter(repeated::contains).isPresent()
+                    ||declaration.clauses().stream().anyMatch(c->c instanceof Ast.OccursClause||c instanceof Ast.UsageClause u&&!u.display());
+                if(repeat)repeated.add(declaration.meta().id());
+                if(!repeat)possibleReceiver(declaration).ifPresent(shape->localText.put(declaration.meta().id(),shape));
+            }
             storage.ifPresent(st->{
                 var leaves=new HashMap<Integer,StorageLayoutSemantics.Node>();
                 for(var n:st.layout().layout(unit.id()).nodes())if(n.kind()==StorageLayoutSemantics.Kind.ELEMENTARY&&!n.filler())leaves.put(n.id().node(),n);
@@ -155,6 +165,9 @@ public final class ScalarMoveSemantics {
             for (var symbol : tables.forProgramUnit(unit.id()).orElseThrow().symbolTable().symbols()) {
                 counts[1]++;
                 ScalarText shape = eligible.get(symbol.declarationAstNodeId());
+                if(localText.containsKey(symbol.declarationAstNodeId())&&symbol.namespace()==SymbolTable.Namespace.DATA
+                    &&symbol.kind()==SymbolTable.SymbolKind.DATA_ITEM)
+                    possibleText.put(new ResolutionContracts.SemanticEntityId(unit.id(),ResolutionContracts.SemanticEntityDomain.DATA_SYMBOL,symbol.id()),localText.get(symbol.declarationAstNodeId()));
                 if (shape != null && symbol.namespace() == SymbolTable.Namespace.DATA
                         && symbol.kind() == SymbolTable.SymbolKind.DATA_ITEM)
                     declarations.put(new ResolutionContracts.SemanticEntityId(unit.id(),
@@ -236,6 +249,20 @@ public final class ScalarMoveSemantics {
                     }
                 }
             }
+            // Occurrence-local value evidence does not prove physical allocation or kill authority.
+            if(copy==Copy.UNAVAILABLE&&storage.map(st->st.move(new StorageLayoutSemantics.Key(occurrence.programUnitId(),move.meta().id())).kind()==StorageAccessSemantics.MoveKind.UNAVAILABLE).orElse(true)
+                &&move.targets().size()==1&&move.meta().provenance().exact()
+                &&target.meta().provenance().exact()&&target.understanding()==Ast.ReferenceUnderstanding.STRUCTURED
+                &&target.subscriptGroups().isEmpty()&&target.referenceModification()==null
+                &&entry.status()==ResolutionContracts.ResolutionStatus.RESOLVED
+                &&move.source() instanceof Ast.LiteralExpression literal&&literal.logicalText().isPresent()) {
+                var selected=entry.selectedCandidate().orElseThrow().entityId();var shape=possibleText.get(selected);
+                var text=literal.logicalText().orElseThrow();
+                if(shape!=null&&text.extent()<=shape.extent()) {
+                    copy=Copy.POSSIBLE_TEXT;whole=Optional.of(selected);
+                    adjustment=Optional.of(new TextAdjustment(shape.extent(),text.value()+" ".repeat(shape.extent()-text.extent())));
+                }
+            }
             NodeKey key = new NodeKey(occurrence.programUnitId(), move.meta().id());
             var basic = fact(whole, copy, moves.get(key).nextStatement());
             moves.put(key, new Move(whole, copy, basic.nextStatement(), basic.gaps(), adjustment, sourceWhole));
@@ -284,6 +311,16 @@ public final class ScalarMoveSemantics {
         return new Move(whole, copy, next, gaps, Optional.empty(), Optional.empty());
     }
 
+    private static Optional<ScalarText> possibleReceiver(Ast.DataEntry entry) {
+        if(!entry.children().isEmpty()||entry.filler()||!entry.meta().provenance().exact())return Optional.empty();
+        Optional<Integer> extent=Optional.empty();int pictures=0,usages=0;
+        for(var clause:entry.clauses()) {
+            if(clause instanceof Ast.PictureClause picture){pictures++;extent=picture.textExtent();}
+            else if(clause instanceof Ast.UsageClause usage&&usage.display())usages++;
+            else if(!(clause instanceof Ast.ValueClause)&&!(clause instanceof Ast.RedefinesClause))return Optional.empty();
+        }
+        return pictures==1&&usages<=1?extent.map(ScalarText::new):Optional.empty();
+    }
     private static Optional<ScalarText> scalar(Ast.DataEntry entry, long[] counts) {
         if (!entry.children().isEmpty() || entry.filler()
                 || entry.visibility() != Ast.DeclarationVisibility.LOCAL
