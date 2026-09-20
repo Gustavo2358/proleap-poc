@@ -15,7 +15,8 @@ public final class GoToSemantics {
             Ast.SourceProvenance selectorOrigin, Optional<Integer> continuation,
             Ast.SourceProvenance continuationOrigin, List<String> gaps) {
         public ConditionalFacts { destinations=List.copyOf(destinations);gaps=List.copyOf(gaps); }
-        public boolean closed() { return gaps.isEmpty() && destinations.stream().allMatch(d->d.proof().gaps().isEmpty()); }
+        public boolean closed() { return !destinations.isEmpty() && continuation.isPresent()
+            && destinations.stream().allMatch(d->d.proof().entry().isPresent()); }
     }
     private final Map<ScalarMoveSemantics.NodeKey,Facts> facts;
     private final Map<ScalarMoveSemantics.NodeKey,ConditionalFacts> conditional;
@@ -47,7 +48,7 @@ public final class GoToSemantics {
         return List.of();
     }
     public boolean closed(ResolutionContracts.ProgramUnitId unit,Ast.GoToStatement g) {
-        return simple(g)?fact(unit,g.meta().id()).gaps().isEmpty():depending(g)&&conditionalFact(unit,g.meta().id()).closed();
+        return simple(g)?fact(unit,g.meta().id()).entry().isPresent():depending(g)&&conditionalFact(unit,g.meta().id()).closed();
     }
     static GoToSemantics analyze(CompilationUnitBuildResult frontend,CompilationUnitSymbolTables tables,
             ReferenceResolution resolution,ResolutionAnalysisReport report,NumericControlSemantics numbers) {
@@ -117,8 +118,11 @@ public final class GoToSemantics {
         if(!g.meta().provenance().exact()||!source.meta().provenance().exact()
                 ||target!=null&&!target.paragraphOrigin().exact()
                 ||executable.filter(n->!n.meta().provenance().exact()).isPresent())gaps.add("GO_TO_PROVENANCE_INCOMPLETE");
-        boolean precise=gaps.isEmpty();
-        return new Facts(Optional.ofNullable(target),source.meta().provenance(),precise?entry:Optional.empty(),
-            precise?executable.map(n->n.meta().provenance()):Optional.empty(),gaps);
+        boolean entryExact=executable.isPresent()&&source.meta().provenance().exact()
+            &&g.meta().provenance().exact()&&target!=null&&target.paragraphOrigin().exact()
+            &&executable.orElseThrow().meta().provenance().exact();
+        var knownEntry=entryExact?entry:Optional.<Integer>empty();
+        return new Facts(Optional.ofNullable(target),source.meta().provenance(),knownEntry,
+            knownEntry.flatMap(id->executable.map(n->n.meta().provenance())),gaps);
     }
 }

@@ -80,7 +80,9 @@ public final class SemanticProductJsonWriter {
             s instanceof CobolSemanticProduct.MoveFact m && m.copySemantics()==CobolSemanticProduct.CopySemantics.POSSIBLE_TEXT
             || s instanceof CobolSemanticProduct.CicsFact c && c.target().filter(t -> t instanceof CobolSemanticProduct.DataReference d && d.logicalWholeItem().isPresent()).isPresent()
             || s instanceof CobolSemanticProduct.CicsFileFact c && c.target().filter(t -> t instanceof CobolSemanticProduct.DataReference d && d.logicalWholeItem().isPresent()).isPresent());
-        return new SemanticProductDocument(SCHEMA, preservation?"2.32.0":port.sourceDependencies().availability()!=CobolSemanticProduct.Availability.UNAVAILABLE?"2.31.0":port.storage().logicalTextViews().isEmpty()?CONTRACT_VERSION:"2.29.0",
+        boolean structuredUnknownEvaluate=port.statements().stream().anyMatch(s -> s instanceof CobolSemanticProduct.EvaluateFact e
+            && e.arms().stream().anyMatch(a -> a.selection().isEmpty()));
+        return new SemanticProductDocument(SCHEMA, structuredUnknownEvaluate?"2.33.0":preservation?"2.32.0":port.sourceDependencies().availability()!=CobolSemanticProduct.Availability.UNAVAILABLE?"2.31.0":port.storage().logicalTextViews().isEmpty()?CONTRACT_VERSION:"2.29.0",
                 unit(port.unit()), policy(port.policy()), declarations, statements,
                 new StructureDocument(port.rootStatements().stream()
                         .map(SemanticProductJsonWriter::statementHandle).toList(),
@@ -264,8 +266,10 @@ public final class SemanticProductJsonWriter {
                 g.entryOrigin().map(SemanticProductJsonWriter::provenance).orElse(null),g.gapCodes());
         if (fact instanceof CobolSemanticProduct.EvaluateFact e)
             return new EvaluateDocument(header(e.header()), e.subject().map(SemanticProductJsonWriter::dataReference).orElse(null),
-                e.arms().stream().map(a -> new EvaluateArmDocument(a.ordinal(), moveSource(a.selection()),
-                    a.statements().stream().map(SemanticProductJsonWriter::statementHandle).toList(), arm(a.control()))).toList(),
+                e.arms().stream().map(a -> new EvaluateArmDocument(a.ordinal(), a.selection().map(SemanticProductJsonWriter::moveSource).orElse(null),
+                    a.statements().stream().map(SemanticProductJsonWriter::statementHandle).toList(), arm(a.control()),
+                    a.selection().isPresent()?null:a.conditionReads().stream().map(SemanticProductJsonWriter::dataReference).toList(),
+                    a.selection().isPresent()?null:provenance(a.conditionOrigin()))).toList(),
                 arm(e.otherArm()), e.otherStatements().stream().map(SemanticProductJsonWriter::statementHandle).toList(),
                 continuation(e.normalContinuation()), e.gapCodes());
         if(fact instanceof CobolSemanticProduct.ProcedurePerformFact p) {
@@ -533,7 +537,9 @@ public final class SemanticProductJsonWriter {
     private record GoToDocument(StatementHeaderDocument header, GoToTargetDocument target, ProvenanceDocument referenceOrigin,
             String targetEntry, ProvenanceDocument entryOrigin, List<String> gapCodes) implements StatementDocument { }
 
-    private record EvaluateArmDocument(int ordinal, MoveSourceDocument selection, List<String> statements, IfArmDocument control) { }
+    private record EvaluateArmDocument(int ordinal, MoveSourceDocument selection, List<String> statements, IfArmDocument control,
+        @JsonInclude(JsonInclude.Include.NON_NULL) List<DataReferenceDocument> conditionReads,
+        @JsonInclude(JsonInclude.Include.NON_NULL) ProvenanceDocument conditionOrigin) { }
     private record EvaluateDocument(StatementHeaderDocument header, DataReferenceDocument subject, List<EvaluateArmDocument> arms,
             IfArmDocument otherArm, List<String> otherStatements, ContinuationDocument normalContinuation, List<String> gapCodes) implements StatementDocument { }
 

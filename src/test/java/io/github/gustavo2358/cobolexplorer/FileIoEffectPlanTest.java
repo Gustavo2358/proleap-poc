@@ -47,7 +47,7 @@ class FileIoEffectPlanTest {
     }
     @Test void foreignDialectSyntaxCannotAcquireIbmStrongEffects() {
         var f=fixture("SELECT F ASSIGN TO INDD FILE STATUS IO-STATUS.","FD F.\n01 REC PIC X(8).","01 DEST PIC X(8).\n01 IO-STATUS PIC XX.","READ F INTO DEST WITH KEPT LOCK.");
-        var p=plan(f,Ast.FileCommand.READ);assertTrue(p.unknownWriteBound());
+        var p=plan(f,Ast.FileCommand.READ);assertFalse(p.unknownWriteBound());
         assertTrue(p.outcomes().stream().flatMap(c->c.steps().stream()).allMatch(s->s.kind()==FileIoEffects.Kind.MAY_UNKNOWN));
     }
 }

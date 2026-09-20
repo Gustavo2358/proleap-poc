@@ -22,3 +22,14 @@ No path pruning or comparison/conversion engine is added. Numeric selections,
 ALSO, TRUE, ANY, THRU, NOT, arithmetic/refmod/subscripts and general nested
 EVALUATE stay outside this slice. Oracles: three-way join, incoming value on
 no-match, strong updates, per-arm CALL sites, nested IF and 1/2/5/40 occurrences.
+
+## Positive topology W2 — SP 2.33.0 extension
+
+When the grammar supplies an ordered WHEN arm but its condition is outside the
+evaluator, the producer retains that arm, its body, source origin, known read
+operands and ordinary continuation. Such an arm has no `selection`; it instead
+publishes `conditionReads` and `conditionOrigin`. Literal arms keep their SP 2.0
+shape. SP 2.33.0 is emitted only when this extension is used. The lower uses the
+existing bool Unknown and ordered Branch chain, including the no-OTHER path.
+Uninterpreted condition details remain coverage; they add no global control or
+memory effects. This does not implement the excluded COBOL condition families.

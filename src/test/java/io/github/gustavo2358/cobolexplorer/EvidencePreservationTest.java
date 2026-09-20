@@ -63,8 +63,8 @@ class EvidencePreservationTest {
     }
 
     @Test void unknownStatementAndCallOperandsPreserveSourceEvidence() {
-        for (var code : List.of("EXHIBIT LIT-PGM.\nCALL LIT-PGM.",
-                "DISPLAY LIT-PGM.\nCALL LIT-PGM USING MISSING-ARG.",
+        invariant(VALUE,"EXHIBIT LIT-PGM.\nCALL LIT-PGM.");
+        for (var code : List.of("DISPLAY LIT-PGM.\nCALL LIT-PGM USING MISSING-ARG.",
                 "CALL 'OTHER' RETURNING LIT-PGM.\nCALL LIT-PGM.")) {
             var c = condition(product(VALUE, code));
             assertEquals(PROGA, c.bytes(), code);

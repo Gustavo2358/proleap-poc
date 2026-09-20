@@ -539,3 +539,13 @@ provas em [DVI](declarative-value-inference.md).
 [Dependency preservation](dependency-preservation.md) defines occurrence-local
 `POSSIBLE_TEXT`, its validation and canonical whole CICS host references independent
 of physical layout. The writer emits 2.32.0 only when this new evidence is present.
+
+## Positive topology W2 — SP 2.33.0
+
+An EVALUATE arm whose condition is not interpreted preserves its ordinal, body,
+known read references and condition provenance. It omits the literal `selection`
+and publishes `conditionReads` and `conditionOrigin`; see
+[EVALUATE](evaluate-semantic-product.md). The writer emits 2.33.0 only when that
+arm shape is present. Other SP versions and supported literal arms retain their
+existing wire shape. Missing interpretation stays in coverage and does not imply
+global memory or control effects.

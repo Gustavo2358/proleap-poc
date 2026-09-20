@@ -293,7 +293,7 @@ final class ReferenceOccurrenceCollector {
                                         List<Ast.StatementClause> clauses,
                                         ReferenceOccurrences.Preservation preservation) {
         var reads=new java.util.HashSet<Integer>();var writes=new java.util.HashSet<Integer>();
-        effects.ifPresent(e->{e.knownReads().forEach(r->reads.add(r.meta().id()));e.mayWrites().forEach(r->writes.add(r.meta().id()));});
+        effects.ifPresent(e->{e.knownReads().forEach(r->reads.add(r.meta().id()));e.sourceTargets().forEach(r->writes.add(r.meta().id()));});
         for (Ast.StatementOperand operand : operands) {
             ResolutionContracts.ReferenceRole role = operand.value() instanceof Ast.FileReference
                     ? ResolutionContracts.ReferenceRole.FILE_OPERATION

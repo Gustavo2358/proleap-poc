@@ -22,12 +22,7 @@ class EvaluateFirstSliceTest {
             for(var file:files.sorted().toList()) {
                 var source=Files.readString(file); var p=ScalarMoveCheckpoint4ATest.publish(source);
                 var name=file.getFileName().toString().replace(".cbl","");
-                if(name.equals("also")) {
-                    assertTrue(p.evaluates().isEmpty());
-                    var observed=p.observedStatements().stream().filter(s->s.observedKind().equals("EVALUATE")).findFirst().orElseThrow();
-                    assertEquals(ContinuationAvailability.UNAVAILABLE,observed.normalContinuation().availability());
-                    assertEquals(2,p.calls().size());
-                } else {
+                {
                     assertFalse(p.evaluates().isEmpty(),name);
                     int count=name.startsWith("compose-")?Integer.parseInt(name.substring(8)):name.equals("e5")?2:1;
                     assertEquals(count,p.evaluates().size(),name);
@@ -37,8 +32,9 @@ class EvaluateFirstSliceTest {
                         var members=new HashSet<StatementId>();
                         for(int i=0;i<e.arms().size();i++) {
                             var arm=e.arms().get(i); assertEquals(i,arm.ordinal());
-                            assertEquals(LiteralKind.ALPHANUMERIC,arm.selection().kind());
-                            assertTrue(arm.selection().provenance().exact());
+                            if(name.equals("also")) assertTrue(arm.selection().isEmpty());
+                            else assertEquals(LiteralKind.ALPHANUMERIC,arm.selection().orElseThrow().kind());
+                            assertTrue(arm.conditionOrigin().exact());
                             if(!name.equals("empty")) assertEquals(arm.statements().get(0),arm.control().entry().statement().orElseThrow());
                             for(var id:arm.statements()) { assertTrue(members.add(id));
                                 assertEquals(new Containment(Optional.of(e.header().id()),Branch.EVALUATE_ARM),p.statement(id).orElseThrow().header().containment()); }
@@ -49,7 +45,7 @@ class EvaluateFirstSliceTest {
                         if(name.equals("empty")) { assertTrue(e.arms().get(0).control().entry().statement().isEmpty()); assertEquals(CoverageStatus.PARTIAL,e.header().coverage()); }
                     }
                     if(name.equals("e1")) {
-                        var e=p.evaluates().get(0); assertEquals(List.of("A","B"),e.arms().stream().map(a->a.selection().value()).toList());
+                        var e=p.evaluates().get(0); assertEquals(List.of("A","B"),e.arms().stream().map(a->a.selection().orElseThrow().value()).toList());
                         var call=p.calls().get(0).header().id(); assertEquals(call,e.normalContinuation().statement().orElseThrow());
                         for(var m:p.moves()) assertEquals(call,m.normalContinuation().statement().orElseThrow());
                     }
@@ -60,18 +56,20 @@ class EvaluateFirstSliceTest {
             }
         }
     }
-    @Test void unsupportedSelectorsNeverAcquireLiteralSemantics() {
+    @Test void unsupportedSelectorsKeepOrderedArmsWithoutLiteralSemantics() {
         for(var selection:List.of("ANY","NOT 'A'","'A' THRU 'Z'","1","FLAG")) {
             var p=ScalarMoveCheckpoint4ATest.publish(source("EVALUATE WS-X\nWHEN "+selection+"\nCALL 'PROGA'\nEND-EVALUATE."));
-            assertTrue(p.evaluates().isEmpty(),selection); assertEquals(1,p.calls().size());
-            assertTrue(p.observedStatements().stream().anyMatch(s->s.observedKind().equals("EVALUATE")),selection);
+            assertEquals(1,p.evaluates().size(),selection); assertEquals(1,p.calls().size());
+            var arm=p.evaluates().get(0).arms().get(0);
+            assertTrue(arm.selection().isEmpty(),selection);
+            assertTrue(arm.conditionOrigin().exact(),selection);
+            assertEquals(CoverageStatus.PARTIAL,p.evaluates().get(0).header().coverage(),selection);
         }
     }
     @Test void generalNestedEvaluateRemainsObserved() {
         var p=ScalarMoveCheckpoint4ATest.publish(source("EVALUATE WS-X\nWHEN 'A'\nEVALUATE FLAG\nWHEN 'Y' CALL 'PROGA'\nEND-EVALUATE\nWHEN OTHER CALL 'PROGB'\nEND-EVALUATE."));
-        assertEquals(1,p.evaluates().size());
+        assertEquals(2,p.evaluates().size());
         assertEquals(2,p.calls().size());
-        assertTrue(p.observedStatements().stream().anyMatch(s->s.observedKind().equals("EVALUATE")
-                && s.normalContinuation().availability()==ContinuationAvailability.UNAVAILABLE));
+        assertTrue(p.evaluates().stream().anyMatch(e -> e.arms().stream().anyMatch(a -> a.selection().isEmpty())));
     }
 }

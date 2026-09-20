@@ -591,7 +591,8 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
                         || current instanceof Ast.PerformStatement || current instanceof Ast.EvaluateStatement
                         || current instanceof Ast.GoToStatement g && g.goToKind()==Ast.GoToKind.DEPENDING_ON
                         || current instanceof Ast.CallStatement call && !call.surface().hasHandlers()
-                        || FileIoSyntax.isNativeStatement(context) || sequentialOpaque(context);
+                        || FileIoSyntax.isNativeStatement(context) || sequentialOpaque(context)
+                        || ordinaryStructuredStatement(current, context);
                 // Positional host boundary only; no embedded-language success/return claim.
                 if(current instanceof Ast.EmbeddedLanguageStatement) {
                     if(next!=null)embedded.put(current.meta().id(),next.meta().id());
@@ -641,6 +642,16 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
             || c.readStatement() != null && c.readStatement().atEndPhrase() == null
                 && c.readStatement().notAtEndPhrase() == null && c.readStatement().invalidKeyPhrase() == null
                 && c.readStatement().notInvalidKeyPhrase() == null;
+    }
+
+    /** A materialized, ordinary statement retains its grammar-owned successor even
+     * when its value transformation has no executable summary. Explicit exits and
+     * handler-bearing DISPLAY surfaces use their own control contracts. */
+    private static boolean ordinaryStructuredStatement(Ast.Statement current, CobolParser.StatementContext c) {
+        if (!(current instanceof Ast.ModeledStatement || current instanceof Ast.PreservedStatement)) return false;
+        if (c.stopStatement() != null || c.exitStatement() != null && c.exitStatement().PROGRAM() != null) return false;
+        if (c.displayStatement() != null) return sequentialOpaque(c);
+        return true;
     }
 
     private record CompletionRegion(List<CobolParser.StatementContext> statements,
@@ -1119,12 +1130,14 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
                 if(!writeIds.contains(r.meta().id()))reads.add(r);
             } else closed=false;
         }
-        // This footprint bounds writes only. Receiver reads/value transforms are
-        // deliberately open (ADD/INSPECT/STRING may read their old destination).
-        return Optional.of(new StatementEffectSummary(reads,writes,List.of(),List.of(),StatementEffectSummary.Bound.ALL,
-            closed?StatementEffectSummary.Bound.NONE:StatementEffectSummary.Bound.ALL,
-            closed?StatementEffectSummary.Bound.NONE:StatementEffectSummary.Bound.ALL,
-            environment,StatementEffectSummary.ValueTransform.UNKNOWN,proof));
+        // Publish the references and effects this source abstraction actually models.
+        // An unsupported option or value transform is coverage, not a global footprint.
+        var modeledWrites=proof==StatementEffectSummary.Proof.ACCEPT_TARGET?writes:List.<Ast.DataReference>of();
+        var mustOverwrite=proof==StatementEffectSummary.Proof.ACCEPT_TARGET?writes:List.<Ast.DataReference>of();
+        return Optional.of(new StatementEffectSummary(reads,modeledWrites,mustOverwrite,List.of(),StatementEffectSummary.Bound.NONE,
+            StatementEffectSummary.Bound.NONE,
+            StatementEffectSummary.Bound.NONE,
+            environment,StatementEffectSummary.ValueTransform.UNKNOWN,proof,writes));
     }
 
     private static Optional<StatementEffectSummary> displayEffects(ParserRuleContext context,

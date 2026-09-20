@@ -19,20 +19,21 @@ public final class ProcedurePerformSemantics {
                         Optional<Integer> resume, Ast.SourceProvenance resumeOrigin, Optional<Loop> loop, Optional<Count> times, Optional<Varying> varying,List<String> gaps) {
         public Facts { procedures=List.copyOf(procedures); gaps=List.copyOf(gaps); }
         public boolean precise() { return gaps.isEmpty(); }
+        public boolean structureKnown() { return gaps.stream().allMatch("PERFORM_UNTIL_PREDICATE_NOT_PROVEN"::equals); }
     }
     private final Map<ScalarMoveSemantics.NodeKey,Facts> facts;
     private final Set<ScalarMoveSemantics.NodeKey> completions;
     private final Set<ScalarMoveSemantics.NodeKey> paragraphEnds;
     private ProcedurePerformSemantics(Map<ScalarMoveSemantics.NodeKey,Facts> facts) {
         this.facts=Map.copyOf(facts);var ends=new HashSet<ScalarMoveSemantics.NodeKey>();
-        facts.forEach((k,v)->{if(v.precise())for(var p:v.procedures())for(var id:p.completions())ends.add(new ScalarMoveSemantics.NodeKey(k.unit(),id));});
+        facts.forEach((k,v)->{if(v.structureKnown())for(var p:v.procedures())for(var id:p.completions())ends.add(new ScalarMoveSemantics.NodeKey(k.unit(),id));});
         completions=Set.copyOf(ends);
         var boundaries=new HashSet<ScalarMoveSemantics.NodeKey>();
         facts.forEach((k,v)->v.procedures().forEach(p->p.completions().forEach(id->boundaries.add(new ScalarMoveSemantics.NodeKey(k.unit(),id)))));
         paragraphEnds=Set.copyOf(boundaries);
     }
     boolean hasPartial(ResolutionContracts.ProgramUnitId unit) {
-        return facts.entrySet().stream().anyMatch(e->e.getKey().unit().equals(unit)&&!e.getValue().precise());
+        return facts.entrySet().stream().anyMatch(e->e.getKey().unit().equals(unit)&&!e.getValue().structureKnown());
     }
     public Optional<Facts> fact(ResolutionContracts.ProgramUnitId unit,int id) { return Optional.ofNullable(facts.get(new ScalarMoveSemantics.NodeKey(unit,id))); }
     public boolean paragraphEnd(ResolutionContracts.ProgramUnitId unit,int id) { return paragraphEnds.contains(new ScalarMoveSemantics.NodeKey(unit,id)); }
@@ -85,7 +86,7 @@ public final class ProcedurePerformSemantics {
                     var paragraph=paragraphs.get(i);var roots=direct(paragraph);var members=members(roots);
                     if(roots.isEmpty()||paragraph.executableEntry().isEmpty()||paragraph.executableEntry().get()!=roots.get(0).meta().id()
                             || !cics.boundedRegion(unit.id(),paragraph)) {gaps.add("PERFORM_PARAGRAPH_BOUNDARY_NOT_PROVEN");break;}
-                    var completions=completions(roots,unit.id(),cics);
+                    var completions=completions(roots,unit.id(),cics,evaluates);
                     range.add(new Paragraph(identities.get(paragraph.meta().id()),roots.get(0).meta().id(),
                         members.stream().map(s->s.meta().id()).toList(),completions,paragraph.meta().provenance()));
                 }
@@ -141,7 +142,7 @@ public final class ProcedurePerformSemantics {
                     var r=f.procedures().get(i);members.addAll(r.statements());
                     for(var id:r.completions())boundary.put(id,i+1<f.procedures().size()?f.procedures().get(i+1).entry():-1);
                 }
-                if(!f.procedures().isEmpty()&&!closed(f.procedures().get(0).entry(),members,boundary,next,nodes,unit.id(),moves,ifs,goTos,basic,provisional,false,cics))
+                if(!f.procedures().isEmpty()&&!closed(f.procedures().get(0).entry(),members,boundary,next,nodes,unit.id(),moves,ifs,evaluates,goTos,basic,provisional,false,cics))
                     gaps.add("PERFORM_RANGE_CONTROL_NOT_PROVEN");
                 provisional.put(item.getKey(),new Facts(f.start(),f.end(),f.procedures(),f.resume(),f.resumeOrigin(),f.loop(),f.times(),f.varying(),List.copyOf(gaps)));
             }
@@ -152,11 +153,11 @@ public final class ProcedurePerformSemantics {
                 var boundary=new HashMap<Integer,Integer>();
                 for(int i=0;i<f.procedures().size();i++)for(var id:f.procedures().get(i).completions())
                     boundary.put(id,i+1<f.procedures().size()?f.procedures().get(i+1).entry():-1);
-                if(!f.procedures().isEmpty() && !closed(f.procedures().get(0).entry(),members,boundary,next,nodes,unit.id(),moves,ifs,goTos,basic,provisional,false,cics))
+                if(!f.procedures().isEmpty() && !closed(f.procedures().get(0).entry(),members,boundary,next,nodes,unit.id(),moves,ifs,evaluates,goTos,basic,provisional,false,cics))
                     gaps.add("PERFORM_RANGE_CONTROL_NOT_PROVEN");
                 var entry=structure?division.procedureEntry().orElseThrow().startStatementId():Optional.<Integer>empty();
                 var primary=new HashSet<Integer>();
-                if(entry.isEmpty()||!closed(entry.get(),primary,Map.of(),next,nodes,unit.id(),moves,ifs,goTos,basic,provisional,true,cics)
+                if(entry.isEmpty()||!closed(entry.get(),primary,Map.of(),next,nodes,unit.id(),moves,ifs,evaluates,goTos,basic,provisional,true,cics)
                         ||!primary.contains(p.meta().id())||f.resume().filter(primary::contains).isEmpty()
                         ||members.stream().anyMatch(primary::contains))gaps.add("PERFORM_ISOLATED_PRIMARY_NOT_PROVEN");
                 for(var n:nodes.values())if(n instanceof Ast.Statement s && !members.contains(s.meta().id())) {
@@ -170,10 +171,10 @@ public final class ProcedurePerformSemantics {
                 }
                 result.put(new ScalarMoveSemantics.NodeKey(unit.id(),p.meta().id()),new Facts(f.start(),f.end(),f.procedures(),f.resume(),f.resumeOrigin(),f.loop(),f.times(),f.varying(),List.copyOf(gaps)));
             }
-            if(result.entrySet().stream().anyMatch(e->e.getKey().unit().equals(unit.id())&&!e.getValue().precise())) {
+            if(result.entrySet().stream().anyMatch(e->e.getKey().unit().equals(unit.id())&&!e.getValue().structureKnown())) {
                 for(var p:performs) {
                     var key=new ScalarMoveSemantics.NodeKey(unit.id(),p.meta().id());var f=result.get(key);
-                    if(f.precise())result.put(key,new Facts(f.start(),f.end(),f.procedures(),f.resume(),f.resumeOrigin(),f.loop(),f.times(),f.varying(),List.of("PERFORM_OPEN_PEER_ACTIVATION")));
+                    if(f.structureKnown())result.put(key,new Facts(f.start(),f.end(),f.procedures(),f.resume(),f.resumeOrigin(),f.loop(),f.times(),f.varying(),List.of("PERFORM_OPEN_PEER_ACTIVATION")));
                 }
             }
         }
@@ -181,7 +182,7 @@ public final class ProcedurePerformSemantics {
     }
     private static boolean closed(int entry,Set<Integer> members,Map<Integer,Integer> boundary,Map<Integer,Integer> next,
             Map<Integer,Ast.Node> nodes,ResolutionContracts.ProgramUnitId unit,Map<ScalarMoveSemantics.NodeKey,ScalarMoveSemantics.Move> moves,
-            IfSemantics ifs,GoToSemantics goTos,PerformSemantics basic,Map<Integer,Facts> ranges,boolean primary,CicsProgramControlAnalyzer.Contribution cics) {
+            IfSemantics ifs,EvaluateSemantics evaluates,GoToSemantics goTos,PerformSemantics basic,Map<Integer,Facts> ranges,boolean primary,CicsProgramControlAnalyzer.Contribution cics) {
         record Visit(int id,boolean finish) { }
         var active=new HashSet<Integer>();var done=new HashSet<Integer>();var todo=new ArrayDeque<Visit>();todo.push(new Visit(entry,false));
         while(!todo.isEmpty()) {
@@ -200,18 +201,18 @@ public final class ProcedurePerformSemantics {
             var completion=boundary.containsKey(v.id())?boundary.get(v.id()):next.get(v.id());if(completion==null)return false;
             todo.push(new Visit(completion,false));
             if(s instanceof Ast.IfStatement f) {
-                if(!f.explicitlyTerminated()||ifs.fact(unit,v.id()).predicate().availability()!=IfSemantics.Availability.KNOWN||f.thenBranch().isEmpty()||f.elsePresence()==Ast.BranchPresence.UNKNOWN)return false;
+                if(!f.explicitlyTerminated()||f.thenBranch().isEmpty()||f.elsePresence()==Ast.BranchPresence.UNKNOWN)return false;
                 todo.push(new Visit(f.thenBranch().get(0).meta().id(),false));
                 if(f.elsePresence()==Ast.BranchPresence.PRESENT){if(f.elseBranch().isEmpty())return false;todo.push(new Visit(f.elseBranch().get(0).meta().id(),false));}
             } else if(s instanceof Ast.EvaluateStatement e) {
-                if(!EvaluateSemantics.supportedShape(e))return false;
+                if(!evaluates.fact(unit,v.id()).structureKnown())return false;
                 for(var arm:e.branches()){if(arm.statements().isEmpty())return false;todo.push(new Visit(arm.statements().get(0).meta().id(),false));}
             } else if(s instanceof Ast.MoveStatement) {
                 var move=moves.get(new ScalarMoveSemantics.NodeKey(unit,v.id()));if(move==null||move.copy()==ScalarMoveSemantics.Copy.UNAVAILABLE)return false;
             } else if(cics.boundedLocal(unit,s)) { /* local error/return and external completion only */ }
             else if(s instanceof Ast.CallStatement c) {if(c.surface().hasHandlers())return false;}
             else if(s instanceof Ast.PerformStatement p && primary) {
-                var range=ranges.get(v.id());if(range!=null ? !range.precise() : !basic.fact(unit,v.id()).simpleProfile())return false;
+                var range=ranges.get(v.id());if(range!=null ? !range.structureKnown() : !basic.fact(unit,v.id()).simpleProfile())return false;
             } else return false;
         }
         return true;
@@ -229,14 +230,14 @@ public final class ProcedurePerformSemantics {
         if(endpoint.isEmpty())return -1;for(int i=0;i<paragraphs.size();i++)if(endpoint.get().identity().equals(identities.get(paragraphs.get(i).meta().id())))return i;return -1;
     }
     /** Only grammar-owned last statements can complete a paragraph; missing edges alone prove nothing. */
-    private static List<Integer> completions(List<Ast.Statement> roots,ResolutionContracts.ProgramUnitId unit,CicsProgramControlAnalyzer.Contribution cics) {
+    private static List<Integer> completions(List<Ast.Statement> roots,ResolutionContracts.ProgramUnitId unit,CicsProgramControlAnalyzer.Contribution cics,EvaluateSemantics evaluates) {
         var result=new ArrayList<Integer>();var pending=new ArrayDeque<List<Ast.Statement>>();pending.push(roots);
         while(!pending.isEmpty()) {
             var region=pending.pop();if(region.isEmpty())continue;var last=region.get(region.size()-1);
             if(cics.boundedLocal(unit,last)||last instanceof Ast.MoveStatement || last instanceof Ast.CallStatement c && !c.surface().hasHandlers())result.add(last.meta().id());
             else if(last instanceof Ast.IfStatement f && f.explicitlyTerminated()) {
                 result.add(last.meta().id());pending.push(f.thenBranch());pending.push(f.elseBranch());
-            } else if(last instanceof Ast.EvaluateStatement e && EvaluateSemantics.supportedShape(e)) {
+            } else if(last instanceof Ast.EvaluateStatement e && evaluates.fact(unit,e.meta().id()).structureKnown()) {
                 result.add(last.meta().id());for(var arm:e.branches())pending.push(arm.statements());
             }
         }

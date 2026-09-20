@@ -66,6 +66,6 @@ class FileEffectsContractTest {
         assertFalse(transfer.path("source").isNull());Files.writeString(Path.of("target/fd-w3/alias-from-effects.json"),alias.toPrettyString());
         var missing=publish(fixture("SELECT F ASSIGN TO OUTDD.","FD F.\n01 REC PIC X(8).","01 SAFE PIC X(8).","WRITE REC FROM MISSING."));
         Files.writeString(Path.of("target/fd-w3/missing-from-effects.json"),missing.toPrettyString());
-        assertTrue(effect(missing).path("unknownReadBound").asBoolean(),"unresolved FROM cannot prove an empty source read bound");
+        assertFalse(effect(missing).path("unknownReadBound").asBoolean(),"unresolved FROM is coverage, not an arbitrary source read");
     }
 }

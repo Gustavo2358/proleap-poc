@@ -41,9 +41,9 @@ class FileMemoryEffectsTest {
             SAFE+"\n01 REC-LENGTH PIC 9(4).","READ F.\nCALL SAFE-PGM.");
         assertEquals(StorageInitialSemantics.Kind.LITERAL_BYTES,f.initial("SAFE-PGM").kind());
     }
-    @Test void unresolvedIntoCannotBecomeAnEmptyWriteSet() {
+    @Test void unresolvedIntoDoesNotWriteUnrelatedMemory() {
         var f=fixture("SELECT F ASSIGN TO INDD.","FD F.\n01 REC PIC X(8).",SAFE,"READ F INTO MISSING.\nCALL SAFE-PGM.");
-        assertNotEquals(StorageInitialSemantics.Kind.LITERAL_BYTES,f.initial("SAFE-PGM").kind());
+        assertEquals(StorageInitialSemantics.Kind.LITERAL_BYTES,f.initial("SAFE-PGM").kind());
     }
     @Test void writeFromPreservesTheDisjointSource() {
         var f=fixture("SELECT F ASSIGN TO OUTDD.","FD F.\n01 REC PIC X(8).",SAFE,"WRITE REC FROM SAFE-PGM.\nCALL SAFE-PGM.");

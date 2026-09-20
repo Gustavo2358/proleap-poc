@@ -23,11 +23,12 @@ class GoToFirstSliceTest {
                     assertFalse(p.goTos().isEmpty(),name);
                     if(name.startsWith("compose-"))assertEquals(Integer.parseInt(name.substring(8)),p.goTos().size());
                     for(var g:p.goTos()) {
-                        if(Set.of("empty","unknown","alter","section","ambiguous").contains(name)) {
+                        if(Set.of("empty","unknown","section","ambiguous").contains(name)) {
                             assertTrue(g.targetEntry().isEmpty(),name); assertFalse(g.gapCodes().isEmpty(),name);
                             if(name.equals("empty"))assertTrue(g.target().isPresent());
                         } else {
-                            assertTrue(g.gapCodes().isEmpty(),name+g.gapCodes());
+                            if(name.equals("alter"))assertTrue(g.gapCodes().contains("GO_TO_ALTER_IN_UNIT"));
+                            else assertTrue(g.gapCodes().isEmpty(),name+g.gapCodes());
                             var target=p.statement(g.targetEntry().orElseThrow()).orElseThrow();
                             assertEquals(g.entryOrigin().orElseThrow(),target.header().provenance());
                             assertEquals(p.unit(),g.target().orElseThrow().id().unit());
@@ -45,11 +46,11 @@ class GoToFirstSliceTest {
             }
         }
     }
-    @Test void unsupportedContainmentKeepsStructuralGap() {
+    @Test void structuredEvaluateKeepsGoToContainment() {
         var p=ScalarMoveCheckpoint4ATest.publish(EvaluateFirstSliceTest.source("EVALUATE TRUE\nWHEN FLAG = 'Y' GO TO TARGET\nEND-EVALUATE.\nTARGET.\nCALL 'PROGA'."));
-        var g=p.goTos().get(0); assertEquals(Branch.UNKNOWN,g.header().containment().branch());
-        assertTrue(g.targetEntry().isEmpty());
-        assertTrue(p.gaps().stream().anyMatch(gap->gap.statement().equals(g.header().id()) && gap.scope()==GapScope.STRUCTURE));
+        var g=p.goTos().get(0); assertEquals(Branch.EVALUATE_ARM,g.header().containment().branch());
+        assertTrue(g.targetEntry().isPresent());
+        assertTrue(p.gaps().stream().noneMatch(gap->gap.statement().equals(g.header().id()) && gap.scope()==GapScope.STRUCTURE));
     }
     @Test void targetInAnotherProgramUnitRemainsUnresolved() {
         var source=EvaluateFirstSliceTest.source("GO TO CHILD-TARGET.\nCALL 'PROGA'.")
@@ -57,6 +58,17 @@ class GoToFirstSliceTest {
         var p=ScalarMoveCheckpoint4ATest.publish(source);
         assertEquals(1,p.goTos().size()); assertTrue(p.goTos().get(0).target().isEmpty());
         assertTrue(p.goTos().get(0).targetEntry().isEmpty());
+    }
+    @Test void dependingSelectorGapKeepsOrdinalDestinations() throws Exception {
+        var source=Files.readString(Path.of("src/test/resources/cobol/goto/depending.cbl"));
+        var p=ScalarMoveCheckpoint4ATest.publish(source.replace("IDX PIC 9", "IDX PIC X"));
+        var g=p.conditionalGoTos().get(0);
+        assertFalse(g.selectorInteger());
+        assertTrue(g.gapCodes().contains("GO_TO_SELECTOR_INTEGER_NOT_PROVEN"));
+        assertEquals(3,g.destinations().size());
+        assertEquals(List.of(0,1,2),g.destinations().stream().map(GoToDestination::ordinal).toList());
+        assertTrue(g.destinations().stream().allMatch(d->d.targetEntry().isPresent()));
+        assertTrue(g.normalContinuation().statement().isPresent());
     }
     @Test void publishesExplicitTargetWithoutFallthrough() throws Exception {
         var p=ScalarMoveCheckpoint4ATest.publish(EvaluateFirstSliceTest.source(

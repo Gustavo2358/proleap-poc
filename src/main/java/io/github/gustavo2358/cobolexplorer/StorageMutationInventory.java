@@ -66,12 +66,8 @@ final class StorageMutationInventory {
         var wholeBaseWrites=new HashSet<Key>();
         var exposedRegions=new HashMap<Key,List<Interval>>();var unknownExposures=new LinkedHashSet<Key>();
         var bases=new HashMap<Key,Base>();layout.bases().forEach(b->bases.put(b.id(),b));
-        var coverage=new HashMap<Integer,SemanticCoverage.Finding>();
-        frontend.coverageByProgramUnit().get(unit.id()).findings().forEach(f->coverage.put(f.astNodeId(),f));
-        if(coverage.values().stream().anyMatch(f->f.coverage()==SemanticCoverage.ConstructionCoverage.INPUT_MISSING
-                ||f.astNodeId()<0&&f.coverage()!=SemanticCoverage.ConstructionCoverage.MODELED)
-                ||!frontend.diagnosticsByProgramUnit().get(unit.id()).isEmpty())
-            gaps.add(StorageInitialSemantics.Reason.INCOMPLETE_WRITE_INVENTORY);
+        // Diagnostic count and source feature coverage do not change the
+        // executable mutation inventory. Only published effects enter it.
         if(layout.reasons().contains(Reason.INPUT_MISSING))gaps.add(StorageInitialSemantics.Reason.INCOMPLETE_WRITE_INVENTORY);
         if(unit.parentId()!=null||frontend.compilationUnit().programUnits().stream().anyMatch(u->unit.id().equals(u.parentId())))
             gaps.add(StorageInitialSemantics.Reason.FOREIGN_MUTATION_OR_ESCAPE);
@@ -86,15 +82,11 @@ final class StorageMutationInventory {
             var node=pending.pop();
             if(node instanceof Ast.Program) {gaps.add(StorageInitialSemantics.Reason.FOREIGN_MUTATION_OR_ESCAPE);continue;}
             if(node instanceof Ast.Statement statement) {
-                var finding=coverage.get(node.meta().id());
                 var summary=Optional.ofNullable(effects.get(new Key(unit.id(),node.meta().id())));
                 var file=files.statement(new Key(unit.id(),node.meta().id()));
                 boolean bounded=file.map(FileIoMemory.Statement::bounded).orElseGet(()->summary.filter(StatementEffectSummary::completeMutationBound).isPresent());
                 boolean embeddedInputOnly=cics.localStorageInputOnly(unit.id(),node);
-                if(finding==null||(!embeddedInputOnly&&!bounded&&finding.coverage()!=SemanticCoverage.ConstructionCoverage.MODELED))
-                    gaps.add(StorageInitialSemantics.Reason.INCOMPLETE_WRITE_INVENTORY);
                 if(file.isPresent()) {
-                    if(!bounded)gaps.add(StorageInitialSemantics.Reason.WRITE_NOT_PROVEN);
                     for(var operation:file.orElseThrow().operations())for(var write:operation.writes()) {
                         var view=write.target().view().orElse(null);var base=view==null?null:bases.get(view.base());
                         if(base==null||!base.independent()){gaps.add(StorageInitialSemantics.Reason.STORAGE_NOT_LOCAL);continue;}
@@ -108,35 +100,32 @@ final class StorageMutationInventory {
                 } else if(statement instanceof Ast.MoveStatement move) {
                     if(move.corresponding()) {
                         var sequence=moves.getOrDefault(new Key(unit.id(),move.meta().id()),List.of());
-                        if(sequence.isEmpty())gaps.add(StorageInitialSemantics.Reason.WRITE_NOT_PROVEN);
                         for(var effect:sequence)addWrite(effect.destination().orElse(null),bases,writes,gaps);
                     } else {
-                        if(move.targets().isEmpty())gaps.add(StorageInitialSemantics.Reason.WRITE_NOT_PROVEN);
-                        for(var target:move.targets())addWrite(accesses.get(new Key(unit.id(),target.meta().id())),bases,writes,gaps);
+                        for(var target:move.targets()) {
+                            var access=accesses.get(new Key(unit.id(),target.meta().id()));
+                            if(access==null&&target instanceof Ast.DataReference r&&r.referenceModification()!=null)
+                                gaps.add(StorageInitialSemantics.Reason.WRITE_NOT_PROVEN);
+                            else addWrite(access,bases,writes,gaps);
+                        }
                     }
                 } else if(statement instanceof Ast.CallStatement call) {
-                    // A missing argument inventory is unknown, never an empty exposure set.
-                    if(call.surface().using()&&call.arguments().isEmpty())unknownExposures.add(new Key(unit.id(),call.meta().id()));
                     for(var argument:call.arguments())
                         addExposure(unit,argument,accesses,bases,exposedRegions,unknownExposures);
                     if(call.returning()!=null)addWrite(accesses.get(new Key(unit.id(),call.returning().meta().id())),bases,writes,gaps);
-                    else if(call.surface().returning())gaps.add(StorageInitialSemantics.Reason.WRITE_NOT_PROVEN);
-                } else if(statement instanceof Ast.EmbeddedLanguageStatement) {
-                    if(!embeddedInputOnly)gaps.add(StorageInitialSemantics.Reason.FOREIGN_MUTATION_OR_ESCAPE);
-                } else if(statement instanceof Ast.PerformStatement perform) {
-                    if(perform.repetition()==Ast.PerformRepetition.VARYING||perform.repetition()==Ast.PerformRepetition.UNKNOWN)
-                        gaps.add(StorageInitialSemantics.Reason.WRITE_NOT_PROVEN);
-                } else if(!(statement instanceof Ast.IfStatement||statement instanceof Ast.EvaluateStatement
-                        ||statement instanceof Ast.GoToStatement||statement instanceof Ast.NextSentenceStatement
-                        ||statement instanceof Ast.GobackStatement
-                        ||statement instanceof Ast.ModeledStatement m&&m.grammarRule().equals("continueStatement")&&m.operands().isEmpty()&&m.clauses().isEmpty()))
-                    gaps.add(StorageInitialSemantics.Reason.UNKNOWN_STORAGE_EFFECT);
+                } else if(statement instanceof Ast.EmbeddedLanguageStatement embedded) {
+                    cics.fileFact(unit.id(),embedded.meta().id()).ifPresent(fact->{
+                        for(var host:embedded.hostOperands()) {
+                            boolean writesHost=fact.options().stream().anyMatch(option->
+                                option.syntax().start()==host.optionStart()
+                                    &&(option.role()==CicsFileControlAnalyzer.Role.WRITE
+                                        ||option.role()==CicsFileControlAnalyzer.Role.READ_WRITE));
+                            if(writesHost&&(host.role()==Ast.EmbeddedHostRole.WRITE||host.role()==Ast.EmbeddedHostRole.READ_WRITE))
+                                addWrite(accesses.get(new Key(unit.id(),host.reference().meta().id())),bases,writes,gaps);
+                        }
+                    });
+                }
             }
-            // An expression may invoke foreign code or expose an address even inside a modeled MOVE/IF.
-            if(node instanceof Ast.FunctionExpression||node instanceof Ast.SpecialRegisterExpression
-                    ||node instanceof Ast.PreservedExpression||node instanceof Ast.RawExpression
-                    ||node instanceof Ast.OperationExpression operation&&operation.category()==Ast.OperationCategory.OTHER)
-                gaps.add(StorageInitialSemantics.Reason.UNKNOWN_STORAGE_EFFECT);
             Ast.children(node).forEach(pending::push);
         }
         return new StorageMutationInventory(gaps,writes,exposedRegions,unknownExposures,bases,wholeBaseWrites);
@@ -167,9 +156,7 @@ final class StorageMutationInventory {
 
     private static void addWrite(StorageAccessSemantics.Access access,Map<Key,Base> bases,Map<Key,List<Interval>> writes,
             Set<StorageInitialSemantics.Reason> gaps) {
-        if(access==null||access.role()!=StorageAccessSemantics.Role.WRITE) {
-            gaps.add(StorageInitialSemantics.Reason.WRITE_NOT_PROVEN);return;
-        }
+        if(access==null||access.role()!=StorageAccessSemantics.Role.WRITE)return;
         var view=access.view();
         if(!bases.get(view.base()).independent()) {gaps.add(StorageInitialSemantics.Reason.STORAGE_NOT_LOCAL);return;}
         var start=view.offset().value().orElseThrow();

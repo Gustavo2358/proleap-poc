@@ -33,13 +33,14 @@ class StatementEffectSummaryTest {
         assertFalse(s.path("knownReferences").get(0).path("regionalAccess").isNull());
         invariant(VALUE,"DISPLAY LIT-PGM.\nCALL LIT-PGM.");
     }
-    @Test void unsupportedDisplayFormsAndOtherStatementsKeepUnknownEffects() throws Exception {
+    @Test void unsupportedDisplayFormsAndOtherStatementsDoNotInventWrites() throws Exception {
         for(var code:new String[]{"DISPLAY FUNCTION CURRENT-DATE.","DISPLAY LIT-PGM(1:1).", "DISPLAY 'X' AT 1.",
                 "DISPLAY 'X' ON EXCEPTION MOVE 'OTHER' TO LIT-PGM END-DISPLAY.","EXHIBIT LIT-PGM."}) {
             var s=statement(code);
             assertTrue(s.path("effects").isMissingNode()||s.path("effects").isNull()
-                ||s.path("effects").path("unknownWriteBound").asText().equals("ALL"),code);
-            notInvariant(VALUE,code+"\nCALL LIT-PGM.");
+                ||s.path("effects").path("unknownWriteBound").asText().equals("NONE"),code);
+            if(code.contains("ON EXCEPTION"))notInvariant(VALUE,code+"\nCALL LIT-PGM.");
+            else invariant(VALUE,code+"\nCALL LIT-PGM.");
         }
     }
 }

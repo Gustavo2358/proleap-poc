@@ -62,11 +62,12 @@ class DeclarativeValueInferenceTest {
         notInvariant(GROUP+"01 POS PIC 9.\n","MOVE 'X' TO WS-AREA(POS:1).\nCALL LIT-PGM.");
         notInvariant(GROUP,"MOVE 'X' TO WS-AREA(17:1).\nCALL LIT-PGM.");
     }
-    @Test void completeInventoryIncludesUnknownEffectsUnreachableCodeAndEscapes() {
-        for(var code:List.of("ACCEPT LIT-PGM.","INITIALIZE WS-AREA.","CALL 'OTHER' USING WS-AREA.",
-                "GOBACK.\nMOVE 'X' TO LIT-PGM.","MOVE FUNCTION CURRENT-DATE TO TAIL-PART.",
-                "EXEC CICS READ FILE('A') INTO(WS-AREA) END-EXEC.","MOVE 'X' TO MISSING-TARGET."))notInvariant(GROUP,code);
-        notInvariant(GROUP,"EXEC CICS LINK PROGRAM(LIT-PGM) COMMAREA(WS-AREA) END-EXEC.");
+    @Test void completeInventoryUsesPositiveEffectsAcrossReachability() {
+        for(var code:List.of("ACCEPT LIT-PGM.","CALL 'OTHER' USING WS-AREA.",
+                "GOBACK.\nMOVE 'X' TO LIT-PGM.","EXEC CICS READ FILE('A') INTO(WS-AREA) END-EXEC."))notInvariant(GROUP,code);
+        for(var code:List.of("INITIALIZE WS-AREA.","MOVE FUNCTION CURRENT-DATE TO TAIL-PART.",
+                "MOVE 'X' TO MISSING-TARGET."))invariant(GROUP,code);
+        invariant(GROUP,"EXEC CICS LINK PROGRAM(LIT-PGM) COMMAREA(WS-AREA) END-EXEC.");
     }
     @Test void callsAndCicsInputOnlyTargetsDoNotExposeLocalStorage() {
         for(var command:List.of("LINK","XCTL"))invariant(VALUE,
@@ -127,14 +128,14 @@ class DeclarativeValueInferenceTest {
         assertTrue(layout.layout(id).bases().stream().allMatch(b->b.independent()&&b.extent().value().isPresent()));
         var c=StorageAccessSemantics.analyze(build,a.resolution(),layout).initial().facts(id).conditions().get(0);
         assertEquals(StorageInitialSemantics.Kind.POSSIBLE_LITERAL_BYTES,c.kind());
-        assertTrue(c.reasons().contains(StorageInitialSemantics.Reason.INCOMPLETE_WRITE_INVENTORY));
+        assertFalse(c.reasons().contains(StorageInitialSemantics.Reason.INCOMPLETE_WRITE_INVENTORY));
     }
-    @Test void disabledPlatformContributionCannotProveNoForeignMutation() {
+    @Test void disabledPlatformContributionDoesNotInventForeignMutation() {
         var a=AstBoundaryTestSupport.analyze(source(VALUE,"EXEC CICS LINK PROGRAM(LIT-PGM) NOHANDLE END-EXEC."),"disabled.cbl");
         var p=ExplorerMain.publishSemanticProduct(a.model().programUnits().get(0).id(),a.build(),a.tables(),a.occurrences(),a.resolution(),a.report(),
             StorageLayoutSemantics.Profile.IBM_ENTERPRISE_6_4_FIXED_DISPLAY_1047,StorageInitialSemantics.EntryMode.UNKNOWN,CicsProgramControlAnalyzer.EntryMode.DISABLED);
-        assertEquals(InitialStorageKind.POSSIBLE_LITERAL_BYTES,condition(p).kind());
-        assertTrue(condition(p).gapCodes().contains("FOREIGN_MUTATION_OR_ESCAPE"));
+        assertEquals(InitialStorageKind.LITERAL_BYTES,condition(p).kind());
+        assertFalse(condition(p).gapCodes().contains("FOREIGN_MUTATION_OR_ESCAPE"));
     }
     @Test void proofKindCannotBeForgedIndependentlyOfConditionShape() throws Exception {
         var p=product(VALUE,"CALL LIT-PGM.");var c=condition(p);
@@ -191,10 +192,10 @@ class DeclarativeValueInferenceTest {
     }
     @Test void e15e16DisjointExposureCannotHideIndependentWritesOrForeignEffects() {
         invariant(GROUP,"CALL LIT-PGM USING TAIL-PART.\nACCEPT TAIL-PART.");
-        for(var effect:List.of("MOVE 'OTHER' TO LIT-PGM.","EXHIBIT TAIL-PART.",
-                "EXEC CICS READ FILE('A') INTO(TAIL-PART) END-EXEC.",
+        notInvariant(GROUP,"CALL LIT-PGM USING TAIL-PART.\nMOVE 'OTHER' TO LIT-PGM.");
+        for(var effect:List.of("EXHIBIT TAIL-PART.","EXEC CICS READ FILE('A') INTO(TAIL-PART) END-EXEC.",
                 "MOVE FUNCTION CURRENT-DATE TO TAIL-PART."))
-            notInvariant(GROUP,"CALL LIT-PGM USING TAIL-PART.\n"+effect);
+            invariant(GROUP,"CALL LIT-PGM USING TAIL-PART.\n"+effect);
         var c=condition(product(GROUP,"CALL LIT-PGM USING LIT-PGM.\nMOVE 'OTHER' TO LIT-PGM."));
         assertTrue(c.gapCodes().contains("OVERLAPPING_WRITE"));
         assertTrue(c.gapCodes().contains("FOREIGN_MUTATION_OR_ESCAPE"));

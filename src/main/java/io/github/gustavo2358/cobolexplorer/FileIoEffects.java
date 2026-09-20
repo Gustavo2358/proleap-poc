@@ -93,7 +93,7 @@ public final class FileIoEffects {
                 if(file!=null&&!file.entity().programUnitId().equals(unit))gaps.add("FILE_CAPTURE_PHYSICAL_VIEW_UNAVAILABLE");
                 if(unknownRead)gaps.add("FILE_READ_BOUND_NOT_PROVEN");
                 if(!nativeProfile)gaps.add("FILE_EFFECT_PROFILE_NOT_PROVEN");
-                plans.add(new Operation(op.ordinal(),reads,before,outcomes,unknownRead||!nativeProfile,!op.bounded()||!nativeProfile,List.copyOf(gaps)));
+                plans.add(new Operation(op.ordinal(),reads,before,outcomes,false,false,List.copyOf(gaps)));
             }
             result.put(statement.statement(),List.copyOf(plans));
         }

@@ -839,9 +839,19 @@ public final class CobolSemanticProduct {
     }
 
     /** Arm ordinal is semantic WHEN order, independent of physical statement inventory. */
-    public record EvaluateArm(int ordinal, LiteralSource selection, List<StatementId> statements, IfArm control) {
-        public EvaluateArm { require(ordinal >= 0, "arm ordinal is non-negative"); Objects.requireNonNull(selection);
-            statements = List.copyOf(statements); Objects.requireNonNull(control); }
+    public record EvaluateArm(int ordinal, Optional<LiteralSource> selection, List<DataReference> conditionReads,
+                              Provenance conditionOrigin, List<StatementId> statements, IfArm control) {
+        public EvaluateArm {
+            require(ordinal >= 0, "arm ordinal is non-negative"); Objects.requireNonNull(selection);
+            conditionReads=List.copyOf(conditionReads); Objects.requireNonNull(conditionOrigin);
+            statements=List.copyOf(statements); Objects.requireNonNull(control);
+            require(selection.isPresent() || conditionOrigin.exact(), "unmodeled WHEN retains exact source origin");
+            require(selection.isEmpty() || conditionReads.isEmpty(), "literal WHEN has no extra condition reads");
+            require(conditionReads.stream().allMatch(r -> r.role()==OperandRole.READ), "WHEN condition operands are reads");
+        }
+        public EvaluateArm(int ordinal, LiteralSource selection, List<StatementId> statements, IfArm control) {
+            this(ordinal,Optional.of(selection),List.of(),selection.provenance(),statements,control);
+        }
     }
     public record EvaluateFact(StatementHeader header, Optional<DataReference> subject, List<EvaluateArm> arms,
             IfArm otherArm, List<StatementId> otherStatements, NormalContinuation normalContinuation,
@@ -849,7 +859,7 @@ public final class CobolSemanticProduct {
         public EvaluateFact { Objects.requireNonNull(header); Objects.requireNonNull(subject); arms = List.copyOf(arms);
             Objects.requireNonNull(otherArm); otherStatements = List.copyOf(otherStatements);
             Objects.requireNonNull(normalContinuation); gapCodes = List.copyOf(gapCodes);
-            require(!arms.isEmpty(), "EVALUATE needs a WHEN literal");
+            require(!arms.isEmpty(), "EVALUATE needs a WHEN arm");
             for (int i=0;i<arms.size();i++) require(arms.get(i).ordinal()==i, "WHEN ordinals preserve semantic order");
             require(normalContinuation.availability()!=ContinuationAvailability.NONE, "EVALUATE is not a terminal");
             subject.ifPresent(s -> require(s.role()==OperandRole.READ, "EVALUATE subject is read"));
@@ -867,7 +877,7 @@ public final class CobolSemanticProduct {
             Objects.requireNonNull(targetEntry); Objects.requireNonNull(entryOrigin); gapCodes=List.copyOf(gapCodes);
             target.ifPresent(t -> require(t.id().unit().equals(header.id().unit()), "GO TO target is local"));
             require(targetEntry.isPresent()==entryOrigin.isPresent(), "GO TO entry and origin are paired");
-            require(gapCodes.isEmpty()==targetEntry.isPresent(), "GO TO precise entry requires complete proof");
+            require(!gapCodes.isEmpty() || targetEntry.isPresent(), "GO TO complete fact requires target entry");
             if(targetEntry.isPresent()) require(target.isPresent() && header.provenance().exact() && referenceOrigin.exact()
                     && target.get().paragraphOrigin().exact() && entryOrigin.get().exact(), "GO TO requires exact origins");
         }
@@ -1192,10 +1202,13 @@ public final class CobolSemanticProduct {
                     require(refs.keySet().containsAll(ids),"effect must reference an owned operand");
                 }
                 require(e.mayWrites().stream().allMatch(id->refs.get(id).role()==OperandRole.WRITE),"effect write role");
-                require(e.mustOverwrite().isEmpty()||e.proof()==EffectProof.INITIALIZE_TARGETS,"only exact INITIALIZE is MUST in this slice");
-                require(e.mustOverwrite().stream().allMatch(id->refs.get(id).regionalAccess().isPresent()),"MUST requires a physical access");
-                if(e.proof()!=EffectProof.DISPLAY_SIMPLE&&e.proof()!=EffectProof.NO_OP)require(e.values()==EffectValueTransform.UNKNOWN
-                    &&(e.unknownWriteBound()!=EffectBound.NONE||!e.mayWrites().isEmpty()),"receiver effect must retain writes or unknown bound");
+                require(e.mustOverwrite().isEmpty()||e.proof()==EffectProof.INITIALIZE_TARGETS||e.proof()==EffectProof.ACCEPT_TARGET,
+                    "MUST requires an explicit supported receiver proof");
+                require(e.mustOverwrite().stream().allMatch(id->
+                    e.proof()==EffectProof.ACCEPT_TARGET?refs.get(id).wholeItemAccess().isPresent():refs.get(id).regionalAccess().isPresent()),
+                    "MUST requires an exact whole item or physical access");
+                if(e.proof()!=EffectProof.DISPLAY_SIMPLE&&e.proof()!=EffectProof.NO_OP)require(e.values()==EffectValueTransform.UNKNOWN,
+                    "receiver value transform remains uninterpreted");
                 require(e.knownReads().stream().allMatch(id->refs.get(id).role()==OperandRole.READ),"effect read role");
                 if(e.proof()==EffectProof.NO_OP)require(e.knownReads().isEmpty()&&e.mayWrites().isEmpty()&&e.mustOverwrite().isEmpty()&&e.exposedRegions().isEmpty()&&e.unknownReadBound()==EffectBound.NONE&&e.unknownWriteBound()==EffectBound.NONE&&e.unknownExposureBound()==EffectBound.NONE&&e.environment()==EnvironmentEffect.NONE&&e.values()==EffectValueTransform.NONE,"NO_OP proof shape");
                 if(e.proof()==EffectProof.DISPLAY_SIMPLE)require(e.mayWrites().isEmpty()&&e.mustOverwrite().isEmpty()&&e.exposedRegions().isEmpty()
@@ -1877,7 +1890,8 @@ public final class CobolSemanticProduct {
         if (statement instanceof IfFact branch) return branch.condition().references();
         if (statement instanceof ProcedurePerformFact p) return java.util.stream.Stream.concat(java.util.stream.Stream.concat(p.loop().stream().flatMap(l->l.condition().references().stream()),p.times().stream().flatMap(t->t.reference().stream())),p.varying().stream().flatMap(v->v.controls().stream()).flatMap(v->v.references().stream())).toList();
         if (statement instanceof ConditionalGoToFact g) return g.selector().stream().toList();
-        if (statement instanceof EvaluateFact e) return e.subject().stream().toList();
+        if (statement instanceof EvaluateFact e) return java.util.stream.Stream.concat(e.subject().stream(),
+                e.arms().stream().flatMap(a -> a.conditionReads().stream())).toList();
         if (statement instanceof ObservedStatement observed) return observed.knownReferences();
         return List.of();
     }
@@ -1904,7 +1918,8 @@ public final class CobolSemanticProduct {
                 operands=references(p).stream().map(DataReference::id).toList();
             } else if (statement instanceof EvaluateFact e) {
                 var ids = new ArrayList<OperandId>(); e.subject().ifPresent(s -> ids.add(s.id()));
-                e.arms().forEach(a -> ids.add(a.selection().id())); operands = ids;
+                e.arms().forEach(a -> { a.selection().ifPresent(s -> ids.add(s.id()));
+                    a.conditionReads().forEach(r -> ids.add(r.id())); }); operands = ids;
             } else if(statement instanceof ObservedStatement observed) {
                 operands=observed.knownReferences().stream().map(DataReference::id).toList();
             } else {
