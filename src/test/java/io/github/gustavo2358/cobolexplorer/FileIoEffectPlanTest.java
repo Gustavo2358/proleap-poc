@@ -45,9 +45,20 @@ class FileIoEffectPlanTest {
         assertTrue(steps.stream().filter(s->s.role()==FileIoMemory.Role.RECORD).allMatch(s->s.kind()==FileIoEffects.Kind.MAY_UNKNOWN));
         assertEquals(List.of(FileIoMemory.Role.RECORD,FileIoMemory.Role.RECORD_LENGTH,FileIoMemory.Role.INTO),steps.stream().map(FileIoEffects.Step::role).toList());
     }
-    @Test void foreignDialectSyntaxCannotAcquireIbmStrongEffects() {
+    @Test void unsupportedLockOptionDoesNotWeakenConditionalReceiverProof() {
         var f=fixture("SELECT F ASSIGN TO INDD FILE STATUS IO-STATUS.","FD F.\n01 REC PIC X(8).","01 DEST PIC X(8).\n01 IO-STATUS PIC XX.","READ F INTO DEST WITH KEPT LOCK.");
         var p=plan(f,Ast.FileCommand.READ);assertFalse(p.unknownWriteBound());
-        assertTrue(p.outcomes().stream().flatMap(c->c.steps().stream()).allMatch(s->s.kind()==FileIoEffects.Kind.MAY_UNKNOWN));
+        assertTrue(p.gaps().contains("FILE_EFFECT_PROFILE_NOT_PROVEN"));
+        var success=outcome(p,FileIoEffects.Outcome.SUCCESS);
+        assertEquals(FileIoEffects.Kind.MUST_UNKNOWN,success.stream().filter(s->s.role()==FileIoMemory.Role.FILE_STATUS).findFirst().orElseThrow().kind());
+        assertEquals(FileIoEffects.Kind.MUST_UNKNOWN,success.stream().filter(s->s.role()==FileIoMemory.Role.INTO).findFirst().orElseThrow().kind());
+        assertTrue(success.stream().filter(s->s.role()==FileIoMemory.Role.RECORD).allMatch(s->s.kind()==FileIoEffects.Kind.MAY_UNKNOWN));
+        assertTrue(outcome(p,FileIoEffects.Outcome.END).stream().noneMatch(s->s.role()==FileIoMemory.Role.INTO));
+    }
+    @Test void assignmentProfileGapDoesNotReplaceProvedFromCopy() {
+        var f=fixture("SELECT F ASSIGN TO DYNAMIC FILE-NAME.","FD F.\n01 REC PIC X(8).","01 FILE-NAME PIC X(8).\n01 SOURCE-PGM PIC X(8).","WRITE REC FROM SOURCE-PGM.");
+        var p=plan(f,Ast.FileCommand.WRITE);assertTrue(p.gaps().contains("FILE_EFFECT_PROFILE_NOT_PROVEN"));
+        assertEquals(FileIoEffects.Kind.COPY_BYTES,p.before().get(0).kind());
+        assertFalse(p.unknownReadBound());assertFalse(p.unknownWriteBound());
     }
 }

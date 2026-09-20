@@ -87,6 +87,25 @@ class CallCheckpointW1ATest {
         assertTrue(call.path("target").path("provenance").path("exact").asBoolean());
         assertNotEquals(call.path("header").path("provenance"), call.path("target").path("provenance"));
     }
+    @Test void ordinaryCallContinuationCrossesAParagraphBoundary() throws Exception {
+        var source="""
+            IDENTIFICATION DIVISION.
+            PROGRAM-ID. CALLER.
+            PROCEDURE DIVISION.
+            FIRST-PARA.
+                CALL 'PROGA'.
+            SECOND-PARA.
+                CALL 'PROGB'.
+                GOBACK.
+            """;
+        var doc=publish(source,"paragraph-continuation");var calls=new java.util.ArrayList<JsonNode>();
+        for(var statement:doc.path("statements"))if(statement.path("variant").asText().equals("CALL"))calls.add(statement);
+        assertEquals(2,calls.size());
+        assertEquals("KNOWN",calls.get(0).path("normalContinuation").path("availability").asText());
+        assertEquals(calls.get(1).path("header").path("id"),calls.get(0).path("normalContinuation").path("statement"));
+        assertEquals("KNOWN",calls.get(1).path("normalContinuation").path("availability").asText());
+        assertTrue(doc.path("gaps").toString().indexOf("CALL_NORMAL_CONTINUATION_NOT_AVAILABLE")<0);
+    }
     static void outsideSlice(JsonNode call) {
         assertNotEquals("SUFFICIENT", call.path("header").path("readiness").path("lowering").path("status").asText());
         assertEquals("UNKNOWN", call.path("effects").asText());
@@ -143,14 +162,13 @@ class CallCheckpointW1ATest {
         assertEquals("UNAVAILABLE", shorter.path("copySemantics").asText());
         assertTrue(shorter.path("textAdjustment").isNull());
     }
-    @Test void continuationIsCanonicalAndDoesNotCrossRegions() throws Exception {
-        for (String source : List.of(DYNAMIC.replace("    GOBACK.", "NEXT-PARA.\n    GOBACK."),
-                DYNAMIC.replace("    GOBACK.\n", ""))) {
-            var call = statement(publish(source, "continuation-unavailable"), "CALL");
-            assertEquals("UNAVAILABLE", call.path("normalContinuation").path("availability").asText());
-            assertTrue(call.path("normalContinuation").path("statement").isNull());
-            outsideSlice(call);
-        }
+    @Test void continuationCrossesKnownParagraphAndRemainsUnavailableAtUnitEnd() throws Exception {
+        var cross=publish(DYNAMIC.replace("    GOBACK.", "NEXT-PARA.\n    GOBACK."),"continuation-paragraph");
+        simpleCall(statement(cross,"CALL"),statement(cross,"GOBACK"));
+        var terminal=statement(publish(DYNAMIC.replace("    GOBACK.\n", ""),"continuation-unavailable"),"CALL");
+        assertEquals("UNAVAILABLE",terminal.path("normalContinuation").path("availability").asText());
+        assertTrue(terminal.path("normalContinuation").path("statement").isNull());
+        outsideSlice(terminal);
     }
     @Test void nestedCallHasItsProvenArmCompletion() throws Exception {
         var sp=publish(DYNAMIC.replace("    CALL WS-PGM.", "    IF WS-PGM = 'PROGA' CALL WS-PGM END-IF."),"nested-call");

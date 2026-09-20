@@ -58,7 +58,7 @@ public final class FileIoEffects {
                     var source=surface.operands().stream().filter(o->o.role()==Ast.FileOperandRole.FROM).findFirst()
                         .flatMap(o->memory.target(new Key(unit,o.value().meta().id())));
                     if(source.isEmpty()||source.orElseThrow().wholeBase())unknownRead=true;
-                    var step=transfer(write.target(),source,statement.origin(),bases);before.add(nativeProfile?step:outsideProfile(step));
+                    before.add(transfer(write.target(),source,statement.origin(),bases));
                 }
                 // This table describes effects IF the semantic outcome occurs;
                 // handler selection and which cases are feasible are independent W4 facts.
@@ -83,7 +83,7 @@ public final class FileIoEffects {
                             if(!sender)reasons.add("FILE_RECORD_MOVE_CLASS_NOT_PROVEN");
                             if(address&&separate&&sender)kind=Kind.MUST_UNKNOWN;
                         }
-                        var step=new Step(role,kind,write.target(),Optional.empty(),reasons,statement.origin());steps.add(nativeProfile?step:outsideProfile(step));
+                        steps.add(new Step(role,kind,write.target(),Optional.empty(),reasons,statement.origin()));
                     }
                     // READ-without-INTO completes (including status) before the
                     // implied MOVE; dependent addressing therefore happens last.
@@ -98,10 +98,6 @@ public final class FileIoEffects {
             result.put(statement.statement(),List.copyOf(plans));
         }
         return new FileIoEffects(result);
-    }
-    private static Step outsideProfile(Step step) {
-        var gaps=new LinkedHashSet<>(step.gaps());gaps.add("FILE_EFFECT_PROFILE_NOT_PROVEN");
-        return new Step(step.role(),Kind.MAY_UNKNOWN,step.destination(),step.source(),List.copyOf(gaps),step.origin());
     }
     private static int order(FileIoMemory.Role role){return switch(role){case RECORD,FROM_RECORD->0;case RELATIVE_KEY->1;case RECORD_LENGTH->2;case FILE_STATUS->3;case ADDITIONAL_STATUS->4;case INTO->5;};}
     private static Step transfer(FileIoMemory.Target destination,Optional<FileIoMemory.Target> source,Ast.SourceProvenance origin,Map<Key,Base> bases) {

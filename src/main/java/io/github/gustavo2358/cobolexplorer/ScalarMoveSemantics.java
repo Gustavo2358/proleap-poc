@@ -121,12 +121,14 @@ public final class ScalarMoveSemantics {
             });
             // Reuse the already immutable canonical relation index; do not rebuild it.
             Map<Integer, Integer> next = Map.of();
+            Map<Integer, Integer> ordinaryNext = Map.of();
             boolean procedureSeen = false;
             for (var division : unit.program().divisions()) {
                 if (division.divisionKind() != Ast.DivisionKind.PROCEDURE) continue;
                 if (procedureSeen) throw new IllegalArgumentException("duplicate procedure division");
                 procedureSeen = true;
                 next = division.normalContinuations();
+                ordinaryNext = division.ordinaryContinuations();
             }
             var attributes = unit.program().attributes();
             boolean ordinary = inputComplete && !attributes.initial() && !attributes.recursive()
@@ -147,7 +149,7 @@ public final class ScalarMoveSemantics {
                 if (node instanceof Ast.CallStatement call) {
                     var key = new NodeKey(unit.id(), call.meta().id());
                     calls.put(key, new Call(Optional.empty(), inputComplete
-                            ? Optional.ofNullable(next.get(call.meta().id())) : Optional.empty(), inputComplete));
+                            ? Optional.ofNullable(ordinaryNext.get(call.meta().id())) : Optional.empty(), inputComplete));
                     if (call.target() instanceof Ast.DataReference target)
                         callTargets.put(new NodeKey(unit.id(), target.meta().id()), call);
                 }
