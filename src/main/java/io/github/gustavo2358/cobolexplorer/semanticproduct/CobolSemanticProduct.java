@@ -643,7 +643,7 @@ public final class CobolSemanticProduct {
         public LogicalTextView {Objects.requireNonNull(node);Objects.requireNonNull(root);Objects.requireNonNull(start);Objects.requireNonNull(length);
             require(node.unit().equals(root.unit())&&start.signum()>=0&&length.signum()>0,"positive logical character range in one unit");}
     }
-    /** Complete, equivalent TEXT views of one locally proved logical storage component. */
+    /** Complete local TEXT view; equal representatives assert exact logical storage identity. */
     public record LogicalExactView(StorageNodeId node,StorageNodeId representative,BigInteger length) {
         public LogicalExactView {Objects.requireNonNull(node);Objects.requireNonNull(representative);Objects.requireNonNull(length);
             require(node.unit().equals(representative.unit())&&length.signum()>0,"positive exact logical view in one unit");}

@@ -146,6 +146,8 @@ public final class StorageLayoutSemantics {
     }
     private static List<LogicalExactView> exactLocalText(CompilationUnitModel.ProgramUnit unit,StorageComponents.Unit structure,Map<Integer,Shape> shapes) {
         var working=new HashSet<Integer>();
+        var declarations=new HashMap<Integer,Ast.DataEntry>();
+        for(var position:structure.positions())declarations.put(position.data().meta().id(),position.data());
         for(var division:unit.program().divisions())if(division.divisionKind()==Ast.DivisionKind.DATA)
             for(var child:division.children())if(child instanceof Ast.Section section&&section.dataSectionKind()==Ast.DataSectionKind.WORKING_STORAGE)
                 for(var entry:section.children())if(entry instanceof Ast.DataEntry data)working.add(data.meta().id());
@@ -165,6 +167,29 @@ public final class StorageLayoutSemantics {
             }
             if(!exact)continue;
             for(int id:members)result.add(new LogicalExactView(new Key(unit.id(),id),new Key(unit.id(),component.representative()),first.leafExtent().orElseThrow()));
+        }
+        // A chain of complete group/child views has one logical TEXT value even
+        // when no physical byte layout or global input completeness is proved.
+        // A second child component or an overlay member would make the relation
+        // partial, so neither may be silently collapsed into the same Cell.
+        for(var component:structure.rootComponents()) {
+            if(component.members().size()!=1)continue;
+            var chain=new ArrayList<Integer>();int current=component.representative();
+            while(true) {
+                var shape=shapes.get(current);
+                if(shape==null||!shape.supported()||declarations.get(current).filler())break;
+                chain.add(current);
+                if(shape.kind()==Kind.ELEMENTARY) {
+                    if(shape.leafExtent().filter(n->n.signum()>0).isPresent())
+                        for(int id:chain)result.add(new LogicalExactView(new Key(unit.id(),id),
+                            new Key(unit.id(),component.representative()),shape.leafExtent().orElseThrow()));
+                    break;
+                }
+                if(shape.kind()!=Kind.GROUP)break;
+                var children=structure.children().getOrDefault(current,List.of());
+                if(children.size()!=1||children.get(0).members().size()!=1)break;
+                current=children.get(0).representative();
+            }
         }
         return result;
     }

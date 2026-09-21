@@ -567,3 +567,17 @@ SP 2.34.0 is emitted only when this fact is present; storage version is 1.10.0.
 The earlier `logicalTextViews` inventory and physical layout contracts retain
 their own admission rules. The parser's recognized MOVE continuation is published
 even if another source artifact is missing; it is not inferred from array order.
+
+## W3-R1 FILE record grounding — SP 2.35.0 / storage 1.11.0
+
+The same `logicalExactViews(node, representative, length)` wire fact now also
+carries a complete local TEXT group-to-descendant chain. Each group in the
+chain has exactly one complete child component; the terminal elementary view
+has a supported positive logical character length. Partial children, partial
+REDEFINES, FILLER, distinct components and nonlocal declarations do not acquire
+this identity. An independently complete elementary root may publish a
+singleton exact view to establish its logical TEXT domain. A singleton asserts
+no alias with another declaration. The proof depends on declarations and
+positive local relations, not on FILE statements, literals, missing input or
+physical byte layout. The earlier SP 2.34.0/storage 1.10.0 sibling-overlay
+shape remains decodable by compatible lowers.

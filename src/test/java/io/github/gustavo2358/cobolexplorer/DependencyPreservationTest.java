@@ -58,8 +58,8 @@ class DependencyPreservationTest {
         for(var changed:java.util.List.of("MOVE 'OTHER' TO B.\nEXEC CICS XCTL PROGRAM(B) END-EXEC.",
                 "MOVE 'PROGB' TO A.\nMOVE 'PROGA' TO B.\nEXEC CICS XCTL PROGRAM(B) END-EXEC."))
             assertEquals(missing.storage().logicalExactViews(),CicsProgramControlTest.regional("COPY MISSINGDP.\n"+pair,changed).storage().logicalExactViews());
-        assertTrue(CicsProgramControlTest.regional("COPY MISSINGDP.\n01 A PIC X(8).\n01 B PIC X(8).",statements)
-            .storage().logicalExactViews().isEmpty());
+        assertEquals(2,CicsProgramControlTest.regional("COPY MISSINGDP.\n01 A PIC X(8).\n01 B PIC X(8).",statements)
+            .storage().logicalExactViews().stream().map(LogicalExactView::representative).distinct().count());
         assertTrue(CicsProgramControlTest.regional("COPY MISSINGDP.\n01 A PIC X(8).\n01 B REDEFINES A PIC X(4).",statements)
             .storage().logicalExactViews().isEmpty());
         var partial=CicsProgramControlTest.regional("01 A PIC X(8).\n01 B REDEFINES A PIC X(4).",statements).storage();

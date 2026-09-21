@@ -82,7 +82,7 @@ public final class SemanticProductJsonWriter {
             || s instanceof CobolSemanticProduct.CicsFileFact c && c.target().filter(t -> t instanceof CobolSemanticProduct.DataReference d && d.logicalWholeItem().isPresent()).isPresent());
         boolean structuredUnknownEvaluate=port.statements().stream().anyMatch(s -> s instanceof CobolSemanticProduct.EvaluateFact e
             && e.arms().stream().anyMatch(a -> a.selection().isEmpty()));
-        return new SemanticProductDocument(SCHEMA, !port.storage().logicalExactViews().isEmpty()?"2.34.0":structuredUnknownEvaluate?"2.33.0":preservation?"2.32.0":port.sourceDependencies().availability()!=CobolSemanticProduct.Availability.UNAVAILABLE?"2.31.0":port.storage().logicalTextViews().isEmpty()?CONTRACT_VERSION:"2.29.0",
+        return new SemanticProductDocument(SCHEMA, !port.storage().logicalExactViews().isEmpty()?"2.35.0":structuredUnknownEvaluate?"2.33.0":preservation?"2.32.0":port.sourceDependencies().availability()!=CobolSemanticProduct.Availability.UNAVAILABLE?"2.31.0":port.storage().logicalTextViews().isEmpty()?CONTRACT_VERSION:"2.29.0",
                 unit(port.unit()), policy(port.policy()), declarations, statements,
                 new StructureDocument(port.rootStatements().stream()
                         .map(SemanticProductJsonWriter::statementHandle).toList(),
@@ -172,7 +172,7 @@ public final class SemanticProductJsonWriter {
         return new StorageMeasureDocument(m.value().map(Object::toString).orElse(null),m.gapCodes());
     }
     private static StorageDocument storage(CobolSemanticProduct.StorageInventory storage) {
-        return new StorageDocument(!storage.logicalExactViews().isEmpty()?"1.10.0":storage.logicalTextViews().isEmpty()?"1.8.0":"1.9.0",storage.profile(),storage.profileId().orElse(null),storage.runtimeCodec().orElse(null),
+        return new StorageDocument(!storage.logicalExactViews().isEmpty()?"1.11.0":storage.logicalTextViews().isEmpty()?"1.8.0":"1.9.0",storage.profile(),storage.profileId().orElse(null),storage.runtimeCodec().orElse(null),
             storage.nodes().stream().map(n->new PhysicalNodeDocument(storageNodeHandle(n.id()),n.parent().map(SemanticProductJsonWriter::storageNodeHandle).orElse(null),
                 n.order(),n.filler(),n.kind(),n.data().map(SemanticProductJsonWriter::dataHandle).orElse(null),measure(n.extent()),provenance(n.provenance()))).toList(),
             storage.bases().stream().map(b->new StorageBaseDocument(storageBaseHandle(b.id()),measure(b.extent()),b.allocation(),provenance(b.provenance()))).toList(),
