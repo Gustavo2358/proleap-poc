@@ -1,5 +1,7 @@
 # W5 — partial structural facts (SP 2.36)
 
+Current compositional control and SP2.37 ordinary continuations: [W7 contract](control-composition.md). Historical profile qualification below does not gate independent branch entries or predicate coverage.
+
 Invariant: **Qualificação integral autoriza especialização integral; ela não autoriza a existência dos fatos positivos.**
 
 ## Facts and availability

@@ -286,19 +286,7 @@ public final class ScalarMoveSemantics {
         var evaluates = EvaluateSemantics.analyze(frontend, resolution, report, declarations);
         var procedurePerforms = ProcedurePerformSemantics.analyze(frontend, tables, resolution, report, declarations, moves, ifs, evaluates, goTos, performs,numbers,cics);
         performs = performs.restrictPrimaryRanges(procedurePerforms);
-        // Ordinary execution crosses grammar-owned paragraph boundaries. Never replace
-        // an intrinsic activation's published completion with that ordinary fallthrough.
-        // This new proof is qualified only in units containing the conditional-transfer slice.
-        var conditionalUnits=goTos.conditionalUnits();
-        for(var unit:frontend.compilationUnit().programUnits())if(report.inputComplete(unit.id()))for(var division:unit.program().divisions())
-            if(conditionalUnits.contains(unit.id())&&division.divisionKind()==Ast.DivisionKind.PROCEDURE)for(var edge:division.ordinaryContinuations().entrySet()) {
-                var key=new NodeKey(unit.id(),edge.getKey());var move=moves.get(key);
-                if(move!=null&&move.nextStatement().isEmpty()&&!performs.intrinsicExit(unit.id(),key.node())
-                        &&!procedurePerforms.paragraphEnd(unit.id(),key.node())) {
-                    moves.put(key,new Move(move.wholeItem(),move.copy(),Optional.of(edge.getValue()),
-                        move.gaps().stream().filter(g->g!=Gap.NORMAL_CONTINUATION_NOT_AVAILABLE).toList(),move.adjustment(),move.sourceWholeItem()));
-                }
-            }
+        // Ordinary flow is published independently in SP 2.37, never promoted by a peer feature.
         return new ScalarMoveSemantics(declarations, moves, calls,
                 new Metrics(counts[0], counts[1], counts[2], counts[3], counts[4]),
                 ifs, performs, evaluates,

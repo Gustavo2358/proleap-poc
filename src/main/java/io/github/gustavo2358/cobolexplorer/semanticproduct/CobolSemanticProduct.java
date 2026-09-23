@@ -1568,17 +1568,46 @@ public final class CobolSemanticProduct {
         public static SourceDependencyInventory unavailable(){return new SourceDependencyInventory(Availability.UNAVAILABLE,List.of(),List.of("SOURCE_DEPENDENCIES_UNAVAILABLE"));}
     }
 
+    /** Positive successor of an ordinary occurrence; absence makes no termination claim. */
+    public record OrdinaryContinuation(StatementId statement, StatementId destination, Provenance provenance) {
+        public OrdinaryContinuation { Objects.requireNonNull(statement); Objects.requireNonNull(destination); Objects.requireNonNull(provenance); }
+    }
+
     /** One immutable, closed publication with a cardinality-independent envelope. */
     public record State(UnitId unit, Policy policy,
                         List<DataDeclaration> dataDeclarations,
                         List<StatementFact> statements,
-                        List<Gap> gaps, CoverageSummary coverage, EntryInventory entryInventory, IndependentStorageSet storageIndependence, StorageInventory storage, FileInventory fileInventory, SourceDependencyInventory sourceDependencies) {
+                        List<Gap> gaps, CoverageSummary coverage, EntryInventory entryInventory, IndependentStorageSet storageIndependence, StorageInventory storage, FileInventory fileInventory, SourceDependencyInventory sourceDependencies, List<OrdinaryContinuation> ordinaryContinuations) {
+        public State(UnitId unit, Policy policy, List<DataDeclaration> dataDeclarations, List<StatementFact> statements,
+                List<Gap> gaps, CoverageSummary coverage, EntryInventory entryInventory, IndependentStorageSet storageIndependence,
+                StorageInventory storage, FileInventory fileInventory, SourceDependencyInventory sourceDependencies) {
+            this(unit,policy,dataDeclarations,statements,gaps,coverage,entryInventory,storageIndependence,storage,fileInventory,sourceDependencies,List.of());
+        }
         public State(UnitId unit, Policy policy, List<DataDeclaration> dataDeclarations, List<StatementFact> statements,
                 List<Gap> gaps, CoverageSummary coverage, EntryInventory entryInventory, IndependentStorageSet storageIndependence,
                 StorageInventory storage, FileInventory fileInventory) {
             this(unit,policy,dataDeclarations,statements,gaps,coverage,entryInventory,storageIndependence,storage,fileInventory,SourceDependencyInventory.unavailable());
         }
         public State {
+            ordinaryContinuations = List.copyOf(ordinaryContinuations);
+            var ordinaryIds = new HashSet<StatementId>();
+            var byId = new HashMap<StatementId,StatementFact>();
+            statements.forEach(f -> byId.put(f.header().id(),f));
+            for (var relation : ordinaryContinuations) {
+                var from=byId.get(relation.statement());
+                require(ordinaryIds.add(relation.statement()) && relation.statement().unit().equals(unit)
+                    && byId.containsKey(relation.destination()) && relation.destination().unit().equals(unit)
+                    && !relation.statement().equals(relation.destination()) && relation.provenance().exact(),
+                    "ordinary continuation requires unique closed endpoints and exact origin");
+                require(from instanceof MoveFact || from instanceof IfFact || from instanceof EvaluateFact
+                    || from instanceof PerformFact || from instanceof ProcedurePerformFact,
+                    "ordinary continuation requires a supported completing construction");
+                var intrinsic=from instanceof MoveFact m?m.normalContinuation():from instanceof IfFact f?f.normalContinuation():
+                    from instanceof EvaluateFact e?e.normalContinuation():from instanceof PerformFact f?f.normalContinuation():
+                    ((ProcedurePerformFact)from).normalContinuation();
+                require(intrinsic.statement().isEmpty() || intrinsic.statement().equals(Optional.of(relation.destination())),
+                    "ordinary and intrinsic successors agree when both known");
+            }
             Objects.requireNonNull(sourceDependencies);
             unit = Objects.requireNonNull(unit, "unit");
             policy = Objects.requireNonNull(policy, "policy");

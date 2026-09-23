@@ -1,5 +1,7 @@
 # EVALUATE first slice — SP 2.0
 
+Current compositional control and SP2.37 ordinary continuations: [W7 contract](control-composition.md). Historical profile qualification below does not gate independent branch entries or predicate coverage.
+
 Rule: [IBM Enterprise COBOL 6.4 EVALUATE](https://www.ibm.com/docs/en/cobol-zos/6.4.0?topic=statements-evaluate-statement).
 The first matching WHEN executes; normal completion leaves EVALUATE. OTHER is
 the default; without OTHER, no match continues after EVALUATE. Roadmap authority

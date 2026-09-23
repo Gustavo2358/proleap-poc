@@ -1,5 +1,7 @@
 # Conditional GO TO / DEPENDING ON — SP 2.6
 
+Current compositional control and SP2.37 ordinary continuations: [W7 contract](control-composition.md). Historical profile qualification below does not gate independent branch entries or predicate coverage.
+
 Status: implementation and local frontend qualification PASS; cross-repo evaluation tracked downstream. No merge.
 
 Authority: IBM Enterprise COBOL 6.4 Language Reference, conditional GO TO,

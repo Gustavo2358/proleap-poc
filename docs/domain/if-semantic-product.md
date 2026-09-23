@@ -1,5 +1,7 @@
 # Fatos de IF simples — CP6 W2A
 
+Current compositional control and SP2.37 ordinary continuations: [W7 contract](control-composition.md). Historical profile qualification below does not gate independent branch entries or predicate coverage.
+
 Contrato corrente SP **1.4.0**. W2A entrega fatos COBOL para uma tradução futura.
 Não implementa AIR, lowering, CFG, análise de fluxo ou IF COBOL geral.
 

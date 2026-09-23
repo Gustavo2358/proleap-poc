@@ -36,6 +36,8 @@ public interface CobolSemanticPort {
 
     default SourceDependencyInventory sourceDependencies(){return SourceDependencyInventory.unavailable();}
 
+    default List<CobolSemanticProduct.OrdinaryContinuation> ordinaryContinuations() { return List.of(); }
+
     List<CobolSemanticProduct.DataDeclaration> dataDeclarations();
 
     List<CobolSemanticProduct.StatementFact> statements();
@@ -95,6 +97,8 @@ final class MaterializedCobolSemanticPort implements CobolSemanticPort {
     @Override public CobolSemanticProduct.FileInventory fileInventory() { return state.fileInventory(); }
 
     @Override public SourceDependencyInventory sourceDependencies(){return state.sourceDependencies();}
+
+    @Override public List<CobolSemanticProduct.OrdinaryContinuation> ordinaryContinuations() { return state.ordinaryContinuations(); }
 
     MaterializedCobolSemanticPort(CobolSemanticProduct.State state) {
         this.state = Objects.requireNonNull(state, "state");

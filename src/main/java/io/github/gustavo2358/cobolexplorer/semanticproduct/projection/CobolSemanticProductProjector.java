@@ -212,7 +212,29 @@ public final class CobolSemanticProductProjector {
                 inventoryStatus, statements, inputs.unitSummary());
         return new ScopedProjection(new CobolSemanticProduct.State(inputs.boundaryUnit(),
                 policy(inputs.report().policy()), declarations.facts(),
-                statements, gaps, coverage, entries, storageIndependence(inputs, declarations.ids()), storage(inputs, declarations.ids()), files(inputs, declarations.ids(), statementIds, observedOperandIds),products.sourceDependencies().getOrDefault(unitId,io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.SourceDependencyInventory.unavailable())),java.util.Collections.unmodifiableMap(new LinkedHashMap<>(declarations.ids())));
+                statements, gaps, coverage, entries, storageIndependence(inputs, declarations.ids()), storage(inputs, declarations.ids()), files(inputs, declarations.ids(), statementIds, observedOperandIds),products.sourceDependencies().getOrDefault(unitId,io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.SourceDependencyInventory.unavailable()),ordinaryContinuations(inputs,statementIds,statements)),java.util.Collections.unmodifiableMap(new LinkedHashMap<>(declarations.ids())));
+    }
+
+    private static List<OrdinaryContinuation> ordinaryContinuations(ProjectionInputs inputs,
+            Map<Ast.Statement,StatementId> ids, List<StatementFact> facts) {
+        if(!inputs.report().inputComplete(inputs.unitId()))return List.of();
+        var sources=new HashMap<StatementId,Ast.Statement>();ids.forEach((source,id)->sources.put(id,source));
+        var result=new ArrayList<OrdinaryContinuation>();
+        for(var fact:facts) {
+            if(!(fact instanceof MoveFact || fact instanceof IfFact || fact instanceof EvaluateFact
+                    || fact instanceof PerformFact || fact instanceof ProcedurePerformFact)) continue;
+            var source=sources.get(fact.header().id());
+            if(source==null || !fact.header().provenance().exact()) continue;
+            for(var division:inputs.selectedSource().unit().program().divisions()) {
+                var target=canonicalStatement(Optional.ofNullable(division.ordinaryContinuations().get(source.meta().id())),inputs,ids);
+                var intrinsic=fact instanceof MoveFact m?m.normalContinuation():fact instanceof IfFact f?f.normalContinuation():
+                    fact instanceof EvaluateFact e?e.normalContinuation():fact instanceof PerformFact f?f.normalContinuation():
+                    ((ProcedurePerformFact)fact).normalContinuation();
+                target.filter(next->!intrinsic.statement().equals(Optional.of(next)))
+                    .ifPresent(next->result.add(new OrdinaryContinuation(fact.header().id(),next,fact.header().provenance())));
+            }
+        }
+        return List.copyOf(result);
     }
 
     private static FileInventory files(ProjectionInputs inputs, Map<ResolutionContracts.SemanticEntityId, DataItemId> dataIds, Map<Ast.Statement,StatementId> statementIds,Map<Integer,OperandId> operandIds) {
@@ -1159,7 +1181,7 @@ public final class CobolSemanticProductProjector {
         }
 
         if (plan.position().statement() instanceof Ast.EvaluateStatement e && plan.capability().supported()) {
-            projectEvaluate(e, plan, inputs, dataIds, statementIds, statementId, containment, statements, gaps);
+            projectEvaluate(e, plan, inputs, dataIds, scalarDataIds, statementIds, statementId, containment, statements, gaps);
             return;
         }
 
@@ -1506,7 +1528,7 @@ public final class CobolSemanticProductProjector {
     }
 
     private static void projectEvaluate(Ast.EvaluateStatement e, StatementPlan plan, ProjectionInputs inputs,
-            Map<ResolutionContracts.SemanticEntityId, DataItemId> dataIds, Map<Ast.Statement, StatementId> ids,
+            Map<ResolutionContracts.SemanticEntityId, DataItemId> dataIds, Set<DataItemId> scalarDataIds, Map<Ast.Statement, StatementId> ids,
             StatementId id, Containment containment, List<StatementFact> output, List<Gap> gaps) {
         var proof = inputs.products().scalarMoves().evaluates().fact(inputs.unitId(), e.meta().id());
         var origin = provenance(e.meta().provenance());
@@ -1514,7 +1536,7 @@ public final class CobolSemanticProductProjector {
         if(proof.supportedShape()) require(plan.entries().size() <= 1, "single canonical EVALUATE subject reference");
         Optional<DataReference> subject = plan.entries().isEmpty() ? Optional.empty()
             : Optional.of(plan.entries().get(0)).filter(r -> projectableDataBinding(r, inputs)).map(r -> new DataReference(new OperandId(id, 0), OperandRole.READ, nominalBinding(r, dataIds),
-                provenance(r.occurrence().meta().provenance()), r.selectedCandidate().map(c -> dataIds.get(c.entityId())).map(WholeItemAccess::new), regionalAccess(inputs, r.occurrence().referenceAstNodeId())));
+                provenance(r.occurrence().meta().provenance()), r.selectedCandidate().map(c -> dataIds.get(c.entityId())).filter(scalarDataIds::contains).map(WholeItemAccess::new), regionalAccess(inputs, r.occurrence().referenceAstNodeId())));
         if (proof.supportedShape() && (subject.isEmpty() || proof.wholeItem().isEmpty())) codes.add("EVALUATE_SUBJECT_NOT_PROVEN");
         if (!proof.supportedShape()) codes.add("EVALUATE_PREDICATE_NOT_MODELED");
         var arms = new ArrayList<EvaluateArm>();
@@ -1543,14 +1565,14 @@ public final class CobolSemanticProductProjector {
                     var selected=subjectEntry.selectedCandidate().map(c -> dataIds.get(c.entityId()));
                     reads.add(new DataReference(new OperandId(id,operandOrdinal++),OperandRole.READ,
                         nominalBinding(subjectEntry,dataIds),provenance(subjectEntry.occurrence().meta().provenance()),
-                        selected.map(WholeItemAccess::new),regionalAccess(inputs,subjectEntry.occurrence().referenceAstNodeId())));
+                        selected.filter(scalarDataIds::contains).map(WholeItemAccess::new),regionalAccess(inputs,subjectEntry.occurrence().referenceAstNodeId())));
                 }
                 for(var selector:a.selectors()) for(var conditionEntry:conditionEntries(selector.expression(),inputs)) {
                     if(!projectableDataBinding(conditionEntry,inputs)) continue;
                     var selected=conditionEntry.selectedCandidate().map(c -> dataIds.get(c.entityId()));
                     reads.add(new DataReference(new OperandId(id,operandOrdinal++),OperandRole.READ,
                         nominalBinding(conditionEntry,dataIds),provenance(conditionEntry.occurrence().meta().provenance()),
-                        selected.map(WholeItemAccess::new),regionalAccess(inputs,conditionEntry.occurrence().referenceAstNodeId())));
+                        selected.filter(scalarDataIds::contains).map(WholeItemAccess::new),regionalAccess(inputs,conditionEntry.occurrence().referenceAstNodeId())));
                 }
                 arms.add(new EvaluateArm(arms.size(),Optional.empty(),reads,provenance(a.meta().provenance()),members,control));
             }

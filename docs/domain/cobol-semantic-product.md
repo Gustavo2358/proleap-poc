@@ -1,5 +1,7 @@
 # COBOL Semantic Product
 
+Current compositional control and SP2.37 ordinary continuations: [W7 contract](control-composition.md). Historical profile qualification below does not gate independent branch entries or predicate coverage.
+
 Writer corrente: [controle condicional FILE / SP 2.25.0](file-dependencies.md), storage 1.8.0
 ([source evidence](evidence-preserving-entry.md)),
 com prova tipada por condição de entrada, preservando [CICS Program Control](cics-program-control.md).
