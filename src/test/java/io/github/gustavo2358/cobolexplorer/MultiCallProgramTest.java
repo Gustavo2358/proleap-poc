@@ -44,7 +44,9 @@ class MultiCallProgramTest {
     @Test void extraPerformAndUnsupportedRootRemainObserved() throws Exception {
         for (String root : List.of("GO TO DEFINE-A.", "CONTINUE.", "ENTRY 'OTHER'.", "EVALUATE TRUE WHEN TRUE MOVE 'PROGA' TO WS-A END-EVALUATE.")) {
             var port = ScalarMoveCheckpoint4ATest.publish(source(5).replace("       CALL WS-A.", "       " + root + "\n       CALL WS-A."));
-            assertTrue(port.performs().isEmpty(), root); assertFalse(port.observedStatements().isEmpty(), root);
+            assertTrue(port.performs().isEmpty(), root);
+            var partial=port.statements().stream().filter(io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.ProcedurePerformFact.class::isInstance).toList();
+            assertEquals(1,partial.size(),root);
         }
     }
 }

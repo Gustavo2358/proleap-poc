@@ -285,7 +285,7 @@ public final class ScalarMoveSemantics {
         var performs = PerformSemantics.analyze(frontend, tables, resolution, report, completingMoves, ifs, goTos);
         var evaluates = EvaluateSemantics.analyze(frontend, resolution, report, declarations);
         var procedurePerforms = ProcedurePerformSemantics.analyze(frontend, tables, resolution, report, declarations, moves, ifs, evaluates, goTos, performs,numbers,cics);
-        performs = performs.restrictOpenRanges(procedurePerforms);
+        performs = performs.restrictPrimaryRanges(procedurePerforms);
         // Ordinary execution crosses grammar-owned paragraph boundaries. Never replace
         // an intrinsic activation's published completion with that ordinary fallthrough.
         // This new proof is qualified only in units containing the conditional-transfer slice.

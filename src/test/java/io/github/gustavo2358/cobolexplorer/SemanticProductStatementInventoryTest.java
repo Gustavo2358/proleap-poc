@@ -82,7 +82,8 @@ class SemanticProductStatementInventoryTest {
                 .filter(item -> !(item.statement() instanceof Ast.MoveStatement)
                         && !(item.statement() instanceof Ast.CallStatement)
                         && !(item.statement() instanceof Ast.IfStatement)
-                        && !(item.statement() instanceof Ast.GobackStatement))
+                        && !(item.statement() instanceof Ast.GobackStatement)
+                        && !(item.statement() instanceof Ast.PerformStatement p && ProcedurePerformSemantics.structuralCandidate(p)))
                 .count();
         CobolSemanticProduct.IfFact actualIf = port.ifs().get(0);
 
@@ -91,7 +92,7 @@ class SemanticProductStatementInventoryTest {
                 () -> assertEquals(2, port.calls().size()),
                 () -> assertEquals(1, port.ifs().size()),
                 () -> assertEquals(expectedObserved, port.observedStatements().size(),
-                        "DISPLAY/PERFORM/CONTINUE remain observed; GOBACK has a dedicated fact"),
+                        "DISPLAY/inline PERFORM/CONTINUE remain observed; paragraph PERFORM preserves typed structure"),
                 () -> assertEquals(3, port.children(actualIf.header().id(),
                         CobolSemanticProduct.Branch.THEN).size(),
                         "unsupported direct IF children are still known branch members"),
@@ -506,6 +507,8 @@ class SemanticProductStatementInventoryTest {
                 assertInstanceOf(CobolSemanticProduct.CallFact.class, fact);
             } else if (statement instanceof Ast.IfStatement) {
                 assertInstanceOf(CobolSemanticProduct.IfFact.class, fact);
+            } else if (statement instanceof Ast.PerformStatement p && ProcedurePerformSemantics.structuralCandidate(p)) {
+                assertInstanceOf(CobolSemanticProduct.ProcedurePerformFact.class, fact);
             } else if (statement instanceof Ast.GobackStatement) {
                 assertInstanceOf(CobolSemanticProduct.GobackFact.class, fact);
             } else {

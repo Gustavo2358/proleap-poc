@@ -633,11 +633,14 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
         return roots.isEmpty()?paragraphNext:roots.get(0).entryStatement()==null?builtStatements.get(roots.get(0)):null;
     }
 
-    /** Only normal completion is asserted; no values, file or arithmetic semantics.
-     * Handler bodies are barriers until their control is independently published. */
+    /** Plain EXIT is neutral; the special transfer forms remain unmodeled. */
+    private static boolean plainExit(CobolParser.ExitStatementContext e) {
+        return e.PROGRAM()==null && e.PARAGRAPH()==null && e.SECTION()==null && e.PERFORM()==null;
+    }
+    /** Only normal completion; no value, file or arithmetic semantics. */
     private static boolean sequentialOpaque(CobolParser.StatementContext c) {
         return c.continueStatement() != null
-            || c.exitStatement()!=null&&c.exitStatement().PROGRAM()==null
+            || c.exitStatement()!=null&&plainExit(c.exitStatement())
             || c.displayStatement() != null && c.displayStatement().onExceptionClause() == null && c.displayStatement().notOnExceptionClause() == null
             || c.readStatement() != null && c.readStatement().atEndPhrase() == null
                 && c.readStatement().notAtEndPhrase() == null && c.readStatement().invalidKeyPhrase() == null
@@ -649,7 +652,7 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
      * handler-bearing DISPLAY surfaces use their own control contracts. */
     private static boolean ordinaryStructuredStatement(Ast.Statement current, CobolParser.StatementContext c) {
         if (!(current instanceof Ast.ModeledStatement || current instanceof Ast.PreservedStatement)) return false;
-        if (c.stopStatement() != null || c.exitStatement() != null && c.exitStatement().PROGRAM() != null) return false;
+        if (c.stopStatement() != null || c.exitStatement() != null && !plainExit(c.exitStatement())) return false;
         if (c.displayStatement() != null) return sequentialOpaque(c);
         return true;
     }
@@ -1078,7 +1081,7 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
     private static Optional<StatementEffectSummary> statementEffects(ParserRuleContext context,List<Ast.StatementOperand> operands,
             List<Ast.StatementClause> clauses,Map<ParserRuleContext,Ast.Node> nodes) {
         if(context instanceof CobolParser.DisplayStatementContext)return displayEffects(context,operands,clauses);
-        if(context instanceof CobolParser.ContinueStatementContext||context instanceof CobolParser.ExitStatementContext e&&e.PROGRAM()==null)
+        if(context instanceof CobolParser.ContinueStatementContext||context instanceof CobolParser.ExitStatementContext e&&plainExit(e))
             return Optional.of(new StatementEffectSummary(List.of(),List.of(),List.of(),List.of(),StatementEffectSummary.Bound.NONE,StatementEffectSummary.Bound.NONE,StatementEffectSummary.Bound.NONE,StatementEffectSummary.Environment.NONE,StatementEffectSummary.ValueTransform.NONE,StatementEffectSummary.Proof.NO_OP));
         var targets=new ArrayList<ParserRuleContext>();StatementEffectSummary.Proof proof;
         boolean closed=clauses.isEmpty();

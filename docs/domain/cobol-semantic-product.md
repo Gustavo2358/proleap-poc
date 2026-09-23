@@ -581,3 +581,10 @@ no alias with another declaration. The proof depends on declarations and
 positive local relations, not on FILE statements, literals, missing input or
 physical byte layout. The earlier SP 2.34.0/storage 1.10.0 sibling-overlay
 shape remains decodable by compatible lowers.
+
+## W5 — SP 2.36 partial structural facts
+
+[Contract and availability](partial-structural-facts.md): `PERFORM_PROCEDURE` can
+publish `STRUCTURAL_FACTS` and an independent `targetEntry`. Existing wire shapes
+and legacy specialization behavior remain versioned. Structural facts do not
+assert whole-body/effects precision and do not select an executable AIR strategy.

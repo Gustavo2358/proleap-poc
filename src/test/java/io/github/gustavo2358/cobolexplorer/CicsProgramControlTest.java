@@ -134,7 +134,9 @@ class CicsProgramControlTest {
             var port=ExplorerMain.publishSemanticProduct(a.model().programUnits().get(0).id(),a.build(),a.tables(),a.occurrences(),a.resolution(),a.report(),StorageLayoutSemantics.Profile.IBM_ENTERPRISE_6_4_FIXED_DISPLAY_1047,StorageInitialSemantics.EntryMode.UNKNOWN,mode);
             var p=port.statements().stream().filter(io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.ProcedurePerformFact.class::isInstance).map(io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.ProcedurePerformFact.class::cast).findFirst().orElseThrow();
             if(mode==CicsProgramControlAnalyzer.EntryMode.DISABLED) {
-                assertTrue(p.gapCodes().contains("PERFORM_PARAGRAPH_BOUNDARY_NOT_PROVEN"),p.gapCodes().toString());assertTrue(p.procedures().isEmpty());
+                assertTrue(p.gapCodes().contains("PERFORM_RANGE_CONTROL_NOT_PROVEN"),p.gapCodes().toString());
+                assertEquals(1,p.procedures().size());assertTrue(p.procedures().get(0).completions().isEmpty());
+                assertTrue(p.targetEntry().isPresent());
                 assertTrue(port.statements().stream().noneMatch(io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.CicsFact.class::isInstance));
             } else {assertTrue(p.gapCodes().isEmpty(),p.gapCodes().toString());assertEquals(1,p.procedures().get(0).completions().size());}
         }

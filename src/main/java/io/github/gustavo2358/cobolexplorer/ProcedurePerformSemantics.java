@@ -9,38 +9,41 @@ public final class ProcedurePerformSemantics {
         public Paragraph { statements=List.copyOf(statements); completions=List.copyOf(completions); }
     }
     public record Endpoint(ResolutionContracts.SemanticEntityId identity, Ast.SourceProvenance referenceOrigin,
-                           Ast.SourceProvenance paragraphOrigin) { }
+                           Ast.SourceProvenance paragraphOrigin,Optional<Integer> entry) { }
     public record Loop(Ast.PerformTestMode testMode, Optional<Ast.Expression> condition, PerformPredicateSemantics.Predicate predicate) { }
     public record Count(Optional<Ast.Expression> expression,Optional<java.math.BigInteger> integer,
                         Optional<ResolutionContracts.SemanticEntityId> wholeItem,boolean proven) { }
     public record VaryingOperand(Ast.PerformControl control,Optional<java.math.BigInteger> integer,Optional<ResolutionContracts.SemanticEntityId> wholeItem) { }
     public record Varying(int levels,List<VaryingOperand> controls) { public Varying {controls=List.copyOf(controls);} }
     public record Facts(Optional<Endpoint> start, Optional<Endpoint> end, List<Paragraph> procedures,
-                        Optional<Integer> resume, Ast.SourceProvenance resumeOrigin, Optional<Loop> loop, Optional<Count> times, Optional<Varying> varying,List<String> gaps) {
+                        Optional<Integer> resume, Ast.SourceProvenance resumeOrigin, Optional<Loop> loop, Optional<Count> times, Optional<Varying> varying,boolean structureKnown,List<String> gaps) {
         public Facts { procedures=List.copyOf(procedures); gaps=List.copyOf(gaps); }
         public boolean precise() { return gaps.isEmpty(); }
-        public boolean structureKnown() { return gaps.stream().allMatch("PERFORM_UNTIL_PREDICATE_NOT_PROVEN"::equals); }
     }
     private final Map<ScalarMoveSemantics.NodeKey,Facts> facts;
     private final Set<ScalarMoveSemantics.NodeKey> completions;
+    private final Set<ScalarMoveSemantics.NodeKey> legacyRanges;
     private final Set<ScalarMoveSemantics.NodeKey> paragraphEnds;
-    private ProcedurePerformSemantics(Map<ScalarMoveSemantics.NodeKey,Facts> facts) {
+    private ProcedurePerformSemantics(Map<ScalarMoveSemantics.NodeKey,Facts> facts,Set<ScalarMoveSemantics.NodeKey> legacyRanges) {
+        this.legacyRanges=Set.copyOf(legacyRanges);
         this.facts=Map.copyOf(facts);var ends=new HashSet<ScalarMoveSemantics.NodeKey>();
-        facts.forEach((k,v)->{if(v.structureKnown())for(var p:v.procedures())for(var id:p.completions())ends.add(new ScalarMoveSemantics.NodeKey(k.unit(),id));});
+        facts.forEach((k,v)->{for(var p:v.procedures())for(var id:p.completions())ends.add(new ScalarMoveSemantics.NodeKey(k.unit(),id));});
         completions=Set.copyOf(ends);
         var boundaries=new HashSet<ScalarMoveSemantics.NodeKey>();
         facts.forEach((k,v)->v.procedures().forEach(p->p.completions().forEach(id->boundaries.add(new ScalarMoveSemantics.NodeKey(k.unit(),id)))));
         paragraphEnds=Set.copyOf(boundaries);
     }
-    boolean hasPartial(ResolutionContracts.ProgramUnitId unit) {
-        return facts.entrySet().stream().anyMatch(e->e.getKey().unit().equals(unit)&&!e.getValue().structureKnown());
-    }
     public Optional<Facts> fact(ResolutionContracts.ProgramUnitId unit,int id) { return Optional.ofNullable(facts.get(new ScalarMoveSemantics.NodeKey(unit,id))); }
+    public boolean legacyRange(ResolutionContracts.ProgramUnitId unit,int id) { return legacyRanges.contains(new ScalarMoveSemantics.NodeKey(unit,id)); }
     public boolean paragraphEnd(ResolutionContracts.ProgramUnitId unit,int id) { return paragraphEnds.contains(new ScalarMoveSemantics.NodeKey(unit,id)); }
     public boolean completion(ResolutionContracts.ProgramUnitId unit,int id) { return completions.contains(new ScalarMoveSemantics.NodeKey(unit,id)); }
     public static boolean applicable(Ast.PerformStatement p) {
         return p.performKind()==Ast.PerformKind.PROCEDURE && p.inlineBody().isEmpty()
             && (p.repetition()==Ast.PerformRepetition.UNTIL || p.repetition()==Ast.PerformRepetition.TIMES || p.repetition()==Ast.PerformRepetition.VARYING || p.throughReference()!=null && p.repetition()==Ast.PerformRepetition.ONCE);
+    }
+    /** Paragraph structure is independent of the legacy specialization's body profile. */
+    public static boolean structuralCandidate(Ast.PerformStatement p) {
+        return p.performKind()==Ast.PerformKind.PROCEDURE && p.fromReference()!=null && p.inlineBody().isEmpty();
     }
     static ProcedurePerformSemantics analyze(CompilationUnitBuildResult frontend,CompilationUnitSymbolTables tables,
             ReferenceResolution resolution,ResolutionAnalysisReport report,
@@ -48,6 +51,7 @@ public final class ProcedurePerformSemantics {
             Map<ScalarMoveSemantics.NodeKey,ScalarMoveSemantics.Move> moves,IfSemantics ifs,
             EvaluateSemantics evaluates,GoToSemantics goTos,PerformSemantics basic,NumericControlSemantics numbers,CicsProgramControlAnalyzer.Contribution cics) {
         var result=new HashMap<ScalarMoveSemantics.NodeKey,Facts>();
+        var legacyRanges=new HashSet<ScalarMoveSemantics.NodeKey>();
         var refs=new HashMap<ScalarMoveSemantics.NodeKey,ReferenceResolution.Entry>();
         for(var ref:resolution.entries())refs.put(new ScalarMoveSemantics.NodeKey(ref.occurrence().programUnitId(),ref.occurrence().referenceAstNodeId()),ref);
         for(var unit:frontend.compilationUnit().programUnits()) {
@@ -72,8 +76,9 @@ public final class ProcedurePerformSemantics {
             if(division!=null){next.putAll(division.normalContinuations());division.embeddedContinuations().forEach((from,to)->{if(cics.boundedLocal(unit.id(),nodes.get(from)))next.put(from,to);});}
             var provisional=new LinkedHashMap<Integer,Facts>();
             var performs=nodes.values().stream().filter(Ast.PerformStatement.class::isInstance).map(Ast.PerformStatement.class::cast)
-                .filter(ProcedurePerformSemantics::applicable).sorted(Comparator.comparingInt(p->p.meta().id())).toList();
+                .filter(ProcedurePerformSemantics::structuralCandidate).sorted(Comparator.comparingInt(p->p.meta().id())).toList();
             for(var p:performs) {
+                if(applicable(p))legacyRanges.add(new ScalarMoveSemantics.NodeKey(unit.id(),p.meta().id()));
                 var gaps=new LinkedHashSet<String>();if(!complete)gaps.add("PERFORM_INPUT_INCOMPLETE");
                 if(!structure)gaps.add("PERFORM_PROCEDURE_STRUCTURE_NOT_PROVEN");
                 var start=endpoint(p.fromReference(),unit.id(),refs,symbols,nodes);
@@ -84,9 +89,8 @@ public final class ProcedurePerformSemantics {
                 if(first<0||last<first)gaps.add("PERFORM_ORDERED_RANGE_NOT_PROVEN");
                 else for(int i=first;i<=last;i++) {
                     var paragraph=paragraphs.get(i);var roots=direct(paragraph);var members=members(roots);
-                    if(roots.isEmpty()||paragraph.executableEntry().isEmpty()||paragraph.executableEntry().get()!=roots.get(0).meta().id()
-                            || !cics.boundedRegion(unit.id(),paragraph)) {gaps.add("PERFORM_PARAGRAPH_BOUNDARY_NOT_PROVEN");break;}
-                    var completions=completions(roots,unit.id(),cics,evaluates);
+                    if(roots.isEmpty()||paragraph.executableEntry().isEmpty()||paragraph.executableEntry().get()!=roots.get(0).meta().id()) {gaps.add("PERFORM_PARAGRAPH_BOUNDARY_NOT_PROVEN");break;}
+                    var completions=completions(roots,unit.id(),cics,evaluates,division.normalCompletionStatements());
                     range.add(new Paragraph(identities.get(paragraph.meta().id()),roots.get(0).meta().id(),
                         members.stream().map(s->s.meta().id()).toList(),completions,paragraph.meta().provenance()));
                 }
@@ -94,6 +98,7 @@ public final class ProcedurePerformSemantics {
                 var resume=Optional.ofNullable(next.get(p.meta().id()));
                 if(resume.isEmpty())gaps.add("PERFORM_RESUME_NOT_PROVEN");
                 if(!p.meta().provenance().exact())gaps.add("PERFORM_PROVENANCE_INCOMPLETE");
+                boolean repetitionSupported=true;
                 Optional<Loop> loop=Optional.empty();
                 if(p.repetition()==Ast.PerformRepetition.UNTIL||p.repetition()==Ast.PerformRepetition.VARYING) {
                     var conditions=p.controls().stream().filter(c->c.context()==Ast.PerformControlContext.CONDITION).map(Ast.PerformControl::expression).toList();
@@ -112,6 +117,7 @@ public final class ProcedurePerformSemantics {
                     boolean proven=complete&&expression.filter(e->e.meta().provenance().exact()).isPresent()
                         &&(integer.filter(i->i.signum()>0).isPresent()||whole.isPresent());
                     times=Optional.of(new Count(expression,integer,whole,proven));
+                    repetitionSupported=proven;
                     if(!proven)gaps.add("PERFORM_TIMES_COUNT_NOT_PROVEN");
                 }
                 Optional<Varying> varying=Optional.empty();
@@ -131,8 +137,13 @@ public final class ProcedurePerformSemantics {
                     if(variables.size()!=1||variables.get(0).wholeItem().isEmpty())gaps.add("PERFORM_VARYING_CONTROL_ITEM_NOT_PROVEN");
                     if(froms.size()!=1||froms.get(0).integer().isEmpty()&&froms.get(0).wholeItem().isEmpty())gaps.add("PERFORM_VARYING_FROM_NOT_PROVEN");
                     if(steps.size()!=1||steps.get(0).integer().filter(n->n.signum()!=0).isEmpty())gaps.add("PERFORM_VARYING_NONZERO_INCREMENT_NOT_PROVEN");
+                    repetitionSupported=levels==1 && p.controls().size()==4 && p.controls().stream().allMatch(c->c.varyingLevel()==1)
+                        && variables.size()==1 && variables.get(0).wholeItem().isPresent()
+                        && froms.size()==1 && (froms.get(0).integer().isPresent()||froms.get(0).wholeItem().isPresent())
+                        && steps.size()==1 && steps.get(0).integer().filter(n->n.signum()!=0).isPresent()
+                        && loop.orElseThrow().predicate().availability()==IfSemantics.Availability.KNOWN;
                 }
-                provisional.put(p.meta().id(),new Facts(start,end,range,resume,resume.map(nodes::get).map(n->n.meta().provenance()).orElse(p.meta().provenance()),loop,times,varying,List.copyOf(gaps)));
+                provisional.put(p.meta().id(),new Facts(start,end,range,resume,resume.map(nodes::get).map(n->n.meta().provenance()).orElse(p.meta().provenance()),loop,times,varying,complete&&structure&&start.isPresent()&&end.isPresent()&&!range.isEmpty()&&resume.isPresent()&&p.meta().provenance().exact()&&repetitionSupported,List.copyOf(gaps)));
             }
             // Validate every callee before primary closure; an unproved sibling activation cannot close primary flow.
             for(var item:new ArrayList<>(provisional.entrySet())) {
@@ -142,43 +153,38 @@ public final class ProcedurePerformSemantics {
                     var r=f.procedures().get(i);members.addAll(r.statements());
                     for(var id:r.completions())boundary.put(id,i+1<f.procedures().size()?f.procedures().get(i+1).entry():-1);
                 }
-                if(!f.procedures().isEmpty()&&!closed(f.procedures().get(0).entry(),members,boundary,next,nodes,unit.id(),moves,ifs,evaluates,goTos,basic,provisional,false,cics))
-                    gaps.add("PERFORM_RANGE_CONTROL_NOT_PROVEN");
-                provisional.put(item.getKey(),new Facts(f.start(),f.end(),f.procedures(),f.resume(),f.resumeOrigin(),f.loop(),f.times(),f.varying(),List.copyOf(gaps)));
+                boolean bodyClosed=!f.procedures().isEmpty()&&closed(f.procedures().get(0).entry(),members,boundary,next,nodes,unit.id(),moves,ifs,evaluates,goTos,basic,provisional,false,cics);
+                if(!bodyClosed)gaps.add("PERFORM_RANGE_CONTROL_NOT_PROVEN");
+                provisional.put(item.getKey(),new Facts(f.start(),f.end(),f.procedures(),f.resume(),f.resumeOrigin(),f.loop(),f.times(),f.varying(),f.structureKnown()&&bodyClosed,List.copyOf(gaps)));
             }
             // All branches must close; ordinary incoming transfers are checked independently, even if unreachable.
             for(var p:performs) {
-                var f=provisional.get(p.meta().id());var gaps=new LinkedHashSet<>(f.gaps());
+                var f=provisional.get(p.meta().id());var gaps=new LinkedHashSet<>(f.gaps());boolean qualified=f.structureKnown();
                 var members=new HashSet<Integer>();f.procedures().forEach(r->members.addAll(r.statements()));
                 var boundary=new HashMap<Integer,Integer>();
                 for(int i=0;i<f.procedures().size();i++)for(var id:f.procedures().get(i).completions())
                     boundary.put(id,i+1<f.procedures().size()?f.procedures().get(i+1).entry():-1);
                 if(!f.procedures().isEmpty() && !closed(f.procedures().get(0).entry(),members,boundary,next,nodes,unit.id(),moves,ifs,evaluates,goTos,basic,provisional,false,cics))
-                    gaps.add("PERFORM_RANGE_CONTROL_NOT_PROVEN");
+                    {qualified=false;gaps.add("PERFORM_RANGE_CONTROL_NOT_PROVEN");}
                 var entry=structure?division.procedureEntry().orElseThrow().startStatementId():Optional.<Integer>empty();
                 var primary=new HashSet<Integer>();
                 if(entry.isEmpty()||!closed(entry.get(),primary,Map.of(),next,nodes,unit.id(),moves,ifs,evaluates,goTos,basic,provisional,true,cics)
                         ||!primary.contains(p.meta().id())||f.resume().filter(primary::contains).isEmpty()
-                        ||members.stream().anyMatch(primary::contains))gaps.add("PERFORM_ISOLATED_PRIMARY_NOT_PROVEN");
+                        ||members.stream().anyMatch(primary::contains)){qualified=false;gaps.add("PERFORM_ISOLATED_PRIMARY_NOT_PROVEN");}
                 for(var n:nodes.values())if(n instanceof Ast.Statement s && !members.contains(s.meta().id())) {
                     if(s instanceof Ast.GoToStatement g && (!goTos.closed(unit.id(),g) || goTos.entries(unit.id(),g).stream().anyMatch(members::contains)))
-                        gaps.add("PERFORM_ORDINARY_INCOMING_NOT_EXCLUDED");
-                    if(Optional.ofNullable(next.get(s.meta().id())).filter(members::contains).isPresent())gaps.add("PERFORM_ORDINARY_INCOMING_NOT_EXCLUDED");
+                        {qualified=false;gaps.add("PERFORM_ORDINARY_INCOMING_NOT_EXCLUDED");}
+                    if(Optional.ofNullable(next.get(s.meta().id())).filter(members::contains).isPresent()){qualified=false;gaps.add("PERFORM_ORDINARY_INCOMING_NOT_EXCLUDED");}
                 }
                 for(var other:provisional.values()) {
                     var otherMembers=new HashSet<Integer>();other.procedures().forEach(r->otherMembers.addAll(r.statements()));
-                    if(!members.equals(otherMembers)&&otherMembers.stream().anyMatch(members::contains))gaps.add("PERFORM_OVERLAPPING_RANGES");
+                    if(!members.equals(otherMembers)&&otherMembers.stream().anyMatch(members::contains)){qualified=false;gaps.add("PERFORM_OVERLAPPING_RANGES");}
                 }
-                result.put(new ScalarMoveSemantics.NodeKey(unit.id(),p.meta().id()),new Facts(f.start(),f.end(),f.procedures(),f.resume(),f.resumeOrigin(),f.loop(),f.times(),f.varying(),List.copyOf(gaps)));
+                result.put(new ScalarMoveSemantics.NodeKey(unit.id(),p.meta().id()),new Facts(f.start(),f.end(),f.procedures(),f.resume(),f.resumeOrigin(),f.loop(),f.times(),f.varying(),qualified,List.copyOf(gaps)));
             }
-            if(result.entrySet().stream().anyMatch(e->e.getKey().unit().equals(unit.id())&&!e.getValue().structureKnown())) {
-                for(var p:performs) {
-                    var key=new ScalarMoveSemantics.NodeKey(unit.id(),p.meta().id());var f=result.get(key);
-                    if(f.structureKnown())result.put(key,new Facts(f.start(),f.end(),f.procedures(),f.resume(),f.resumeOrigin(),f.loop(),f.times(),f.varying(),List.of("PERFORM_OPEN_PEER_ACTIVATION")));
-                }
-            }
+
         }
-        return new ProcedurePerformSemantics(result);
+        return new ProcedurePerformSemantics(result,legacyRanges);
     }
     private static boolean closed(int entry,Set<Integer> members,Map<Integer,Integer> boundary,Map<Integer,Integer> next,
             Map<Integer,Ast.Node> nodes,ResolutionContracts.ProgramUnitId unit,Map<ScalarMoveSemantics.NodeKey,ScalarMoveSemantics.Move> moves,
@@ -212,7 +218,7 @@ public final class ProcedurePerformSemantics {
             } else if(cics.boundedLocal(unit,s)) { /* local error/return and external completion only */ }
             else if(s instanceof Ast.CallStatement c) {if(c.surface().hasHandlers())return false;}
             else if(s instanceof Ast.PerformStatement p && primary) {
-                var range=ranges.get(v.id());if(range!=null ? !range.structureKnown() : !basic.fact(unit,v.id()).simpleProfile())return false;
+                var range=applicable(p)?ranges.get(v.id()):null;if(range!=null ? !range.structureKnown() : !basic.fact(unit,v.id()).simpleProfile())return false;
             } else return false;
         }
         return true;
@@ -224,17 +230,19 @@ public final class ProcedurePerformSemantics {
         var id=ref.selectedCandidate().orElseThrow().entityId();var s=symbols.get(id.localId());
         if(!id.programUnitId().equals(unit)||id.domain()!=ResolutionContracts.SemanticEntityDomain.PROCEDURE_SYMBOL||s==null
                 ||s.kind()!=SymbolTable.SymbolKind.PARAGRAPH||!(nodes.get(s.declarationAstNodeId()) instanceof Ast.Paragraph p))return Optional.empty();
-        return Optional.of(new Endpoint(id,reference.meta().provenance(),p.meta().provenance()));
+        return Optional.of(new Endpoint(id,reference.meta().provenance(),p.meta().provenance(),p.executableEntry()));
     }
     private static int index(List<Ast.Paragraph> paragraphs,Optional<Endpoint> endpoint,Map<Integer,ResolutionContracts.SemanticEntityId> identities) {
         if(endpoint.isEmpty())return -1;for(int i=0;i<paragraphs.size();i++)if(endpoint.get().identity().equals(identities.get(paragraphs.get(i).meta().id())))return i;return -1;
     }
     /** Only grammar-owned last statements can complete a paragraph; missing edges alone prove nothing. */
-    private static List<Integer> completions(List<Ast.Statement> roots,ResolutionContracts.ProgramUnitId unit,CicsProgramControlAnalyzer.Contribution cics,EvaluateSemantics evaluates) {
+    private static List<Integer> completions(List<Ast.Statement> roots,ResolutionContracts.ProgramUnitId unit,CicsProgramControlAnalyzer.Contribution cics,EvaluateSemantics evaluates,Set<Integer> normalCompletions) {
         var result=new ArrayList<Integer>();var pending=new ArrayDeque<List<Ast.Statement>>();pending.push(roots);
         while(!pending.isEmpty()) {
             var region=pending.pop();if(region.isEmpty())continue;var last=region.get(region.size()-1);
-            if(cics.boundedLocal(unit,last)||last instanceof Ast.MoveStatement || last instanceof Ast.CallStatement c && !c.surface().hasHandlers())result.add(last.meta().id());
+            if(!(last instanceof Ast.IfStatement) && !(last instanceof Ast.EvaluateStatement)
+                    && (!(last instanceof Ast.PerformStatement p) || structuralCandidate(p))
+                    && (cics.boundedLocal(unit,last)||normalCompletions.contains(last.meta().id())))result.add(last.meta().id());
             else if(last instanceof Ast.IfStatement f && f.explicitlyTerminated()) {
                 result.add(last.meta().id());pending.push(f.thenBranch());pending.push(f.elseBranch());
             } else if(last instanceof Ast.EvaluateStatement e && evaluates.fact(unit,e.meta().id()).structureKnown()) {

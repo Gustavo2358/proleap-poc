@@ -573,10 +573,17 @@ public final class CobolSemanticProductProjector {
         return CobolSemanticPort.open(project(products, unitId));
     }
 
+    private static boolean partialBasic(Ast.PerformStatement p, ProjectionInputs inputs) {
+        return !ProcedurePerformSemantics.applicable(p) && ProcedurePerformSemantics.structuralCandidate(p)
+            && !inputs.products().scalarMoves().performs().fact(inputs.unitId(),p.meta().id()).simpleProfile()
+            && inputs.products().scalarMoves().procedurePerforms().fact(inputs.unitId(),p.meta().id())
+                .filter(f->f.start().isPresent()).isPresent();
+    }
+
     private static StatementPlan plan(StatementPosition position, ProjectionInputs inputs) {
         if(position.statement() instanceof Ast.EmbeddedLanguageStatement embedded && inputs.products().cics().flatMap(c->c.fact(inputs.unitId(),embedded.meta().id())).isPresent())
             return new StatementPlan(position,Capability.supported("CICS","CICS_PROGRAM_CONTROL"),embedded.hostOperands().stream().map(h->inputs.entryFor(h.reference())).toList());
-        if (position.statement() instanceof Ast.PerformStatement p && ProcedurePerformSemantics.applicable(p))
+        if (position.statement() instanceof Ast.PerformStatement p && (ProcedurePerformSemantics.applicable(p) || partialBasic(p, inputs)))
             return new StatementPlan(position, Capability.supported("PERFORM", "PERFORM_PROCEDURE"),
                 p.controls().stream()
                     .flatMap(c->performControlEntries(c,inputs).stream()).toList());
@@ -1059,7 +1066,7 @@ public final class CobolSemanticProductProjector {
             return;
         }
 
-        if(plan.position().statement() instanceof Ast.PerformStatement p && ProcedurePerformSemantics.applicable(p)) {
+        if(plan.position().statement() instanceof Ast.PerformStatement p && (ProcedurePerformSemantics.applicable(p) || partialBasic(p, inputs))) {
             var proof=inputs.products().scalarMoves().procedurePerforms().fact(inputs.unitId(),p.meta().id()).orElseThrow();
             java.util.function.Function<ProcedurePerformSemantics.Endpoint,PerformTarget> endpoint=t->new PerformTarget(
                 new ProcedureId(inputs.boundaryUnit(),t.identity().localId()),provenance(t.referenceOrigin()),provenance(t.paragraphOrigin()));
@@ -1067,7 +1074,10 @@ public final class CobolSemanticProductProjector {
                 canonicalStatement(Optional.of(r.entry()),inputs,statementIds).orElseThrow(),
                 r.statements().stream().map(id->canonicalStatement(Optional.of(id),inputs,statementIds).orElseThrow()).toList(),
                 r.completions().stream().map(id->canonicalStatement(Optional.of(id),inputs,statementIds).orElseThrow()).toList(),provenance(r.origin()))).toList();
-            var codes=new ArrayList<>(proof.gaps());if(containment.branch()==Branch.UNKNOWN)codes.add(CONTAINMENT_GAP);
+            var codes=new ArrayList<>(proof.gaps());
+            if(partialBasic(p,inputs))for(var code:inputs.products().scalarMoves().performs().fact(inputs.unitId(),p.meta().id()).gaps())
+                if(!codes.contains(code))codes.add(code);
+            if(containment.branch()==Branch.UNKNOWN)codes.add(CONTAINMENT_GAP);
             int[] operandOrdinal={0};
             var loop=proof.loop().map(l->{
                 var references=new ArrayList<DataReference>();var predicate=l.predicate();
@@ -1120,7 +1130,10 @@ public final class CobolSemanticProductProjector {
                 readiness(status,"typed paragraph range",status,"activation-specific continuation",ReadinessStatus.PARTIAL,"general effects not published")),
                 proof.start().map(endpoint),proof.end().map(endpoint),paragraphs,
                 new NormalContinuation(proof.resume().isPresent()?ContinuationAvailability.KNOWN:ContinuationAvailability.UNAVAILABLE,
-                    canonicalStatement(proof.resume(),inputs,statementIds),provenance(proof.resumeOrigin())),loop,times,varying,codes));
+                    canonicalStatement(proof.resume(),inputs,statementIds),provenance(proof.resumeOrigin())),loop,times,varying,codes,
+                partialBasic(p,inputs)||paragraphs.isEmpty()&&proof.start().flatMap(ProcedurePerformSemantics.Endpoint::entry).isPresent()
+                    ?PerformPublicationKind.STRUCTURAL_FACTS:PerformPublicationKind.LEGACY_PROFILE,
+                canonicalStatement(proof.start().flatMap(ProcedurePerformSemantics.Endpoint::entry),inputs,statementIds)));
             for(var code:codes)gaps.add(new Gap(statementId,code.equals(CONTAINMENT_GAP)?GapScope.STRUCTURE:GapScope.CAPABILITY,code,"PERFORM range proof unavailable",statementProvenance));
             return;
         }

@@ -54,7 +54,9 @@ class PerformBasicTest {
         sources.forEach((name, source) -> {
             var port = ScalarMoveCheckpoint4ATest.publish(source);
             assertTrue(port.performs().isEmpty(), name);
-            assertTrue(port.observedStatements().stream().anyMatch(s -> s.observedKind().equals("PERFORM")), name);
+            assertTrue(port.observedStatements().stream().anyMatch(s -> s.observedKind().equals("PERFORM"))
+                || port.statements().stream().anyMatch(s -> s instanceof io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.ProcedurePerformFact p
+                    && p.publicationKind()==io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.PerformPublicationKind.STRUCTURAL_FACTS), name);
         });
     }
     @Test void namesDoNotSelectPrimaryOrTarget() {

@@ -347,7 +347,7 @@ class CobolSemanticProductProjectorTest {
         CobolSemanticProduct.IfFact branch = port.ifs().get(0);
 
         assertEquals(List.of(port.moves().get(0).header().id(),
-                        observedByKind(port, "PERFORM").header().id()),
+                        port.statements().stream().filter(CobolSemanticProduct.ProcedurePerformFact.class::isInstance).findFirst().orElseThrow().header().id()),
                 ids(port.children(branch.header().id(), CobolSemanticProduct.Branch.THEN)));
         assertTrue(port.children(branch.header().id(),
                 CobolSemanticProduct.Branch.ELSE).isEmpty());

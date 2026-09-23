@@ -23,10 +23,15 @@ public final class PerformSemantics {
         facts.forEach((key,value) -> value.target().ifPresent(t -> exits.add(new ScalarMoveSemantics.NodeKey(key.unit(),t.statements().get(t.statements().size()-1)))));
         intrinsicExits=Set.copyOf(exits);
     }
-    PerformSemantics restrictOpenRanges(ProcedurePerformSemantics ranges) {
+    /** Only a range on this specialization's own primary path can invalidate its closure. */
+    PerformSemantics restrictPrimaryRanges(ProcedurePerformSemantics ranges) {
         var result=new HashMap<ScalarMoveSemantics.NodeKey,Facts>();
-        facts.forEach((key,f)->result.put(key,f.simpleProfile()&&ranges.hasPartial(key.unit())
-            ?new Facts(Optional.empty(),Optional.empty(),f.resumeOrigin(),List.of(),List.of("PERFORM_PRIMARY_CONTAINS_OPEN_RANGE")):f));
+        facts.forEach((key,f)->{
+            boolean blocked=f.simpleProfile() && f.primaryStatements().stream().anyMatch(id->
+                ranges.legacyRange(key.unit(),id) && ranges.fact(key.unit(),id).filter(r->!r.structureKnown()).isPresent());
+            result.put(key,blocked?new Facts(Optional.empty(),Optional.empty(),f.resumeOrigin(),List.of(),
+                List.of("PERFORM_PRIMARY_CONTAINS_OPEN_RANGE")):f);
+        });
         return new PerformSemantics(result);
     }
     public boolean intrinsicExit(ResolutionContracts.ProgramUnitId unit,int node) { return intrinsicExits.contains(new ScalarMoveSemantics.NodeKey(unit,node)); }

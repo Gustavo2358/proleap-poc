@@ -949,17 +949,29 @@ public final class CobolSemanticProduct {
     public record PerformVarying(int levels,List<VaryingOperand> controls) {
         public PerformVarying {require(levels>0,"varying levels");controls=List.copyOf(controls);}
     }
+    public enum PerformPublicationKind { LEGACY_PROFILE, STRUCTURAL_FACTS }
     public record ProcedurePerformFact(StatementHeader header, Optional<PerformTarget> start, Optional<PerformTarget> end,
-            List<PerformParagraph> procedures, NormalContinuation normalContinuation, Optional<PerformLoop> loop, Optional<PerformCount> times, Optional<PerformVarying> varying,List<String> gapCodes) implements StatementFact {
-        public ProcedurePerformFact { Objects.requireNonNull(header); Objects.requireNonNull(start); Objects.requireNonNull(end);
+            List<PerformParagraph> procedures, NormalContinuation normalContinuation, Optional<PerformLoop> loop, Optional<PerformCount> times, Optional<PerformVarying> varying,List<String> gapCodes, PerformPublicationKind publicationKind,Optional<StatementId> targetEntry) implements StatementFact {
+        public ProcedurePerformFact(StatementHeader header, Optional<PerformTarget> start, Optional<PerformTarget> end,
+                List<PerformParagraph> procedures, NormalContinuation normalContinuation, Optional<PerformLoop> loop,
+                Optional<PerformCount> times, Optional<PerformVarying> varying,List<String> gapCodes,PerformPublicationKind publicationKind) {
+            this(header,start,end,procedures,normalContinuation,loop,times,varying,gapCodes,publicationKind,
+                procedures.isEmpty()?Optional.empty():Optional.of(procedures.get(0).entry()));
+        }
+        public ProcedurePerformFact(StatementHeader header, Optional<PerformTarget> start, Optional<PerformTarget> end,
+                List<PerformParagraph> procedures, NormalContinuation normalContinuation, Optional<PerformLoop> loop,
+                Optional<PerformCount> times, Optional<PerformVarying> varying,List<String> gapCodes) {
+            this(header,start,end,procedures,normalContinuation,loop,times,varying,gapCodes,PerformPublicationKind.LEGACY_PROFILE);
+        }
+        public ProcedurePerformFact { Objects.requireNonNull(targetEntry); Objects.requireNonNull(publicationKind); Objects.requireNonNull(header); Objects.requireNonNull(start); Objects.requireNonNull(end);
             Objects.requireNonNull(normalContinuation); Objects.requireNonNull(loop);Objects.requireNonNull(times);Objects.requireNonNull(varying);require(loop.isEmpty()||times.isEmpty(),"one repetition kind");require(varying.isEmpty()||loop.isPresent()&&times.isEmpty(),"VARYING uses condition loop"); procedures=List.copyOf(procedures); gapCodes=List.copyOf(gapCodes);
-            if(gapCodes.isEmpty())require(start.isPresent() && end.isPresent() && !procedures.isEmpty()
+            if(publicationKind==PerformPublicationKind.LEGACY_PROFILE && gapCodes.isEmpty())require(start.isPresent() && end.isPresent() && !procedures.isEmpty()
                 && normalContinuation.statement().isPresent(), "PERFORM range needs endpoints, body and resume");
             if(!procedures.isEmpty())require(start.isPresent() && end.isPresent()
                 && procedures.get(0).id().equals(start.get().id()) && procedures.get(procedures.size()-1).id().equals(end.get().id()), "PERFORM range endpoints disagree");
-            if(gapCodes.isEmpty())times.ifPresent(t->require(t.profile()!=PerformCountProfile.UNAVAILABLE,"count must be proven"));
-            if(gapCodes.isEmpty())loop.ifPresent(l->require(l.condition().predicate().availability()==Availability.KNOWN,"loop predicate must be proven"));
-            if(gapCodes.isEmpty())varying.ifPresent(v->{
+            if(publicationKind==PerformPublicationKind.LEGACY_PROFILE && gapCodes.isEmpty())times.ifPresent(t->require(t.profile()!=PerformCountProfile.UNAVAILABLE,"count must be proven"));
+            if(publicationKind==PerformPublicationKind.LEGACY_PROFILE && gapCodes.isEmpty())loop.ifPresent(l->require(l.condition().predicate().availability()==Availability.KNOWN,"loop predicate must be proven"));
+            if(publicationKind==PerformPublicationKind.LEGACY_PROFILE && gapCodes.isEmpty())varying.ifPresent(v->{
                 require(v.levels()==1 && v.controls().size()==3,"single VARYING control profile");
                 for(var role:VaryingOperandRole.values()) {
                     var operands=v.controls().stream().filter(o->o.level()==1&&o.role()==role).toList();
@@ -1977,6 +1989,10 @@ public final class CobolSemanticProduct {
                 });
             }
             if(statement instanceof ProcedurePerformFact p) {
+                p.targetEntry().ifPresent(id->require(p.start().isPresent() && id.unit().equals(p.header().id().unit())
+                    && statements.containsKey(id) && statements.get(id).header().containment().branch()==Branch.ROOT,
+                    "PERFORM target entry references local published root"));
+                if(!p.procedures().isEmpty())require(p.targetEntry().filter(p.procedures().get(0).entry()::equals).isPresent(),"PERFORM entry agrees with range");
                 var members=new HashSet<StatementId>();var paragraphs=new HashSet<ProcedureId>();
                 for(var paragraph:p.procedures()) {
                     require(paragraphs.add(paragraph.id()) && paragraph.id().unit().equals(p.header().id().unit()), "unique local range paragraph");
@@ -1985,7 +2001,7 @@ public final class CobolSemanticProduct {
                     require(paragraph.statements().containsAll(paragraph.completions()), "paragraph completion belongs to body");
                 }
                 p.normalContinuation().statement().ifPresent(id->require(statements.containsKey(id), "published range resume"));
-                if(p.gapCodes().isEmpty())require(!members.contains(p.header().id()) && p.normalContinuation().statement().filter(members::contains).isEmpty(), "activation/resume outside range");
+                if(p.publicationKind()==PerformPublicationKind.LEGACY_PROFILE && p.gapCodes().isEmpty())require(!members.contains(p.header().id()) && p.normalContinuation().statement().filter(members::contains).isEmpty(), "activation/resume outside range");
             }
             if (statement instanceof PerformFact basic && basic.profile() == PerformProfile.BASIC_PROCEDURE_PERFORM) {
                 var seen=new HashSet<StatementId>();

@@ -34,7 +34,7 @@ callsite resumes; structured branch joins; external incoming/escape/overlap/cycl
 refusal; 1/2/5/40 occurrences; byte determinism and physical-order permutations.
 SP 1.x/2.0/2.1 semantics remain historical. SP 2.2 adds PERFORM_PROCEDURE
 with typed start/end, ordered paragraphs and completion frontiers; the historical
-PERFORM variant remains unchanged. Open peer ranges prevent isolation claims.
+PERFORM variant remains unchanged. Causally relevant open primary ranges prevent whole-profile isolation claims; unrelated peers do not erase facts.
 
 SP 2.3 adds an optional typed UNTIL loop to the same procedure-range fact. A
 single procedure is the one-member case of that range. The grammar supplies
@@ -92,3 +92,12 @@ and iteration must-writes to the control item, count-independent multiplicity,
 FROM reads, negative increments, AFTER exit bypassing the increment, and cumulative
 byte/order/control regressions. SP 2.4 and older must reject the new wire fields
 and predicate profile; their historical meaning is unchanged.
+
+## Positive Memory Topology W5
+
+Whole-profile qualification is separate from positive structural facts. Partial
+BASIC now publishes target, independent entry, range membership, conditional normal
+completion frontiers and callsite resume under SP 2.36. Historical range facts keep
+their prior meaning and consumer admission. Nested nonrecursive facts are in scope;
+compositional return execution is handed off to W6.
+See [partial structural facts](partial-structural-facts.md).
