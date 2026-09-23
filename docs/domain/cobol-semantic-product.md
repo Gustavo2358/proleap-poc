@@ -1,6 +1,6 @@
 # COBOL Semantic Product
 
-Current compositional control and SP2.37 ordinary continuations: [W7 contract](control-composition.md). Historical profile qualification below does not gate independent branch entries or predicate coverage.
+Current compositional control: [W7 contract](control-composition.md). SP2.38 independent MOVE receivers are specified below. Historical profile qualification below does not gate independent branch entries or predicate coverage.
 
 Writer corrente: [controle condicional FILE / SP 2.25.0](file-dependencies.md), storage 1.8.0
 ([source evidence](evidence-preserving-entry.md)),
@@ -486,14 +486,34 @@ em source/target/regionalMove. Ordem do array é semântica; lower não usa nome
 para ordenar ou descobrir receivers. FIT_TEXT significa ajuste à direita com
 SPACE, ao extent explícito do target. FITTED_LITERAL_BYTES conserva o literal
 original e publica o vetor após esse ajuste; LITERAL_BYTES continua byte-exato.
-Múltiplos receivers admitem valores exatos somente sem alteração potencial de
-origem; em sobreposição todos os valores da sequência têm gap explícito.
+Múltiplos receivers com fonte DATA admitem efeitos regionais exatos somente quando
+captura do emissor e interferência são provadas; sobreposição de origem permanece
+conservadora. SP2.38 acrescenta uma prova lógica separada para literal textual,
+que não depende de layout físico e pode coexistir com gaps regionais.
 
 ST-W6.4 consumes the same SP2.11 transfer sequence: canonical fixed textual
 CORRESPONDING publishes each implicit pair with declaration identity/origin and
 its own regional effect. Both primary and additional sources can differ. The
 sequence contains only selected pairs; unmatched bytes are not written. Matching
 is owned by StorageCorrespondence, never by a projector or downstream consumer.
+
+### W8 / SP2.38: MOVE por receiver
+
+Quando um MOVE multi-receiver publica ao menos uma transferência lógica provada ou
+uma sequência regional parcialmente indisponível, o writer seleciona `2.38.0`.
+`source`, `target` e `regionalMove` continuam a primeira transferência;
+`additionalTransfers[]` mantém a ordem e cada efeito regional próprio, inclusive
+`UNAVAILABLE` com gap localizado. O campo opcional `logicalTransfers[]` contém
+`{target,value}` para cada receiver textual inteiro cujo literal de origem e
+extent escalar estão provados. `value` é o texto ajustado por padding/truncamento
+para aquele receiver; o target referencia um operand WRITE publicado no mesmo MOVE.
+Uma transferência lógica não certifica bytes, codec ou acesso regional.
+
+A ausência de `logicalTransfers` mantém os bytes históricos. SP2.37 não aceita a
+semântica de sequência regional parcialmente indisponível nem o novo campo.
+Receivers com alias explícito mantêm a mesma identidade de storage no downstream;
+o source literal é estável durante a sequência. Fonte DATA com overlap requer
+prova de captura e não herda esta regra de literal.
 
 ### ST-W7.1 / SP2.12, storage1.3
 

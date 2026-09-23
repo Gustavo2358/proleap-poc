@@ -617,10 +617,15 @@ public final class CobolSemanticProductProjector {
         if (position.statement() instanceof Ast.MoveStatement move) {
             Capability capability = moveCapability(move);
             var sequence=inputs.products().storage().map(s->s.sequence(new StorageLayoutSemantics.Key(inputs.unitId(),move.meta().id()))).orElse(List.of());
-            if((move.corresponding() || move.source() instanceof Ast.LiteralExpression || move.source() instanceof Ast.DataReference)
+            boolean regionalSequence=(move.corresponding() || move.source() instanceof Ast.LiteralExpression || move.source() instanceof Ast.DataReference)
                     && move.targets().stream().allMatch(Ast.DataReference.class::isInstance)
-                    && !sequence.isEmpty()&&sequence.stream().allMatch(e->e.kind()!=StorageAccessSemantics.MoveKind.UNAVAILABLE))
-                capability=Capability.supported("MOVE","REGIONAL_TRANSFER_SEQUENCE");
+                    && !sequence.isEmpty()&&sequence.stream().anyMatch(e->e.kind()!=StorageAccessSemantics.MoveKind.UNAVAILABLE);
+            boolean logicalSequence=move.targets().size()>1 && move.source() instanceof Ast.LiteralExpression literal
+                && literal.logicalText().isPresent() && move.targets().stream().filter(Ast.DataReference.class::isInstance)
+                    .map(Ast.DataReference.class::cast).anyMatch(receiver->inputs.products().storage()
+                        .flatMap(st->st.logicalWholeItem(new StorageLayoutSemantics.Key(inputs.unitId(),receiver.meta().id())))
+                        .flatMap(inputs.products().scalarMoves()::declaration).isPresent());
+            if(regionalSequence||logicalSequence)capability=Capability.supported("MOVE","REGIONAL_TRANSFER_SEQUENCE");
             List<ReferenceResolution.Entry> entries = new ArrayList<>();
             if (capability.supported()) {
                 for(var receiver:move.targets()) {
@@ -628,14 +633,14 @@ public final class CobolSemanticProductProjector {
                 require(target.occurrence().role() == ResolutionContracts.ReferenceRole.VALUE_WRITE,
                         "MOVE target role must come from the canonical occurrence");
                 entries.add(target);
-                capability = bindingCapability(capability, target, "MOVE");
+                if(!regionalSequence&&!logicalSequence)capability = bindingCapability(capability, target, "MOVE");
                 }
                 if (move.source() instanceof Ast.DataReference source) {
                     var read = inputs.entryFor(source);
                     require(read.occurrence().role() == ResolutionContracts.ReferenceRole.VALUE_READ,
                             "MOVE source role must come from the canonical occurrence");
                     entries.add(read);
-                    capability = bindingCapability(capability, read, "MOVE");
+                    if(!regionalSequence&&!logicalSequence)capability = bindingCapability(capability, read, "MOVE");
                 }
             }
             return new StatementPlan(position, capability, entries);
@@ -1313,18 +1318,38 @@ public final class CobolSemanticProductProjector {
                             TextAdjustmentRule.RIGHT_PAD_SPACE, adjustment.receiverExtent(),
                             new TextValue(adjustment.result()), statementProvenance)), regionalMove(inputs, move.meta().id()));
             var effects=inputs.products().storage().map(s->s.sequence(new StorageLayoutSemantics.Key(inputs.unitId(),move.meta().id()))).orElse(List.of());
-            if(effects.size()>1) {
+            if(move.targets().size()>1) {
                 var extra=new ArrayList<MoveTransfer>();
-                for(int i=1;i<effects.size();i++) {
-                    var e=effects.get(i);var receiver=(Ast.DataReference)move.targets().get(i);
+                for(int i=1;i<move.targets().size();i++) {
+                    var e=i<effects.size()?effects.get(i):null;var receiver=(Ast.DataReference)move.targets().get(i);
                     MoveSource sending;
                     if(source instanceof LiteralSource literal)sending=new LiteralSource(new OperandId(statementId,i*2),literal.kind(),literal.value(),literal.provenance(),literal.logicalValue());
                     else {var read=(DataReference)source;sending=new DataReference(new OperandId(statementId,i*2),OperandRole.READ,read.binding(),read.provenance(),Optional.empty(),read.regionalAccess());}
-                    var receiving=new DataReference(new OperandId(statementId,i*2+1),OperandRole.WRITE,nominalBinding(plan.entries().get(i),dataIds),provenance(receiver.meta().provenance()),Optional.empty(),regionalAccess(inputs,receiver.meta().id()));
-                    extra.add(new MoveTransfer(sending,receiving,new RegionalMove(RegionalMoveKind.valueOf(e.kind().name()),e.bytes(),e.reasons().stream().map(Enum::name).toList())));
+                    var logical=inputs.products().storage().flatMap(st->st.logicalWholeItem(new StorageLayoutSemantics.Key(inputs.unitId(),receiver.meta().id()))).map(dataIds::get);
+                    var receiving=new DataReference(new OperandId(statementId,i*2+1),OperandRole.WRITE,nominalBinding(plan.entries().get(i),dataIds),provenance(receiver.meta().provenance()),Optional.empty(),regionalAccess(inputs,receiver.meta().id()),List.of(),logical);
+                    var effect=e==null?new RegionalMove(RegionalMoveKind.UNAVAILABLE,List.of(),List.of("ACCESS_NOT_PROVEN"))
+                        :new RegionalMove(RegionalMoveKind.valueOf(e.kind().name()),e.bytes(),e.reasons().stream().map(Enum::name).toList());
+                    extra.add(new MoveTransfer(sending,receiving,effect));
                 }
                 fact=new MoveFact(fact.header(),fact.source(),fact.target(),CopySemantics.UNAVAILABLE,fact.normalContinuation(),Optional.empty(),fact.regionalMove(),extra);
             }
+            var logicalTransfers=new ArrayList<LogicalTransfer>();
+            if(move.targets().size()>1&&fact.source() instanceof LiteralSource literal&&literal.logicalValue().isPresent()) {
+                var text=literal.logicalValue().orElseThrow().value();var length=text.codePointCount(0,text.length());
+                for(int i=0;i<move.targets().size();i++) {
+                    var receiver=i==0?fact.target():fact.additionalTransfers().get(i-1).target();
+                    if(receiver.logicalWholeItem().isEmpty())continue;
+                    var entity=inputs.products().storage().orElseThrow().logicalWholeItem(new StorageLayoutSemantics.Key(
+                        inputs.unitId(),move.targets().get(i).meta().id()));
+                    var extent=entity.flatMap(inputs.products().scalarMoves()::declaration);
+                    if(extent.isEmpty())continue;
+                    var n=extent.orElseThrow().extent();
+                    var fitted=length>n?text.substring(0,text.offsetByCodePoints(0,n)):text+" ".repeat(n-length);
+                    logicalTransfers.add(new LogicalTransfer(receiver.id(),new TextValue(fitted)));
+                }
+            }
+            if(!logicalTransfers.isEmpty())fact=new MoveFact(fact.header(),fact.source(),fact.target(),fact.copySemantics(),
+                fact.normalContinuation(),fact.textAdjustment(),fact.regionalMove(),fact.additionalTransfers(),logicalTransfers);
             statements.add(fact);
             if (move.source() instanceof Ast.LiteralExpression literal && literal.logicalText().isEmpty()) gaps.add(new Gap(statementId, GapScope.LITERAL_KIND,
                     LITERAL_KIND_GAP, "literal category is outside the canonical basic text capability",

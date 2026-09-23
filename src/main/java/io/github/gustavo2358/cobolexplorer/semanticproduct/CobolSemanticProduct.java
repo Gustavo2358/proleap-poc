@@ -1034,11 +1034,23 @@ public final class CobolSemanticProduct {
         public MoveTransfer { Objects.requireNonNull(source);Objects.requireNonNull(target);Objects.requireNonNull(effect);require(target.role()==OperandRole.WRITE,"transfer target requires WRITE");if(source instanceof DataReference r)require(r.role()==OperandRole.READ,"transfer source requires READ"); }
     }
 
+    /** A value transfer proved for one receiver independently of peer storage layout. */
+    public record LogicalTransfer(OperandId target,TextValue value) {
+        public LogicalTransfer { Objects.requireNonNull(target);Objects.requireNonNull(value); }
+    }
     public record MoveFact(StatementHeader header, MoveSource source,
                            DataReference target, CopySemantics copySemantics,
-                           NormalContinuation normalContinuation, Optional<TextAdjustment> textAdjustment, Optional<RegionalMove> regionalMove, List<MoveTransfer> additionalTransfers) implements StatementFact {
+                           NormalContinuation normalContinuation, Optional<TextAdjustment> textAdjustment, Optional<RegionalMove> regionalMove, List<MoveTransfer> additionalTransfers,List<LogicalTransfer> logicalTransfers) implements StatementFact {
         public MoveFact {
-            additionalTransfers=List.copyOf(additionalTransfers);
+            additionalTransfers=List.copyOf(additionalTransfers);logicalTransfers=List.copyOf(logicalTransfers);
+            require(logicalTransfers.isEmpty()||source instanceof LiteralSource literal&&literal.logicalValue().isPresent(),"logical transfer requires a proved literal");
+            var logicalTargets=new HashSet<OperandId>();
+            for(var transfer:logicalTransfers) {
+                require(logicalTargets.add(transfer.target()),"logical receiver may appear once");
+                var receiver=transfer.target().equals(target.id())?target:additionalTransfers.stream()
+                    .map(MoveTransfer::target).filter(r->r.id().equals(transfer.target())).findFirst().orElse(null);
+                require(receiver!=null&&receiver.logicalWholeItem().isPresent(),"logical transfer requires a whole receiver");
+            }
             require(additionalTransfers.isEmpty()||regionalMove.isPresent()&&copySemantics==CopySemantics.UNAVAILABLE,"additional transfers require regional effects exclusively");
             Objects.requireNonNull(regionalMove);
             copySemantics = Objects.requireNonNull(copySemantics);
@@ -1067,6 +1079,10 @@ public final class CobolSemanticProduct {
             if (source instanceof DataReference data) require(data.role() == OperandRole.READ, "MOVE data source requires READ");
             if (target.role() != OperandRole.WRITE)
                 throw new IllegalArgumentException("MOVE target must have WRITE role");
+        }
+        public MoveFact(StatementHeader header,MoveSource source,DataReference target,CopySemantics copySemantics,
+                NormalContinuation normalContinuation,Optional<TextAdjustment> textAdjustment,Optional<RegionalMove> regionalMove,List<MoveTransfer> additionalTransfers) {
+            this(header,source,target,copySemantics,normalContinuation,textAdjustment,regionalMove,additionalTransfers,List.of());
         }
         public MoveFact(StatementHeader header,MoveSource source,DataReference target,CopySemantics copySemantics,
                 NormalContinuation normalContinuation,Optional<TextAdjustment> textAdjustment,Optional<RegionalMove> regionalMove) {

@@ -82,7 +82,10 @@ public final class SemanticProductJsonWriter {
             || s instanceof CobolSemanticProduct.CicsFileFact c && c.target().filter(t -> t instanceof CobolSemanticProduct.DataReference d && d.logicalWholeItem().isPresent()).isPresent());
         boolean structuredUnknownEvaluate=port.statements().stream().anyMatch(s -> s instanceof CobolSemanticProduct.EvaluateFact e
             && e.arms().stream().anyMatch(a -> a.selection().isEmpty()));
-        return new SemanticProductDocument(SCHEMA, !port.ordinaryContinuations().isEmpty()?"2.37.0":port.statements().stream().anyMatch(s->s instanceof CobolSemanticProduct.ProcedurePerformFact p && p.publicationKind()==CobolSemanticProduct.PerformPublicationKind.STRUCTURAL_FACTS)?"2.36.0":!port.storage().logicalExactViews().isEmpty()?"2.35.0":structuredUnknownEvaluate?"2.33.0":preservation?"2.32.0":port.sourceDependencies().availability()!=CobolSemanticProduct.Availability.UNAVAILABLE?"2.31.0":port.storage().logicalTextViews().isEmpty()?CONTRACT_VERSION:"2.29.0",
+        boolean partialRegionalSequence=port.statements().stream().anyMatch(s -> s instanceof CobolSemanticProduct.MoveFact m
+            && (!m.logicalTransfers().isEmpty() || !m.additionalTransfers().isEmpty()
+                && m.transfers().stream().anyMatch(t -> t.effect().kind()==CobolSemanticProduct.RegionalMoveKind.UNAVAILABLE)));
+        return new SemanticProductDocument(SCHEMA, partialRegionalSequence?"2.38.0":!port.ordinaryContinuations().isEmpty()?"2.37.0":port.statements().stream().anyMatch(s->s instanceof CobolSemanticProduct.ProcedurePerformFact p && p.publicationKind()==CobolSemanticProduct.PerformPublicationKind.STRUCTURAL_FACTS)?"2.36.0":!port.storage().logicalExactViews().isEmpty()?"2.35.0":structuredUnknownEvaluate?"2.33.0":preservation?"2.32.0":port.sourceDependencies().availability()!=CobolSemanticProduct.Availability.UNAVAILABLE?"2.31.0":port.storage().logicalTextViews().isEmpty()?CONTRACT_VERSION:"2.29.0",
                 unit(port.unit()), policy(port.policy()), declarations, statements,
                 new StructureDocument(port.rootStatements().stream()
                         .map(SemanticProductJsonWriter::statementHandle).toList(),
@@ -203,6 +206,7 @@ public final class SemanticProductJsonWriter {
     private record RegionalSliceDocument(String offset,String extent) { }
     private record RegionalAccessDocument(String view,RegionalSliceDocument slice) { }
     private record MoveTransferDocument(MoveSourceDocument source,DataReferenceDocument target,RegionalMoveDocument effect) { }
+    private record LogicalTransferDocument(String target,TextValueDocument value) { }
     private record RegionalMoveDocument(CobolSemanticProduct.RegionalMoveKind kind,List<Integer> bytes,List<String> gapCodes) { }
 
     private static EntryInventoryDocument entryInventory(CobolSemanticProduct.EntryInventory inventory) {
@@ -302,7 +306,9 @@ public final class SemanticProductJsonWriter {
                             provenance(move.normalContinuation().provenance())), move.textAdjustment().map(a ->
                             new TextAdjustmentDocument(a.rule(), a.receiverExtent(),
                                     new TextValueDocument(a.result().logicalDomain(), a.result().value(), a.result().logicalExtent()),
-                                    provenance(a.provenance()))).orElse(null), move.regionalMove().map(m->new RegionalMoveDocument(m.kind(),m.bytes(),m.gapCodes())).orElse(null),move.additionalTransfers().stream().map(t->new MoveTransferDocument(moveSource(t.source()),dataReference(t.target()),new RegionalMoveDocument(t.effect().kind(),t.effect().bytes(),t.effect().gapCodes()))).toList());
+                                    provenance(a.provenance()))).orElse(null), move.regionalMove().map(m->new RegionalMoveDocument(m.kind(),m.bytes(),m.gapCodes())).orElse(null),move.additionalTransfers().stream().map(t->new MoveTransferDocument(moveSource(t.source()),dataReference(t.target()),new RegionalMoveDocument(t.effect().kind(),t.effect().bytes(),t.effect().gapCodes()))).toList(),
+                        move.logicalTransfers().stream().map(t->new LogicalTransferDocument(operandHandle(t.target()),
+                            new TextValueDocument(t.value().logicalDomain(),t.value().value(),t.value().logicalExtent()))).toList());
         }
         if (fact instanceof CobolSemanticProduct.CicsFileFact cics) return new CicsFileDocument(header(cics.header()),cics.command(),cics.rawText(),cics.targetMode(),cics.target().map(SemanticProductJsonWriter::callTarget).orElse(null),
             cics.options().stream().map(o->new CicsFileOptionDocument(o.name(),o.canonicalName(),o.operand().orElse(null),o.start(),o.end(),o.role(),o.reference().map(SemanticProductJsonWriter::dataReference).orElse(null),o.literal().orElse(null),o.integer().map(Object::toString).orElse(null))).toList(),cics.conditions(),continuation(cics.localContinuation()),continuation(cics.ordinaryContinuation()),cics.nameProfile(),cics.gapCodes());
@@ -567,7 +573,8 @@ public final class SemanticProductJsonWriter {
     @JsonPropertyOrder({"variant", "header", "source", "target", "copySemantics", "normalContinuation", "textAdjustment"})
     private record MoveDocument(StatementHeaderDocument header, MoveSourceDocument source,
                                 DataReferenceDocument target, CobolSemanticProduct.CopySemantics copySemantics,
-                                ContinuationDocument normalContinuation, TextAdjustmentDocument textAdjustment, RegionalMoveDocument regionalMove,List<MoveTransferDocument> additionalTransfers) implements StatementDocument { }
+                                ContinuationDocument normalContinuation, TextAdjustmentDocument textAdjustment, RegionalMoveDocument regionalMove,List<MoveTransferDocument> additionalTransfers,
+                                @JsonInclude(JsonInclude.Include.NON_EMPTY) List<LogicalTransferDocument> logicalTransfers) implements StatementDocument { }
 
     private record TextAdjustmentDocument(CobolSemanticProduct.TextAdjustmentRule rule, int receiverExtent,
                                             TextValueDocument result, ProvenanceDocument provenance) { }
