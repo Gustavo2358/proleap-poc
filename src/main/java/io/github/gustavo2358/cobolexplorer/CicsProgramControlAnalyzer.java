@@ -19,7 +19,16 @@ public final class CicsProgramControlAnalyzer {
         private final Map<Key,Fact> facts;
         private final Set<Key> defaultHandlers;
         private final Optional<CicsFileControlAnalyzer.Contribution> files;
-        private Contribution(CompilationUnitBuildResult owner, Map<Key,Fact> facts,Set<Key> defaultHandlers,boolean enabled) { this.owner=owner;this.facts=Map.copyOf(facts);this.defaultHandlers=Set.copyOf(defaultHandlers);this.files=enabled?Optional.of(new CicsFileControlAnalyzer().analyze(owner)):Optional.empty(); }
+        private Contribution(CompilationUnitBuildResult owner, Map<Key,Fact> facts,Set<Key> defaultHandlers,boolean enabled) { this.owner=owner;this.facts=Map.copyOf(facts);this.defaultHandlers=Set.copyOf(defaultHandlers);this.files=enabled?Optional.of(new CicsFileControlAnalyzer().analyze(owner)):Optional.empty();this.handlers=Optional.empty(); }
+        private final Optional<CicsHandlerSemantics> handlers;
+        public Contribution withHandlers(CicsHandlerSemantics contribution) {
+            if(!contribution.belongsTo(owner))throw new IllegalArgumentException("handler contribution belongs to another frontend");
+            return new Contribution(owner,facts,defaultHandlers,files,Optional.of(contribution));
+        }
+        private Contribution(CompilationUnitBuildResult owner,Map<Key,Fact> facts,Set<Key> defaults,Optional<CicsFileControlAnalyzer.Contribution> files,Optional<CicsHandlerSemantics> handlers) {
+            this.owner=owner;this.facts=facts;this.defaultHandlers=defaults;this.files=files;this.handlers=handlers;
+        }
+        public Optional<CicsHandlerSemantics.Fact> handlerFact(ResolutionContracts.ProgramUnitId unit,int statement){return handlers.flatMap(h->h.fact(unit,statement));}
         public Optional<CicsFileControlAnalyzer.Fact> fileFact(ResolutionContracts.ProgramUnitId unit,int statement){return files.flatMap(f->f.fact(unit,statement));}
         public boolean defaultHandlers(ResolutionContracts.ProgramUnitId unit,int statement){return defaultHandlers.contains(new Key(unit,statement));}
         public boolean belongsTo(CompilationUnitBuildResult frontend) { return owner==frontend; }

@@ -399,8 +399,9 @@ public final class Ast {
     public enum EmbeddedHostRole { READ, WRITE, READ_WRITE }
     public record EmbeddedHostOperand(String option,int optionStart,EmbeddedHostRole role,DataReference reference) { }
     public record EmbeddedLanguageStatement(Meta meta, EmbeddedLanguage language,
-                                            String rawText,List<EmbeddedHostOperand> hostOperands) implements Statement {
-        public EmbeddedLanguageStatement {hostOperands=List.copyOf(hostOperands);}
+                                            String rawText,List<EmbeddedHostOperand> hostOperands,List<ProcedureReference> procedureOperands) implements Statement {
+        public EmbeddedLanguageStatement {hostOperands=List.copyOf(hostOperands);procedureOperands=List.copyOf(procedureOperands);}
+        public EmbeddedLanguageStatement(Meta meta,EmbeddedLanguage language,String rawText,List<EmbeddedHostOperand> hostOperands){this(meta,language,rawText,hostOperands,List.of());}
         public EmbeddedLanguageStatement(Meta meta,EmbeddedLanguage language,String rawText){this(meta,language,rawText,List.of());}
     }
 
@@ -705,7 +706,7 @@ public final class Ast {
             result.addAll(n.exceptionFlow());
             return result;
         }
-        if (node instanceof EmbeddedLanguageStatement n) return n.hostOperands().stream().map(EmbeddedHostOperand::reference).toList();
+        if (node instanceof EmbeddedLanguageStatement n) return java.util.stream.Stream.concat(n.hostOperands().stream().map(EmbeddedHostOperand::reference).map(Node.class::cast),n.procedureOperands().stream()).toList();
         if (node instanceof CallArgument n) return n.value() == null ? List.of() : List.of(n.value());
         if (node instanceof IfStatement n) {
             List<Node> result = new ArrayList<>();

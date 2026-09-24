@@ -777,9 +777,64 @@ public final class CobolSemanticProduct {
     }
 
     /** Adding a fact type extends this inventory without changing the State envelope. */
-    public sealed interface StatementFact permits MoveFact, CallFact, CicsFact, CicsFileFact, IfFact,
+    public sealed interface StatementFact permits MoveFact, CallFact, CicsFact, CicsFileFact, CicsHandlerFact, IfFact,
             ObservedStatement, GobackFact, PerformFact, EvaluateFact, GoToFact, ConditionalGoToFact, ProcedurePerformFact {
         StatementHeader header();
+    }
+
+    public enum CicsHandlerKind { ABEND }
+    public enum CicsHandlerAction { ACTIVATE, CANCEL, RESET, UNAVAILABLE }
+    public enum CicsHandlerTargetKind { LABEL, PROGRAM, NONE, UNAVAILABLE }
+    public enum CicsHandlerScopeKind { CURRENT_EXECUTION_LOGICAL_LEVEL }
+    /** Relative CICS scope, never a runtime identity inferred from source ProgramUnit. */
+    public record CicsHandlerScope(CicsHandlerScopeKind kind,Availability runtimeIdentity,Provenance provenance) {
+        public CicsHandlerScope {
+            Objects.requireNonNull(kind);Objects.requireNonNull(provenance);
+            require(runtimeIdentity==Availability.UNAVAILABLE,"runtime logical-level identity is not a source unit");
+        }
+    }
+    public record CicsHandlerLabelTarget(ProcedureId id,Provenance declarationOrigin) {
+        public CicsHandlerLabelTarget {Objects.requireNonNull(id);Objects.requireNonNull(declarationOrigin);}
+    }
+    /** Operation on successful execution, not handler state, execution evidence or a dispatch edge. */
+    public record CicsHandlerFact(StatementHeader header,CicsHandlerKind handlerKind,CicsHandlerAction action,
+            CicsHandlerTargetKind targetKind,Optional<String> targetSyntax,Optional<ResolutionStatus> labelBindingStatus,
+            Optional<CicsHandlerLabelTarget> labelTarget,Optional<StatementId> targetEntry,Optional<Provenance> entryOrigin,
+            Provenance targetOrigin,Optional<CallTarget> programTarget,CicsHandlerScope scope,String rawText,
+            List<CicsOption> options,List<String> gapCodes) implements StatementFact {
+        public CicsHandlerFact {
+            Objects.requireNonNull(header);Objects.requireNonNull(handlerKind);Objects.requireNonNull(action);Objects.requireNonNull(targetKind);
+            Objects.requireNonNull(targetSyntax);Objects.requireNonNull(labelBindingStatus);Objects.requireNonNull(labelTarget);
+            Objects.requireNonNull(targetEntry);Objects.requireNonNull(entryOrigin);Objects.requireNonNull(targetOrigin);
+            Objects.requireNonNull(programTarget);Objects.requireNonNull(scope);Objects.requireNonNull(rawText);
+            options=List.copyOf(options);gapCodes=List.copyOf(gapCodes);
+            require(action!=CicsHandlerAction.ACTIVATE||targetKind==CicsHandlerTargetKind.LABEL||targetKind==CicsHandlerTargetKind.PROGRAM,"activation has LABEL or PROGRAM syntax");
+            require(action!=CicsHandlerAction.CANCEL&&action!=CicsHandlerAction.RESET||targetKind==CicsHandlerTargetKind.NONE,"cancel/reset carry no new target");
+            require((action==CicsHandlerAction.UNAVAILABLE)==(targetKind==CicsHandlerTargetKind.UNAVAILABLE),"unavailable action has no invented target kind");
+            require(targetSyntax.isPresent()==(targetKind==CicsHandlerTargetKind.LABEL||targetKind==CicsHandlerTargetKind.PROGRAM),"target syntax agrees with kind");
+            require(labelBindingStatus.isPresent()==(targetKind==CicsHandlerTargetKind.LABEL),"LABEL binding status is independent of PROGRAM data binding");
+            require(labelTarget.isPresent()==labelBindingStatus.filter(s->s==ResolutionStatus.RESOLVED).isPresent(),"only resolved LABEL has a selected identity");
+            require(programTarget.isEmpty()||targetKind==CicsHandlerTargetKind.PROGRAM,"PROGRAM target belongs only to PROGRAM operation");
+            require(targetEntry.isPresent()==entryOrigin.isPresent()&&(targetEntry.isEmpty()||labelTarget.isPresent()),"entry requires bound label and provenance");
+            var owner=header.id().unit();
+            labelTarget.ifPresent(t->require(t.id().unit().equals(owner),"LABEL target stays in its source owner"));
+            targetEntry.ifPresent(t->require(t.unit().equals(owner),"handler target entry stays in source owner"));
+            programTarget.ifPresent(t->require(t.id().statement().equals(header.id()),"handler PROGRAM operand owner"));
+            for(var option:options)require(option.end()<=rawText.length(),"handler option outside payload");
+            require(header.coverage()!=CoverageStatus.MODELED,"handler execution/state/dispatch remain partial");
+            if(action!=CicsHandlerAction.UNAVAILABLE) {
+                require(!options.isEmpty()&&options.get(0).name().equals("ABEND"),"handler kind has ABEND syntax");
+                require(options.stream().map(CicsOption::name).distinct().count()==options.size(),"known handler action has no duplicate options");
+                for(var option:options)require(Set.of("ABEND","LABEL","PROGRAM","CANCEL","RESET","RESP","RESP2","NOHANDLE").contains(option.name())
+                    &&Set.of("LABEL","PROGRAM","RESP","RESP2").contains(option.name())==option.operand().isPresent()
+                    &&option.operand().filter(String::isBlank).isEmpty(),"known handler action has supported option shapes");
+                var selectors=options.stream().filter(o->Set.of("LABEL","PROGRAM","CANCEL","RESET").contains(o.name())).toList();
+                require(selectors.size()<=1,"known handler action has one selector");
+                String selector=selectors.isEmpty()?"CANCEL":selectors.get(0).name();
+                require(action==CicsHandlerAction.ACTIVATE?selector.equals(targetKind.name()):selector.equals(action.name()),"handler action agrees with selected operation");
+                if(action==CicsHandlerAction.ACTIVATE)require(targetSyntax.equals(selectors.get(0).operand()),"handler target syntax agrees with selected operand");
+            }
+        }
     }
 
     public enum CicsCommand { LINK, XCTL }
@@ -1971,6 +2026,7 @@ public final class CobolSemanticProduct {
             var result=new ArrayList<DataReference>();if(move.source() instanceof DataReference r)result.add(r);result.add(move.target());
             for(var t:move.additionalTransfers()){if(t.source() instanceof DataReference r)result.add(r);result.add(t.target());}return List.copyOf(result);
         }
+        if (statement instanceof CicsHandlerFact cics) return java.util.stream.Stream.concat(cics.programTarget().filter(DataReference.class::isInstance).map(DataReference.class::cast).stream(),cics.options().stream().flatMap(o->o.reference().stream())).toList();
         if (statement instanceof CicsFileFact cics) return java.util.stream.Stream.concat(cics.target().filter(DataReference.class::isInstance).map(DataReference.class::cast).stream(),cics.options().stream().flatMap(o->o.reference().stream())).toList();
         if (statement instanceof CicsFact cics) return java.util.stream.Stream.concat(cics.target().filter(DataReference.class::isInstance).map(DataReference.class::cast).stream(),cics.options().stream().flatMap(o->o.reference().stream())).toList();
         if (statement instanceof CallFact call) return call.target() instanceof DataReference data ? List.of(data) : List.of();
@@ -1990,6 +2046,8 @@ public final class CobolSemanticProduct {
             if (statement instanceof MoveFact move) {
                 var all=new ArrayList<OperandId>();all.add(move.source().id());all.add(move.target().id());
                 for(var t:move.additionalTransfers()){all.add(t.source().id());all.add(t.target().id());}operands=List.copyOf(all);
+            } else if (statement instanceof CicsHandlerFact cics) {
+                operands=java.util.stream.Stream.concat(cics.programTarget().stream().map(CallTarget::id),cics.options().stream().flatMap(o->o.reference().stream()).map(DataReference::id)).toList();
             } else if (statement instanceof CicsFileFact cics) {
                 operands=java.util.stream.Stream.concat(cics.target().stream().map(CallTarget::id),cics.options().stream().flatMap(o->o.reference().stream()).map(DataReference::id)).toList();
             } else if (statement instanceof CicsFact cics) {
@@ -2028,6 +2086,11 @@ public final class CobolSemanticProduct {
         var goToTargets=new HashMap<ProcedureId,StatementId>();
         var procedureOrigins=new HashMap<ProcedureId,Provenance>();
         for (StatementFact statement : statements.values()) {
+            if(statement instanceof CicsHandlerFact h)h.targetEntry().ifPresent(id->{
+                var target=statements.get(id);
+                require(target!=null&&target.header().provenance().equals(h.entryOrigin().orElseThrow()),"handler entry is published with its canonical provenance");
+                require(target.header().containment().branch()==Branch.ROOT,"handler entry is a procedure root statement");
+            });
             if (statement instanceof GoToFact g) g.targetEntry().ifPresent(id -> {
                 require(id.unit().equals(g.header().id().unit()) && statements.containsKey(id), "GO TO entry is published in same unit");
                 var previousOrigin=procedureOrigins.putIfAbsent(g.target().orElseThrow().id(),g.target().orElseThrow().paragraphOrigin());

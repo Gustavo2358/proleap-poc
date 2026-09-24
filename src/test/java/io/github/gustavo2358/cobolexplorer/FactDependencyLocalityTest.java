@@ -35,7 +35,7 @@ class FactDependencyLocalityTest {
         assertFalse(known(absent,"SENTINEL",FactKind.PHYSICAL_VIEW));assertTrue(known(present,"SENTINEL",FactKind.PHYSICAL_VIEW));
         for(var kind:List.of(FactKind.SOURCE_IDENTITY,FactKind.LOGICAL_TEXT,FactKind.LOCAL_CELL))assertEquals(known(absent,"TARGET",kind),known(present,"TARGET",kind));
         var out=Path.of("target/fact-dependency-r2");Files.createDirectories(out);Files.write(out.resolve("mixed-profile-absent.json"),SemanticProductJsonWriter.serialize(absent));
-        assertEquals("2.40.0",new ObjectMapper().readTree(SemanticProductJsonWriter.serialize(absent)).path("contractVersion").asText());
+        assertEquals("2.41.0",new ObjectMapper().readTree(SemanticProductJsonWriter.serialize(absent)).path("contractVersion").asText());
     }
     @Test void missingInputNeedsClosedRegionNotLexicalDistance() throws Exception {
         var closed=publish("01 RECORD-A.\n 05 TARGET PIC X(8).\n 05 COUNTER PIC 9.\n01 SENTINEL PIC X.\nCOPY UNKNOWN-DATA.");

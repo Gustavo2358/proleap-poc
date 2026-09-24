@@ -72,3 +72,7 @@ como registros/handoffs cross-repo para `air-java`, `cobol-lower` e
 - [WORK-SEMANTIC-PRODUCT-009](active/WORK-SEMANTIC-PRODUCT-009.yaml): SP1.8 compositionality and partial publication; coordinated with WORK-CFG-038.
 
 [WORK-FD-HARNESS](active/WORK-FD-HARNESS.json): IN_PROGRESS; preparação para revisão, sem merge.
+
+## Positive Memory Topology — R7 contract review
+
+[Typed CICS handler operations / SP 2.41.0](positive-cics-handler-r7.md): IN_PROGRESS, frontend contract qualification; no runtime handler-state propagation or merge.

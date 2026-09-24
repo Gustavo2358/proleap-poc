@@ -22,6 +22,11 @@ final class CicsHostSyntax {
                 case WRITE -> Ast.EmbeddedHostRole.WRITE;case READ_WRITE -> Ast.EmbeddedHostRole.READ_WRITE;default -> Ast.EmbeddedHostRole.READ;
             });
         }
+        CicsHandlerSyntax.parse(raw).ifPresent(handler->{
+            for(var option:handler.options())if(Set.of("PROGRAM","RESP","RESP2").contains(option.name())) {
+                options.add(option);roles.put(option.start(),option.name().equals("PROGRAM")?Ast.EmbeddedHostRole.READ:Ast.EmbeddedHostRole.WRITE);
+            }
+        });
         var result=new ArrayList<Host>();
         for(var option:options) {
             if(option.operand().isEmpty())continue;

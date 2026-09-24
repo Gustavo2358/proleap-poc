@@ -618,6 +618,8 @@ public final class CobolSemanticProductProjector {
     }
 
     private static StatementPlan plan(StatementPosition position, ProjectionInputs inputs) {
+        if(position.statement() instanceof Ast.EmbeddedLanguageStatement embedded && inputs.products().cics().flatMap(c->c.handlerFact(inputs.unitId(),embedded.meta().id())).isPresent())
+            return new StatementPlan(position,Capability.supported("CICS","CICS_HANDLER"),embedded.hostOperands().stream().map(h->inputs.entryFor(h.reference())).toList());
         if(position.statement() instanceof Ast.EmbeddedLanguageStatement embedded && inputs.products().cics().flatMap(c->c.fact(inputs.unitId(),embedded.meta().id())).isPresent())
             return new StatementPlan(position,Capability.supported("CICS","CICS_PROGRAM_CONTROL"),embedded.hostOperands().stream().map(h->inputs.entryFor(h.reference())).toList());
         if (position.statement() instanceof Ast.PerformStatement p && (ProcedurePerformSemantics.applicable(p) || partialBasic(p, inputs)))
@@ -965,6 +967,50 @@ public final class CobolSemanticProductProjector {
                 provenance(plan.position().statement().meta().provenance());
         CobolSemanticProduct.Containment containment = containment(
                 plan.position(), statementIds);
+
+        var handler=inputs.products().cics().flatMap(c->c.handlerFact(inputs.unitId(),plan.position().statement().meta().id()));
+        if(handler.isPresent()) {
+            var source=handler.get();var codes=new LinkedHashSet<>(source.gaps());
+            codes.add("CICS_HANDLER_EXECUTION_STATE_NOT_MODELED");
+            var embedded=(Ast.EmbeddedLanguageStatement)plan.position().statement();
+            for(var reference:embedded.procedureOperands()) {
+                var entry=inputs.entryFor(reference);
+                addReportGaps(statementId,entry.occurrence(),inputs,provenance(reference.meta().provenance()),gaps);
+            }
+            Optional<CallTarget> program=source.programLiteral().map(value->new LiteralCallTarget(new OperandId(statementId,0),value,
+                source.targetSyntax().orElseThrow(),Optional.of(new TextValue(value)),statementProvenance));
+            var options=new ArrayList<CicsOption>();int ordinal=1;
+            for(var option:source.options()) {
+                Optional<DataReference> reference=Optional.empty();
+                var host=embedded.hostOperands().stream().filter(h->h.optionStart()==option.start()).reduce((left,right)->{throw new IllegalArgumentException("handler operand has one canonical identity at this position");});
+                if(host.isPresent()) {
+                    var h=host.get();var entry=inputs.entryFor(h.reference());
+                    addReportGaps(statementId,entry.occurrence(),inputs,provenance(h.reference().meta().provenance()),gaps);
+                    if(projectableDataBinding(entry,inputs))reference=Optional.of(new DataReference(new OperandId(statementId,ordinal++),
+                        h.role()==Ast.EmbeddedHostRole.WRITE?OperandRole.WRITE:OperandRole.READ,nominalBinding(entry,dataIds),
+                        provenance(h.reference().meta().provenance()),Optional.empty(),regionalAccess(inputs,h.reference().meta().id()),List.of(),
+                        h.reference().understanding()==Ast.ReferenceUnderstanding.STRUCTURED&&h.reference().subscriptGroups().isEmpty()&&h.reference().referenceModification()==null
+                            ?nominalBinding(entry,dataIds).selected():Optional.empty()));
+                }
+                if(option.name().equals("PROGRAM")&&source.targetKind()==io.github.gustavo2358.cobolexplorer.CicsHandlerSemantics.TargetKind.PROGRAM) {
+                    if(program.isEmpty()&&reference.isPresent())program=Optional.of(reference.get());reference=Optional.empty();
+                }
+                options.add(new CicsOption(option.name(),option.operand(),option.start(),option.end(),reference));
+            }
+            if(source.targetKind()==io.github.gustavo2358.cobolexplorer.CicsHandlerSemantics.TargetKind.PROGRAM&&program.isEmpty())codes.add("CICS_HANDLER_PROGRAM_BINDING_UNAVAILABLE");
+            var label=source.labelTarget().map(t->new CicsHandlerLabelTarget(new ProcedureId(inputs.boundaryUnit(),t.identity().localId()),provenance(t.declarationOrigin())));
+            var entry=canonicalStatement(source.labelTarget().flatMap(t->t.entry()),inputs,statementIds);
+            if(containment.branch()==Branch.UNKNOWN)codes.add(CONTAINMENT_GAP);
+            statements.add(new CicsHandlerFact(header(statementId,plan.position().ordinal(),containment,statementProvenance,CoverageStatus.PARTIAL,
+                readiness(ReadinessStatus.PARTIAL,"typed handler operation",ReadinessStatus.BLOCKED,"handler state and dispatch not modeled",ReadinessStatus.BLOCKED,"CICS effects not modeled")),
+                CicsHandlerKind.ABEND,CicsHandlerAction.valueOf(source.action().name()),CicsHandlerTargetKind.valueOf(source.targetKind().name()),source.targetSyntax(),
+                source.labelBindingStatus().map(s->ResolutionStatus.valueOf(s.name())),label,entry,
+                entry.isPresent()?source.labelTarget().flatMap(t->t.entryOrigin()).map(CobolSemanticProductProjector::provenance):Optional.empty(),
+                provenance(source.targetOrigin()),program,new CicsHandlerScope(CicsHandlerScopeKind.CURRENT_EXECUTION_LOGICAL_LEVEL,Availability.UNAVAILABLE,statementProvenance),
+                source.raw(),options,List.copyOf(codes)));
+            for(var code:codes)gaps.add(capabilityGap(statementId,code,"Handler operation retained; execution/state/dispatch remain unproved",statementProvenance));
+            addContainmentGap(containment,statementId,statementProvenance,gaps);return;
+        }
 
         var cicsFile=inputs.products().cics().flatMap(c->c.fileFact(inputs.unitId(),plan.position().statement().meta().id()));
         if(cicsFile.isPresent()) {

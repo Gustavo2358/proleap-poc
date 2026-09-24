@@ -22,7 +22,7 @@ import java.util.Optional;
 public final class CobolLoweringReadinessConsumer {
     private CobolLoweringReadinessConsumer() { }
 
-    public enum StatementFamily { MOVE, CALL, CICS_PROGRAM_CONTROL, CICS_FILE_CONTROL, IF, OBSERVED, GOBACK, PERFORM, EVALUATE, GO_TO }
+    public enum StatementFamily { MOVE, CALL, CICS_PROGRAM_CONTROL, CICS_FILE_CONTROL, CICS_HANDLER, IF, OBSERVED, GOBACK, PERFORM, EVALUATE, GO_TO }
 
     public record ConditionalGoToAudit(StatementHeaderAudit header, CobolSemanticProduct.ConditionalGoToFact fact) implements StatementAudit {
         @Override public StatementFamily family() { return StatementFamily.GO_TO; }
@@ -214,6 +214,9 @@ public final class CobolLoweringReadinessConsumer {
         @Override public StatementFamily family() { return StatementFamily.MOVE; }
     }
 
+    public record CicsHandlerAudit(StatementHeaderAudit header,CobolSemanticProduct.CicsHandlerFact fact) implements StatementAudit {
+        @Override public StatementFamily family(){return StatementFamily.CICS_HANDLER;}
+    }
     public record CicsFileAudit(StatementHeaderAudit header,CobolSemanticProduct.CicsFileFact fact) implements StatementAudit {
         public CicsFileAudit {Objects.requireNonNull(header);Objects.requireNonNull(fact);}
         @Override public StatementFamily family(){return StatementFamily.CICS_FILE_CONTROL;}
@@ -343,6 +346,7 @@ public final class CobolLoweringReadinessConsumer {
             return new MoveAudit(header, move.source() instanceof CobolSemanticProduct.LiteralSource literal
                     ? literal(literal) : reference((CobolSemanticProduct.DataReference) move.source()), reference(move.target()));
         }
+        if (fact instanceof CobolSemanticProduct.CicsHandlerFact cics) return new CicsHandlerAudit(header,cics);
         if (fact instanceof CobolSemanticProduct.CicsFileFact cics) return new CicsFileAudit(header,cics);
         if (fact instanceof CobolSemanticProduct.CicsFact cics) return new CicsAudit(header,cics);
         if (fact instanceof CobolSemanticProduct.CallFact call) {

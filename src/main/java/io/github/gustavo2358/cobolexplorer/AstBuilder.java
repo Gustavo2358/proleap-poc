@@ -1440,7 +1440,13 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
                 if(expression instanceof Ast.DataReference reference)operands.add(new Ast.EmbeddedHostOperand(host.option(),host.optionStart(),host.role(),reference));
             } finally { embeddedOperandOrigin=previous; }
         }
-        return new Ast.EmbeddedLanguageStatement(anchor, language, raw, operands);
+        var procedures=new ArrayList<Ast.ProcedureReference>();
+        if(language==Ast.EmbeddedLanguage.CICS) {
+            var label=CicsHandlerSyntax.label(raw,context.getStart().getStartIndex(),context.getStart().getLine(),context.getStart().getCharPositionInLine(),context.getStart().getTokenIndex());
+            var previous=embeddedOperandOrigin;embeddedOperandOrigin=anchor.origin();
+            try {label.ifPresent(tree->procedures.add(procedureReference(tree)));} finally {embeddedOperandOrigin=previous;}
+        }
+        return new Ast.EmbeddedLanguageStatement(anchor, language, raw, operands,procedures);
     }
 
     private Ast.Expression expression(ParserRuleContext context, String role) {
