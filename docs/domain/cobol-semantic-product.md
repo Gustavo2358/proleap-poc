@@ -610,3 +610,7 @@ shape remains decodable by compatible lowers.
 publish `STRUCTURAL_FACTS` and an independent `targetEntry`. Existing wire shapes
 and legacy specialization behavior remain versioned. Structural facts do not
 assert whole-body/effects precision and do not select an executable AIR strategy.
+
+## Control topology authority — 2.39.0
+
+The new contract and legacy boundary are specified in [control-topology.md](control-topology.md).

@@ -13,7 +13,7 @@ class StorageOverlayProductTest {
     @Test void relationIdentityOriginsAndFillerCrossTheVersionedBoundary() throws Exception {
         var s=state("01 RAW-AREA PIC X(4).\n01 VIEW-AREA REDEFINES RAW-AREA PIC X(8).\n01 FILLER REDEFINES VIEW-AREA PIC X(12).","MOVE 'ABCDEFGH' TO VIEW-AREA.\nCALL RAW-AREA.");
         var bytes=SemanticProductJsonWriter.serialize(CobolSemanticPort.open(s));var mapper=new ObjectMapper();var doc=mapper.readTree(bytes);
-        assertEquals("2.28.0",doc.path("contractVersion").asText());var storage=doc.path("storage");assertEquals("1.8.0",storage.path("version").asText());
+        assertEquals("2.39.0",doc.path("contractVersion").asText());var storage=doc.path("storage");assertEquals("1.8.0",storage.path("version").asText());
         var relations=storage.path("relations");assertEquals(2,relations.size());assertEquals(1,storage.path("bases").size());
         var nodes=new HashMap<String,com.fasterxml.jackson.databind.JsonNode>();storage.path("nodes").forEach(n->nodes.put(n.path("id").asText(),n));
         var ids=new HashSet<String>();

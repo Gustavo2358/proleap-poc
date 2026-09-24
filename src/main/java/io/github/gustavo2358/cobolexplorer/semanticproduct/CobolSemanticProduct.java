@@ -1593,7 +1593,12 @@ public final class CobolSemanticProduct {
     public record State(UnitId unit, Policy policy,
                         List<DataDeclaration> dataDeclarations,
                         List<StatementFact> statements,
-                        List<Gap> gaps, CoverageSummary coverage, EntryInventory entryInventory, IndependentStorageSet storageIndependence, StorageInventory storage, FileInventory fileInventory, SourceDependencyInventory sourceDependencies, List<OrdinaryContinuation> ordinaryContinuations) {
+                        List<Gap> gaps, CoverageSummary coverage, EntryInventory entryInventory, IndependentStorageSet storageIndependence, StorageInventory storage, FileInventory fileInventory, SourceDependencyInventory sourceDependencies, List<OrdinaryContinuation> ordinaryContinuations, Optional<ControlTopology> controlTopology) {
+        public State(UnitId unit, Policy policy, List<DataDeclaration> dataDeclarations, List<StatementFact> statements,
+                List<Gap> gaps, CoverageSummary coverage, EntryInventory entryInventory, IndependentStorageSet storageIndependence,
+                StorageInventory storage, FileInventory fileInventory, SourceDependencyInventory sourceDependencies, List<OrdinaryContinuation> ordinaryContinuations) {
+            this(unit,policy,dataDeclarations,statements,gaps,coverage,entryInventory,storageIndependence,storage,fileInventory,sourceDependencies,ordinaryContinuations,Optional.empty());
+        }
         public State(UnitId unit, Policy policy, List<DataDeclaration> dataDeclarations, List<StatementFact> statements,
                 List<Gap> gaps, CoverageSummary coverage, EntryInventory entryInventory, IndependentStorageSet storageIndependence,
                 StorageInventory storage, FileInventory fileInventory, SourceDependencyInventory sourceDependencies) {
@@ -1605,6 +1610,11 @@ public final class CobolSemanticProduct {
             this(unit,policy,dataDeclarations,statements,gaps,coverage,entryInventory,storageIndependence,storage,fileInventory,SourceDependencyInventory.unavailable());
         }
         public State {
+            Objects.requireNonNull(controlTopology);
+            if(controlTopology.isPresent()) {
+                var published=statements.stream().map(s->"statement:"+s.header().id().localId()).collect(java.util.stream.Collectors.toSet());
+                require(published.equals(controlTopology.get().occurrences().stream().map(ControlTopology.Occurrence::statement).collect(java.util.stream.Collectors.toSet())),"topology occurrence inventory equals publication");
+            }
             ordinaryContinuations = List.copyOf(ordinaryContinuations);
             var ordinaryIds = new HashSet<StatementId>();
             var byId = new HashMap<StatementId,StatementFact>();

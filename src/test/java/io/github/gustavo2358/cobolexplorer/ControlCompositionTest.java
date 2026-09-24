@@ -20,7 +20,7 @@ class ControlCompositionTest {
         var base=publish(body);var peer=publish(body+"UNUSED.\nGO TO P-A P-B DEPENDING ON N.\nP-A.\nCONTINUE.\nP-B.\nGOBACK.\n");
         var a=facts(base,"MOVE").get(0);var b=facts(peer,"MOVE").get(0);
         assertEquals(a,b,"unrelated peer cannot mutate MOVE facts");
-        assertEquals("2.37.0",base.path("contractVersion").asText());
+        assertEquals("2.39.0",base.path("contractVersion").asText());
         assertEquals(base.path("ordinaryContinuations"),peer.path("ordinaryContinuations"));
         assertEquals(a.path("header").path("id"),base.path("ordinaryContinuations").get(0).path("statement"));
         assertEquals(facts(base,"CALL").get(0).path("header").path("id"),base.path("ordinaryContinuations").get(0).path("destination"));

@@ -626,6 +626,8 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
                     else if(clause instanceof CobolParser.WriteNotAtEndOfPagePhraseContext x)body=x.statement();
                     if(body!=null)pending.push(new CompletionRegion(body,next,ordinaryNext));
                 }
+                if(context.performStatement()!=null&&context.performStatement().performInlineStatement()!=null)
+                    pending.push(new CompletionRegion(context.performStatement().performInlineStatement().statement(),null,null));
                 // An unmaterialized direct statement is a barrier, never skipped.
                 next = current;ordinaryNext=current;
             }

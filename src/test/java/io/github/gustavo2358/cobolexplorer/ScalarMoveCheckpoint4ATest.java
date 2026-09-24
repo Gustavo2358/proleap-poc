@@ -53,7 +53,7 @@ class ScalarMoveCheckpoint4ATest {
     }
     // JSON-only assertions have no frontend joins and deliberately erase textual readiness.
     static void assertJson(JsonNode doc) {
-        assertEquals("2.28.0", doc.path("contractVersion").asText());
+        assertEquals("2.39.0", doc.path("contractVersion").asText());
         var data = doc.path("dataDeclarations").get(0);
         var statements = doc.path("statements");
         JsonNode move = null, goback = null;
@@ -264,7 +264,7 @@ class ScalarMoveCheckpoint4ATest {
         var a = AstBoundaryTestSupport.analyze(Files.readString(fixture), fixture.getFileName().toString());
         var port = CobolSemanticProductProjector.open(products(a), a.model().programUnits().get(0).id());
         var current = mapper.readTree(SemanticProductJsonWriter.serialize(port));
-        assertEquals("2.28.0", current.path("contractVersion").asText());
+        assertEquals("2.39.0", current.path("contractVersion").asText());
         assertEquals("GOBACK", previous.path("statements").get(0).path("variant").asText());
         assertEquals("NONE", previous.path("statements").get(0).path("localContinuation").asText());
         ((com.fasterxml.jackson.databind.node.ObjectNode) previous).remove("contractVersion");
@@ -279,6 +279,9 @@ class ScalarMoveCheckpoint4ATest {
         assertEquals("KNOWN", current.path("fileInventory").path("availability").asText());
         assertTrue(current.path("fileInventory").path("declarations").isEmpty());
         ((com.fasterxml.jackson.databind.node.ObjectNode) current).remove("fileInventory");
+        assertEquals("FRONTEND_CONTROL_TOPOLOGY_R1", current.path("controlTopology").path("authority").asText());
+        assertEquals(current.path("statements").size(), current.path("controlTopology").path("occurrences").size());
+        ((com.fasterxml.jackson.databind.node.ObjectNode) current).remove("controlTopology");
         assertEquals(previous, current, "all CP3 facts, provenance, coverage and gaps must be unchanged");
     }
 

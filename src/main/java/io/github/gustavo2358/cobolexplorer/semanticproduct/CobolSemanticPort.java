@@ -38,6 +38,8 @@ public interface CobolSemanticPort {
 
     default List<CobolSemanticProduct.OrdinaryContinuation> ordinaryContinuations() { return List.of(); }
 
+    default Optional<ControlTopology> controlTopology() { return Optional.empty(); }
+
     List<CobolSemanticProduct.DataDeclaration> dataDeclarations();
 
     List<CobolSemanticProduct.StatementFact> statements();
@@ -99,6 +101,8 @@ final class MaterializedCobolSemanticPort implements CobolSemanticPort {
     @Override public SourceDependencyInventory sourceDependencies(){return state.sourceDependencies();}
 
     @Override public List<CobolSemanticProduct.OrdinaryContinuation> ordinaryContinuations() { return state.ordinaryContinuations(); }
+
+    @Override public Optional<ControlTopology> controlTopology() { return state.controlTopology(); }
 
     MaterializedCobolSemanticPort(CobolSemanticProduct.State state) {
         this.state = Objects.requireNonNull(state, "state");

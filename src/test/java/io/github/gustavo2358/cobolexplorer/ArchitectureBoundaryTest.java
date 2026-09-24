@@ -365,7 +365,9 @@ class ArchitectureBoundaryTest {
     }
 
     private static boolean isJsonAdapterBoundaryType(String reference) {
-        return reference.equals(SEMANTIC_PORT_INTERNAL)
+        String topology = "io/github/gustavo2358/cobolexplorer/semanticproduct/ControlTopology";
+        return reference.equals(topology) || reference.startsWith(topology + '$')
+                || reference.equals(SEMANTIC_PORT_INTERNAL)
                 || reference.equals(SEMANTIC_PRODUCT_INTERNAL)
                 || reference.startsWith(SEMANTIC_PRODUCT_INTERNAL + '$')
                 || reference.equals(JSON_WRITER_INTERNAL)

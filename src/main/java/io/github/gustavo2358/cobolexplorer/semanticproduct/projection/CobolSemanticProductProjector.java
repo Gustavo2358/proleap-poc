@@ -210,9 +210,13 @@ public final class CobolSemanticProductProjector {
             inventoryStatus = InventoryStatus.PARTIAL;
         CobolSemanticProduct.CoverageSummary coverage = coverage(
                 inventoryStatus, statements, inputs.unitSummary());
+        var fileInventory=files(inputs, declarations.ids(), statementIds, observedOperandIds);
+        var topology=io.github.gustavo2358.cobolexplorer.ControlTopologySemantics.analyze(
+                inputs.selectedSource().unit(), inputs.selectedSource().table(), products.resolution(), products.report(),
+                statementIds, fileInventory, products.cics().orElse(null));
         return new ScopedProjection(new CobolSemanticProduct.State(inputs.boundaryUnit(),
                 policy(inputs.report().policy()), declarations.facts(),
-                statements, gaps, coverage, entries, storageIndependence(inputs, declarations.ids()), storage(inputs, declarations.ids()), files(inputs, declarations.ids(), statementIds, observedOperandIds),products.sourceDependencies().getOrDefault(unitId,io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.SourceDependencyInventory.unavailable()),ordinaryContinuations(inputs,statementIds,statements)),java.util.Collections.unmodifiableMap(new LinkedHashMap<>(declarations.ids())));
+                statements, gaps, coverage, entries, storageIndependence(inputs, declarations.ids()), storage(inputs, declarations.ids()), fileInventory,products.sourceDependencies().getOrDefault(unitId,io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.SourceDependencyInventory.unavailable()),ordinaryContinuations(inputs,statementIds,statements),Optional.of(topology)),java.util.Collections.unmodifiableMap(new LinkedHashMap<>(declarations.ids())));
     }
 
     private static List<OrdinaryContinuation> ordinaryContinuations(ProjectionInputs inputs,

@@ -21,7 +21,7 @@ class StorageProductTest {
     static State state(String data,String code) { return state(data,code,StorageLayoutSemantics.Profile.IBM_ENTERPRISE_6_4_FIXED_DISPLAY_1047); }
     static State group() { return state("01 WS-AREA.\n05 PREFIX-PART PIC X(2).\n05 FILLER PIC X(2).\n05 WS-PGM PIC X(4).", "MOVE 'ABCDEFGH' TO WS-AREA.\nCALL WS-PGM."); }
     static StorageMeasure known(long n) { return new StorageMeasure(Optional.of(BigInteger.valueOf(n)),List.of()); }
-    static State withStorage(State s,StorageInventory storage) { return new State(s.unit(),s.policy(),s.dataDeclarations(),s.statements(),s.gaps(),s.coverage(),s.entryInventory(),s.storageIndependence(),storage,s.fileInventory()); }
+    static State withStorage(State s,StorageInventory storage) { return new State(s.unit(),s.policy(),s.dataDeclarations(),s.statements(),s.gaps(),s.coverage(),s.entryInventory(),s.storageIndependence(),storage,s.fileInventory(),s.sourceDependencies(),s.ordinaryContinuations(),s.controlTopology()); }
     @Test void groupFillerAndCallCrossTheClosedPortWithSeparatePhysicalIds() {
         var s=group();var p=CobolSemanticPort.open(s);var storage=p.storage();
         assertEquals(StorageProfile.IBM_ENTERPRISE_6_4_FIXED_DISPLAY_1047,storage.profile());
@@ -60,7 +60,7 @@ class StorageProductTest {
     @Test void json28HasDeterministicClosedStorageTransport() throws Exception {
         var p=CobolSemanticPort.open(group());var bytes=SemanticProductJsonWriter.serialize(p);
         assertArrayEquals(bytes,SemanticProductJsonWriter.serialize(CobolSemanticPort.open(group())));
-        var doc=new ObjectMapper().readTree(bytes);assertEquals("2.28.0",doc.path("contractVersion").asText());
+        var doc=new ObjectMapper().readTree(bytes);assertEquals("2.39.0",doc.path("contractVersion").asText());
         assertEquals("ibm-enterprise-6.4-fixed-display-1047@1",doc.path("storage").path("profileId").asText());
         assertEquals("8",doc.path("storage").path("bases").get(0).path("extent").path("value").asText());
         assertTrue(doc.path("storage").path("bases").get(0).path("extent").path("value").isTextual());
