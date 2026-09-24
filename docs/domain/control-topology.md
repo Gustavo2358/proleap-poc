@@ -81,3 +81,27 @@ verb substitution, ordinary versus performed entry, THRU endpoints, two callers,
 nesting, predicate/input gaps and FILE handler inventory/event separation.
 Real source witnesses, external full73 redistribution and backend scale remain
 mandatory campaign gates; unit tests alone do not qualify the wave.
+
+## FILE executable target authority (R1-R1)
+
+For SP2.39, ControlTopology is the sole executable target authority. FILE
+`fileInventory` retains domain facts: operation identity, event/effect association,
+handler metadata and source evidence used by the frontend when building topology.
+Each destination slot has exactly one published outcome role
+`file/<use ordinal>/<event>/<destination ordinal>` on its source occurrence.
+The producer verifies that a handler outcome names the corresponding FILE_HANDLER
+region and that the region entry is the source handler entry.
+
+The consumer validates FILE domain shape and role coverage, but it never obtains
+an executable target from the legacy handler member order or continuation. The
+source reference closure and the emitter both resolve the published outcome.
+There is no consumer fallback or target equality reconstruction against FILE
+metadata; an absent role is invalid input before AIR. Unsupported callback
+knowledge remains UNKNOWN_LOCAL. Historical SP contracts retain legacy routing.
+
+Permanent tests: producer FileTopologyAuthorityTest checks every destination and
+its handler entry; lower FileTopologyAuthoritySuite reverses legacy handler member
+metadata while retaining topology and requires identical AIR modulo publication
+namespace. It removes each FILE outcome and its occurrence reference, leaving an
+internally well-shaped graph, and requires rejection before AIR through both wire
+and typed ports. The unchanged ControlTopologyAuthorityTest is in fixed FAST.
