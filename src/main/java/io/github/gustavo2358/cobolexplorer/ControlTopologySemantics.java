@@ -160,8 +160,11 @@ public final class ControlTopologySemantics {
             if(s instanceof Ast.GoToStatement g) {
                 int ordinal=0;
                 for(var ref:g.targets()) {var declaration=targetDeclarations.get(ref.meta().id());
-                    var target=declaration!=null&&paragraphIds.containsKey(declaration)?entry(paragraphIds.get(declaration),p):unknown(owner,p);
-                    add(s,owner,OutcomeKind.EXPLICIT_TRANSFER,"target-"+(ordinal++),target,"",p);}
+                    boolean resolved=declaration!=null&&paragraphIds.containsKey(declaration);
+                    var resolution=proof(id+"/target-"+ordinal,resolved?ProofKind.RESOLVED_TARGET:ProofKind.PARTIAL_UNKNOWN,
+                        resolved?"resolved-goto-target":"unresolved-goto-target",ref.meta().provenance(),List.of(p));
+                    var target=resolved?entry(paragraphIds.get(declaration),resolution):unknown(owner,resolution);
+                    add(s,owner,OutcomeKind.EXPLICIT_TRANSFER,"target-"+(ordinal++),target,"",resolution);}
                 if(g.goToKind()==Ast.GoToKind.DEPENDING_ON)add(s,owner,OutcomeKind.NORMAL,"normal",next,"",p);
                 if(g.targets().isEmpty())add(s,owner,OutcomeKind.UNKNOWN_LOCAL,"transfer-unresolved",unknown(owner,p),"",p);continue;
             }

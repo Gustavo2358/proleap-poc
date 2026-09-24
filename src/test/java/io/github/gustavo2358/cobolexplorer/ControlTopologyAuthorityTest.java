@@ -94,6 +94,8 @@ class ControlTopologyAuthorityTest {
     }
     @Test void symbolicCyclesAreRejectedButSourceLoopsRemainRepresentable() {
         var t=publish("MAIN.\nGO TO MAIN.\n").controlTopology().orElseThrow();
+        var transfer=t.outcomes().stream().filter(o->o.kind()==OutcomeKind.EXPLICIT_TRANSFER).findFirst().orElseThrow();
+        assertTrue(t.proofs().stream().anyMatch(p->transfer.proofs().contains(p.id())&&p.kind()==ProofKind.RESOLVED_TARGET&&!p.dependencies().isEmpty()));
         var p=t.regions().stream().filter(r->r.kind()==RegionKind.PARAGRAPH).findFirst().orElseThrow();
         var boundary=t.boundaries().stream().filter(b->b.region().equals(p.id())).findFirst().orElseThrow();
         var list=new ArrayList<>(t.boundaries());list.remove(boundary);
