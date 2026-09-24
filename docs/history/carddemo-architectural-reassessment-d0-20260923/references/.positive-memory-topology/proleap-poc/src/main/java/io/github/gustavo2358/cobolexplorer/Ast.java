@@ -1,0 +1,813 @@
+package io.github.gustavo2358.cobolexplorer;
+
+import java.util.*;
+
+/** Semantic COBOL AST used by the explorer and by future analysis phases. */
+public final class Ast {
+    private Ast() {}
+
+    public record SourceSpan(int startLine, int startColumn, int endLine, int endColumn,
+                             int startToken, int endToken) {}
+
+    public record ParseTreeOrigin(int rootNodeId, String grammarRule, int subtreeNodeCount) {}
+
+    public record SourceLocation(String file, int startLine, int startColumn,
+                                 int endLine, int endColumn) {}
+
+    public record CopyFrame(String includingFile, String requestedName, String includedFile,
+                            int includeLine) {}
+
+    public record SourceProvenance(SourceLocation expanded, SourceLocation original,
+                                   List<CopyFrame> includeChain, boolean exact) {
+        public SourceProvenance { includeChain = List.copyOf(includeChain); }
+    }
+
+    public record Meta(int id, SourceSpan span, ParseTreeOrigin origin,
+                       SourceProvenance provenance) {
+        public Meta(int id, SourceSpan span, ParseTreeOrigin origin) {
+            this(id, span, origin, new SourceProvenance(
+                    new SourceLocation("<unknown>", span.startLine(), span.startColumn(), span.endLine(), span.endColumn()),
+                    new SourceLocation("<unknown>", span.startLine(), span.startColumn(), span.endLine(), span.endColumn()),
+                    List.of(), false));
+        }
+    }
+
+    public sealed interface Node permits Program, Division, Section, FileBinding, FileDescription, FileAreaSharing, FileRecordClause, FileAuxiliary, UseClause,
+            DataEntry, Paragraph, Sentence, CallArgument, EvaluateBranch, DataQualifier,
+            SubscriptGroup, ReferenceModification, ProcedureQualifier, ProcedureReference,
+            ProcedureSignature, ProcedureParameter, StatementOperand, StatementClause, SearchWhen,
+            Statement, Expression, DataClause {
+        Meta meta();
+    }
+
+    public enum DivisionKind { IDENTIFICATION, ENVIRONMENT, DATA, PROCEDURE }
+    public enum SentenceTerminator { PERIOD, END_OF_PROCEDURE }
+    public enum PassingMode { REFERENCE, VALUE, CONTENT }
+    public enum EmbeddedLanguage { SQL, CICS, SQLIMS, DLI, UNKNOWN }
+    /** Syntactic form only; linkage is compiler-option-dependent and belongs to resolution. */
+    public enum CallTargetSyntax { LITERAL_PROGRAM_NAME, IDENTIFIER_OR_EXPRESSION }
+    public enum PerformKind { INLINE, PROCEDURE }
+    /** Typed pre-binding context of a PERFORM control expression. */
+    public enum PerformControlContext { VALUE, CONDITION, CONTROL_VARIABLE, FROM, BY }
+    public enum PerformRepetition { ONCE, UNTIL, TIMES, VARYING, UNKNOWN }
+    public enum PerformTestMode { BEFORE, AFTER }
+    public enum GoToKind { SIMPLE, DEPENDING_ON }
+    public enum QualifierConnector { OF, IN }
+    /**
+     * Namespace knowledge the surface AST is able to hold about one written qualifier.
+     * <p>{@link #UNSPECIFIED} is a surface fact, not a binding result: the written qualifier
+     * was preserved, but the parse tree provides no evidence to classify it as DATA, FILE or
+     * MNEMONIC (all three parse through the same word-shaped branch in the current grammar).
+     * Downstream consumers apply a compatibility-preserving mapping until the namespace
+     * question is answerable (see BACKLOG-RES-004 for the DATA/FILE widening).</p>
+     */
+    public enum QualifierTarget { DATA, FILE, DATA_OR_FILE, UNSPECIFIED }
+    public enum ReferenceUnderstanding { STRUCTURED, PRESERVED }
+    public enum OperationCategory { RELATIONAL, OTHER }
+    /** Semantic context supplied by the typed statement production; this is not a binding result. */
+    public enum StatementOperandContext { DEFAULT, SET_CONDITION_TARGET, SET_DATA_OR_INDEX, FILE_RECORD, FILE_INTO, FILE_FROM, FILE_KEY, FILE_ADVANCING }
+    /** Context of a WHEN selector derived from its typed evaluateCondition and matching subject position. */
+    public enum EvaluateSelectorContext { BOOLEAN_SUBJECT_NOMINAL, VALUE_COMPARISON, SIMPLE_LITERAL, OTHER }
+    public enum DataSectionKind { FILE, DATABASE, WORKING_STORAGE, LINKAGE, COMMUNICATION, LOCAL_STORAGE, SCREEN, REPORT, PROGRAM_LIBRARY }
+    public enum DataLevelKind { GROUP_OR_ELEMENTARY, STANDALONE_77, RENAMES_66, CONDITION_88, OPAQUE }
+    public enum CallArgumentKind { VALUE, OMITTED, ADDRESS_OF, LENGTH_OF }
+    public enum DeclarationVisibility { LOCAL, GLOBAL, EXTERNAL, CONFLICTING }
+
+    public record ProgramAttributes(boolean common, boolean initial, boolean recursive,
+                                    boolean library, boolean definition, String writtenText) {
+        public ProgramAttributes { writtenText = Objects.requireNonNullElse(writtenText, ""); }
+        public static ProgramAttributes none() {
+            return new ProgramAttributes(false, false, false, false, false, "");
+        }
+    }
+
+    public record Program(Meta meta, String name, ProgramAttributes attributes,
+                          List<Division> divisions, UnitInputProof inputProof) implements Node {
+        public Program {
+            attributes = Objects.requireNonNull(attributes, "attributes");
+            inputProof = Objects.requireNonNull(inputProof, "inputProof");
+            divisions = List.copyOf(divisions);
+        }
+        public Program(Meta meta, String name, ProgramAttributes attributes, List<Division> divisions) {
+            this(meta, name, attributes, divisions, UnitInputProof.unknown());
+        }
+        public Program(Meta meta, String name, List<Division> divisions) {
+            this(meta, name, ProgramAttributes.none(), divisions);
+        }
+    }
+
+    /** Non-node relation: the primary entry of the nondeclarative procedure body.
+     * It neither adds a traversal edge nor duplicates the target statement. */
+    public record ProcedureEntry(Optional<Integer> startStatementId,
+                                 boolean signatureClausesPresent, boolean declarativesPresent,
+                                 EntryInputProof inputProof) {
+        public ProcedureEntry {
+            startStatementId = Objects.requireNonNull(startStatementId, "startStatementId");
+            inputProof = Objects.requireNonNull(inputProof, "inputProof");
+        }
+        public ProcedureEntry(Optional<Integer> startStatementId, boolean signatureClausesPresent, boolean declarativesPresent) {
+            this(startStatementId, signatureClausesPresent, declarativesPresent, new EntryInputProof(List.of()));
+        }
+    }
+
+    public record Division(Meta meta, DivisionKind divisionKind, List<Node> children,
+                           Optional<ProcedureEntry> procedureEntry, Map<Integer, Integer> normalContinuations,
+                           Map<Integer,Integer> ordinaryContinuations,Map<Integer,Integer> embeddedContinuations,
+                           Map<Integer,Integer> embeddedOrdinaryContinuations, Set<Integer> normalCompletionStatements) implements Node {
+        public Division {
+            children = List.copyOf(children);
+            procedureEntry = Objects.requireNonNull(procedureEntry, "procedureEntry");
+            normalContinuations = Map.copyOf(normalContinuations);
+            ordinaryContinuations = Map.copyOf(ordinaryContinuations);
+            embeddedContinuations = Map.copyOf(embeddedContinuations);
+            embeddedOrdinaryContinuations = Map.copyOf(embeddedOrdinaryContinuations);
+            normalCompletionStatements=Set.copyOf(normalCompletionStatements);
+            if (procedureEntry.isPresent() && divisionKind != DivisionKind.PROCEDURE)
+                throw new IllegalArgumentException("only PROCEDURE DIVISION has an executable entry");
+        }
+        public Division(Meta meta,DivisionKind kind,List<Node> children,Optional<ProcedureEntry> entry,Map<Integer,Integer> normal,Map<Integer,Integer> ordinary,Map<Integer,Integer> embedded,Map<Integer,Integer> embeddedOrdinary) {this(meta,kind,children,entry,normal,ordinary,embedded,embeddedOrdinary,Set.of());}
+        public Division(Meta meta,DivisionKind kind,List<Node> children,Optional<ProcedureEntry> entry,Map<Integer,Integer> normal,Map<Integer,Integer> ordinary) {this(meta,kind,children,entry,normal,ordinary,Map.of(),Map.of());}
+        /** Paragraph-local completion stays distinct from ordinary flow across paragraph boundaries. */
+        public Division(Meta meta, DivisionKind kind, List<Node> children,Optional<ProcedureEntry> entry,Map<Integer,Integer> next) {
+            this(meta,kind,children,entry,next,next);
+        }
+        public Division(Meta meta, DivisionKind divisionKind, List<Node> children,
+                        Optional<ProcedureEntry> procedureEntry) {
+            this(meta, divisionKind, children, procedureEntry, Map.of());
+        }
+        public Division(Meta meta, DivisionKind divisionKind, List<Node> children) {
+            this(meta, divisionKind, children, Optional.empty(), Map.of());
+        }
+    }
+
+    public enum UseKind { AFTER_EXCEPTION, DEBUGGING }
+    /** USE is declarative metadata, never an executable statement. */
+    public record UseClause(Meta meta,UseKind kind,boolean global,FileOpenMode mode,List<FileReference> files) implements Node {
+        public UseClause {files=List.copyOf(files);}
+    }
+
+    public record Section(Meta meta, String name, DataSectionKind dataSectionKind, List<Node> children) implements Node {
+        public Section { children = List.copyOf(children); }
+        public Section(Meta meta, String name, List<Node> children) { this(meta, name, null, children); }
+    }
+
+    public enum FileAuxKind { RERUN, SAME_AREA, SAME_RECORD_AREA, SAME_SORT_AREA, SAME_SORT_MERGE_AREA,
+        MULTIPLE_FILE, APPLY_WRITE_ONLY, COMMITMENT_CONTROL, RESERVE, PADDING, RECORD_DELIMITER,
+        PASSWORD, BLOCK, RECORD, LABEL_RECORDS, VALUE_OF, DATA_RECORDS, LINAGE, RECORDING_MODE, CODE_SET, REPORT }
+    public enum FileTrigger { NONE, SORT_MERGE, RECORD_COUNT, END_VOLUME, UNSUPPORTED }
+    public record FileAuxParameter(String role,String value) { }
+    public record FileAuxData(String role,DataReference reference) { }
+    public record FileAuxiliary(Meta meta,FileAuxKind kind,List<FileReference> files,List<FileAuxData> data,
+            List<FileAuxParameter> parameters,Optional<FileAssignment> checkpoint,FileTrigger trigger) implements Node {
+        public FileAuxiliary {files=List.copyOf(files);data=List.copyOf(data);parameters=List.copyOf(parameters);}
+    }
+    public enum FileAreaKind { AREA, RECORD, SORT, SORT_MERGE }
+    public record FileAreaSharing(Meta meta,FileAreaKind kind,List<FileReference> files) implements Node {
+        public FileAreaSharing { files=List.copyOf(files); }
+    }
+    public enum FileKind { FD, SD, UNKNOWN }
+    public enum FileOrganization { SEQUENTIAL, LINE_SEQUENTIAL, INDEXED, RELATIVE, UNSPECIFIED, UNSUPPORTED }
+    public enum FileAccessMode { SEQUENTIAL, RANDOM, DYNAMIC, UNSPECIFIED, UNSUPPORTED }
+    public enum FileReferenceRole { RECORD_KEY, ALTERNATE_RECORD_KEY, RELATIVE_KEY, FILE_STATUS, ADDITIONAL_STATUS }
+    public enum AssignmentForm { IBM_NAME, OUTSIDE_N_LR, MISSING }
+    public record FileAssignment(AssignmentForm form, String original, String externalFileName) { }
+    public record FileClauseReference(FileReferenceRole role, DataReference reference, boolean duplicates) { }
+    public record FileControl(boolean optional, FileAssignment assignment, FileOrganization organization,
+                              FileAccessMode accessMode, List<FileClauseReference> references,List<FileAuxiliary> auxiliary) {
+        public FileControl { references = List.copyOf(references);auxiliary=List.copyOf(auxiliary); }
+        public FileControl(boolean optional,FileAssignment assignment,FileOrganization organization,FileAccessMode accessMode,List<FileClauseReference> references){this(optional,assignment,organization,accessMode,references,List.of());}
+    }
+    public record FileBinding(Meta meta, String logicalName, String assignment, FileControl control) implements Node {
+        public FileBinding(Meta meta, String logicalName, String assignment) { this(meta, logicalName, assignment, null); }
+    }
+
+    public enum FileRecordForm { FIXED, VARYING, RANGE }
+    public record FileRecordClause(Meta meta, FileRecordForm form, Optional<java.math.BigInteger> minimum,
+            Optional<java.math.BigInteger> maximum, Optional<DataReference> dependingOn) implements Node { }
+    public record FileDescription(Meta meta, String fileName, FileKind kind, DeclarationVisibility visibility,
+                                  List<DataEntry> entries, List<FileRecordClause> recordClauses,List<FileAuxiliary> auxiliary) implements Node {
+        public FileDescription { entries = List.copyOf(entries); recordClauses=List.copyOf(recordClauses);auxiliary=List.copyOf(auxiliary); }
+        public FileDescription(Meta meta,String fileName,FileKind kind,DeclarationVisibility visibility,List<DataEntry> entries,List<FileRecordClause> recordClauses){this(meta,fileName,kind,visibility,entries,recordClauses,List.of());}
+        public FileDescription(Meta meta, String fileName, FileKind kind, DeclarationVisibility visibility, List<DataEntry> entries) {
+            this(meta,fileName,kind,visibility,entries,List.of());
+        }
+        public FileDescription(Meta meta, String fileName, DeclarationVisibility visibility, List<DataEntry> entries) {
+            this(meta, fileName, FileKind.UNKNOWN, visibility, entries);
+        }
+        public FileDescription(Meta meta, String fileName, List<DataEntry> entries) {
+            this(meta, fileName, DeclarationVisibility.LOCAL, entries);
+        }
+    }
+
+    public record DataEntry(Meta meta, String level, DataLevelKind levelKind, String name, boolean filler,
+                            DeclarationVisibility visibility, String declaration,
+                            List<DataClause> clauses, List<DataEntry> children) implements Node {
+        public DataEntry {
+            clauses = List.copyOf(clauses);
+            children = List.copyOf(children);
+        }
+        public DataEntry(Meta meta, String level, DataLevelKind levelKind, String name, boolean filler,
+                         String declaration, List<DataClause> clauses, List<DataEntry> children) {
+            this(meta, level, levelKind, name, filler, DeclarationVisibility.LOCAL,
+                    declaration, clauses, children);
+        }
+    }
+    public sealed interface DataClause extends Node permits PictureClause, UsageClause, ValueClause,
+            RedefinesClause, RenamesClause, OccursClause, PreservedDataClause {}
+    public record PictureClause(Meta meta, String picture, String writtenText,
+                                Optional<Integer> textExtent, Optional<Integer> integerDigits) implements DataClause {
+        public PictureClause { textExtent = Objects.requireNonNull(textExtent); integerDigits=Objects.requireNonNull(integerDigits); }
+        public PictureClause(Meta meta,String picture,String writtenText,Optional<Integer> textExtent) { this(meta,picture,writtenText,textExtent,Optional.empty()); }
+        public PictureClause(Meta meta, String picture, String writtenText) {
+            this(meta, picture, writtenText, Optional.empty());
+        }
+    }
+    public record UsageClause(Meta meta, String usage, String writtenText, boolean display) implements DataClause {
+        public UsageClause(Meta meta, String usage, String writtenText) { this(meta, usage, writtenText, false); }
+    }
+    public record ValueClause(Meta meta, List<String> values, String writtenText, Optional<LogicalText> logicalText) implements DataClause {
+        public ValueClause { values = List.copyOf(values); logicalText=Objects.requireNonNull(logicalText); }
+        public ValueClause(Meta meta,List<String> values,String writtenText) {this(meta,values,writtenText,Optional.empty());}
+    }
+    public record RedefinesClause(Meta meta, DataReference target, String writtenText) implements DataClause {}
+    public record RenamesClause(Meta meta, DataReference from, DataReference through,
+                                String writtenText) implements DataClause {}
+    public record OccursClause(Meta meta, Expression minimum, Expression maximum,
+                               DataReference dependingOn, List<DataReference> keys,
+                               List<IndexReference> indexes, String writtenText) implements DataClause {
+        public OccursClause {
+            keys = List.copyOf(keys);
+            indexes = List.copyOf(indexes);
+        }
+    }
+    public record PreservedDataClause(Meta meta, String grammarRule, String writtenText,
+                                      List<Node> recognizedReferences) implements DataClause {
+        public PreservedDataClause { recognizedReferences = List.copyOf(recognizedReferences); }
+    }
+    public record ProcedureSignature(Meta meta, boolean chaining, List<ProcedureParameter> parameters,
+                                     DataReference returning, String writtenText) implements Node {
+        public ProcedureSignature { parameters = List.copyOf(parameters); }
+    }
+    public record ProcedureParameter(Meta meta, PassingMode passingMode, Expression reference,
+                                     boolean optional, boolean any, String writtenText) implements Node {}
+
+    public record Paragraph(Meta meta, String name, List<Sentence> sentences,
+                            Optional<Integer> executableEntry) implements Node {
+        public Paragraph { sentences = List.copyOf(sentences); Objects.requireNonNull(executableEntry); }
+        public Paragraph(Meta meta, String name, List<Sentence> sentences) {
+            this(meta, name, sentences, Optional.empty());
+        }
+    }
+
+    public record Sentence(Meta meta, List<Statement> statements, SentenceTerminator terminator,
+                           SourceSpan terminatorSpan) implements Node {
+        public Sentence { statements = List.copyOf(statements); }
+    }
+
+    public sealed interface Statement extends Node permits CallStatement, IfStatement, EvaluateStatement,
+            PerformStatement, GoToStatement, MoveStatement, EmbeddedLanguageStatement,
+            NextSentenceStatement, ModeledStatement, PreservedStatement, SearchStatement,
+            UnsupportedStatement, GobackStatement {}
+
+    /** Logical end of the current program invocation; no local continuation.
+     * Caller/runtime disposition and lifecycle effects are separate concerns. */
+    public record GobackStatement(Meta meta) implements Statement {}
+
+    public sealed interface Expression extends Node permits LiteralExpression, DataReference,
+            OperationExpression, FunctionExpression, SpecialRegisterExpression,
+            FileReference, ProgramReference, IndexReference, NamedReference,
+            PreservedExpression, RawExpression, LogicalCondition, GroupedCondition,
+            RelationCondition, NegatedCondition, ContextualConditionTail,
+            DistributedOperandGroup, ClassCondition {}
+
+    public record CallStatement(Meta meta, CallTargetSyntax targetSyntax, Expression target,
+                                List<CallArgument> arguments, Expression returning,
+                                List<Statement> exceptionFlow, CallSurface surface,
+                                Optional<LogicalText> literalText) implements Statement {
+        public CallStatement {
+            arguments = List.copyOf(arguments);
+            exceptionFlow = List.copyOf(exceptionFlow);
+        }
+    }
+
+    /** Written clause presence, obtained from direct CALL parser contexts. */
+    public record CallSurface(boolean using, boolean returning, boolean onException,
+                              boolean notOnException, boolean onOverflow) {
+        public boolean hasHandlers() { return onException || notOnException || onOverflow; }
+    }
+
+    public record CallArgument(Meta meta, PassingMode passingMode, CallArgumentKind argumentKind,
+                               Expression value, String writtenText) implements Node {}
+
+    public enum BranchPresence { ABSENT, PRESENT, UNKNOWN }
+
+    public record IfStatement(Meta meta, Expression condition, List<Statement> thenBranch,
+                              List<Statement> elseBranch, boolean explicitlyTerminated,
+                              BranchPresence elsePresence, SourceProvenance thenProvenance,
+                              SourceProvenance elseProvenance) implements Statement {
+        public IfStatement {
+            thenBranch = List.copyOf(thenBranch);
+            elseBranch = List.copyOf(elseBranch);
+            Objects.requireNonNull(elsePresence);
+            Objects.requireNonNull(thenProvenance);
+            Objects.requireNonNull(elseProvenance);
+        }
+        /** Legacy/manual ASTs cannot prove lexical absence from an empty list. */
+        public IfStatement(Meta meta, Expression condition, List<Statement> thenBranch,
+                           List<Statement> elseBranch, boolean explicitlyTerminated) {
+            this(meta, condition, thenBranch, elseBranch, explicitlyTerminated,
+                    BranchPresence.UNKNOWN, meta.provenance(), meta.provenance());
+        }
+    }
+
+    public record EvaluateStatement(Meta meta, List<Expression> subjects, List<EvaluateBranch> branches,
+                                    boolean explicitlyTerminated, boolean simpleSubject) implements Statement {
+        public EvaluateStatement {
+            subjects = List.copyOf(subjects);
+            branches = List.copyOf(branches);
+        }
+    }
+
+    public record EvaluateBranch(Meta meta, List<EvaluateSelector> selectors,
+                                 String writtenSelector, boolean other,
+                                 List<Statement> statements) implements Node {
+        public EvaluateBranch {
+            selectors = List.copyOf(selectors);
+            statements = List.copyOf(statements);
+        }
+        /** Compatibility view for consumers interested only in expression structure. */
+        public List<Expression> selectorExpressions() { return selectors.stream().map(EvaluateSelector::expression).toList(); }
+        public String selector() { return writtenSelector; }
+    }
+
+    /** A WHEN selection object and the zero-based EVALUATE subject it corresponds to through ALSO. */
+    public record EvaluateSelector(Expression expression, int subjectIndex,
+                                   EvaluateSelectorContext context) {}
+
+    /** Metadata for a PERFORM control; it is not an AST node and consumes no ID. */
+    public record PerformControl(Expression expression, PerformControlContext context,int varyingLevel) {
+        public PerformControl(Expression expression,PerformControlContext context){this(expression,context,0);}
+        public PerformControl {
+            expression = Objects.requireNonNull(expression, "expression");
+            context = Objects.requireNonNull(context, "context");
+            if(varyingLevel<0)throw new IllegalArgumentException("negative varying level");
+        }
+    }
+
+    public record PerformStatement(Meta meta, PerformKind performKind, ProcedureReference fromReference,
+                                   ProcedureReference throughReference, String writtenControl,
+                                   List<Expression> controlExpressions,
+                                   List<PerformControl> controls,
+                                   List<Statement> inlineBody, PerformRepetition repetition, PerformTestMode testMode) implements Statement {
+        public PerformStatement {
+            Objects.requireNonNull(repetition); Objects.requireNonNull(testMode);
+            controlExpressions = List.copyOf(controlExpressions);
+            controls = List.copyOf(controls);
+            if (!controls.stream().map(PerformControl::expression).toList().equals(controlExpressions))
+                throw new IllegalArgumentException("PERFORM controls must preserve control expression order");
+            inlineBody = List.copyOf(inlineBody);
+        }
+        public PerformStatement(Meta meta, PerformKind performKind, ProcedureReference fromReference,
+                                ProcedureReference throughReference, String writtenControl,
+                                List<Expression> controlExpressions, List<PerformControl> controls, List<Statement> inlineBody) {
+            this(meta,performKind,fromReference,throughReference,writtenControl,controlExpressions,controls,inlineBody,
+                controlExpressions.isEmpty()?PerformRepetition.ONCE:PerformRepetition.UNKNOWN,PerformTestMode.BEFORE);
+        }
+        public PerformStatement(Meta meta, PerformKind performKind, ProcedureReference fromReference,
+                                ProcedureReference throughReference, String writtenControl,
+                                List<Expression> controlExpressions, List<Statement> inlineBody) {
+            this(meta, performKind, fromReference, throughReference, writtenControl, controlExpressions,
+                    controlExpressions.stream().map(expression ->
+                            new PerformControl(expression, PerformControlContext.VALUE)).toList(), inlineBody);
+        }
+        public String fromProcedure() { return fromReference == null ? "" : fromReference.writtenText(); }
+        public String throughProcedure() { return throughReference == null ? "" : throughReference.writtenText(); }
+        public String control() { return writtenControl; }
+    }
+
+    public record GoToStatement(Meta meta, GoToKind goToKind, List<ProcedureReference> targets,
+                                Expression dependingOn) implements Statement {
+        public GoToStatement { targets = List.copyOf(targets); }
+    }
+
+    public record MoveStatement(Meta meta, Expression source, List<Expression> targets,
+                                boolean corresponding) implements Statement {
+        public MoveStatement { targets = List.copyOf(targets); }
+    }
+
+    /** Preserved payload with optional host syntax. Platform meaning belongs to its analyzer. */
+    public enum EmbeddedHostRole { READ, WRITE, READ_WRITE }
+    public record EmbeddedHostOperand(String option,int optionStart,EmbeddedHostRole role,DataReference reference) { }
+    public record EmbeddedLanguageStatement(Meta meta, EmbeddedLanguage language,
+                                            String rawText,List<EmbeddedHostOperand> hostOperands) implements Statement {
+        public EmbeddedLanguageStatement {hostOperands=List.copyOf(hostOperands);}
+        public EmbeddedLanguageStatement(Meta meta,EmbeddedLanguage language,String rawText){this(meta,language,rawText,List.of());}
+    }
+
+    public record NextSentenceStatement(Meta meta) implements Statement {}
+
+    /** Typed SEARCH statement boundary; {@code all} is structural, not validation. */
+    public record SearchStatement(Meta meta, boolean all, DataReference searchedReference,
+                                  DataReference varying, StatementClause atEnd,
+                                  List<SearchWhen> whens) implements Statement {
+        public SearchStatement {
+            whens = List.copyOf(whens);
+        }
+    }
+
+    /** One written SEARCH WHEN branch, owning its condition and branch actions. */
+    public record SearchWhen(Meta meta, Expression condition,
+                             List<Statement> statements) implements Node {
+        public SearchWhen {
+            statements = List.copyOf(statements);
+        }
+    }
+
+    public record StatementOperand(Meta meta, String grammarRole, StatementOperandContext context,
+                                   Node value) implements Node {
+        public StatementOperand(Meta meta, String grammarRole, Node value) {
+            this(meta, grammarRole, StatementOperandContext.DEFAULT, value);
+        }
+    }
+
+    public record StatementClause(Meta meta, String grammarRule, String writtenText,
+                                  List<Node> recognizedNodes,
+                                  List<Statement> nestedStatements) implements Node {
+        public StatementClause {
+            recognizedNodes = List.copyOf(recognizedNodes);
+            nestedStatements = List.copyOf(nestedStatements);
+        }
+    }
+
+    public enum FileCommand { OPEN, READ, WRITE, REWRITE, DELETE_RECORD, START, CLOSE, RELEASE, RETURN, SORT, MERGE }
+    public enum FileOpenMode { INPUT, OUTPUT, IO, EXTEND, UNSPECIFIED }
+    public enum FileSyntaxProfile { N_LR, UNSUPPORTED }
+    public enum FileOption { NEXT, REVERSED, NO_REWIND, LOCK, REEL, UNIT, FOR_REMOVAL, BEFORE_ADVANCING, AFTER_ADVANCING, PAGE }
+    public enum FileKeyRelation { UNSPECIFIED, EQUAL, GREATER, GREATER_OR_EQUAL }
+    public enum FileOperandRole { RECORD, INTO, FROM, KEY, ADVANCING }
+    public enum FileHandlerKind { AT_END, NOT_AT_END, INVALID_KEY, NOT_INVALID_KEY, AT_END_OF_PAGE, NOT_AT_END_OF_PAGE }
+    public enum FileRole { DIRECT, WORK, INPUT, OUTPUT }
+    public enum FileProcedurePhase { INPUT, OUTPUT }
+    public record FileProcedureSurface(FileProcedurePhase phase,ProcedureReference start,Optional<ProcedureReference> end) {
+        public FileProcedureSurface {Objects.requireNonNull(phase);Objects.requireNonNull(start);Objects.requireNonNull(end);}
+    }
+    public record FileIoOperand(Node reference, FileOpenMode mode, List<FileOption> options,FileRole role) {
+        public FileIoOperand(Node reference,FileOpenMode mode,List<FileOption> options){this(reference,mode,options,FileRole.DIRECT);}
+        public FileIoOperand { options=List.copyOf(options); }
+    }
+    public record FileDataOperand(FileOperandRole role, Node value) { }
+    public record FileHandler(FileHandlerKind kind, StatementClause clause) { }
+    /** Aliases existing operand/clause nodes; traversal visits their original owners exactly once. */
+    public record FileIoSurface(FileCommand command, List<FileIoOperand> files, FileSyntaxProfile profile,
+            List<FileDataOperand> operands, List<FileOption> options, FileKeyRelation keyRelation,
+            boolean explicitTerminator, List<FileHandler> handlers,List<FileProcedureSurface> procedures,List<String> gapCodes) {
+        public FileIoSurface(FileCommand command,List<FileIoOperand> files,FileSyntaxProfile profile,List<FileDataOperand> operands,List<FileOption> options,FileKeyRelation keyRelation,boolean explicitTerminator,List<FileHandler> handlers){this(command,files,profile,operands,options,keyRelation,explicitTerminator,handlers,List.of(),List.of());}
+        public FileIoSurface { files=List.copyOf(files);operands=List.copyOf(operands);options=List.copyOf(options);handlers=List.copyOf(handlers);procedures=List.copyOf(procedures);gapCodes=List.copyOf(gapCodes); }
+    }
+
+    public record ModeledStatement(Meta meta, String grammarRule, String writtenText,
+                                   List<StatementOperand> operands,
+                                   List<StatementClause> clauses, Optional<StatementEffectSummary> effects,
+                                   Optional<FileIoSurface> fileIo) implements Statement {
+        public ModeledStatement(Meta meta,String grammarRule,String writtenText,List<StatementOperand> operands,List<StatementClause> clauses,Optional<StatementEffectSummary> effects) {
+            this(meta,grammarRule,writtenText,operands,clauses,effects,Optional.empty());
+        }
+        public ModeledStatement(Meta meta,String grammarRule,String writtenText,List<StatementOperand> operands,List<StatementClause> clauses) {
+            this(meta,grammarRule,writtenText,operands,clauses,Optional.empty());
+        }
+        public ModeledStatement {
+            Objects.requireNonNull(effects);Objects.requireNonNull(fileIo);
+            operands = List.copyOf(operands);
+            clauses = List.copyOf(clauses);
+        }
+    }
+
+    public record PreservedStatement(Meta meta, String grammarRule, String writtenText,
+                                     List<StatementOperand> operands,
+                                     List<StatementClause> clauses, Optional<StatementEffectSummary> effects,
+                                   Optional<FileIoSurface> fileIo) implements Statement {
+        public PreservedStatement(Meta meta,String grammarRule,String writtenText,List<StatementOperand> operands,List<StatementClause> clauses,Optional<StatementEffectSummary> effects) {
+            this(meta,grammarRule,writtenText,operands,clauses,effects,Optional.empty());
+        }
+        public PreservedStatement(Meta meta,String grammarRule,String writtenText,List<StatementOperand> operands,List<StatementClause> clauses) {
+            this(meta,grammarRule,writtenText,operands,clauses,Optional.empty());
+        }
+        public PreservedStatement {
+            Objects.requireNonNull(effects);Objects.requireNonNull(fileIo);
+            operands = List.copyOf(operands);
+            clauses = List.copyOf(clauses);
+        }
+    }
+
+    /** Keeps unsupported syntax visible and retains any directly nested statements. */
+    public record UnsupportedStatement(Meta meta, String grammarRule, String rawText,
+                                       List<Node> recognizedReferences,
+                                       List<Statement> nestedStatements) implements Statement {
+        public UnsupportedStatement {
+            recognizedReferences = List.copyOf(recognizedReferences);
+            nestedStatements = List.copyOf(nestedStatements);
+        }
+    }
+
+    /** Logical text is established only by the basic literal production, never by Java value type. */
+    public record LogicalText(String value) {
+        public LogicalText { value = Objects.requireNonNull(value); }
+        public int extent() { return value.codePointCount(0, value.length()); }
+    }
+    public record LiteralExpression(Meta meta, String value, String rawLexeme,
+                                    Optional<LogicalText> logicalText, Optional<java.math.BigInteger> integerValue) implements Expression {
+        public LiteralExpression { logicalText = Objects.requireNonNull(logicalText); integerValue=Objects.requireNonNull(integerValue); }
+        public LiteralExpression(Meta meta,String value,String rawLexeme,Optional<LogicalText> logicalText) { this(meta,value,rawLexeme,logicalText,Optional.empty()); }
+        public LiteralExpression(Meta meta, String value, String rawLexeme) {
+            this(meta, value, rawLexeme, Optional.empty());
+        }
+    }
+    public record DataQualifier(Meta meta, QualifierConnector connector, QualifierTarget target,
+                                DataReference reference,
+                                String writtenText) implements Node {
+        public String name() { return reference.baseName(); }
+    }
+    public record SubscriptGroup(Meta meta, List<Expression> subscripts,
+                                 String writtenText) implements Node {
+        public SubscriptGroup { subscripts = List.copyOf(subscripts); }
+    }
+    public record ReferenceModification(Meta meta, Expression offset, Expression length,
+                                        String writtenText) implements Node {}
+    public record DataReference(Meta meta, String baseName, String writtenText,
+                                List<DataQualifier> qualifiers, List<SubscriptGroup> subscriptGroups,
+                                ReferenceModification referenceModification,
+                                ReferenceUnderstanding understanding) implements Expression {
+        public DataReference {
+            qualifiers = List.copyOf(qualifiers);
+            subscriptGroups = List.copyOf(subscriptGroups);
+        }
+        public String writtenName() { return writtenText; }
+    }
+    public record OperationExpression(Meta meta, OperationCategory category, String operator,
+                                      List<Expression> operands, String writtenText) implements Expression {
+        public OperationExpression {
+            category = Objects.requireNonNull(category, "category");
+            operands = List.copyOf(operands);
+        }
+        public OperationExpression(Meta meta, String operator, List<Expression> operands,
+                                   String writtenText) {
+            this(meta, OperationCategory.OTHER, operator, operands, writtenText);
+        }
+    }
+    public record FunctionExpression(Meta meta, String functionName, List<Expression> arguments,
+                                     ReferenceModification referenceModification,
+                                     String writtenText) implements Expression {
+        public FunctionExpression { arguments = List.copyOf(arguments); }
+    }
+    public record SpecialRegisterExpression(Meta meta, String registerName,
+                                            List<Expression> operands,
+                                            String writtenText) implements Expression {
+        public SpecialRegisterExpression { operands = List.copyOf(operands); }
+    }
+    public record ProcedureQualifier(Meta meta, QualifierConnector connector, String sectionName,
+                                     String writtenText) implements Node {}
+    public record ProcedureReference(Meta meta, String baseName, String writtenText,
+                                     ProcedureQualifier qualifier) implements Node {}
+    public record FileReference(Meta meta, String baseName, String writtenText) implements Expression {}
+    public record ProgramReference(Meta meta, String programName, String writtenText) implements Expression {}
+    public record IndexReference(Meta meta, String indexName, String writtenText) implements Expression {}
+    public record NamedReference(Meta meta, String grammarKind, String writtenText) implements Expression {}
+    public record PreservedExpression(Meta meta, String grammarRule, String writtenText,
+                                      List<Expression> recognizedOperands,
+                                      ReferenceUnderstanding understanding) implements Expression {
+        public PreservedExpression { recognizedOperands = List.copyOf(recognizedOperands); }
+    }
+    public record RawExpression(Meta meta, String role, String rawText) implements Expression {}
+
+    /**
+     * Surface connector of a combined condition. Precedence is structural: an AND
+     * {@link LogicalCondition} nests under an OR {@link LogicalCondition}; conditions
+     * are never flattened into a mixed-connector list.
+     */
+    public enum LogicalConnector { AND, OR }
+
+    /**
+     * Explicit AND/OR condition with a single connector and n-ary operands.
+     * Operands are source-ordered condition fragments; a nested
+     * {@code LogicalCondition} carries the higher-precedence connector.
+     */
+    public record LogicalCondition(Meta meta, LogicalConnector connector,
+                                   List<Expression> operands, String writtenText) implements Expression {
+        public LogicalCondition {
+            connector = Objects.requireNonNull(connector, "connector");
+            operands = List.copyOf(operands);
+        }
+    }
+
+    /**
+     * Parentheses written as an explicit condition group. The opening and closing
+     * parenthesis spans come from the written tokens; the group is a boundary that
+     * the future post-binding projector uses to close the abbreviation state.
+     */
+    public record GroupedCondition(Meta meta, Expression inner, SourceSpan openParenSpan,
+                                   SourceSpan closeParenSpan, String writtenText) implements Expression {
+        public GroupedCondition {
+            inner = Objects.requireNonNull(inner, "inner");
+            openParenSpan = Objects.requireNonNull(openParenSpan, "openParenSpan");
+            closeParenSpan = Objects.requireNonNull(closeParenSpan, "closeParenSpan");
+        }
+    }
+
+    /**
+     * Surface relation condition preserving exactly what was written. {@code null}
+     * {@code subject} means the subject is OMITTED (abbreviated relation); {@code null}
+     * {@code relationalOperator} means the operator is OMITTED. No synthetic node is
+     * created for omitted parts. A relational NOT is part of {@code relationalOperator}
+     * canonical text; a logical NOT is a separate {@link NegatedCondition}.
+     */
+    public enum RelationOperator { EQUAL, OTHER, UNAVAILABLE }
+
+    public record RelationCondition(Meta meta, Expression subject, String relationalOperator,
+                                    Expression object, String writtenText, RelationOperator operatorKind) implements Expression {
+        public RelationCondition {
+            object = Objects.requireNonNull(object, "object");
+            Objects.requireNonNull(operatorKind);
+        }
+        public RelationCondition(Meta meta, Expression subject, String relationalOperator,
+                                 Expression object, String writtenText) {
+            this(meta, subject, relationalOperator, object, writtenText, RelationOperator.UNAVAILABLE);
+        }
+    }
+
+    /** Logical NOT applied only to the immediately following condition fragment. */
+    public record NegatedCondition(Meta meta, Expression operand, String writtenText) implements Expression {
+        public NegatedCondition { operand = Objects.requireNonNull(operand, "operand"); }
+    }
+
+    /**
+     * A written bare nominal in a condition position whose final interpretation
+     * (DATA/INDEX as abbreviated relation object, or CONDITION as a new simple
+     * condition) depends on name binding. The surface AST keeps the alternative
+     * open: this node is neither a condition-name claim nor an abbreviated
+     * relation claim. The inner {@link DataReference} is the written nominal use.
+     */
+    public record ContextualConditionTail(Meta meta, DataReference nominalReference,
+                                          String writtenText) implements Expression {
+        public ContextualConditionTail {
+            nominalReference = Objects.requireNonNull(nominalReference, "nominalReference");
+        }
+    }
+
+    /**
+     * Operand group under a distributed relational operator, as in {@code A = (B OR C)}.
+     * Structurally distinct from {@link GroupedCondition}: the operator is distributed
+     * over the operands and subject/operator remain current after the group closes.
+     * {@code connectors} has {@code operands.size() - 1} entries in source order.
+     */
+    public record DistributedOperandGroup(Meta meta, List<Expression> operands,
+                                          List<LogicalConnector> connectors,
+                                          String writtenText) implements Expression {
+        public DistributedOperandGroup {
+            operands = List.copyOf(operands);
+            connectors = List.copyOf(connectors);
+        }
+    }
+
+    /**
+     * Class condition such as {@code C IS NUMERIC}: a structural simple condition
+     * that terminates the abbreviated relation sequence. Never downgraded to a
+     * contextual tail.
+     */
+    public record ClassCondition(Meta meta, Expression subject, String className, boolean negated,
+                                 String writtenText) implements Expression {
+        public ClassCondition {
+            subject = Objects.requireNonNull(subject, "subject");
+            className = Objects.requireNonNullElse(className, "");
+        }
+    }
+
+    public static List<? extends Node> children(Node node) {
+        if (node instanceof Program n) return n.divisions();
+        if (node instanceof Division n) return n.children();
+        if (node instanceof Section n) return n.children();
+        if (node instanceof FileDescription n) { var result=new ArrayList<Node>(n.recordClauses());result.addAll(n.auxiliary());result.addAll(n.entries());return result; }
+        if (node instanceof FileRecordClause n) return n.dependingOn().stream().toList();
+        if (node instanceof UseClause u) return List.copyOf(u.files());
+        if (node instanceof FileAreaSharing n) return n.files();
+        if(node instanceof FileAuxiliary n){var children=new ArrayList<Node>(n.files());n.data().forEach(d->children.add(d.reference()));return children;}
+        if (node instanceof FileBinding n) {var children=new ArrayList<Node>();if(n.control()!=null){n.control().references().forEach(r->children.add(r.reference()));children.addAll(n.control().auxiliary());}return children;}
+        if (node instanceof DataEntry n) {
+            List<Node> result = new ArrayList<>(n.clauses());
+            result.addAll(n.children());
+            return result;
+        }
+        if (node instanceof Paragraph n) return n.sentences();
+        if (node instanceof Sentence n) return n.statements();
+        if (node instanceof CallStatement n) {
+            List<Node> result = new ArrayList<>();
+            result.add(n.target()); result.addAll(n.arguments());
+            if (n.returning() != null) result.add(n.returning());
+            result.addAll(n.exceptionFlow());
+            return result;
+        }
+        if (node instanceof EmbeddedLanguageStatement n) return n.hostOperands().stream().map(EmbeddedHostOperand::reference).toList();
+        if (node instanceof CallArgument n) return n.value() == null ? List.of() : List.of(n.value());
+        if (node instanceof IfStatement n) {
+            List<Node> result = new ArrayList<>();
+            result.add(n.condition()); result.addAll(n.thenBranch()); result.addAll(n.elseBranch());
+            return result;
+        }
+        if (node instanceof EvaluateStatement n) {
+            List<Node> result = new ArrayList<>(n.subjects()); result.addAll(n.branches()); return result;
+        }
+        if (node instanceof EvaluateBranch n) {
+            List<Node> result = new ArrayList<>(n.selectorExpressions()); result.addAll(n.statements()); return result;
+        }
+        if (node instanceof SearchStatement n) {
+            List<Node> result = new ArrayList<>();
+            result.add(n.searchedReference());
+            if (n.varying() != null) result.add(n.varying());
+            if (n.atEnd() != null) result.add(n.atEnd());
+            result.addAll(n.whens());
+            return result;
+        }
+        if (node instanceof SearchWhen n) {
+            List<Node> result = new ArrayList<>();
+            result.add(n.condition());
+            result.addAll(n.statements());
+            return result;
+        }
+        if (node instanceof PerformStatement n) {
+            List<Node> result = new ArrayList<>();
+            if (n.fromReference() != null) result.add(n.fromReference());
+            if (n.throughReference() != null) result.add(n.throughReference());
+            result.addAll(n.controlExpressions()); result.addAll(n.inlineBody()); return result;
+        }
+        if (node instanceof GoToStatement n) {
+            List<Node> result = new ArrayList<>(n.targets());
+            if (n.dependingOn() != null) result.add(n.dependingOn()); return result;
+        }
+        if (node instanceof MoveStatement n) {
+            List<Node> result = new ArrayList<>(); result.add(n.source()); result.addAll(n.targets()); return result;
+        }
+        if (node instanceof UnsupportedStatement n) {
+            List<Node> result = new ArrayList<>(n.recognizedReferences()); result.addAll(n.nestedStatements()); return result;
+        }
+        if (node instanceof ModeledStatement n) {
+            List<Node> result = new ArrayList<>(n.operands()); result.addAll(n.clauses()); return result;
+        }
+        if (node instanceof PreservedStatement n) {
+            List<Node> result = new ArrayList<>(n.operands()); result.addAll(n.clauses()); return result;
+        }
+        if (node instanceof StatementOperand n) return List.of(n.value());
+        if (node instanceof StatementClause n) {
+            List<Node> result = new ArrayList<>(n.recognizedNodes());
+            result.addAll(n.nestedStatements());
+            return result;
+        }
+        if (node instanceof DataReference n) {
+            List<Node> result = new ArrayList<>(n.qualifiers()); result.addAll(n.subscriptGroups());
+            if (n.referenceModification() != null) result.add(n.referenceModification());
+            return result;
+        }
+        if (node instanceof DataQualifier n) return List.of(n.reference());
+        if (node instanceof ProcedureReference n) return n.qualifier() == null ? List.of() : List.of(n.qualifier());
+        if (node instanceof ProcedureSignature n) {
+            List<Node> result = new ArrayList<>(n.parameters());
+            if (n.returning() != null) result.add(n.returning());
+            return result;
+        }
+        if (node instanceof ProcedureParameter n) return n.reference() == null ? List.of() : List.of(n.reference());
+        if (node instanceof RedefinesClause n) return List.of(n.target());
+        if (node instanceof RenamesClause n) return n.through()==null?List.of(n.from()):List.of(n.from(),n.through());
+        if (node instanceof OccursClause n) {
+            List<Node> result = new ArrayList<>();
+            if (n.minimum() != null) result.add(n.minimum());
+            if (n.maximum() != null) result.add(n.maximum());
+            if (n.dependingOn() != null) result.add(n.dependingOn());
+            result.addAll(n.keys());
+            result.addAll(n.indexes());
+            return result;
+        }
+        if (node instanceof PreservedDataClause n) return n.recognizedReferences();
+        if (node instanceof SubscriptGroup n) return n.subscripts();
+        if (node instanceof ReferenceModification n) {
+            if (n.length() == null) return List.of(n.offset());
+            return List.of(n.offset(), n.length());
+        }
+        if (node instanceof OperationExpression n) return n.operands();
+        if (node instanceof FunctionExpression n) {
+            List<Node> result = new ArrayList<>(n.arguments());
+            if (n.referenceModification() != null) result.add(n.referenceModification());
+            return result;
+        }
+        if (node instanceof SpecialRegisterExpression n) return n.operands();
+        if (node instanceof PreservedExpression n) return n.recognizedOperands();
+        if (node instanceof LogicalCondition n) return n.operands();
+        if (node instanceof GroupedCondition n) return List.of(n.inner());
+        if (node instanceof RelationCondition n) {
+            if (n.subject() == null) return List.of(n.object());
+            return List.of(n.subject(), n.object());
+        }
+        if (node instanceof NegatedCondition n) return List.of(n.operand());
+        if (node instanceof ContextualConditionTail n) return List.of(n.nominalReference());
+        if (node instanceof DistributedOperandGroup n) return n.operands();
+        if (node instanceof ClassCondition n) return List.of(n.subject());
+        return List.of();
+    }
+}

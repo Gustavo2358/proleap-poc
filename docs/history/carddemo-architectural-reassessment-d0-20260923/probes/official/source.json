@@ -1,0 +1,7 @@
+{
+  "url": "https://publibfp.dhe.ibm.com/epubs/pdf/igy6lr40.pdf",
+  "sha256": "eef69c81ab8bcd569eaa2a47f430ff70c5518d4929cff26e7ab1ed6170f5c0bc",
+  "bytes": 4345979,
+  "retainedFile": "/home/gustavo/workspace/teste-e2e/artefatos-e2e/carddemo-architectural-reassessment-d0-20260923/probes/official/igy6lr40.pdf",
+  "textExtraction": "pdftotext -layout; original PDF retained unchanged"
+}

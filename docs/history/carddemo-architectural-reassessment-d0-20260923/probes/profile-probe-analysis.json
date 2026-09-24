@@ -1,0 +1,269 @@
+{
+  "profile-probe": [
+    {
+      "path": "app/app-authorization-ims-db2-mq/cbl/COPAUS2C.cbl",
+      "stages": {
+        "frontend": {
+          "state": "PARTIAL",
+          "reasonCode": "PRODUCT_WITH_EXPLICIT_GAPS",
+          "diagnostic": "product has explicit incomplete coverage",
+          "elapsedMs": 1416.691064
+        },
+        "lower": {
+          "state": "BLOCKED",
+          "reasonCode": "LOWERING_REJECTED",
+          "diagnostic": "Lowering BLOCKED_LOWERING\nPROFILE_FACT data:1: supported logical value has an unrepresentable partial storage relation\nPROFILE_FACT data:13: supported logical value has an unrepresentable partial storage relation\n",
+          "elapsedMs": 715.091029
+        },
+        "cfg": {
+          "state": "NOT_REACHED",
+          "reasonCode": null,
+          "diagnostic": null,
+          "elapsedMs": null
+        },
+        "dependency": {
+          "state": "NOT_REACHED",
+          "reasonCode": null,
+          "diagnostic": null,
+          "elapsedMs": null
+        }
+      }
+    }
+  ],
+  "profile-input-probe": [
+    {
+      "path": "app/cbl/COADM01C.cbl",
+      "stages": {
+        "frontend": {
+          "state": "PARTIAL",
+          "reasonCode": "PRODUCT_WITH_EXPLICIT_GAPS",
+          "diagnostic": "product has explicit incomplete coverage",
+          "elapsedMs": 1816.961486
+        },
+        "lower": {
+          "state": "BLOCKED",
+          "reasonCode": "LOWERING_REJECTED",
+          "diagnostic": "Lowering BLOCKED_LOWERING\nPROFILE_FACT data:17: supported logical value has an unrepresentable partial storage relation\nPROFILE_FACT data:3: supported logical value has an unrepresentable partial storage relation\nPROFILE_FACT data:2: supported logical value has an unrepresentable partial storage relation\nPROFILE_FACT data:15: supported logical value has an unrepresentable partial storage relation\nPROFILE_FACT data:1: supported logical value has an unrepresentable partial storage relation\nPROFILE_FACT data:5: supported logical value has an unrepresentable partial storage relation\nPROFILE_FACT data:4: supported logical value has an unrepresentable partial storage relation\nPROFILE_FACT data:225: supported logical value has an unrepresentable partial storage relation\nPROFILE_FACT data:258: supported logical value has an unrepresentable partial storage relation\nPROFILE_FACT data:259: supported logical value has an unrepresentable partial storage relation\nPROFILE_FACT data:227: supported logical value has an unrepresentable partial storage relation\n",
+          "elapsedMs": 1115.863975
+        },
+        "cfg": {
+          "state": "NOT_REACHED",
+          "reasonCode": null,
+          "diagnostic": null,
+          "elapsedMs": null
+        },
+        "dependency": {
+          "state": "NOT_REACHED",
+          "reasonCode": null,
+          "diagnostic": null,
+          "elapsedMs": null
+        }
+      }
+    }
+  ],
+  "profile-pure-7": [
+    {
+      "path": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/CSUTLDTC.cbl",
+      "stages": {
+        "frontend": {
+          "state": "PARTIAL",
+          "reasonCode": "PRODUCT_WITH_EXPLICIT_GAPS",
+          "diagnostic": "product has explicit incomplete coverage",
+          "elapsedMs": 1466.231862
+        },
+        "lower": {
+          "state": "PARTIAL",
+          "reasonCode": "PRODUCT_WITH_EXPLICIT_GAPS",
+          "diagnostic": "product has explicit incomplete coverage",
+          "elapsedMs": 965.597924
+        },
+        "cfg": {
+          "state": "PARTIAL",
+          "reasonCode": "PRODUCT_WITH_EXPLICIT_GAPS",
+          "diagnostic": "product has explicit incomplete coverage",
+          "elapsedMs": 414.674716
+        },
+        "dependency": {
+          "state": "PARTIAL",
+          "reasonCode": "PRODUCT_WITH_EXPLICIT_GAPS",
+          "diagnostic": "product has explicit incomplete coverage",
+          "elapsedMs": 514.823903
+        }
+      }
+    },
+    {
+      "path": "app/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL",
+      "stages": {
+        "frontend": {
+          "state": "PARTIAL",
+          "reasonCode": "PRODUCT_WITH_EXPLICIT_GAPS",
+          "diagnostic": "product has explicit incomplete coverage",
+          "elapsedMs": 1566.363407
+        },
+        "lower": {
+          "state": "PARTIAL",
+          "reasonCode": "PRODUCT_WITH_EXPLICIT_GAPS",
+          "diagnostic": "product has explicit incomplete coverage",
+          "elapsedMs": 1316.085919
+        },
+        "cfg": {
+          "state": "PARTIAL",
+          "reasonCode": "PRODUCT_WITH_EXPLICIT_GAPS",
+          "diagnostic": "product has explicit incomplete coverage",
+          "elapsedMs": 514.790282
+        },
+        "dependency": {
+          "state": "PARTIAL",
+          "reasonCode": "PRODUCT_WITH_EXPLICIT_GAPS",
+          "diagnostic": "product has explicit incomplete coverage",
+          "elapsedMs": 664.900199
+        }
+      }
+    },
+    {
+      "path": "app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
+      "stages": {
+        "frontend": {
+          "state": "PARTIAL",
+          "reasonCode": "PRODUCT_WITH_EXPLICIT_GAPS",
+          "diagnostic": "product has explicit incomplete coverage",
+          "elapsedMs": 1616.713215
+        },
+        "lower": {
+          "state": "PARTIAL",
+          "reasonCode": "PRODUCT_WITH_EXPLICIT_GAPS",
+          "diagnostic": "product has explicit incomplete coverage",
+          "elapsedMs": 1416.258758
+        },
+        "cfg": {
+          "state": "PARTIAL",
+          "reasonCode": "PRODUCT_WITH_EXPLICIT_GAPS",
+          "diagnostic": "product has explicit incomplete coverage",
+          "elapsedMs": 614.980282
+        },
+        "dependency": {
+          "state": "PARTIAL",
+          "reasonCode": "PRODUCT_WITH_EXPLICIT_GAPS",
+          "diagnostic": "product has explicit incomplete coverage",
+          "elapsedMs": 865.431787
+        }
+      }
+    },
+    {
+      "path": "app/cbl/CSUTLDTC.cbl",
+      "stages": {
+        "frontend": {
+          "state": "PARTIAL",
+          "reasonCode": "PRODUCT_WITH_EXPLICIT_GAPS",
+          "diagnostic": "product has explicit incomplete coverage",
+          "elapsedMs": 1416.194762
+        },
+        "lower": {
+          "state": "PARTIAL",
+          "reasonCode": "PRODUCT_WITH_EXPLICIT_GAPS",
+          "diagnostic": "product has explicit incomplete coverage",
+          "elapsedMs": 965.468207
+        },
+        "cfg": {
+          "state": "PARTIAL",
+          "reasonCode": "PRODUCT_WITH_EXPLICIT_GAPS",
+          "diagnostic": "product has explicit incomplete coverage",
+          "elapsedMs": 414.572261
+        },
+        "dependency": {
+          "state": "PARTIAL",
+          "reasonCode": "PRODUCT_WITH_EXPLICIT_GAPS",
+          "diagnostic": "product has explicit incomplete coverage",
+          "elapsedMs": 514.707792
+        }
+      }
+    },
+    {
+      "path": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/CBACT04C.cbl",
+      "stages": {
+        "frontend": {
+          "state": "PARTIAL",
+          "reasonCode": "PRODUCT_WITH_EXPLICIT_GAPS",
+          "diagnostic": "product has explicit incomplete coverage",
+          "elapsedMs": 1917.1368
+        },
+        "lower": {
+          "state": "BLOCKED",
+          "reasonCode": "LOWERING_REJECTED",
+          "diagnostic": "Lowering OUTPUT_INVALID\n",
+          "elapsedMs": 2418.081533
+        },
+        "cfg": {
+          "state": "NOT_REACHED",
+          "reasonCode": null,
+          "diagnostic": null,
+          "elapsedMs": null
+        },
+        "dependency": {
+          "state": "NOT_REACHED",
+          "reasonCode": null,
+          "diagnostic": null,
+          "elapsedMs": null
+        }
+      }
+    },
+    {
+      "path": "app/cbl/CBACT04C.cbl",
+      "stages": {
+        "frontend": {
+          "state": "PARTIAL",
+          "reasonCode": "PRODUCT_WITH_EXPLICIT_GAPS",
+          "diagnostic": "product has explicit incomplete coverage",
+          "elapsedMs": 1917.260094
+        },
+        "lower": {
+          "state": "BLOCKED",
+          "reasonCode": "LOWERING_REJECTED",
+          "diagnostic": "Lowering OUTPUT_INVALID\n",
+          "elapsedMs": 2418.209355
+        },
+        "cfg": {
+          "state": "NOT_REACHED",
+          "reasonCode": null,
+          "diagnostic": null,
+          "elapsedMs": null
+        },
+        "dependency": {
+          "state": "NOT_REACHED",
+          "reasonCode": null,
+          "diagnostic": null,
+          "elapsedMs": null
+        }
+      }
+    },
+    {
+      "path": "app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+      "stages": {
+        "frontend": {
+          "state": "PARTIAL",
+          "reasonCode": "PRODUCT_WITH_EXPLICIT_GAPS",
+          "diagnostic": "product has explicit incomplete coverage",
+          "elapsedMs": 1566.655227
+        },
+        "lower": {
+          "state": "PARTIAL",
+          "reasonCode": "PRODUCT_WITH_EXPLICIT_GAPS",
+          "diagnostic": "product has explicit incomplete coverage",
+          "elapsedMs": 1215.927646
+        },
+        "cfg": {
+          "state": "PARTIAL",
+          "reasonCode": "PRODUCT_WITH_EXPLICIT_GAPS",
+          "diagnostic": "product has explicit incomplete coverage",
+          "elapsedMs": 514.831837
+        },
+        "dependency": {
+          "state": "PARTIAL",
+          "reasonCode": "PRODUCT_WITH_EXPLICIT_GAPS",
+          "diagnostic": "product has explicit incomplete coverage",
+          "elapsedMs": 664.980977
+        }
+      }
+    }
+  ]
+}

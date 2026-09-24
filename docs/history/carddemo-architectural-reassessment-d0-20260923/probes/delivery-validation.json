@@ -1,0 +1,20 @@
+{
+  "status": "PASS",
+  "productReposPreserved": true,
+  "canonicalHashesVerified": 4787,
+  "sourceHashesVerified": 73,
+  "historicalEvidenceHashesVerified": 22567,
+  "carddemoPin": "59cc6c2fd7ebd7ef7925cad552a01a4b8b6e4d5e",
+  "reports": 20,
+  "f2MatrixRows": 1964,
+  "f2Programs": 46,
+  "f2Sites": 1512,
+  "f2WitnessPrograms": 14,
+  "f2WitnessCases": 24,
+  "f2AstCorroboration": "24/24",
+  "f7MappedLabels": 60,
+  "f7AffectedContextsPerVariant": 11,
+  "f6RootCauseVerified": true,
+  "brokenReportLinks": [],
+  "productTests": "NOT_RUN_NO_PRODUCT_CHANGE"
+}

@@ -1,0 +1,26 @@
+[
+  {
+    "program": "app/app-transaction-type-db2/cbl/COTRTLIC.cbl",
+    "sha256": "916a5fe2279ad626147990d8f86fac1e4b296f827889485b020cc310b5323601",
+    "byteOffset": 75337,
+    "line": 1811,
+    "column": 18,
+    "lineBytesHex": "3138313330302020202020202020202020092028283a57532d454449542d444553432d464c4147203d20273127"
+  },
+  {
+    "source": "/home/gustavo/workspace/teste-e2e/artefatos-e2e/carddemo-validation-20260923/full/archive-members/samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cpy/CUSTREC",
+    "sha256": "208747e3eb2f4099c0a4bf4b56a4395aad54bfd3c39fd80085b073afdfcfa11a",
+    "line": 6,
+    "lineBytesHex": "09202020202030352020435553542d46495253542d4e414d45202020202020202020202020202020202020202020202020205049432058283235292e",
+    "prefix": [
+      9,
+      32,
+      32,
+      32,
+      32,
+      32,
+      48,
+      53
+    ]
+  }
+]

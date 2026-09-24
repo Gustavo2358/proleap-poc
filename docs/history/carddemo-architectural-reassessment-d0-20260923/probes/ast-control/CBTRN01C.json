@@ -1,0 +1,5847 @@
+{
+  "source" : "/home/gustavo/workspace/teste-e2e/storage-semantics-st-w0-w5/runtime/carddemo-upstream/app/cbl/CBTRN01C.cbl",
+  "unresolvedCopies" : 0,
+  "preprocessorErrors" : 0,
+  "parserDiagnostics" : [ ],
+  "statements" : [ {
+    "id" : 283,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 269,
+        "startColumn" : 4,
+        "endLine" : 269,
+        "endColumn" : 51
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 156,
+        "startColumn" : 11,
+        "endLine" : 156,
+        "endColumn" : 58
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 287,
+    "ordinaryNext" : 287,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 287,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 270,
+        "startColumn" : 4,
+        "endLine" : 270,
+        "endColumn" : 29
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 157,
+        "startColumn" : 11,
+        "endLine" : 157,
+        "endColumn" : 36
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 290,
+    "ordinaryNext" : 290,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 290,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 271,
+        "startColumn" : 4,
+        "endLine" : 271,
+        "endColumn" : 29
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 158,
+        "startColumn" : 11,
+        "endLine" : 158,
+        "endColumn" : 36
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 293,
+    "ordinaryNext" : 293,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 293,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 272,
+        "startColumn" : 4,
+        "endLine" : 272,
+        "endColumn" : 29
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 159,
+        "startColumn" : 11,
+        "endLine" : 159,
+        "endColumn" : 36
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 296,
+    "ordinaryNext" : 296,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 296,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 273,
+        "startColumn" : 4,
+        "endLine" : 273,
+        "endColumn" : 29
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 160,
+        "startColumn" : 11,
+        "endLine" : 160,
+        "endColumn" : 36
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 299,
+    "ordinaryNext" : 299,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 299,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 274,
+        "startColumn" : 4,
+        "endLine" : 274,
+        "endColumn" : 29
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 161,
+        "startColumn" : 11,
+        "endLine" : 161,
+        "endColumn" : 36
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 302,
+    "ordinaryNext" : 302,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 302,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 275,
+        "startColumn" : 4,
+        "endLine" : 275,
+        "endColumn" : 29
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 162,
+        "startColumn" : 11,
+        "endLine" : 162,
+        "endColumn" : 36
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 305,
+    "ordinaryNext" : 305,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 305,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 277,
+        "startColumn" : 4,
+        "endLine" : 299,
+        "endColumn" : 14
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 164,
+        "startColumn" : 11,
+        "endLine" : 186,
+        "endColumn" : 21
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 363,
+    "ordinaryNext" : 363,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 309,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 278,
+        "startColumn" : 8,
+        "endLine" : 298,
+        "endColumn" : 13
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 165,
+        "startColumn" : 15,
+        "endLine" : 185,
+        "endColumn" : 20
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : null,
+    "normalCompletionRecognized" : false
+  }, {
+    "id" : 313,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 279,
+        "startColumn" : 12,
+        "endLine" : 279,
+        "endColumn" : 41
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 166,
+        "startColumn" : 19,
+        "endLine" : 166,
+        "endColumn" : 48
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : null,
+    "normalCompletionRecognized" : false
+  }, {
+    "id" : 315,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 280,
+        "startColumn" : 12,
+        "endLine" : 282,
+        "endColumn" : 17
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 167,
+        "startColumn" : 19,
+        "endLine" : 169,
+        "endColumn" : 24
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : null,
+    "normalCompletionRecognized" : false
+  }, {
+    "id" : 319,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 281,
+        "startColumn" : 16,
+        "endLine" : 281,
+        "endColumn" : 38
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 168,
+        "startColumn" : 23,
+        "endLine" : 168,
+        "endColumn" : 45
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : null,
+    "normalCompletionRecognized" : false
+  }, {
+    "id" : 322,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 283,
+        "startColumn" : 12,
+        "endLine" : 283,
+        "endColumn" : 56
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 170,
+        "startColumn" : 19,
+        "endLine" : 170,
+        "endColumn" : 63
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : null,
+    "normalCompletionRecognized" : false
+  }, {
+    "id" : 325,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 284,
+        "startColumn" : 12,
+        "endLine" : 284,
+        "endColumn" : 50
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 171,
+        "startColumn" : 19,
+        "endLine" : 171,
+        "endColumn" : 57
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : null,
+    "normalCompletionRecognized" : false
+  }, {
+    "id" : 328,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 285,
+        "startColumn" : 12,
+        "endLine" : 285,
+        "endColumn" : 35
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 172,
+        "startColumn" : 19,
+        "endLine" : 172,
+        "endColumn" : 42
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : null,
+    "normalCompletionRecognized" : false
+  }, {
+    "id" : 330,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 286,
+        "startColumn" : 12,
+        "endLine" : 297,
+        "endColumn" : 17
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 173,
+        "startColumn" : 19,
+        "endLine" : 184,
+        "endColumn" : 24
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : null,
+    "normalCompletionRecognized" : false
+  }, {
+    "id" : 334,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 287,
+        "startColumn" : 14,
+        "endLine" : 287,
+        "endColumn" : 53
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 174,
+        "startColumn" : 21,
+        "endLine" : 174,
+        "endColumn" : 60
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : null,
+    "normalCompletionRecognized" : false
+  }, {
+    "id" : 337,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 288,
+        "startColumn" : 14,
+        "endLine" : 288,
+        "endColumn" : 41
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 175,
+        "startColumn" : 21,
+        "endLine" : 175,
+        "endColumn" : 48
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : null,
+    "normalCompletionRecognized" : false
+  }, {
+    "id" : 340,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 289,
+        "startColumn" : 14,
+        "endLine" : 289,
+        "endColumn" : 38
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 176,
+        "startColumn" : 21,
+        "endLine" : 176,
+        "endColumn" : 45
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : null,
+    "normalCompletionRecognized" : false
+  }, {
+    "id" : 342,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 290,
+        "startColumn" : 14,
+        "endLine" : 292,
+        "endColumn" : 19
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 177,
+        "startColumn" : 21,
+        "endLine" : 179,
+        "endColumn" : 26
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : null,
+    "normalCompletionRecognized" : false
+  }, {
+    "id" : 346,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 291,
+        "startColumn" : 18,
+        "endLine" : 291,
+        "endColumn" : 56
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 178,
+        "startColumn" : 25,
+        "endLine" : 178,
+        "endColumn" : 63
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : null,
+    "normalCompletionRecognized" : false
+  }, {
+    "id" : 353,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 294,
+        "startColumn" : 14,
+        "endLine" : 296,
+        "endColumn" : 24
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 181,
+        "startColumn" : 21,
+        "endLine" : 183,
+        "endColumn" : 31
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : null,
+    "normalCompletionRecognized" : false
+  }, {
+    "id" : 363,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 301,
+        "startColumn" : 4,
+        "endLine" : 301,
+        "endColumn" : 30
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 188,
+        "startColumn" : 11,
+        "endLine" : 188,
+        "endColumn" : 37
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 366,
+    "ordinaryNext" : 366,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 366,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 302,
+        "startColumn" : 4,
+        "endLine" : 302,
+        "endColumn" : 30
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 189,
+        "startColumn" : 11,
+        "endLine" : 189,
+        "endColumn" : 37
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 369,
+    "ordinaryNext" : 369,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 369,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 303,
+        "startColumn" : 4,
+        "endLine" : 303,
+        "endColumn" : 30
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 190,
+        "startColumn" : 11,
+        "endLine" : 190,
+        "endColumn" : 37
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 372,
+    "ordinaryNext" : 372,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 372,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 304,
+        "startColumn" : 4,
+        "endLine" : 304,
+        "endColumn" : 30
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 191,
+        "startColumn" : 11,
+        "endLine" : 191,
+        "endColumn" : 37
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 375,
+    "ordinaryNext" : 375,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 375,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 305,
+        "startColumn" : 4,
+        "endLine" : 305,
+        "endColumn" : 30
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 192,
+        "startColumn" : 11,
+        "endLine" : 192,
+        "endColumn" : 37
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 378,
+    "ordinaryNext" : 378,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 378,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 306,
+        "startColumn" : 4,
+        "endLine" : 306,
+        "endColumn" : 30
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 193,
+        "startColumn" : 11,
+        "endLine" : 193,
+        "endColumn" : 37
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 381,
+    "ordinaryNext" : 381,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 381,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 308,
+        "startColumn" : 4,
+        "endLine" : 308,
+        "endColumn" : 49
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 195,
+        "startColumn" : 11,
+        "endLine" : 195,
+        "endColumn" : 56
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 385,
+    "ordinaryNext" : 385,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 385,
+    "type" : "GobackStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 310,
+        "startColumn" : 4,
+        "endLine" : 310,
+        "endColumn" : 9
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 197,
+        "startColumn" : 11,
+        "endLine" : 197,
+        "endColumn" : 16
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : null,
+    "normalCompletionRecognized" : false
+  }, {
+    "id" : 388,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 316,
+        "startColumn" : 4,
+        "endLine" : 316,
+        "endColumn" : 42
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 203,
+        "startColumn" : 11,
+        "endLine" : 203,
+        "endColumn" : 49
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 394,
+    "ordinaryNext" : 394,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 394,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 317,
+        "startColumn" : 4,
+        "endLine" : 325,
+        "endColumn" : 9
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 204,
+        "startColumn" : 11,
+        "endLine" : 212,
+        "endColumn" : 16
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 411,
+    "ordinaryNext" : 411,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 398,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 318,
+        "startColumn" : 8,
+        "endLine" : 318,
+        "endColumn" : 28
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 205,
+        "startColumn" : 15,
+        "endLine" : 205,
+        "endColumn" : 35
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 411,
+    "ordinaryNext" : 411,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 401,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 320,
+        "startColumn" : 8,
+        "endLine" : 324,
+        "endColumn" : 13
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 207,
+        "startColumn" : 15,
+        "endLine" : 211,
+        "endColumn" : 20
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 411,
+    "ordinaryNext" : 411,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 405,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 321,
+        "startColumn" : 12,
+        "endLine" : 321,
+        "endColumn" : 33
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 208,
+        "startColumn" : 19,
+        "endLine" : 208,
+        "endColumn" : 40
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 411,
+    "ordinaryNext" : 411,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 408,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 323,
+        "startColumn" : 12,
+        "endLine" : 323,
+        "endColumn" : 33
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 210,
+        "startColumn" : 19,
+        "endLine" : 210,
+        "endColumn" : 40
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 411,
+    "ordinaryNext" : 411,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 411,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 326,
+        "startColumn" : 4,
+        "endLine" : 337,
+        "endColumn" : 9
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 213,
+        "startColumn" : 11,
+        "endLine" : 224,
+        "endColumn" : 16
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 429,
+    "ordinaryNext" : 429,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 413,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 327,
+        "startColumn" : 8,
+        "endLine" : 327,
+        "endColumn" : 15
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 214,
+        "startColumn" : 15,
+        "endLine" : 214,
+        "endColumn" : 22
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 429,
+    "ordinaryNext" : 429,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 414,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 329,
+        "startColumn" : 8,
+        "endLine" : 336,
+        "endColumn" : 13
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 216,
+        "startColumn" : 15,
+        "endLine" : 223,
+        "endColumn" : 20
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 429,
+    "ordinaryNext" : 429,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 416,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 330,
+        "startColumn" : 12,
+        "endLine" : 330,
+        "endColumn" : 46
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 217,
+        "startColumn" : 19,
+        "endLine" : 217,
+        "endColumn" : 53
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 429,
+    "ordinaryNext" : 429,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 419,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 332,
+        "startColumn" : 12,
+        "endLine" : 332,
+        "endColumn" : 57
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 219,
+        "startColumn" : 19,
+        "endLine" : 219,
+        "endColumn" : 64
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 422,
+    "ordinaryNext" : 422,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 422,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 333,
+        "startColumn" : 12,
+        "endLine" : 333,
+        "endColumn" : 44
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 220,
+        "startColumn" : 19,
+        "endLine" : 220,
+        "endColumn" : 51
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 425,
+    "ordinaryNext" : 425,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 425,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 334,
+        "startColumn" : 12,
+        "endLine" : 334,
+        "endColumn" : 38
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 221,
+        "startColumn" : 19,
+        "endLine" : 221,
+        "endColumn" : 45
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 427,
+    "ordinaryNext" : 427,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 427,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 335,
+        "startColumn" : 12,
+        "endLine" : 335,
+        "endColumn" : 34
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 222,
+        "startColumn" : 19,
+        "endLine" : 222,
+        "endColumn" : 41
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 429,
+    "ordinaryNext" : 429,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 429,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 338,
+        "startColumn" : 4,
+        "endLine" : 338,
+        "endColumn" : 7
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 225,
+        "startColumn" : 11,
+        "endLine" : 225,
+        "endColumn" : 14
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 432,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 432,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 341,
+        "startColumn" : 4,
+        "endLine" : 341,
+        "endColumn" : 41
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 228,
+        "startColumn" : 11,
+        "endLine" : 228,
+        "endColumn" : 48
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 435,
+    "ordinaryNext" : 435,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 435,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 342,
+        "startColumn" : 4,
+        "endLine" : 352,
+        "endColumn" : 11
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 229,
+        "startColumn" : 11,
+        "endLine" : 239,
+        "endColumn" : 18
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 470,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 443,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 345,
+        "startColumn" : 11,
+        "endLine" : 345,
+        "endColumn" : 48
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 232,
+        "startColumn" : 18,
+        "endLine" : 232,
+        "endColumn" : 55
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 446,
+    "ordinaryNext" : 446,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 446,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 346,
+        "startColumn" : 11,
+        "endLine" : 346,
+        "endColumn" : 39
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 233,
+        "startColumn" : 18,
+        "endLine" : 233,
+        "endColumn" : 46
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 470,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 450,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 348,
+        "startColumn" : 11,
+        "endLine" : 348,
+        "endColumn" : 43
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 235,
+        "startColumn" : 18,
+        "endLine" : 235,
+        "endColumn" : 50
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 453,
+    "ordinaryNext" : 453,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 453,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 349,
+        "startColumn" : 11,
+        "endLine" : 349,
+        "endColumn" : 47
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 236,
+        "startColumn" : 18,
+        "endLine" : 236,
+        "endColumn" : 54
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 458,
+    "ordinaryNext" : 458,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 458,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 350,
+        "startColumn" : 11,
+        "endLine" : 350,
+        "endColumn" : 46
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 237,
+        "startColumn" : 18,
+        "endLine" : 237,
+        "endColumn" : 53
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 463,
+    "ordinaryNext" : 463,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 463,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 351,
+        "startColumn" : 11,
+        "endLine" : 351,
+        "endColumn" : 46
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 238,
+        "startColumn" : 18,
+        "endLine" : 238,
+        "endColumn" : 53
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 470,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 470,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 355,
+        "startColumn" : 4,
+        "endLine" : 355,
+        "endColumn" : 29
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 242,
+        "startColumn" : 11,
+        "endLine" : 242,
+        "endColumn" : 36
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 473,
+    "ordinaryNext" : 473,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 473,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 356,
+        "startColumn" : 4,
+        "endLine" : 363,
+        "endColumn" : 11
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 243,
+        "startColumn" : 11,
+        "endLine" : 250,
+        "endColumn" : 18
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 493,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 481,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 359,
+        "startColumn" : 11,
+        "endLine" : 359,
+        "endColumn" : 48
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 246,
+        "startColumn" : 18,
+        "endLine" : 246,
+        "endColumn" : 55
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 484,
+    "ordinaryNext" : 484,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 484,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 360,
+        "startColumn" : 11,
+        "endLine" : 360,
+        "endColumn" : 39
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 247,
+        "startColumn" : 18,
+        "endLine" : 247,
+        "endColumn" : 46
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 493,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 488,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 362,
+        "startColumn" : 11,
+        "endLine" : 362,
+        "endColumn" : 51
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 249,
+        "startColumn" : 18,
+        "endLine" : 249,
+        "endColumn" : 58
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 493,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 493,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 366,
+        "startColumn" : 4,
+        "endLine" : 366,
+        "endColumn" : 24
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 253,
+        "startColumn" : 11,
+        "endLine" : 253,
+        "endColumn" : 31
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 497,
+    "ordinaryNext" : 497,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 497,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 367,
+        "startColumn" : 4,
+        "endLine" : 367,
+        "endColumn" : 27
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 254,
+        "startColumn" : 11,
+        "endLine" : 254,
+        "endColumn" : 34
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 500,
+    "ordinaryNext" : 500,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 500,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 368,
+        "startColumn" : 4,
+        "endLine" : 372,
+        "endColumn" : 9
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 255,
+        "startColumn" : 11,
+        "endLine" : 259,
+        "endColumn" : 16
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 510,
+    "ordinaryNext" : 510,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 504,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 369,
+        "startColumn" : 8,
+        "endLine" : 369,
+        "endColumn" : 28
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 256,
+        "startColumn" : 15,
+        "endLine" : 256,
+        "endColumn" : 35
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 510,
+    "ordinaryNext" : 510,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 507,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 371,
+        "startColumn" : 8,
+        "endLine" : 371,
+        "endColumn" : 29
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 258,
+        "startColumn" : 15,
+        "endLine" : 258,
+        "endColumn" : 36
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 510,
+    "ordinaryNext" : 510,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 510,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 373,
+        "startColumn" : 4,
+        "endLine" : 380,
+        "endColumn" : 9
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 260,
+        "startColumn" : 11,
+        "endLine" : 267,
+        "endColumn" : 16
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 523,
+    "ordinaryNext" : 523,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 512,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 374,
+        "startColumn" : 8,
+        "endLine" : 374,
+        "endColumn" : 15
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 261,
+        "startColumn" : 15,
+        "endLine" : 261,
+        "endColumn" : 22
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 523,
+    "ordinaryNext" : 523,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 513,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 376,
+        "startColumn" : 8,
+        "endLine" : 376,
+        "endColumn" : 53
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 263,
+        "startColumn" : 15,
+        "endLine" : 263,
+        "endColumn" : 60
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 516,
+    "ordinaryNext" : 516,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 516,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 377,
+        "startColumn" : 8,
+        "endLine" : 377,
+        "endColumn" : 40
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 264,
+        "startColumn" : 15,
+        "endLine" : 264,
+        "endColumn" : 47
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 519,
+    "ordinaryNext" : 519,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 519,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 378,
+        "startColumn" : 8,
+        "endLine" : 378,
+        "endColumn" : 34
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 265,
+        "startColumn" : 15,
+        "endLine" : 265,
+        "endColumn" : 41
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 521,
+    "ordinaryNext" : 521,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 521,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 379,
+        "startColumn" : 8,
+        "endLine" : 379,
+        "endColumn" : 30
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 266,
+        "startColumn" : 15,
+        "endLine" : 266,
+        "endColumn" : 37
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 523,
+    "ordinaryNext" : 523,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 523,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 381,
+        "startColumn" : 4,
+        "endLine" : 381,
+        "endColumn" : 7
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 268,
+        "startColumn" : 11,
+        "endLine" : 268,
+        "endColumn" : 14
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 526,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 526,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 385,
+        "startColumn" : 4,
+        "endLine" : 385,
+        "endColumn" : 24
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 272,
+        "startColumn" : 11,
+        "endLine" : 272,
+        "endColumn" : 31
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 530,
+    "ordinaryNext" : 530,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 530,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 386,
+        "startColumn" : 4,
+        "endLine" : 386,
+        "endColumn" : 27
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 273,
+        "startColumn" : 11,
+        "endLine" : 273,
+        "endColumn" : 34
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 533,
+    "ordinaryNext" : 533,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 533,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 387,
+        "startColumn" : 4,
+        "endLine" : 391,
+        "endColumn" : 9
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 274,
+        "startColumn" : 11,
+        "endLine" : 278,
+        "endColumn" : 16
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 543,
+    "ordinaryNext" : 543,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 537,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 388,
+        "startColumn" : 8,
+        "endLine" : 388,
+        "endColumn" : 28
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 275,
+        "startColumn" : 15,
+        "endLine" : 275,
+        "endColumn" : 35
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 543,
+    "ordinaryNext" : 543,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 540,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 390,
+        "startColumn" : 8,
+        "endLine" : 390,
+        "endColumn" : 29
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 277,
+        "startColumn" : 15,
+        "endLine" : 277,
+        "endColumn" : 36
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 543,
+    "ordinaryNext" : 543,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 543,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 392,
+        "startColumn" : 4,
+        "endLine" : 399,
+        "endColumn" : 9
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 279,
+        "startColumn" : 11,
+        "endLine" : 286,
+        "endColumn" : 16
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 556,
+    "ordinaryNext" : 556,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 545,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 393,
+        "startColumn" : 8,
+        "endLine" : 393,
+        "endColumn" : 15
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 280,
+        "startColumn" : 15,
+        "endLine" : 280,
+        "endColumn" : 22
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 556,
+    "ordinaryNext" : 556,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 546,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 395,
+        "startColumn" : 8,
+        "endLine" : 395,
+        "endColumn" : 44
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 282,
+        "startColumn" : 15,
+        "endLine" : 282,
+        "endColumn" : 51
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 549,
+    "ordinaryNext" : 549,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 549,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 396,
+        "startColumn" : 8,
+        "endLine" : 396,
+        "endColumn" : 40
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 283,
+        "startColumn" : 15,
+        "endLine" : 283,
+        "endColumn" : 47
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 552,
+    "ordinaryNext" : 552,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 552,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 397,
+        "startColumn" : 8,
+        "endLine" : 397,
+        "endColumn" : 34
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 284,
+        "startColumn" : 15,
+        "endLine" : 284,
+        "endColumn" : 41
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 554,
+    "ordinaryNext" : 554,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 554,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 398,
+        "startColumn" : 8,
+        "endLine" : 398,
+        "endColumn" : 30
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 285,
+        "startColumn" : 15,
+        "endLine" : 285,
+        "endColumn" : 37
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 556,
+    "ordinaryNext" : 556,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 556,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 400,
+        "startColumn" : 4,
+        "endLine" : 400,
+        "endColumn" : 7
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 287,
+        "startColumn" : 11,
+        "endLine" : 287,
+        "endColumn" : 14
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 559,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 559,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 403,
+        "startColumn" : 4,
+        "endLine" : 403,
+        "endColumn" : 24
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 290,
+        "startColumn" : 11,
+        "endLine" : 290,
+        "endColumn" : 31
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 563,
+    "ordinaryNext" : 563,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 563,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 404,
+        "startColumn" : 4,
+        "endLine" : 404,
+        "endColumn" : 23
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 291,
+        "startColumn" : 11,
+        "endLine" : 291,
+        "endColumn" : 30
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 566,
+    "ordinaryNext" : 566,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 566,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 405,
+        "startColumn" : 4,
+        "endLine" : 409,
+        "endColumn" : 9
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 292,
+        "startColumn" : 11,
+        "endLine" : 296,
+        "endColumn" : 16
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 576,
+    "ordinaryNext" : 576,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 570,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 406,
+        "startColumn" : 8,
+        "endLine" : 406,
+        "endColumn" : 28
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 293,
+        "startColumn" : 15,
+        "endLine" : 293,
+        "endColumn" : 35
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 576,
+    "ordinaryNext" : 576,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 573,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 408,
+        "startColumn" : 8,
+        "endLine" : 408,
+        "endColumn" : 29
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 295,
+        "startColumn" : 15,
+        "endLine" : 295,
+        "endColumn" : 36
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 576,
+    "ordinaryNext" : 576,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 576,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 410,
+        "startColumn" : 4,
+        "endLine" : 417,
+        "endColumn" : 9
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 297,
+        "startColumn" : 11,
+        "endLine" : 304,
+        "endColumn" : 16
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 589,
+    "ordinaryNext" : 589,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 578,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 411,
+        "startColumn" : 8,
+        "endLine" : 411,
+        "endColumn" : 15
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 298,
+        "startColumn" : 15,
+        "endLine" : 298,
+        "endColumn" : 22
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 589,
+    "ordinaryNext" : 589,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 579,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 413,
+        "startColumn" : 8,
+        "endLine" : 413,
+        "endColumn" : 45
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 300,
+        "startColumn" : 15,
+        "endLine" : 300,
+        "endColumn" : 52
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 582,
+    "ordinaryNext" : 582,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 582,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 414,
+        "startColumn" : 8,
+        "endLine" : 414,
+        "endColumn" : 40
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 301,
+        "startColumn" : 15,
+        "endLine" : 301,
+        "endColumn" : 47
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 585,
+    "ordinaryNext" : 585,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 585,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 415,
+        "startColumn" : 8,
+        "endLine" : 415,
+        "endColumn" : 34
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 302,
+        "startColumn" : 15,
+        "endLine" : 302,
+        "endColumn" : 41
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 587,
+    "ordinaryNext" : 587,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 587,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 416,
+        "startColumn" : 8,
+        "endLine" : 416,
+        "endColumn" : 30
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 303,
+        "startColumn" : 15,
+        "endLine" : 303,
+        "endColumn" : 37
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 589,
+    "ordinaryNext" : 589,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 589,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 418,
+        "startColumn" : 4,
+        "endLine" : 418,
+        "endColumn" : 7
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 305,
+        "startColumn" : 11,
+        "endLine" : 305,
+        "endColumn" : 14
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 592,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 592,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 421,
+        "startColumn" : 4,
+        "endLine" : 421,
+        "endColumn" : 24
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 308,
+        "startColumn" : 11,
+        "endLine" : 308,
+        "endColumn" : 31
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 596,
+    "ordinaryNext" : 596,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 596,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 422,
+        "startColumn" : 4,
+        "endLine" : 422,
+        "endColumn" : 23
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 309,
+        "startColumn" : 11,
+        "endLine" : 309,
+        "endColumn" : 30
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 599,
+    "ordinaryNext" : 599,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 599,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 423,
+        "startColumn" : 4,
+        "endLine" : 427,
+        "endColumn" : 9
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 310,
+        "startColumn" : 11,
+        "endLine" : 314,
+        "endColumn" : 16
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 609,
+    "ordinaryNext" : 609,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 603,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 424,
+        "startColumn" : 8,
+        "endLine" : 424,
+        "endColumn" : 28
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 311,
+        "startColumn" : 15,
+        "endLine" : 311,
+        "endColumn" : 35
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 609,
+    "ordinaryNext" : 609,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 606,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 426,
+        "startColumn" : 8,
+        "endLine" : 426,
+        "endColumn" : 29
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 313,
+        "startColumn" : 15,
+        "endLine" : 313,
+        "endColumn" : 36
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 609,
+    "ordinaryNext" : 609,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 609,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 428,
+        "startColumn" : 4,
+        "endLine" : 435,
+        "endColumn" : 9
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 315,
+        "startColumn" : 11,
+        "endLine" : 322,
+        "endColumn" : 16
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 622,
+    "ordinaryNext" : 622,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 611,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 429,
+        "startColumn" : 8,
+        "endLine" : 429,
+        "endColumn" : 15
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 316,
+        "startColumn" : 15,
+        "endLine" : 316,
+        "endColumn" : 22
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 622,
+    "ordinaryNext" : 622,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 612,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 431,
+        "startColumn" : 8,
+        "endLine" : 431,
+        "endColumn" : 40
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 318,
+        "startColumn" : 15,
+        "endLine" : 318,
+        "endColumn" : 47
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 615,
+    "ordinaryNext" : 615,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 615,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 432,
+        "startColumn" : 8,
+        "endLine" : 432,
+        "endColumn" : 40
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 319,
+        "startColumn" : 15,
+        "endLine" : 319,
+        "endColumn" : 47
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 618,
+    "ordinaryNext" : 618,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 618,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 433,
+        "startColumn" : 8,
+        "endLine" : 433,
+        "endColumn" : 34
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 320,
+        "startColumn" : 15,
+        "endLine" : 320,
+        "endColumn" : 41
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 620,
+    "ordinaryNext" : 620,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 620,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 434,
+        "startColumn" : 8,
+        "endLine" : 434,
+        "endColumn" : 30
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 321,
+        "startColumn" : 15,
+        "endLine" : 321,
+        "endColumn" : 37
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 622,
+    "ordinaryNext" : 622,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 622,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 436,
+        "startColumn" : 4,
+        "endLine" : 436,
+        "endColumn" : 7
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 323,
+        "startColumn" : 11,
+        "endLine" : 323,
+        "endColumn" : 14
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 625,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 625,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 439,
+        "startColumn" : 4,
+        "endLine" : 439,
+        "endColumn" : 24
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 326,
+        "startColumn" : 11,
+        "endLine" : 326,
+        "endColumn" : 31
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 629,
+    "ordinaryNext" : 629,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 629,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 440,
+        "startColumn" : 4,
+        "endLine" : 440,
+        "endColumn" : 26
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 327,
+        "startColumn" : 11,
+        "endLine" : 327,
+        "endColumn" : 33
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 632,
+    "ordinaryNext" : 632,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 632,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 441,
+        "startColumn" : 4,
+        "endLine" : 445,
+        "endColumn" : 9
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 328,
+        "startColumn" : 11,
+        "endLine" : 332,
+        "endColumn" : 16
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 642,
+    "ordinaryNext" : 642,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 636,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 442,
+        "startColumn" : 8,
+        "endLine" : 442,
+        "endColumn" : 28
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 329,
+        "startColumn" : 15,
+        "endLine" : 329,
+        "endColumn" : 35
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 642,
+    "ordinaryNext" : 642,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 639,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 444,
+        "startColumn" : 8,
+        "endLine" : 444,
+        "endColumn" : 29
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 331,
+        "startColumn" : 15,
+        "endLine" : 331,
+        "endColumn" : 36
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 642,
+    "ordinaryNext" : 642,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 642,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 446,
+        "startColumn" : 4,
+        "endLine" : 453,
+        "endColumn" : 9
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 333,
+        "startColumn" : 11,
+        "endLine" : 340,
+        "endColumn" : 16
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 655,
+    "ordinaryNext" : 655,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 644,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 447,
+        "startColumn" : 8,
+        "endLine" : 447,
+        "endColumn" : 15
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 334,
+        "startColumn" : 15,
+        "endLine" : 334,
+        "endColumn" : 22
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 655,
+    "ordinaryNext" : 655,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 645,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 449,
+        "startColumn" : 8,
+        "endLine" : 449,
+        "endColumn" : 43
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 336,
+        "startColumn" : 15,
+        "endLine" : 336,
+        "endColumn" : 50
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 648,
+    "ordinaryNext" : 648,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 648,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 450,
+        "startColumn" : 8,
+        "endLine" : 450,
+        "endColumn" : 40
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 337,
+        "startColumn" : 15,
+        "endLine" : 337,
+        "endColumn" : 47
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 651,
+    "ordinaryNext" : 651,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 651,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 451,
+        "startColumn" : 8,
+        "endLine" : 451,
+        "endColumn" : 34
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 338,
+        "startColumn" : 15,
+        "endLine" : 338,
+        "endColumn" : 41
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 653,
+    "ordinaryNext" : 653,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 653,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 452,
+        "startColumn" : 8,
+        "endLine" : 452,
+        "endColumn" : 30
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 339,
+        "startColumn" : 15,
+        "endLine" : 339,
+        "endColumn" : 37
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 655,
+    "ordinaryNext" : 655,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 655,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 454,
+        "startColumn" : 4,
+        "endLine" : 454,
+        "endColumn" : 7
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 341,
+        "startColumn" : 11,
+        "endLine" : 341,
+        "endColumn" : 14
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 658,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 658,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 457,
+        "startColumn" : 4,
+        "endLine" : 457,
+        "endColumn" : 24
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 344,
+        "startColumn" : 11,
+        "endLine" : 344,
+        "endColumn" : 31
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 662,
+    "ordinaryNext" : 662,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 662,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 458,
+        "startColumn" : 4,
+        "endLine" : 458,
+        "endColumn" : 27
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 345,
+        "startColumn" : 11,
+        "endLine" : 345,
+        "endColumn" : 34
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 665,
+    "ordinaryNext" : 665,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 665,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 459,
+        "startColumn" : 4,
+        "endLine" : 463,
+        "endColumn" : 9
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 346,
+        "startColumn" : 11,
+        "endLine" : 350,
+        "endColumn" : 16
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 675,
+    "ordinaryNext" : 675,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 669,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 460,
+        "startColumn" : 8,
+        "endLine" : 460,
+        "endColumn" : 28
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 347,
+        "startColumn" : 15,
+        "endLine" : 347,
+        "endColumn" : 35
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 675,
+    "ordinaryNext" : 675,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 672,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 462,
+        "startColumn" : 8,
+        "endLine" : 462,
+        "endColumn" : 29
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 349,
+        "startColumn" : 15,
+        "endLine" : 349,
+        "endColumn" : 36
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 675,
+    "ordinaryNext" : 675,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 675,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 464,
+        "startColumn" : 4,
+        "endLine" : 471,
+        "endColumn" : 9
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 351,
+        "startColumn" : 11,
+        "endLine" : 358,
+        "endColumn" : 16
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 688,
+    "ordinaryNext" : 688,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 677,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 465,
+        "startColumn" : 8,
+        "endLine" : 465,
+        "endColumn" : 15
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 352,
+        "startColumn" : 15,
+        "endLine" : 352,
+        "endColumn" : 22
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 688,
+    "ordinaryNext" : 688,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 678,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 467,
+        "startColumn" : 8,
+        "endLine" : 467,
+        "endColumn" : 47
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 354,
+        "startColumn" : 15,
+        "endLine" : 354,
+        "endColumn" : 54
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 681,
+    "ordinaryNext" : 681,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 681,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 468,
+        "startColumn" : 8,
+        "endLine" : 468,
+        "endColumn" : 40
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 355,
+        "startColumn" : 15,
+        "endLine" : 355,
+        "endColumn" : 47
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 684,
+    "ordinaryNext" : 684,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 684,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 469,
+        "startColumn" : 8,
+        "endLine" : 469,
+        "endColumn" : 34
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 356,
+        "startColumn" : 15,
+        "endLine" : 356,
+        "endColumn" : 41
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 686,
+    "ordinaryNext" : 686,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 686,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 470,
+        "startColumn" : 8,
+        "endLine" : 470,
+        "endColumn" : 30
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 357,
+        "startColumn" : 15,
+        "endLine" : 357,
+        "endColumn" : 37
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 688,
+    "ordinaryNext" : 688,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 688,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 472,
+        "startColumn" : 4,
+        "endLine" : 472,
+        "endColumn" : 7
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 359,
+        "startColumn" : 11,
+        "endLine" : 359,
+        "endColumn" : 14
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 691,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 691,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 475,
+        "startColumn" : 4,
+        "endLine" : 475,
+        "endColumn" : 35
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 362,
+        "startColumn" : 11,
+        "endLine" : 362,
+        "endColumn" : 42
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 699,
+    "ordinaryNext" : 699,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 699,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 476,
+        "startColumn" : 4,
+        "endLine" : 476,
+        "endColumn" : 22
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 363,
+        "startColumn" : 11,
+        "endLine" : 363,
+        "endColumn" : 29
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 702,
+    "ordinaryNext" : 702,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 702,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 477,
+        "startColumn" : 4,
+        "endLine" : 481,
+        "endColumn" : 9
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 364,
+        "startColumn" : 11,
+        "endLine" : 368,
+        "endColumn" : 16
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 712,
+    "ordinaryNext" : 712,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 706,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 478,
+        "startColumn" : 8,
+        "endLine" : 478,
+        "endColumn" : 28
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 365,
+        "startColumn" : 15,
+        "endLine" : 365,
+        "endColumn" : 35
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 712,
+    "ordinaryNext" : 712,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 709,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 480,
+        "startColumn" : 8,
+        "endLine" : 480,
+        "endColumn" : 29
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 367,
+        "startColumn" : 15,
+        "endLine" : 367,
+        "endColumn" : 36
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 712,
+    "ordinaryNext" : 712,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 712,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 482,
+        "startColumn" : 4,
+        "endLine" : 489,
+        "endColumn" : 9
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 369,
+        "startColumn" : 11,
+        "endLine" : 376,
+        "endColumn" : 16
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 725,
+    "ordinaryNext" : 725,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 714,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 483,
+        "startColumn" : 8,
+        "endLine" : 483,
+        "endColumn" : 15
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 370,
+        "startColumn" : 15,
+        "endLine" : 370,
+        "endColumn" : 22
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 725,
+    "ordinaryNext" : 725,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 715,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 485,
+        "startColumn" : 8,
+        "endLine" : 485,
+        "endColumn" : 44
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 372,
+        "startColumn" : 15,
+        "endLine" : 372,
+        "endColumn" : 51
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 718,
+    "ordinaryNext" : 718,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 718,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 486,
+        "startColumn" : 8,
+        "endLine" : 486,
+        "endColumn" : 40
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 373,
+        "startColumn" : 15,
+        "endLine" : 373,
+        "endColumn" : 47
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 721,
+    "ordinaryNext" : 721,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 721,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 487,
+        "startColumn" : 8,
+        "endLine" : 487,
+        "endColumn" : 34
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 374,
+        "startColumn" : 15,
+        "endLine" : 374,
+        "endColumn" : 41
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 723,
+    "ordinaryNext" : 723,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 723,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 488,
+        "startColumn" : 8,
+        "endLine" : 488,
+        "endColumn" : 30
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 375,
+        "startColumn" : 15,
+        "endLine" : 375,
+        "endColumn" : 37
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 725,
+    "ordinaryNext" : 725,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 725,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 490,
+        "startColumn" : 4,
+        "endLine" : 490,
+        "endColumn" : 7
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 377,
+        "startColumn" : 11,
+        "endLine" : 377,
+        "endColumn" : 14
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 728,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 728,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 493,
+        "startColumn" : 4,
+        "endLine" : 493,
+        "endColumn" : 35
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 380,
+        "startColumn" : 11,
+        "endLine" : 380,
+        "endColumn" : 42
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 736,
+    "ordinaryNext" : 736,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 736,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 494,
+        "startColumn" : 4,
+        "endLine" : 494,
+        "endColumn" : 22
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 381,
+        "startColumn" : 11,
+        "endLine" : 381,
+        "endColumn" : 29
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 739,
+    "ordinaryNext" : 739,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 739,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 495,
+        "startColumn" : 4,
+        "endLine" : 499,
+        "endColumn" : 9
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 382,
+        "startColumn" : 11,
+        "endLine" : 386,
+        "endColumn" : 16
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 749,
+    "ordinaryNext" : 749,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 743,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 496,
+        "startColumn" : 8,
+        "endLine" : 496,
+        "endColumn" : 28
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 383,
+        "startColumn" : 15,
+        "endLine" : 383,
+        "endColumn" : 35
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 749,
+    "ordinaryNext" : 749,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 746,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 498,
+        "startColumn" : 8,
+        "endLine" : 498,
+        "endColumn" : 29
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 385,
+        "startColumn" : 15,
+        "endLine" : 385,
+        "endColumn" : 36
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 749,
+    "ordinaryNext" : 749,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 749,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 500,
+        "startColumn" : 4,
+        "endLine" : 507,
+        "endColumn" : 9
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 387,
+        "startColumn" : 11,
+        "endLine" : 394,
+        "endColumn" : 16
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 762,
+    "ordinaryNext" : 762,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 751,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 501,
+        "startColumn" : 8,
+        "endLine" : 501,
+        "endColumn" : 15
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 388,
+        "startColumn" : 15,
+        "endLine" : 388,
+        "endColumn" : 22
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 762,
+    "ordinaryNext" : 762,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 752,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 503,
+        "startColumn" : 8,
+        "endLine" : 503,
+        "endColumn" : 44
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 390,
+        "startColumn" : 15,
+        "endLine" : 390,
+        "endColumn" : 51
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 755,
+    "ordinaryNext" : 755,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 755,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 504,
+        "startColumn" : 8,
+        "endLine" : 504,
+        "endColumn" : 40
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 391,
+        "startColumn" : 15,
+        "endLine" : 391,
+        "endColumn" : 47
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 758,
+    "ordinaryNext" : 758,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 758,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 505,
+        "startColumn" : 8,
+        "endLine" : 505,
+        "endColumn" : 34
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 392,
+        "startColumn" : 15,
+        "endLine" : 392,
+        "endColumn" : 41
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 760,
+    "ordinaryNext" : 760,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 760,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 506,
+        "startColumn" : 8,
+        "endLine" : 506,
+        "endColumn" : 30
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 393,
+        "startColumn" : 15,
+        "endLine" : 393,
+        "endColumn" : 37
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 762,
+    "ordinaryNext" : 762,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 762,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 508,
+        "startColumn" : 4,
+        "endLine" : 508,
+        "endColumn" : 7
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 395,
+        "startColumn" : 11,
+        "endLine" : 395,
+        "endColumn" : 14
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 765,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 765,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 511,
+        "startColumn" : 4,
+        "endLine" : 511,
+        "endColumn" : 35
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 398,
+        "startColumn" : 11,
+        "endLine" : 398,
+        "endColumn" : 42
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 773,
+    "ordinaryNext" : 773,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 773,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 512,
+        "startColumn" : 4,
+        "endLine" : 512,
+        "endColumn" : 18
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 399,
+        "startColumn" : 11,
+        "endLine" : 399,
+        "endColumn" : 25
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 776,
+    "ordinaryNext" : 776,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 776,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 513,
+        "startColumn" : 4,
+        "endLine" : 517,
+        "endColumn" : 9
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 400,
+        "startColumn" : 11,
+        "endLine" : 404,
+        "endColumn" : 16
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 786,
+    "ordinaryNext" : 786,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 780,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 514,
+        "startColumn" : 8,
+        "endLine" : 514,
+        "endColumn" : 28
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 401,
+        "startColumn" : 15,
+        "endLine" : 401,
+        "endColumn" : 35
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 786,
+    "ordinaryNext" : 786,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 783,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 516,
+        "startColumn" : 8,
+        "endLine" : 516,
+        "endColumn" : 29
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 403,
+        "startColumn" : 15,
+        "endLine" : 403,
+        "endColumn" : 36
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 786,
+    "ordinaryNext" : 786,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 786,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 518,
+        "startColumn" : 4,
+        "endLine" : 525,
+        "endColumn" : 9
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 405,
+        "startColumn" : 11,
+        "endLine" : 412,
+        "endColumn" : 16
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 799,
+    "ordinaryNext" : 799,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 788,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 519,
+        "startColumn" : 8,
+        "endLine" : 519,
+        "endColumn" : 15
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 406,
+        "startColumn" : 15,
+        "endLine" : 406,
+        "endColumn" : 22
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 799,
+    "ordinaryNext" : 799,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 789,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 521,
+        "startColumn" : 8,
+        "endLine" : 521,
+        "endColumn" : 45
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 408,
+        "startColumn" : 15,
+        "endLine" : 408,
+        "endColumn" : 52
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 792,
+    "ordinaryNext" : 792,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 792,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 522,
+        "startColumn" : 8,
+        "endLine" : 522,
+        "endColumn" : 40
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 409,
+        "startColumn" : 15,
+        "endLine" : 409,
+        "endColumn" : 47
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 795,
+    "ordinaryNext" : 795,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 795,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 523,
+        "startColumn" : 8,
+        "endLine" : 523,
+        "endColumn" : 34
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 410,
+        "startColumn" : 15,
+        "endLine" : 410,
+        "endColumn" : 41
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 797,
+    "ordinaryNext" : 797,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 797,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 524,
+        "startColumn" : 8,
+        "endLine" : 524,
+        "endColumn" : 30
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 411,
+        "startColumn" : 15,
+        "endLine" : 411,
+        "endColumn" : 37
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 799,
+    "ordinaryNext" : 799,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 799,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 526,
+        "startColumn" : 4,
+        "endLine" : 526,
+        "endColumn" : 7
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 413,
+        "startColumn" : 11,
+        "endLine" : 413,
+        "endColumn" : 14
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 802,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 802,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 529,
+        "startColumn" : 4,
+        "endLine" : 529,
+        "endColumn" : 35
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 416,
+        "startColumn" : 11,
+        "endLine" : 416,
+        "endColumn" : 42
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 810,
+    "ordinaryNext" : 810,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 810,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 530,
+        "startColumn" : 4,
+        "endLine" : 530,
+        "endColumn" : 18
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 417,
+        "startColumn" : 11,
+        "endLine" : 417,
+        "endColumn" : 25
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 813,
+    "ordinaryNext" : 813,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 813,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 531,
+        "startColumn" : 4,
+        "endLine" : 535,
+        "endColumn" : 9
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 418,
+        "startColumn" : 11,
+        "endLine" : 422,
+        "endColumn" : 16
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 823,
+    "ordinaryNext" : 823,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 817,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 532,
+        "startColumn" : 8,
+        "endLine" : 532,
+        "endColumn" : 28
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 419,
+        "startColumn" : 15,
+        "endLine" : 419,
+        "endColumn" : 35
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 823,
+    "ordinaryNext" : 823,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 820,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 534,
+        "startColumn" : 8,
+        "endLine" : 534,
+        "endColumn" : 29
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 421,
+        "startColumn" : 15,
+        "endLine" : 421,
+        "endColumn" : 36
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 823,
+    "ordinaryNext" : 823,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 823,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 536,
+        "startColumn" : 4,
+        "endLine" : 543,
+        "endColumn" : 9
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 423,
+        "startColumn" : 11,
+        "endLine" : 430,
+        "endColumn" : 16
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 836,
+    "ordinaryNext" : 836,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 825,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 537,
+        "startColumn" : 8,
+        "endLine" : 537,
+        "endColumn" : 15
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 424,
+        "startColumn" : 15,
+        "endLine" : 424,
+        "endColumn" : 22
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 836,
+    "ordinaryNext" : 836,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 826,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 539,
+        "startColumn" : 8,
+        "endLine" : 539,
+        "endColumn" : 40
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 426,
+        "startColumn" : 15,
+        "endLine" : 426,
+        "endColumn" : 47
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 829,
+    "ordinaryNext" : 829,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 829,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 540,
+        "startColumn" : 8,
+        "endLine" : 540,
+        "endColumn" : 40
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 427,
+        "startColumn" : 15,
+        "endLine" : 427,
+        "endColumn" : 47
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 832,
+    "ordinaryNext" : 832,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 832,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 541,
+        "startColumn" : 8,
+        "endLine" : 541,
+        "endColumn" : 34
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 428,
+        "startColumn" : 15,
+        "endLine" : 428,
+        "endColumn" : 41
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 834,
+    "ordinaryNext" : 834,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 834,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 542,
+        "startColumn" : 8,
+        "endLine" : 542,
+        "endColumn" : 30
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 429,
+        "startColumn" : 15,
+        "endLine" : 429,
+        "endColumn" : 37
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 836,
+    "ordinaryNext" : 836,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 836,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 544,
+        "startColumn" : 4,
+        "endLine" : 544,
+        "endColumn" : 7
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 431,
+        "startColumn" : 11,
+        "endLine" : 431,
+        "endColumn" : 14
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 839,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 839,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 547,
+        "startColumn" : 4,
+        "endLine" : 547,
+        "endColumn" : 35
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 434,
+        "startColumn" : 11,
+        "endLine" : 434,
+        "endColumn" : 42
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 847,
+    "ordinaryNext" : 847,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 847,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 548,
+        "startColumn" : 4,
+        "endLine" : 548,
+        "endColumn" : 21
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 435,
+        "startColumn" : 11,
+        "endLine" : 435,
+        "endColumn" : 28
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 850,
+    "ordinaryNext" : 850,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 850,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 549,
+        "startColumn" : 4,
+        "endLine" : 553,
+        "endColumn" : 9
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 436,
+        "startColumn" : 11,
+        "endLine" : 440,
+        "endColumn" : 16
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 860,
+    "ordinaryNext" : 860,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 854,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 550,
+        "startColumn" : 8,
+        "endLine" : 550,
+        "endColumn" : 28
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 437,
+        "startColumn" : 15,
+        "endLine" : 437,
+        "endColumn" : 35
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 860,
+    "ordinaryNext" : 860,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 857,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 552,
+        "startColumn" : 8,
+        "endLine" : 552,
+        "endColumn" : 29
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 439,
+        "startColumn" : 15,
+        "endLine" : 439,
+        "endColumn" : 36
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 860,
+    "ordinaryNext" : 860,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 860,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 554,
+        "startColumn" : 4,
+        "endLine" : 561,
+        "endColumn" : 9
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 441,
+        "startColumn" : 11,
+        "endLine" : 448,
+        "endColumn" : 16
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 873,
+    "ordinaryNext" : 873,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 862,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 555,
+        "startColumn" : 8,
+        "endLine" : 555,
+        "endColumn" : 15
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 442,
+        "startColumn" : 15,
+        "endLine" : 442,
+        "endColumn" : 22
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 873,
+    "ordinaryNext" : 873,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 863,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 557,
+        "startColumn" : 8,
+        "endLine" : 557,
+        "endColumn" : 43
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 444,
+        "startColumn" : 15,
+        "endLine" : 444,
+        "endColumn" : 50
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 866,
+    "ordinaryNext" : 866,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 866,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 558,
+        "startColumn" : 8,
+        "endLine" : 558,
+        "endColumn" : 40
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 445,
+        "startColumn" : 15,
+        "endLine" : 445,
+        "endColumn" : 47
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 869,
+    "ordinaryNext" : 869,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 869,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 559,
+        "startColumn" : 8,
+        "endLine" : 559,
+        "endColumn" : 34
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 446,
+        "startColumn" : 15,
+        "endLine" : 446,
+        "endColumn" : 41
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 871,
+    "ordinaryNext" : 871,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 871,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 560,
+        "startColumn" : 8,
+        "endLine" : 560,
+        "endColumn" : 30
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 447,
+        "startColumn" : 15,
+        "endLine" : 447,
+        "endColumn" : 37
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 873,
+    "ordinaryNext" : 873,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 873,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 562,
+        "startColumn" : 4,
+        "endLine" : 562,
+        "endColumn" : 7
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 449,
+        "startColumn" : 11,
+        "endLine" : 449,
+        "endColumn" : 14
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 876,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 876,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 565,
+        "startColumn" : 4,
+        "endLine" : 565,
+        "endColumn" : 35
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 452,
+        "startColumn" : 11,
+        "endLine" : 452,
+        "endColumn" : 42
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 884,
+    "ordinaryNext" : 884,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 884,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 566,
+        "startColumn" : 4,
+        "endLine" : 566,
+        "endColumn" : 22
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 453,
+        "startColumn" : 11,
+        "endLine" : 453,
+        "endColumn" : 29
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 887,
+    "ordinaryNext" : 887,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 887,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 567,
+        "startColumn" : 4,
+        "endLine" : 571,
+        "endColumn" : 9
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 454,
+        "startColumn" : 11,
+        "endLine" : 458,
+        "endColumn" : 16
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 897,
+    "ordinaryNext" : 897,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 891,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 568,
+        "startColumn" : 8,
+        "endLine" : 568,
+        "endColumn" : 28
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 455,
+        "startColumn" : 15,
+        "endLine" : 455,
+        "endColumn" : 35
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 897,
+    "ordinaryNext" : 897,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 894,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 570,
+        "startColumn" : 8,
+        "endLine" : 570,
+        "endColumn" : 29
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 457,
+        "startColumn" : 15,
+        "endLine" : 457,
+        "endColumn" : 36
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 897,
+    "ordinaryNext" : 897,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 897,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 572,
+        "startColumn" : 4,
+        "endLine" : 579,
+        "endColumn" : 9
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 459,
+        "startColumn" : 11,
+        "endLine" : 466,
+        "endColumn" : 16
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 910,
+    "ordinaryNext" : 910,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 899,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 573,
+        "startColumn" : 8,
+        "endLine" : 573,
+        "endColumn" : 15
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 460,
+        "startColumn" : 15,
+        "endLine" : 460,
+        "endColumn" : 22
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 910,
+    "ordinaryNext" : 910,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 900,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 575,
+        "startColumn" : 8,
+        "endLine" : 575,
+        "endColumn" : 47
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 462,
+        "startColumn" : 15,
+        "endLine" : 462,
+        "endColumn" : 54
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 903,
+    "ordinaryNext" : 903,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 903,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 576,
+        "startColumn" : 8,
+        "endLine" : 576,
+        "endColumn" : 40
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 463,
+        "startColumn" : 15,
+        "endLine" : 463,
+        "endColumn" : 47
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 906,
+    "ordinaryNext" : 906,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 906,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 577,
+        "startColumn" : 8,
+        "endLine" : 577,
+        "endColumn" : 34
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 464,
+        "startColumn" : 15,
+        "endLine" : 464,
+        "endColumn" : 41
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 908,
+    "ordinaryNext" : 908,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 908,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 578,
+        "startColumn" : 8,
+        "endLine" : 578,
+        "endColumn" : 30
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 465,
+        "startColumn" : 15,
+        "endLine" : 465,
+        "endColumn" : 37
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 910,
+    "ordinaryNext" : 910,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 910,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 580,
+        "startColumn" : 4,
+        "endLine" : 580,
+        "endColumn" : 7
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 467,
+        "startColumn" : 11,
+        "endLine" : 467,
+        "endColumn" : 14
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 913,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 913,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 583,
+        "startColumn" : 4,
+        "endLine" : 583,
+        "endColumn" : 29
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 470,
+        "startColumn" : 11,
+        "endLine" : 470,
+        "endColumn" : 36
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 916,
+    "ordinaryNext" : 916,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 916,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 584,
+        "startColumn" : 4,
+        "endLine" : 584,
+        "endColumn" : 19
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 471,
+        "startColumn" : 11,
+        "endLine" : 471,
+        "endColumn" : 26
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 919,
+    "ordinaryNext" : 919,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 919,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 585,
+        "startColumn" : 4,
+        "endLine" : 585,
+        "endColumn" : 21
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 472,
+        "startColumn" : 11,
+        "endLine" : 472,
+        "endColumn" : 28
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 922,
+    "ordinaryNext" : 922,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 922,
+    "type" : "CallStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 586,
+        "startColumn" : 4,
+        "endLine" : 586,
+        "endColumn" : 38
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 473,
+        "startColumn" : 11,
+        "endLine" : 473,
+        "endColumn" : 45
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 930,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 930,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 590,
+        "startColumn" : 4,
+        "endLine" : 601,
+        "endColumn" : 9
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 477,
+        "startColumn" : 11,
+        "endLine" : 488,
+        "endColumn" : 16
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 971,
+    "ordinaryNext" : 971,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 937,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 592,
+        "startColumn" : 8,
+        "endLine" : 592,
+        "endColumn" : 41
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 479,
+        "startColumn" : 15,
+        "endLine" : 479,
+        "endColumn" : 48
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 943,
+    "ordinaryNext" : 943,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 943,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 593,
+        "startColumn" : 8,
+        "endLine" : 593,
+        "endColumn" : 40
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 480,
+        "startColumn" : 15,
+        "endLine" : 480,
+        "endColumn" : 47
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 946,
+    "ordinaryNext" : 946,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 946,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 594,
+        "startColumn" : 8,
+        "endLine" : 594,
+        "endColumn" : 39
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 481,
+        "startColumn" : 15,
+        "endLine" : 481,
+        "endColumn" : 46
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 949,
+    "ordinaryNext" : 949,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 949,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 595,
+        "startColumn" : 8,
+        "endLine" : 595,
+        "endColumn" : 46
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 482,
+        "startColumn" : 15,
+        "endLine" : 482,
+        "endColumn" : 53
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 952,
+    "ordinaryNext" : 952,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 952,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 596,
+        "startColumn" : 8,
+        "endLine" : 596,
+        "endColumn" : 50
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 483,
+        "startColumn" : 15,
+        "endLine" : 483,
+        "endColumn" : 57
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 971,
+    "ordinaryNext" : 971,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 957,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 598,
+        "startColumn" : 8,
+        "endLine" : 598,
+        "endColumn" : 34
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 485,
+        "startColumn" : 15,
+        "endLine" : 485,
+        "endColumn" : 41
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 960,
+    "ordinaryNext" : 960,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 960,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 599,
+        "startColumn" : 8,
+        "endLine" : 599,
+        "endColumn" : 42
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 486,
+        "startColumn" : 15,
+        "endLine" : 486,
+        "endColumn" : 49
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 966,
+    "ordinaryNext" : 966,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 966,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 600,
+        "startColumn" : 8,
+        "endLine" : 600,
+        "endColumn" : 50
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 487,
+        "startColumn" : 15,
+        "endLine" : 487,
+        "endColumn" : 57
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 971,
+    "ordinaryNext" : 971,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 971,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 602,
+        "startColumn" : 4,
+        "endLine" : 602,
+        "endColumn" : 7
+      },
+      "original" : {
+        "file" : "CBTRN01C.cbl",
+        "startLine" : 489,
+        "startColumn" : 11,
+        "endLine" : 489,
+        "endColumn" : 14
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : null,
+    "normalCompletionRecognized" : true
+  } ],
+  "storageComponents" : [ {
+    "structureProven" : true,
+    "roots" : [ {
+      "source" : {
+        "expanded" : {
+          "file" : "<preprocessed>",
+          "startLine" : 102,
+          "startColumn" : 0,
+          "endLine" : 103,
+          "endColumn" : 3
+        },
+        "original" : {
+          "file" : "CVTRA06Y.cpy",
+          "startLine" : 4,
+          "startColumn" : 7,
+          "endLine" : 5,
+          "endColumn" : 10
+        },
+        "includeChain" : [ {
+          "includingFile" : "CBTRN01C.cbl",
+          "requestedName" : "CVTRA06Y",
+          "includedFile" : "CVTRA06Y.cpy",
+          "includeLine" : 99
+        } ],
+        "exact" : true
+      },
+      "parsedLevel" : 1,
+      "astId" : 59,
+      "name" : "DALYTRAN-RECORD",
+      "level" : "01"
+    }, {
+      "source" : {
+        "expanded" : {
+          "file" : "<preprocessed>",
+          "startLine" : 121,
+          "startColumn" : 0,
+          "endLine" : 122,
+          "endColumn" : 3
+        },
+        "original" : {
+          "file" : "CBTRN01C.cbl",
+          "startLine" : 100,
+          "startColumn" : 7,
+          "endLine" : 101,
+          "endColumn" : 10
+        },
+        "includeChain" : [ ],
+        "exact" : true
+      },
+      "parsedLevel" : 1,
+      "astId" : 88,
+      "name" : "DALYTRAN-STATUS",
+      "level" : "01"
+    }, {
+      "source" : {
+        "expanded" : {
+          "file" : "<preprocessed>",
+          "startLine" : 128,
+          "startColumn" : 0,
+          "endLine" : 129,
+          "endColumn" : 3
+        },
+        "original" : {
+          "file" : "CVCUS01Y.cpy",
+          "startLine" : 4,
+          "startColumn" : 7,
+          "endLine" : 5,
+          "endColumn" : 10
+        },
+        "includeChain" : [ {
+          "includingFile" : "CBTRN01C.cbl",
+          "requestedName" : "CVCUS01Y",
+          "includedFile" : "CVCUS01Y.cpy",
+          "includeLine" : 104
+        } ],
+        "exact" : true
+      },
+      "parsedLevel" : 1,
+      "astId" : 93,
+      "name" : "CUSTOMER-RECORD",
+      "level" : "01"
+    }, {
+      "source" : {
+        "expanded" : {
+          "file" : "<preprocessed>",
+          "startLine" : 152,
+          "startColumn" : 0,
+          "endLine" : 153,
+          "endColumn" : 3
+        },
+        "original" : {
+          "file" : "CBTRN01C.cbl",
+          "startLine" : 105,
+          "startColumn" : 7,
+          "endLine" : 106,
+          "endColumn" : 10
+        },
+        "includeChain" : [ ],
+        "exact" : true
+      },
+      "parsedLevel" : 1,
+      "astId" : 132,
+      "name" : "CUSTFILE-STATUS",
+      "level" : "01"
+    }, {
+      "source" : {
+        "expanded" : {
+          "file" : "<preprocessed>",
+          "startLine" : 159,
+          "startColumn" : 0,
+          "endLine" : 160,
+          "endColumn" : 3
+        },
+        "original" : {
+          "file" : "CVACT03Y.cpy",
+          "startLine" : 4,
+          "startColumn" : 7,
+          "endLine" : 5,
+          "endColumn" : 10
+        },
+        "includeChain" : [ {
+          "includingFile" : "CBTRN01C.cbl",
+          "requestedName" : "CVACT03Y",
+          "includedFile" : "CVACT03Y.cpy",
+          "includeLine" : 109
+        } ],
+        "exact" : true
+      },
+      "parsedLevel" : 1,
+      "astId" : 137,
+      "name" : "CARD-XREF-RECORD",
+      "level" : "01"
+    }, {
+      "source" : {
+        "expanded" : {
+          "file" : "<preprocessed>",
+          "startLine" : 168,
+          "startColumn" : 0,
+          "endLine" : 169,
+          "endColumn" : 3
+        },
+        "original" : {
+          "file" : "CBTRN01C.cbl",
+          "startLine" : 110,
+          "startColumn" : 7,
+          "endLine" : 111,
+          "endColumn" : 10
+        },
+        "includeChain" : [ ],
+        "exact" : true
+      },
+      "parsedLevel" : 1,
+      "astId" : 146,
+      "name" : "XREFFILE-STATUS",
+      "level" : "01"
+    }, {
+      "source" : {
+        "expanded" : {
+          "file" : "<preprocessed>",
+          "startLine" : 175,
+          "startColumn" : 0,
+          "endLine" : 176,
+          "endColumn" : 3
+        },
+        "original" : {
+          "file" : "CVACT02Y.cpy",
+          "startLine" : 4,
+          "startColumn" : 7,
+          "endLine" : 5,
+          "endColumn" : 10
+        },
+        "includeChain" : [ {
+          "includingFile" : "CBTRN01C.cbl",
+          "requestedName" : "CVACT02Y",
+          "includedFile" : "CVACT02Y.cpy",
+          "includeLine" : 114
+        } ],
+        "exact" : true
+      },
+      "parsedLevel" : 1,
+      "astId" : 151,
+      "name" : "CARD-RECORD",
+      "level" : "01"
+    }, {
+      "source" : {
+        "expanded" : {
+          "file" : "<preprocessed>",
+          "startLine" : 187,
+          "startColumn" : 0,
+          "endLine" : 188,
+          "endColumn" : 3
+        },
+        "original" : {
+          "file" : "CBTRN01C.cbl",
+          "startLine" : 115,
+          "startColumn" : 7,
+          "endLine" : 116,
+          "endColumn" : 10
+        },
+        "includeChain" : [ ],
+        "exact" : true
+      },
+      "parsedLevel" : 1,
+      "astId" : 166,
+      "name" : "CARDFILE-STATUS",
+      "level" : "01"
+    }, {
+      "source" : {
+        "expanded" : {
+          "file" : "<preprocessed>",
+          "startLine" : 194,
+          "startColumn" : 0,
+          "endLine" : 195,
+          "endColumn" : 3
+        },
+        "original" : {
+          "file" : "CVACT01Y.cpy",
+          "startLine" : 4,
+          "startColumn" : 7,
+          "endLine" : 5,
+          "endColumn" : 10
+        },
+        "includeChain" : [ {
+          "includingFile" : "CBTRN01C.cbl",
+          "requestedName" : "CVACT01Y",
+          "includedFile" : "CVACT01Y.cpy",
+          "includeLine" : 119
+        } ],
+        "exact" : true
+      },
+      "parsedLevel" : 1,
+      "astId" : 171,
+      "name" : "ACCOUNT-RECORD",
+      "level" : "01"
+    }, {
+      "source" : {
+        "expanded" : {
+          "file" : "<preprocessed>",
+          "startLine" : 212,
+          "startColumn" : 0,
+          "endLine" : 213,
+          "endColumn" : 3
+        },
+        "original" : {
+          "file" : "CBTRN01C.cbl",
+          "startLine" : 120,
+          "startColumn" : 7,
+          "endLine" : 121,
+          "endColumn" : 10
+        },
+        "includeChain" : [ ],
+        "exact" : true
+      },
+      "parsedLevel" : 1,
+      "astId" : 198,
+      "name" : "ACCTFILE-STATUS",
+      "level" : "01"
+    }, {
+      "source" : {
+        "expanded" : {
+          "file" : "<preprocessed>",
+          "startLine" : 219,
+          "startColumn" : 0,
+          "endLine" : 220,
+          "endColumn" : 3
+        },
+        "original" : {
+          "file" : "CVTRA05Y.cpy",
+          "startLine" : 4,
+          "startColumn" : 7,
+          "endLine" : 5,
+          "endColumn" : 10
+        },
+        "includeChain" : [ {
+          "includingFile" : "CBTRN01C.cbl",
+          "requestedName" : "CVTRA05Y",
+          "includedFile" : "CVTRA05Y.cpy",
+          "includeLine" : 124
+        } ],
+        "exact" : true
+      },
+      "parsedLevel" : 1,
+      "astId" : 203,
+      "name" : "TRAN-RECORD",
+      "level" : "01"
+    }, {
+      "source" : {
+        "expanded" : {
+          "file" : "<preprocessed>",
+          "startLine" : 238,
+          "startColumn" : 0,
+          "endLine" : 239,
+          "endColumn" : 3
+        },
+        "original" : {
+          "file" : "CBTRN01C.cbl",
+          "startLine" : 125,
+          "startColumn" : 7,
+          "endLine" : 126,
+          "endColumn" : 10
+        },
+        "includeChain" : [ ],
+        "exact" : true
+      },
+      "parsedLevel" : 1,
+      "astId" : 232,
+      "name" : "TRANFILE-STATUS",
+      "level" : "01"
+    }, {
+      "source" : {
+        "expanded" : {
+          "file" : "<preprocessed>",
+          "startLine" : 242,
+          "startColumn" : 0,
+          "endLine" : 243,
+          "endColumn" : 3
+        },
+        "original" : {
+          "file" : "CBTRN01C.cbl",
+          "startLine" : 129,
+          "startColumn" : 7,
+          "endLine" : 130,
+          "endColumn" : 10
+        },
+        "includeChain" : [ ],
+        "exact" : true
+      },
+      "parsedLevel" : 1,
+      "astId" : 237,
+      "name" : "IO-STATUS",
+      "level" : "01"
+    }, {
+      "source" : {
+        "expanded" : {
+          "file" : "<preprocessed>",
+          "startLine" : 246,
+          "startColumn" : 0,
+          "endLine" : 246,
+          "endColumn" : 44
+        },
+        "original" : {
+          "file" : "CBTRN01C.cbl",
+          "startLine" : 133,
+          "startColumn" : 7,
+          "endLine" : 133,
+          "endColumn" : 51
+        },
+        "includeChain" : [ ],
+        "exact" : true
+      },
+      "parsedLevel" : 1,
+      "astId" : 242,
+      "name" : "TWO-BYTES-BINARY",
+      "level" : "01"
+    }, {
+      "source" : {
+        "expanded" : {
+          "file" : "<preprocessed>",
+          "startLine" : 247,
+          "startColumn" : 0,
+          "endLine" : 248,
+          "endColumn" : 3
+        },
+        "original" : {
+          "file" : "CBTRN01C.cbl",
+          "startLine" : 134,
+          "startColumn" : 7,
+          "endLine" : 135,
+          "endColumn" : 10
+        },
+        "includeChain" : [ ],
+        "exact" : true
+      },
+      "parsedLevel" : 1,
+      "astId" : 245,
+      "name" : "TWO-BYTES-ALPHA",
+      "level" : "01"
+    }, {
+      "source" : {
+        "expanded" : {
+          "file" : "<preprocessed>",
+          "startLine" : 251,
+          "startColumn" : 0,
+          "endLine" : 252,
+          "endColumn" : 3
+        },
+        "original" : {
+          "file" : "CBTRN01C.cbl",
+          "startLine" : 138,
+          "startColumn" : 7,
+          "endLine" : 139,
+          "endColumn" : 10
+        },
+        "includeChain" : [ ],
+        "exact" : true
+      },
+      "parsedLevel" : 1,
+      "astId" : 252,
+      "name" : "IO-STATUS-04",
+      "level" : "01"
+    }, {
+      "source" : {
+        "expanded" : {
+          "file" : "<preprocessed>",
+          "startLine" : 255,
+          "startColumn" : 0,
+          "endLine" : 256,
+          "endColumn" : 3
+        },
+        "original" : {
+          "file" : "CBTRN01C.cbl",
+          "startLine" : 142,
+          "startColumn" : 7,
+          "endLine" : 143,
+          "endColumn" : 10
+        },
+        "includeChain" : [ ],
+        "exact" : true
+      },
+      "parsedLevel" : 1,
+      "astId" : 259,
+      "name" : "APPL-RESULT",
+      "level" : "01"
+    }, {
+      "source" : {
+        "expanded" : {
+          "file" : "<preprocessed>",
+          "startLine" : 259,
+          "startColumn" : 0,
+          "endLine" : 259,
+          "endColumn" : 63
+        },
+        "original" : {
+          "file" : "CBTRN01C.cbl",
+          "startLine" : 146,
+          "startColumn" : 7,
+          "endLine" : 146,
+          "endColumn" : 70
+        },
+        "includeChain" : [ ],
+        "exact" : true
+      },
+      "parsedLevel" : 1,
+      "astId" : 266,
+      "name" : "END-OF-DAILY-TRANS-FILE",
+      "level" : "01"
+    }, {
+      "source" : {
+        "expanded" : {
+          "file" : "<preprocessed>",
+          "startLine" : 260,
+          "startColumn" : 0,
+          "endLine" : 260,
+          "endColumn" : 45
+        },
+        "original" : {
+          "file" : "CBTRN01C.cbl",
+          "startLine" : 147,
+          "startColumn" : 7,
+          "endLine" : 147,
+          "endColumn" : 52
+        },
+        "includeChain" : [ ],
+        "exact" : true
+      },
+      "parsedLevel" : 1,
+      "astId" : 269,
+      "name" : "ABCODE",
+      "level" : "01"
+    }, {
+      "source" : {
+        "expanded" : {
+          "file" : "<preprocessed>",
+          "startLine" : 261,
+          "startColumn" : 0,
+          "endLine" : 261,
+          "endColumn" : 45
+        },
+        "original" : {
+          "file" : "CBTRN01C.cbl",
+          "startLine" : 148,
+          "startColumn" : 7,
+          "endLine" : 148,
+          "endColumn" : 52
+        },
+        "includeChain" : [ ],
+        "exact" : true
+      },
+      "parsedLevel" : 1,
+      "astId" : 272,
+      "name" : "TIMING",
+      "level" : "01"
+    }, {
+      "source" : {
+        "expanded" : {
+          "file" : "<preprocessed>",
+          "startLine" : 262,
+          "startColumn" : 0,
+          "endLine" : 263,
+          "endColumn" : 3
+        },
+        "original" : {
+          "file" : "CBTRN01C.cbl",
+          "startLine" : 149,
+          "startColumn" : 7,
+          "endLine" : 150,
+          "endColumn" : 10
+        },
+        "includeChain" : [ ],
+        "exact" : true
+      },
+      "parsedLevel" : 1,
+      "astId" : 275,
+      "name" : "WS-MISC-VARIABLES",
+      "level" : "01"
+    }, {
+      "source" : {
+        "expanded" : {
+          "file" : "<preprocessed>",
+          "startLine" : 67,
+          "startColumn" : 0,
+          "endLine" : 68,
+          "endColumn" : 3
+        },
+        "original" : {
+          "file" : "CBTRN01C.cbl",
+          "startLine" : 67,
+          "startColumn" : 7,
+          "endLine" : 68,
+          "endColumn" : 10
+        },
+        "includeChain" : [ ],
+        "exact" : true
+      },
+      "parsedLevel" : 1,
+      "astId" : 23,
+      "name" : "FD-TRAN-RECORD",
+      "level" : "01"
+    }, {
+      "source" : {
+        "expanded" : {
+          "file" : "<preprocessed>",
+          "startLine" : 72,
+          "startColumn" : 0,
+          "endLine" : 73,
+          "endColumn" : 3
+        },
+        "original" : {
+          "file" : "CBTRN01C.cbl",
+          "startLine" : 72,
+          "startColumn" : 7,
+          "endLine" : 73,
+          "endColumn" : 10
+        },
+        "includeChain" : [ ],
+        "exact" : true
+      },
+      "parsedLevel" : 1,
+      "astId" : 29,
+      "name" : "FD-CUSTFILE-REC",
+      "level" : "01"
+    }, {
+      "source" : {
+        "expanded" : {
+          "file" : "<preprocessed>",
+          "startLine" : 77,
+          "startColumn" : 0,
+          "endLine" : 78,
+          "endColumn" : 3
+        },
+        "original" : {
+          "file" : "CBTRN01C.cbl",
+          "startLine" : 77,
+          "startColumn" : 7,
+          "endLine" : 78,
+          "endColumn" : 10
+        },
+        "includeChain" : [ ],
+        "exact" : true
+      },
+      "parsedLevel" : 1,
+      "astId" : 35,
+      "name" : "FD-XREFFILE-REC",
+      "level" : "01"
+    }, {
+      "source" : {
+        "expanded" : {
+          "file" : "<preprocessed>",
+          "startLine" : 82,
+          "startColumn" : 0,
+          "endLine" : 83,
+          "endColumn" : 3
+        },
+        "original" : {
+          "file" : "CBTRN01C.cbl",
+          "startLine" : 82,
+          "startColumn" : 7,
+          "endLine" : 83,
+          "endColumn" : 10
+        },
+        "includeChain" : [ ],
+        "exact" : true
+      },
+      "parsedLevel" : 1,
+      "astId" : 41,
+      "name" : "FD-CARDFILE-REC",
+      "level" : "01"
+    }, {
+      "source" : {
+        "expanded" : {
+          "file" : "<preprocessed>",
+          "startLine" : 87,
+          "startColumn" : 0,
+          "endLine" : 88,
+          "endColumn" : 3
+        },
+        "original" : {
+          "file" : "CBTRN01C.cbl",
+          "startLine" : 87,
+          "startColumn" : 7,
+          "endLine" : 88,
+          "endColumn" : 10
+        },
+        "includeChain" : [ ],
+        "exact" : true
+      },
+      "parsedLevel" : 1,
+      "astId" : 47,
+      "name" : "FD-ACCTFILE-REC",
+      "level" : "01"
+    }, {
+      "source" : {
+        "expanded" : {
+          "file" : "<preprocessed>",
+          "startLine" : 92,
+          "startColumn" : 0,
+          "endLine" : 93,
+          "endColumn" : 3
+        },
+        "original" : {
+          "file" : "CBTRN01C.cbl",
+          "startLine" : 92,
+          "startColumn" : 7,
+          "endLine" : 93,
+          "endColumn" : 10
+        },
+        "includeChain" : [ ],
+        "exact" : true
+      },
+      "parsedLevel" : 1,
+      "astId" : 53,
+      "name" : "FD-TRANFILE-REC",
+      "level" : "01"
+    } ],
+    "unit" : "ProgramUnitId[compilationUnitId=CBTRN01C.CBL, structuralPath=[0], canonicalProgramName=CBTRN01C]"
+  } ]
+}

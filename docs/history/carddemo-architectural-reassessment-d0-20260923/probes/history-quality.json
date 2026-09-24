@@ -1,0 +1,2474 @@
+[
+  {
+    "wave": "pre-positive",
+    "path": "app/cbl/CBACT01C.cbl",
+    "stages": {
+      "frontend": "PARTIAL",
+      "lower": "PARTIAL",
+      "cfg": "PARTIAL",
+      "dependency": "PARTIAL"
+    },
+    "variants": {
+      "OBSERVED": 103,
+      "IF": 22,
+      "GOBACK": 1,
+      "MOVE": 62,
+      "CALL": 2
+    },
+    "coverage": {
+      "inputMissingStatements": 0,
+      "inventoryStatus": "COMPLETE",
+      "modeledStatements": 2,
+      "observedStatements": 190,
+      "partialStatements": 115,
+      "readiness": {
+        "cfg": {
+          "scope": "complete observed inventory bounded by each statement's structural readiness",
+          "status": "BLOCKED"
+        },
+        "effectsDataflow": {
+          "scope": "report dependency claim bounded by each statement's effects readiness",
+          "status": "BLOCKED"
+        },
+        "lowering": {
+          "scope": "report binding claim combined with every observed statement fact",
+          "status": "BLOCKED"
+        }
+      },
+      "unsupportedStatements": 73
+    },
+    "statements": 190,
+    "ordinaryRelations": 0,
+    "storage": [
+      "PROFILE_NOT_SELECTED"
+    ]
+  },
+  {
+    "wave": "pre-positive",
+    "path": "app/cbl/COACTUPC.cbl",
+    "stages": {
+      "frontend": "BLOCKED",
+      "lower": "NOT_REACHED",
+      "cfg": "NOT_REACHED",
+      "dependency": "NOT_REACHED"
+    }
+  },
+  {
+    "wave": "pre-positive",
+    "path": "app/cbl/CBEXPORT.cbl",
+    "stages": {
+      "frontend": "PARTIAL",
+      "lower": "PARTIAL",
+      "cfg": "PARTIAL",
+      "dependency": "PARTIAL"
+    },
+    "variants": {
+      "OBSERVED": 129,
+      "GOBACK": 1,
+      "IF": 16,
+      "MOVE": 77,
+      "CALL": 1
+    },
+    "coverage": {
+      "inputMissingStatements": 0,
+      "inventoryStatus": "COMPLETE",
+      "modeledStatements": 16,
+      "observedStatements": 224,
+      "partialStatements": 116,
+      "readiness": {
+        "cfg": {
+          "scope": "complete observed inventory bounded by each statement's structural readiness",
+          "status": "BLOCKED"
+        },
+        "effectsDataflow": {
+          "scope": "report dependency claim bounded by each statement's effects readiness",
+          "status": "BLOCKED"
+        },
+        "lowering": {
+          "scope": "report binding claim combined with every observed statement fact",
+          "status": "BLOCKED"
+        }
+      },
+      "unsupportedStatements": 92
+    },
+    "statements": 224,
+    "ordinaryRelations": 0,
+    "storage": [
+      "PROFILE_NOT_SELECTED"
+    ]
+  },
+  {
+    "wave": "pre-positive",
+    "path": "app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+    "stages": {
+      "frontend": "PARTIAL",
+      "lower": "PARTIAL",
+      "cfg": "PARTIAL",
+      "dependency": "PARTIAL"
+    },
+    "variants": {
+      "OBSERVED": 81,
+      "IF": 17,
+      "MOVE": 93,
+      "CICS_PROGRAM_CONTROL": 2
+    },
+    "coverage": {
+      "inputMissingStatements": 0,
+      "inventoryStatus": "INPUT_MISSING",
+      "modeledStatements": 0,
+      "observedStatements": 193,
+      "partialStatements": 126,
+      "readiness": {
+        "cfg": {
+          "scope": "complete observed inventory bounded by each statement's structural readiness",
+          "status": "BLOCKED"
+        },
+        "effectsDataflow": {
+          "scope": "report dependency claim bounded by each statement's effects readiness",
+          "status": "BLOCKED"
+        },
+        "lowering": {
+          "scope": "report binding claim combined with every observed statement fact",
+          "status": "BLOCKED"
+        }
+      },
+      "unsupportedStatements": 67
+    },
+    "statements": 193,
+    "ordinaryRelations": 0,
+    "storage": [
+      "PROFILE_NOT_SELECTED",
+      "INPUT_MISSING"
+    ]
+  },
+  {
+    "wave": "pre-positive",
+    "path": "app/app-vsam-mq/cbl/COACCT01.cbl",
+    "stages": {
+      "frontend": "PARTIAL",
+      "lower": "PARTIAL",
+      "cfg": "PARTIAL",
+      "dependency": "PARTIAL"
+    },
+    "variants": {
+      "OBSERVED": 68,
+      "IF": 7,
+      "MOVE": 118,
+      "PERFORM_PROCEDURE": 1,
+      "CALL": 9,
+      "CICS_FILE_CONTROL": 1,
+      "GOBACK": 1
+    },
+    "coverage": {
+      "inputMissingStatements": 0,
+      "inventoryStatus": "INPUT_MISSING",
+      "modeledStatements": 1,
+      "observedStatements": 205,
+      "partialStatements": 141,
+      "readiness": {
+        "cfg": {
+          "scope": "complete observed inventory bounded by each statement's structural readiness",
+          "status": "BLOCKED"
+        },
+        "effectsDataflow": {
+          "scope": "report dependency claim bounded by each statement's effects readiness",
+          "status": "BLOCKED"
+        },
+        "lowering": {
+          "scope": "report binding claim combined with every observed statement fact",
+          "status": "BLOCKED"
+        }
+      },
+      "unsupportedStatements": 63
+    },
+    "statements": 205,
+    "ordinaryRelations": 0,
+    "storage": [
+      "PROFILE_NOT_SELECTED",
+      "INPUT_MISSING"
+    ]
+  },
+  {
+    "wave": "pre-positive",
+    "path": "app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
+    "stages": {
+      "frontend": "PARTIAL",
+      "lower": "PARTIAL",
+      "cfg": "PARTIAL",
+      "dependency": "PARTIAL"
+    },
+    "variants": {
+      "PERFORM_PROCEDURE": 10,
+      "OBSERVED": 72,
+      "IF": 17,
+      "MOVE": 8,
+      "GOBACK": 2,
+      "EVALUATE": 1
+    },
+    "coverage": {
+      "inputMissingStatements": 0,
+      "inventoryStatus": "COMPLETE",
+      "modeledStatements": 2,
+      "observedStatements": 110,
+      "partialStatements": 70,
+      "readiness": {
+        "cfg": {
+          "scope": "complete observed inventory bounded by each statement's structural readiness",
+          "status": "BLOCKED"
+        },
+        "effectsDataflow": {
+          "scope": "report dependency claim bounded by each statement's effects readiness",
+          "status": "BLOCKED"
+        },
+        "lowering": {
+          "scope": "report binding claim combined with every observed statement fact",
+          "status": "BLOCKED"
+        }
+      },
+      "unsupportedStatements": 38
+    },
+    "statements": 110,
+    "ordinaryRelations": 0,
+    "storage": [
+      "PROFILE_NOT_SELECTED"
+    ]
+  },
+  {
+    "wave": "pre-positive",
+    "path": "app/cbl/COADM01C.cbl",
+    "stages": {
+      "frontend": "PARTIAL",
+      "lower": "PARTIAL",
+      "cfg": "PARTIAL",
+      "dependency": "PARTIAL"
+    },
+    "variants": {
+      "OBSERVED": 29,
+      "IF": 6,
+      "MOVE": 43,
+      "CICS_PROGRAM_CONTROL": 2
+    },
+    "coverage": {
+      "inputMissingStatements": 0,
+      "inventoryStatus": "INPUT_MISSING",
+      "modeledStatements": 0,
+      "observedStatements": 80,
+      "partialStatements": 56,
+      "readiness": {
+        "cfg": {
+          "scope": "complete observed inventory bounded by each statement's structural readiness",
+          "status": "BLOCKED"
+        },
+        "effectsDataflow": {
+          "scope": "report dependency claim bounded by each statement's effects readiness",
+          "status": "BLOCKED"
+        },
+        "lowering": {
+          "scope": "report binding claim combined with every observed statement fact",
+          "status": "BLOCKED"
+        }
+      },
+      "unsupportedStatements": 24
+    },
+    "statements": 80,
+    "ordinaryRelations": 0,
+    "storage": [
+      "PROFILE_NOT_SELECTED",
+      "INPUT_MISSING"
+    ]
+  },
+  {
+    "wave": "pre-positive",
+    "path": "app/app-authorization-ims-db2-mq/cbl/COPAUS2C.cbl",
+    "stages": {
+      "frontend": "PARTIAL",
+      "lower": "PARTIAL",
+      "cfg": "PARTIAL",
+      "dependency": "PARTIAL"
+    },
+    "variants": {
+      "OBSERVED": 14,
+      "MOVE": 39,
+      "IF": 3
+    },
+    "coverage": {
+      "inputMissingStatements": 0,
+      "inventoryStatus": "COMPLETE",
+      "modeledStatements": 0,
+      "observedStatements": 56,
+      "partialStatements": 47,
+      "readiness": {
+        "cfg": {
+          "scope": "complete observed inventory bounded by each statement's structural readiness",
+          "status": "BLOCKED"
+        },
+        "effectsDataflow": {
+          "scope": "report dependency claim bounded by each statement's effects readiness",
+          "status": "BLOCKED"
+        },
+        "lowering": {
+          "scope": "report binding claim combined with every observed statement fact",
+          "status": "BLOCKED"
+        }
+      },
+      "unsupportedStatements": 9
+    },
+    "statements": 56,
+    "ordinaryRelations": 0,
+    "storage": [
+      "PROFILE_NOT_SELECTED",
+      "SECTION_NOT_PROVEN"
+    ]
+  },
+  {
+    "wave": "pre-positive",
+    "path": "app/cbl/CBACT04C.cbl",
+    "stages": {
+      "frontend": "PARTIAL",
+      "lower": "PARTIAL",
+      "cfg": "PARTIAL",
+      "dependency": "PARTIAL"
+    },
+    "variants": {
+      "OBSERVED": 148,
+      "IF": 43,
+      "MOVE": 101,
+      "GOBACK": 1,
+      "CALL": 1
+    },
+    "coverage": {
+      "inputMissingStatements": 0,
+      "inventoryStatus": "COMPLETE",
+      "modeledStatements": 6,
+      "observedStatements": 294,
+      "partialStatements": 167,
+      "readiness": {
+        "cfg": {
+          "scope": "complete observed inventory bounded by each statement's structural readiness",
+          "status": "BLOCKED"
+        },
+        "effectsDataflow": {
+          "scope": "report dependency claim bounded by each statement's effects readiness",
+          "status": "BLOCKED"
+        },
+        "lowering": {
+          "scope": "report binding claim combined with every observed statement fact",
+          "status": "BLOCKED"
+        }
+      },
+      "unsupportedStatements": 121
+    },
+    "statements": 294,
+    "ordinaryRelations": 0,
+    "storage": [
+      "PROFILE_NOT_SELECTED"
+    ]
+  },
+  {
+    "wave": "pre-positive",
+    "path": "app/cbl/COBSWAIT.cbl",
+    "stages": {
+      "frontend": "PARTIAL",
+      "lower": "PARTIAL",
+      "cfg": "PARTIAL",
+      "dependency": "PARTIAL"
+    },
+    "variants": {
+      "OBSERVED": 2,
+      "MOVE": 1,
+      "CALL": 1
+    },
+    "coverage": {
+      "inputMissingStatements": 0,
+      "inventoryStatus": "COMPLETE",
+      "modeledStatements": 0,
+      "observedStatements": 4,
+      "partialStatements": 2,
+      "readiness": {
+        "cfg": {
+          "scope": "complete observed inventory bounded by each statement's structural readiness",
+          "status": "BLOCKED"
+        },
+        "effectsDataflow": {
+          "scope": "report dependency claim bounded by each statement's effects readiness",
+          "status": "BLOCKED"
+        },
+        "lowering": {
+          "scope": "report binding claim combined with every observed statement fact",
+          "status": "BLOCKED"
+        }
+      },
+      "unsupportedStatements": 2
+    },
+    "statements": 4,
+    "ordinaryRelations": 0,
+    "storage": [
+      "PROFILE_NOT_SELECTED"
+    ]
+  },
+  {
+    "wave": "w5",
+    "path": "app/cbl/CBACT01C.cbl",
+    "stages": {
+      "frontend": "PARTIAL",
+      "lower": "BLOCKED",
+      "cfg": "NOT_REACHED",
+      "dependency": "NOT_REACHED"
+    },
+    "variants": {
+      "OBSERVED": 69,
+      "PERFORM_PROCEDURE": 34,
+      "IF": 22,
+      "GOBACK": 1,
+      "MOVE": 62,
+      "CALL": 2
+    },
+    "coverage": {
+      "inputMissingStatements": 0,
+      "inventoryStatus": "COMPLETE",
+      "modeledStatements": 2,
+      "observedStatements": 190,
+      "partialStatements": 149,
+      "readiness": {
+        "cfg": {
+          "scope": "complete observed inventory bounded by each statement's structural readiness",
+          "status": "BLOCKED"
+        },
+        "effectsDataflow": {
+          "scope": "report dependency claim bounded by each statement's effects readiness",
+          "status": "BLOCKED"
+        },
+        "lowering": {
+          "scope": "report binding claim combined with every observed statement fact",
+          "status": "BLOCKED"
+        }
+      },
+      "unsupportedStatements": 39
+    },
+    "statements": 190,
+    "ordinaryRelations": 0,
+    "storage": [
+      "PROFILE_NOT_SELECTED"
+    ]
+  },
+  {
+    "wave": "w5",
+    "path": "app/cbl/COACTUPC.cbl",
+    "stages": {
+      "frontend": "BLOCKED",
+      "lower": "NOT_REACHED",
+      "cfg": "NOT_REACHED",
+      "dependency": "NOT_REACHED"
+    }
+  },
+  {
+    "wave": "w5",
+    "path": "app/cbl/CBEXPORT.cbl",
+    "stages": {
+      "frontend": "PARTIAL",
+      "lower": "BLOCKED",
+      "cfg": "NOT_REACHED",
+      "dependency": "NOT_REACHED"
+    },
+    "variants": {
+      "PERFORM_PROCEDURE": 40,
+      "GOBACK": 1,
+      "OBSERVED": 89,
+      "IF": 16,
+      "MOVE": 77,
+      "CALL": 1
+    },
+    "coverage": {
+      "inputMissingStatements": 0,
+      "inventoryStatus": "COMPLETE",
+      "modeledStatements": 16,
+      "observedStatements": 224,
+      "partialStatements": 156,
+      "readiness": {
+        "cfg": {
+          "scope": "complete observed inventory bounded by each statement's structural readiness",
+          "status": "BLOCKED"
+        },
+        "effectsDataflow": {
+          "scope": "report dependency claim bounded by each statement's effects readiness",
+          "status": "BLOCKED"
+        },
+        "lowering": {
+          "scope": "report binding claim combined with every observed statement fact",
+          "status": "BLOCKED"
+        }
+      },
+      "unsupportedStatements": 52
+    },
+    "statements": 224,
+    "ordinaryRelations": 0,
+    "storage": [
+      "PROFILE_NOT_SELECTED"
+    ]
+  },
+  {
+    "wave": "w5",
+    "path": "app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+    "stages": {
+      "frontend": "PARTIAL",
+      "lower": "BLOCKED",
+      "cfg": "NOT_REACHED",
+      "dependency": "NOT_REACHED"
+    },
+    "variants": {
+      "OBSERVED": 47,
+      "IF": 17,
+      "MOVE": 93,
+      "PERFORM_PROCEDURE": 34,
+      "CICS_PROGRAM_CONTROL": 2
+    },
+    "coverage": {
+      "inputMissingStatements": 0,
+      "inventoryStatus": "INPUT_MISSING",
+      "modeledStatements": 4,
+      "observedStatements": 193,
+      "partialStatements": 156,
+      "readiness": {
+        "cfg": {
+          "scope": "complete observed inventory bounded by each statement's structural readiness",
+          "status": "BLOCKED"
+        },
+        "effectsDataflow": {
+          "scope": "report dependency claim bounded by each statement's effects readiness",
+          "status": "BLOCKED"
+        },
+        "lowering": {
+          "scope": "report binding claim combined with every observed statement fact",
+          "status": "BLOCKED"
+        }
+      },
+      "unsupportedStatements": 33
+    },
+    "statements": 193,
+    "ordinaryRelations": 0,
+    "storage": [
+      "PROFILE_NOT_SELECTED",
+      "INPUT_MISSING"
+    ]
+  },
+  {
+    "wave": "w5",
+    "path": "app/app-vsam-mq/cbl/COACCT01.cbl",
+    "stages": {
+      "frontend": "PARTIAL",
+      "lower": "BLOCKED",
+      "cfg": "NOT_REACHED",
+      "dependency": "NOT_REACHED"
+    },
+    "variants": {
+      "OBSERVED": 37,
+      "PERFORM_PROCEDURE": 32,
+      "IF": 7,
+      "MOVE": 118,
+      "CALL": 9,
+      "CICS_FILE_CONTROL": 1,
+      "GOBACK": 1
+    },
+    "coverage": {
+      "inputMissingStatements": 0,
+      "inventoryStatus": "INPUT_MISSING",
+      "modeledStatements": 5,
+      "observedStatements": 205,
+      "partialStatements": 168,
+      "readiness": {
+        "cfg": {
+          "scope": "complete observed inventory bounded by each statement's structural readiness",
+          "status": "BLOCKED"
+        },
+        "effectsDataflow": {
+          "scope": "report dependency claim bounded by each statement's effects readiness",
+          "status": "BLOCKED"
+        },
+        "lowering": {
+          "scope": "report binding claim combined with every observed statement fact",
+          "status": "BLOCKED"
+        }
+      },
+      "unsupportedStatements": 32
+    },
+    "statements": 205,
+    "ordinaryRelations": 0,
+    "storage": [
+      "PROFILE_NOT_SELECTED",
+      "INPUT_MISSING"
+    ]
+  },
+  {
+    "wave": "w5",
+    "path": "app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
+    "stages": {
+      "frontend": "PARTIAL",
+      "lower": "BLOCKED",
+      "cfg": "NOT_REACHED",
+      "dependency": "NOT_REACHED"
+    },
+    "variants": {
+      "PERFORM_PROCEDURE": 15,
+      "OBSERVED": 66,
+      "IF": 17,
+      "MOVE": 8,
+      "GOBACK": 2,
+      "EVALUATE": 2
+    },
+    "coverage": {
+      "inputMissingStatements": 0,
+      "inventoryStatus": "COMPLETE",
+      "modeledStatements": 2,
+      "observedStatements": 110,
+      "partialStatements": 76,
+      "readiness": {
+        "cfg": {
+          "scope": "complete observed inventory bounded by each statement's structural readiness",
+          "status": "BLOCKED"
+        },
+        "effectsDataflow": {
+          "scope": "report dependency claim bounded by each statement's effects readiness",
+          "status": "BLOCKED"
+        },
+        "lowering": {
+          "scope": "report binding claim combined with every observed statement fact",
+          "status": "BLOCKED"
+        }
+      },
+      "unsupportedStatements": 32
+    },
+    "statements": 110,
+    "ordinaryRelations": 0,
+    "storage": [
+      "PROFILE_NOT_SELECTED"
+    ]
+  },
+  {
+    "wave": "w5",
+    "path": "app/cbl/COADM01C.cbl",
+    "stages": {
+      "frontend": "PARTIAL",
+      "lower": "BLOCKED",
+      "cfg": "NOT_REACHED",
+      "dependency": "NOT_REACHED"
+    },
+    "variants": {
+      "OBSERVED": 18,
+      "IF": 6,
+      "MOVE": 43,
+      "PERFORM_PROCEDURE": 11,
+      "CICS_PROGRAM_CONTROL": 2
+    },
+    "coverage": {
+      "inputMissingStatements": 0,
+      "inventoryStatus": "INPUT_MISSING",
+      "modeledStatements": 3,
+      "observedStatements": 80,
+      "partialStatements": 64,
+      "readiness": {
+        "cfg": {
+          "scope": "complete observed inventory bounded by each statement's structural readiness",
+          "status": "BLOCKED"
+        },
+        "effectsDataflow": {
+          "scope": "report dependency claim bounded by each statement's effects readiness",
+          "status": "BLOCKED"
+        },
+        "lowering": {
+          "scope": "report binding claim combined with every observed statement fact",
+          "status": "BLOCKED"
+        }
+      },
+      "unsupportedStatements": 13
+    },
+    "statements": 80,
+    "ordinaryRelations": 0,
+    "storage": [
+      "PROFILE_NOT_SELECTED",
+      "INPUT_MISSING"
+    ]
+  },
+  {
+    "wave": "w5",
+    "path": "app/app-authorization-ims-db2-mq/cbl/COPAUS2C.cbl",
+    "stages": {
+      "frontend": "PARTIAL",
+      "lower": "BLOCKED",
+      "cfg": "NOT_REACHED",
+      "dependency": "NOT_REACHED"
+    },
+    "variants": {
+      "OBSERVED": 13,
+      "MOVE": 39,
+      "IF": 3,
+      "PERFORM_PROCEDURE": 1
+    },
+    "coverage": {
+      "inputMissingStatements": 0,
+      "inventoryStatus": "COMPLETE",
+      "modeledStatements": 0,
+      "observedStatements": 56,
+      "partialStatements": 48,
+      "readiness": {
+        "cfg": {
+          "scope": "complete observed inventory bounded by each statement's structural readiness",
+          "status": "BLOCKED"
+        },
+        "effectsDataflow": {
+          "scope": "report dependency claim bounded by each statement's effects readiness",
+          "status": "BLOCKED"
+        },
+        "lowering": {
+          "scope": "report binding claim combined with every observed statement fact",
+          "status": "BLOCKED"
+        }
+      },
+      "unsupportedStatements": 8
+    },
+    "statements": 56,
+    "ordinaryRelations": 0,
+    "storage": [
+      "PROFILE_NOT_SELECTED",
+      "SECTION_NOT_PROVEN"
+    ]
+  },
+  {
+    "wave": "w5",
+    "path": "app/cbl/CBACT04C.cbl",
+    "stages": {
+      "frontend": "PARTIAL",
+      "lower": "BLOCKED",
+      "cfg": "NOT_REACHED",
+      "dependency": "NOT_REACHED"
+    },
+    "variants": {
+      "OBSERVED": 93,
+      "PERFORM_PROCEDURE": 55,
+      "IF": 43,
+      "MOVE": 101,
+      "GOBACK": 1,
+      "CALL": 1
+    },
+    "coverage": {
+      "inputMissingStatements": 0,
+      "inventoryStatus": "COMPLETE",
+      "modeledStatements": 6,
+      "observedStatements": 294,
+      "partialStatements": 222,
+      "readiness": {
+        "cfg": {
+          "scope": "complete observed inventory bounded by each statement's structural readiness",
+          "status": "BLOCKED"
+        },
+        "effectsDataflow": {
+          "scope": "report dependency claim bounded by each statement's effects readiness",
+          "status": "BLOCKED"
+        },
+        "lowering": {
+          "scope": "report binding claim combined with every observed statement fact",
+          "status": "BLOCKED"
+        }
+      },
+      "unsupportedStatements": 66
+    },
+    "statements": 294,
+    "ordinaryRelations": 0,
+    "storage": [
+      "PROFILE_NOT_SELECTED"
+    ]
+  },
+  {
+    "wave": "w5",
+    "path": "app/cbl/COBSWAIT.cbl",
+    "stages": {
+      "frontend": "PARTIAL",
+      "lower": "PARTIAL",
+      "cfg": "PARTIAL",
+      "dependency": "PARTIAL"
+    },
+    "variants": {
+      "OBSERVED": 2,
+      "MOVE": 1,
+      "CALL": 1
+    },
+    "coverage": {
+      "inputMissingStatements": 0,
+      "inventoryStatus": "COMPLETE",
+      "modeledStatements": 0,
+      "observedStatements": 4,
+      "partialStatements": 2,
+      "readiness": {
+        "cfg": {
+          "scope": "complete observed inventory bounded by each statement's structural readiness",
+          "status": "BLOCKED"
+        },
+        "effectsDataflow": {
+          "scope": "report dependency claim bounded by each statement's effects readiness",
+          "status": "BLOCKED"
+        },
+        "lowering": {
+          "scope": "report binding claim combined with every observed statement fact",
+          "status": "BLOCKED"
+        }
+      },
+      "unsupportedStatements": 2
+    },
+    "statements": 4,
+    "ordinaryRelations": 0,
+    "storage": [
+      "PROFILE_NOT_SELECTED"
+    ]
+  },
+  {
+    "wave": "w6",
+    "path": "app/cbl/CBACT01C.cbl",
+    "stages": {
+      "frontend": "PARTIAL",
+      "lower": "BLOCKED",
+      "cfg": "NOT_REACHED",
+      "dependency": "NOT_REACHED"
+    },
+    "variants": {
+      "OBSERVED": 69,
+      "PERFORM_PROCEDURE": 34,
+      "IF": 22,
+      "GOBACK": 1,
+      "MOVE": 62,
+      "CALL": 2
+    },
+    "coverage": {
+      "inputMissingStatements": 0,
+      "inventoryStatus": "COMPLETE",
+      "modeledStatements": 2,
+      "observedStatements": 190,
+      "partialStatements": 149,
+      "readiness": {
+        "cfg": {
+          "scope": "complete observed inventory bounded by each statement's structural readiness",
+          "status": "BLOCKED"
+        },
+        "effectsDataflow": {
+          "scope": "report dependency claim bounded by each statement's effects readiness",
+          "status": "BLOCKED"
+        },
+        "lowering": {
+          "scope": "report binding claim combined with every observed statement fact",
+          "status": "BLOCKED"
+        }
+      },
+      "unsupportedStatements": 39
+    },
+    "statements": 190,
+    "ordinaryRelations": 0,
+    "storage": [
+      "PROFILE_NOT_SELECTED"
+    ]
+  },
+  {
+    "wave": "w6",
+    "path": "app/cbl/COACTUPC.cbl",
+    "stages": {
+      "frontend": "BLOCKED",
+      "lower": "NOT_REACHED",
+      "cfg": "NOT_REACHED",
+      "dependency": "NOT_REACHED"
+    }
+  },
+  {
+    "wave": "w6",
+    "path": "app/cbl/CBEXPORT.cbl",
+    "stages": {
+      "frontend": "PARTIAL",
+      "lower": "BLOCKED",
+      "cfg": "NOT_REACHED",
+      "dependency": "NOT_REACHED"
+    },
+    "variants": {
+      "PERFORM_PROCEDURE": 40,
+      "GOBACK": 1,
+      "OBSERVED": 89,
+      "IF": 16,
+      "MOVE": 77,
+      "CALL": 1
+    },
+    "coverage": {
+      "inputMissingStatements": 0,
+      "inventoryStatus": "COMPLETE",
+      "modeledStatements": 16,
+      "observedStatements": 224,
+      "partialStatements": 156,
+      "readiness": {
+        "cfg": {
+          "scope": "complete observed inventory bounded by each statement's structural readiness",
+          "status": "BLOCKED"
+        },
+        "effectsDataflow": {
+          "scope": "report dependency claim bounded by each statement's effects readiness",
+          "status": "BLOCKED"
+        },
+        "lowering": {
+          "scope": "report binding claim combined with every observed statement fact",
+          "status": "BLOCKED"
+        }
+      },
+      "unsupportedStatements": 52
+    },
+    "statements": 224,
+    "ordinaryRelations": 0,
+    "storage": [
+      "PROFILE_NOT_SELECTED"
+    ]
+  },
+  {
+    "wave": "w6",
+    "path": "app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+    "stages": {
+      "frontend": "PARTIAL",
+      "lower": "BLOCKED",
+      "cfg": "NOT_REACHED",
+      "dependency": "NOT_REACHED"
+    },
+    "variants": {
+      "OBSERVED": 47,
+      "IF": 17,
+      "MOVE": 93,
+      "PERFORM_PROCEDURE": 34,
+      "CICS_PROGRAM_CONTROL": 2
+    },
+    "coverage": {
+      "inputMissingStatements": 0,
+      "inventoryStatus": "INPUT_MISSING",
+      "modeledStatements": 4,
+      "observedStatements": 193,
+      "partialStatements": 156,
+      "readiness": {
+        "cfg": {
+          "scope": "complete observed inventory bounded by each statement's structural readiness",
+          "status": "BLOCKED"
+        },
+        "effectsDataflow": {
+          "scope": "report dependency claim bounded by each statement's effects readiness",
+          "status": "BLOCKED"
+        },
+        "lowering": {
+          "scope": "report binding claim combined with every observed statement fact",
+          "status": "BLOCKED"
+        }
+      },
+      "unsupportedStatements": 33
+    },
+    "statements": 193,
+    "ordinaryRelations": 0,
+    "storage": [
+      "PROFILE_NOT_SELECTED",
+      "INPUT_MISSING"
+    ]
+  },
+  {
+    "wave": "w6",
+    "path": "app/app-vsam-mq/cbl/COACCT01.cbl",
+    "stages": {
+      "frontend": "PARTIAL",
+      "lower": "BLOCKED",
+      "cfg": "NOT_REACHED",
+      "dependency": "NOT_REACHED"
+    },
+    "variants": {
+      "OBSERVED": 37,
+      "PERFORM_PROCEDURE": 32,
+      "IF": 7,
+      "MOVE": 118,
+      "CALL": 9,
+      "CICS_FILE_CONTROL": 1,
+      "GOBACK": 1
+    },
+    "coverage": {
+      "inputMissingStatements": 0,
+      "inventoryStatus": "INPUT_MISSING",
+      "modeledStatements": 5,
+      "observedStatements": 205,
+      "partialStatements": 168,
+      "readiness": {
+        "cfg": {
+          "scope": "complete observed inventory bounded by each statement's structural readiness",
+          "status": "BLOCKED"
+        },
+        "effectsDataflow": {
+          "scope": "report dependency claim bounded by each statement's effects readiness",
+          "status": "BLOCKED"
+        },
+        "lowering": {
+          "scope": "report binding claim combined with every observed statement fact",
+          "status": "BLOCKED"
+        }
+      },
+      "unsupportedStatements": 32
+    },
+    "statements": 205,
+    "ordinaryRelations": 0,
+    "storage": [
+      "PROFILE_NOT_SELECTED",
+      "INPUT_MISSING"
+    ]
+  },
+  {
+    "wave": "w6",
+    "path": "app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
+    "stages": {
+      "frontend": "PARTIAL",
+      "lower": "BLOCKED",
+      "cfg": "NOT_REACHED",
+      "dependency": "NOT_REACHED"
+    },
+    "variants": {
+      "PERFORM_PROCEDURE": 15,
+      "OBSERVED": 66,
+      "IF": 17,
+      "MOVE": 8,
+      "GOBACK": 2,
+      "EVALUATE": 2
+    },
+    "coverage": {
+      "inputMissingStatements": 0,
+      "inventoryStatus": "COMPLETE",
+      "modeledStatements": 2,
+      "observedStatements": 110,
+      "partialStatements": 76,
+      "readiness": {
+        "cfg": {
+          "scope": "complete observed inventory bounded by each statement's structural readiness",
+          "status": "BLOCKED"
+        },
+        "effectsDataflow": {
+          "scope": "report dependency claim bounded by each statement's effects readiness",
+          "status": "BLOCKED"
+        },
+        "lowering": {
+          "scope": "report binding claim combined with every observed statement fact",
+          "status": "BLOCKED"
+        }
+      },
+      "unsupportedStatements": 32
+    },
+    "statements": 110,
+    "ordinaryRelations": 0,
+    "storage": [
+      "PROFILE_NOT_SELECTED"
+    ]
+  },
+  {
+    "wave": "w6",
+    "path": "app/cbl/COADM01C.cbl",
+    "stages": {
+      "frontend": "PARTIAL",
+      "lower": "BLOCKED",
+      "cfg": "NOT_REACHED",
+      "dependency": "NOT_REACHED"
+    },
+    "variants": {
+      "OBSERVED": 18,
+      "IF": 6,
+      "MOVE": 43,
+      "PERFORM_PROCEDURE": 11,
+      "CICS_PROGRAM_CONTROL": 2
+    },
+    "coverage": {
+      "inputMissingStatements": 0,
+      "inventoryStatus": "INPUT_MISSING",
+      "modeledStatements": 3,
+      "observedStatements": 80,
+      "partialStatements": 64,
+      "readiness": {
+        "cfg": {
+          "scope": "complete observed inventory bounded by each statement's structural readiness",
+          "status": "BLOCKED"
+        },
+        "effectsDataflow": {
+          "scope": "report dependency claim bounded by each statement's effects readiness",
+          "status": "BLOCKED"
+        },
+        "lowering": {
+          "scope": "report binding claim combined with every observed statement fact",
+          "status": "BLOCKED"
+        }
+      },
+      "unsupportedStatements": 13
+    },
+    "statements": 80,
+    "ordinaryRelations": 0,
+    "storage": [
+      "PROFILE_NOT_SELECTED",
+      "INPUT_MISSING"
+    ]
+  },
+  {
+    "wave": "w6",
+    "path": "app/app-authorization-ims-db2-mq/cbl/COPAUS2C.cbl",
+    "stages": {
+      "frontend": "PARTIAL",
+      "lower": "BLOCKED",
+      "cfg": "NOT_REACHED",
+      "dependency": "NOT_REACHED"
+    },
+    "variants": {
+      "OBSERVED": 13,
+      "MOVE": 39,
+      "IF": 3,
+      "PERFORM_PROCEDURE": 1
+    },
+    "coverage": {
+      "inputMissingStatements": 0,
+      "inventoryStatus": "COMPLETE",
+      "modeledStatements": 0,
+      "observedStatements": 56,
+      "partialStatements": 48,
+      "readiness": {
+        "cfg": {
+          "scope": "complete observed inventory bounded by each statement's structural readiness",
+          "status": "BLOCKED"
+        },
+        "effectsDataflow": {
+          "scope": "report dependency claim bounded by each statement's effects readiness",
+          "status": "BLOCKED"
+        },
+        "lowering": {
+          "scope": "report binding claim combined with every observed statement fact",
+          "status": "BLOCKED"
+        }
+      },
+      "unsupportedStatements": 8
+    },
+    "statements": 56,
+    "ordinaryRelations": 0,
+    "storage": [
+      "PROFILE_NOT_SELECTED",
+      "SECTION_NOT_PROVEN"
+    ]
+  },
+  {
+    "wave": "w6",
+    "path": "app/cbl/CBACT04C.cbl",
+    "stages": {
+      "frontend": "PARTIAL",
+      "lower": "BLOCKED",
+      "cfg": "NOT_REACHED",
+      "dependency": "NOT_REACHED"
+    },
+    "variants": {
+      "OBSERVED": 93,
+      "PERFORM_PROCEDURE": 55,
+      "IF": 43,
+      "MOVE": 101,
+      "GOBACK": 1,
+      "CALL": 1
+    },
+    "coverage": {
+      "inputMissingStatements": 0,
+      "inventoryStatus": "COMPLETE",
+      "modeledStatements": 6,
+      "observedStatements": 294,
+      "partialStatements": 222,
+      "readiness": {
+        "cfg": {
+          "scope": "complete observed inventory bounded by each statement's structural readiness",
+          "status": "BLOCKED"
+        },
+        "effectsDataflow": {
+          "scope": "report dependency claim bounded by each statement's effects readiness",
+          "status": "BLOCKED"
+        },
+        "lowering": {
+          "scope": "report binding claim combined with every observed statement fact",
+          "status": "BLOCKED"
+        }
+      },
+      "unsupportedStatements": 66
+    },
+    "statements": 294,
+    "ordinaryRelations": 0,
+    "storage": [
+      "PROFILE_NOT_SELECTED"
+    ]
+  },
+  {
+    "wave": "w6",
+    "path": "app/cbl/COBSWAIT.cbl",
+    "stages": {
+      "frontend": "PARTIAL",
+      "lower": "PARTIAL",
+      "cfg": "PARTIAL",
+      "dependency": "PARTIAL"
+    },
+    "variants": {
+      "OBSERVED": 2,
+      "MOVE": 1,
+      "CALL": 1
+    },
+    "coverage": {
+      "inputMissingStatements": 0,
+      "inventoryStatus": "COMPLETE",
+      "modeledStatements": 0,
+      "observedStatements": 4,
+      "partialStatements": 2,
+      "readiness": {
+        "cfg": {
+          "scope": "complete observed inventory bounded by each statement's structural readiness",
+          "status": "BLOCKED"
+        },
+        "effectsDataflow": {
+          "scope": "report dependency claim bounded by each statement's effects readiness",
+          "status": "BLOCKED"
+        },
+        "lowering": {
+          "scope": "report binding claim combined with every observed statement fact",
+          "status": "BLOCKED"
+        }
+      },
+      "unsupportedStatements": 2
+    },
+    "statements": 4,
+    "ordinaryRelations": 0,
+    "storage": [
+      "PROFILE_NOT_SELECTED"
+    ]
+  },
+  {
+    "wave": "w6-r1",
+    "path": "app/cbl/CBACT01C.cbl",
+    "stages": {
+      "frontend": "PARTIAL",
+      "lower": "BLOCKED",
+      "cfg": "NOT_REACHED",
+      "dependency": "NOT_REACHED"
+    },
+    "variants": {
+      "OBSERVED": 69,
+      "PERFORM_PROCEDURE": 34,
+      "IF": 22,
+      "GOBACK": 1,
+      "MOVE": 62,
+      "CALL": 2
+    },
+    "coverage": {
+      "inputMissingStatements": 0,
+      "inventoryStatus": "COMPLETE",
+      "modeledStatements": 2,
+      "observedStatements": 190,
+      "partialStatements": 149,
+      "readiness": {
+        "cfg": {
+          "scope": "complete observed inventory bounded by each statement's structural readiness",
+          "status": "BLOCKED"
+        },
+        "effectsDataflow": {
+          "scope": "report dependency claim bounded by each statement's effects readiness",
+          "status": "BLOCKED"
+        },
+        "lowering": {
+          "scope": "report binding claim combined with every observed statement fact",
+          "status": "BLOCKED"
+        }
+      },
+      "unsupportedStatements": 39
+    },
+    "statements": 190,
+    "ordinaryRelations": 0,
+    "storage": [
+      "PROFILE_NOT_SELECTED"
+    ]
+  },
+  {
+    "wave": "w6-r1",
+    "path": "app/cbl/COACTUPC.cbl",
+    "stages": {
+      "frontend": "BLOCKED",
+      "lower": "NOT_REACHED",
+      "cfg": "NOT_REACHED",
+      "dependency": "NOT_REACHED"
+    }
+  },
+  {
+    "wave": "w6-r1",
+    "path": "app/cbl/CBEXPORT.cbl",
+    "stages": {
+      "frontend": "PARTIAL",
+      "lower": "BLOCKED",
+      "cfg": "NOT_REACHED",
+      "dependency": "NOT_REACHED"
+    },
+    "variants": {
+      "PERFORM_PROCEDURE": 40,
+      "GOBACK": 1,
+      "OBSERVED": 89,
+      "IF": 16,
+      "MOVE": 77,
+      "CALL": 1
+    },
+    "coverage": {
+      "inputMissingStatements": 0,
+      "inventoryStatus": "COMPLETE",
+      "modeledStatements": 16,
+      "observedStatements": 224,
+      "partialStatements": 156,
+      "readiness": {
+        "cfg": {
+          "scope": "complete observed inventory bounded by each statement's structural readiness",
+          "status": "BLOCKED"
+        },
+        "effectsDataflow": {
+          "scope": "report dependency claim bounded by each statement's effects readiness",
+          "status": "BLOCKED"
+        },
+        "lowering": {
+          "scope": "report binding claim combined with every observed statement fact",
+          "status": "BLOCKED"
+        }
+      },
+      "unsupportedStatements": 52
+    },
+    "statements": 224,
+    "ordinaryRelations": 0,
+    "storage": [
+      "PROFILE_NOT_SELECTED"
+    ]
+  },
+  {
+    "wave": "w6-r1",
+    "path": "app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+    "stages": {
+      "frontend": "PARTIAL",
+      "lower": "BLOCKED",
+      "cfg": "NOT_REACHED",
+      "dependency": "NOT_REACHED"
+    },
+    "variants": {
+      "OBSERVED": 47,
+      "IF": 17,
+      "MOVE": 93,
+      "PERFORM_PROCEDURE": 34,
+      "CICS_PROGRAM_CONTROL": 2
+    },
+    "coverage": {
+      "inputMissingStatements": 0,
+      "inventoryStatus": "INPUT_MISSING",
+      "modeledStatements": 4,
+      "observedStatements": 193,
+      "partialStatements": 156,
+      "readiness": {
+        "cfg": {
+          "scope": "complete observed inventory bounded by each statement's structural readiness",
+          "status": "BLOCKED"
+        },
+        "effectsDataflow": {
+          "scope": "report dependency claim bounded by each statement's effects readiness",
+          "status": "BLOCKED"
+        },
+        "lowering": {
+          "scope": "report binding claim combined with every observed statement fact",
+          "status": "BLOCKED"
+        }
+      },
+      "unsupportedStatements": 33
+    },
+    "statements": 193,
+    "ordinaryRelations": 0,
+    "storage": [
+      "PROFILE_NOT_SELECTED",
+      "INPUT_MISSING"
+    ]
+  },
+  {
+    "wave": "w6-r1",
+    "path": "app/app-vsam-mq/cbl/COACCT01.cbl",
+    "stages": {
+      "frontend": "PARTIAL",
+      "lower": "BLOCKED",
+      "cfg": "NOT_REACHED",
+      "dependency": "NOT_REACHED"
+    },
+    "variants": {
+      "OBSERVED": 37,
+      "PERFORM_PROCEDURE": 32,
+      "IF": 7,
+      "MOVE": 118,
+      "CALL": 9,
+      "CICS_FILE_CONTROL": 1,
+      "GOBACK": 1
+    },
+    "coverage": {
+      "inputMissingStatements": 0,
+      "inventoryStatus": "INPUT_MISSING",
+      "modeledStatements": 5,
+      "observedStatements": 205,
+      "partialStatements": 168,
+      "readiness": {
+        "cfg": {
+          "scope": "complete observed inventory bounded by each statement's structural readiness",
+          "status": "BLOCKED"
+        },
+        "effectsDataflow": {
+          "scope": "report dependency claim bounded by each statement's effects readiness",
+          "status": "BLOCKED"
+        },
+        "lowering": {
+          "scope": "report binding claim combined with every observed statement fact",
+          "status": "BLOCKED"
+        }
+      },
+      "unsupportedStatements": 32
+    },
+    "statements": 205,
+    "ordinaryRelations": 0,
+    "storage": [
+      "PROFILE_NOT_SELECTED",
+      "INPUT_MISSING"
+    ]
+  },
+  {
+    "wave": "w6-r1",
+    "path": "app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
+    "stages": {
+      "frontend": "PARTIAL",
+      "lower": "BLOCKED",
+      "cfg": "NOT_REACHED",
+      "dependency": "NOT_REACHED"
+    },
+    "variants": {
+      "PERFORM_PROCEDURE": 15,
+      "OBSERVED": 66,
+      "IF": 17,
+      "MOVE": 8,
+      "GOBACK": 2,
+      "EVALUATE": 2
+    },
+    "coverage": {
+      "inputMissingStatements": 0,
+      "inventoryStatus": "COMPLETE",
+      "modeledStatements": 2,
+      "observedStatements": 110,
+      "partialStatements": 76,
+      "readiness": {
+        "cfg": {
+          "scope": "complete observed inventory bounded by each statement's structural readiness",
+          "status": "BLOCKED"
+        },
+        "effectsDataflow": {
+          "scope": "report dependency claim bounded by each statement's effects readiness",
+          "status": "BLOCKED"
+        },
+        "lowering": {
+          "scope": "report binding claim combined with every observed statement fact",
+          "status": "BLOCKED"
+        }
+      },
+      "unsupportedStatements": 32
+    },
+    "statements": 110,
+    "ordinaryRelations": 0,
+    "storage": [
+      "PROFILE_NOT_SELECTED"
+    ]
+  },
+  {
+    "wave": "w6-r1",
+    "path": "app/cbl/COADM01C.cbl",
+    "stages": {
+      "frontend": "PARTIAL",
+      "lower": "BLOCKED",
+      "cfg": "NOT_REACHED",
+      "dependency": "NOT_REACHED"
+    },
+    "variants": {
+      "OBSERVED": 18,
+      "IF": 6,
+      "MOVE": 43,
+      "PERFORM_PROCEDURE": 11,
+      "CICS_PROGRAM_CONTROL": 2
+    },
+    "coverage": {
+      "inputMissingStatements": 0,
+      "inventoryStatus": "INPUT_MISSING",
+      "modeledStatements": 3,
+      "observedStatements": 80,
+      "partialStatements": 64,
+      "readiness": {
+        "cfg": {
+          "scope": "complete observed inventory bounded by each statement's structural readiness",
+          "status": "BLOCKED"
+        },
+        "effectsDataflow": {
+          "scope": "report dependency claim bounded by each statement's effects readiness",
+          "status": "BLOCKED"
+        },
+        "lowering": {
+          "scope": "report binding claim combined with every observed statement fact",
+          "status": "BLOCKED"
+        }
+      },
+      "unsupportedStatements": 13
+    },
+    "statements": 80,
+    "ordinaryRelations": 0,
+    "storage": [
+      "PROFILE_NOT_SELECTED",
+      "INPUT_MISSING"
+    ]
+  },
+  {
+    "wave": "w6-r1",
+    "path": "app/app-authorization-ims-db2-mq/cbl/COPAUS2C.cbl",
+    "stages": {
+      "frontend": "PARTIAL",
+      "lower": "BLOCKED",
+      "cfg": "NOT_REACHED",
+      "dependency": "NOT_REACHED"
+    },
+    "variants": {
+      "OBSERVED": 13,
+      "MOVE": 39,
+      "IF": 3,
+      "PERFORM_PROCEDURE": 1
+    },
+    "coverage": {
+      "inputMissingStatements": 0,
+      "inventoryStatus": "COMPLETE",
+      "modeledStatements": 0,
+      "observedStatements": 56,
+      "partialStatements": 48,
+      "readiness": {
+        "cfg": {
+          "scope": "complete observed inventory bounded by each statement's structural readiness",
+          "status": "BLOCKED"
+        },
+        "effectsDataflow": {
+          "scope": "report dependency claim bounded by each statement's effects readiness",
+          "status": "BLOCKED"
+        },
+        "lowering": {
+          "scope": "report binding claim combined with every observed statement fact",
+          "status": "BLOCKED"
+        }
+      },
+      "unsupportedStatements": 8
+    },
+    "statements": 56,
+    "ordinaryRelations": 0,
+    "storage": [
+      "PROFILE_NOT_SELECTED",
+      "SECTION_NOT_PROVEN"
+    ]
+  },
+  {
+    "wave": "w6-r1",
+    "path": "app/cbl/CBACT04C.cbl",
+    "stages": {
+      "frontend": "PARTIAL",
+      "lower": "BLOCKED",
+      "cfg": "NOT_REACHED",
+      "dependency": "NOT_REACHED"
+    },
+    "variants": {
+      "OBSERVED": 93,
+      "PERFORM_PROCEDURE": 55,
+      "IF": 43,
+      "MOVE": 101,
+      "GOBACK": 1,
+      "CALL": 1
+    },
+    "coverage": {
+      "inputMissingStatements": 0,
+      "inventoryStatus": "COMPLETE",
+      "modeledStatements": 6,
+      "observedStatements": 294,
+      "partialStatements": 222,
+      "readiness": {
+        "cfg": {
+          "scope": "complete observed inventory bounded by each statement's structural readiness",
+          "status": "BLOCKED"
+        },
+        "effectsDataflow": {
+          "scope": "report dependency claim bounded by each statement's effects readiness",
+          "status": "BLOCKED"
+        },
+        "lowering": {
+          "scope": "report binding claim combined with every observed statement fact",
+          "status": "BLOCKED"
+        }
+      },
+      "unsupportedStatements": 66
+    },
+    "statements": 294,
+    "ordinaryRelations": 0,
+    "storage": [
+      "PROFILE_NOT_SELECTED"
+    ]
+  },
+  {
+    "wave": "w6-r1",
+    "path": "app/cbl/COBSWAIT.cbl",
+    "stages": {
+      "frontend": "PARTIAL",
+      "lower": "PARTIAL",
+      "cfg": "PARTIAL",
+      "dependency": "PARTIAL"
+    },
+    "variants": {
+      "OBSERVED": 2,
+      "MOVE": 1,
+      "CALL": 1
+    },
+    "coverage": {
+      "inputMissingStatements": 0,
+      "inventoryStatus": "COMPLETE",
+      "modeledStatements": 0,
+      "observedStatements": 4,
+      "partialStatements": 2,
+      "readiness": {
+        "cfg": {
+          "scope": "complete observed inventory bounded by each statement's structural readiness",
+          "status": "BLOCKED"
+        },
+        "effectsDataflow": {
+          "scope": "report dependency claim bounded by each statement's effects readiness",
+          "status": "BLOCKED"
+        },
+        "lowering": {
+          "scope": "report binding claim combined with every observed statement fact",
+          "status": "BLOCKED"
+        }
+      },
+      "unsupportedStatements": 2
+    },
+    "statements": 4,
+    "ordinaryRelations": 0,
+    "storage": [
+      "PROFILE_NOT_SELECTED"
+    ]
+  },
+  {
+    "wave": "w7",
+    "path": "app/cbl/CBACT01C.cbl",
+    "stages": {
+      "frontend": "PARTIAL",
+      "lower": "BLOCKED",
+      "cfg": "NOT_REACHED",
+      "dependency": "NOT_REACHED"
+    },
+    "variants": {
+      "OBSERVED": 69,
+      "PERFORM_PROCEDURE": 34,
+      "IF": 22,
+      "GOBACK": 1,
+      "MOVE": 62,
+      "CALL": 2
+    },
+    "coverage": {
+      "inputMissingStatements": 0,
+      "inventoryStatus": "COMPLETE",
+      "modeledStatements": 2,
+      "observedStatements": 190,
+      "partialStatements": 149,
+      "readiness": {
+        "cfg": {
+          "scope": "complete observed inventory bounded by each statement's structural readiness",
+          "status": "BLOCKED"
+        },
+        "effectsDataflow": {
+          "scope": "report dependency claim bounded by each statement's effects readiness",
+          "status": "BLOCKED"
+        },
+        "lowering": {
+          "scope": "report binding claim combined with every observed statement fact",
+          "status": "BLOCKED"
+        }
+      },
+      "unsupportedStatements": 39
+    },
+    "statements": 190,
+    "ordinaryRelations": 0,
+    "storage": [
+      "PROFILE_NOT_SELECTED"
+    ]
+  },
+  {
+    "wave": "w7",
+    "path": "app/cbl/COACTUPC.cbl",
+    "stages": {
+      "frontend": "BLOCKED",
+      "lower": "NOT_REACHED",
+      "cfg": "NOT_REACHED",
+      "dependency": "NOT_REACHED"
+    }
+  },
+  {
+    "wave": "w7",
+    "path": "app/cbl/CBEXPORT.cbl",
+    "stages": {
+      "frontend": "PARTIAL",
+      "lower": "BLOCKED",
+      "cfg": "NOT_REACHED",
+      "dependency": "NOT_REACHED"
+    },
+    "variants": {
+      "PERFORM_PROCEDURE": 40,
+      "GOBACK": 1,
+      "OBSERVED": 89,
+      "IF": 16,
+      "MOVE": 77,
+      "CALL": 1
+    },
+    "coverage": {
+      "inputMissingStatements": 0,
+      "inventoryStatus": "COMPLETE",
+      "modeledStatements": 16,
+      "observedStatements": 224,
+      "partialStatements": 156,
+      "readiness": {
+        "cfg": {
+          "scope": "complete observed inventory bounded by each statement's structural readiness",
+          "status": "BLOCKED"
+        },
+        "effectsDataflow": {
+          "scope": "report dependency claim bounded by each statement's effects readiness",
+          "status": "BLOCKED"
+        },
+        "lowering": {
+          "scope": "report binding claim combined with every observed statement fact",
+          "status": "BLOCKED"
+        }
+      },
+      "unsupportedStatements": 52
+    },
+    "statements": 224,
+    "ordinaryRelations": 12,
+    "storage": [
+      "PROFILE_NOT_SELECTED"
+    ]
+  },
+  {
+    "wave": "w7",
+    "path": "app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+    "stages": {
+      "frontend": "PARTIAL",
+      "lower": "BLOCKED",
+      "cfg": "NOT_REACHED",
+      "dependency": "NOT_REACHED"
+    },
+    "variants": {
+      "OBSERVED": 47,
+      "IF": 17,
+      "MOVE": 93,
+      "PERFORM_PROCEDURE": 34,
+      "CICS_PROGRAM_CONTROL": 2
+    },
+    "coverage": {
+      "inputMissingStatements": 0,
+      "inventoryStatus": "INPUT_MISSING",
+      "modeledStatements": 4,
+      "observedStatements": 193,
+      "partialStatements": 156,
+      "readiness": {
+        "cfg": {
+          "scope": "complete observed inventory bounded by each statement's structural readiness",
+          "status": "BLOCKED"
+        },
+        "effectsDataflow": {
+          "scope": "report dependency claim bounded by each statement's effects readiness",
+          "status": "BLOCKED"
+        },
+        "lowering": {
+          "scope": "report binding claim combined with every observed statement fact",
+          "status": "BLOCKED"
+        }
+      },
+      "unsupportedStatements": 33
+    },
+    "statements": 193,
+    "ordinaryRelations": 0,
+    "storage": [
+      "PROFILE_NOT_SELECTED",
+      "INPUT_MISSING"
+    ]
+  },
+  {
+    "wave": "w7",
+    "path": "app/app-vsam-mq/cbl/COACCT01.cbl",
+    "stages": {
+      "frontend": "PARTIAL",
+      "lower": "BLOCKED",
+      "cfg": "NOT_REACHED",
+      "dependency": "NOT_REACHED"
+    },
+    "variants": {
+      "OBSERVED": 37,
+      "PERFORM_PROCEDURE": 32,
+      "IF": 7,
+      "MOVE": 118,
+      "CALL": 9,
+      "CICS_FILE_CONTROL": 1,
+      "GOBACK": 1
+    },
+    "coverage": {
+      "inputMissingStatements": 0,
+      "inventoryStatus": "INPUT_MISSING",
+      "modeledStatements": 5,
+      "observedStatements": 205,
+      "partialStatements": 168,
+      "readiness": {
+        "cfg": {
+          "scope": "complete observed inventory bounded by each statement's structural readiness",
+          "status": "BLOCKED"
+        },
+        "effectsDataflow": {
+          "scope": "report dependency claim bounded by each statement's effects readiness",
+          "status": "BLOCKED"
+        },
+        "lowering": {
+          "scope": "report binding claim combined with every observed statement fact",
+          "status": "BLOCKED"
+        }
+      },
+      "unsupportedStatements": 32
+    },
+    "statements": 205,
+    "ordinaryRelations": 0,
+    "storage": [
+      "PROFILE_NOT_SELECTED",
+      "INPUT_MISSING"
+    ]
+  },
+  {
+    "wave": "w7",
+    "path": "app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
+    "stages": {
+      "frontend": "PARTIAL",
+      "lower": "BLOCKED",
+      "cfg": "NOT_REACHED",
+      "dependency": "NOT_REACHED"
+    },
+    "variants": {
+      "PERFORM_PROCEDURE": 15,
+      "OBSERVED": 66,
+      "IF": 17,
+      "MOVE": 8,
+      "GOBACK": 2,
+      "EVALUATE": 2
+    },
+    "coverage": {
+      "inputMissingStatements": 0,
+      "inventoryStatus": "COMPLETE",
+      "modeledStatements": 2,
+      "observedStatements": 110,
+      "partialStatements": 76,
+      "readiness": {
+        "cfg": {
+          "scope": "complete observed inventory bounded by each statement's structural readiness",
+          "status": "BLOCKED"
+        },
+        "effectsDataflow": {
+          "scope": "report dependency claim bounded by each statement's effects readiness",
+          "status": "BLOCKED"
+        },
+        "lowering": {
+          "scope": "report binding claim combined with every observed statement fact",
+          "status": "BLOCKED"
+        }
+      },
+      "unsupportedStatements": 32
+    },
+    "statements": 110,
+    "ordinaryRelations": 16,
+    "storage": [
+      "PROFILE_NOT_SELECTED"
+    ]
+  },
+  {
+    "wave": "w7",
+    "path": "app/cbl/COADM01C.cbl",
+    "stages": {
+      "frontend": "PARTIAL",
+      "lower": "BLOCKED",
+      "cfg": "NOT_REACHED",
+      "dependency": "NOT_REACHED"
+    },
+    "variants": {
+      "OBSERVED": 18,
+      "IF": 6,
+      "MOVE": 43,
+      "PERFORM_PROCEDURE": 11,
+      "CICS_PROGRAM_CONTROL": 2
+    },
+    "coverage": {
+      "inputMissingStatements": 0,
+      "inventoryStatus": "INPUT_MISSING",
+      "modeledStatements": 3,
+      "observedStatements": 80,
+      "partialStatements": 64,
+      "readiness": {
+        "cfg": {
+          "scope": "complete observed inventory bounded by each statement's structural readiness",
+          "status": "BLOCKED"
+        },
+        "effectsDataflow": {
+          "scope": "report dependency claim bounded by each statement's effects readiness",
+          "status": "BLOCKED"
+        },
+        "lowering": {
+          "scope": "report binding claim combined with every observed statement fact",
+          "status": "BLOCKED"
+        }
+      },
+      "unsupportedStatements": 13
+    },
+    "statements": 80,
+    "ordinaryRelations": 0,
+    "storage": [
+      "PROFILE_NOT_SELECTED",
+      "INPUT_MISSING"
+    ]
+  },
+  {
+    "wave": "w7",
+    "path": "app/app-authorization-ims-db2-mq/cbl/COPAUS2C.cbl",
+    "stages": {
+      "frontend": "PARTIAL",
+      "lower": "BLOCKED",
+      "cfg": "NOT_REACHED",
+      "dependency": "NOT_REACHED"
+    },
+    "variants": {
+      "OBSERVED": 13,
+      "MOVE": 39,
+      "IF": 3,
+      "PERFORM_PROCEDURE": 1
+    },
+    "coverage": {
+      "inputMissingStatements": 0,
+      "inventoryStatus": "COMPLETE",
+      "modeledStatements": 0,
+      "observedStatements": 56,
+      "partialStatements": 48,
+      "readiness": {
+        "cfg": {
+          "scope": "complete observed inventory bounded by each statement's structural readiness",
+          "status": "BLOCKED"
+        },
+        "effectsDataflow": {
+          "scope": "report dependency claim bounded by each statement's effects readiness",
+          "status": "BLOCKED"
+        },
+        "lowering": {
+          "scope": "report binding claim combined with every observed statement fact",
+          "status": "BLOCKED"
+        }
+      },
+      "unsupportedStatements": 8
+    },
+    "statements": 56,
+    "ordinaryRelations": 0,
+    "storage": [
+      "PROFILE_NOT_SELECTED",
+      "SECTION_NOT_PROVEN"
+    ]
+  },
+  {
+    "wave": "w7",
+    "path": "app/cbl/CBACT04C.cbl",
+    "stages": {
+      "frontend": "PARTIAL",
+      "lower": "BLOCKED",
+      "cfg": "NOT_REACHED",
+      "dependency": "NOT_REACHED"
+    },
+    "variants": {
+      "OBSERVED": 93,
+      "PERFORM_PROCEDURE": 55,
+      "IF": 43,
+      "MOVE": 101,
+      "GOBACK": 1,
+      "CALL": 1
+    },
+    "coverage": {
+      "inputMissingStatements": 0,
+      "inventoryStatus": "COMPLETE",
+      "modeledStatements": 6,
+      "observedStatements": 294,
+      "partialStatements": 222,
+      "readiness": {
+        "cfg": {
+          "scope": "complete observed inventory bounded by each statement's structural readiness",
+          "status": "BLOCKED"
+        },
+        "effectsDataflow": {
+          "scope": "report dependency claim bounded by each statement's effects readiness",
+          "status": "BLOCKED"
+        },
+        "lowering": {
+          "scope": "report binding claim combined with every observed statement fact",
+          "status": "BLOCKED"
+        }
+      },
+      "unsupportedStatements": 66
+    },
+    "statements": 294,
+    "ordinaryRelations": 0,
+    "storage": [
+      "PROFILE_NOT_SELECTED"
+    ]
+  },
+  {
+    "wave": "w7",
+    "path": "app/cbl/COBSWAIT.cbl",
+    "stages": {
+      "frontend": "PARTIAL",
+      "lower": "PARTIAL",
+      "cfg": "PARTIAL",
+      "dependency": "PARTIAL"
+    },
+    "variants": {
+      "OBSERVED": 2,
+      "MOVE": 1,
+      "CALL": 1
+    },
+    "coverage": {
+      "inputMissingStatements": 0,
+      "inventoryStatus": "COMPLETE",
+      "modeledStatements": 0,
+      "observedStatements": 4,
+      "partialStatements": 2,
+      "readiness": {
+        "cfg": {
+          "scope": "complete observed inventory bounded by each statement's structural readiness",
+          "status": "BLOCKED"
+        },
+        "effectsDataflow": {
+          "scope": "report dependency claim bounded by each statement's effects readiness",
+          "status": "BLOCKED"
+        },
+        "lowering": {
+          "scope": "report binding claim combined with every observed statement fact",
+          "status": "BLOCKED"
+        }
+      },
+      "unsupportedStatements": 2
+    },
+    "statements": 4,
+    "ordinaryRelations": 0,
+    "storage": [
+      "PROFILE_NOT_SELECTED"
+    ]
+  },
+  {
+    "wave": "w7-r1",
+    "path": "app/cbl/CBACT01C.cbl",
+    "stages": {
+      "frontend": "PARTIAL",
+      "lower": "BLOCKED",
+      "cfg": "NOT_REACHED",
+      "dependency": "NOT_REACHED"
+    },
+    "variants": {
+      "OBSERVED": 69,
+      "PERFORM_PROCEDURE": 34,
+      "IF": 22,
+      "GOBACK": 1,
+      "MOVE": 62,
+      "CALL": 2
+    },
+    "coverage": {
+      "inputMissingStatements": 0,
+      "inventoryStatus": "COMPLETE",
+      "modeledStatements": 2,
+      "observedStatements": 190,
+      "partialStatements": 149,
+      "readiness": {
+        "cfg": {
+          "scope": "complete observed inventory bounded by each statement's structural readiness",
+          "status": "BLOCKED"
+        },
+        "effectsDataflow": {
+          "scope": "report dependency claim bounded by each statement's effects readiness",
+          "status": "BLOCKED"
+        },
+        "lowering": {
+          "scope": "report binding claim combined with every observed statement fact",
+          "status": "BLOCKED"
+        }
+      },
+      "unsupportedStatements": 39
+    },
+    "statements": 190,
+    "ordinaryRelations": 0,
+    "storage": [
+      "PROFILE_NOT_SELECTED"
+    ]
+  },
+  {
+    "wave": "w7-r1",
+    "path": "app/cbl/COACTUPC.cbl",
+    "stages": {
+      "frontend": "BLOCKED",
+      "lower": "NOT_REACHED",
+      "cfg": "NOT_REACHED",
+      "dependency": "NOT_REACHED"
+    }
+  },
+  {
+    "wave": "w7-r1",
+    "path": "app/cbl/CBEXPORT.cbl",
+    "stages": {
+      "frontend": "PARTIAL",
+      "lower": "BLOCKED",
+      "cfg": "NOT_REACHED",
+      "dependency": "NOT_REACHED"
+    },
+    "variants": {
+      "PERFORM_PROCEDURE": 40,
+      "GOBACK": 1,
+      "OBSERVED": 89,
+      "IF": 16,
+      "MOVE": 77,
+      "CALL": 1
+    },
+    "coverage": {
+      "inputMissingStatements": 0,
+      "inventoryStatus": "COMPLETE",
+      "modeledStatements": 16,
+      "observedStatements": 224,
+      "partialStatements": 156,
+      "readiness": {
+        "cfg": {
+          "scope": "complete observed inventory bounded by each statement's structural readiness",
+          "status": "BLOCKED"
+        },
+        "effectsDataflow": {
+          "scope": "report dependency claim bounded by each statement's effects readiness",
+          "status": "BLOCKED"
+        },
+        "lowering": {
+          "scope": "report binding claim combined with every observed statement fact",
+          "status": "BLOCKED"
+        }
+      },
+      "unsupportedStatements": 52
+    },
+    "statements": 224,
+    "ordinaryRelations": 12,
+    "storage": [
+      "PROFILE_NOT_SELECTED"
+    ]
+  },
+  {
+    "wave": "w7-r1",
+    "path": "app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+    "stages": {
+      "frontend": "PARTIAL",
+      "lower": "BLOCKED",
+      "cfg": "NOT_REACHED",
+      "dependency": "NOT_REACHED"
+    },
+    "variants": {
+      "OBSERVED": 47,
+      "IF": 17,
+      "MOVE": 93,
+      "PERFORM_PROCEDURE": 34,
+      "CICS_PROGRAM_CONTROL": 2
+    },
+    "coverage": {
+      "inputMissingStatements": 0,
+      "inventoryStatus": "INPUT_MISSING",
+      "modeledStatements": 4,
+      "observedStatements": 193,
+      "partialStatements": 156,
+      "readiness": {
+        "cfg": {
+          "scope": "complete observed inventory bounded by each statement's structural readiness",
+          "status": "BLOCKED"
+        },
+        "effectsDataflow": {
+          "scope": "report dependency claim bounded by each statement's effects readiness",
+          "status": "BLOCKED"
+        },
+        "lowering": {
+          "scope": "report binding claim combined with every observed statement fact",
+          "status": "BLOCKED"
+        }
+      },
+      "unsupportedStatements": 33
+    },
+    "statements": 193,
+    "ordinaryRelations": 0,
+    "storage": [
+      "PROFILE_NOT_SELECTED",
+      "INPUT_MISSING"
+    ]
+  },
+  {
+    "wave": "w7-r1",
+    "path": "app/app-vsam-mq/cbl/COACCT01.cbl",
+    "stages": {
+      "frontend": "PARTIAL",
+      "lower": "BLOCKED",
+      "cfg": "NOT_REACHED",
+      "dependency": "NOT_REACHED"
+    },
+    "variants": {
+      "OBSERVED": 37,
+      "PERFORM_PROCEDURE": 32,
+      "IF": 7,
+      "MOVE": 118,
+      "CALL": 9,
+      "CICS_FILE_CONTROL": 1,
+      "GOBACK": 1
+    },
+    "coverage": {
+      "inputMissingStatements": 0,
+      "inventoryStatus": "INPUT_MISSING",
+      "modeledStatements": 5,
+      "observedStatements": 205,
+      "partialStatements": 168,
+      "readiness": {
+        "cfg": {
+          "scope": "complete observed inventory bounded by each statement's structural readiness",
+          "status": "BLOCKED"
+        },
+        "effectsDataflow": {
+          "scope": "report dependency claim bounded by each statement's effects readiness",
+          "status": "BLOCKED"
+        },
+        "lowering": {
+          "scope": "report binding claim combined with every observed statement fact",
+          "status": "BLOCKED"
+        }
+      },
+      "unsupportedStatements": 32
+    },
+    "statements": 205,
+    "ordinaryRelations": 0,
+    "storage": [
+      "PROFILE_NOT_SELECTED",
+      "INPUT_MISSING"
+    ]
+  },
+  {
+    "wave": "w7-r1",
+    "path": "app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
+    "stages": {
+      "frontend": "PARTIAL",
+      "lower": "BLOCKED",
+      "cfg": "NOT_REACHED",
+      "dependency": "NOT_REACHED"
+    },
+    "variants": {
+      "PERFORM_PROCEDURE": 15,
+      "OBSERVED": 66,
+      "IF": 17,
+      "MOVE": 8,
+      "GOBACK": 2,
+      "EVALUATE": 2
+    },
+    "coverage": {
+      "inputMissingStatements": 0,
+      "inventoryStatus": "COMPLETE",
+      "modeledStatements": 2,
+      "observedStatements": 110,
+      "partialStatements": 76,
+      "readiness": {
+        "cfg": {
+          "scope": "complete observed inventory bounded by each statement's structural readiness",
+          "status": "BLOCKED"
+        },
+        "effectsDataflow": {
+          "scope": "report dependency claim bounded by each statement's effects readiness",
+          "status": "BLOCKED"
+        },
+        "lowering": {
+          "scope": "report binding claim combined with every observed statement fact",
+          "status": "BLOCKED"
+        }
+      },
+      "unsupportedStatements": 32
+    },
+    "statements": 110,
+    "ordinaryRelations": 16,
+    "storage": [
+      "PROFILE_NOT_SELECTED"
+    ]
+  },
+  {
+    "wave": "w7-r1",
+    "path": "app/cbl/COADM01C.cbl",
+    "stages": {
+      "frontend": "PARTIAL",
+      "lower": "BLOCKED",
+      "cfg": "NOT_REACHED",
+      "dependency": "NOT_REACHED"
+    },
+    "variants": {
+      "OBSERVED": 18,
+      "IF": 6,
+      "MOVE": 43,
+      "PERFORM_PROCEDURE": 11,
+      "CICS_PROGRAM_CONTROL": 2
+    },
+    "coverage": {
+      "inputMissingStatements": 0,
+      "inventoryStatus": "INPUT_MISSING",
+      "modeledStatements": 3,
+      "observedStatements": 80,
+      "partialStatements": 64,
+      "readiness": {
+        "cfg": {
+          "scope": "complete observed inventory bounded by each statement's structural readiness",
+          "status": "BLOCKED"
+        },
+        "effectsDataflow": {
+          "scope": "report dependency claim bounded by each statement's effects readiness",
+          "status": "BLOCKED"
+        },
+        "lowering": {
+          "scope": "report binding claim combined with every observed statement fact",
+          "status": "BLOCKED"
+        }
+      },
+      "unsupportedStatements": 13
+    },
+    "statements": 80,
+    "ordinaryRelations": 0,
+    "storage": [
+      "PROFILE_NOT_SELECTED",
+      "INPUT_MISSING"
+    ]
+  },
+  {
+    "wave": "w7-r1",
+    "path": "app/app-authorization-ims-db2-mq/cbl/COPAUS2C.cbl",
+    "stages": {
+      "frontend": "PARTIAL",
+      "lower": "BLOCKED",
+      "cfg": "NOT_REACHED",
+      "dependency": "NOT_REACHED"
+    },
+    "variants": {
+      "OBSERVED": 13,
+      "MOVE": 39,
+      "IF": 3,
+      "PERFORM_PROCEDURE": 1
+    },
+    "coverage": {
+      "inputMissingStatements": 0,
+      "inventoryStatus": "COMPLETE",
+      "modeledStatements": 0,
+      "observedStatements": 56,
+      "partialStatements": 48,
+      "readiness": {
+        "cfg": {
+          "scope": "complete observed inventory bounded by each statement's structural readiness",
+          "status": "BLOCKED"
+        },
+        "effectsDataflow": {
+          "scope": "report dependency claim bounded by each statement's effects readiness",
+          "status": "BLOCKED"
+        },
+        "lowering": {
+          "scope": "report binding claim combined with every observed statement fact",
+          "status": "BLOCKED"
+        }
+      },
+      "unsupportedStatements": 8
+    },
+    "statements": 56,
+    "ordinaryRelations": 0,
+    "storage": [
+      "PROFILE_NOT_SELECTED",
+      "SECTION_NOT_PROVEN"
+    ]
+  },
+  {
+    "wave": "w7-r1",
+    "path": "app/cbl/CBACT04C.cbl",
+    "stages": {
+      "frontend": "PARTIAL",
+      "lower": "BLOCKED",
+      "cfg": "NOT_REACHED",
+      "dependency": "NOT_REACHED"
+    },
+    "variants": {
+      "OBSERVED": 93,
+      "PERFORM_PROCEDURE": 55,
+      "IF": 43,
+      "MOVE": 101,
+      "GOBACK": 1,
+      "CALL": 1
+    },
+    "coverage": {
+      "inputMissingStatements": 0,
+      "inventoryStatus": "COMPLETE",
+      "modeledStatements": 6,
+      "observedStatements": 294,
+      "partialStatements": 222,
+      "readiness": {
+        "cfg": {
+          "scope": "complete observed inventory bounded by each statement's structural readiness",
+          "status": "BLOCKED"
+        },
+        "effectsDataflow": {
+          "scope": "report dependency claim bounded by each statement's effects readiness",
+          "status": "BLOCKED"
+        },
+        "lowering": {
+          "scope": "report binding claim combined with every observed statement fact",
+          "status": "BLOCKED"
+        }
+      },
+      "unsupportedStatements": 66
+    },
+    "statements": 294,
+    "ordinaryRelations": 0,
+    "storage": [
+      "PROFILE_NOT_SELECTED"
+    ]
+  },
+  {
+    "wave": "w7-r1",
+    "path": "app/cbl/COBSWAIT.cbl",
+    "stages": {
+      "frontend": "PARTIAL",
+      "lower": "PARTIAL",
+      "cfg": "PARTIAL",
+      "dependency": "PARTIAL"
+    },
+    "variants": {
+      "OBSERVED": 2,
+      "MOVE": 1,
+      "CALL": 1
+    },
+    "coverage": {
+      "inputMissingStatements": 0,
+      "inventoryStatus": "COMPLETE",
+      "modeledStatements": 0,
+      "observedStatements": 4,
+      "partialStatements": 2,
+      "readiness": {
+        "cfg": {
+          "scope": "complete observed inventory bounded by each statement's structural readiness",
+          "status": "BLOCKED"
+        },
+        "effectsDataflow": {
+          "scope": "report dependency claim bounded by each statement's effects readiness",
+          "status": "BLOCKED"
+        },
+        "lowering": {
+          "scope": "report binding claim combined with every observed statement fact",
+          "status": "BLOCKED"
+        }
+      },
+      "unsupportedStatements": 2
+    },
+    "statements": 4,
+    "ordinaryRelations": 0,
+    "storage": [
+      "PROFILE_NOT_SELECTED"
+    ]
+  }
+]

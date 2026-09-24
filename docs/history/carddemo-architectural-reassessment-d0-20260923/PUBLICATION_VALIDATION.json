@@ -1,0 +1,13 @@
+{
+  "status": "PASS",
+  "archives": 3,
+  "archivedFilesVerified": 5911,
+  "originalD0ManifestEntriesAccountedFor": 1081,
+  "canonicalManifestEntriesVerified": 4787,
+  "externalNormativeReferenceFiles": 2,
+  "reportsContentPreserved": 20,
+  "primaryReportLinks": "PASS",
+  "readableCopiesByteIdentical": 131,
+  "readableFormattingChangesVerified": 3,
+  "productTests": "NOT_RUN_DOCUMENTARY_PUBLICATION"
+}

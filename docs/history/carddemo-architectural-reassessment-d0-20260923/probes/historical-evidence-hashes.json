@@ -1,0 +1,27 @@
+[
+  {
+    "wave": "w5",
+    "checked": 4089,
+    "bad": []
+  },
+  {
+    "wave": "w6",
+    "checked": 5767,
+    "bad": []
+  },
+  {
+    "wave": "w6-r1",
+    "checked": 5206,
+    "bad": []
+  },
+  {
+    "wave": "w7",
+    "checked": 6176,
+    "bad": []
+  },
+  {
+    "wave": "w7-r1",
+    "checked": 1329,
+    "bad": []
+  }
+]

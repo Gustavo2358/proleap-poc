@@ -1,0 +1,1201 @@
+[
+  {
+    "path": "app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+    "statements": 344,
+    "performSites": 36,
+    "rangeSites": 20,
+    "repetitionSites": 0,
+    "frontierKinds": {
+      "PERFORM": 27,
+      "EXIT": 20,
+      "IF": 23,
+      "SET": 5,
+      "MOVE": 3,
+      "CONTINUE": 3,
+      "STRING": 1
+    },
+    "issueKinds": {
+      "EXIT": 40,
+      "SET": 15,
+      "CONTINUE": 6,
+      "STRING": 2
+    },
+    "predictedRules": {
+      "normal completion cannot override explicit control": 29,
+      "intrinsic normal edge stays in paragraph": 34
+    },
+    "actualRules": {
+      "normal completion cannot override explicit control": 29,
+      "intrinsic normal edge stays in paragraph": 34
+    },
+    "diagnosticLimit": false,
+    "allIssuesMatch": true
+  },
+  {
+    "path": "app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+    "statements": 370,
+    "performSites": 44,
+    "rangeSites": 0,
+    "repetitionSites": 0,
+    "frontierKinds": {
+      "IF": 26,
+      "PERFORM": 6,
+      "SET": 5,
+      "MOVE": 3
+    },
+    "issueKinds": {
+      "SET": 28,
+      "CONTINUE": 3
+    },
+    "predictedRules": {
+      "normal completion cannot override explicit control": 7,
+      "intrinsic normal edge stays in paragraph": 24
+    },
+    "actualRules": {
+      "normal completion cannot override explicit control": 7,
+      "intrinsic normal edge stays in paragraph": 24
+    },
+    "diagnosticLimit": false,
+    "allIssuesMatch": true
+  },
+  {
+    "path": "app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+    "statements": 193,
+    "performSites": 34,
+    "rangeSites": 0,
+    "repetitionSites": 0,
+    "frontierKinds": {
+      "PERFORM": 6,
+      "IF": 18,
+      "MOVE": 5,
+      "SET": 1
+    },
+    "issueKinds": {
+      "SET": 8
+    },
+    "predictedRules": {
+      "intrinsic normal edge stays in paragraph": 8
+    },
+    "actualRules": {
+      "intrinsic normal edge stays in paragraph": 8
+    },
+    "diagnosticLimit": false,
+    "allIssuesMatch": true
+  },
+  {
+    "path": "app/app-transaction-type-db2/cbl/COBTUPDT.cbl",
+    "statements": 58,
+    "performSites": 13,
+    "rangeSites": 0,
+    "repetitionSites": 0,
+    "frontierKinds": {
+      "EXIT": 13
+    },
+    "issueKinds": {
+      "EXIT": 24
+    },
+    "predictedRules": {
+      "normal completion cannot override explicit control": 12,
+      "intrinsic normal edge stays in paragraph": 12
+    },
+    "actualRules": {
+      "normal completion cannot override explicit control": 12,
+      "intrinsic normal edge stays in paragraph": 12
+    },
+    "diagnosticLimit": false,
+    "allIssuesMatch": true
+  },
+  {
+    "path": "app/app-transaction-type-db2/cbl/COTRTUPC.cbl",
+    "statements": 436,
+    "performSites": 40,
+    "rangeSites": 40,
+    "repetitionSites": 0,
+    "frontierKinds": {
+      "EXIT": 42,
+      "IF": 9,
+      "SET": 5,
+      "PERFORM": 9,
+      "MOVE": 15,
+      "CONTINUE": 3
+    },
+    "issueKinds": {
+      "SET": 58,
+      "EXIT": 82,
+      "STRING": 2,
+      "CONTINUE": 14
+    },
+    "predictedRules": {
+      "intrinsic normal edge stays in paragraph": 106,
+      "normal completion cannot override explicit control": 50
+    },
+    "actualRules": {
+      "intrinsic normal edge stays in paragraph": 78,
+      "normal completion cannot override explicit control": 22
+    },
+    "diagnosticLimit": true,
+    "allIssuesMatch": false
+  },
+  {
+    "path": "app/app-vsam-mq/cbl/COACCT01.cbl",
+    "statements": 205,
+    "performSites": 32,
+    "rangeSites": 0,
+    "repetitionSites": 1,
+    "frontierKinds": {
+      "ADD": 2,
+      "IF": 3,
+      "PERFORM": 4,
+      "SET": 2
+    },
+    "issueKinds": {
+      "SET": 7,
+      "ADD": 4
+    },
+    "predictedRules": {
+      "intrinsic normal edge stays in paragraph": 7,
+      "normal completion cannot override explicit control": 4
+    },
+    "actualRules": {
+      "intrinsic normal edge stays in paragraph": 7,
+      "normal completion cannot override explicit control": 4
+    },
+    "diagnosticLimit": false,
+    "allIssuesMatch": true
+  },
+  {
+    "path": "app/app-vsam-mq/cbl/CODATE01.cbl",
+    "statements": 182,
+    "performSites": 28,
+    "rangeSites": 0,
+    "repetitionSites": 1,
+    "frontierKinds": {
+      "ADD": 2,
+      "IF": 2,
+      "PERFORM": 4,
+      "SET": 2
+    },
+    "issueKinds": {
+      "SET": 7,
+      "ADD": 4
+    },
+    "predictedRules": {
+      "intrinsic normal edge stays in paragraph": 7,
+      "normal completion cannot override explicit control": 4
+    },
+    "actualRules": {
+      "intrinsic normal edge stays in paragraph": 7,
+      "normal completion cannot override explicit control": 4
+    },
+    "diagnosticLimit": false,
+    "allIssuesMatch": true
+  },
+  {
+    "path": "app/cbl/CBACT01C.cbl",
+    "statements": 190,
+    "performSites": 34,
+    "rangeSites": 0,
+    "repetitionSites": 0,
+    "frontierKinds": {
+      "EXIT": 24,
+      "CALL": 10
+    },
+    "issueKinds": {
+      "EXIT": 28
+    },
+    "predictedRules": {
+      "normal completion cannot override explicit control": 14,
+      "intrinsic normal edge stays in paragraph": 14
+    },
+    "actualRules": {
+      "normal completion cannot override explicit control": 14,
+      "intrinsic normal edge stays in paragraph": 14
+    },
+    "diagnosticLimit": false,
+    "allIssuesMatch": true
+  },
+  {
+    "path": "app/cbl/CBACT02C.cbl",
+    "statements": 63,
+    "performSites": 9,
+    "rangeSites": 0,
+    "repetitionSites": 0,
+    "frontierKinds": {
+      "EXIT": 6,
+      "CALL": 3
+    },
+    "issueKinds": {
+      "EXIT": 6
+    },
+    "predictedRules": {
+      "normal completion cannot override explicit control": 3,
+      "intrinsic normal edge stays in paragraph": 3
+    },
+    "actualRules": {
+      "normal completion cannot override explicit control": 3,
+      "intrinsic normal edge stays in paragraph": 3
+    },
+    "diagnosticLimit": false,
+    "allIssuesMatch": true
+  },
+  {
+    "path": "app/cbl/CBACT03C.cbl",
+    "statements": 64,
+    "performSites": 9,
+    "rangeSites": 0,
+    "repetitionSites": 0,
+    "frontierKinds": {
+      "EXIT": 6,
+      "CALL": 3
+    },
+    "issueKinds": {
+      "EXIT": 6
+    },
+    "predictedRules": {
+      "normal completion cannot override explicit control": 3,
+      "intrinsic normal edge stays in paragraph": 3
+    },
+    "actualRules": {
+      "normal completion cannot override explicit control": 3,
+      "intrinsic normal edge stays in paragraph": 3
+    },
+    "diagnosticLimit": false,
+    "allIssuesMatch": true
+  },
+  {
+    "path": "app/cbl/CBCUS01C.cbl",
+    "statements": 64,
+    "performSites": 9,
+    "rangeSites": 0,
+    "repetitionSites": 0,
+    "frontierKinds": {
+      "EXIT": 6,
+      "CALL": 3
+    },
+    "issueKinds": {
+      "EXIT": 6
+    },
+    "predictedRules": {
+      "normal completion cannot override explicit control": 3,
+      "intrinsic normal edge stays in paragraph": 3
+    },
+    "actualRules": {
+      "normal completion cannot override explicit control": 3,
+      "intrinsic normal edge stays in paragraph": 3
+    },
+    "diagnosticLimit": false,
+    "allIssuesMatch": true
+  },
+  {
+    "path": "app/cbl/CBEXPORT.cbl",
+    "statements": 224,
+    "performSites": 40,
+    "rangeSites": 0,
+    "repetitionSites": 0,
+    "frontierKinds": {
+      "DISPLAY": 7,
+      "STRING": 1,
+      "IF": 11,
+      "PERFORM": 11,
+      "CALL": 16,
+      "ADD": 5
+    },
+    "issueKinds": {
+      "DISPLAY": 14,
+      "STRING": 2,
+      "ADD": 10
+    },
+    "predictedRules": {
+      "normal completion cannot override explicit control": 13,
+      "intrinsic normal edge stays in paragraph": 13
+    },
+    "actualRules": {
+      "normal completion cannot override explicit control": 13,
+      "intrinsic normal edge stays in paragraph": 13
+    },
+    "diagnosticLimit": false,
+    "allIssuesMatch": true
+  },
+  {
+    "path": "app/cbl/CBIMPORT.cbl",
+    "statements": 175,
+    "performSites": 28,
+    "rangeSites": 0,
+    "repetitionSites": 0,
+    "frontierKinds": {
+      "DISPLAY": 3,
+      "IF": 3,
+      "PERFORM": 5,
+      "CALL": 13,
+      "EVALUATE": 1,
+      "ADD": 6
+    },
+    "issueKinds": {
+      "DISPLAY": 6,
+      "ADD": 12
+    },
+    "predictedRules": {
+      "normal completion cannot override explicit control": 9,
+      "intrinsic normal edge stays in paragraph": 9
+    },
+    "actualRules": {
+      "normal completion cannot override explicit control": 9,
+      "intrinsic normal edge stays in paragraph": 9
+    },
+    "diagnosticLimit": false,
+    "allIssuesMatch": true
+  },
+  {
+    "path": "app/cbl/CBSTM03A.CBL",
+    "statements": 424,
+    "performSites": 25,
+    "rangeSites": 2,
+    "repetitionSites": 0,
+    "frontierKinds": {
+      "EXIT": 12,
+      "CALL": 13,
+      "WRITE": 2
+    },
+    "issueKinds": {
+      "EXIT": 24
+    },
+    "predictedRules": {
+      "normal completion cannot override explicit control": 12,
+      "intrinsic normal edge stays in paragraph": 12
+    },
+    "actualRules": {
+      "normal completion cannot override explicit control": 12,
+      "intrinsic normal edge stays in paragraph": 12
+    },
+    "diagnosticLimit": false,
+    "allIssuesMatch": true
+  },
+  {
+    "path": "app/cbl/CBTRN01C.cbl",
+    "statements": 216,
+    "performSites": 41,
+    "rangeSites": 0,
+    "repetitionSites": 0,
+    "frontierKinds": {
+      "EXIT": 26,
+      "READ": 2,
+      "CALL": 13
+    },
+    "issueKinds": {
+      "EXIT": 26,
+      "DISPLAY": 2
+    },
+    "predictedRules": {
+      "normal completion cannot override explicit control": 13,
+      "intrinsic normal edge stays in paragraph": 15
+    },
+    "actualRules": {
+      "normal completion cannot override explicit control": 13,
+      "intrinsic normal edge stays in paragraph": 15
+    },
+    "diagnosticLimit": false,
+    "allIssuesMatch": true
+  },
+  {
+    "path": "app/cbl/CBTRN02C.cbl",
+    "statements": 339,
+    "performSites": 60,
+    "rangeSites": 0,
+    "repetitionSites": 0,
+    "frontierKinds": {
+      "EXIT": 40,
+      "CALL": 18,
+      "CONTINUE": 2,
+      "IF": 2,
+      "PERFORM": 2
+    },
+    "issueKinds": {
+      "EXIT": 44,
+      "CONTINUE": 4
+    },
+    "predictedRules": {
+      "normal completion cannot override explicit control": 24,
+      "intrinsic normal edge stays in paragraph": 24
+    },
+    "actualRules": {
+      "normal completion cannot override explicit control": 24,
+      "intrinsic normal edge stays in paragraph": 24
+    },
+    "diagnosticLimit": false,
+    "allIssuesMatch": true
+  },
+  {
+    "path": "app/cbl/CBTRN03C.cbl",
+    "statements": 315,
+    "performSites": 71,
+    "rangeSites": 0,
+    "repetitionSites": 0,
+    "frontierKinds": {
+      "EXIT": 52,
+      "CALL": 18
+    },
+    "issueKinds": {
+      "EXIT": 68,
+      "DISPLAY": 1
+    },
+    "predictedRules": {
+      "normal completion cannot override explicit control": 34,
+      "intrinsic normal edge stays in paragraph": 35
+    },
+    "actualRules": {
+      "normal completion cannot override explicit control": 34,
+      "intrinsic normal edge stays in paragraph": 35
+    },
+    "diagnosticLimit": false,
+    "allIssuesMatch": true
+  },
+  {
+    "path": "app/cbl/COACTUPC.cbl",
+    "statements": 1415,
+    "performSites": 61,
+    "rangeSites": 61,
+    "repetitionSites": 0,
+    "frontierKinds": {
+      "EXIT": 79,
+      "PERFORM": 4,
+      "MOVE": 13,
+      "IF": 27,
+      "CONTINUE": 16,
+      "SET": 51
+    },
+    "issueKinds": {
+      "SET": 138,
+      "EXIT": 156,
+      "CONTINUE": 35,
+      "STRING": 3
+    },
+    "predictedRules": {
+      "intrinsic normal edge stays in paragraph": 187,
+      "normal completion cannot override explicit control": 145
+    },
+    "actualRules": {
+      "intrinsic normal edge stays in paragraph": 68,
+      "normal completion cannot override explicit control": 32
+    },
+    "diagnosticLimit": true,
+    "allIssuesMatch": false
+  },
+  {
+    "path": "app/cbl/COACTVWC.cbl",
+    "statements": 275,
+    "performSites": 18,
+    "rangeSites": 18,
+    "repetitionSites": 0,
+    "frontierKinds": {
+      "EXIT": 18,
+      "PERFORM": 4,
+      "MOVE": 4,
+      "IF": 4,
+      "SET": 2
+    },
+    "issueKinds": {
+      "SET": 34,
+      "EXIT": 36,
+      "STRING": 3
+    },
+    "predictedRules": {
+      "intrinsic normal edge stays in paragraph": 53,
+      "normal completion cannot override explicit control": 20
+    },
+    "actualRules": {
+      "intrinsic normal edge stays in paragraph": 53,
+      "normal completion cannot override explicit control": 20
+    },
+    "diagnosticLimit": false,
+    "allIssuesMatch": true
+  },
+  {
+    "path": "app/cbl/COBIL00C.cbl",
+    "statements": 190,
+    "performSites": 38,
+    "rangeSites": 0,
+    "repetitionSites": 0,
+    "frontierKinds": {
+      "IF": 2,
+      "PERFORM": 4,
+      "MOVE": 4
+    },
+    "issueKinds": {
+      "CONTINUE": 6
+    },
+    "predictedRules": {
+      "intrinsic normal edge stays in paragraph": 6
+    },
+    "actualRules": {
+      "intrinsic normal edge stays in paragraph": 6
+    },
+    "diagnosticLimit": false,
+    "allIssuesMatch": true
+  },
+  {
+    "path": "app/cbl/COCRDLIC.cbl",
+    "statements": 500,
+    "performSites": 27,
+    "rangeSites": 23,
+    "repetitionSites": 0,
+    "frontierKinds": {
+      "EXIT": 23,
+      "PERFORM": 8,
+      "MOVE": 6,
+      "CONTINUE": 3,
+      "IF": 8,
+      "SET": 2
+    },
+    "issueKinds": {
+      "SET": 32,
+      "EXIT": 46,
+      "CONTINUE": 10
+    },
+    "predictedRules": {
+      "intrinsic normal edge stays in paragraph": 58,
+      "normal completion cannot override explicit control": 30
+    },
+    "actualRules": {
+      "intrinsic normal edge stays in paragraph": 58,
+      "normal completion cannot override explicit control": 30
+    },
+    "diagnosticLimit": false,
+    "allIssuesMatch": true
+  },
+  {
+    "path": "app/cbl/COCRDSLC.cbl",
+    "statements": 263,
+    "performSites": 19,
+    "rangeSites": 19,
+    "repetitionSites": 0,
+    "frontierKinds": {
+      "EXIT": 19,
+      "PERFORM": 7,
+      "MOVE": 4,
+      "IF": 4,
+      "SET": 3
+    },
+    "issueKinds": {
+      "SET": 36,
+      "EXIT": 38
+    },
+    "predictedRules": {
+      "intrinsic normal edge stays in paragraph": 52,
+      "normal completion cannot override explicit control": 22
+    },
+    "actualRules": {
+      "intrinsic normal edge stays in paragraph": 52,
+      "normal completion cannot override explicit control": 22
+    },
+    "diagnosticLimit": false,
+    "allIssuesMatch": true
+  },
+  {
+    "path": "app/cbl/COCRDUPC.cbl",
+    "statements": 488,
+    "performSites": 26,
+    "rangeSites": 26,
+    "repetitionSites": 0,
+    "frontierKinds": {
+      "EXIT": 27,
+      "IF": 12,
+      "MOVE": 7,
+      "PERFORM": 4,
+      "CONTINUE": 3,
+      "SET": 8
+    },
+    "issueKinds": {
+      "SET": 52,
+      "EXIT": 52,
+      "CONTINUE": 9
+    },
+    "predictedRules": {
+      "intrinsic normal edge stays in paragraph": 76,
+      "normal completion cannot override explicit control": 37
+    },
+    "actualRules": {
+      "intrinsic normal edge stays in paragraph": 68,
+      "normal completion cannot override explicit control": 32
+    },
+    "diagnosticLimit": true,
+    "allIssuesMatch": false
+  },
+  {
+    "path": "app/cbl/CORPT00C.cbl",
+    "statements": 220,
+    "performSites": 33,
+    "rangeSites": 0,
+    "repetitionSites": 0,
+    "frontierKinds": {
+      "IF": 4,
+      "PERFORM": 1,
+      "INITIALIZE": 2,
+      "MOVE": 1
+    },
+    "issueKinds": {
+      "CONTINUE": 1
+    },
+    "predictedRules": {
+      "intrinsic normal edge stays in paragraph": 1
+    },
+    "actualRules": {
+      "intrinsic normal edge stays in paragraph": 1
+    },
+    "diagnosticLimit": false,
+    "allIssuesMatch": true
+  },
+  {
+    "path": "app/cbl/COTRN00C.cbl",
+    "statements": 294,
+    "performSites": 38,
+    "rangeSites": 0,
+    "repetitionSites": 0,
+    "frontierKinds": {
+      "IF": 20,
+      "MOVE": 3,
+      "PERFORM": 5
+    },
+    "issueKinds": {
+      "CONTINUE": 12
+    },
+    "predictedRules": {
+      "intrinsic normal edge stays in paragraph": 12
+    },
+    "actualRules": {
+      "intrinsic normal edge stays in paragraph": 12
+    },
+    "diagnosticLimit": false,
+    "allIssuesMatch": true
+  },
+  {
+    "path": "app/cbl/COTRN01C.cbl",
+    "statements": 95,
+    "performSites": 17,
+    "rangeSites": 0,
+    "repetitionSites": 0,
+    "frontierKinds": {
+      "IF": 2,
+      "PERFORM": 3,
+      "MOVE": 2
+    },
+    "issueKinds": {
+      "CONTINUE": 1
+    },
+    "predictedRules": {
+      "intrinsic normal edge stays in paragraph": 1
+    },
+    "actualRules": {
+      "intrinsic normal edge stays in paragraph": 1
+    },
+    "diagnosticLimit": false,
+    "allIssuesMatch": true
+  },
+  {
+    "path": "app/cbl/COTRN02C.cbl",
+    "statements": 300,
+    "performSites": 61,
+    "rangeSites": 0,
+    "repetitionSites": 0,
+    "frontierKinds": {
+      "PERFORM": 4,
+      "IF": 1,
+      "MOVE": 3
+    },
+    "issueKinds": {
+      "CONTINUE": 6
+    },
+    "predictedRules": {
+      "intrinsic normal edge stays in paragraph": 6
+    },
+    "actualRules": {
+      "intrinsic normal edge stays in paragraph": 6
+    },
+    "diagnosticLimit": false,
+    "allIssuesMatch": true
+  },
+  {
+    "path": "app/cbl/COUSR00C.cbl",
+    "statements": 288,
+    "performSites": 37,
+    "rangeSites": 0,
+    "repetitionSites": 0,
+    "frontierKinds": {
+      "IF": 19,
+      "MOVE": 3,
+      "PERFORM": 5
+    },
+    "issueKinds": {
+      "CONTINUE": 12
+    },
+    "predictedRules": {
+      "intrinsic normal edge stays in paragraph": 12
+    },
+    "actualRules": {
+      "intrinsic normal edge stays in paragraph": 12
+    },
+    "diagnosticLimit": false,
+    "allIssuesMatch": true
+  },
+  {
+    "path": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/CBACT01C.cbl",
+    "statements": 77,
+    "performSites": 10,
+    "rangeSites": 0,
+    "repetitionSites": 0,
+    "frontierKinds": {
+      "EXIT": 7,
+      "CALL": 3
+    },
+    "issueKinds": {
+      "EXIT": 8
+    },
+    "predictedRules": {
+      "normal completion cannot override explicit control": 4,
+      "intrinsic normal edge stays in paragraph": 4
+    },
+    "actualRules": {
+      "normal completion cannot override explicit control": 4,
+      "intrinsic normal edge stays in paragraph": 4
+    },
+    "diagnosticLimit": false,
+    "allIssuesMatch": true
+  },
+  {
+    "path": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/CBACT02C.cbl",
+    "statements": 63,
+    "performSites": 9,
+    "rangeSites": 0,
+    "repetitionSites": 0,
+    "frontierKinds": {
+      "EXIT": 6,
+      "CALL": 3
+    },
+    "issueKinds": {
+      "EXIT": 6
+    },
+    "predictedRules": {
+      "normal completion cannot override explicit control": 3,
+      "intrinsic normal edge stays in paragraph": 3
+    },
+    "actualRules": {
+      "normal completion cannot override explicit control": 3,
+      "intrinsic normal edge stays in paragraph": 3
+    },
+    "diagnosticLimit": false,
+    "allIssuesMatch": true
+  },
+  {
+    "path": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/CBACT03C.cbl",
+    "statements": 64,
+    "performSites": 9,
+    "rangeSites": 0,
+    "repetitionSites": 0,
+    "frontierKinds": {
+      "EXIT": 6,
+      "CALL": 3
+    },
+    "issueKinds": {
+      "EXIT": 6
+    },
+    "predictedRules": {
+      "normal completion cannot override explicit control": 3,
+      "intrinsic normal edge stays in paragraph": 3
+    },
+    "actualRules": {
+      "normal completion cannot override explicit control": 3,
+      "intrinsic normal edge stays in paragraph": 3
+    },
+    "diagnosticLimit": false,
+    "allIssuesMatch": true
+  },
+  {
+    "path": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/CBCUS01C.cbl",
+    "statements": 64,
+    "performSites": 9,
+    "rangeSites": 0,
+    "repetitionSites": 0,
+    "frontierKinds": {
+      "EXIT": 6,
+      "CALL": 3
+    },
+    "issueKinds": {
+      "EXIT": 6
+    },
+    "predictedRules": {
+      "normal completion cannot override explicit control": 3,
+      "intrinsic normal edge stays in paragraph": 3
+    },
+    "actualRules": {
+      "normal completion cannot override explicit control": 3,
+      "intrinsic normal edge stays in paragraph": 3
+    },
+    "diagnosticLimit": false,
+    "allIssuesMatch": true
+  },
+  {
+    "path": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/CBTRN01C.cbl",
+    "statements": 216,
+    "performSites": 41,
+    "rangeSites": 0,
+    "repetitionSites": 0,
+    "frontierKinds": {
+      "EXIT": 26,
+      "READ": 2,
+      "CALL": 13
+    },
+    "issueKinds": {
+      "EXIT": 26,
+      "DISPLAY": 2
+    },
+    "predictedRules": {
+      "normal completion cannot override explicit control": 13,
+      "intrinsic normal edge stays in paragraph": 15
+    },
+    "actualRules": {
+      "normal completion cannot override explicit control": 13,
+      "intrinsic normal edge stays in paragraph": 15
+    },
+    "diagnosticLimit": false,
+    "allIssuesMatch": true
+  },
+  {
+    "path": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/CBTRN02C.cbl",
+    "statements": 339,
+    "performSites": 60,
+    "rangeSites": 0,
+    "repetitionSites": 0,
+    "frontierKinds": {
+      "EXIT": 40,
+      "CALL": 18,
+      "CONTINUE": 2,
+      "IF": 2,
+      "PERFORM": 2
+    },
+    "issueKinds": {
+      "EXIT": 44,
+      "CONTINUE": 4
+    },
+    "predictedRules": {
+      "normal completion cannot override explicit control": 24,
+      "intrinsic normal edge stays in paragraph": 24
+    },
+    "actualRules": {
+      "normal completion cannot override explicit control": 24,
+      "intrinsic normal edge stays in paragraph": 24
+    },
+    "diagnosticLimit": false,
+    "allIssuesMatch": true
+  },
+  {
+    "path": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/CBTRN03C.cbl",
+    "statements": 315,
+    "performSites": 71,
+    "rangeSites": 0,
+    "repetitionSites": 0,
+    "frontierKinds": {
+      "EXIT": 52,
+      "CALL": 18
+    },
+    "issueKinds": {
+      "EXIT": 68,
+      "DISPLAY": 1
+    },
+    "predictedRules": {
+      "normal completion cannot override explicit control": 34,
+      "intrinsic normal edge stays in paragraph": 35
+    },
+    "actualRules": {
+      "normal completion cannot override explicit control": 34,
+      "intrinsic normal edge stays in paragraph": 35
+    },
+    "diagnosticLimit": false,
+    "allIssuesMatch": true
+  },
+  {
+    "path": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/COACTUPC.cl2",
+    "statements": 1400,
+    "performSites": 61,
+    "rangeSites": 61,
+    "repetitionSites": 0,
+    "frontierKinds": {
+      "EXIT": 79,
+      "PERFORM": 4,
+      "MOVE": 13,
+      "IF": 27,
+      "CONTINUE": 16,
+      "SET": 51
+    },
+    "issueKinds": {
+      "SET": 138,
+      "EXIT": 156,
+      "CONTINUE": 35,
+      "STRING": 3
+    },
+    "predictedRules": {
+      "intrinsic normal edge stays in paragraph": 187,
+      "normal completion cannot override explicit control": 145
+    },
+    "actualRules": {
+      "intrinsic normal edge stays in paragraph": 68,
+      "normal completion cannot override explicit control": 32
+    },
+    "diagnosticLimit": true,
+    "allIssuesMatch": false
+  },
+  {
+    "path": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/COACTVWC.cl2",
+    "statements": 275,
+    "performSites": 18,
+    "rangeSites": 18,
+    "repetitionSites": 0,
+    "frontierKinds": {
+      "EXIT": 18,
+      "PERFORM": 4,
+      "MOVE": 4,
+      "IF": 4,
+      "SET": 2
+    },
+    "issueKinds": {
+      "SET": 34,
+      "EXIT": 36,
+      "STRING": 3
+    },
+    "predictedRules": {
+      "intrinsic normal edge stays in paragraph": 53,
+      "normal completion cannot override explicit control": 20
+    },
+    "actualRules": {
+      "intrinsic normal edge stays in paragraph": 53,
+      "normal completion cannot override explicit control": 20
+    },
+    "diagnosticLimit": false,
+    "allIssuesMatch": true
+  },
+  {
+    "path": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/COBIL00C.cl2",
+    "statements": 190,
+    "performSites": 38,
+    "rangeSites": 0,
+    "repetitionSites": 0,
+    "frontierKinds": {
+      "IF": 2,
+      "PERFORM": 4,
+      "MOVE": 4
+    },
+    "issueKinds": {
+      "CONTINUE": 6
+    },
+    "predictedRules": {
+      "intrinsic normal edge stays in paragraph": 6
+    },
+    "actualRules": {
+      "intrinsic normal edge stays in paragraph": 6
+    },
+    "diagnosticLimit": false,
+    "allIssuesMatch": true
+  },
+  {
+    "path": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/COCRDLIC.cl2",
+    "statements": 500,
+    "performSites": 27,
+    "rangeSites": 23,
+    "repetitionSites": 0,
+    "frontierKinds": {
+      "EXIT": 23,
+      "PERFORM": 8,
+      "MOVE": 6,
+      "CONTINUE": 3,
+      "IF": 8,
+      "SET": 2
+    },
+    "issueKinds": {
+      "SET": 32,
+      "EXIT": 46,
+      "CONTINUE": 10
+    },
+    "predictedRules": {
+      "intrinsic normal edge stays in paragraph": 58,
+      "normal completion cannot override explicit control": 30
+    },
+    "actualRules": {
+      "intrinsic normal edge stays in paragraph": 58,
+      "normal completion cannot override explicit control": 30
+    },
+    "diagnosticLimit": false,
+    "allIssuesMatch": true
+  },
+  {
+    "path": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/COCRDSLC.cl2",
+    "statements": 263,
+    "performSites": 19,
+    "rangeSites": 19,
+    "repetitionSites": 0,
+    "frontierKinds": {
+      "EXIT": 19,
+      "PERFORM": 7,
+      "MOVE": 4,
+      "IF": 4,
+      "SET": 3
+    },
+    "issueKinds": {
+      "SET": 36,
+      "EXIT": 38
+    },
+    "predictedRules": {
+      "intrinsic normal edge stays in paragraph": 52,
+      "normal completion cannot override explicit control": 22
+    },
+    "actualRules": {
+      "intrinsic normal edge stays in paragraph": 52,
+      "normal completion cannot override explicit control": 22
+    },
+    "diagnosticLimit": false,
+    "allIssuesMatch": true
+  },
+  {
+    "path": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/COCRDUPC.cl2",
+    "statements": 488,
+    "performSites": 26,
+    "rangeSites": 26,
+    "repetitionSites": 0,
+    "frontierKinds": {
+      "EXIT": 27,
+      "IF": 12,
+      "MOVE": 7,
+      "PERFORM": 4,
+      "CONTINUE": 3,
+      "SET": 8
+    },
+    "issueKinds": {
+      "SET": 52,
+      "EXIT": 52,
+      "CONTINUE": 9
+    },
+    "predictedRules": {
+      "intrinsic normal edge stays in paragraph": 76,
+      "normal completion cannot override explicit control": 37
+    },
+    "actualRules": {
+      "intrinsic normal edge stays in paragraph": 68,
+      "normal completion cannot override explicit control": 32
+    },
+    "diagnosticLimit": true,
+    "allIssuesMatch": false
+  },
+  {
+    "path": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/CORPT00C.cl2",
+    "statements": 220,
+    "performSites": 33,
+    "rangeSites": 0,
+    "repetitionSites": 0,
+    "frontierKinds": {
+      "IF": 4,
+      "PERFORM": 1,
+      "INITIALIZE": 2,
+      "MOVE": 1
+    },
+    "issueKinds": {
+      "CONTINUE": 1
+    },
+    "predictedRules": {
+      "intrinsic normal edge stays in paragraph": 1
+    },
+    "actualRules": {
+      "intrinsic normal edge stays in paragraph": 1
+    },
+    "diagnosticLimit": false,
+    "allIssuesMatch": true
+  },
+  {
+    "path": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/COTRN00C.cl2",
+    "statements": 294,
+    "performSites": 38,
+    "rangeSites": 0,
+    "repetitionSites": 0,
+    "frontierKinds": {
+      "IF": 20,
+      "MOVE": 3,
+      "PERFORM": 5
+    },
+    "issueKinds": {
+      "CONTINUE": 12
+    },
+    "predictedRules": {
+      "intrinsic normal edge stays in paragraph": 12
+    },
+    "actualRules": {
+      "intrinsic normal edge stays in paragraph": 12
+    },
+    "diagnosticLimit": false,
+    "allIssuesMatch": true
+  },
+  {
+    "path": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/COTRN01C.cl2",
+    "statements": 95,
+    "performSites": 17,
+    "rangeSites": 0,
+    "repetitionSites": 0,
+    "frontierKinds": {
+      "IF": 2,
+      "PERFORM": 3,
+      "MOVE": 2
+    },
+    "issueKinds": {
+      "CONTINUE": 1
+    },
+    "predictedRules": {
+      "intrinsic normal edge stays in paragraph": 1
+    },
+    "actualRules": {
+      "intrinsic normal edge stays in paragraph": 1
+    },
+    "diagnosticLimit": false,
+    "allIssuesMatch": true
+  },
+  {
+    "path": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/COTRN02C.cl2",
+    "statements": 300,
+    "performSites": 61,
+    "rangeSites": 0,
+    "repetitionSites": 0,
+    "frontierKinds": {
+      "PERFORM": 4,
+      "IF": 1,
+      "MOVE": 3
+    },
+    "issueKinds": {
+      "CONTINUE": 6
+    },
+    "predictedRules": {
+      "intrinsic normal edge stays in paragraph": 6
+    },
+    "actualRules": {
+      "intrinsic normal edge stays in paragraph": 6
+    },
+    "diagnosticLimit": false,
+    "allIssuesMatch": true
+  },
+  {
+    "path": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/COUSR00C.cl2",
+    "statements": 288,
+    "performSites": 37,
+    "rangeSites": 0,
+    "repetitionSites": 0,
+    "frontierKinds": {
+      "IF": 19,
+      "MOVE": 3,
+      "PERFORM": 5
+    },
+    "issueKinds": {
+      "CONTINUE": 12
+    },
+    "predictedRules": {
+      "intrinsic normal edge stays in paragraph": 12
+    },
+    "actualRules": {
+      "intrinsic normal edge stays in paragraph": 12
+    },
+    "diagnosticLimit": false,
+    "allIssuesMatch": true
+  }
+]
