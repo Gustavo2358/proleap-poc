@@ -145,8 +145,7 @@ public final class ControlTopologySemantics {
                     var parts=paragraphs.subList(first,last+1).stream().map(x->paragraphIds.get(x.meta().id())).toList();
                     putRegion(range,RegionKind.RANGE,owner,entry(parts.get(0),resolution),List.of(),next,resolution);
                     var r=regions.get(range);regions.put(range,new Region(r.id(),r.kind(),r.parent(),r.entry(),r.members(),parts,r.boundary(),r.proofs()));
-                    bindings.put(binding,invocation(binding,id,range,"boundary:"+parts.get(parts.size()-1),next,perform,resolution));
-                    add(s,owner,OutcomeKind.LOCAL_INVOKE,"invoke",entry(range,resolution),binding,resolution);
+                    publishInvocation(perform,owner,range,binding,id,"boundary:"+parts.get(parts.size()-1),next,resolution);
                 }else add(s,owner,OutcomeKind.UNKNOWN_LOCAL,"invoke-unresolved",unknown(owner,p),"",p);
                 continue;
             }
@@ -156,8 +155,7 @@ public final class ControlTopologySemantics {
                 String range="region:"+id+"/range",binding="binding:"+id;
                 putRegion(range,RegionKind.RANGE,owner,entry(region,p),List.of(),next,p);
                 var r=regions.get(range);regions.put(range,new Region(r.id(),r.kind(),r.parent(),r.entry(),r.members(),List.of(region),r.boundary(),r.proofs()));
-                bindings.put(binding,invocation(binding,id,range,"boundary:"+region,next,perform,p));
-                add(s,owner,OutcomeKind.LOCAL_INVOKE,"invoke",entry(range,p),binding,p);continue;
+                publishInvocation(perform,owner,range,binding,id,"boundary:"+region,next,p);continue;
             }
             if(s instanceof Ast.GoToStatement g) {
                 int ordinal=0;
@@ -178,6 +176,18 @@ public final class ControlTopologySemantics {
             add(s,owner,completion?OutcomeKind.NORMAL:OutcomeKind.UNKNOWN_LOCAL,completion?"normal":"unknown",completion?next:unknown(owner,p),"",p);
         }
     }
+    private void publishInvocation(Ast.PerformStatement perform,String owner,String range,String binding,String id,String endpoint,Target resume,String premise) {
+        var literal=perform.controls().size()==1&&perform.controls().get(0).expression() instanceof Ast.LiteralExpression l
+            ?l.integerValue():Optional.<java.math.BigInteger>empty();
+        if(perform.repetition()==Ast.PerformRepetition.TIMES&&literal.isPresent()&&literal.get().signum()<=0) {
+            var partial=proof(id+"/count-capability",ProofKind.PARTIAL_UNKNOWN,
+                "nonpositive-literal-count-outside-qualified-profile",perform.meta().provenance(),List.of(premise));
+            add(perform,owner,OutcomeKind.UNKNOWN_LOCAL,"invoke-unavailable",unknown(range,partial),"",partial);
+            return;
+        }
+        bindings.put(binding,invocation(binding,id,range,endpoint,resume,perform,premise));
+        add(perform,owner,OutcomeKind.LOCAL_INVOKE,"invoke",entry(range,premise),binding,premise);
+    }
     private Binding invocation(String binding,String id,String range,String endpoint,Target resume,Ast.PerformStatement p,String proof) {
         var phases=new ArrayList<Phase>();String entry="BODY",completion="RESUME";
         boolean before=p.testMode()==Ast.PerformTestMode.BEFORE;
@@ -192,8 +202,7 @@ public final class ControlTopologySemantics {
         } else if(p.repetition()==Ast.PerformRepetition.TIMES) {
             phases.add(phase("repeat",PhaseKind.PREDICATE,"COUNT_REPEAT",proof,"true","RESUME","false","BODY"));completion="repeat";
             var literal=p.controls().size()==1&&p.controls().get(0).expression() instanceof Ast.LiteralExpression l?l.integerValue():Optional.<java.math.BigInteger>empty();
-            if(literal.isPresent()) {if(literal.get().signum()<=0)entry="RESUME";}
-            else {entry="count-entry";phases.add(phase("count-entry",PhaseKind.PREDICATE,"COUNT_ENTRY",proof,"true","RESUME","false","BODY"));}
+            if(literal.isEmpty()) {entry="count-entry";phases.add(phase("count-entry",PhaseKind.PREDICATE,"COUNT_ENTRY",proof,"true","RESUME","false","BODY"));}
         }
         return new Binding(binding,id,range,endpoint,resume,entry,completion,phases,List.of(proof));
     }

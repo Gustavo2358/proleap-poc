@@ -35,7 +35,9 @@ An explicit transfer/return does not acquire a completion edge.
 
 Bindings carry their own resume and finite phase graph. BODY and RESUME are
 endpoints; predicate/effect phases publish routing explicitly. ONCE, BEFORE/AFTER,
-TIMES and single-level VARYING use this graph. Value/effect precision is separate
+TIMES and single-level VARYING use this graph. Nonpositive literal counts retain
+the historical unavailable-count capability frontier; their resolved range stays
+inventoried without an executable binding or resume bypass. Value/effect precision is separate
 from routing. Inline repetition may retain unknown predicate/effect values.
 
 ## Proof and integrity

@@ -100,6 +100,14 @@ class ControlTopologyAuthorityTest {
         list.add(new Boundary(boundary.id(),p.id(),new Target(TargetKind.COMPLETE,p.id(),boundary.proofs()),boundary.proofs()));
         assertThrows(IllegalArgumentException.class,()->new ControlTopology(t.authority(),t.occurrences(),t.regions(),list,t.outcomes(),t.bindings(),t.proofs()));
     }
+    @Test void unavailableCountPreservesRangeWithoutInventingResume() {
+        var t=publish("MAIN.\nPERFORM P 0 TIMES.\nCALL 'AFTER'.\nGOBACK.\nP.\nCONTINUE.\n").controlTopology().orElseThrow();
+        var range=t.regions().stream().filter(r->r.kind()==RegionKind.RANGE).findFirst().orElseThrow();
+        var unknown=t.outcomes().stream().filter(o->o.role().equals("invoke-unavailable")).findFirst().orElseThrow();
+        assertEquals(TargetKind.UNKNOWN_LOCAL,unknown.target().kind());assertEquals(range.id(),unknown.target().reference());
+        assertTrue(t.bindings().isEmpty());assertEquals(1,range.regions().size());assertEquals(4,t.occurrences().size());
+        assertTrue(t.proofs().stream().anyMatch(p->p.kind()==ProofKind.PARTIAL_UNKNOWN&&p.rule().equals("nonpositive-literal-count-outside-qualified-profile")));
+    }
     @Test void historicalTypedPortAndNewWireStaySeparate() throws Exception {
         var p=publish("MAIN.\nPERFORM P.\nGOBACK.\nP.\nCONTINUE.\nQ.\nDISPLAY 'DEAD'.\nGOBACK.\n");
         var legacy=CobolSemanticPort.open(new CobolSemanticProduct.State(p.unit(),p.policy(),p.dataDeclarations(),p.statements(),p.gaps(),p.coverage(),p.entryInventory(),p.storageIndependence(),p.storage(),p.fileInventory(),p.sourceDependencies(),p.ordinaryContinuations()));
