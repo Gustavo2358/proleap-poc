@@ -614,3 +614,8 @@ assert whole-body/effects precision and do not select an executable AIR strategy
 ## Control topology authority — 2.39.0
 
 The new contract and legacy boundary are specified in [control-topology.md](control-topology.md).
+
+## SP 2.40 fact dependency locality
+
+[Fact dependency locality](fact-dependency-locality.md) defines the new causal proof
+graph. 2.40 requires it alongside R1 topology; <=2.39 retains historical meaning.

@@ -736,7 +736,8 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
         qualified.removeIf(rejected::contains);
         // Preserve SourceMap occurrence order; never infer ownership from diagnostic text/line.
         return new UnitInputProof(sourceMap.inputGapRegions().stream().map(SourceMap.Segment::inputGap)
-            .filter(qualified::contains).distinct().toList());
+            .filter(qualified::contains).distinct().toList(), sourceMap.inputGapRegions().stream()
+            .filter(r->qualified.contains(r.inputGap())).map(r->sourceMap.provenance(r.start(),r.end())).toList());
     }
     private List<Diagnostic> separateUnitCopies(CobolParser.ProgramUnitContext program) {
         if(sourceMap.inputGapRegions().isEmpty())return List.of();

@@ -496,7 +496,7 @@ class SemanticProductMoveCallContractTest {
                 .map(method -> method.getName()).toList());
 
         assertEquals(Set.of("unit", "policy", "dataDeclarations", "statements",
-                "gaps", "coverage", "entryInventory", "storageIndependence", "storage", "fileInventory", "sourceDependencies", "ordinaryContinuations", "controlTopology"), stateComponents);
+                "gaps", "coverage", "entryInventory", "storageIndependence", "storage", "fileInventory", "sourceDependencies", "ordinaryContinuations", "controlTopology", "factDependencies"), stateComponents);
         assertTrue(portMethods.containsAll(Set.of("statements", "moves", "calls", "ifs",
                 "observedStatements", "rootStatements", "children")));
         assertFalse(portMethods.contains("move"));

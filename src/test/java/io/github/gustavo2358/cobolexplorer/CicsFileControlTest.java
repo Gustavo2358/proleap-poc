@@ -87,7 +87,7 @@ class CicsFileControlTest {
             assertEquals("ACCOUNTS",((io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.LiteralCallTarget)fact.target().orElseThrow()).text());
             var bytes=io.github.gustavo2358.cobolexplorer.semanticproduct.transport.SemanticProductJsonWriter.serialize(io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticPort.open(state));
             var doc=new com.fasterxml.jackson.databind.ObjectMapper().readTree(bytes);
-            assertEquals("2.39.0",doc.path("contractVersion").asText());
+            assertEquals("2.40.0",doc.path("contractVersion").asText());
             assertEquals("CICS_FILE_CONTROL",doc.path("statements").get(0).path("variant").asText());
             emit(entry.getKey().toLowerCase(Locale.ROOT),bytes);
         }

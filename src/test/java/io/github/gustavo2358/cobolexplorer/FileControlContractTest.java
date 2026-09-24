@@ -22,7 +22,7 @@ class FileControlContractTest {
     }
     @Test void useBodyAndPrimaryEntrySurviveTransportWithConditionalDispatch()throws Exception {
         var p=publish(source(FILE_USE,"READ F INTO DEST\n AT END CALL 'EOFPGM' END-READ.\nCALL 'AFTER'."));
-        assertEquals("2.39.0",p.path("contractVersion").asText());var inventory=p.path("fileInventory");assertEquals("1.6.0",inventory.path("version").asText());
+        assertEquals("2.40.0",p.path("contractVersion").asText());var inventory=p.path("fileInventory");assertEquals("1.6.0",inventory.path("version").asText());
         assertEquals(1,inventory.path("declaratives").size());var declaration=inventory.path("declaratives").get(0);
         assertFalse(declaration.path("entry").isNull());assertEquals(1,declaration.path("roots").size());assertEquals(1,declaration.path("completions").size());
         var c=inventory.path("operations").path("uses").get(0).path("control");assertEquals("KNOWN",c.path("availability").asText());

@@ -74,7 +74,17 @@ public final class CobolSemanticProductProjector {
             Map<ResolutionContracts.ProgramUnitId, ReferenceOccurrences> occurrencesByUnit,
             ReferenceResolution resolution,
             ResolutionAnalysisReport report, ScalarMoveSemantics scalarMoves, Optional<StorageAccessSemantics> storage, Optional<io.github.gustavo2358.cobolexplorer.CicsProgramControlAnalyzer.Contribution> cics, io.github.gustavo2358.cobolexplorer.FileScopeSemantics fileScope,
-            Map<ResolutionContracts.ProgramUnitId,io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.SourceDependencyInventory> sourceDependencies) {
+            Map<ResolutionContracts.ProgramUnitId,io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.SourceDependencyInventory> sourceDependencies,
+            Map<ResolutionContracts.ProgramUnitId,io.github.gustavo2358.cobolexplorer.semanticproduct.FactDependencies> factDependencies) {
+        public FrontendProducts(CompilationUnitBuildResult frontend,CompilationUnitSymbolTables symbolTables,
+                Map<ResolutionContracts.ProgramUnitId,ReferenceOccurrences> occurrencesByUnit,ReferenceResolution resolution,
+                ResolutionAnalysisReport report,ScalarMoveSemantics scalarMoves,Optional<StorageAccessSemantics> storage,
+                Optional<io.github.gustavo2358.cobolexplorer.CicsProgramControlAnalyzer.Contribution> cics,
+                io.github.gustavo2358.cobolexplorer.FileScopeSemantics fileScope,
+                Map<ResolutionContracts.ProgramUnitId,SourceDependencyInventory> sourceDependencies) {
+            this(frontend,symbolTables,occurrencesByUnit,resolution,report,scalarMoves,storage,cics,fileScope,sourceDependencies,
+                io.github.gustavo2358.cobolexplorer.FactLocalitySemantics.prepare(frontend,symbolTables,resolution,report,storage));
+        }
         public FrontendProducts(CompilationUnitBuildResult frontend, CompilationUnitSymbolTables symbolTables,
                 Map<ResolutionContracts.ProgramUnitId, ReferenceOccurrences> occurrencesByUnit, ReferenceResolution resolution,
                 ResolutionAnalysisReport report, ScalarMoveSemantics scalarMoves, Optional<StorageAccessSemantics> storage,
@@ -84,7 +94,7 @@ public final class CobolSemanticProductProjector {
         }
         public FrontendProducts withSourceDependencies(List<io.github.gustavo2358.cobolexplorer.SourceDependencyFact> facts,List<String> gaps) {
             return new FrontendProducts(frontend,symbolTables,occurrencesByUnit,resolution,report,scalarMoves,storage,cics,fileScope,
-                io.github.gustavo2358.cobolexplorer.SourceDependencySemantics.associate(frontend,facts,gaps));
+                io.github.gustavo2358.cobolexplorer.SourceDependencySemantics.associate(frontend,facts,gaps),factDependencies);
         }
         public FrontendProducts(CompilationUnitBuildResult frontend, CompilationUnitSymbolTables symbolTables, Map<ResolutionContracts.ProgramUnitId, ReferenceOccurrences> occurrencesByUnit, ReferenceResolution resolution, ResolutionAnalysisReport report, ScalarMoveSemantics scalarMoves, Optional<StorageAccessSemantics> storage, Optional<io.github.gustavo2358.cobolexplorer.CicsProgramControlAnalyzer.Contribution> cics) {
             this(frontend,symbolTables,occurrencesByUnit,resolution,report,scalarMoves,storage,cics,io.github.gustavo2358.cobolexplorer.FileScopeSemantics.analyze(symbolTables));
@@ -101,6 +111,7 @@ public final class CobolSemanticProductProjector {
         }
         public FrontendProducts {
             sourceDependencies=Map.copyOf(sourceDependencies);
+            factDependencies=Map.copyOf(factDependencies);
             Objects.requireNonNull(cics);
             if(cics.isPresent()&&!cics.get().belongsTo(frontend))throw new IllegalArgumentException("CICS snapshot belongs to another frontend");
             Objects.requireNonNull(storage);
@@ -216,7 +227,7 @@ public final class CobolSemanticProductProjector {
                 statementIds, fileInventory, products.cics().orElse(null));
         return new ScopedProjection(new CobolSemanticProduct.State(inputs.boundaryUnit(),
                 policy(inputs.report().policy()), declarations.facts(),
-                statements, gaps, coverage, entries, storageIndependence(inputs, declarations.ids()), storage(inputs, declarations.ids()), fileInventory,products.sourceDependencies().getOrDefault(unitId,io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.SourceDependencyInventory.unavailable()),ordinaryContinuations(inputs,statementIds,statements),Optional.of(topology)),java.util.Collections.unmodifiableMap(new LinkedHashMap<>(declarations.ids())));
+                statements, gaps, coverage, entries, storageIndependence(inputs, declarations.ids()), storage(inputs, declarations.ids()), fileInventory,products.sourceDependencies().getOrDefault(unitId,io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.SourceDependencyInventory.unavailable()),ordinaryContinuations(inputs,statementIds,statements),Optional.of(topology),Optional.ofNullable(products.factDependencies().get(unitId))),java.util.Collections.unmodifiableMap(new LinkedHashMap<>(declarations.ids())));
     }
 
     private static List<OrdinaryContinuation> ordinaryContinuations(ProjectionInputs inputs,

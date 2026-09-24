@@ -85,7 +85,7 @@ public final class SemanticProductJsonWriter {
         boolean partialRegionalSequence=port.statements().stream().anyMatch(s -> s instanceof CobolSemanticProduct.MoveFact m
             && (!m.logicalTransfers().isEmpty() || !m.additionalTransfers().isEmpty()
                 && m.transfers().stream().anyMatch(t -> t.effect().kind()==CobolSemanticProduct.RegionalMoveKind.UNAVAILABLE)));
-        return new SemanticProductDocument(SCHEMA, port.controlTopology().isPresent()?"2.39.0":partialRegionalSequence?"2.38.0":!port.ordinaryContinuations().isEmpty()?"2.37.0":port.statements().stream().anyMatch(s->s instanceof CobolSemanticProduct.ProcedurePerformFact p && p.publicationKind()==CobolSemanticProduct.PerformPublicationKind.STRUCTURAL_FACTS)?"2.36.0":!port.storage().logicalExactViews().isEmpty()?"2.35.0":structuredUnknownEvaluate?"2.33.0":preservation?"2.32.0":port.sourceDependencies().availability()!=CobolSemanticProduct.Availability.UNAVAILABLE?"2.31.0":port.storage().logicalTextViews().isEmpty()?CONTRACT_VERSION:"2.29.0",
+        return new SemanticProductDocument(SCHEMA, port.factDependencies().isPresent()?"2.40.0":port.controlTopology().isPresent()?"2.39.0":partialRegionalSequence?"2.38.0":!port.ordinaryContinuations().isEmpty()?"2.37.0":port.statements().stream().anyMatch(s->s instanceof CobolSemanticProduct.ProcedurePerformFact p && p.publicationKind()==CobolSemanticProduct.PerformPublicationKind.STRUCTURAL_FACTS)?"2.36.0":!port.storage().logicalExactViews().isEmpty()?"2.35.0":structuredUnknownEvaluate?"2.33.0":preservation?"2.32.0":port.sourceDependencies().availability()!=CobolSemanticProduct.Availability.UNAVAILABLE?"2.31.0":port.storage().logicalTextViews().isEmpty()?CONTRACT_VERSION:"2.29.0",
                 unit(port.unit()), policy(port.policy()), declarations, statements,
                 new StructureDocument(port.rootStatements().stream()
                         .map(SemanticProductJsonWriter::statementHandle).toList(),
@@ -93,7 +93,7 @@ public final class SemanticProductJsonWriter {
                 entryInventory(port.entryInventory()), storageIndependence(port.storageIndependence()), storage(port.storage()),
                 port.statements().stream().filter(CobolSemanticProduct.ObservedStatement.class::isInstance)
                     .map(CobolSemanticProduct.ObservedStatement.class::cast).filter(s->s.effects().isPresent())
-                    .map(s->effectDocument(s.header().id(),s.effects().orElseThrow())).toList(), fileInventory(port.fileInventory()),port.sourceDependencies().availability()==CobolSemanticProduct.Availability.UNAVAILABLE?null:port.sourceDependencies(),port.ordinaryContinuations().isEmpty()?null:port.ordinaryContinuations().stream().map(r->new OrdinaryContinuationDocument(statementHandle(r.statement()),statementHandle(r.destination()),provenance(r.provenance()))).toList(),port.controlTopology().orElse(null));
+                    .map(s->effectDocument(s.header().id(),s.effects().orElseThrow())).toList(), fileInventory(port.fileInventory()),port.sourceDependencies().availability()==CobolSemanticProduct.Availability.UNAVAILABLE?null:port.sourceDependencies(),port.ordinaryContinuations().isEmpty()?null:port.ordinaryContinuations().stream().map(r->new OrdinaryContinuationDocument(statementHandle(r.statement()),statementHandle(r.destination()),provenance(r.provenance()))).toList(),port.controlTopology().orElse(null),port.factDependencies().orElse(null));
     }
 
     private static FileInventoryDocument fileInventory(CobolSemanticProduct.FileInventory inventory) {
@@ -465,7 +465,7 @@ public final class SemanticProductJsonWriter {
             StructureDocument structure,
             List<GapDocument> gaps,
             CoverageDocument coverage,
-            EntryInventoryDocument entryInventory, IndependentStorageDocument storageIndependence, StorageDocument storage,List<EffectDocument> statementEffects, FileInventoryDocument fileInventory, @JsonInclude(JsonInclude.Include.NON_NULL) io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.SourceDependencyInventory sourceDependencies, @JsonInclude(JsonInclude.Include.NON_NULL) List<OrdinaryContinuationDocument> ordinaryContinuations, @JsonInclude(JsonInclude.Include.NON_NULL) io.github.gustavo2358.cobolexplorer.semanticproduct.ControlTopology controlTopology) { }
+            EntryInventoryDocument entryInventory, IndependentStorageDocument storageIndependence, StorageDocument storage,List<EffectDocument> statementEffects, FileInventoryDocument fileInventory, @JsonInclude(JsonInclude.Include.NON_NULL) io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.SourceDependencyInventory sourceDependencies, @JsonInclude(JsonInclude.Include.NON_NULL) List<OrdinaryContinuationDocument> ordinaryContinuations, @JsonInclude(JsonInclude.Include.NON_NULL) io.github.gustavo2358.cobolexplorer.semanticproduct.ControlTopology controlTopology, @JsonInclude(JsonInclude.Include.NON_NULL) io.github.gustavo2358.cobolexplorer.semanticproduct.FactDependencies factDependencies) { }
     private record OrdinaryContinuationDocument(String statement,String destination,ProvenanceDocument provenance) { }
 
     private record EntryInventoryDocument(CobolSemanticProduct.InventoryStatus status,

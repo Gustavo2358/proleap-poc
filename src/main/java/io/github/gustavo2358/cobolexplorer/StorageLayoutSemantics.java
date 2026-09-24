@@ -233,8 +233,8 @@ public final class StorageLayoutSemantics {
         }
         return Measure.known(max);
     }
-    private record Shape(Kind kind,boolean supported,Optional<BigInteger> leafExtent) { }
-    private static Shape shape(Ast.DataEntry data,Map<Integer,SemanticCoverage.Finding> coverage,Set<Integer> duplicates) {
+    record Shape(Kind kind,boolean supported,Optional<BigInteger> leafExtent) { }
+    static Shape shape(Ast.DataEntry data,Map<Integer,SemanticCoverage.Finding> coverage,Set<Integer> duplicates) {
         boolean known=!duplicates.contains(data.meta().id())
             &&data.visibility()==Ast.DeclarationVisibility.LOCAL
             &&(data.levelKind()==Ast.DataLevelKind.GROUP_OR_ELEMENTARY||data.levelKind()==Ast.DataLevelKind.STANDALONE_77)

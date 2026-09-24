@@ -1,0 +1,6 @@
+{
+  "id": "WORK-FRONTEND-FACT-DEPENDENCY-R2",
+  "title": "Fact dependency locality after approved R1 closure",
+  "status": "IN_PROGRESS",
+  "scope": "SP 2.40 causal storage/input proof graph; R1 authority preserved; no W8, W9, merge or backend redesign"
+}
