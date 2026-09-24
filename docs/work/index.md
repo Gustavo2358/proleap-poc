@@ -1,3 +1,5 @@
+R3 active: [WORK-AST-INPUT-HARDENING-R3](active/WORK-AST-INPUT-HARDENING-R3/work-item.json), user-authorized pivot supersedes old EXPLICIT_SOURCE_ENVIRONMENT scope; historical D0 remains read-only.
+
 # Trabalho ativo e backlog
 
 [FILE-DEPENDENCIES — CORE N+C](../domain/file-dependencies.md): W0–W7 qualificadas; [W8](active/FD-W8.yaml) produtor qualificado localmente, integração em andamento. STOP após W11; W10 não autorizado.

@@ -93,7 +93,7 @@ class SourceNormalizerTest {
     }
 
     @Test
-    void fixedFormatHasExplicitMarginsAndRejectsAmbiguousTabs() {
+    void fixedFormatHasExplicitMarginsAndExpandsSeparatorTabs() {
         String code = "000100 DISPLAY 'A'." + " ".repeat(72 - "000100 DISPLAY 'A'.".length())
                 + "IDENTIFICATION-AREA\n";
         SourceNormalizer.Result result = SourceNormalizer.normalize(
@@ -104,11 +104,8 @@ class SourceNormalizerTest {
         assertEquals("", SourceNormalizerTestSupport.fixed("123456"),
                 "a short record containing only sequence-area columns has no program text");
 
-        IllegalArgumentException tab = org.junit.jupiter.api.Assertions.assertThrows(
-                IllegalArgumentException.class,
-                () -> SourceNormalizer.normalize("      \tDISPLAY 'A'.", "tab.cbl",
-                        SourceNormalizer.SourceFormat.FIXED));
-        org.junit.jupiter.api.Assertions.assertTrue(tab.getMessage().contains("tab"), tab.getMessage());
+        assertEquals(" DISPLAY 'A'.", SourceNormalizer.normalize("      \tDISPLAY 'A'.", "tab.cbl",
+                SourceNormalizer.SourceFormat.FIXED).text());
     }
 
     @Test
