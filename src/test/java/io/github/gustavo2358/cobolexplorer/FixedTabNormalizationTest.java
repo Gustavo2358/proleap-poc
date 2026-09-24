@@ -11,12 +11,20 @@ class FixedTabNormalizationTest {
         return SourceNormalizer.normalize(raw, "input.cbl", SourceNormalizer.SourceFormat.FIXED);
     }
 
-    @Test void advancesToNextStopRatherThanAddingEightSpaces() {
-        assertEquals("      05 FIELD PIC X.\n", normalize("\t     05 FIELD PIC X.\n").text());
-        assertEquals("              05 FIELD PIC X.\n", normalize("\t\t     05 FIELD PIC X.\n").text());
+    @Test void advancesToNextFourColumnStopRatherThanAddingFixedWidth() {
+        assertEquals("  05 FIELD PIC X.\n", normalize("\t     05 FIELD PIC X.\n").text());
+        assertEquals("      05 FIELD PIC X.\n", normalize("\t\t     05 FIELD PIC X.\n").text());
         assertEquals(" "+"DISPLAY 'A'.", normalize("      \tDISPLAY 'A'.").text());
         assertEquals(" "+"DISPLAY 'A'.", normalize("       \tDISPLAY 'A'.").text());
-        assertEquals(" ".repeat(17)+"((:FLAG = '1'\n", normalize("181300           \t((:FLAG = '1'\n").text());
+        assertEquals(" ".repeat(13)+"((:FLAG = '1'\n", normalize("181300           \t((:FLAG = '1'\n").text());
+    }
+
+    @Test void retainsLongDeclarationAfterTwoIndentationTabs() {
+        String raw="\t\t     05  CUSTOMER-FIELD                          PIC X(25).\n";
+        assertTrue(normalize(raw).text().endsWith("PIC X(25).\n"));
+        assertEquals(normalize(raw.replace("\t\t", "        ")).text(), normalize(raw).text());
+        assertThrows(IllegalArgumentException.class, () -> normalize("\tCOPY MEMBER.\n"),
+                "A four-column tab does not silently move text out of an invalid indicator");
     }
 
     @Test void preservesLiteralAndCommentPayloadAndLineEndings() {
@@ -32,7 +40,7 @@ class FixedTabNormalizationTest {
     @Test void retainsIndicatorAndColumn72Boundary() {
         assertEquals("*>  PAGE\tTEXT\n", normalize("      / PAGE\tTEXT\n").text());
         assertThrows(IllegalArgumentException.class, () -> normalize("      ?BAD\n"));
-        assertEquals("A".repeat(57)+" ".repeat(8), normalize("       "+"A".repeat(57)+"\tX").text());
+        assertEquals("A".repeat(57)+" ".repeat(4)+"X", normalize("       "+"A".repeat(57)+"\tX").text());
         assertEquals("A".repeat(64)+" ", normalize("       "+"A".repeat(64)+"\tX").text());
         assertEquals("A".repeat(65), normalize("       "+"A".repeat(65)+"\tX").text());
     }
@@ -55,10 +63,10 @@ class FixedTabNormalizationTest {
     }
 
     @Test void usesIdenticalPolicyForNestedCopyAndRetainsIncludeChain(@TempDir Path dir) throws Exception {
-        Files.writeString(dir.resolve("ONE.cpy"),"\tCOPY TWO.\n");
+        Files.writeString(dir.resolve("ONE.cpy"),"\t\tCOPY TWO.\n");
         Files.writeString(dir.resolve("TWO.cpy"),"\t     05 FIELD PIC X.\n");
         var out=new PreprocessorEngine(Bindings.cobol(),new CopybookLibrary(dir))
-                .process(normalize("\tCOPY ONE.\n").sourceMap(),"input.cbl");
+                .process(normalize("\t\tCOPY ONE.\n").sourceMap(),"input.cbl");
         assertEquals(0,out.errors()); assertEquals(0,out.unresolved());
         int field=out.text().indexOf("FIELD"); assertTrue(field>=0);
         var provenance=out.sourceMap().provenance(field,field+5);

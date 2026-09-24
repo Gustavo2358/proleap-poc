@@ -48,8 +48,8 @@ Evals: EVAL-SRC-001, EVAL-SRC-002, EVAL-PRE-002 e EVAL-PROV-002. Invariantes: IN
 ## Importação de TAB (R3-A)
 
 Antes de interpretar as áreas fixas, HT separador avança até a próxima parada
-de oito colunas (9, 17, 25, … em coordenadas de coluna 1-based), e não adiciona
-sempre oito espaços. A mesma regra é aplicada a cada fonte e COPY físico.
+de quatro colunas (5, 9, 13, … em coordenadas de coluna 1-based), e não adiciona
+sempre quatro espaços. A mesma regra é aplicada a cada fonte e COPY físico.
 Não há configuração externa nova nem seleção automática de perfil físico.
 
 Aspas simples/duplas, inclusive duplicadas e literais continuados com seu
@@ -66,3 +66,10 @@ IBM define HT de largura oito. Precedente: [IBM z/OS expand](https://www.ibm.com
 áreas e continuação: [IBM indicator area](https://www.ibm.com/docs/en/cobol-zos/6.4.0?topic=format-indicator-area).
 Evidência: `FixedTabNormalizationTest`, mínimos de prefixo e separador SQL,
 fronteiras 7/8/72/73, Unicode, LF/CRLF/CR, payload e provenance/COPY.
+
+A inspeção das duas variantes físicas mostrou que paradas de oito colunas
+truncavam cláusulas depois de dois HT iniciais. A política de quatro colunas
+preserva ambos os prefixos e as cláusulas completas dentro da margem 72.
+É uma convenção interna determinística de importação, sem inferência de dialeto
+ou promessa de recuperar a intenção de todo arquivo externo. Indicador inválido
+após a expansão continua sendo erro; não há seleção por arquivo/corpus.

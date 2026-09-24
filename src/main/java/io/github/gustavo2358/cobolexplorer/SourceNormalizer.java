@@ -473,7 +473,7 @@ final class SourceNormalizer {
         return result;
     }
 
-    // Import policy, not a COBOL dialect rule: separators advance to columns 9, 17, ... .
+    // Import policy, not a COBOL dialect rule: separators advance to columns 5, 9, 13, ... .
     // Literal/comment payload remains verbatim. Both source and COPY enter this normalizer.
     private record FixedTabs(String text, int[] origins) {
         int original(int offset) {
@@ -507,7 +507,7 @@ final class SourceNormalizer {
                     }
                 }
                 if (cp == '\t' && column < 72 && (column < 7 || quote == 0 && !comment)) {
-                    int spaces = 8 - column % 8;
+                    int spaces = 4 - column % 4;
                     expanded.append(" ".repeat(spaces));
                     for (int n = 0; n < spaces; n++) origins.add(-rawOffset - 1);
                     column += spaces;
@@ -596,7 +596,8 @@ final class SourceNormalizer {
         }
         String previous = previousLine.content();
         int previousEnd = previous.length();
-        while (previousEnd > 0 && previous.charAt(previousEnd - 1) == ' ') previousEnd--;
+        while (previousEnd > 0 && previous.charAt(previousEnd - 1) != '\t'
+                && Character.isWhitespace(previous.charAt(previousEnd - 1))) previousEnd--;
         previous = previous.substring(0, previousEnd);
         String continuation = area.stripLeading();
         ContinuationKind kind = continuationKind(previous, physical);
