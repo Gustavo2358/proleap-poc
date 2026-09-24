@@ -7,13 +7,13 @@ import static io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticP
 public record FactDependencies(String authority,List<Input> inputs,List<Proof> proofs,
         List<Region> regions,List<Fact> facts,List<Binding> bindings) {
     public enum InputKind { MISSING_COPY, OPAQUE_INCLUDE, UNLOCATED_INPUT, PHYSICAL_PROFILE }
-    public enum ProofKind { SOURCE_SYNTAX, REGION_CONTEXT, REGION_BOUNDARY, REGION_CLOSURE, ALIAS_INVENTORY, ALIAS_CLOSURE, LOCAL_ALLOCATION, LOGICAL_TYPE, PROFILE, PHYSICAL_VIEW }
+    public enum ProofKind { SOURCE_SYNTAX, REGION_CONTEXT, DECLARATION_CONTEXT, REGION_BOUNDARY, REGION_CLOSURE, ALIAS_INVENTORY, ALIAS_CLOSURE, LOCAL_ALLOCATION, LOGICAL_TYPE, PROFILE, PHYSICAL_VIEW }
     public enum FactKind { SOURCE_IDENTITY, LOGICAL_TEXT, STORAGE_IDENTITY, LOCAL_CELL, PHYSICAL_VIEW }
-    public record Input(String id,InputKind kind,boolean available,List<String> contextScopes,List<String> closureScopes,Provenance provenance) {
-        public Input {text(id);Objects.requireNonNull(kind);contextScopes=sorted(contextScopes);closureScopes=sorted(closureScopes);Objects.requireNonNull(provenance);}
+    public record Input(String id,InputKind kind,boolean available,List<String> contextScopes,List<String> closureScopes,List<String> declarationScopes,Provenance provenance) {
+        public Input {text(id);Objects.requireNonNull(kind);contextScopes=sorted(contextScopes);closureScopes=sorted(closureScopes);declarationScopes=sorted(declarationScopes);Objects.requireNonNull(provenance);}
     }
-    public record Proof(String id,ProofKind kind,String scope,boolean localPremise,List<String> dependencies,List<String> inputs,String rule,Provenance provenance) {
-        public Proof {text(id);Objects.requireNonNull(kind);text(scope);dependencies=sorted(dependencies);inputs=sorted(inputs);text(rule);Objects.requireNonNull(provenance);}
+    public record Proof(String id,ProofKind kind,String scope,String subject,boolean localPremise,List<String> dependencies,List<String> inputs,String rule,Provenance provenance) {
+        public Proof {text(id);Objects.requireNonNull(kind);text(scope);text(subject);dependencies=sorted(dependencies);inputs=sorted(inputs);text(rule);Objects.requireNonNull(provenance);}
     }
     public record Region(String id,List<String> members,Provenance provenance) {
         public Region {text(id);members=sorted(members);require(!members.isEmpty(),"region members required");Objects.requireNonNull(provenance);}
@@ -31,30 +31,43 @@ public record FactDependencies(String authority,List<Input> inputs,List<Proof> p
         var ins=index(inputs,Input::id);var ps=index(proofs,Proof::id);var rs=index(regions,Region::id);var fs=index(facts,Fact::id);var bs=index(bindings,Binding::node);
         var owners=new HashMap<String,String>();
         for(var r:regions)for(var n:r.members())require(owners.put(n,r.id())==null,"node has one nominal region");
-        for(var i:inputs){refs(i.contextScopes(),rs);refs(i.closureScopes(),rs);}
-        var inputContext=new HashMap<String,Set<String>>();var inputClosure=new HashMap<String,Set<String>>();var profileInputs=new TreeSet<String>();
+        for(var i:inputs){refs(i.contextScopes(),rs);refs(i.closureScopes(),rs);refs(i.declarationScopes(),owners);}
+        var inputDeclarations=new HashMap<String,Set<String>>();var inputContext=new HashMap<String,Set<String>>();var inputClosure=new HashMap<String,Set<String>>();var profileInputs=new TreeSet<String>();
         for(var i:inputs) {for(var scope:i.contextScopes())inputContext.computeIfAbsent(scope,k->new TreeSet<>()).add(i.id());
             for(var scope:i.closureScopes())inputClosure.computeIfAbsent(scope,k->new TreeSet<>()).add(i.id());
+            for(var node:i.declarationScopes())inputDeclarations.computeIfAbsent(node,k->new TreeSet<>()).add(i.id());
             if(i.kind()==InputKind.PHYSICAL_PROFILE)profileInputs.add(i.id());}
         require(profileInputs.size()==1,"one explicit physical profile premise");
         for(var p:proofs) {
             require(rs.containsKey(p.scope()),"proof region exists");refs(p.dependencies(),ps);refs(p.inputs(),ins);
+            require(p.subject().equals(p.scope())||p.scope().equals(owners.get(p.subject())),"proof subject belongs to scope");
+            require(switch(p.kind()) {
+                case SOURCE_SYNTAX -> true;
+                case DECLARATION_CONTEXT,LOGICAL_TYPE,PHYSICAL_VIEW -> owners.containsKey(p.subject());
+                default -> p.subject().equals(p.scope());
+            },"proof kind has the required region/declaration subject");
             kinds(p.dependencies(),ps,switch(p.kind()) {
                 case SOURCE_SYNTAX,PROFILE -> Set.of();
-                case REGION_CONTEXT,REGION_BOUNDARY,ALIAS_INVENTORY,LOGICAL_TYPE -> Set.of(ProofKind.SOURCE_SYNTAX);
+                case REGION_CONTEXT,DECLARATION_CONTEXT,REGION_BOUNDARY,ALIAS_INVENTORY -> Set.of(ProofKind.SOURCE_SYNTAX);
+                case LOGICAL_TYPE -> Set.of(ProofKind.SOURCE_SYNTAX,ProofKind.DECLARATION_CONTEXT);
                 case REGION_CLOSURE -> Set.of(ProofKind.SOURCE_SYNTAX,ProofKind.REGION_BOUNDARY);
                 case ALIAS_CLOSURE -> Set.of(ProofKind.REGION_CLOSURE,ProofKind.ALIAS_INVENTORY);
                 case LOCAL_ALLOCATION -> Set.of(ProofKind.SOURCE_SYNTAX,ProofKind.REGION_CONTEXT);
                 case PHYSICAL_VIEW -> Set.of(ProofKind.SOURCE_SYNTAX,ProofKind.PROFILE,ProofKind.REGION_CONTEXT,ProofKind.REGION_CLOSURE);
             });
             var expected=switch(p.kind()) {
+                case DECLARATION_CONTEXT -> inputDeclarations.getOrDefault(p.subject(),Set.of());
                 case REGION_CONTEXT -> inputContext.getOrDefault(p.scope(),Set.of());
                 case REGION_CLOSURE -> inputClosure.getOrDefault(p.scope(),Set.of());
                 case PROFILE -> profileInputs;
                 default -> Set.<String>of();
             };
             require(expected.equals(new TreeSet<>(p.inputs())),"proof input relation is complete");
-            for(var dependency:p.dependencies())require(ps.get(dependency).scope().equals(p.scope()),"proof scope agreement");
+            for(var dependency:p.dependencies()) {
+                var premise=ps.get(dependency);require(premise.scope().equals(p.scope()),"proof scope agreement");
+                if(premise.kind()==ProofKind.SOURCE_SYNTAX||premise.kind()==ProofKind.DECLARATION_CONTEXT)
+                    require(premise.subject().equals(p.subject()),"proof declaration subject agreement");
+            }
         }
         var known=evaluate(proofs,ins); // also rejects cycles
         var cells=new HashMap<String,Fact>();var allocations=new HashMap<String,Fact>();
@@ -70,7 +83,11 @@ public record FactDependencies(String authority,List<Input> inputs,List<Proof> p
                 case LOCAL_CELL -> Set.of(ProofKind.LOGICAL_TYPE,ProofKind.ALIAS_CLOSURE,ProofKind.LOCAL_ALLOCATION);
                 case PHYSICAL_VIEW -> Set.of(ProofKind.PHYSICAL_VIEW);
             });
-            for(var p:f.dependencies())require(ps.get(p).scope().equals(f.region()),"fact proof scope");
+            for(var p:f.dependencies()) {
+                var proof=ps.get(p);require(proof.scope().equals(f.region()),"fact proof scope");
+                boolean local=proof.kind()==ProofKind.SOURCE_SYNTAX||proof.kind()==ProofKind.LOGICAL_TYPE||proof.kind()==ProofKind.PHYSICAL_VIEW;
+                require(proof.subject().equals(local?f.subject():f.region()),"fact proof subject agreement");
+            }
             if(f.kind()==FactKind.LOCAL_CELL)cells.put(f.subject(),f);
             if(f.kind()==FactKind.STORAGE_IDENTITY)allocations.put(f.subject(),f);
         }

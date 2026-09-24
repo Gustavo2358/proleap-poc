@@ -68,22 +68,30 @@ public final class FactLocalitySemantics {
         for(var entry:members.entrySet())if(!closeAt.containsKey(entry.getKey())) {var section=sections.get(bases.get(entry.getKey()).id().node());
             closeAt.put(entry.getKey(),section==null?procedureStart:sectionEnds.get(section.meta().id()));
             closeOrigin.put(entry.getKey(),section==null?program.meta().provenance():boundaryOrigins.get(section.meta().id()));}
-        var context=new HashMap<String,List<String>>();var closure=new HashMap<String,List<String>>();
+        var declarationInputs=new HashMap<String,List<String>>();var context=new HashMap<String,List<String>>();var closure=new HashMap<String,List<String>>();
         var inputs=new ArrayList<Input>();int ordinal=0;
         for(var gap:gaps) {
-            var contexts=new ArrayList<String>();var closures=new ArrayList<String>();var input="input:"+ordinal++;
+            var contexts=new ArrayList<String>();var closures=new ArrayList<String>();var declarations=new ArrayList<String>();var input="input:"+ordinal++;
             for(var entry:members.entrySet()) {
                 var b=bases.get(entry.getKey());var root=positions.get(b.id().node()).data();var section=sections.get(root.meta().id());
                 // Prefix proof is intentionally conservative after an unknown insertion.
-                boolean affectsContext=!gap.located()||compare(start(gap.origin()),start(root.meta().provenance()))<=0;
+                // Allocation/visibility also depend on the entire declaration header.
+                // A COPY inside its clauses may change EXTERNAL/GLOBAL or identity.
+                boolean affectsContext=!gap.located()||start(gap.origin())<end(root.meta().provenance().expanded());
                 long close=closeAt.get(entry.getKey());
                 boolean affectsClosure=affectsContext||!gap.located()||start(gap.origin())<close;
                 if(affectsContext){contexts.add(entry.getKey());context.computeIfAbsent(entry.getKey(),k->new ArrayList<>()).add(input);}
                 if(affectsClosure){closures.add(entry.getKey());closure.computeIfAbsent(entry.getKey(),k->new ArrayList<>()).add(input);}
             }
-            inputs.add(new Input(input,gap.kind(),false,contexts,closures,origin(gap.origin())));
+            for(var entry:members.values())for(var n:entry) {
+                var ast=positions.get(n.id().node()).data();
+                if(!gap.located()||start(gap.origin())<end(ast.meta().provenance().expanded())) {
+                    var subject=node(n.id().node());declarations.add(subject);declarationInputs.computeIfAbsent(subject,k->new ArrayList<>()).add(input);
+                }
+            }
+            inputs.add(new Input(input,gap.kind(),false,contexts,closures,declarations,origin(gap.origin())));
         }
-        inputs.add(new Input("input:profile",InputKind.PHYSICAL_PROFILE,layout.profile()!=StorageLayoutSemantics.Profile.UNSPECIFIED,List.of(),List.of(),origin(program.meta().provenance())));
+        inputs.add(new Input("input:profile",InputKind.PHYSICAL_PROFILE,layout.profile()!=StorageLayoutSemantics.Profile.UNSPECIFIED,List.of(),List.of(),List.of(),origin(program.meta().provenance())));
         var proofs=new ArrayList<Proof>();var regions=new ArrayList<Region>();var facts=new ArrayList<Fact>();var bindings=new ArrayList<Binding>();
         var attrs=program.attributes();boolean ordinary=!attrs.recursive()&&!attrs.common()&&!attrs.library()&&!attrs.definition()&&!attrs.initial();
         var exacts=new HashMap<Integer,Integer>();for(var e:storage.logicalExactViews())if(e.node().unit().equals(id))exacts.put(e.node().node(),e.representative().node());
@@ -118,13 +126,14 @@ public final class FactLocalitySemantics {
                 int nid=n.id().node();var subject=node(nid);var ast=positions.get(nid).data();var shape=shapes.get(nid);
                 var s=proof(proofs,ProofKind.SOURCE_SYNTAX,subject,region,StorageComponents.level(ast)>0,List.of(),List.of(),n.origin());
                 boolean text=wholeExact||shape.supported()&&shape.kind()==StorageLayoutSemantics.Kind.ELEMENTARY&&shape.leafExtent().filter(v->v.signum()>0).isPresent();
-                var logical=proof(proofs,ProofKind.LOGICAL_TYPE,subject,region,text,List.of(s),List.of(),n.origin());
+                var header=proof(proofs,ProofKind.DECLARATION_CONTEXT,subject,region,true,List.of(s),declarationInputs.getOrDefault(subject,List.of()),n.origin());
+                var logical=proof(proofs,ProofKind.LOGICAL_TYPE,subject,region,text,List.of(s,header),List.of(),n.origin());
                 var v=views.get(nid);
                 var physical=proof(proofs,ProofKind.PHYSICAL_VIEW,subject,region,v.offset().value().isPresent()&&v.extent().value().isPresent(),List.of(s,profile,ctx,closed),List.of(),n.origin());
                 fact(facts,FactKind.SOURCE_IDENTITY,subject,region,List.of(s));fact(facts,FactKind.LOGICAL_TEXT,subject,region,List.of(logical));
                 fact(facts,FactKind.PHYSICAL_VIEW,subject,region,List.of(physical));
                 fact(facts,FactKind.LOCAL_CELL,subject,region,List.of(logical,alias,allocation));
-                if(isolated&&text&&!n.filler()&&n.entity().isPresent())cells.put(nid,node(wholeExact?exacts.get(nid):nid));
+                if(isolated&&text&&declarationInputs.getOrDefault(subject,List.of()).isEmpty()&&!n.filler()&&n.entity().isPresent())cells.put(nid,node(wholeExact?exacts.get(nid):nid));
             }
             var descendants=new HashMap<Integer,Set<String>>();
             if(!wholeExact)for(var cell:cells.entrySet()) {int current=cell.getKey();var visited=new HashSet<Integer>();
@@ -139,14 +148,13 @@ public final class FactLocalitySemantics {
         return new FactDependencies("FRONTEND_FACT_DEPENDENCY_LOCALITY_R2",inputs,proofs,regions,facts,bindings);
     }
     private static String proof(List<Proof> out,ProofKind kind,String subject,String scope,boolean premise,List<String> deps,List<String> inputs,Ast.SourceProvenance p) {
-        var id=kind+"/"+subject;out.add(new Proof(id,kind,scope,premise,deps,inputs,"IBM6.4/R2/"+kind,origin(p)));return id;
+        var id=kind+"/"+subject;out.add(new Proof(id,kind,scope,subject,premise,deps,inputs,"IBM6.4/R2/"+kind,origin(p)));return id;
     }
     private static void fact(List<Fact> out,FactKind kind,String subject,String region,List<String> deps){out.add(new Fact(kind+"/"+subject,kind,subject,region,deps));}
     private static String node(int id){return "storage-node:"+id;}
     private static String base(int id){return "storage-base:"+id;}
     private static long start(Ast.SourceProvenance p){return ((long)p.expanded().startLine()<<32)+p.expanded().startColumn();}
     private static long end(Ast.SourceLocation p){return ((long)p.endLine()<<32)+p.endColumn();}
-    private static int compare(long a,long b){return Long.compare(a,b);}
     private static CobolSemanticProduct.Provenance origin(Ast.SourceProvenance p){return new CobolSemanticProduct.Provenance(location(p.expanded()),location(p.original()),p.includeChain().stream().map(c->new CobolSemanticProduct.IncludeFrame(c.includingFile(),c.requestedName(),c.includedFile(),c.includeLine())).toList(),p.exact());}
     private static CobolSemanticProduct.Location location(Ast.SourceLocation p){return new CobolSemanticProduct.Location(p.file(),p.startLine(),p.startColumn(),p.endLine(),p.endColumn());}
 }

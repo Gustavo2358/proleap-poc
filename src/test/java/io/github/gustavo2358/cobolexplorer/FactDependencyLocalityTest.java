@@ -59,13 +59,13 @@ class FactDependencyLocalityTest {
         var graph=publish("01 RECORD-A.\n 05 TARGET PIC X(8).\n 05 COUNTER PIC 9.\n01 SENTINEL PIC X.\nCOPY UNKNOWN-DATA.").factDependencies().orElseThrow();
         var shuffled=new ArrayList<>(graph.facts());Collections.reverse(shuffled);
         assertEquals(graph,new FactDependencies(graph.authority(),graph.inputs(),graph.proofs(),graph.regions(),shuffled,graph.bindings()));
-        for(var kind:List.of(ProofKind.ALIAS_CLOSURE,ProofKind.ALIAS_INVENTORY,ProofKind.REGION_BOUNDARY,ProofKind.REGION_CLOSURE,ProofKind.LOCAL_ALLOCATION)) {
+        for(var kind:List.of(ProofKind.DECLARATION_CONTEXT,ProofKind.ALIAS_CLOSURE,ProofKind.ALIAS_INVENTORY,ProofKind.REGION_BOUNDARY,ProofKind.REGION_CLOSURE,ProofKind.LOCAL_ALLOCATION)) {
             var victim=graph.proofs().stream().filter(p->p.kind()==kind).findFirst().orElseThrow();
             var proofs=graph.proofs().stream().filter(p->!p.equals(victim)).toList();
             assertThrows(IllegalArgumentException.class,()->new FactDependencies(graph.authority(),graph.inputs(),proofs,graph.regions(),graph.facts(),graph.bindings()));
         }
         var victim=graph.proofs().stream().filter(p->p.kind()==ProofKind.REGION_CLOSURE&&!p.inputs().isEmpty()).findFirst().orElseThrow();
-        var proofs=graph.proofs().stream().map(p->p.equals(victim)?new Proof(p.id(),p.kind(),p.scope(),p.localPremise(),p.dependencies(),List.of(),p.rule(),p.provenance()):p).toList();
+        var proofs=graph.proofs().stream().map(p->p.equals(victim)?new Proof(p.id(),p.kind(),p.scope(),p.subject(),p.localPremise(),p.dependencies(),List.of(),p.rule(),p.provenance()):p).toList();
         assertThrows(IllegalArgumentException.class,()->new FactDependencies(graph.authority(),graph.inputs(),proofs,graph.regions(),graph.facts(),graph.bindings()));
     }
     @Test void M1_M5_M7_independentInputDoesNotChangeClosedFacets() {
@@ -107,6 +107,20 @@ class FactDependencyLocalityTest {
         var left=ExplorerMain.publishSemanticProduct(aa.model().programUnits().get(0).id(),aa.build(),aa.tables(),aa.occurrences(),aa.resolution(),aa.report());
         var right=ExplorerMain.publishSemanticProduct(bb.model().programUnits().get(0).id(),bb.build(),bb.tables(),bb.occurrences(),bb.resolution(),bb.report());
         assertEquals(left.factDependencies(),right.factDependencies(),"irrelevant statement reorder preserves data proof identity");
+    }
+    @Test void missingInputInsideDeclarationHeaderDoesNotProveAllocation() throws Exception {
+        var product=publish("01 TARGET\nCOPY UNKNOWN-CLAUSE.\n PIC X(8).\n01 SENTINEL PIC X.");
+        var g=product.factDependencies().orElseThrow();var target=node(product,"TARGET");
+        var region=g.regions().stream().filter(r->r.members().contains(target)).findFirst().orElseThrow();
+        var allocation=g.facts().stream().filter(f->f.subject().equals(region.id())&&f.kind()==FactKind.STORAGE_IDENTITY).findFirst().orElseThrow();
+        assertFalse(g.available(allocation),"unknown header clauses can change allocation/visibility; a name alone is insufficient");
+        assertFalse(known(product,"TARGET",FactKind.LOGICAL_TEXT),"unknown header can separate PIC from the observed declaration");
+        var child=publish("01 RECORD-A.\n 05 TARGET\nCOPY UNKNOWN-CLAUSE.\n PIC X(8).\n01 SENTINEL PIC X.");
+        assertFalse(known(child,"TARGET",FactKind.LOGICAL_TEXT));
+        assertFalse(known(child,"TARGET",FactKind.LOCAL_CELL));
+        var out=Path.of("target/fact-dependency-r2");Files.createDirectories(out);
+        Files.write(out.resolve("header-copy.json"),SemanticProductJsonWriter.serialize(product));
+        Files.write(out.resolve("child-header-copy.json"),SemanticProductJsonWriter.serialize(child));
     }
     @Test void graphGrowthIsBoundedByDeclarationsAndDependencies() throws Exception {
         var rows=new ArrayList<Map<String,Object>>();var out=Path.of("target/fact-dependency-r2/scale");Files.createDirectories(out);

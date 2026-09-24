@@ -13,7 +13,7 @@ the new field. The graph is a closed typed domain value; JSON is only transport.
 A fact has identity, facet, subject, region and proof dependencies. Availability is
 the conjunction of local premises, prerequisite proofs and input availability.
 Inputs identify missing COPY, opaque include, unlocated input and physical profile;
-they carry explicit affected context/closure regions. Diagnostics are not proof.
+they carry explicit affected context/closure regions and declaration-header subjects. Diagnostics are not proof.
 Deleting required proof kinds, input relations, region bounds or referenced targets
 rejects on wire and in memory. Lists are canonical and duplicates/cycles are invalid.
 
@@ -33,8 +33,12 @@ record. Lexical distance and COPY/program names prove nothing.
 The frontend uses the AST hierarchy, existing storage components/alias relations,
 visibility, and preprocessing source-map gap occurrences. It publishes regional
 context, boundary, closure, alias-inventory/closure, allocation, logical-type and
-physical-profile proofs. A gap inside an open record revokes closure. A gap before
-an unproved header revokes context. An unlocated parser/I/O/input gap remains
+physical-profile proofs. Each proof identifies its region scope and exact subject.
+A gap inside an open record revokes closure. A gap before or inside a declaration
+header revokes its DECLARATION_CONTEXT proof; a root header also revokes allocation
+context. LOGICAL_TYPE requires the complete declaration context: an unknown COPY
+can introduce a period/new declaration and detach an observed PIC clause. Source
+identity remains an observation, not proof of those missing clauses. An unlocated parser/I/O/input gap remains
 unavailable even when another COPY has a located occurrence. Opaque SQL INCLUDE
 stays an unavailable input; no SQLCA expansion is fabricated.
 
@@ -84,7 +88,11 @@ Activation specialization is unchanged and remains a measured transitional backe
 COPY regions, aliases, opaque includes, diagnostic removal, input renaming, storage
 versus control, inventory permutation, causal mutations and 1/10/100/1000 local items.
 `FactDependencyWireSuite` covers old/new decoding, typed roundtrip, malformed shape,
-missing dependencies/bounds, alias/input negatives and deterministic AIR.
+missing dependencies/bounds, alias/input/header negatives and deterministic AIR.
+The lower also requires DECLARATION_CONTEXT before using historical declaration
+metadata to materialize an executable object. Header-input relation/proof removal
+rejects on both wire and typed ports. R2-F01 preserves the initial failing negative
+and corrects the unapproved 2.40 draft; approved <=2.39 contracts remain unchanged.
 
 The campaign evidence is `fact-dependency-locality-r2/evidence/` in the aggregator,
 including first-four and all56 storage checkpoints, full73 physical discovery,
