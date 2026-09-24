@@ -1,4 +1,6 @@
-R3 active: [WORK-AST-INPUT-HARDENING-R3](active/WORK-AST-INPUT-HARDENING-R3/work-item.json), user-authorized pivot supersedes old EXPLICIT_SOURCE_ENVIRONMENT scope; historical D0 remains read-only.
+R4 active: [WORK-AST-EOF-BOUNDARY-R4](active/WORK-AST-EOF-BOUNDARY-R4/work-item.json). EOF input ownership only; R5–R9 not started.
+
+R3 prior wave:  [WORK-AST-INPUT-HARDENING-R3](active/WORK-AST-INPUT-HARDENING-R3/work-item.json), user-authorized pivot supersedes old EXPLICIT_SOURCE_ENVIRONMENT scope; historical D0 remains read-only.
 
 # Trabalho ativo e backlog
 

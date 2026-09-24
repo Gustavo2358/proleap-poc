@@ -36,3 +36,8 @@ localizar por busca binária somente o intervalo solicitado.
 ## Relações
 
 Evals: EVAL-PROV-001, EVAL-PROV-002 e EVAL-PRE-002. Invariantes: INV-PROV-001, INV-PROV-002 e INV-COV-001. ADR: ADR-0002.
+
+A fronteira física do source principal é conservada separadamente dos segmentos de
+texto. Ela permite qualificar ownership EOF conforme o contrato de compilation units;
+não acrescenta token, linha ou flag exact. Substituições no documento preservam a
+fronteira principal; fragments/inclusões isolados não a estabelecem.

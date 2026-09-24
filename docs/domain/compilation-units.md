@@ -34,3 +34,30 @@ O índice por ID é construído uma vez; parentage é validado na construção. 
 ## Relações
 
 Evals: EVAL-UNIT-001, EVAL-RES-DATA-003, EVAL-RES-PROG-001 e EVAL-RES-DET-001. Invariantes: INV-DET-001, INV-PERF-001, INV-RES-002 e INV-RES-003. ADRs: ADR-0005 e ADR-0006.
+
+## Ownership de input na fronteira física (R4)
+
+Conforme [IBM Enterprise COBOL 6.4 — program structure](https://www.ibm.com/docs/en/cobol-zos/6.4.0?topic=structure-cobol-program),
+END PROGRAM é opcional somente na última unidade externa que não contém programas
+nested. O AstBuilder admite EOF para ownership de input apenas nessa posição da
+árvore, com anteriores explicitamente delimitadas, start/stop reais, EOF consumido
+no fim do texto expandido e fronteira física conhecida no SourceMap. O início deve
+pertencer ao source principal. Sem evidência de integridade do preprocessamento/lexer,
+ou com erro do parser, essa nova prova não é emitida. A prova explícita existente
+não recebe nova interpretação.
+
+SourceMap conserva identidade e offset do fim físico através da composição. Slices
+transformados e mapas marcados como inclusão não são fontes completas. Essa fronteira
+não é um token END PROGRAM nem uma origem textual fabricada; nenhuma provenance
+sintética é marcada exact. Os gaps conservam as próprias regiões e include chains.
+
+UnitInputProof e EntryInputProof reutilizam ownership por ocorrência, sem consulta
+a spelling de COPY, nome do programa ou caminho. EOF não fornece conteúdo faltante
+nem fechamento de storage. FactLocalitySemantics aplica as mesmas relações R2 de
+REGION_CONTEXT/REGION_CLOSURE/DECLARATION_CONTEXT e SP 2.40.0 permanece inalterado.
+O construtor interno sem evidência de integridade não licencia a nova prova EOF.
+
+A qualificação percorre apenas as unidades top-level para a única candidata final,
+e usa a consulta de provenance indexada. Não há enumeração de caminhos ou varredura
+de nós por gap. O custo de associação existente das regiões SourceMap permanece.
+Evidência: EofUnitBoundaryTest, FactDependencyLocalityTest e controles de provenance.

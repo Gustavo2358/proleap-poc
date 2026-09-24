@@ -7,6 +7,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 /** Immutable, segment-based mapping from preprocessed text back to COBOL source files. */
 final class SourceMap {
@@ -45,12 +46,18 @@ final class SourceMap {
         }
     }
 
+    /** Physical source boundary, not a token or an exact textual provenance. */
+    record PhysicalBoundary(String sourceFile, int originalOffset) { }
+
+    private final PhysicalBoundary physicalBoundary;
     private final String text;
     private final UnicodeText indexedText;
     private final List<Segment> segments;
     private final Map<String, UnicodeText> sources;
 
-    private SourceMap(String text, List<Segment> segments, Map<String, UnicodeText> sources) {
+    private SourceMap(String text, List<Segment> segments, Map<String, UnicodeText> sources,
+                      PhysicalBoundary physicalBoundary) {
+        this.physicalBoundary = physicalBoundary;
         this.text = Objects.requireNonNull(text);
         this.indexedText = new UnicodeText(text);
         this.segments = List.copyOf(segments);
@@ -61,7 +68,7 @@ final class SourceMap {
         UnicodeText indexed = new UnicodeText(text);
         List<Segment> segments = text.isEmpty() ? List.of()
                 : List.of(new Segment(0, indexed.length(), file, 0, indexed.length(), List.of(), true));
-        return new SourceMap(text, segments, Map.of(file, indexed));
+        return new SourceMap(text, segments, Map.of(file, indexed), new PhysicalBoundary(file, indexed.length()));
     }
 
     static SourceMap mapped(String text, String file, String original, List<Segment> segments) {
@@ -86,12 +93,15 @@ final class SourceMap {
             }
             previousEnd = segment.end();
         }
-        return new SourceMap(text, mergeAdjacent(segments), Map.of(file, indexedOriginal));
+        return new SourceMap(text, mergeAdjacent(segments), Map.of(file, indexedOriginal),
+                new PhysicalBoundary(file, indexedOriginal.length()));
     }
 
     String text() { return text; }
 
     int length() { return indexedText.length(); }
+
+    Optional<PhysicalBoundary> physicalBoundary() { return Optional.ofNullable(physicalBoundary); }
 
     SourceMap replace(int start, int end, SourceMap replacement) {
         return replaceAll(List.of(new Replacement(start, end, replacement)));
@@ -121,7 +131,7 @@ final class SourceMap {
         }
         nextText.append(indexedText.substring(cursor, indexedText.length()));
         addSlice(next, cursor, indexedText.length(), destination);
-        return new SourceMap(nextText.toString(), mergeAdjacent(next), nextSources);
+        return new SourceMap(nextText.toString(), mergeAdjacent(next), nextSources, physicalBoundary);
     }
 
     SourceMap transformedSlice(int start, int end, String replacementText) {
@@ -130,14 +140,14 @@ final class SourceMap {
         Segment segment = replacementText.isEmpty() ? null : new Segment(0, replacement.length(),
                 origin.original().file(), offset(origin.original().file(), origin.original().startLine(),
                 origin.original().startColumn()), offsetAfter(origin.original()), origin.includeChain(), false);
-        return new SourceMap(replacementText, segment == null ? List.of() : List.of(segment), sources);
+        return new SourceMap(replacementText, segment == null ? List.of() : List.of(segment), sources, null);
     }
 
     SourceMap withInputGap(Diagnostic diagnostic) {
         if (diagnostic.code() != Diagnostic.Code.UNRESOLVED_COPY)
             throw new IllegalArgumentException("only missing COPY regions are qualified");
         return new SourceMap(text, segments.stream().map(s -> new Segment(s.start(), s.end(),
-                s.sourceFile(), s.originalStart(), s.originalEnd(), s.includeChain(), s.exact(), diagnostic)).toList(), sources);
+                s.sourceFile(), s.originalStart(), s.originalEnd(), s.includeChain(), s.exact(), diagnostic)).toList(), sources, physicalBoundary);
     }
 
     List<Segment> inputGapRegions() {
@@ -167,7 +177,7 @@ final class SourceMap {
             return new Segment(segment.start(), segment.end(), segment.sourceFile(), segment.originalStart(),
                     segment.originalEnd(), chain, segment.exact(), segment.inputGap());
         }).toList();
-        return new SourceMap(text, framed, sources);
+        return new SourceMap(text, framed, sources, null);
     }
 
     Ast.SourceProvenance provenance(int start, int end) {

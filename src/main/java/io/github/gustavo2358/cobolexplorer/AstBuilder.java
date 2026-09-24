@@ -29,6 +29,7 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
     private final CobolParser parser;
     private final UnicodeText indexedSource;
     private final SourceMap sourceMap;
+    private final boolean inputIntegrityKnown;
     private final Map<CobolParser.ProgramUnitContext,UnitInputProof> inputProofs=new IdentityHashMap<>();
     private final IdentityHashMap<ParseTree, Integer> parseIds;
     private final IdentityHashMap<ParseTree, Integer> parseSubtreeSizes;
@@ -59,12 +60,21 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
     AstBuilder(Parser parser, String source, SourceMap sourceMap,
                IdentityHashMap<ParseTree, Integer> parseIds,
                IdentityHashMap<ParseTree, Integer> parseSubtreeSizes) {
+        this(parser, source, sourceMap, parseIds, parseSubtreeSizes, false);
+    }
+
+    /** EOF qualification requires the caller's lexer/preprocessor integrity evidence.
+     * The older internal constructor deliberately supplies no such evidence. */
+    AstBuilder(Parser parser, String source, SourceMap sourceMap,
+               IdentityHashMap<ParseTree, Integer> parseIds,
+               IdentityHashMap<ParseTree, Integer> parseSubtreeSizes, boolean inputIntegrityKnown) {
         if (!(parser instanceof CobolParser cobolParser)) {
             throw new IllegalArgumentException("AstBuilder requires the versioned COBOL parser");
         }
         this.parser = cobolParser;
         this.indexedSource = new UnicodeText(source);
         this.sourceMap = sourceMap;
+        this.inputIntegrityKnown = inputIntegrityKnown && source.equals(sourceMap.text());
         this.parseIds = parseIds;
         this.parseSubtreeSizes = parseSubtreeSizes;
     }
@@ -724,9 +734,14 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
         return inputProofs.computeIfAbsent(program,this::computeUnitInputProof);
     }
     private UnitInputProof computeUnitInputProof(CobolParser.ProgramUnitContext program) {
-        if (!(program.getParent() instanceof CobolParser.CompilationUnitContext)
-                || program.endProgramStatement() == null) return UnitInputProof.unknown();
-        int start=program.getStart().getStartIndex(), end=program.endProgramStatement().getStop().getStopIndex()+1;
+        if (!(program.getParent() instanceof CobolParser.CompilationUnitContext))
+            return UnitInputProof.unknown();
+        int end;
+        if (program.endProgramStatement() != null)
+            end = program.endProgramStatement().getStop().getStopIndex() + 1;
+        else if (hasQualifiedEofBoundary(program)) end = sourceMap.length();
+        else return UnitInputProof.unknown();
+        int start = program.getStart().getStartIndex();
         Set<Diagnostic> qualified=Collections.newSetFromMap(new IdentityHashMap<>());
         Set<Diagnostic> rejected=Collections.newSetFromMap(new IdentityHashMap<>());
         for(var region:sourceMap.inputGapRegions()) {
@@ -739,10 +754,40 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
             .filter(qualified::contains).distinct().toList(), sourceMap.inputGapRegions().stream()
             .filter(r->qualified.contains(r.inputGap())).map(r->sourceMap.provenance(r.start(),r.end())).toList());
     }
+    /** IBM Enterprise COBOL 6.4: only the final, non-containing outermost
+     * program may omit END PROGRAM. Physical EOF qualifies ownership, never content.
+     * No parser recovery (even elsewhere in the compilation) is positive evidence. */
+    private boolean hasQualifiedEofBoundary(CobolParser.ProgramUnitContext program) {
+        if (!inputIntegrityKnown || parser.getNumberOfSyntaxErrors() != 0
+                || !(program.getParent() instanceof CobolParser.CompilationUnitContext compilation)
+                || !program.programUnit().isEmpty()
+                || !(compilation.getParent() instanceof CobolParser.StartRuleContext root)
+                || root.EOF() == null || root.EOF() instanceof ErrorNode
+                || program.getStart() == null || program.getStop() == null)
+            return false;
+        var units = compilation.programUnit();
+        if (units.isEmpty() || units.get(units.size() - 1) != program
+                || program.getStop() != compilation.getStop()) return false;
+        for (int i = 0; i < units.size() - 1; i++)
+            if (units.get(i).endProgramStatement() == null) return false;
+        var eof = root.EOF().getSymbol();
+        if (eof.getType() != Token.EOF || eof.getTokenIndex() < 0
+                || eof.getStartIndex() != sourceMap.length()
+                || program.getStart().getTokenIndex() < 0
+                || program.getStart().getStartIndex() < 0
+                || program.getStop().getStopIndex() >= eof.getStartIndex()) return false;
+        var physical = sourceMap.physicalBoundary();
+        if (physical.isEmpty()) return false;
+        var start = sourceMap.provenance(program.getStart().getStartIndex(),
+                program.getStart().getStopIndex() + 1);
+        return start.exact() && start.includeChain().isEmpty()
+                && start.original().file().equals(physical.orElseThrow().sourceFile());
+    }
+
     private List<Diagnostic> separateUnitCopies(CobolParser.ProgramUnitContext program) {
         if(sourceMap.inputGapRegions().isEmpty())return List.of();
         if (!(program.getParent() instanceof CobolParser.CompilationUnitContext compilation)
-                || program.endProgramStatement() == null) return List.of();
+                || program.endProgramStatement() == null && !hasQualifiedEofBoundary(program)) return List.of();
         return compilation.programUnit().stream().filter(p->p!=program)
             .flatMap(p->unitInputProof(p).copies().stream()).toList();
     }

@@ -134,7 +134,8 @@ public final class ExplorerMain {
         progress.phase = "AST_BUILD";
         phaseStarted = System.nanoTime();
         CompilationUnitBuildResult compilationBuild = new AstBuilder(parser, normalized,
-                preprocessed.sourceMap(), parseIds, parseSubtreeSizes)
+                preprocessed.sourceMap(), parseIds, parseSubtreeSizes,
+                preprocessed.errors() == 0 && lexerErrors == 0 && parserErrors == 0)
                 .buildCompilationUnit(tree, source.getFileName().toString());
         CompilationUnitModel compilationUnit = compilationBuild.compilationUnit();
         if (compilationUnit.programUnits().isEmpty())
