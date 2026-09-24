@@ -374,6 +374,24 @@ function assertSymbols(symbols, ast, expectedSource) {
       `${location}.diagnostics[${index}].symbols`, `invalid symbol id ${String(symbolId)}`)));
 }
 
+export function assertUnitGapSummary(location, unit, units, gaps) {
+  const byId = new Map(units.map(value => [value.id, value]));
+  const ancestors = new Set();
+  for (let current = unit; current; current = current.parentId === null ? null : byId.get(current.parentId)) {
+    invariant(!ancestors.has(current.id), location, "cyclic unit ancestry");
+    ancestors.add(current.id);
+    invariant(current.parentId === null || byId.has(current.parentId), location, "unknown parent unit");
+  }
+  const inputMissing = gaps.some(gap => gap.category === "INPUT"
+      && (gap.unitId === null || ancestors.has(gap.unitId)));
+  const owned = gaps.filter(gap => gap.unitId === unit.id);
+  const count = owned.length + (inputMissing ? 1 : 0);
+  invariant(unit.gaps === count, `${location}.gaps`, `declared ${String(unit.gaps)}, derived ${count}`);
+  const complete = !inputMissing && owned.every(gap => gap.category === "CALL_SEMANTICS");
+  invariant(unit.complete === complete, `${location}.complete`,
+      `declared ${String(unit.complete)}, derived ${complete}`);
+}
+
 function assertResolution(resolution, ast, tree, symbols, expectedSource) {
   const location = "resolution-data.js";
   object(resolution.meta, `${location}.meta`);
@@ -430,10 +448,8 @@ function assertResolution(resolution, ast, tree, symbols, expectedSource) {
         `invalid AST id ${String(relation.referenceAstNodeId)}`);
   });
 
-  const hasGlobalInputGap = gaps.some(gap => gap.unitId === null);
   for (const unit of units) {
     const unitEntries = entries.filter(entry => entry.unitId === unit.id);
-    const unitGaps = gaps.filter(gap => gap.unitId === unit.id);
     invariant(unit.references === unitEntries.length, `${location}.units[${unit.id}].references`,
         `declared ${String(unit.references)}, derived ${unitEntries.length}`);
     for (const [field, status] of [["resolved", "RESOLVED"],
@@ -443,13 +459,7 @@ function assertResolution(resolution, ast, tree, symbols, expectedSource) {
       invariant(unit[field] === derived, `${location}.units[${unit.id}].${field}`,
           `declared ${String(unit[field])}, derived ${derived}`);
     }
-    const derivedGaps = unitGaps.length + (hasGlobalInputGap ? 1 : 0);
-    invariant(unit.gaps === derivedGaps, `${location}.units[${unit.id}].gaps`,
-        `declared ${String(unit.gaps)}, derived ${derivedGaps}`);
-    const bindingComplete = !hasGlobalInputGap
-        && unitGaps.every(gap => gap.category === "CALL_SEMANTICS");
-    invariant(unit.complete === bindingComplete, `${location}.units[${unit.id}].complete`,
-        `declared ${String(unit.complete)}, derived ${bindingComplete}`);
+    assertUnitGapSummary(`${location}.units[${unit.id}]`, unit, units, gaps);
   }
 
   const bindingComplete = gaps.every(gap => gap.category === "CALL_SEMANTICS");

@@ -9,6 +9,7 @@ import {
   assertCountMap,
   assertDeclaredCount,
   assertOccurrenceIdentity,
+  assertUnitGapSummary,
   loadWindowData,
 } from "./assert-semantic-artifacts.mjs";
 
@@ -75,4 +76,19 @@ test("names occurrences by unit and local id", () => {
       [{ unitId: "INNER", occurrenceId: 1 }], unitIds), /unknown occurrence 1 in unit INNER/);
   assert.throws(() => assertOccurrenceIdentity("resolution-data.js", entries, [],
       [{ unitId: "OUTER", occurrenceId: -2 }], unitIds), /expected -1 or a non-negative integer/);
+});
+
+// R4 exposes input ownership already supported by ResolutionAnalysisReport.
+// Summary counts exact-unit inventory plus one applicable-input indicator.
+test("input summary follows ownership and ancestry without granting completeness", () => {
+  const units = [{ id: "outer", parentId: null }, { id: "child", parentId: "outer" },
+    { id: "peer", parentId: null }];
+  const scoped = [{ unitId: "outer", category: "INPUT" }, { unitId: "outer", category: "INPUT" }];
+  assert.doesNotThrow(() => assertUnitGapSummary("outer", { ...units[0], gaps: 3, complete: false }, units, scoped));
+  assert.doesNotThrow(() => assertUnitGapSummary("child", { ...units[1], gaps: 1, complete: false }, units, scoped));
+  assert.doesNotThrow(() => assertUnitGapSummary("peer", { ...units[2], gaps: 0, complete: true }, units, scoped));
+  assert.throws(() => assertUnitGapSummary("outer", { ...units[0], gaps: 2, complete: false }, units, scoped), /declared 2, derived 3/);
+  assert.throws(() => assertUnitGapSummary("child", { ...units[1], gaps: 1, complete: true }, units, scoped), /complete/);
+  const global = [{ unitId: null, category: "INPUT" }];
+  assert.doesNotThrow(() => assertUnitGapSummary("peer", { ...units[2], gaps: 1, complete: false }, units, global));
 });
