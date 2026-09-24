@@ -105,3 +105,20 @@ metadata while retaining topology and requires identical AIR modulo publication
 namespace. It removes each FILE outcome and its occurrence reference, leaving an
 internally well-shaped graph, and requires rejection before AIR through both wire
 and typed ports. The unchanged ControlTopologyAuthorityTest is in fixed FAST.
+
+### Outcome role cardinality (R1-R1-F03)
+
+Each occurrence has at most one outcome for a given role. IDs distinguish records,
+not competing interpretations of a control slot. This invariant applies to all
+outcomes, including FILE destination slots; alternatives have distinct roles.
+The same role on different source occurrences is valid. Duplicate roles reject
+before AIR even when their targets agree, regardless of outcome identity or
+physical inventory order. Producer and consumer typed constructors validate this
+invariant; the new wire decoder uses the same consumer validation. No target is
+recovered from fileInventory, and no verb or program exception is introduced.
+
+SP2.39's shape and authority are unchanged. This corrects acceptance of malformed
+input under the existing single-outcome role contract; it does not reinterpret
+historical SP versions or introduce R2 fact locality. Permanent FILE authority
+tests cover FILE and non-FILE duplicate roles, equal/conflicting targets,
+first/last identities and reversed inventory, with typed/wire rejection parity.

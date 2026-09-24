@@ -58,7 +58,12 @@ public record ControlTopology(String authority, List<Occurrence> occurrences,
         }};
         for(var o:occurrences){refs(o.proofs(),ps);require(rs.containsKey(o.region()),"occurrence region");refs(o.outcomes(),es);
             require(rs.get(o.region()).members().contains(o.statement()),"inventoried region member");
-            for(var e:o.outcomes())require(es.get(e).statement().equals(o.statement()),"outcome owner");}
+            // A role selects one published outcome; opaque IDs never break a tie.
+            var roles=new HashSet<String>();
+            for(var id:o.outcomes()) {
+                var e=es.get(id);require(e.statement().equals(o.statement()),"outcome owner");
+                require(roles.add(e.role()),"duplicate outcome role: "+o.statement()+"/"+e.role());
+            }}
         for(var r:regions){refs(r.proofs(),ps);refs(r.members(),os);refs(r.regions(),rs);target.accept(r.entry());
             for(var member:r.members())require(os.get(member).region().equals(r.id()),"member owner");
             require(r.parent().isEmpty()||rs.containsKey(r.parent()),"region parent");
