@@ -38,7 +38,8 @@ class CompositionalityContractTest {
             var cics=io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticPort.open(CicsProgramControlTest.regional("01 WS-PGM PIC X(8).","EXEC CICS LINK PROGRAM(WS-PGM)\nNOHANDLE END-EXEC.\n".repeat(n)));
             var files=io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticPort.open(CicsProgramControlTest.regional("01 FN PIC X(8).","EXEC CICS ENDBR FILE(FN)\nNOHANDLE END-EXEC.\n".repeat(n)));
             var handlers=CicsHandlerContractTest.port("EXEC CICS HANDLE ABEND LABEL(ERR) END-EXEC.\n".repeat(n)+"GOBACK.\nERR.\nGOBACK.");
-            for (var family : families) assertTrue((family==CicsHandlerFact.class?handlers:family==CicsFileFact.class?files:family==CicsFact.class?cics:family==ConditionalGoToFact.class?conditional:family==GoToFact.class?transfers:family==ProcedurePerformFact.class?ranges:mixed).statements().stream().filter(family::isInstance).count() >= n,
+            var abends=CicsAbendContractTest.port("EXEC CICS ABEND END-EXEC.\n".repeat(n));
+            for (var family : families) assertTrue((family==CicsAbendFact.class?abends:family==CicsHandlerFact.class?handlers:family==CicsFileFact.class?files:family==CicsFact.class?cics:family==ConditionalGoToFact.class?conditional:family==GoToFact.class?transfers:family==ProcedurePerformFact.class?ranges:mixed).statements().stream().filter(family::isInstance).count() >= n,
                     "Missing compositional generator for " + family.getSimpleName() + " at N=" + n);
         }
         for (int n : List.of(1, 2, 5, 40)) for (var counts : List.of(new int[]{n,0,0}, new int[]{1,n,0}, new int[]{0,0,n})) {

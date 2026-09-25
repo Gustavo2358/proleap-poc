@@ -777,9 +777,32 @@ public final class CobolSemanticProduct {
     }
 
     /** Adding a fact type extends this inventory without changing the State envelope. */
-    public sealed interface StatementFact permits MoveFact, CallFact, CicsFact, CicsFileFact, CicsHandlerFact, IfFact,
+    public sealed interface StatementFact permits MoveFact, CallFact, CicsFact, CicsFileFact, CicsHandlerFact, CicsAbendFact, IfFact,
             ObservedStatement, GobackFact, PerformFact, EvaluateFact, GoToFact, ConditionalGoToFact, ProcedurePerformFact {
         StatementHeader header();
+    }
+
+    public enum CicsAbendEventKind { ABEND }
+    public enum CicsAbendEligibility { HANDLER_ELIGIBLE, HANDLERS_BYPASSED, UNAVAILABLE }
+    /** Event eligibility, not active state, destination, dispatch or ordinary continuation. */
+    public record CicsAbendFact(StatementHeader header,CicsAbendEventKind eventKind,
+            CicsAbendEligibility dispatchEligibility,String rawText,List<CicsOption> options,List<String> gapCodes) implements StatementFact {
+        public CicsAbendFact {
+            Objects.requireNonNull(header);Objects.requireNonNull(eventKind);Objects.requireNonNull(dispatchEligibility);
+            Objects.requireNonNull(rawText);options=List.copyOf(options);gapCodes=List.copyOf(gapCodes);
+            var names=new java.util.HashSet<String>();boolean shape=true;int lastEnd=-1;
+            for(var option:options) {
+                require(option.start()>=lastEnd&&option.end()>option.start()&&option.end()<=rawText.length(),"ordered event option coordinates");lastEnd=option.end();
+                require(option.reference().isEmpty(),"ABEND dump operand has no published binding in this subset");
+                shape&=names.add(option.name())&&java.util.Set.of("CANCEL","NODUMP","ABCODE").contains(option.name());
+                shape&=option.name().equals("ABCODE")?option.operand().filter(s->!s.isBlank()).isPresent():option.operand().isEmpty();
+            }
+            if(dispatchEligibility!=CicsAbendEligibility.UNAVAILABLE) {
+                require(shape,"qualified ABEND options are complete and nonconflicting");
+                require((dispatchEligibility==CicsAbendEligibility.HANDLERS_BYPASSED)==names.contains("CANCEL"),"event eligibility agrees with CANCEL evidence");
+                require(gapCodes.stream().allMatch(g->g.equals("CICS_ABEND_DISPATCH_NOT_MODELED")),"unqualified syntax cannot be eligible");
+            } else require(gapCodes.stream().anyMatch(g->!g.equals("CICS_ABEND_DISPATCH_NOT_MODELED")),"unavailable event retains its reason");
+        }
     }
 
     public enum CicsHandlerKind { ABEND }

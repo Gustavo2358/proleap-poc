@@ -1,6 +1,6 @@
 # COBOL Semantic Product
 
-Produção corrente: [SP 2.41.0 — operações CICS de handler](cics-handler-operations.md), acrescentando fatos tipados a SP 2.40.0/FactDependencies. As versões por feature e seções históricas abaixo não autorizam downgrade dessa publicação.
+Produção corrente: [SP 2.42.0 — eventos explícitos CICS ABEND](cics-abend-events.md), preservando SP 2.41.0/CICS_HANDLER e SP 2.40.0/FactDependencies. As versões por feature e seções históricas abaixo não autorizam downgrade dessa publicação.
 
 Current compositional control: [W7 contract](control-composition.md). SP2.38 independent MOVE receivers are specified below. Historical profile qualification below does not gate independent branch entries or predicate coverage.
 

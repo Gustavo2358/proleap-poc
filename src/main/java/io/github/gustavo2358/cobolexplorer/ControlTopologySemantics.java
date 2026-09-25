@@ -176,7 +176,11 @@ public final class ControlTopologySemantics {
             }
             boolean completion=division.normalCompletionStatements().contains(s.meta().id());
             if(s instanceof Ast.EmbeddedLanguageStatement)completion=cics!=null&&cics.boundedLocal(unit.id(),s);
-            add(s,owner,completion?OutcomeKind.NORMAL:OutcomeKind.UNKNOWN_LOCAL,completion?"normal":"unknown",completion?next:unknown(owner,p),"",p);
+            boolean registration=cics!=null&&cics.handlerOrdinaryCompletion(unit.id(),s);
+            var completionProof=registration?proof(id+"/handler-normal",ProofKind.LOCAL_GRAMMAR,
+                "cics-handle-abend-ordinary-return",s.meta().provenance(),List.of(p)):p;
+            completion|=registration;
+            add(s,owner,completion?OutcomeKind.NORMAL:OutcomeKind.UNKNOWN_LOCAL,completion?"normal":"unknown",completion?next:unknown(owner,p),"",completionProof);
         }
     }
     private void publishInvocation(Ast.PerformStatement perform,String owner,String range,String binding,String id,String endpoint,Target resume,String premise) {

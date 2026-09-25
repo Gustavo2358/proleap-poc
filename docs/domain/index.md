@@ -1,5 +1,7 @@
 # Domínio
 
+[SP 2.42 — explicit CICS ABEND events](cics-abend-events.md), preserving the SP 2.41 handler operation contract.
+
 Documentos de domínio descrevem como cada subsistema funciona semanticamente hoje. Cada um deve explicitar entradas, saídas, superfície suportada, fronteiras não suportadas, incerteza, provenance, custo esperado e links para invariantes, ADRs e evals relevantes.
 
 Domínios disponíveis, na ordem do pipeline:

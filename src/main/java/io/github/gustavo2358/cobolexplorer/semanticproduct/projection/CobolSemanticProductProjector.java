@@ -618,6 +618,8 @@ public final class CobolSemanticProductProjector {
     }
 
     private static StatementPlan plan(StatementPosition position, ProjectionInputs inputs) {
+        if(position.statement() instanceof Ast.EmbeddedLanguageStatement embedded && inputs.products().cics().flatMap(c->c.abendFact(inputs.unitId(),embedded.meta().id())).isPresent())
+            return new StatementPlan(position,Capability.supported("CICS","CICS_ABEND"),List.of());
         if(position.statement() instanceof Ast.EmbeddedLanguageStatement embedded && inputs.products().cics().flatMap(c->c.handlerFact(inputs.unitId(),embedded.meta().id())).isPresent())
             return new StatementPlan(position,Capability.supported("CICS","CICS_HANDLER"),embedded.hostOperands().stream().map(h->inputs.entryFor(h.reference())).toList());
         if(position.statement() instanceof Ast.EmbeddedLanguageStatement embedded && inputs.products().cics().flatMap(c->c.fact(inputs.unitId(),embedded.meta().id())).isPresent())
@@ -968,6 +970,16 @@ public final class CobolSemanticProductProjector {
         CobolSemanticProduct.Containment containment = containment(
                 plan.position(), statementIds);
 
+        var abend=inputs.products().cics().flatMap(c->c.abendFact(inputs.unitId(),plan.position().statement().meta().id()));
+        if(abend.isPresent()) {
+            var source=abend.get();var codes=new LinkedHashSet<>(source.gaps());codes.add("CICS_ABEND_DISPATCH_NOT_MODELED");
+            var options=source.options().stream().map(o->new CicsOption(o.name(),o.operand(),o.start(),o.end(),Optional.empty())).toList();
+            statements.add(new CicsAbendFact(header(statementId,plan.position().ordinal(),containment,statementProvenance,CoverageStatus.PARTIAL,
+                readiness(ReadinessStatus.PARTIAL,"typed ABEND event",ReadinessStatus.BLOCKED,"ABEND dispatch not modeled",ReadinessStatus.BLOCKED,"ABEND runtime effects not modeled")),
+                CicsAbendEventKind.ABEND,CicsAbendEligibility.valueOf(source.eligibility().name()),source.raw(),options,List.copyOf(codes)));
+            for(var code:codes)gaps.add(capabilityGap(statementId,code,"ABEND event dimension remains partial",statementProvenance));
+            addContainmentGap(containment,statementId,statementProvenance,gaps);return;
+        }
         var handler=inputs.products().cics().flatMap(c->c.handlerFact(inputs.unitId(),plan.position().statement().meta().id()));
         if(handler.isPresent()) {
             var source=handler.get();var codes=new LinkedHashSet<>(source.gaps());

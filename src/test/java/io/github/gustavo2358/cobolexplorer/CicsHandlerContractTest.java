@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class CicsHandlerContractTest {
     static JsonNode publish(String code) throws Exception {
         var a=AstBoundaryTestSupport.analyze(ScalarMoveCheckpoint4ATest.program("01 PGM PIC X(8).",code),"handlers.cbl");
-        return new ObjectMapper().readTree(SemanticProductJsonWriter.serialize(EofUnitBoundaryTest.publish(a,0,StorageLayoutSemantics.Profile.UNSPECIFIED)));
+        return new ObjectMapper().readTree(SemanticProductJsonWriter.serialize(HistoricalCicsHandler241TestSupport.publish(a,0,StorageLayoutSemantics.Profile.UNSPECIFIED)));
     }
     @Test void registrationCancelAndResetAreSeparateOperations() throws Exception {
         var json=publish("EXEC CICS HANDLE ABEND LABEL(ERR) END-EXEC.\nEXEC CICS HANDLE ABEND CANCEL END-EXEC.\nEXEC CICS HANDLE ABEND RESET END-EXEC.\nGOBACK.\nERR.\nGOBACK.");
@@ -28,7 +28,7 @@ class CicsHandlerContractTest {
 
     static CobolSemanticPort port(String code) {
         var a=AstBoundaryTestSupport.analyze(ScalarMoveCheckpoint4ATest.program("01 PGM PIC X(8).\n01 RC PIC S9(8) COMP.\n01 RC2 PIC S9(8) COMP.",code),"handlers.cbl");
-        return EofUnitBoundaryTest.publish(a,0,StorageLayoutSemantics.Profile.UNSPECIFIED);
+        return HistoricalCicsHandler241TestSupport.publish(a,0,StorageLayoutSemantics.Profile.UNSPECIFIED);
     }
     static List<CicsHandlerFact> handlers(CobolSemanticPort p) {return p.statements().stream().filter(CicsHandlerFact.class::isInstance).map(CicsHandlerFact.class::cast).toList();}
     @Test void overwritePreservesTwoOperationsAndCanonicalTargets() {
@@ -84,8 +84,8 @@ class CicsHandlerContractTest {
         String body="EXEC CICS HANDLE ABEND LABEL(ERR) END-EXEC.\nGOBACK.\nERR.\nGOBACK.\n";
         String source="IDENTIFICATION DIVISION.\nPROGRAM-ID. A.\nPROCEDURE DIVISION.\n"+body+"END PROGRAM A.\nIDENTIFICATION DIVISION.\nPROGRAM-ID. B.\nPROCEDURE DIVISION.\n"+body+"END PROGRAM B.\n";
         var a=AstBoundaryTestSupport.analyze(source,"two.cbl");assertEquals(2,a.model().programUnits().size());
-        var first=handlers(EofUnitBoundaryTest.publish(a,0,StorageLayoutSemantics.Profile.UNSPECIFIED)).get(0);
-        var second=handlers(EofUnitBoundaryTest.publish(a,1,StorageLayoutSemantics.Profile.UNSPECIFIED)).get(0);
+        var first=handlers(HistoricalCicsHandler241TestSupport.publish(a,0,StorageLayoutSemantics.Profile.UNSPECIFIED)).get(0);
+        var second=handlers(HistoricalCicsHandler241TestSupport.publish(a,1,StorageLayoutSemantics.Profile.UNSPECIFIED)).get(0);
         assertNotEquals(first.labelTarget().orElseThrow().declarationOrigin(),second.labelTarget().orElseThrow().declarationOrigin());
         assertNotEquals(first.header().id(),second.header().id());assertNotEquals(first.labelTarget().orElseThrow().id(),second.labelTarget().orElseThrow().id());
         assertEquals(first.header().id().unit(),first.labelTarget().orElseThrow().id().unit());assertEquals(second.header().id().unit(),second.labelTarget().orElseThrow().id().unit());
@@ -98,7 +98,7 @@ class CicsHandlerContractTest {
     }
     @Test void typedOperationDoesNotAddDispatchOrContinuation() throws Exception {
         var a=AstBoundaryTestSupport.analyze(ScalarMoveCheckpoint4ATest.program("01 PGM PIC X(8).","EXEC CICS HANDLE ABEND LABEL(ERR) END-EXEC.\nEXEC CICS XCTL PROGRAM(PGM) NOHANDLE END-EXEC.\nGOBACK.\nERR.\nGOBACK."),"handlers.cbl");
-        var p=EofUnitBoundaryTest.publish(a,0,StorageLayoutSemantics.Profile.UNSPECIFIED);
+        var p=HistoricalCicsHandler241TestSupport.publish(a,0,StorageLayoutSemantics.Profile.UNSPECIFIED);
         var legacy=ScalarMoveCheckpoint4ATest.products(a);
         var cics=new CicsProgramControlAnalyzer().analyze(a.build(),a.report());
         var without=io.github.gustavo2358.cobolexplorer.semanticproduct.projection.CobolSemanticProductProjector.open(new io.github.gustavo2358.cobolexplorer.semanticproduct.projection.CobolSemanticProductProjector.FrontendProducts(
