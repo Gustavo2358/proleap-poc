@@ -1,6 +1,8 @@
 # R7-R7B — terminal SEND typed contract (SP2.44)
 
 Status: BLOCKED for real executable qualification; typed contract ready for review.
+
+Current source-control availability is superseded by [R7-R7B1](control-effects-r7-r7b1.md). The storage/executable boundary below remains valid; the prior source UNKNOWN_LOCAL expectation is historical.
 Scope: SEND source operands and independent lower-owned transport. No state algorithm, AIR schema, CFG, dependency policy or physical profile change.
 
 ## Source contract

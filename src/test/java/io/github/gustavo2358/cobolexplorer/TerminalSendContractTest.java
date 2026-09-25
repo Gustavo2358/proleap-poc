@@ -15,8 +15,8 @@ class TerminalSendContractTest {
         for(var options:List.of("FROM(WS-AREA)","FROM(WS-AREA) LENGTH(80)","FROM(WS-AREA) LENGTH(LENGTH OF WS-AREA)","FROM(WS-AREA) NOHANDLE","FROM(WS-AREA) ERASE","FROM(WS-AREA) LENGTH(LENGTH OF WS-AREA) NOHANDLE ERASE")) {
             var j=one(options);var f=c(j);assertEquals("2.44.0",j.path("contractVersion").asText());assertEquals("SEND_TERMINAL",f.path("commandKind").asText());assertEquals("SUPPORTED",f.path("syntaxStatus").asText());
             assertEquals("RESOLVED",f.path("options").get(0).path("reference").path("binding").path("status").asText());
-            var normal=outcomes(j).stream().filter(o->o.path("kind").asText().equals("NORMAL")).toList();assertEquals(0,normal.size());
-            assertTrue(outcomes(j).stream().allMatch(o->o.path("kind").asText().equals("UNKNOWN_LOCAL")));
+            var normal=outcomes(j).stream().filter(o->o.path("kind").asText().equals("NORMAL")).toList();assertEquals(1,normal.size());
+            assertEquals(!options.contains("NOHANDLE"),outcomes(j).stream().anyMatch(o->o.path("kind").asText().equals("UNKNOWN_LOCAL")));
         }
     }
     @Test void lengthUsesCanonicalStructureAndOperandOrigin()throws Exception {
@@ -29,10 +29,10 @@ class TerminalSendContractTest {
         assertEquals("INTEGER",c(one("FROM(WS-AREA) LENGTH(80)")).path("length").path("kind").asText());
         assertEquals("DATA_REFERENCE",c(one("FROM(WS-AREA) LENGTH(RC)")).path("length").path("kind").asText());
     }
-    @Test void explicitNohandleDoesNotAuthorizeExecution()throws Exception {
+    @Test void explicitNohandleQualifiesSourceConditionDisposition()throws Exception {
         var bare=one("FROM(WS-AREA)");var local=one("FROM(WS-AREA) NOHANDLE");
-        assertTrue(outcomes(bare).stream().allMatch(o->o.path("kind").asText().equals("UNKNOWN_LOCAL")));
-        assertTrue(outcomes(local).stream().allMatch(o->o.path("kind").asText().equals("UNKNOWN_LOCAL")));
+        assertEquals(Set.of("NORMAL:normal","UNKNOWN_LOCAL:cics/handler-or-default-condition"),CicsCommandContractTest.roles(bare));
+        assertEquals(Set.of("NORMAL:normal"),CicsCommandContractTest.roles(local));
         assertEquals(List.of("FROM","NOHANDLE"),c(local).path("options").findValuesAsText("name"));
         assertEquals(List.of("FROM","RESP"),c(one("FROM(WS-AREA) RESP(RC)")).path("options").findValuesAsText("name"));
     }
@@ -59,6 +59,6 @@ class TerminalSendContractTest {
         var j=publish("GO TO LIVE.\nDEAD.\nEXEC CICS SEND FROM(WS-AREA) END-EXEC.\nLIVE.\nGOBACK.");
         assertEquals("SEND_TERMINAL",c(j).path("commandKind").asText()); // qualification does not create an incoming path
         var branched=publish("IF RC = 0\nEXEC CICS SEND FROM(WS-AREA) NOHANDLE END-EXEC\nELSE\nDISPLAY 'ELSE'\nEND-IF.\nGOBACK.");
-        assertTrue(outcomes(branched).stream().allMatch(o->o.path("kind").asText().equals("UNKNOWN_LOCAL")));
+        assertEquals("COMPLETE",outcomes(branched).get(0).path("target").path("kind").asText());
     }
 }
