@@ -22,7 +22,7 @@ import java.util.Optional;
 public final class CobolLoweringReadinessConsumer {
     private CobolLoweringReadinessConsumer() { }
 
-    public enum StatementFamily { MOVE, CALL, CICS_PROGRAM_CONTROL, CICS_FILE_CONTROL, CICS_HANDLER, CICS_ABEND, IF, OBSERVED, GOBACK, PERFORM, EVALUATE, GO_TO }
+    public enum StatementFamily { MOVE, CALL, CICS_PROGRAM_CONTROL, CICS_FILE_CONTROL, CICS_HANDLER, CICS_ABEND, CICS_COMMAND, IF, OBSERVED, GOBACK, PERFORM, EVALUATE, GO_TO }
 
     public record ConditionalGoToAudit(StatementHeaderAudit header, CobolSemanticProduct.ConditionalGoToFact fact) implements StatementAudit {
         @Override public StatementFamily family() { return StatementFamily.GO_TO; }
@@ -214,6 +214,9 @@ public final class CobolLoweringReadinessConsumer {
         @Override public StatementFamily family() { return StatementFamily.MOVE; }
     }
 
+    public record CicsCommandAudit(StatementHeaderAudit header,CobolSemanticProduct.CicsCommandFact fact) implements StatementAudit {
+        @Override public StatementFamily family(){return StatementFamily.CICS_COMMAND;}
+    }
     public record CicsAbendAudit(StatementHeaderAudit header,CobolSemanticProduct.CicsAbendFact fact) implements StatementAudit {
         @Override public StatementFamily family(){return StatementFamily.CICS_ABEND;}
     }
@@ -349,6 +352,7 @@ public final class CobolLoweringReadinessConsumer {
             return new MoveAudit(header, move.source() instanceof CobolSemanticProduct.LiteralSource literal
                     ? literal(literal) : reference((CobolSemanticProduct.DataReference) move.source()), reference(move.target()));
         }
+        if (fact instanceof CobolSemanticProduct.CicsCommandFact cics) return new CicsCommandAudit(header,cics);
         if (fact instanceof CobolSemanticProduct.CicsAbendFact cics) return new CicsAbendAudit(header,cics);
         if (fact instanceof CobolSemanticProduct.CicsHandlerFact cics) return new CicsHandlerAudit(header,cics);
         if (fact instanceof CobolSemanticProduct.CicsFileFact cics) return new CicsFileAudit(header,cics);

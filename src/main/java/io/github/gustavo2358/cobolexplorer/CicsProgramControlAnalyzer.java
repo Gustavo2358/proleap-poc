@@ -19,12 +19,18 @@ public final class CicsProgramControlAnalyzer {
         private final Map<Key,Fact> facts;
         private final Set<Key> defaultHandlers;
         private final Optional<CicsFileControlAnalyzer.Contribution> files;
-        private Contribution(CompilationUnitBuildResult owner, Map<Key,Fact> facts,Set<Key> defaultHandlers,boolean enabled) { this.owner=owner;this.facts=Map.copyOf(facts);this.defaultHandlers=Set.copyOf(defaultHandlers);this.files=enabled?Optional.of(new CicsFileControlAnalyzer().analyze(owner)):Optional.empty();this.handlers=Optional.empty();this.abends=Optional.empty(); }
+        private Contribution(CompilationUnitBuildResult owner, Map<Key,Fact> facts,Set<Key> defaultHandlers,boolean enabled) { this.owner=owner;this.facts=Map.copyOf(facts);this.defaultHandlers=Set.copyOf(defaultHandlers);this.files=enabled?Optional.of(new CicsFileControlAnalyzer().analyze(owner)):Optional.empty();this.handlers=Optional.empty();this.abends=Optional.empty();this.commands=Optional.empty(); }
         private final Optional<CicsHandlerSemantics> handlers;
         private final Optional<CicsAbendSemantics> abends;
+        private final Optional<CicsCommandSemantics> commands;
+        public Contribution withCommands(CicsCommandSemantics contribution) {
+            if(!contribution.belongsTo(owner))throw new IllegalArgumentException("command contribution belongs to another frontend");
+            return new Contribution(owner,facts,defaultHandlers,files,handlers,abends,Optional.of(contribution));
+        }
+        public Optional<CicsCommandSemantics.Fact> commandFact(ResolutionContracts.ProgramUnitId unit,int statement){return commands.flatMap(c->c.fact(unit,statement));}
         public Contribution withAbendEvents(CicsAbendSemantics contribution) {
             if(!contribution.belongsTo(owner))throw new IllegalArgumentException("ABEND contribution belongs to another frontend");
-            return new Contribution(owner,facts,defaultHandlers,files,handlers,Optional.of(contribution));
+            return new Contribution(owner,facts,defaultHandlers,files,handlers,Optional.of(contribution),commands);
         }
         public Optional<CicsAbendSemantics.Fact> abendFact(ResolutionContracts.ProgramUnitId unit,int statement){return abends.flatMap(a->a.fact(unit,statement));}
         /** Qualified ordinary return only; never dispatch or a proof about current handler state. */
@@ -37,10 +43,10 @@ public final class CicsProgramControlAnalyzer {
         }
         public Contribution withHandlers(CicsHandlerSemantics contribution) {
             if(!contribution.belongsTo(owner))throw new IllegalArgumentException("handler contribution belongs to another frontend");
-            return new Contribution(owner,facts,defaultHandlers,files,Optional.of(contribution),abends);
+            return new Contribution(owner,facts,defaultHandlers,files,Optional.of(contribution),abends,commands);
         }
-        private Contribution(CompilationUnitBuildResult owner,Map<Key,Fact> facts,Set<Key> defaults,Optional<CicsFileControlAnalyzer.Contribution> files,Optional<CicsHandlerSemantics> handlers,Optional<CicsAbendSemantics> abends) {
-            this.owner=owner;this.facts=facts;this.defaultHandlers=defaults;this.files=files;this.handlers=handlers;this.abends=abends;
+        private Contribution(CompilationUnitBuildResult owner,Map<Key,Fact> facts,Set<Key> defaults,Optional<CicsFileControlAnalyzer.Contribution> files,Optional<CicsHandlerSemantics> handlers,Optional<CicsAbendSemantics> abends,Optional<CicsCommandSemantics> commands) {
+            this.owner=owner;this.facts=facts;this.defaultHandlers=defaults;this.files=files;this.handlers=handlers;this.abends=abends;this.commands=commands;
         }
         public Optional<CicsHandlerSemantics.Fact> handlerFact(ResolutionContracts.ProgramUnitId unit,int statement){return handlers.flatMap(h->h.fact(unit,statement));}
         public Optional<CicsFileControlAnalyzer.Fact> fileFact(ResolutionContracts.ProgramUnitId unit,int statement){return files.flatMap(f->f.fact(unit,statement));}

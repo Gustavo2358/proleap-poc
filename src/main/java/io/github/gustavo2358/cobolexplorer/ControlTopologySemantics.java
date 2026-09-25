@@ -174,6 +174,16 @@ public final class ControlTopologySemantics {
                 for(var handler:surface.get().handlers())arm(region,"handler-"+handler.kind(),RegionKind.FILE_HANDLER,handler.clause().nestedStatements(),p,isolation);
                 add(s,region,OutcomeKind.NORMAL,"normal",complete(region,p),"",p);continue;
             }
+            var command=cics==null?Optional.<CicsCommandControl.Qualification>empty():cics.commandFact(unit.id(),s.meta().id()).flatMap(CicsCommandControl::qualify);
+            if(command.isPresent()) {
+                var q=command.get();var normal=proof(id+"/command-normal",ProofKind.LOCAL_GRAMMAR,q.ordinaryProof(),s.meta().provenance(),List.of(p));
+                add(s,owner,OutcomeKind.NORMAL,"normal",next,"",normal);
+                for(var condition:q.unresolvedConditions()) {
+                    var remainder=proof(id+"/command-"+condition,ProofKind.PARTIAL_UNKNOWN,"cics-command-"+condition,s.meta().provenance(),List.of(normal));
+                    add(s,owner,OutcomeKind.UNKNOWN_LOCAL,"cics/"+condition,unknown(owner,remainder),"",remainder);
+                }
+                continue;
+            }
             boolean completion=division.normalCompletionStatements().contains(s.meta().id());
             if(s instanceof Ast.EmbeddedLanguageStatement)completion=cics!=null&&cics.boundedLocal(unit.id(),s);
             boolean registration=cics!=null&&cics.handlerOrdinaryCompletion(unit.id(),s);

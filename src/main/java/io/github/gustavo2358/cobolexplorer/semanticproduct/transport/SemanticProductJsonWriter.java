@@ -85,7 +85,7 @@ public final class SemanticProductJsonWriter {
         boolean partialRegionalSequence=port.statements().stream().anyMatch(s -> s instanceof CobolSemanticProduct.MoveFact m
             && (!m.logicalTransfers().isEmpty() || !m.additionalTransfers().isEmpty()
                 && m.transfers().stream().anyMatch(t -> t.effect().kind()==CobolSemanticProduct.RegionalMoveKind.UNAVAILABLE)));
-        return new SemanticProductDocument(SCHEMA, port.statements().stream().anyMatch(CobolSemanticProduct.CicsAbendFact.class::isInstance)
+        return new SemanticProductDocument(SCHEMA, port.statements().stream().anyMatch(CobolSemanticProduct.CicsCommandFact.class::isInstance)?"2.43.0":port.statements().stream().anyMatch(CobolSemanticProduct.CicsAbendFact.class::isInstance)
                 ||port.controlTopology().stream().flatMap(t->t.proofs().stream()).anyMatch(p->p.rule().equals("cics-handle-abend-ordinary-return"))?"2.42.0":port.factDependencies().isPresent()||port.statements().stream().anyMatch(CobolSemanticProduct.CicsHandlerFact.class::isInstance)?"2.41.0":port.controlTopology().isPresent()?"2.39.0":partialRegionalSequence?"2.38.0":!port.ordinaryContinuations().isEmpty()?"2.37.0":port.statements().stream().anyMatch(s->s instanceof CobolSemanticProduct.ProcedurePerformFact p && p.publicationKind()==CobolSemanticProduct.PerformPublicationKind.STRUCTURAL_FACTS)?"2.36.0":!port.storage().logicalExactViews().isEmpty()?"2.35.0":structuredUnknownEvaluate?"2.33.0":preservation?"2.32.0":port.sourceDependencies().availability()!=CobolSemanticProduct.Availability.UNAVAILABLE?"2.31.0":port.storage().logicalTextViews().isEmpty()?CONTRACT_VERSION:"2.29.0",
                 unit(port.unit()), policy(port.policy()), declarations, statements,
                 new StructureDocument(port.rootStatements().stream()
@@ -311,6 +311,8 @@ public final class SemanticProductJsonWriter {
                         move.logicalTransfers().stream().map(t->new LogicalTransferDocument(operandHandle(t.target()),
                             new TextValueDocument(t.value().logicalDomain(),t.value().value(),t.value().logicalExtent()))).toList());
         }
+        if(fact instanceof CobolSemanticProduct.CicsCommandFact c)return new CicsCommandDocument(header(c.header()),c.commandKind(),c.syntaxStatus(),c.rawText(),
+            c.options().stream().map(o->new CicsOptionDocument(o.name(),o.operand().orElse(null),o.start(),o.end(),o.reference().map(SemanticProductJsonWriter::dataReference).orElse(null))).toList(),c.gapCodes());
         if(fact instanceof CobolSemanticProduct.CicsAbendFact e)return new CicsAbendDocument(header(e.header()),e.eventKind(),e.dispatchEligibility(),e.rawText(),
             e.options().stream().map(o->new CicsOptionDocument(o.name(),o.operand().orElse(null),o.start(),o.end(),null)).toList(),e.gapCodes());
         if(fact instanceof CobolSemanticProduct.CicsHandlerFact h)return new CicsHandlerDocument(header(h.header()),h.handlerKind(),h.action(),h.targetKind(),h.targetSyntax().orElse(null),h.labelBindingStatus().orElse(null),
@@ -525,6 +527,7 @@ public final class SemanticProductJsonWriter {
             @JsonSubTypes.Type(value = CallDocument.class, name = "CALL"),
             @JsonSubTypes.Type(value = CicsDocument.class, name = "CICS_PROGRAM_CONTROL"),
             @JsonSubTypes.Type(value = CicsAbendDocument.class, name = "CICS_ABEND"),
+            @JsonSubTypes.Type(value = CicsCommandDocument.class, name = "CICS_COMMAND"),
             @JsonSubTypes.Type(value = CicsHandlerDocument.class, name = "CICS_HANDLER"),
             @JsonSubTypes.Type(value = CicsFileDocument.class, name = "CICS_FILE_CONTROL"),
             @JsonSubTypes.Type(value = IfDocument.class, name = "IF"),
@@ -536,13 +539,15 @@ public final class SemanticProductJsonWriter {
             @JsonSubTypes.Type(value = ConditionalGoToDocument.class, name = "GO_TO_DEPENDING_ON"),
             @JsonSubTypes.Type(value = ObservedDocument.class, name = "OBSERVED")
     })
-    private sealed interface StatementDocument permits MoveDocument, CallDocument, CicsDocument, CicsFileDocument, CicsHandlerDocument, CicsAbendDocument,
+    private sealed interface StatementDocument permits MoveDocument, CallDocument, CicsDocument, CicsFileDocument, CicsHandlerDocument, CicsAbendDocument, CicsCommandDocument,
             IfDocument, ObservedDocument, GobackDocument, PerformDocument, EvaluateDocument, GoToDocument, ConditionalGoToDocument, ProcedurePerformDocument { }
 
     private record CicsFileOptionDocument(String name,String canonicalName,String operand,int start,int end,
         CobolSemanticProduct.CicsFileRole role,DataReferenceDocument reference,String literal,String integer) { }
     private record CicsHandlerLabelDocument(String id,ProvenanceDocument declarationOrigin) { }
     private record CicsHandlerScopeDocument(CobolSemanticProduct.CicsHandlerScopeKind kind,CobolSemanticProduct.Availability runtimeIdentity,ProvenanceDocument provenance) { }
+    private record CicsCommandDocument(StatementHeaderDocument header,CobolSemanticProduct.CicsCommandKind commandKind,
+        CobolSemanticProduct.CicsCommandSyntaxStatus syntaxStatus,String rawText,List<CicsOptionDocument> options,List<String> gapCodes) implements StatementDocument { }
     private record CicsAbendDocument(StatementHeaderDocument header,CobolSemanticProduct.CicsAbendEventKind eventKind,
         CobolSemanticProduct.CicsAbendEligibility dispatchEligibility,String rawText,List<CicsOptionDocument> options,List<String> gapCodes) implements StatementDocument { }
     private record CicsHandlerDocument(StatementHeaderDocument header,CobolSemanticProduct.CicsHandlerKind handlerKind,

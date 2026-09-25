@@ -618,6 +618,8 @@ public final class CobolSemanticProductProjector {
     }
 
     private static StatementPlan plan(StatementPosition position, ProjectionInputs inputs) {
+        if(position.statement() instanceof Ast.EmbeddedLanguageStatement embedded && inputs.products().cics().flatMap(c->c.commandFact(inputs.unitId(),embedded.meta().id())).isPresent())
+            return new StatementPlan(position,Capability.supported("CICS","CICS_COMMAND"),embedded.hostOperands().stream().map(h->inputs.entryFor(h.reference())).toList());
         if(position.statement() instanceof Ast.EmbeddedLanguageStatement embedded && inputs.products().cics().flatMap(c->c.abendFact(inputs.unitId(),embedded.meta().id())).isPresent())
             return new StatementPlan(position,Capability.supported("CICS","CICS_ABEND"),List.of());
         if(position.statement() instanceof Ast.EmbeddedLanguageStatement embedded && inputs.products().cics().flatMap(c->c.handlerFact(inputs.unitId(),embedded.meta().id())).isPresent())
@@ -970,6 +972,31 @@ public final class CobolSemanticProductProjector {
         CobolSemanticProduct.Containment containment = containment(
                 plan.position(), statementIds);
 
+        var command=inputs.products().cics().flatMap(c->c.commandFact(inputs.unitId(),plan.position().statement().meta().id()));
+        if(command.isPresent()) {
+            var source=command.get();var codes=new LinkedHashSet<>(source.gaps());codes.add("CICS_COMMAND_EFFECTS_NOT_MODELED");
+            var embedded=(Ast.EmbeddedLanguageStatement)plan.position().statement();var hosts=new HashMap<Integer,Ast.EmbeddedHostOperand>();
+            for(var host:embedded.hostOperands())require(hosts.put(host.optionStart(),host)==null,"one canonical command operand per option");
+            var options=new ArrayList<CicsOption>();int ordinal=0;
+            for(var option:source.options()) {
+                Optional<DataReference> reference=Optional.empty();var h=hosts.get(option.start());
+                if(h!=null) {
+                    var entry=inputs.entryFor(h.reference());addReportGaps(statementId,entry.occurrence(),inputs,provenance(h.reference().meta().provenance()),gaps);
+                    if(projectableDataBinding(entry,inputs))reference=Optional.of(new DataReference(new OperandId(statementId,ordinal++),
+                        h.role()==Ast.EmbeddedHostRole.WRITE?OperandRole.WRITE:OperandRole.READ,nominalBinding(entry,dataIds),
+                        provenance(h.reference().meta().provenance()),Optional.empty(),regionalAccess(inputs,h.reference().meta().id()),List.of(),
+                        h.reference().understanding()==Ast.ReferenceUnderstanding.STRUCTURED&&h.reference().subscriptGroups().isEmpty()&&h.reference().referenceModification()==null
+                            ?nominalBinding(entry,dataIds).selected():Optional.empty()));
+                }
+                options.add(new CicsOption(option.name(),option.operand(),option.start(),option.end(),reference));
+            }
+            statements.add(new CicsCommandFact(header(statementId,plan.position().ordinal(),containment,statementProvenance,CoverageStatus.PARTIAL,
+                readiness(ReadinessStatus.PARTIAL,"typed CICS command",ReadinessStatus.PARTIAL,"control in ControlTopology",ReadinessStatus.BLOCKED,"command effects not modeled")),
+                CicsCommandKind.valueOf(source.command().name()),source.supported()?CicsCommandSyntaxStatus.SUPPORTED:CicsCommandSyntaxStatus.UNAVAILABLE,
+                source.raw(),options,List.copyOf(codes)));
+            for(var code:codes)gaps.add(capabilityGap(statementId,code,"Command dimension remains partial",statementProvenance));
+            addContainmentGap(containment,statementId,statementProvenance,gaps);return;
+        }
         var abend=inputs.products().cics().flatMap(c->c.abendFact(inputs.unitId(),plan.position().statement().meta().id()));
         if(abend.isPresent()) {
             var source=abend.get();var codes=new LinkedHashSet<>(source.gaps());codes.add("CICS_ABEND_DISPATCH_NOT_MODELED");
