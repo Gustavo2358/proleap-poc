@@ -7,7 +7,29 @@ import static io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticP
  * pre-bound successor. This model contains no execution contexts or value facts. */
 public record ControlTopology(String authority, List<Occurrence> occurrences,
         List<Region> regions, List<Boundary> boundaries, List<Outcome> outcomes,
-        List<Binding> bindings, List<Proof> proofs) {
+        List<Binding> bindings, List<Proof> proofs, List<ExceptionalEvent> exceptionalEvents) {
+    /** Historical contracts have no event ingress authority. */
+    public ControlTopology(String authority,List<Occurrence> occurrences,List<Region> regions,
+            List<Boundary> boundaries,List<Outcome> outcomes,List<Binding> bindings,List<Proof> proofs) {
+        this(authority,occurrences,regions,boundaries,outcomes,bindings,proofs,List.of());
+    }
+    public enum EventOrigin { EXPLICIT_ABEND, XCTL_PGMIDERR }
+    public enum EventEligibility { HANDLER_ELIGIBLE, HANDLERS_BYPASSED }
+    public enum EventPremise { CONDITION_RAISED, DEFAULT_DISPOSITION_APPLIES }
+    /** A conditional source relation, never a statically selected handler edge. */
+    public record ExceptionalEvent(String id,String statement,EventOrigin origin,
+            String disposition,EventEligibility eligibility,String scope,String runtimeIdentity,
+            List<EventPremise> premises,List<String> proofs) {
+        public ExceptionalEvent {
+            text(id);text(statement);Objects.requireNonNull(origin);Objects.requireNonNull(eligibility);
+            require("TASK_ABEND".equals(disposition),"event disposition");
+            require("CURRENT_EXECUTION_LOGICAL_LEVEL".equals(scope)&&"UNAVAILABLE".equals(runtimeIdentity),"relative event scope");
+            premises=List.copyOf(premises);proofs=sorted(nonempty(proofs),x->x);
+            require(origin==EventOrigin.EXPLICIT_ABEND?premises.isEmpty():
+                premises.equals(List.of(EventPremise.CONDITION_RAISED,EventPremise.DEFAULT_DISPOSITION_APPLIES))
+                    &&eligibility==EventEligibility.HANDLER_ELIGIBLE,"event guard/origin agreement");
+        }
+    }
     public enum RegionKind { PROCEDURE, PARAGRAPH, RANGE, IF, IF_ARM, EVALUATE, EVALUATE_ARM, FILE, FILE_HANDLER, INLINE_BODY, DECLARATIVE }
     public enum TargetKind { OCCURRENCE, REGION_ENTRY, COMPLETE, PROGRAM_RETURN, UNKNOWN_LOCAL }
     public enum OutcomeKind { NORMAL, BRANCH, EXPLICIT_TRANSFER, LOCAL_INVOKE, PROGRAM_RETURN, UNKNOWN_LOCAL }
@@ -46,8 +68,16 @@ public record ControlTopology(String authority, List<Occurrence> occurrences,
         if(!"FRONTEND_CONTROL_TOPOLOGY_R1".equals(authority))throw new IllegalArgumentException("control topology authority");
         occurrences=sorted(occurrences,Occurrence::statement);regions=sorted(regions,Region::id);boundaries=sorted(boundaries,Boundary::id);
         outcomes=sorted(outcomes,Outcome::id);bindings=sorted(bindings,Binding::id);proofs=sorted(proofs,Proof::id);
+        exceptionalEvents=sorted(exceptionalEvents==null?List.of():exceptionalEvents,ExceptionalEvent::id);
+        index(exceptionalEvents,ExceptionalEvent::id);
         var os=index(occurrences,Occurrence::statement);var rs=index(regions,Region::id);var bs=index(boundaries,Boundary::id);
         var es=index(outcomes,Outcome::id);var calls=index(bindings,Binding::id);var ps=index(proofs,Proof::id);
+        for(var e:exceptionalEvents) {
+            require(os.containsKey(e.statement()),"exceptional source occurrence");refs(e.proofs(),ps);
+            String rule=e.origin()==EventOrigin.EXPLICIT_ABEND?"cics-explicit-abend-event":"cics-xctl-pgmiderr-default-abend-event";
+            require(e.proofs().stream().anyMatch(id->ps.get(id).kind()==ProofKind.LOCAL_GRAMMAR&&ps.get(id).rule().equals(rule)),"exceptional event authority");
+        }
+        require(exceptionalEvents.stream().map(e->e.statement()+"/"+e.origin()).distinct().count()==exceptionalEvents.size(),"duplicate event source/origin");
         for(var p:proofs) {refs(p.dependencies(),ps);var pending=new ArrayDeque<String>();pending.add(p.id());var visited=new HashSet<String>();
             while(!pending.isEmpty()){var next=pending.removeFirst();if(!visited.add(next))continue;for(var dependency:ps.get(next).dependencies()){
                 require(!dependency.equals(p.id()),"proof dependency cycle");pending.addLast(dependency);}}

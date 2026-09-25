@@ -62,7 +62,7 @@ class CicsAbendInvariantTest {
     @Test void capabilityDoesNotLimitOccurrenceCardinality() throws Exception {
         for(int n:List.of(0,1,2,8)) {
             var p=CicsAbendContractTest.publish("EXEC CICS ABEND END-EXEC.\n".repeat(n)+"GOBACK.");
-            assertEquals(n,CicsAbendContractTest.events(p).size());assertEquals(n==0?"2.41.0":"2.42.0",p.path("contractVersion").asText());
+            assertEquals(n,CicsAbendContractTest.events(p).size());assertEquals(n==0?"2.41.0":"2.45.0",p.path("contractVersion").asText());
         }
     }
 }

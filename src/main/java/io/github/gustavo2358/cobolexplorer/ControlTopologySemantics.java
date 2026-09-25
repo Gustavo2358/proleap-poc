@@ -23,6 +23,7 @@ public final class ControlTopologySemantics {
     private final Map<String,Boundary> boundaries=new TreeMap<>();
     private final Map<String,Outcome> outcomes=new TreeMap<>();
     private final Map<String,Binding> bindings=new TreeMap<>();
+    private final List<ExceptionalEvent> exceptionalEvents=new ArrayList<>();
     private final Map<String,Proof> proofs=new TreeMap<>();
     private final Map<String,List<String>> subregions=new HashMap<>();
     private final CobolSemanticProduct.FileInventory files;
@@ -107,7 +108,7 @@ public final class ControlTopologySemantics {
         for(var r:new ArrayList<>(regions.values()))regions.put(r.id(),new Region(r.id(),r.kind(),r.parent(),r.entry(),occurrences.values().stream().filter(o->o.region().equals(r.id())).map(Occurrence::statement).toList(),
             r.kind()==RegionKind.RANGE?r.regions():subregions.getOrDefault(r.id(),List.of()).stream().sorted().toList(),r.boundary(),r.proofs()));
         return new ControlTopology("FRONTEND_CONTROL_TOPOLOGY_R1",List.copyOf(occurrences.values()),List.copyOf(regions.values()),
-            List.copyOf(boundaries.values()),List.copyOf(outcomes.values()),List.copyOf(bindings.values()),List.copyOf(proofs.values()));
+            List.copyOf(boundaries.values()),List.copyOf(outcomes.values()),List.copyOf(bindings.values()),List.copyOf(proofs.values()),exceptionalEvents);
     }
     private void statements(List<Ast.Statement> list,String owner,Target end,String isolation) {
         for(int i=0;i<list.size();i++) {
@@ -115,6 +116,7 @@ public final class ControlTopologySemantics {
             String id=ids.get(s);var p=proof(id,ProofKind.LOCAL_GRAMMAR,"statement-scope",s.meta().provenance(),List.of(isolation));
             var next=i+1<list.size()&&ids.containsKey(list.get(i+1))?occ(list.get(i+1),p):end;
             if(!independent){add(s,owner,OutcomeKind.UNKNOWN_LOCAL,"unknown",unknown(owner,p),"",p);continue;}
+            exceptionalEvent(s,p);
             if(s instanceof Ast.GobackStatement){add(s,owner,OutcomeKind.PROGRAM_RETURN,"return",new Target(TargetKind.PROGRAM_RETURN,root,List.of(p)),"",p);continue;}
             if(s instanceof Ast.IfStatement f) {
                 var region="region:"+id+"/if";putRegion(region,RegionKind.IF,owner,occ(s,p),List.of(),next,p);
@@ -192,6 +194,27 @@ public final class ControlTopologySemantics {
             completion|=registration;
             add(s,owner,completion?OutcomeKind.NORMAL:OutcomeKind.UNKNOWN_LOCAL,completion?"normal":"unknown",completion?next:unknown(owner,p),"",completionProof);
         }
+    }
+    private void exceptionalEvent(Ast.Statement statement,String premise) {
+        if(cics==null)return;
+        var abend=cics.abendFact(unit.id(),statement.meta().id()).orElse(null);
+        EventOrigin origin;EventEligibility eligibility;List<EventPremise> guards;
+        if(abend!=null&&abend.eligibility()!=CicsAbendSemantics.Eligibility.UNAVAILABLE) {
+            origin=EventOrigin.EXPLICIT_ABEND;eligibility=EventEligibility.valueOf(abend.eligibility().name());guards=List.of();
+        } else {
+            var command=cics.fact(unit.id(),statement.meta().id()).orElse(null);
+            if(command==null||command.command()!=CicsProgramControlAnalyzer.Command.XCTL||!command.gaps().isEmpty()
+                ||command.options().stream().anyMatch(o->!Set.of("PROGRAM","COMMAREA","LENGTH","RESP2").contains(o.name()))
+                ||command.options().stream().filter(o->o.name().equals("PROGRAM")).count()!=1
+                ||command.options().stream().map(CicsProgramControlAnalyzer.Option::name).distinct().count()!=command.options().size())return;
+            origin=EventOrigin.XCTL_PGMIDERR;eligibility=EventEligibility.HANDLER_ELIGIBLE;
+            guards=List.of(EventPremise.CONDITION_RAISED,EventPremise.DEFAULT_DISPOSITION_APPLIES);
+        }
+        var id="event:"+ids.get(statement)+"/"+origin;
+        var proof=proof(id,ProofKind.LOCAL_GRAMMAR,origin==EventOrigin.EXPLICIT_ABEND?
+            "cics-explicit-abend-event":"cics-xctl-pgmiderr-default-abend-event",statement.meta().provenance(),List.of(premise));
+        exceptionalEvents.add(new ExceptionalEvent(id,ids.get(statement),origin,"TASK_ABEND",eligibility,
+            "CURRENT_EXECUTION_LOGICAL_LEVEL","UNAVAILABLE",guards,List.of(proof)));
     }
     private void publishInvocation(Ast.PerformStatement perform,String owner,String range,String binding,String id,String endpoint,Target resume,String premise) {
         var literal=perform.controls().size()==1&&perform.controls().get(0).expression() instanceof Ast.LiteralExpression l

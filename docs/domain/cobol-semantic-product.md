@@ -621,3 +621,7 @@ The new contract and legacy boundary are specified in [control-topology.md](cont
 
 [Fact dependency locality](fact-dependency-locality.md) defines the new causal proof
 graph. 2.40 requires it alongside R1 topology; <=2.39 retains historical meaning.
+
+## SP 2.45 — exceptional source-event authority
+
+[Exceptional CICS events](cics-exceptional-handlers.md) add `ControlTopology.exceptionalEvents` descriptors with closed runtime premises. No handler destination is selected in SP. Ordinary topology and FactDependencies retain their meaning. Empty event inventories are omitted from historical wire.

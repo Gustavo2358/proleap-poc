@@ -30,10 +30,15 @@ public final class SemanticProductJsonWriter {
 
     private static final ObjectMapper JSON = JsonMapper.builder()
             .enable(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY)
+            .addMixIn(io.github.gustavo2358.cobolexplorer.semanticproduct.ControlTopology.class,TopologyWire.class)
             .defaultPropertyInclusion(JsonInclude.Value.construct(
                     JsonInclude.Include.ALWAYS, JsonInclude.Include.ALWAYS))
             .build();
 
+    private interface TopologyWire {
+        @JsonInclude(JsonInclude.Include.NON_EMPTY)
+        List<io.github.gustavo2358.cobolexplorer.semanticproduct.ControlTopology.ExceptionalEvent> exceptionalEvents();
+    }
     private SemanticProductJsonWriter() { }
 
     /** Materializes typed transport DTOs and serializes them as deterministic UTF-8 bytes. */
@@ -85,7 +90,7 @@ public final class SemanticProductJsonWriter {
         boolean partialRegionalSequence=port.statements().stream().anyMatch(s -> s instanceof CobolSemanticProduct.MoveFact m
             && (!m.logicalTransfers().isEmpty() || !m.additionalTransfers().isEmpty()
                 && m.transfers().stream().anyMatch(t -> t.effect().kind()==CobolSemanticProduct.RegionalMoveKind.UNAVAILABLE)));
-        return new SemanticProductDocument(SCHEMA, port.statements().stream().anyMatch(s->s instanceof CobolSemanticProduct.CicsCommandFact c&&c.commandKind()==CobolSemanticProduct.CicsCommandKind.SEND_TERMINAL)?"2.44.0":port.statements().stream().anyMatch(CobolSemanticProduct.CicsCommandFact.class::isInstance)?"2.43.0":port.statements().stream().anyMatch(CobolSemanticProduct.CicsAbendFact.class::isInstance)
+        return new SemanticProductDocument(SCHEMA, port.controlTopology().stream().anyMatch(t->!t.exceptionalEvents().isEmpty())?"2.45.0":port.statements().stream().anyMatch(s->s instanceof CobolSemanticProduct.CicsCommandFact c&&c.commandKind()==CobolSemanticProduct.CicsCommandKind.SEND_TERMINAL)?"2.44.0":port.statements().stream().anyMatch(CobolSemanticProduct.CicsCommandFact.class::isInstance)?"2.43.0":port.statements().stream().anyMatch(CobolSemanticProduct.CicsAbendFact.class::isInstance)
                 ||port.controlTopology().stream().flatMap(t->t.proofs().stream()).anyMatch(p->p.rule().equals("cics-handle-abend-ordinary-return"))?"2.42.0":port.factDependencies().isPresent()||port.statements().stream().anyMatch(CobolSemanticProduct.CicsHandlerFact.class::isInstance)?"2.41.0":port.controlTopology().isPresent()?"2.39.0":partialRegionalSequence?"2.38.0":!port.ordinaryContinuations().isEmpty()?"2.37.0":port.statements().stream().anyMatch(s->s instanceof CobolSemanticProduct.ProcedurePerformFact p && p.publicationKind()==CobolSemanticProduct.PerformPublicationKind.STRUCTURAL_FACTS)?"2.36.0":!port.storage().logicalExactViews().isEmpty()?"2.35.0":structuredUnknownEvaluate?"2.33.0":preservation?"2.32.0":port.sourceDependencies().availability()!=CobolSemanticProduct.Availability.UNAVAILABLE?"2.31.0":port.storage().logicalTextViews().isEmpty()?CONTRACT_VERSION:"2.29.0",
                 unit(port.unit()), policy(port.policy()), declarations, statements,
                 new StructureDocument(port.rootStatements().stream()

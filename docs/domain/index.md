@@ -26,3 +26,5 @@ como domínio atual sem contrato materializado.
 - Current [SP1.8 compositional/partial boundary](../architecture/compositional-partial-lowering.md) and [BASIC PERFORM](perform-basic.md).
 
 - [Positive memory topology and storage coverage](scoped-storage-uncertainty.md): POSITIVE_MEMORY_TOPOLOGY W1 supported textual projection.
+
+- [R7 exceptional handler source semantics](cics-exceptional-handlers.md) — SP2.45, source-only selection and entry.
