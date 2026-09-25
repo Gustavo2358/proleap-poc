@@ -7,9 +7,10 @@ import org.antlr.v4.runtime.*;
 /** Source command/option qualification. Does not compute control, runtime values or handlers. */
 public final class CicsCommandSemantics {
     public enum Kind { SYNCPOINT, RECEIVE_MAP, SEND_MAP }
-    public record Fact(Kind command,String raw,List<CicsCommandSyntax.Option> options,List<String> gaps) {
-        public Fact { options=List.copyOf(options);gaps=List.copyOf(gaps); }
-        public boolean supported(){return gaps.isEmpty();}
+    public enum SyntaxStatus { SUPPORTED, UNAVAILABLE }
+    public record Fact(Kind command,SyntaxStatus syntaxStatus,String raw,List<CicsCommandSyntax.Option> options,List<String> gaps) {
+        public Fact { Objects.requireNonNull(command);Objects.requireNonNull(syntaxStatus);options=List.copyOf(options);gaps=List.copyOf(gaps); }
+        public boolean supported(){return syntaxStatus==SyntaxStatus.SUPPORTED;}
     }
     private final CompilationUnitBuildResult owner;
     private final Map<CicsProgramControlAnalyzer.Key,Fact> facts;
@@ -38,26 +39,26 @@ public final class CicsCommandSemantics {
         else if(Set.of("SEND","RECEIVE").contains(s.name())&&s.options().stream().anyMatch(o->o.name().equals("MAP")))
             kind=s.name().equals("SEND")?Kind.SEND_MAP:Kind.RECEIVE_MAP;
         else return Optional.empty();
-        var gaps=new LinkedHashSet<>(s.gaps());var names=new HashSet<String>();
+        var gaps=new LinkedHashSet<>(s.gaps());boolean supported=s.gaps().isEmpty();var names=new HashSet<String>();
         var allowed=new HashSet<>(Set.of("RESP","RESP2","NOHANDLE"));
         if(kind!=Kind.SYNCPOINT)allowed.addAll(Set.of("MAP","MAPSET",kind==Kind.SEND_MAP?"FROM":"INTO"));
         if(kind==Kind.SEND_MAP)allowed.addAll(Set.of("CURSOR","ERASE","FREEKB"));
         for(var o:s.options()) {
-            if(!allowed.contains(o.name()))gaps.add("CICS_COMMAND_UNMODELED_OPTION");
-            if(!names.add(o.name()))gaps.add("CICS_COMMAND_DUPLICATE_OPTION");
+            if(!allowed.contains(o.name())){supported=false;gaps.add("CICS_COMMAND_UNMODELED_OPTION");}
+            if(!names.add(o.name())){supported=false;gaps.add("CICS_COMMAND_DUPLICATE_OPTION");}
             boolean flag=Set.of("NOHANDLE","CURSOR","ERASE","FREEKB").contains(o.name());
-            if(flag?o.operand().isPresent():o.operand().filter(v->!v.isBlank()).isEmpty())gaps.add("CICS_COMMAND_OPERAND_SHAPE");
+            if(flag?o.operand().isPresent():o.operand().filter(v->!v.isBlank()).isEmpty()){supported=false;gaps.add("CICS_COMMAND_OPERAND_SHAPE");}
             if(!flag&&allowed.contains(o.name())&&o.operand().isPresent()) {
                 String v=o.operand().orElseThrow().strip();boolean name=Set.of("MAP","MAPSET").contains(o.name());
-                if(!(name&&CicsCommandSyntax.literal(v).filter(x->!x.isEmpty()).isPresent())&&!dataSyntax(v))gaps.add("CICS_COMMAND_OPERAND_SHAPE");
+                if(!(name&&CicsCommandSyntax.literal(v).filter(x->!x.isEmpty()).isPresent())&&!dataSyntax(v)){supported=false;gaps.add("CICS_COMMAND_OPERAND_SHAPE");}
             }
         }
         if(kind!=Kind.SYNCPOINT) {
             var map=s.options().stream().filter(o->o.name().equals("MAP")).findFirst().orElseThrow();
             if(map.operand().flatMap(v->CicsCommandSyntax.literal(v.strip())).isEmpty()&&!names.contains(kind==Kind.SEND_MAP?"FROM":"INTO"))
-                gaps.add("CICS_COMMAND_IMPLICIT_AREA_UNAVAILABLE");
+                {supported=false;gaps.add("CICS_COMMAND_IMPLICIT_AREA_UNAVAILABLE");}
         }
-        return Optional.of(new Fact(kind,raw,s.options(),List.copyOf(gaps)));
+        return Optional.of(new Fact(kind,supported?SyntaxStatus.SUPPORTED:SyntaxStatus.UNAVAILABLE,raw,s.options(),List.copyOf(gaps)));
     }
     private static boolean dataSyntax(String text) {
         var failed=new boolean[1];var listener=new BaseErrorListener(){@Override public void syntaxError(Recognizer<?,?> r,Object s,int l,int c,String m,RecognitionException e){failed[0]=true;}};

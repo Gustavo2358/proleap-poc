@@ -92,4 +92,12 @@ class CicsCommandContractTest {
         var second=EofUnitBoundaryTest.publish(a,1,StorageLayoutSemantics.Profile.UNSPECIFIED);
         assertNotEquals(first.statements().get(0).header().id(),second.statements().get(0).header().id());
     }
+    @Test void diagnosticAbsenceDoesNotSupplySyntaxQualification() {
+        var unsupported=CicsCommandSemantics.parse("EXEC CICS SYNCPOINT ROLLBACK END-EXEC").orElseThrow();
+        var withoutDiagnostic=new CicsCommandSemantics.Fact(unsupported.command(),unsupported.syntaxStatus(),unsupported.raw(),unsupported.options(),List.of());
+        assertFalse(withoutDiagnostic.supported());assertTrue(CicsCommandControl.qualify(withoutDiagnostic).isEmpty());
+        var supported=CicsCommandSemantics.parse("EXEC CICS SYNCPOINT END-EXEC").orElseThrow();
+        var unrelatedDiagnostic=new CicsCommandSemantics.Fact(supported.command(),supported.syntaxStatus(),supported.raw(),supported.options(),List.of("UNRELATED_MODELING_GAP"));
+        assertTrue(unrelatedDiagnostic.supported());assertTrue(CicsCommandControl.qualify(unrelatedDiagnostic).isPresent());
+    }
 }
