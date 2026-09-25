@@ -1443,7 +1443,7 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
             // The operand grammar is a separate tree. UI navigation points to its real EXEC container,
             // while the operand retains its own expanded offsets and conservative SourceMap provenance.
             var previous=embeddedOperandOrigin;embeddedOperandOrigin=anchor.origin();
-            boolean previousRetained=retainedEmbeddedOperand;retainedEmbeddedOperand=handler&&host.option().equals("PROGRAM");
+            boolean previousRetained=retainedEmbeddedOperand;retainedEmbeddedOperand=handler&&host.option().equals("PROGRAM")||CicsCommandSemantics.parse(raw).filter(c->c.command()==CicsCommandSemantics.Kind.SEND_TERMINAL).isPresent();
             try {
                 var expression=identifierExpression(host.identifier());
                 if(expression instanceof Ast.DataReference reference)operands.add(new Ast.EmbeddedHostOperand(host.option(),host.optionStart(),host.role(),reference));
@@ -1457,7 +1457,13 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
             try {label.ifPresent(tree->procedures.add(procedureReference(tree)));}
             finally {embeddedOperandOrigin=previous;retainedEmbeddedOperand=previousRetained;}
         }
-        return new Ast.EmbeddedLanguageStatement(anchor, language, raw, operands,procedures,anchors);
+        var expressions=new ArrayList<Ast.EmbeddedExpressionOperand>();
+        if(language==Ast.EmbeddedLanguage.CICS)for(var host:EmbeddedExpressionSyntax.parse(raw,context.getStart().getStartIndex(),context.getStart().getLine(),context.getStart().getCharPositionInLine(),context.getStart().getTokenIndex())) {
+            var previous=embeddedOperandOrigin;embeddedOperandOrigin=anchor.origin();boolean retained=retainedEmbeddedOperand;retainedEmbeddedOperand=true;
+            try {expressions.add(new Ast.EmbeddedExpressionOperand(host.option(),host.optionStart(),expression(host.tree(),"embedded value")));}
+            finally {embeddedOperandOrigin=previous;retainedEmbeddedOperand=retained;}
+        }
+        return new Ast.EmbeddedLanguageStatement(anchor, language, raw, operands,procedures,anchors,expressions);
     }
 
     private Ast.Expression expression(ParserRuleContext context, String role) {

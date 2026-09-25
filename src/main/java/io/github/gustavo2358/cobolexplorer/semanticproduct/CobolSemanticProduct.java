@@ -782,17 +782,29 @@ public final class CobolSemanticProduct {
         StatementHeader header();
     }
 
-    public enum CicsCommandKind { SYNCPOINT, RECEIVE_MAP, SEND_MAP }
+    public enum CicsCommandKind { SYNCPOINT, RECEIVE_MAP, SEND_MAP, SEND_TERMINAL }
+    public enum OperandExpressionKind { INTEGER, DATA_REFERENCE, LENGTH_OF }
+    /** Source expression structure; LENGTH_OF refers to a declaration, not its stored value. */
+    public record OperandExpression(OperandExpressionKind kind,Optional<java.math.BigInteger> integer,
+            Optional<DataReference> reference,Provenance provenance) {
+        public OperandExpression {
+            Objects.requireNonNull(kind);Objects.requireNonNull(integer);Objects.requireNonNull(reference);Objects.requireNonNull(provenance);
+            require(integer.isPresent()==(kind==OperandExpressionKind.INTEGER),"integer expression shape");
+            require(reference.isPresent()==(kind!=OperandExpressionKind.INTEGER),"reference expression shape");
+            reference.ifPresent(r->require(r.role()==OperandRole.READ,"source expression operand role"));
+        }
+    }
     public enum CicsCommandSyntaxStatus { SUPPORTED, UNAVAILABLE }
     /** Explicit source options; no control decision, handler target or runtime value. */
     public record CicsCommandFact(StatementHeader header,CicsCommandKind commandKind,CicsCommandSyntaxStatus syntaxStatus,
-            String rawText,List<CicsOption> options,List<String> gapCodes) implements StatementFact {
+            String rawText,List<CicsOption> options,List<String> gapCodes,Optional<OperandExpression> length) implements StatementFact {
         public CicsCommandFact {
-            Objects.requireNonNull(header);Objects.requireNonNull(commandKind);Objects.requireNonNull(syntaxStatus);Objects.requireNonNull(rawText);
+            Objects.requireNonNull(header);Objects.requireNonNull(commandKind);Objects.requireNonNull(syntaxStatus);Objects.requireNonNull(rawText);Objects.requireNonNull(length);
             options=List.copyOf(options);gapCodes=List.copyOf(gapCodes);
             var names=new java.util.HashSet<String>();int last=0;boolean shape=true;
             var allowed=new java.util.HashSet<>(java.util.Set.of("RESP","RESP2","NOHANDLE"));
-            if(commandKind!=CicsCommandKind.SYNCPOINT)allowed.addAll(java.util.Set.of("MAP","MAPSET",commandKind==CicsCommandKind.SEND_MAP?"FROM":"INTO"));
+            if(commandKind==CicsCommandKind.SEND_TERMINAL)allowed.addAll(java.util.Set.of("FROM","LENGTH","ERASE"));
+            if(commandKind==CicsCommandKind.SEND_MAP||commandKind==CicsCommandKind.RECEIVE_MAP)allowed.addAll(java.util.Set.of("MAP","MAPSET",commandKind==CicsCommandKind.SEND_MAP?"FROM":"INTO"));
             if(commandKind==CicsCommandKind.SEND_MAP)allowed.addAll(java.util.Set.of("CURSOR","ERASE","FREEKB"));
             for(var o:options) {
                 require(o.start()>=last&&o.end()>o.start()&&o.end()<=rawText.length(),"ordered command options");last=o.end();
@@ -803,10 +815,15 @@ public final class CobolSemanticProduct {
                     require(r.role()==(java.util.Set.of("RESP","RESP2","INTO").contains(o.name())?OperandRole.WRITE:OperandRole.READ),"command operand role");});
             }
             if(syntaxStatus==CicsCommandSyntaxStatus.SUPPORTED) {
-                require(shape&&(commandKind==CicsCommandKind.SYNCPOINT||names.contains("MAP")),"supported command syntax");
+                require(shape&&(commandKind==CicsCommandKind.SYNCPOINT||names.contains(commandKind==CicsCommandKind.SEND_TERMINAL?"FROM":"MAP")),"supported command syntax");
                 require(gapCodes.stream().allMatch(g->g.equals("CICS_COMMAND_EFFECTS_NOT_MODELED")),"supported syntax has no syntax gap");
             } else require(gapCodes.stream().anyMatch(g->!g.isBlank()&&!g.equals("CICS_COMMAND_EFFECTS_NOT_MODELED")),"unavailable command reason");
+            require(length.isEmpty()||commandKind==CicsCommandKind.SEND_TERMINAL&&names.contains("LENGTH"),"length belongs to terminal LENGTH option");
+            if(commandKind==CicsCommandKind.SEND_TERMINAL&&syntaxStatus==CicsCommandSyntaxStatus.SUPPORTED)
+                require(length.isPresent()==names.contains("LENGTH"),"supported LENGTH has structural expression");
+            length.flatMap(OperandExpression::reference).ifPresent(r->require(r.id().statement().equals(header.id()),"expression operand owner"));
         }
+        public CicsCommandFact(StatementHeader h,CicsCommandKind k,CicsCommandSyntaxStatus s,String raw,List<CicsOption> o,List<String> g){this(h,k,s,raw,o,g,Optional.empty());}
     }
 
     public enum CicsAbendEventKind { ABEND }

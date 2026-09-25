@@ -6,7 +6,7 @@ import org.antlr.v4.runtime.*;
 
 /** Source command/option qualification. Does not compute control, runtime values or handlers. */
 public final class CicsCommandSemantics {
-    public enum Kind { SYNCPOINT, RECEIVE_MAP, SEND_MAP }
+    public enum Kind { SYNCPOINT, RECEIVE_MAP, SEND_MAP, SEND_TERMINAL }
     public enum SyntaxStatus { SUPPORTED, UNAVAILABLE }
     public record Fact(Kind command,SyntaxStatus syntaxStatus,String raw,List<CicsCommandSyntax.Option> options,List<String> gaps) {
         public Fact { Objects.requireNonNull(command);Objects.requireNonNull(syntaxStatus);options=List.copyOf(options);gaps=List.copyOf(gaps); }
@@ -38,10 +38,12 @@ public final class CicsCommandSemantics {
         if(s.name().equals("SYNCPOINT"))kind=Kind.SYNCPOINT;
         else if(Set.of("SEND","RECEIVE").contains(s.name())&&s.options().stream().anyMatch(o->o.name().equals("MAP")))
             kind=s.name().equals("SEND")?Kind.SEND_MAP:Kind.RECEIVE_MAP;
+        else if(s.name().equals("SEND")&&s.options().stream().noneMatch(o->Set.of("MAP","TEXT","CONTROL","PAGE","CONVID","SESSION","MRO","PARTN").contains(o.name())))kind=Kind.SEND_TERMINAL;
         else return Optional.empty();
         var gaps=new LinkedHashSet<>(s.gaps());boolean supported=s.gaps().isEmpty();var names=new HashSet<String>();
         var allowed=new HashSet<>(Set.of("RESP","RESP2","NOHANDLE"));
-        if(kind!=Kind.SYNCPOINT)allowed.addAll(Set.of("MAP","MAPSET",kind==Kind.SEND_MAP?"FROM":"INTO"));
+        if(kind==Kind.SEND_TERMINAL)allowed.addAll(Set.of("FROM","LENGTH","ERASE"));
+        if(kind==Kind.SEND_MAP||kind==Kind.RECEIVE_MAP)allowed.addAll(Set.of("MAP","MAPSET",kind==Kind.SEND_MAP?"FROM":"INTO"));
         if(kind==Kind.SEND_MAP)allowed.addAll(Set.of("CURSOR","ERASE","FREEKB"));
         for(var o:s.options()) {
             if(!allowed.contains(o.name())){supported=false;gaps.add("CICS_COMMAND_UNMODELED_OPTION");}
@@ -50,10 +52,11 @@ public final class CicsCommandSemantics {
             if(flag?o.operand().isPresent():o.operand().filter(v->!v.isBlank()).isEmpty()){supported=false;gaps.add("CICS_COMMAND_OPERAND_SHAPE");}
             if(!flag&&allowed.contains(o.name())&&o.operand().isPresent()) {
                 String v=o.operand().orElseThrow().strip();boolean name=Set.of("MAP","MAPSET").contains(o.name());
-                if(!(name&&CicsCommandSyntax.literal(v).filter(x->!x.isEmpty()).isPresent())&&!dataSyntax(v)){supported=false;gaps.add("CICS_COMMAND_OPERAND_SHAPE");}
+                if(!(kind==Kind.SEND_TERMINAL&&o.name().equals("LENGTH")?EmbeddedExpressionSyntax.supported(v):name&&CicsCommandSyntax.literal(v).filter(x->!x.isEmpty()).isPresent()||dataSyntax(v))){supported=false;gaps.add("CICS_COMMAND_OPERAND_SHAPE");}
             }
         }
-        if(kind!=Kind.SYNCPOINT) {
+        if(kind==Kind.SEND_TERMINAL&&!names.contains("FROM")){supported=false;gaps.add("CICS_COMMAND_REQUIRED_FROM");}
+        if(kind==Kind.SEND_MAP||kind==Kind.RECEIVE_MAP) {
             var map=s.options().stream().filter(o->o.name().equals("MAP")).findFirst().orElseThrow();
             if(map.operand().flatMap(v->CicsCommandSyntax.literal(v.strip())).isEmpty()&&!names.contains(kind==Kind.SEND_MAP?"FROM":"INTO"))
                 {supported=false;gaps.add("CICS_COMMAND_IMPLICIT_AREA_UNAVAILABLE");}

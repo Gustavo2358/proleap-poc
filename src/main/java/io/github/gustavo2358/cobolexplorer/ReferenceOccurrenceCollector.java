@@ -104,6 +104,7 @@ final class ReferenceOccurrenceCollector {
         }
         if(node instanceof Ast.EmbeddedLanguageStatement embedded) {
             for(var host:embedded.hostOperands())visit(host.reference(),host.role()==Ast.EmbeddedHostRole.WRITE?ResolutionContracts.ReferenceRole.VALUE_WRITE:ResolutionContracts.ReferenceRole.VALUE_READ,preservation);
+            for(var host:embedded.expressionOperands())visit(host.expression(),host.expression() instanceof Ast.SpecialRegisterExpression?ResolutionContracts.ReferenceRole.DECLARATION_RELATION:ResolutionContracts.ReferenceRole.VALUE_READ,preservation);
             for(var reference:embedded.procedureOperands())visit(reference,ResolutionContracts.ReferenceRole.CICS_HANDLER_TARGET,preservation);
             return;
         }

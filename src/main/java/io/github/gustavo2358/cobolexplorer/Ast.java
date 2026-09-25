@@ -399,11 +399,13 @@ public final class Ast {
     public enum EmbeddedHostRole { READ, WRITE, READ_WRITE }
     public record EmbeddedHostOperand(String option,int optionStart,EmbeddedHostRole role,DataReference reference) { }
     /** Source anchor only: does not allocate AST identity, bind a name or produce a dependency. */
+    public record EmbeddedExpressionOperand(String option,int optionStart,Expression expression) { }
     public record EmbeddedOperandAnchor(String option, int optionStart, String syntax, SourceProvenance provenance) { }
     public record EmbeddedLanguageStatement(Meta meta, EmbeddedLanguage language,
                                             String rawText,List<EmbeddedHostOperand> hostOperands,List<ProcedureReference> procedureOperands,
-                                            List<EmbeddedOperandAnchor> operandAnchors) implements Statement {
-        public EmbeddedLanguageStatement {hostOperands=List.copyOf(hostOperands);procedureOperands=List.copyOf(procedureOperands);operandAnchors=List.copyOf(operandAnchors);}
+                                            List<EmbeddedOperandAnchor> operandAnchors,List<EmbeddedExpressionOperand> expressionOperands) implements Statement {
+        public EmbeddedLanguageStatement {hostOperands=List.copyOf(hostOperands);procedureOperands=List.copyOf(procedureOperands);operandAnchors=List.copyOf(operandAnchors);expressionOperands=List.copyOf(expressionOperands);}
+        public EmbeddedLanguageStatement(Meta meta,EmbeddedLanguage language,String rawText,List<EmbeddedHostOperand> hostOperands,List<ProcedureReference> procedureOperands,List<EmbeddedOperandAnchor> operandAnchors){this(meta,language,rawText,hostOperands,procedureOperands,operandAnchors,List.of());}
         public EmbeddedLanguageStatement(Meta meta,EmbeddedLanguage language,String rawText,List<EmbeddedHostOperand> hostOperands,List<ProcedureReference> procedureOperands){this(meta,language,rawText,hostOperands,procedureOperands,List.of());}
         public EmbeddedLanguageStatement(Meta meta,EmbeddedLanguage language,String rawText,List<EmbeddedHostOperand> hostOperands){this(meta,language,rawText,hostOperands,List.of());}
         public EmbeddedLanguageStatement(Meta meta,EmbeddedLanguage language,String rawText){this(meta,language,rawText,List.of());}
@@ -710,7 +712,7 @@ public final class Ast {
             result.addAll(n.exceptionFlow());
             return result;
         }
-        if (node instanceof EmbeddedLanguageStatement n) return java.util.stream.Stream.concat(n.hostOperands().stream().map(EmbeddedHostOperand::reference).map(Node.class::cast),n.procedureOperands().stream()).toList();
+        if (node instanceof EmbeddedLanguageStatement n) return java.util.stream.Stream.of(n.hostOperands().stream().map(EmbeddedHostOperand::reference).map(Node.class::cast),n.procedureOperands().stream().map(Node.class::cast),n.expressionOperands().stream().map(EmbeddedExpressionOperand::expression).map(Node.class::cast)).flatMap(s->s).toList();
         if (node instanceof CallArgument n) return n.value() == null ? List.of() : List.of(n.value());
         if (node instanceof IfStatement n) {
             List<Node> result = new ArrayList<>();

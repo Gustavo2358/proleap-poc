@@ -49,7 +49,7 @@ class CicsCommandContractTest {
         }
     }
     @Test void unrelatedAndTerminalCommandsStayOutsideNewFamily() throws Exception {
-        for(var cmd:List.of("SEND TEXT FROM(WS-AREA)","SEND FROM(WS-AREA)","RETURN","XCTL PROGRAM('X')","ABEND","READ FILE('F') INTO(WS-AREA) RESP(RC)","MYSTERY RESP(RC)")) {
+        for(var cmd:List.of("SEND TEXT FROM(WS-AREA)","RETURN","XCTL PROGRAM('X')","ABEND","READ FILE('F') INTO(WS-AREA) RESP(RC)","MYSTERY RESP(RC)")) {
             var j=one(cmd);assertTrue(j.path("statements").findValuesAsText("variant").stream().noneMatch("CICS_COMMAND"::equals));
             var first=j.path("statements").get(0);
             if(!cmd.startsWith("READ"))assertTrue(outcomes(j,first).stream().noneMatch(o->o.path("target").path("reference").equals(j.path("statements").get(1).path("header").path("id"))),cmd);

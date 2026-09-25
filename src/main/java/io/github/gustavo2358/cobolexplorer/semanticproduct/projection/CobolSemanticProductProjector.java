@@ -993,7 +993,8 @@ public final class CobolSemanticProductProjector {
             statements.add(new CicsCommandFact(header(statementId,plan.position().ordinal(),containment,statementProvenance,CoverageStatus.PARTIAL,
                 readiness(ReadinessStatus.PARTIAL,"typed CICS command",ReadinessStatus.PARTIAL,"control in ControlTopology",ReadinessStatus.BLOCKED,"command effects not modeled")),
                 CicsCommandKind.valueOf(source.command().name()),source.supported()?CicsCommandSyntaxStatus.SUPPORTED:CicsCommandSyntaxStatus.UNAVAILABLE,
-                source.raw(),options,List.copyOf(codes)));
+                source.raw(),options,List.copyOf(codes),commandLength(embedded,statementId,ordinal,inputs,dataIds)));
+
             for(var code:codes)gaps.add(capabilityGap(statementId,code,"Command dimension remains partial",statementProvenance));
             addContainmentGap(containment,statementId,statementProvenance,gaps);return;
         }
@@ -1004,6 +1005,7 @@ public final class CobolSemanticProductProjector {
             statements.add(new CicsAbendFact(header(statementId,plan.position().ordinal(),containment,statementProvenance,CoverageStatus.PARTIAL,
                 readiness(ReadinessStatus.PARTIAL,"typed ABEND event",ReadinessStatus.BLOCKED,"ABEND dispatch not modeled",ReadinessStatus.BLOCKED,"ABEND runtime effects not modeled")),
                 CicsAbendEventKind.ABEND,CicsAbendEligibility.valueOf(source.eligibility().name()),source.raw(),options,List.copyOf(codes)));
+
             for(var code:codes)gaps.add(capabilityGap(statementId,code,"ABEND event dimension remains partial",statementProvenance));
             addContainmentGap(containment,statementId,statementProvenance,gaps);return;
         }
@@ -1047,6 +1049,7 @@ public final class CobolSemanticProductProjector {
                 entry.isPresent()?source.labelTarget().flatMap(t->t.entryOrigin()).map(CobolSemanticProductProjector::provenance):Optional.empty(),
                 source.targetOrigin().map(CobolSemanticProductProjector::provenance),program,new CicsHandlerScope(CicsHandlerScopeKind.CURRENT_EXECUTION_LOGICAL_LEVEL,Availability.UNAVAILABLE,statementProvenance),
                 source.raw(),options,List.copyOf(codes)));
+
             for(var code:codes)gaps.add(capabilityGap(statementId,code,"Handler operation retained; execution/state/dispatch remain unproved",statementProvenance));
             addContainmentGap(containment,statementId,statementProvenance,gaps);return;
         }
@@ -1616,6 +1619,23 @@ public final class CobolSemanticProductProjector {
         }
     }
 
+
+    private static Optional<OperandExpression> commandLength(Ast.EmbeddedLanguageStatement embedded,StatementId statement,int ordinal,
+            ProjectionInputs inputs,Map<ResolutionContracts.SemanticEntityId,DataItemId> dataIds) {
+        if(embedded.expressionOperands().isEmpty())return Optional.empty();
+        var expression=embedded.expressionOperands().get(0).expression();var origin=provenance(expression.meta().provenance());
+        if(expression instanceof Ast.LiteralExpression literal&&literal.integerValue().isPresent())
+            return Optional.of(new OperandExpression(OperandExpressionKind.INTEGER,literal.integerValue(),Optional.empty(),origin));
+        Ast.DataReference ref=expression instanceof Ast.DataReference r?r:expression instanceof Ast.SpecialRegisterExpression r
+            &&r.registerName().equals("LENGTH")&&r.operands().size()==1&&r.operands().get(0) instanceof Ast.DataReference d?d:null;
+        if(ref==null)return Optional.empty();
+        var entry=inputs.entryFor(ref);if(!projectableDataBinding(entry,inputs))return Optional.empty();
+        var binding=nominalBinding(entry,dataIds);var projected=new DataReference(new OperandId(statement,ordinal),OperandRole.READ,binding,
+            provenance(ref.meta().provenance()),Optional.empty(),Optional.empty(),List.of(),
+            ref.understanding()==Ast.ReferenceUnderstanding.STRUCTURED&&ref.subscriptGroups().isEmpty()&&ref.referenceModification()==null?binding.selected():Optional.empty());
+        return Optional.of(new OperandExpression(expression instanceof Ast.SpecialRegisterExpression?OperandExpressionKind.LENGTH_OF:OperandExpressionKind.DATA_REFERENCE,
+            Optional.empty(),Optional.of(projected),origin));
+    }
     private static void projectCorresponding(Ast.MoveStatement move,StatementPlan plan,ProjectionInputs inputs,
             Map<ResolutionContracts.SemanticEntityId,DataItemId> dataIds,Map<Ast.Statement,StatementId> ids,
             StatementId id,Containment containment,List<StatementFact> output,List<Gap> gaps) {
