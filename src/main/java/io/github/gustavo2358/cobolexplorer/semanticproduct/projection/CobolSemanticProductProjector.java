@@ -978,7 +978,7 @@ public final class CobolSemanticProductProjector {
                 addReportGaps(statementId,entry.occurrence(),inputs,provenance(reference.meta().provenance()),gaps);
             }
             Optional<CallTarget> program=source.programLiteral().map(value->new LiteralCallTarget(new OperandId(statementId,0),value,
-                source.targetSyntax().orElseThrow(),Optional.of(new TextValue(value)),statementProvenance));
+                source.targetSyntax().orElseThrow(),Optional.of(new TextValue(value)),provenance(source.targetOrigin().orElseThrow())));
             var options=new ArrayList<CicsOption>();int ordinal=1;
             for(var option:source.options()) {
                 Optional<DataReference> reference=Optional.empty();
@@ -1006,7 +1006,7 @@ public final class CobolSemanticProductProjector {
                 CicsHandlerKind.ABEND,CicsHandlerAction.valueOf(source.action().name()),CicsHandlerTargetKind.valueOf(source.targetKind().name()),source.targetSyntax(),
                 source.labelBindingStatus().map(s->ResolutionStatus.valueOf(s.name())),label,entry,
                 entry.isPresent()?source.labelTarget().flatMap(t->t.entryOrigin()).map(CobolSemanticProductProjector::provenance):Optional.empty(),
-                provenance(source.targetOrigin()),program,new CicsHandlerScope(CicsHandlerScopeKind.CURRENT_EXECUTION_LOGICAL_LEVEL,Availability.UNAVAILABLE,statementProvenance),
+                source.targetOrigin().map(CobolSemanticProductProjector::provenance),program,new CicsHandlerScope(CicsHandlerScopeKind.CURRENT_EXECUTION_LOGICAL_LEVEL,Availability.UNAVAILABLE,statementProvenance),
                 source.raw(),options,List.copyOf(codes)));
             for(var code:codes)gaps.add(capabilityGap(statementId,code,"Handler operation retained; execution/state/dispatch remain unproved",statementProvenance));
             addContainmentGap(containment,statementId,statementProvenance,gaps);return;

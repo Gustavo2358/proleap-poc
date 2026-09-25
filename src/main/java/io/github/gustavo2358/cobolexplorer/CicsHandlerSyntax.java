@@ -35,6 +35,18 @@ final class CicsHandlerSyntax {
         if(!gaps.isEmpty()||!command.get().ended()) {action=Action.UNAVAILABLE;kind=TargetKind.UNAVAILABLE;target=Optional.empty();}
         return Optional.of(new Operation(raw,action,kind,target,options,List.copyOf(gaps)));
     }
+    record TargetOperand(String option, int optionStart, String syntax, int start, int end) { }
+    /** Coordinates owned by the embedded parser; never reconstructed by a projector. */
+    static List<TargetOperand> targetOperand(String raw) {
+        var operation=parse(raw);
+        if(operation.isEmpty()||operation.get().action()!=Action.ACTIVATE)return List.of();
+        var option=operation.get().options().stream().filter(o->o.name().equals(operation.get().targetKind().name())).findFirst().orElseThrow();
+        int begin=raw.indexOf('(',option.start())+1, end=begin+option.operand().orElseThrow().length();
+        while(begin<end&&Character.isWhitespace(raw.charAt(begin)))begin++;
+        while(end>begin&&Character.isWhitespace(raw.charAt(end-1)))end--;
+        return List.of(new TargetOperand(option.name(),option.start(),raw.substring(begin,end),
+                raw.codePointCount(0,begin),raw.codePointCount(0,end)));
+    }
     /** Syntax bridge to the COBOL procedure grammar. No spelling-based binding here. */
     static Optional<CobolParser.ProcedureNameContext> label(String raw,int offset,int line,int column,int anchorToken) {
         var operation=parse(raw);

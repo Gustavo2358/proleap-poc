@@ -40,7 +40,7 @@ class CicsHandlerContractTest {
             assertEquals(p.unit(),h.labelTarget().orElseThrow().id().unit());assertTrue(h.targetEntry().isPresent());
             assertEquals(h.entryOrigin().orElseThrow(),p.statement(h.targetEntry().orElseThrow()).orElseThrow().header().provenance());
             assertEquals(CicsHandlerScopeKind.CURRENT_EXECUTION_LOGICAL_LEVEL,h.scope().kind());assertEquals(Availability.UNAVAILABLE,h.scope().runtimeIdentity());
-            assertFalse(h.targetOrigin().exact(),"embedded source provenance is not promoted to exact");
+            assertFalse(h.targetOrigin().orElseThrow().exact(),"embedded source provenance is not promoted to exact");
         }
     }
     @Test void defaultCancelAndResetHaveNoNewTargetOrRuntimeState() {

@@ -800,7 +800,7 @@ public final class CobolSemanticProduct {
     public record CicsHandlerFact(StatementHeader header,CicsHandlerKind handlerKind,CicsHandlerAction action,
             CicsHandlerTargetKind targetKind,Optional<String> targetSyntax,Optional<ResolutionStatus> labelBindingStatus,
             Optional<CicsHandlerLabelTarget> labelTarget,Optional<StatementId> targetEntry,Optional<Provenance> entryOrigin,
-            Provenance targetOrigin,Optional<CallTarget> programTarget,CicsHandlerScope scope,String rawText,
+            Optional<Provenance> targetOrigin,Optional<CallTarget> programTarget,CicsHandlerScope scope,String rawText,
             List<CicsOption> options,List<String> gapCodes) implements StatementFact {
         public CicsHandlerFact {
             Objects.requireNonNull(header);Objects.requireNonNull(handlerKind);Objects.requireNonNull(action);Objects.requireNonNull(targetKind);
@@ -812,6 +812,8 @@ public final class CobolSemanticProduct {
             require(action!=CicsHandlerAction.CANCEL&&action!=CicsHandlerAction.RESET||targetKind==CicsHandlerTargetKind.NONE,"cancel/reset carry no new target");
             require((action==CicsHandlerAction.UNAVAILABLE)==(targetKind==CicsHandlerTargetKind.UNAVAILABLE),"unavailable action has no invented target kind");
             require(targetSyntax.isPresent()==(targetKind==CicsHandlerTargetKind.LABEL||targetKind==CicsHandlerTargetKind.PROGRAM),"target syntax agrees with kind");
+            require(targetOrigin.isPresent()==targetSyntax.isPresent(),"target origin exists exactly when target syntax exists");
+            require(programTarget.isEmpty()||targetOrigin.filter(programTarget.orElseThrow().provenance()::equals).isPresent(),"PROGRAM target and operand provenance agree");
             require(labelBindingStatus.isPresent()==(targetKind==CicsHandlerTargetKind.LABEL),"LABEL binding status is independent of PROGRAM data binding");
             require(labelTarget.isPresent()==labelBindingStatus.filter(s->s==ResolutionStatus.RESOLVED).isPresent(),"only resolved LABEL has a selected identity");
             require(programTarget.isEmpty()||targetKind==CicsHandlerTargetKind.PROGRAM,"PROGRAM target belongs only to PROGRAM operation");

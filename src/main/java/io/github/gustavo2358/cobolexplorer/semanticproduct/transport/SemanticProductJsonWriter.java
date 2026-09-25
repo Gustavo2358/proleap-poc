@@ -312,7 +312,7 @@ public final class SemanticProductJsonWriter {
         }
         if(fact instanceof CobolSemanticProduct.CicsHandlerFact h)return new CicsHandlerDocument(header(h.header()),h.handlerKind(),h.action(),h.targetKind(),h.targetSyntax().orElse(null),h.labelBindingStatus().orElse(null),
             h.labelTarget().map(t->new CicsHandlerLabelDocument("procedure:"+t.id().localId(),provenance(t.declarationOrigin()))).orElse(null),
-            h.targetEntry().map(SemanticProductJsonWriter::statementHandle).orElse(null),h.entryOrigin().map(SemanticProductJsonWriter::provenance).orElse(null),provenance(h.targetOrigin()),
+            h.targetEntry().map(SemanticProductJsonWriter::statementHandle).orElse(null),h.entryOrigin().map(SemanticProductJsonWriter::provenance).orElse(null),h.targetOrigin().map(SemanticProductJsonWriter::provenance).orElse(null),
             h.programTarget().map(SemanticProductJsonWriter::callTarget).orElse(null),new CicsHandlerScopeDocument(h.scope().kind(),h.scope().runtimeIdentity(),provenance(h.scope().provenance())),h.rawText(),
             h.options().stream().map(o->new CicsOptionDocument(o.name(),o.operand().orElse(null),o.start(),o.end(),o.reference().map(SemanticProductJsonWriter::dataReference).orElse(null))).toList(),h.gapCodes());
         if (fact instanceof CobolSemanticProduct.CicsFileFact cics) return new CicsFileDocument(header(cics.header()),cics.command(),cics.rawText(),cics.targetMode(),cics.target().map(SemanticProductJsonWriter::callTarget).orElse(null),

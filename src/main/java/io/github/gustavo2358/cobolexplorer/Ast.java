@@ -398,9 +398,13 @@ public final class Ast {
     /** Preserved payload with optional host syntax. Platform meaning belongs to its analyzer. */
     public enum EmbeddedHostRole { READ, WRITE, READ_WRITE }
     public record EmbeddedHostOperand(String option,int optionStart,EmbeddedHostRole role,DataReference reference) { }
+    /** Source anchor only: does not allocate AST identity, bind a name or produce a dependency. */
+    public record EmbeddedOperandAnchor(String option, int optionStart, String syntax, SourceProvenance provenance) { }
     public record EmbeddedLanguageStatement(Meta meta, EmbeddedLanguage language,
-                                            String rawText,List<EmbeddedHostOperand> hostOperands,List<ProcedureReference> procedureOperands) implements Statement {
-        public EmbeddedLanguageStatement {hostOperands=List.copyOf(hostOperands);procedureOperands=List.copyOf(procedureOperands);}
+                                            String rawText,List<EmbeddedHostOperand> hostOperands,List<ProcedureReference> procedureOperands,
+                                            List<EmbeddedOperandAnchor> operandAnchors) implements Statement {
+        public EmbeddedLanguageStatement {hostOperands=List.copyOf(hostOperands);procedureOperands=List.copyOf(procedureOperands);operandAnchors=List.copyOf(operandAnchors);}
+        public EmbeddedLanguageStatement(Meta meta,EmbeddedLanguage language,String rawText,List<EmbeddedHostOperand> hostOperands,List<ProcedureReference> procedureOperands){this(meta,language,rawText,hostOperands,procedureOperands,List.of());}
         public EmbeddedLanguageStatement(Meta meta,EmbeddedLanguage language,String rawText,List<EmbeddedHostOperand> hostOperands){this(meta,language,rawText,hostOperands,List.of());}
         public EmbeddedLanguageStatement(Meta meta,EmbeddedLanguage language,String rawText){this(meta,language,rawText,List.of());}
     }

@@ -27,7 +27,7 @@ premises, not corpus-derived rules. ABEND CANCEL is a separate command.
 | labelBindingStatus | Canonical nominal resolution status, present for LABEL only |
 | labelTarget | Only a uniquely selected local procedure identity plus declaration provenance; absent for unresolved/ambiguous targets |
 | targetEntry / entryOrigin | Optional canonical paragraph entry statement and its provenance; structural binding, **not** an activation edge |
-| targetOrigin | Operand SourceMap provenance; transformed source is never promoted to exact |
+| targetOrigin | Optional operand SourceMap provenance; present exactly for LABEL/PROGRAM, absent for NONE/UNAVAILABLE; transformed source is never promoted to exact |
 | programTarget | Literal text or DATA reference with existing nominal binding and access evidence; no inferred runtime program name |
 | scope | CURRENT_EXECUTION_LOGICAL_LEVEL, relative to execution of this statement; runtimeIdentity=UNAVAILABLE |
 | rawText / options | Preserved command and ordered options/operand offsets; options may retain DATA references |
@@ -78,3 +78,31 @@ publication, including missing/ambiguous targets, qualified procedures, PROGRAM,
 common options, distinct units, COPY, topology equality and determinism. Frontend
 FAST and full local qualification preserve the other semantic families. R7
 campaign evidence remains under the aggregate `.positive-memory-topology/positive-cics-handler-r7/contract-expansion/`.
+
+## R7-R1 operand provenance closure (draft 2.41 correction)
+
+The preprocessing envelope retains its existing approximate statement provenance.
+A separate retained-text map composes original source ranges and COPY frames through
+framing and line flattening. Only handler operands consume this refinement. It uses
+indexed segment lookup; no file reopening, spelling search, downstream reparsing or
+source reconstruction is involved. The opaque envelope keeps `exact=false` even
+when the operand's original coordinates are narrower.
+
+AstBuilder carries PROGRAM syntax plus SourceMap provenance in a non-node
+`EmbeddedOperandAnchor`; it allocates no new AST/statement identity or dependency.
+Canonical ProcedureReference and DataReference provenance takes precedence when
+those nodes exist. The projector transports the canonical fact unchanged.
+
+`targetSyntax.present == targetOrigin.present == (targetKind in {LABEL, PROGRAM})`.
+PROGRAM LiteralCallTarget/DataReference provenance must equal targetOrigin, including
+both locations, includeChain and exact. Unknown PROGRAM binding retains the operand
+origin without inventing a runtime target. CANCEL, RESET and UNAVAILABLE carry no
+origin for a target they do not supply. NONE retains the R7 meaning of no **new**
+target, and does not establish historical absence or runtime state. Constructors
+reject inconsistent action/kind/target shapes.
+
+`CicsHandlerProvenanceTest` adds full-coordinate/parity, COPY, distinct-unit, absence,
+constructor rejection and byte-replay oracles. The 14 historical handler tests
+retain their semantic expectations; their Optional API access is adapted mechanically.
+No version bump, execution state, replacement, dispatch, topology edge or downstream
+2.41 consumer is introduced by this correction.

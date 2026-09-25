@@ -39,6 +39,7 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
             new IdentityHashMap<>();
     private int nextId;
     private Ast.ParseTreeOrigin embeddedOperandOrigin;
+    private boolean retainedEmbeddedOperand;
 
     private record CoverageDraft(String grammarRule, Ast.Meta meta, String writtenText,
                                  int astNodeId) { }
@@ -1431,22 +1432,32 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
 
     private Ast.EmbeddedLanguageStatement buildEmbedded(ParserRuleContext context, Ast.EmbeddedLanguage language) {
         var anchor=meta(context);String raw=sourceText(context).strip();var operands=new ArrayList<Ast.EmbeddedHostOperand>();
+        var anchors=new ArrayList<Ast.EmbeddedOperandAnchor>();
+        boolean handler=language==Ast.EmbeddedLanguage.CICS&&CicsHandlerSyntax.parse(raw).isPresent();
+        if(handler) for(var operand:CicsHandlerSyntax.targetOperand(raw)) {
+            int offset=context.getStart().getStartIndex();
+            anchors.add(new Ast.EmbeddedOperandAnchor(operand.option(),operand.optionStart(),operand.syntax(),
+                    sourceMap.embeddedOperandProvenance(offset+operand.start(),offset+operand.end())));
+        }
         if(language==Ast.EmbeddedLanguage.CICS)for(var host:CicsHostSyntax.parse(raw,context.getStart().getStartIndex(),context.getStart().getLine(),context.getStart().getCharPositionInLine(),context.getStart().getTokenIndex())) {
             // The operand grammar is a separate tree. UI navigation points to its real EXEC container,
             // while the operand retains its own expanded offsets and conservative SourceMap provenance.
             var previous=embeddedOperandOrigin;embeddedOperandOrigin=anchor.origin();
+            boolean previousRetained=retainedEmbeddedOperand;retainedEmbeddedOperand=handler&&host.option().equals("PROGRAM");
             try {
                 var expression=identifierExpression(host.identifier());
                 if(expression instanceof Ast.DataReference reference)operands.add(new Ast.EmbeddedHostOperand(host.option(),host.optionStart(),host.role(),reference));
-            } finally { embeddedOperandOrigin=previous; }
+            } finally { embeddedOperandOrigin=previous;retainedEmbeddedOperand=previousRetained; }
         }
         var procedures=new ArrayList<Ast.ProcedureReference>();
         if(language==Ast.EmbeddedLanguage.CICS) {
             var label=CicsHandlerSyntax.label(raw,context.getStart().getStartIndex(),context.getStart().getLine(),context.getStart().getCharPositionInLine(),context.getStart().getTokenIndex());
             var previous=embeddedOperandOrigin;embeddedOperandOrigin=anchor.origin();
-            try {label.ifPresent(tree->procedures.add(procedureReference(tree)));} finally {embeddedOperandOrigin=previous;}
+            boolean previousRetained=retainedEmbeddedOperand;retainedEmbeddedOperand=handler;
+            try {label.ifPresent(tree->procedures.add(procedureReference(tree)));}
+            finally {embeddedOperandOrigin=previous;retainedEmbeddedOperand=previousRetained;}
         }
-        return new Ast.EmbeddedLanguageStatement(anchor, language, raw, operands,procedures);
+        return new Ast.EmbeddedLanguageStatement(anchor, language, raw, operands,procedures,anchors);
     }
 
     private Ast.Expression expression(ParserRuleContext context, String role) {
@@ -2117,7 +2128,8 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
         int startOffset = start == null ? 0 : Math.max(0, start.getStartIndex());
         int endOffset = stop == null ? startOffset : Math.min(indexedSource.length(), stop.getStopIndex() + 1);
         return new Ast.Meta(id, span, new Ast.ParseTreeOrigin(-1, grammarRule, 0),
-                sourceMap.provenance(startOffset, endOffset));
+                retainedEmbeddedOperand ? sourceMap.embeddedOperandProvenance(startOffset, endOffset)
+                        : sourceMap.provenance(startOffset, endOffset));
     }
 
     private static Ast.SourceSpan spanOf(TerminalNode terminal) {
@@ -2374,7 +2386,8 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
                 !parseIds.containsKey(context)&&embeddedOperandOrigin!=null?embeddedOperandOrigin:
                     new Ast.ParseTreeOrigin(parseIds.getOrDefault(context, -1), rule(context),
                         parseSubtreeSizes.getOrDefault(context, 1)),
-                sourceMap.provenance(startOffset, endOffset));
+                retainedEmbeddedOperand ? sourceMap.embeddedOperandProvenance(startOffset, endOffset)
+                        : sourceMap.provenance(startOffset, endOffset));
     }
 
     /** Written arm anchor; children and owner retain their own complete provenance.

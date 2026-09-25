@@ -319,8 +319,10 @@ final class PreprocessorEngine {
                 String opaque = flattenPhysicalLines(embeddedSource).strip();
                 LOG.trace("event=embedded_language_preserved source={} phase=PREPROCESSING rule={} line={} sentenceEnd={}",
                         file, rule, startToken.getLine(), sentenceEnd);
-                edits.add(new Edit(start, end, document.transformedSlice(start, end,
-                        tag + " " + opaque + "\n" + (sentenceEnd ? ". \n" : ""))));
+                String suffix = "\n" + (sentenceEnd ? ". \n" : "");
+                edits.add(new Edit(start, end, rule.equals("execCicsStatement")
+                        ? document.framedEmbeddedSlice(start, end, sentenceEnd ? end - 1 : end, tag + " ", suffix)
+                        : document.transformedSlice(start, end, tag + " " + opaque + suffix)));
             } else if (policy == PreprocessorPolicy.UNSUPPORTED) {
                 throw new UnsupportedOperationException(
                         "Unsupported preprocessing construct: " + rule);

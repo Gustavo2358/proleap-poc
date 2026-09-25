@@ -1,0 +1,3 @@
+       EXEC CICS HANDLE ABEND
+           PROGRAM(PGM)
+       END-EXEC.

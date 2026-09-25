@@ -10,7 +10,7 @@ public final class CicsHandlerSemantics {
                               Optional<Integer> entry,Optional<Ast.SourceProvenance> entryOrigin) { }
     public record Fact(String raw,Action action,TargetKind targetKind,Optional<String> targetSyntax,
                        Optional<ResolutionContracts.ResolutionStatus> labelBindingStatus,Optional<LabelTarget> labelTarget,
-                       Ast.SourceProvenance targetOrigin,Optional<String> programLiteral,
+                       Optional<Ast.SourceProvenance> targetOrigin,Optional<String> programLiteral,
                        List<CicsProgramControlAnalyzer.Option> options,List<String> gaps) {
         public Fact { options=List.copyOf(options);gaps=List.copyOf(gaps); }
     }
@@ -33,12 +33,14 @@ public final class CicsHandlerSemantics {
             for(var node:nodes.values())if(node instanceof Ast.EmbeddedLanguageStatement statement&&statement.language()==Ast.EmbeddedLanguage.CICS) {
                 var parsed=CicsHandlerSyntax.parse(statement.rawText());if(parsed.isEmpty())continue;var operation=parsed.get();
                 var gaps=new LinkedHashSet<>(operation.gaps());Optional<LabelTarget> target=Optional.empty();
-                Optional<ResolutionContracts.ResolutionStatus> status=Optional.empty();var origin=statement.meta().provenance();
+                Optional<ResolutionContracts.ResolutionStatus> status=Optional.empty();
+                Optional<Ast.SourceProvenance> origin=statement.operandAnchors().stream().map(Ast.EmbeddedOperandAnchor::provenance)
+                        .reduce((a,b)->{throw new IllegalArgumentException("handler has one target operand anchor");});
                 Optional<String> literal=Optional.empty();
                 if(operation.targetKind()==CicsHandlerSyntax.TargetKind.LABEL) {
                     var reference=statement.procedureOperands().size()==1?statement.procedureOperands().get(0):null;
                     var resolved=reference==null?null:refs.get(new ScalarMoveSemantics.NodeKey(unit.id(),reference.meta().id()));
-                    if(reference!=null)origin=reference.meta().provenance();
+                    if(reference!=null)origin=Optional.of(reference.meta().provenance());
                     status=Optional.of(resolved==null?ResolutionContracts.ResolutionStatus.UNRESOLVED:resolved.status());
                     if(resolved!=null&&resolved.occurrence().role()==ResolutionContracts.ReferenceRole.CICS_HANDLER_TARGET
                             &&resolved.status()==ResolutionContracts.ResolutionStatus.RESOLVED&&resolved.candidates().size()==1&&resolved.selectedCandidate().isPresent()) {
@@ -56,6 +58,9 @@ public final class CicsHandlerSemantics {
                     else if(target.get().entry().isEmpty())gaps.add("CICS_HANDLER_LABEL_ENTRY_UNAVAILABLE");
                 }
                 if(operation.targetKind()==CicsHandlerSyntax.TargetKind.PROGRAM) {
+                    var host=statement.hostOperands().stream().filter(h->h.option().equals("PROGRAM"))
+                            .reduce((a,b)->{throw new IllegalArgumentException("handler PROGRAM has one operand identity");});
+                    if(host.isPresent())origin=Optional.of(host.get().reference().meta().provenance());
                     var syntax=operation.targetSyntax().orElseThrow().strip();
                     if(syntax.startsWith("'")||syntax.startsWith("\"")) {literal=CicsCommandSyntax.literal(syntax);if(literal.isEmpty())gaps.add("CICS_HANDLER_INVALID_PROGRAM_LITERAL");}
                 }
