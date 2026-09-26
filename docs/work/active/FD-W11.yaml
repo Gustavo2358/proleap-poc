@@ -1,6 +1,6 @@
 id: FD-W11
 title: Corrigir continuação FILE e portabilidade do gate de naming na qualificação
-status: IN_PROGRESS
+status: DONE
 scope: [file-dependencies, semantic-product, harness]
 rule: O fact OBSERVED conserva continuação intrínseca; fileInventory.control publica separadamente continuação ordinária por outcome.
 oracle: FileControlContractTest.paragraphFileCompletionKeepsIntrinsicAndOrdinaryContinuationsDistinct; corpus CBSTM03A.CBL.
@@ -8,3 +8,5 @@ motivation: W11 demonstrou recusa bilateral em dois WRITE no fim de parágrafo; 
 evidence: RED/GREEN bilateral e naming sem ripgrep; FAST352 e Q946 PASS. Snapshot3 qualificado nas fronteiras; Q e E2E REUSED após ajuste exclusivo do harness. Ver estado canônico W11/C06.
 
 c06: C06-HUMAN-20260917; normalizar exclusivamente READ DATASET como FILE, conservar spelling/offsets. RED três oráculos; gates em andamento.
+
+closeout: Merged and main smoke PASS; core complete; W10 optional/deferred.

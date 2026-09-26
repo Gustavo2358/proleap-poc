@@ -1,6 +1,6 @@
 # AGENTS.md
 
-[FILE-DEPENDENCIES — core N+C qualificado](docs/domain/file-dependencies.md): source-only; W0–W9/W11 autorizados, closeout/merges autorizados; W10 DEFERRED/OPTIONAL.
+[FILE-DEPENDENCIES — CORE N+C concluído](docs/domain/file-dependencies.md): MERGED / COMPLETE; W10 DEFERRED / OPTIONAL_EXTENSION, requer nova autorização.
 
 ## Política de engenharia vigente
 
