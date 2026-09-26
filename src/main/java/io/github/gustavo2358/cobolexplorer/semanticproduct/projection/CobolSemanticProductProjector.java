@@ -74,7 +74,17 @@ public final class CobolSemanticProductProjector {
             Map<ResolutionContracts.ProgramUnitId, ReferenceOccurrences> occurrencesByUnit,
             ReferenceResolution resolution,
             ResolutionAnalysisReport report, ScalarMoveSemantics scalarMoves, Optional<StorageAccessSemantics> storage, Optional<io.github.gustavo2358.cobolexplorer.CicsProgramControlAnalyzer.Contribution> cics, io.github.gustavo2358.cobolexplorer.FileScopeSemantics fileScope,
-            Map<ResolutionContracts.ProgramUnitId,io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.SourceDependencyInventory> sourceDependencies) {
+            Map<ResolutionContracts.ProgramUnitId,io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.SourceDependencyInventory> sourceDependencies,
+            Map<ResolutionContracts.ProgramUnitId,io.github.gustavo2358.cobolexplorer.semanticproduct.FactDependencies> factDependencies) {
+        public FrontendProducts(CompilationUnitBuildResult frontend,CompilationUnitSymbolTables symbolTables,
+                Map<ResolutionContracts.ProgramUnitId,ReferenceOccurrences> occurrencesByUnit,ReferenceResolution resolution,
+                ResolutionAnalysisReport report,ScalarMoveSemantics scalarMoves,Optional<StorageAccessSemantics> storage,
+                Optional<io.github.gustavo2358.cobolexplorer.CicsProgramControlAnalyzer.Contribution> cics,
+                io.github.gustavo2358.cobolexplorer.FileScopeSemantics fileScope,
+                Map<ResolutionContracts.ProgramUnitId,SourceDependencyInventory> sourceDependencies) {
+            this(frontend,symbolTables,occurrencesByUnit,resolution,report,scalarMoves,storage,cics,fileScope,sourceDependencies,
+                io.github.gustavo2358.cobolexplorer.FactLocalitySemantics.prepare(frontend,symbolTables,resolution,report,storage));
+        }
         public FrontendProducts(CompilationUnitBuildResult frontend, CompilationUnitSymbolTables symbolTables,
                 Map<ResolutionContracts.ProgramUnitId, ReferenceOccurrences> occurrencesByUnit, ReferenceResolution resolution,
                 ResolutionAnalysisReport report, ScalarMoveSemantics scalarMoves, Optional<StorageAccessSemantics> storage,
@@ -84,7 +94,7 @@ public final class CobolSemanticProductProjector {
         }
         public FrontendProducts withSourceDependencies(List<io.github.gustavo2358.cobolexplorer.SourceDependencyFact> facts,List<String> gaps) {
             return new FrontendProducts(frontend,symbolTables,occurrencesByUnit,resolution,report,scalarMoves,storage,cics,fileScope,
-                io.github.gustavo2358.cobolexplorer.SourceDependencySemantics.associate(frontend,facts,gaps));
+                io.github.gustavo2358.cobolexplorer.SourceDependencySemantics.associate(frontend,facts,gaps),factDependencies);
         }
         public FrontendProducts(CompilationUnitBuildResult frontend, CompilationUnitSymbolTables symbolTables, Map<ResolutionContracts.ProgramUnitId, ReferenceOccurrences> occurrencesByUnit, ReferenceResolution resolution, ResolutionAnalysisReport report, ScalarMoveSemantics scalarMoves, Optional<StorageAccessSemantics> storage, Optional<io.github.gustavo2358.cobolexplorer.CicsProgramControlAnalyzer.Contribution> cics) {
             this(frontend,symbolTables,occurrencesByUnit,resolution,report,scalarMoves,storage,cics,io.github.gustavo2358.cobolexplorer.FileScopeSemantics.analyze(symbolTables));
@@ -101,6 +111,7 @@ public final class CobolSemanticProductProjector {
         }
         public FrontendProducts {
             sourceDependencies=Map.copyOf(sourceDependencies);
+            factDependencies=Map.copyOf(factDependencies);
             Objects.requireNonNull(cics);
             if(cics.isPresent()&&!cics.get().belongsTo(frontend))throw new IllegalArgumentException("CICS snapshot belongs to another frontend");
             Objects.requireNonNull(storage);
@@ -193,8 +204,11 @@ public final class CobolSemanticProductProjector {
             positionsByStatement.put(position.statement(), position);
         Map<Ast.Statement, ContinuationProjection> continuations = new IdentityHashMap<>();
         var observedOperandIds = new HashMap<Integer,OperandId>();
+        var scalarDataIds=declarations.facts().stream()
+            .filter(d->d.scalarText().isPresent()||d.scalarInteger().isPresent())
+            .map(CobolSemanticProduct.DataDeclaration::id).collect(java.util.stream.Collectors.toSet());
         for (StatementPlan plan : plans)
-            projectStatement(plan, inputs, declarations.ids(), statementIds,
+            projectStatement(plan, inputs, declarations.ids(), scalarDataIds, statementIds,
                     positionsByStatement, continuations, statements, gaps, observedOperandIds);
 
         CobolSemanticProduct.InventoryStatus inventoryStatus =
@@ -207,9 +221,35 @@ public final class CobolSemanticProductProjector {
             inventoryStatus = InventoryStatus.PARTIAL;
         CobolSemanticProduct.CoverageSummary coverage = coverage(
                 inventoryStatus, statements, inputs.unitSummary());
+        var fileInventory=files(inputs, declarations.ids(), statementIds, observedOperandIds);
+        var topology=io.github.gustavo2358.cobolexplorer.ControlTopologySemantics.analyze(
+                inputs.selectedSource().unit(), inputs.selectedSource().table(), products.resolution(), products.report(),
+                statementIds, fileInventory, products.cics().orElse(null));
         return new ScopedProjection(new CobolSemanticProduct.State(inputs.boundaryUnit(),
                 policy(inputs.report().policy()), declarations.facts(),
-                statements, gaps, coverage, entries, storageIndependence(inputs, declarations.ids()), storage(inputs, declarations.ids()), files(inputs, declarations.ids(), statementIds, observedOperandIds),products.sourceDependencies().getOrDefault(unitId,io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.SourceDependencyInventory.unavailable())),java.util.Collections.unmodifiableMap(new LinkedHashMap<>(declarations.ids())));
+                statements, gaps, coverage, entries, storageIndependence(inputs, declarations.ids()), storage(inputs, declarations.ids()), fileInventory,products.sourceDependencies().getOrDefault(unitId,io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.SourceDependencyInventory.unavailable()),ordinaryContinuations(inputs,statementIds,statements),Optional.of(topology),Optional.ofNullable(products.factDependencies().get(unitId))),java.util.Collections.unmodifiableMap(new LinkedHashMap<>(declarations.ids())));
+    }
+
+    private static List<OrdinaryContinuation> ordinaryContinuations(ProjectionInputs inputs,
+            Map<Ast.Statement,StatementId> ids, List<StatementFact> facts) {
+        if(!inputs.report().inputComplete(inputs.unitId()))return List.of();
+        var sources=new HashMap<StatementId,Ast.Statement>();ids.forEach((source,id)->sources.put(id,source));
+        var result=new ArrayList<OrdinaryContinuation>();
+        for(var fact:facts) {
+            if(!(fact instanceof MoveFact || fact instanceof IfFact || fact instanceof EvaluateFact
+                    || fact instanceof PerformFact || fact instanceof ProcedurePerformFact)) continue;
+            var source=sources.get(fact.header().id());
+            if(source==null || !fact.header().provenance().exact()) continue;
+            for(var division:inputs.selectedSource().unit().program().divisions()) {
+                var target=canonicalStatement(Optional.ofNullable(division.ordinaryContinuations().get(source.meta().id())),inputs,ids);
+                var intrinsic=fact instanceof MoveFact m?m.normalContinuation():fact instanceof IfFact f?f.normalContinuation():
+                    fact instanceof EvaluateFact e?e.normalContinuation():fact instanceof PerformFact f?f.normalContinuation():
+                    ((ProcedurePerformFact)fact).normalContinuation();
+                target.filter(next->!intrinsic.statement().equals(Optional.of(next)))
+                    .ifPresent(next->result.add(new OrdinaryContinuation(fact.header().id(),next,fact.header().provenance())));
+            }
+        }
+        return List.copyOf(result);
     }
 
     private static FileInventory files(ProjectionInputs inputs, Map<ResolutionContracts.SemanticEntityId, DataItemId> dataIds, Map<Ast.Statement,StatementId> statementIds,Map<Integer,OperandId> operandIds) {
@@ -422,7 +462,9 @@ public final class CobolSemanticProductProjector {
                     r.proved()?StorageRelationStatus.PROVEN:StorageRelationStatus.UNPROVEN,provenance(r.clause().meta().provenance()),
                     r.proved()?List.of():List.of("RENAMES_NOT_PROVEN"))).toList(),initialStorage(inputs),
                 inputs.products().storage().get().layout().logicalViews().stream().filter(v->v.node().unit().equals(inputs.unitId()))
-                    .map(v->new LogicalTextView(storageNode(inputs,v.node()),storageNode(inputs,v.root()),v.start(),v.length())).toList());
+                    .map(v->new LogicalTextView(storageNode(inputs,v.node()),storageNode(inputs,v.root()),v.start(),v.length())).toList(),
+                inputs.products().storage().get().layout().logicalExactViews().stream().filter(v->v.node().unit().equals(inputs.unitId()))
+                    .map(v->new LogicalExactView(storageNode(inputs,v.node()),storageNode(inputs,v.representative()),v.length())).toList());
     }
     private static StorageEntryState initialStorage(ProjectionInputs inputs) {
         var facts=inputs.products().storage().orElseThrow().initial().facts(inputs.unitId());
@@ -449,7 +491,11 @@ public final class CobolSemanticProductProjector {
             if (division.divisionKind() != Ast.DivisionKind.PROCEDURE) continue;
             // Intrinsic completion is paragraph-local, including native FILE surfaces.
             // The FILE outcome plan carries the separate ordinary continuation.
-            var next = canonicalStatement(Optional.ofNullable(division.normalContinuations().get(source.meta().id())), inputs, ids);
+            var following=division.normalContinuations().get(source.meta().id());
+            if(following==null && (source instanceof Ast.ModeledStatement m && m.fileIo().isEmpty()
+                    || source instanceof Ast.PreservedStatement p && p.fileIo().isEmpty()))
+                following=division.ordinaryContinuations().get(source.meta().id());
+            var next = canonicalStatement(Optional.ofNullable(following), inputs, ids);
             if (next.isPresent()) return new NormalContinuation(ContinuationAvailability.KNOWN, next, provenance(source.meta().provenance()));
         }
         return NormalContinuation.unavailable(provenance(source.meta().provenance()));
@@ -564,10 +610,23 @@ public final class CobolSemanticProductProjector {
         return CobolSemanticPort.open(project(products, unitId));
     }
 
+    private static boolean partialBasic(Ast.PerformStatement p, ProjectionInputs inputs) {
+        return !ProcedurePerformSemantics.applicable(p) && ProcedurePerformSemantics.structuralCandidate(p)
+            && !inputs.products().scalarMoves().performs().fact(inputs.unitId(),p.meta().id()).simpleProfile()
+            && inputs.products().scalarMoves().procedurePerforms().fact(inputs.unitId(),p.meta().id())
+                .filter(f->f.start().isPresent()).isPresent();
+    }
+
     private static StatementPlan plan(StatementPosition position, ProjectionInputs inputs) {
+        if(position.statement() instanceof Ast.EmbeddedLanguageStatement embedded && inputs.products().cics().flatMap(c->c.commandFact(inputs.unitId(),embedded.meta().id())).isPresent())
+            return new StatementPlan(position,Capability.supported("CICS","CICS_COMMAND"),embedded.hostOperands().stream().map(h->inputs.entryFor(h.reference())).toList());
+        if(position.statement() instanceof Ast.EmbeddedLanguageStatement embedded && inputs.products().cics().flatMap(c->c.abendFact(inputs.unitId(),embedded.meta().id())).isPresent())
+            return new StatementPlan(position,Capability.supported("CICS","CICS_ABEND"),List.of());
+        if(position.statement() instanceof Ast.EmbeddedLanguageStatement embedded && inputs.products().cics().flatMap(c->c.handlerFact(inputs.unitId(),embedded.meta().id())).isPresent())
+            return new StatementPlan(position,Capability.supported("CICS","CICS_HANDLER"),embedded.hostOperands().stream().map(h->inputs.entryFor(h.reference())).toList());
         if(position.statement() instanceof Ast.EmbeddedLanguageStatement embedded && inputs.products().cics().flatMap(c->c.fact(inputs.unitId(),embedded.meta().id())).isPresent())
             return new StatementPlan(position,Capability.supported("CICS","CICS_PROGRAM_CONTROL"),embedded.hostOperands().stream().map(h->inputs.entryFor(h.reference())).toList());
-        if (position.statement() instanceof Ast.PerformStatement p && ProcedurePerformSemantics.applicable(p))
+        if (position.statement() instanceof Ast.PerformStatement p && (ProcedurePerformSemantics.applicable(p) || partialBasic(p, inputs)))
             return new StatementPlan(position, Capability.supported("PERFORM", "PERFORM_PROCEDURE"),
                 p.controls().stream()
                     .flatMap(c->performControlEntries(c,inputs).stream()).toList());
@@ -579,10 +638,15 @@ public final class CobolSemanticProductProjector {
         if (position.statement() instanceof Ast.MoveStatement move) {
             Capability capability = moveCapability(move);
             var sequence=inputs.products().storage().map(s->s.sequence(new StorageLayoutSemantics.Key(inputs.unitId(),move.meta().id()))).orElse(List.of());
-            if((move.corresponding() || move.source() instanceof Ast.LiteralExpression || move.source() instanceof Ast.DataReference)
+            boolean regionalSequence=(move.corresponding() || move.source() instanceof Ast.LiteralExpression || move.source() instanceof Ast.DataReference)
                     && move.targets().stream().allMatch(Ast.DataReference.class::isInstance)
-                    && !sequence.isEmpty()&&sequence.stream().allMatch(e->e.kind()!=StorageAccessSemantics.MoveKind.UNAVAILABLE))
-                capability=Capability.supported("MOVE","REGIONAL_TRANSFER_SEQUENCE");
+                    && !sequence.isEmpty()&&sequence.stream().anyMatch(e->e.kind()!=StorageAccessSemantics.MoveKind.UNAVAILABLE);
+            boolean logicalSequence=move.targets().size()>1 && move.source() instanceof Ast.LiteralExpression literal
+                && literal.logicalText().isPresent() && move.targets().stream().filter(Ast.DataReference.class::isInstance)
+                    .map(Ast.DataReference.class::cast).anyMatch(receiver->inputs.products().storage()
+                        .flatMap(st->st.logicalWholeItem(new StorageLayoutSemantics.Key(inputs.unitId(),receiver.meta().id())))
+                        .flatMap(inputs.products().scalarMoves()::declaration).isPresent());
+            if(regionalSequence||logicalSequence)capability=Capability.supported("MOVE","REGIONAL_TRANSFER_SEQUENCE");
             List<ReferenceResolution.Entry> entries = new ArrayList<>();
             if (capability.supported()) {
                 for(var receiver:move.targets()) {
@@ -590,14 +654,14 @@ public final class CobolSemanticProductProjector {
                 require(target.occurrence().role() == ResolutionContracts.ReferenceRole.VALUE_WRITE,
                         "MOVE target role must come from the canonical occurrence");
                 entries.add(target);
-                capability = bindingCapability(capability, target, "MOVE");
+                if(!regionalSequence&&!logicalSequence)capability = bindingCapability(capability, target, "MOVE");
                 }
                 if (move.source() instanceof Ast.DataReference source) {
                     var read = inputs.entryFor(source);
                     require(read.occurrence().role() == ResolutionContracts.ReferenceRole.VALUE_READ,
                             "MOVE source role must come from the canonical occurrence");
                     entries.add(read);
-                    capability = bindingCapability(capability, read, "MOVE");
+                    if(!regionalSequence&&!logicalSequence)capability = bindingCapability(capability, read, "MOVE");
                 }
             }
             return new StatementPlan(position, capability, entries);
@@ -609,9 +673,9 @@ public final class CobolSemanticProductProjector {
         if (position.statement() instanceof Ast.GoToStatement g && GoToSemantics.simple(g))
             return new StatementPlan(position, Capability.supported("GO_TO", "LOCAL_UNCONDITIONAL_PARAGRAPH"), List.of());
 
-        if (position.statement() instanceof Ast.EvaluateStatement e && inputs.products().scalarMoves().evaluates().fact(inputs.unitId(), e.meta().id()).supportedShape())
-            return new StatementPlan(position, Capability.supported("EVALUATE", "SIMPLE_SUBJECT_LITERAL_ARMS"),
-                    conditionEntries(e.subjects().get(0), inputs));
+        if (position.statement() instanceof Ast.EvaluateStatement e && inputs.products().scalarMoves().evaluates().fact(inputs.unitId(), e.meta().id()).structureKnown())
+            return new StatementPlan(position, Capability.supported("EVALUATE", "ORDERED_ARMS"),
+                    e.subjects().stream().flatMap(s -> conditionEntries(s,inputs).stream()).toList());
 
         if (position.statement() instanceof Ast.IfStatement branch)
             return new StatementPlan(position, Capability.supported("IF", "IF_STRUCTURAL"),
@@ -645,6 +709,16 @@ public final class CobolSemanticProductProjector {
         var entries=new LinkedHashSet<ReferenceResolution.Entry>();
         effectSummary(position.statement(),inputs).ifPresent(e->java.util.stream.Stream.of(e.knownReads(),e.mayWrites(),e.exposedRegions())
             .flatMap(List::stream).map(inputs::entryFor).forEach(entries::add));
+        var surfaceOperands=position.statement() instanceof Ast.ModeledStatement m?m.operands()
+            :position.statement() instanceof Ast.PreservedStatement p?p.operands():List.<Ast.StatementOperand>of();
+        for(var operand:surfaceOperands) {
+            var pending=new java.util.ArrayDeque<Ast.Node>();pending.add(operand.value());
+            while(!pending.isEmpty()) {
+                var node=pending.removeFirst();var entry=inputs.optionalEntryFor(node);
+                if(entry!=null)entries.add(entry);
+                pending.addAll(Ast.children(node));
+            }
+        }
         var file=position.statement() instanceof Ast.ModeledStatement m?m.fileIo():position.statement() instanceof Ast.PreservedStatement p?p.fileIo():Optional.<Ast.FileIoSurface>empty();
         file.ifPresent(f->{for(var operand:f.operands()) {
             var pending=new java.util.ArrayDeque<Ast.Node>();pending.add(operand.value());
@@ -657,13 +731,17 @@ public final class CobolSemanticProductProjector {
         return inputs.products().storage().flatMap(s->s.effects(new StorageLayoutSemantics.Key(inputs.unitId(),statement.meta().id())))
             .or(()->io.github.gustavo2358.cobolexplorer.StatementEffectSummary.of(statement));
     }
-    private static EffectSummary projectEffects(io.github.gustavo2358.cobolexplorer.StatementEffectSummary e,Map<Integer,OperandId> ids) {
+    private static EffectSummary projectEffects(io.github.gustavo2358.cobolexplorer.StatementEffectSummary e,Map<Integer,OperandId> ids,
+            List<CobolSemanticProduct.DataReference> references) {
         java.util.function.Function<List<Ast.DataReference>,List<OperandId>> mapped=rs->rs.stream().map(r->ids.get(r.meta().id())).filter(Objects::nonNull).toList();
         var reads=mapped.apply(e.knownReads());var writes=mapped.apply(e.mayWrites());var exposures=mapped.apply(e.exposedRegions());
-        return new EffectSummary(reads,writes,mapped.apply(e.mustOverwrite()),exposures,
-            reads.size()==e.knownReads().size()?EffectBound.valueOf(e.unknownReadBound().name()):EffectBound.ALL,
-            writes.size()==e.mayWrites().size()?EffectBound.valueOf(e.unknownWriteBound().name()):EffectBound.ALL,
-            exposures.size()==e.exposedRegions().size()?EffectBound.valueOf(e.unknownExposureBound().name()):EffectBound.ALL,
+        var exact=references.stream().filter(r->e.proof()==io.github.gustavo2358.cobolexplorer.StatementEffectSummary.Proof.ACCEPT_TARGET
+                ?r.wholeItemAccess().isPresent():r.regionalAccess().isPresent())
+            .map(CobolSemanticProduct.DataReference::id).collect(java.util.stream.Collectors.toSet());
+        return new EffectSummary(reads,writes,mapped.apply(e.mustOverwrite()).stream().filter(exact::contains).toList(),exposures,
+            EffectBound.valueOf(e.unknownReadBound().name()),
+            EffectBound.valueOf(e.unknownWriteBound().name()),
+            EffectBound.valueOf(e.unknownExposureBound().name()),
             EnvironmentEffect.valueOf(e.environment().name()),EffectValueTransform.valueOf(e.values().name()),EffectProof.valueOf(e.proof().name()));
     }
 
@@ -880,6 +958,7 @@ public final class CobolSemanticProductProjector {
     private static void projectStatement(
             StatementPlan plan, ProjectionInputs inputs,
             Map<ResolutionContracts.SemanticEntityId, CobolSemanticProduct.DataItemId> dataIds,
+            Set<CobolSemanticProduct.DataItemId> scalarDataIds,
             Map<Ast.Statement, CobolSemanticProduct.StatementId> statementIds,
             Map<Ast.Statement, StatementPosition> positionsByStatement,
             Map<Ast.Statement, ContinuationProjection> continuations,
@@ -892,6 +971,88 @@ public final class CobolSemanticProductProjector {
                 provenance(plan.position().statement().meta().provenance());
         CobolSemanticProduct.Containment containment = containment(
                 plan.position(), statementIds);
+
+        var command=inputs.products().cics().flatMap(c->c.commandFact(inputs.unitId(),plan.position().statement().meta().id()));
+        if(command.isPresent()) {
+            var source=command.get();var codes=new LinkedHashSet<>(source.gaps());codes.add("CICS_COMMAND_EFFECTS_NOT_MODELED");
+            var embedded=(Ast.EmbeddedLanguageStatement)plan.position().statement();var hosts=new HashMap<Integer,Ast.EmbeddedHostOperand>();
+            for(var host:embedded.hostOperands())require(hosts.put(host.optionStart(),host)==null,"one canonical command operand per option");
+            var options=new ArrayList<CicsOption>();int ordinal=0;
+            for(var option:source.options()) {
+                Optional<DataReference> reference=Optional.empty();var h=hosts.get(option.start());
+                if(h!=null) {
+                    var entry=inputs.entryFor(h.reference());addReportGaps(statementId,entry.occurrence(),inputs,provenance(h.reference().meta().provenance()),gaps);
+                    if(projectableDataBinding(entry,inputs))reference=Optional.of(new DataReference(new OperandId(statementId,ordinal++),
+                        h.role()==Ast.EmbeddedHostRole.WRITE?OperandRole.WRITE:OperandRole.READ,nominalBinding(entry,dataIds),
+                        provenance(h.reference().meta().provenance()),Optional.empty(),regionalAccess(inputs,h.reference().meta().id()),List.of(),
+                        h.reference().understanding()==Ast.ReferenceUnderstanding.STRUCTURED&&h.reference().subscriptGroups().isEmpty()&&h.reference().referenceModification()==null
+                            ?nominalBinding(entry,dataIds).selected():Optional.empty()));
+                }
+                options.add(new CicsOption(option.name(),option.operand(),option.start(),option.end(),reference));
+            }
+            statements.add(new CicsCommandFact(header(statementId,plan.position().ordinal(),containment,statementProvenance,CoverageStatus.PARTIAL,
+                readiness(ReadinessStatus.PARTIAL,"typed CICS command",ReadinessStatus.PARTIAL,"control in ControlTopology",ReadinessStatus.BLOCKED,"command effects not modeled")),
+                CicsCommandKind.valueOf(source.command().name()),source.supported()?CicsCommandSyntaxStatus.SUPPORTED:CicsCommandSyntaxStatus.UNAVAILABLE,
+                source.raw(),options,List.copyOf(codes),commandLength(embedded,statementId,ordinal,inputs,dataIds)));
+
+            for(var code:codes)gaps.add(capabilityGap(statementId,code,"Command dimension remains partial",statementProvenance));
+            addContainmentGap(containment,statementId,statementProvenance,gaps);return;
+        }
+        var abend=inputs.products().cics().flatMap(c->c.abendFact(inputs.unitId(),plan.position().statement().meta().id()));
+        if(abend.isPresent()) {
+            var source=abend.get();var codes=new LinkedHashSet<>(source.gaps());codes.add("CICS_ABEND_DISPATCH_NOT_MODELED");
+            var options=source.options().stream().map(o->new CicsOption(o.name(),o.operand(),o.start(),o.end(),Optional.empty())).toList();
+            statements.add(new CicsAbendFact(header(statementId,plan.position().ordinal(),containment,statementProvenance,CoverageStatus.PARTIAL,
+                readiness(ReadinessStatus.PARTIAL,"typed ABEND event",ReadinessStatus.BLOCKED,"ABEND dispatch not modeled",ReadinessStatus.BLOCKED,"ABEND runtime effects not modeled")),
+                CicsAbendEventKind.ABEND,CicsAbendEligibility.valueOf(source.eligibility().name()),source.raw(),options,List.copyOf(codes)));
+
+            for(var code:codes)gaps.add(capabilityGap(statementId,code,"ABEND event dimension remains partial",statementProvenance));
+            addContainmentGap(containment,statementId,statementProvenance,gaps);return;
+        }
+        var handler=inputs.products().cics().flatMap(c->c.handlerFact(inputs.unitId(),plan.position().statement().meta().id()));
+        if(handler.isPresent()) {
+            var source=handler.get();var codes=new LinkedHashSet<>(source.gaps());
+            codes.add("CICS_HANDLER_EXECUTION_STATE_NOT_MODELED");
+            var embedded=(Ast.EmbeddedLanguageStatement)plan.position().statement();
+            for(var reference:embedded.procedureOperands()) {
+                var entry=inputs.entryFor(reference);
+                addReportGaps(statementId,entry.occurrence(),inputs,provenance(reference.meta().provenance()),gaps);
+            }
+            Optional<CallTarget> program=source.programLiteral().map(value->new LiteralCallTarget(new OperandId(statementId,0),value,
+                source.targetSyntax().orElseThrow(),Optional.of(new TextValue(value)),provenance(source.targetOrigin().orElseThrow())));
+            var options=new ArrayList<CicsOption>();int ordinal=1;
+            for(var option:source.options()) {
+                Optional<DataReference> reference=Optional.empty();
+                var host=embedded.hostOperands().stream().filter(h->h.optionStart()==option.start()).reduce((left,right)->{throw new IllegalArgumentException("handler operand has one canonical identity at this position");});
+                if(host.isPresent()) {
+                    var h=host.get();var entry=inputs.entryFor(h.reference());
+                    addReportGaps(statementId,entry.occurrence(),inputs,provenance(h.reference().meta().provenance()),gaps);
+                    if(projectableDataBinding(entry,inputs))reference=Optional.of(new DataReference(new OperandId(statementId,ordinal++),
+                        h.role()==Ast.EmbeddedHostRole.WRITE?OperandRole.WRITE:OperandRole.READ,nominalBinding(entry,dataIds),
+                        provenance(h.reference().meta().provenance()),Optional.empty(),regionalAccess(inputs,h.reference().meta().id()),List.of(),
+                        h.reference().understanding()==Ast.ReferenceUnderstanding.STRUCTURED&&h.reference().subscriptGroups().isEmpty()&&h.reference().referenceModification()==null
+                            ?nominalBinding(entry,dataIds).selected():Optional.empty()));
+                }
+                if(option.name().equals("PROGRAM")&&source.targetKind()==io.github.gustavo2358.cobolexplorer.CicsHandlerSemantics.TargetKind.PROGRAM) {
+                    if(program.isEmpty()&&reference.isPresent())program=Optional.of(reference.get());reference=Optional.empty();
+                }
+                options.add(new CicsOption(option.name(),option.operand(),option.start(),option.end(),reference));
+            }
+            if(source.targetKind()==io.github.gustavo2358.cobolexplorer.CicsHandlerSemantics.TargetKind.PROGRAM&&program.isEmpty())codes.add("CICS_HANDLER_PROGRAM_BINDING_UNAVAILABLE");
+            var label=source.labelTarget().map(t->new CicsHandlerLabelTarget(new ProcedureId(inputs.boundaryUnit(),t.identity().localId()),provenance(t.declarationOrigin())));
+            var entry=canonicalStatement(source.labelTarget().flatMap(t->t.entry()),inputs,statementIds);
+            if(containment.branch()==Branch.UNKNOWN)codes.add(CONTAINMENT_GAP);
+            statements.add(new CicsHandlerFact(header(statementId,plan.position().ordinal(),containment,statementProvenance,CoverageStatus.PARTIAL,
+                readiness(ReadinessStatus.PARTIAL,"typed handler operation",ReadinessStatus.BLOCKED,"handler state and dispatch not modeled",ReadinessStatus.BLOCKED,"CICS effects not modeled")),
+                CicsHandlerKind.ABEND,CicsHandlerAction.valueOf(source.action().name()),CicsHandlerTargetKind.valueOf(source.targetKind().name()),source.targetSyntax(),
+                source.labelBindingStatus().map(s->ResolutionStatus.valueOf(s.name())),label,entry,
+                entry.isPresent()?source.labelTarget().flatMap(t->t.entryOrigin()).map(CobolSemanticProductProjector::provenance):Optional.empty(),
+                source.targetOrigin().map(CobolSemanticProductProjector::provenance),program,new CicsHandlerScope(CicsHandlerScopeKind.CURRENT_EXECUTION_LOGICAL_LEVEL,Availability.UNAVAILABLE,statementProvenance),
+                source.raw(),options,List.copyOf(codes)));
+
+            for(var code:codes)gaps.add(capabilityGap(statementId,code,"Handler operation retained; execution/state/dispatch remain unproved",statementProvenance));
+            addContainmentGap(containment,statementId,statementProvenance,gaps);return;
+        }
 
         var cicsFile=inputs.products().cics().flatMap(c->c.fileFact(inputs.unitId(),plan.position().statement().meta().id()));
         if(cicsFile.isPresent()) {
@@ -1022,8 +1183,8 @@ public final class CobolSemanticProductProjector {
             var proof=inputs.products().scalarMoves().goTos().fact(inputs.unitId(),g.meta().id());
             var codes=new ArrayList<>(proof.gaps());
             if(containment.branch()==Branch.UNKNOWN)codes.add(CONTAINMENT_GAP);
-            var entry=codes.isEmpty()?canonicalStatement(proof.entry(),inputs,statementIds):Optional.<StatementId>empty();
-            if(codes.isEmpty() && entry.isEmpty())codes.add("GO_TO_TARGET_ENTRY_UNAVAILABLE");
+            var entry=canonicalStatement(proof.entry(),inputs,statementIds);
+            if(entry.isEmpty() && codes.isEmpty())codes.add("GO_TO_TARGET_ENTRY_UNAVAILABLE");
             var status=codes.isEmpty()?ReadinessStatus.SUFFICIENT:ReadinessStatus.PARTIAL;
             statements.add(new GoToFact(header(statementId,plan.position().ordinal(),containment,statementProvenance,
                 codes.isEmpty()?CoverageStatus.MODELED:CoverageStatus.PARTIAL,
@@ -1035,7 +1196,7 @@ public final class CobolSemanticProductProjector {
             return;
         }
 
-        if(plan.position().statement() instanceof Ast.PerformStatement p && ProcedurePerformSemantics.applicable(p)) {
+        if(plan.position().statement() instanceof Ast.PerformStatement p && (ProcedurePerformSemantics.applicable(p) || partialBasic(p, inputs))) {
             var proof=inputs.products().scalarMoves().procedurePerforms().fact(inputs.unitId(),p.meta().id()).orElseThrow();
             java.util.function.Function<ProcedurePerformSemantics.Endpoint,PerformTarget> endpoint=t->new PerformTarget(
                 new ProcedureId(inputs.boundaryUnit(),t.identity().localId()),provenance(t.referenceOrigin()),provenance(t.paragraphOrigin()));
@@ -1043,7 +1204,10 @@ public final class CobolSemanticProductProjector {
                 canonicalStatement(Optional.of(r.entry()),inputs,statementIds).orElseThrow(),
                 r.statements().stream().map(id->canonicalStatement(Optional.of(id),inputs,statementIds).orElseThrow()).toList(),
                 r.completions().stream().map(id->canonicalStatement(Optional.of(id),inputs,statementIds).orElseThrow()).toList(),provenance(r.origin()))).toList();
-            var codes=new ArrayList<>(proof.gaps());if(containment.branch()==Branch.UNKNOWN)codes.add(CONTAINMENT_GAP);
+            var codes=new ArrayList<>(proof.gaps());
+            if(partialBasic(p,inputs))for(var code:inputs.products().scalarMoves().performs().fact(inputs.unitId(),p.meta().id()).gaps())
+                if(!codes.contains(code))codes.add(code);
+            if(containment.branch()==Branch.UNKNOWN)codes.add(CONTAINMENT_GAP);
             int[] operandOrdinal={0};
             var loop=proof.loop().map(l->{
                 var references=new ArrayList<DataReference>();var predicate=l.predicate();
@@ -1096,7 +1260,10 @@ public final class CobolSemanticProductProjector {
                 readiness(status,"typed paragraph range",status,"activation-specific continuation",ReadinessStatus.PARTIAL,"general effects not published")),
                 proof.start().map(endpoint),proof.end().map(endpoint),paragraphs,
                 new NormalContinuation(proof.resume().isPresent()?ContinuationAvailability.KNOWN:ContinuationAvailability.UNAVAILABLE,
-                    canonicalStatement(proof.resume(),inputs,statementIds),provenance(proof.resumeOrigin())),loop,times,varying,codes));
+                    canonicalStatement(proof.resume(),inputs,statementIds),provenance(proof.resumeOrigin())),loop,times,varying,codes,
+                partialBasic(p,inputs)||paragraphs.isEmpty()&&proof.start().flatMap(ProcedurePerformSemantics.Endpoint::entry).isPresent()
+                    ?PerformPublicationKind.STRUCTURAL_FACTS:PerformPublicationKind.LEGACY_PROFILE,
+                canonicalStatement(proof.start().flatMap(ProcedurePerformSemantics.Endpoint::entry),inputs,statementIds)));
             for(var code:codes)gaps.add(new Gap(statementId,code.equals(CONTAINMENT_GAP)?GapScope.STRUCTURE:GapScope.CAPABILITY,code,"PERFORM range proof unavailable",statementProvenance));
             return;
         }
@@ -1122,7 +1289,7 @@ public final class CobolSemanticProductProjector {
         }
 
         if (plan.position().statement() instanceof Ast.EvaluateStatement e && plan.capability().supported()) {
-            projectEvaluate(e, plan, inputs, dataIds, statementIds, statementId, containment, statements, gaps);
+            projectEvaluate(e, plan, inputs, dataIds, scalarDataIds, statementIds, statementId, containment, statements, gaps);
             return;
         }
 
@@ -1154,20 +1321,26 @@ public final class CobolSemanticProductProjector {
                     blockedReadiness("statement shape is outside the current projection capability"));
             var references=new ArrayList<CobolSemanticProduct.DataReference>();
             var referenceIds=new java.util.HashMap<Integer,OperandId>();
+            var wholeEffectReferences=new java.util.HashSet<Integer>();
+            effectSummary(plan.position().statement(),inputs).ifPresent(e->java.util.stream.Stream.of(e.knownReads(),e.mayWrites())
+                .flatMap(List::stream).forEach(r->wholeEffectReferences.add(r.meta().id())));
             for(var entry:plan.entries()) {
                 var role=entry.occurrence().role();
                 if(projectableDataBinding(entry,inputs) && (role==ResolutionContracts.ReferenceRole.VALUE_READ || role==ResolutionContracts.ReferenceRole.VALUE_WRITE)) {
                     referenceIds.put(entry.occurrence().referenceAstNodeId(),new OperandId(statementId,references.size()));
                     references.add(new CobolSemanticProduct.DataReference(new OperandId(statementId,references.size()),
                         role==ResolutionContracts.ReferenceRole.VALUE_READ?OperandRole.READ:OperandRole.WRITE,
-                        nominalBinding(entry,dataIds),provenance(entry.occurrence().meta().provenance()),Optional.empty(), regionalAccess(inputs,entry.occurrence().referenceAstNodeId())));
+                        nominalBinding(entry,dataIds),provenance(entry.occurrence().meta().provenance()),
+                        wholeEffectReferences.contains(entry.occurrence().referenceAstNodeId())
+                            ?entry.selectedCandidate().map(c->dataIds.get(c.entityId())).filter(scalarDataIds::contains).map(WholeItemAccess::new)
+                            :Optional.empty(), regionalAccess(inputs,entry.occurrence().referenceAstNodeId())));
                 }
             }
             observedOperandIds.putAll(referenceIds);
             statements.add(new CobolSemanticProduct.ObservedStatement(header,
                     plan.capability().kind(),
                     plan.capability().shape(), plan.capability().gapCode(), observedContinuation(plan.position().statement(), inputs, statementIds), references,
-                    effectSummary(plan.position().statement(),inputs).map(e->projectEffects(e,referenceIds))));
+                    effectSummary(plan.position().statement(),inputs).map(e->projectEffects(e,referenceIds,references))));
             gaps.add(new CobolSemanticProduct.Gap(statementId,
                     CobolSemanticProduct.GapScope.CAPABILITY,
                     plan.capability().gapCode(),
@@ -1248,18 +1421,38 @@ public final class CobolSemanticProductProjector {
                             TextAdjustmentRule.RIGHT_PAD_SPACE, adjustment.receiverExtent(),
                             new TextValue(adjustment.result()), statementProvenance)), regionalMove(inputs, move.meta().id()));
             var effects=inputs.products().storage().map(s->s.sequence(new StorageLayoutSemantics.Key(inputs.unitId(),move.meta().id()))).orElse(List.of());
-            if(effects.size()>1) {
+            if(move.targets().size()>1) {
                 var extra=new ArrayList<MoveTransfer>();
-                for(int i=1;i<effects.size();i++) {
-                    var e=effects.get(i);var receiver=(Ast.DataReference)move.targets().get(i);
+                for(int i=1;i<move.targets().size();i++) {
+                    var e=i<effects.size()?effects.get(i):null;var receiver=(Ast.DataReference)move.targets().get(i);
                     MoveSource sending;
                     if(source instanceof LiteralSource literal)sending=new LiteralSource(new OperandId(statementId,i*2),literal.kind(),literal.value(),literal.provenance(),literal.logicalValue());
                     else {var read=(DataReference)source;sending=new DataReference(new OperandId(statementId,i*2),OperandRole.READ,read.binding(),read.provenance(),Optional.empty(),read.regionalAccess());}
-                    var receiving=new DataReference(new OperandId(statementId,i*2+1),OperandRole.WRITE,nominalBinding(plan.entries().get(i),dataIds),provenance(receiver.meta().provenance()),Optional.empty(),regionalAccess(inputs,receiver.meta().id()));
-                    extra.add(new MoveTransfer(sending,receiving,new RegionalMove(RegionalMoveKind.valueOf(e.kind().name()),e.bytes(),e.reasons().stream().map(Enum::name).toList())));
+                    var logical=inputs.products().storage().flatMap(st->st.logicalWholeItem(new StorageLayoutSemantics.Key(inputs.unitId(),receiver.meta().id()))).map(dataIds::get);
+                    var receiving=new DataReference(new OperandId(statementId,i*2+1),OperandRole.WRITE,nominalBinding(plan.entries().get(i),dataIds),provenance(receiver.meta().provenance()),Optional.empty(),regionalAccess(inputs,receiver.meta().id()),List.of(),logical);
+                    var effect=e==null?new RegionalMove(RegionalMoveKind.UNAVAILABLE,List.of(),List.of("ACCESS_NOT_PROVEN"))
+                        :new RegionalMove(RegionalMoveKind.valueOf(e.kind().name()),e.bytes(),e.reasons().stream().map(Enum::name).toList());
+                    extra.add(new MoveTransfer(sending,receiving,effect));
                 }
                 fact=new MoveFact(fact.header(),fact.source(),fact.target(),CopySemantics.UNAVAILABLE,fact.normalContinuation(),Optional.empty(),fact.regionalMove(),extra);
             }
+            var logicalTransfers=new ArrayList<LogicalTransfer>();
+            if(move.targets().size()>1&&fact.source() instanceof LiteralSource literal&&literal.logicalValue().isPresent()) {
+                var text=literal.logicalValue().orElseThrow().value();var length=text.codePointCount(0,text.length());
+                for(int i=0;i<move.targets().size();i++) {
+                    var receiver=i==0?fact.target():fact.additionalTransfers().get(i-1).target();
+                    if(receiver.logicalWholeItem().isEmpty())continue;
+                    var entity=inputs.products().storage().orElseThrow().logicalWholeItem(new StorageLayoutSemantics.Key(
+                        inputs.unitId(),move.targets().get(i).meta().id()));
+                    var extent=entity.flatMap(inputs.products().scalarMoves()::declaration);
+                    if(extent.isEmpty())continue;
+                    var n=extent.orElseThrow().extent();
+                    var fitted=length>n?text.substring(0,text.offsetByCodePoints(0,n)):text+" ".repeat(n-length);
+                    logicalTransfers.add(new LogicalTransfer(receiver.id(),new TextValue(fitted)));
+                }
+            }
+            if(!logicalTransfers.isEmpty())fact=new MoveFact(fact.header(),fact.source(),fact.target(),fact.copySemantics(),
+                fact.normalContinuation(),fact.textAdjustment(),fact.regionalMove(),fact.additionalTransfers(),logicalTransfers);
             statements.add(fact);
             if (move.source() instanceof Ast.LiteralExpression literal && literal.logicalText().isEmpty()) gaps.add(new Gap(statementId, GapScope.LITERAL_KIND,
                     LITERAL_KIND_GAP, "literal category is outside the canonical basic text capability",
@@ -1426,6 +1619,23 @@ public final class CobolSemanticProductProjector {
         }
     }
 
+
+    private static Optional<OperandExpression> commandLength(Ast.EmbeddedLanguageStatement embedded,StatementId statement,int ordinal,
+            ProjectionInputs inputs,Map<ResolutionContracts.SemanticEntityId,DataItemId> dataIds) {
+        if(embedded.expressionOperands().isEmpty())return Optional.empty();
+        var expression=embedded.expressionOperands().get(0).expression();var origin=provenance(expression.meta().provenance());
+        if(expression instanceof Ast.LiteralExpression literal&&literal.integerValue().isPresent())
+            return Optional.of(new OperandExpression(OperandExpressionKind.INTEGER,literal.integerValue(),Optional.empty(),origin));
+        Ast.DataReference ref=expression instanceof Ast.DataReference r?r:expression instanceof Ast.SpecialRegisterExpression r
+            &&r.registerName().equals("LENGTH")&&r.operands().size()==1&&r.operands().get(0) instanceof Ast.DataReference d?d:null;
+        if(ref==null)return Optional.empty();
+        var entry=inputs.entryFor(ref);if(!projectableDataBinding(entry,inputs))return Optional.empty();
+        var binding=nominalBinding(entry,dataIds);var projected=new DataReference(new OperandId(statement,ordinal),OperandRole.READ,binding,
+            provenance(ref.meta().provenance()),Optional.empty(),Optional.empty(),List.of(),
+            ref.understanding()==Ast.ReferenceUnderstanding.STRUCTURED&&ref.subscriptGroups().isEmpty()&&ref.referenceModification()==null?binding.selected():Optional.empty());
+        return Optional.of(new OperandExpression(expression instanceof Ast.SpecialRegisterExpression?OperandExpressionKind.LENGTH_OF:OperandExpressionKind.DATA_REFERENCE,
+            Optional.empty(),Optional.of(projected),origin));
+    }
     private static void projectCorresponding(Ast.MoveStatement move,StatementPlan plan,ProjectionInputs inputs,
             Map<ResolutionContracts.SemanticEntityId,DataItemId> dataIds,Map<Ast.Statement,StatementId> ids,
             StatementId id,Containment containment,List<StatementFact> output,List<Gap> gaps) {
@@ -1463,20 +1673,22 @@ public final class CobolSemanticProductProjector {
     }
 
     private static void projectEvaluate(Ast.EvaluateStatement e, StatementPlan plan, ProjectionInputs inputs,
-            Map<ResolutionContracts.SemanticEntityId, DataItemId> dataIds, Map<Ast.Statement, StatementId> ids,
+            Map<ResolutionContracts.SemanticEntityId, DataItemId> dataIds, Set<DataItemId> scalarDataIds, Map<Ast.Statement, StatementId> ids,
             StatementId id, Containment containment, List<StatementFact> output, List<Gap> gaps) {
         var proof = inputs.products().scalarMoves().evaluates().fact(inputs.unitId(), e.meta().id());
         var origin = provenance(e.meta().provenance());
         var codes = new ArrayList<String>();
-        require(plan.entries().size() <= 1, "single canonical EVALUATE subject reference");
+        if(proof.supportedShape()) require(plan.entries().size() <= 1, "single canonical EVALUATE subject reference");
         Optional<DataReference> subject = plan.entries().isEmpty() ? Optional.empty()
             : Optional.of(plan.entries().get(0)).filter(r -> projectableDataBinding(r, inputs)).map(r -> new DataReference(new OperandId(id, 0), OperandRole.READ, nominalBinding(r, dataIds),
-                provenance(e.subjects().get(0).meta().provenance()), proof.wholeItem().map(d -> new WholeItemAccess(dataIds.get(d))), regionalAccess(inputs, r.occurrence().referenceAstNodeId())));
-        if (subject.isEmpty() || proof.wholeItem().isEmpty()) codes.add("EVALUATE_SUBJECT_NOT_PROVEN");
+                provenance(r.occurrence().meta().provenance()), r.selectedCandidate().map(c -> dataIds.get(c.entityId())).filter(scalarDataIds::contains).map(WholeItemAccess::new), regionalAccess(inputs, r.occurrence().referenceAstNodeId())));
+        if (proof.supportedShape() && (subject.isEmpty() || proof.wholeItem().isEmpty())) codes.add("EVALUATE_SUBJECT_NOT_PROVEN");
+        if (!proof.supportedShape()) codes.add("EVALUATE_PREDICATE_NOT_MODELED");
         var arms = new ArrayList<EvaluateArm>();
         var other = new IfArm(ClausePresence.ABSENT, Availability.KNOWN,
                 new ExecutableStart(Availability.UNAVAILABLE, Optional.empty()), origin, List.of());
         List<StatementId> otherStatements = List.of();
+        int operandOrdinal=1;
         for (var a : e.branches()) {
             var members = a.statements().stream().map(ids::get).toList();
             var entry = proof.structureKnown() && !members.isEmpty() ? Optional.of(members.get(0)) : Optional.<StatementId>empty();
@@ -1485,11 +1697,29 @@ public final class CobolSemanticProductProjector {
                 new ExecutableStart(entry.isPresent() ? Availability.KNOWN : Availability.UNAVAILABLE, entry), provenance(a.meta().provenance()), armCodes);
             codes.addAll(armCodes);
             if (a.other()) { other = control; otherStatements = members; }
-            else {
+            else if(proof.supportedShape()) {
                 var literal = (Ast.LiteralExpression)a.selectors().get(0).expression();
-                var selection = new LiteralSource(new OperandId(id, arms.size()+1), LiteralKind.ALPHANUMERIC,
+                var selection = new LiteralSource(new OperandId(id, operandOrdinal++), LiteralKind.ALPHANUMERIC,
                     literal.value(), provenance(literal.meta().provenance()), literal.logicalText().map(t -> new TextValue(t.value())));
                 arms.add(new EvaluateArm(arms.size(), selection, members, control));
+            } else {
+                var reads=new ArrayList<DataReference>();
+                for(int subjectOrdinal=1;subjectOrdinal<plan.entries().size();subjectOrdinal++) {
+                    var subjectEntry=plan.entries().get(subjectOrdinal);
+                    if(!projectableDataBinding(subjectEntry,inputs)) continue;
+                    var selected=subjectEntry.selectedCandidate().map(c -> dataIds.get(c.entityId()));
+                    reads.add(new DataReference(new OperandId(id,operandOrdinal++),OperandRole.READ,
+                        nominalBinding(subjectEntry,dataIds),provenance(subjectEntry.occurrence().meta().provenance()),
+                        selected.filter(scalarDataIds::contains).map(WholeItemAccess::new),regionalAccess(inputs,subjectEntry.occurrence().referenceAstNodeId())));
+                }
+                for(var selector:a.selectors()) for(var conditionEntry:conditionEntries(selector.expression(),inputs)) {
+                    if(!projectableDataBinding(conditionEntry,inputs)) continue;
+                    var selected=conditionEntry.selectedCandidate().map(c -> dataIds.get(c.entityId()));
+                    reads.add(new DataReference(new OperandId(id,operandOrdinal++),OperandRole.READ,
+                        nominalBinding(conditionEntry,dataIds),provenance(conditionEntry.occurrence().meta().provenance()),
+                        selected.filter(scalarDataIds::contains).map(WholeItemAccess::new),regionalAccess(inputs,conditionEntry.occurrence().referenceAstNodeId())));
+                }
+                arms.add(new EvaluateArm(arms.size(),Optional.empty(),reads,provenance(a.meta().provenance()),members,control));
             }
         }
         var next = canonicalStatement(proof.nextStatement(), inputs, ids);
@@ -2329,7 +2559,7 @@ public final class CobolSemanticProductProjector {
                         CobolSemanticProduct.Branch.THEN, output, evaluates, unit);
                 collectStatementGroup(conditional.elseBranch(), conditional,
                         CobolSemanticProduct.Branch.ELSE, output, evaluates, unit);
-            } else if (statement instanceof Ast.EvaluateStatement e && evaluates.fact(unit, e.meta().id()).supportedShape()) {
+            } else if (statement instanceof Ast.EvaluateStatement e && evaluates.fact(unit, e.meta().id()).structureKnown()) {
                 for (var arm : e.branches()) collectStatementGroup(arm.statements(), e, Branch.EVALUATE_ARM, output, evaluates, unit);
             } else if(fileSurface(statement).isPresent()) {
                 for(var handler:fileSurface(statement).orElseThrow().handlers())

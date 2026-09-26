@@ -98,7 +98,7 @@ class IfCheckpointW2ATest {
             assertEquals(2, result.independent().size());
             var bytes = SemanticProductJsonWriter.serialize(port);
             assertArrayEquals(bytes, SemanticProductJsonWriter.serialize(ScalarMoveCheckpoint4ATest.publish(fixture(name))));
-            assertEquals("2.28.0", new ObjectMapper().readTree(bytes).path("contractVersion").asText());
+            assertEquals("2.39.0", new ObjectMapper().readTree(bytes).path("contractVersion").asText());
         }
     }
     @Test void multipleStatementsInEachArmFollowDirectRelations() throws Exception {
@@ -188,7 +188,8 @@ class IfCheckpointW2ATest {
             assertEquals("UNKNOWN", one(d, "IF").path("elseArm").path("presence").asText());
             assertEquals("INPUT_MISSING", one(d, "IF").path("elseArm").path("contentAvailability").asText());
             assertEquals("UNAVAILABLE", one(d, "IF").path("normalContinuation").path("availability").asText());
-            assertEquals("UNAVAILABLE", one(d, "MOVE").path("normalContinuation").path("availability").asText());
+            assertEquals("KNOWN", one(d, "MOVE").path("normalContinuation").path("availability").asText());
+            assertTrue(one(d, "MOVE").path("normalContinuation").path("statement").isTextual());
         }
     }
     @Test void nestedOwnershipAndCompletionAreNeverFlattened() throws Exception {

@@ -1,0 +1,17 @@
+{
+  "id": "WORK-AST-INPUT-HARDENING-R3",
+  "title": "Pragmatic fixed-format input hardening and external semantic discovery",
+  "status": "IN_PROGRESS",
+  "scope": [
+    "R3-A only: generic source/COPY TAB normalization and provenance, tests and docs. R3-B outside product: read-only semantic discovery."
+  ],
+  "authority": "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/dependency-semantic-discovery-r3/R3_AUTHORITY.md",
+  "supersedes": "R3 EXPLICIT_SOURCE_ENVIRONMENT planning scope; no technical gate or oracle superseded",
+  "must_not_change": [
+    "ControlTopology",
+    "FactDependencies",
+    "lower/CFG/value semantics",
+    "w4-b.2 corpus, manifest, oracles, locks",
+    "CardDemo original sources and copybooks"
+  ]
+}

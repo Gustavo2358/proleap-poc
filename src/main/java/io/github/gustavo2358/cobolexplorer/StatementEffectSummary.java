@@ -8,7 +8,7 @@ public record StatementEffectSummary(List<Ast.DataReference> knownReads,
         List<Ast.DataReference> mayWrites, List<Ast.DataReference> mustOverwrite,
         List<Ast.DataReference> exposedRegions, Bound unknownReadBound,
         Bound unknownWriteBound, Bound unknownExposureBound, Environment environment,
-        ValueTransform values, Proof proof) {
+        ValueTransform values, Proof proof, List<Ast.DataReference> sourceTargets) {
     public enum Bound { NONE, ALL }
     public enum Environment { OUTPUT, INPUT, UNKNOWN, NONE }
     public enum ValueTransform { NONE, UNKNOWN }
@@ -16,10 +16,19 @@ public record StatementEffectSummary(List<Ast.DataReference> knownReads,
     public StatementEffectSummary {
         knownReads=List.copyOf(knownReads);mayWrites=List.copyOf(mayWrites);
         mustOverwrite=List.copyOf(mustOverwrite);exposedRegions=List.copyOf(exposedRegions);
+        sourceTargets=List.copyOf(sourceTargets);
         Objects.requireNonNull(unknownReadBound);Objects.requireNonNull(unknownWriteBound);
         Objects.requireNonNull(unknownExposureBound);Objects.requireNonNull(environment);
         Objects.requireNonNull(values);Objects.requireNonNull(proof);
         if(!mayWrites.containsAll(mustOverwrite))throw new IllegalArgumentException("MUST requires a write occurrence");
+    }
+    public StatementEffectSummary(List<Ast.DataReference> knownReads,
+            List<Ast.DataReference> mayWrites, List<Ast.DataReference> mustOverwrite,
+            List<Ast.DataReference> exposedRegions, Bound unknownReadBound,
+            Bound unknownWriteBound, Bound unknownExposureBound, Environment environment,
+            ValueTransform values, Proof proof) {
+        this(knownReads,mayWrites,mustOverwrite,exposedRegions,unknownReadBound,
+            unknownWriteBound,unknownExposureBound,environment,values,proof,mayWrites);
     }
     public boolean completeMutationBound() {return unknownWriteBound==Bound.NONE&&unknownExposureBound==Bound.NONE;}
     public static Optional<StatementEffectSummary> of(Ast.Statement statement) {

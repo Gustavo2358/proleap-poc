@@ -113,7 +113,7 @@ public final class StorageAccessSemantics {
             }
             var coverage=new HashMap<Integer,SemanticCoverage.Finding>();
             for(var statement:statementNodes)StatementEffectSummary.of(statement).ifPresent(e->{
-                var must=new ArrayList<Ast.DataReference>();
+                var must=new ArrayList<>(e.mustOverwrite());
                 if(e.proof()==StatementEffectSummary.Proof.INITIALIZE_TARGETS&&e.completeMutationBound())for(var ref:e.mayWrites()) {
                     var access=accesses.get(new Key(unit.id(),ref.meta().id()));
                     if(access==null||access.sliced())continue;
@@ -124,7 +124,7 @@ public final class StorageAccessSemantics {
                             &&declaration.clauses().stream().noneMatch(c->c instanceof Ast.RedefinesClause||c instanceof Ast.OccursClause))must.add(ref);
                 }
                 summaries.put(new Key(unit.id(),statement.meta().id()),new StatementEffectSummary(e.knownReads(),e.mayWrites(),must,e.exposedRegions(),
-                    e.unknownReadBound(),e.unknownWriteBound(),e.unknownExposureBound(),e.environment(),e.values(),e.proof()));
+                    e.unknownReadBound(),e.unknownWriteBound(),e.unknownExposureBound(),e.environment(),e.values(),e.proof(),e.sourceTargets()));
             });
             for(var finding:frontend.coverageByProgramUnit().get(unit.id()).findings())coverage.put(finding.astNodeId(),finding);
             var correspondence=new StorageCorrespondence(declarations,nodes,physical,bases);
@@ -198,7 +198,8 @@ public final class StorageAccessSemantics {
     }
     private record Visit(Ast.Node node,Ast.Statement owner) { }
     private static Role role(ResolutionContracts.ReferenceRole role) {
-        return role==ResolutionContracts.ReferenceRole.VALUE_READ?Role.READ:role==ResolutionContracts.ReferenceRole.VALUE_WRITE?Role.WRITE
+        return role==ResolutionContracts.ReferenceRole.VALUE_READ?Role.READ
+            :role==ResolutionContracts.ReferenceRole.VALUE_WRITE||role==ResolutionContracts.ReferenceRole.CALL_RETURNING?Role.WRITE
             :role==ResolutionContracts.ReferenceRole.CALL_TARGET?Role.CALL_TARGET
             :role==ResolutionContracts.ReferenceRole.CALL_ARGUMENT?Role.CALL_ARGUMENT:null;
     }

@@ -643,14 +643,23 @@ public final class CobolSemanticProduct {
         public LogicalTextView {Objects.requireNonNull(node);Objects.requireNonNull(root);Objects.requireNonNull(start);Objects.requireNonNull(length);
             require(node.unit().equals(root.unit())&&start.signum()>=0&&length.signum()>0,"positive logical character range in one unit");}
     }
+    /** Complete local TEXT view; equal representatives assert exact logical storage identity. */
+    public record LogicalExactView(StorageNodeId node,StorageNodeId representative,BigInteger length) {
+        public LogicalExactView {Objects.requireNonNull(node);Objects.requireNonNull(representative);Objects.requireNonNull(length);
+            require(node.unit().equals(representative.unit())&&length.signum()>0,"positive exact logical view in one unit");}
+    }
     public record StorageInventory(StorageProfile profile, List<PhysicalNode> nodes, List<StorageBase> bases,
-            List<StorageView> views, List<String> gapCodes, List<StorageRelation> relations, List<StorageRenames> renames,StorageEntryState entryState,List<LogicalTextView> logicalTextViews) {
+            List<StorageView> views, List<String> gapCodes, List<StorageRelation> relations, List<StorageRenames> renames,StorageEntryState entryState,List<LogicalTextView> logicalTextViews,List<LogicalExactView> logicalExactViews) {
         public StorageInventory {
             logicalTextViews=List.copyOf(logicalTextViews);
+            logicalExactViews=List.copyOf(logicalExactViews);
             Objects.requireNonNull(entryState);Objects.requireNonNull(profile); nodes = List.copyOf(nodes); bases = List.copyOf(bases);
             views = List.copyOf(views); gapCodes = List.copyOf(gapCodes); relations=List.copyOf(relations);renames=List.copyOf(renames);
             gapCodes.forEach(code -> requireText(code, "storage gap"));
             require(profile != StorageProfile.UNSPECIFIED || !gapCodes.isEmpty(), "absent environment requires a gap");
+        }
+        public StorageInventory(StorageProfile profile,List<PhysicalNode> nodes,List<StorageBase> bases,List<StorageView> views,List<String> gapCodes,List<StorageRelation> relations,List<StorageRenames> renames,StorageEntryState entryState,List<LogicalTextView> logicalTextViews) {
+            this(profile,nodes,bases,views,gapCodes,relations,renames,entryState,logicalTextViews,List.of());
         }
         public StorageInventory(StorageProfile profile,List<PhysicalNode> nodes,List<StorageBase> bases,List<StorageView> views,List<String> gapCodes,List<StorageRelation> relations,List<StorageRenames> renames,StorageEntryState entryState) {
             this(profile,nodes,bases,views,gapCodes,relations,renames,entryState,List.of());
@@ -768,9 +777,133 @@ public final class CobolSemanticProduct {
     }
 
     /** Adding a fact type extends this inventory without changing the State envelope. */
-    public sealed interface StatementFact permits MoveFact, CallFact, CicsFact, CicsFileFact, IfFact,
+    public sealed interface StatementFact permits MoveFact, CallFact, CicsFact, CicsFileFact, CicsHandlerFact, CicsAbendFact, CicsCommandFact, IfFact,
             ObservedStatement, GobackFact, PerformFact, EvaluateFact, GoToFact, ConditionalGoToFact, ProcedurePerformFact {
         StatementHeader header();
+    }
+
+    public enum CicsCommandKind { SYNCPOINT, RECEIVE_MAP, SEND_MAP, SEND_TERMINAL }
+    public enum OperandExpressionKind { INTEGER, DATA_REFERENCE, LENGTH_OF }
+    /** Source expression structure; LENGTH_OF refers to a declaration, not its stored value. */
+    public record OperandExpression(OperandExpressionKind kind,Optional<java.math.BigInteger> integer,
+            Optional<DataReference> reference,Provenance provenance) {
+        public OperandExpression {
+            Objects.requireNonNull(kind);Objects.requireNonNull(integer);Objects.requireNonNull(reference);Objects.requireNonNull(provenance);
+            require(integer.isPresent()==(kind==OperandExpressionKind.INTEGER),"integer expression shape");
+            require(reference.isPresent()==(kind!=OperandExpressionKind.INTEGER),"reference expression shape");
+            reference.ifPresent(r->require(r.role()==OperandRole.READ,"source expression operand role"));
+        }
+    }
+    public enum CicsCommandSyntaxStatus { SUPPORTED, UNAVAILABLE }
+    /** Explicit source options; no control decision, handler target or runtime value. */
+    public record CicsCommandFact(StatementHeader header,CicsCommandKind commandKind,CicsCommandSyntaxStatus syntaxStatus,
+            String rawText,List<CicsOption> options,List<String> gapCodes,Optional<OperandExpression> length) implements StatementFact {
+        public CicsCommandFact {
+            Objects.requireNonNull(header);Objects.requireNonNull(commandKind);Objects.requireNonNull(syntaxStatus);Objects.requireNonNull(rawText);Objects.requireNonNull(length);
+            options=List.copyOf(options);gapCodes=List.copyOf(gapCodes);
+            var names=new java.util.HashSet<String>();int last=0;boolean shape=true;
+            var allowed=new java.util.HashSet<>(java.util.Set.of("RESP","RESP2","NOHANDLE"));
+            if(commandKind==CicsCommandKind.SEND_TERMINAL)allowed.addAll(java.util.Set.of("FROM","LENGTH","ERASE"));
+            if(commandKind==CicsCommandKind.SEND_MAP||commandKind==CicsCommandKind.RECEIVE_MAP)allowed.addAll(java.util.Set.of("MAP","MAPSET",commandKind==CicsCommandKind.SEND_MAP?"FROM":"INTO"));
+            if(commandKind==CicsCommandKind.SEND_MAP)allowed.addAll(java.util.Set.of("CURSOR","ERASE","FREEKB"));
+            for(var o:options) {
+                require(o.start()>=last&&o.end()>o.start()&&o.end()<=rawText.length(),"ordered command options");last=o.end();
+                boolean flag=java.util.Set.of("NOHANDLE","CURSOR","ERASE","FREEKB").contains(o.name());
+                shape&=names.add(o.name())&&allowed.contains(o.name())&&(flag?o.operand().isEmpty():o.operand().filter(v->!v.isBlank()).isPresent());
+                require(o.reference().isEmpty()||o.operand().isPresent()&&!flag,"command reference has operand");
+                o.reference().ifPresent(r->{require(r.id().statement().equals(header.id()),"command operand owner");
+                    require(r.role()==(java.util.Set.of("RESP","RESP2","INTO").contains(o.name())?OperandRole.WRITE:OperandRole.READ),"command operand role");});
+            }
+            if(syntaxStatus==CicsCommandSyntaxStatus.SUPPORTED) {
+                require(shape&&(commandKind==CicsCommandKind.SYNCPOINT||names.contains(commandKind==CicsCommandKind.SEND_TERMINAL?"FROM":"MAP")),"supported command syntax");
+                require(gapCodes.stream().allMatch(g->g.equals("CICS_COMMAND_EFFECTS_NOT_MODELED")),"supported syntax has no syntax gap");
+            } else require(gapCodes.stream().anyMatch(g->!g.isBlank()&&!g.equals("CICS_COMMAND_EFFECTS_NOT_MODELED")),"unavailable command reason");
+            require(length.isEmpty()||commandKind==CicsCommandKind.SEND_TERMINAL&&names.contains("LENGTH"),"length belongs to terminal LENGTH option");
+            if(commandKind==CicsCommandKind.SEND_TERMINAL&&syntaxStatus==CicsCommandSyntaxStatus.SUPPORTED)
+                require(length.isPresent()==names.contains("LENGTH"),"supported LENGTH has structural expression");
+            length.flatMap(OperandExpression::reference).ifPresent(r->require(r.id().statement().equals(header.id()),"expression operand owner"));
+        }
+        public CicsCommandFact(StatementHeader h,CicsCommandKind k,CicsCommandSyntaxStatus s,String raw,List<CicsOption> o,List<String> g){this(h,k,s,raw,o,g,Optional.empty());}
+    }
+
+    public enum CicsAbendEventKind { ABEND }
+    public enum CicsAbendEligibility { HANDLER_ELIGIBLE, HANDLERS_BYPASSED, UNAVAILABLE }
+    /** Event eligibility, not active state, destination, dispatch or ordinary continuation. */
+    public record CicsAbendFact(StatementHeader header,CicsAbendEventKind eventKind,
+            CicsAbendEligibility dispatchEligibility,String rawText,List<CicsOption> options,List<String> gapCodes) implements StatementFact {
+        public CicsAbendFact {
+            Objects.requireNonNull(header);Objects.requireNonNull(eventKind);Objects.requireNonNull(dispatchEligibility);
+            Objects.requireNonNull(rawText);options=List.copyOf(options);gapCodes=List.copyOf(gapCodes);
+            var names=new java.util.HashSet<String>();boolean shape=true;int lastEnd=-1;
+            for(var option:options) {
+                require(option.start()>=lastEnd&&option.end()>option.start()&&option.end()<=rawText.length(),"ordered event option coordinates");lastEnd=option.end();
+                require(option.reference().isEmpty(),"ABEND dump operand has no published binding in this subset");
+                shape&=names.add(option.name())&&java.util.Set.of("CANCEL","NODUMP","ABCODE").contains(option.name());
+                shape&=option.name().equals("ABCODE")?option.operand().filter(s->!s.isBlank()).isPresent():option.operand().isEmpty();
+            }
+            if(dispatchEligibility!=CicsAbendEligibility.UNAVAILABLE) {
+                require(shape,"qualified ABEND options are complete and nonconflicting");
+                require((dispatchEligibility==CicsAbendEligibility.HANDLERS_BYPASSED)==names.contains("CANCEL"),"event eligibility agrees with CANCEL evidence");
+                require(gapCodes.stream().allMatch(g->g.equals("CICS_ABEND_DISPATCH_NOT_MODELED")),"unqualified syntax cannot be eligible");
+            } else require(gapCodes.stream().anyMatch(g->!g.equals("CICS_ABEND_DISPATCH_NOT_MODELED")),"unavailable event retains its reason");
+        }
+    }
+
+    public enum CicsHandlerKind { ABEND }
+    public enum CicsHandlerAction { ACTIVATE, CANCEL, RESET, UNAVAILABLE }
+    public enum CicsHandlerTargetKind { LABEL, PROGRAM, NONE, UNAVAILABLE }
+    public enum CicsHandlerScopeKind { CURRENT_EXECUTION_LOGICAL_LEVEL }
+    /** Relative CICS scope, never a runtime identity inferred from source ProgramUnit. */
+    public record CicsHandlerScope(CicsHandlerScopeKind kind,Availability runtimeIdentity,Provenance provenance) {
+        public CicsHandlerScope {
+            Objects.requireNonNull(kind);Objects.requireNonNull(provenance);
+            require(runtimeIdentity==Availability.UNAVAILABLE,"runtime logical-level identity is not a source unit");
+        }
+    }
+    public record CicsHandlerLabelTarget(ProcedureId id,Provenance declarationOrigin) {
+        public CicsHandlerLabelTarget {Objects.requireNonNull(id);Objects.requireNonNull(declarationOrigin);}
+    }
+    /** Operation on successful execution, not handler state, execution evidence or a dispatch edge. */
+    public record CicsHandlerFact(StatementHeader header,CicsHandlerKind handlerKind,CicsHandlerAction action,
+            CicsHandlerTargetKind targetKind,Optional<String> targetSyntax,Optional<ResolutionStatus> labelBindingStatus,
+            Optional<CicsHandlerLabelTarget> labelTarget,Optional<StatementId> targetEntry,Optional<Provenance> entryOrigin,
+            Optional<Provenance> targetOrigin,Optional<CallTarget> programTarget,CicsHandlerScope scope,String rawText,
+            List<CicsOption> options,List<String> gapCodes) implements StatementFact {
+        public CicsHandlerFact {
+            Objects.requireNonNull(header);Objects.requireNonNull(handlerKind);Objects.requireNonNull(action);Objects.requireNonNull(targetKind);
+            Objects.requireNonNull(targetSyntax);Objects.requireNonNull(labelBindingStatus);Objects.requireNonNull(labelTarget);
+            Objects.requireNonNull(targetEntry);Objects.requireNonNull(entryOrigin);Objects.requireNonNull(targetOrigin);
+            Objects.requireNonNull(programTarget);Objects.requireNonNull(scope);Objects.requireNonNull(rawText);
+            options=List.copyOf(options);gapCodes=List.copyOf(gapCodes);
+            require(action!=CicsHandlerAction.ACTIVATE||targetKind==CicsHandlerTargetKind.LABEL||targetKind==CicsHandlerTargetKind.PROGRAM,"activation has LABEL or PROGRAM syntax");
+            require(action!=CicsHandlerAction.CANCEL&&action!=CicsHandlerAction.RESET||targetKind==CicsHandlerTargetKind.NONE,"cancel/reset carry no new target");
+            require((action==CicsHandlerAction.UNAVAILABLE)==(targetKind==CicsHandlerTargetKind.UNAVAILABLE),"unavailable action has no invented target kind");
+            require(targetSyntax.isPresent()==(targetKind==CicsHandlerTargetKind.LABEL||targetKind==CicsHandlerTargetKind.PROGRAM),"target syntax agrees with kind");
+            require(targetOrigin.isPresent()==targetSyntax.isPresent(),"target origin exists exactly when target syntax exists");
+            require(programTarget.isEmpty()||targetOrigin.filter(programTarget.orElseThrow().provenance()::equals).isPresent(),"PROGRAM target and operand provenance agree");
+            require(labelBindingStatus.isPresent()==(targetKind==CicsHandlerTargetKind.LABEL),"LABEL binding status is independent of PROGRAM data binding");
+            require(labelTarget.isPresent()==labelBindingStatus.filter(s->s==ResolutionStatus.RESOLVED).isPresent(),"only resolved LABEL has a selected identity");
+            require(programTarget.isEmpty()||targetKind==CicsHandlerTargetKind.PROGRAM,"PROGRAM target belongs only to PROGRAM operation");
+            require(targetEntry.isPresent()==entryOrigin.isPresent()&&(targetEntry.isEmpty()||labelTarget.isPresent()),"entry requires bound label and provenance");
+            var owner=header.id().unit();
+            labelTarget.ifPresent(t->require(t.id().unit().equals(owner),"LABEL target stays in its source owner"));
+            targetEntry.ifPresent(t->require(t.unit().equals(owner),"handler target entry stays in source owner"));
+            programTarget.ifPresent(t->require(t.id().statement().equals(header.id()),"handler PROGRAM operand owner"));
+            for(var option:options)require(option.end()<=rawText.length(),"handler option outside payload");
+            require(header.coverage()!=CoverageStatus.MODELED,"handler execution/state/dispatch remain partial");
+            if(action!=CicsHandlerAction.UNAVAILABLE) {
+                require(!options.isEmpty()&&options.get(0).name().equals("ABEND"),"handler kind has ABEND syntax");
+                require(options.stream().map(CicsOption::name).distinct().count()==options.size(),"known handler action has no duplicate options");
+                for(var option:options)require(Set.of("ABEND","LABEL","PROGRAM","CANCEL","RESET","RESP","RESP2","NOHANDLE").contains(option.name())
+                    &&Set.of("LABEL","PROGRAM","RESP","RESP2").contains(option.name())==option.operand().isPresent()
+                    &&option.operand().filter(String::isBlank).isEmpty(),"known handler action has supported option shapes");
+                var selectors=options.stream().filter(o->Set.of("LABEL","PROGRAM","CANCEL","RESET").contains(o.name())).toList();
+                require(selectors.size()<=1,"known handler action has one selector");
+                String selector=selectors.isEmpty()?"CANCEL":selectors.get(0).name();
+                require(action==CicsHandlerAction.ACTIVATE?selector.equals(targetKind.name()):selector.equals(action.name()),"handler action agrees with selected operation");
+                if(action==CicsHandlerAction.ACTIVATE)require(targetSyntax.equals(selectors.get(0).operand()),"handler target syntax agrees with selected operand");
+            }
+        }
     }
 
     public enum CicsCommand { LINK, XCTL }
@@ -839,9 +972,19 @@ public final class CobolSemanticProduct {
     }
 
     /** Arm ordinal is semantic WHEN order, independent of physical statement inventory. */
-    public record EvaluateArm(int ordinal, LiteralSource selection, List<StatementId> statements, IfArm control) {
-        public EvaluateArm { require(ordinal >= 0, "arm ordinal is non-negative"); Objects.requireNonNull(selection);
-            statements = List.copyOf(statements); Objects.requireNonNull(control); }
+    public record EvaluateArm(int ordinal, Optional<LiteralSource> selection, List<DataReference> conditionReads,
+                              Provenance conditionOrigin, List<StatementId> statements, IfArm control) {
+        public EvaluateArm {
+            require(ordinal >= 0, "arm ordinal is non-negative"); Objects.requireNonNull(selection);
+            conditionReads=List.copyOf(conditionReads); Objects.requireNonNull(conditionOrigin);
+            statements=List.copyOf(statements); Objects.requireNonNull(control);
+            require(selection.isPresent() || conditionOrigin.exact(), "unmodeled WHEN retains exact source origin");
+            require(selection.isEmpty() || conditionReads.isEmpty(), "literal WHEN has no extra condition reads");
+            require(conditionReads.stream().allMatch(r -> r.role()==OperandRole.READ), "WHEN condition operands are reads");
+        }
+        public EvaluateArm(int ordinal, LiteralSource selection, List<StatementId> statements, IfArm control) {
+            this(ordinal,Optional.of(selection),List.of(),selection.provenance(),statements,control);
+        }
     }
     public record EvaluateFact(StatementHeader header, Optional<DataReference> subject, List<EvaluateArm> arms,
             IfArm otherArm, List<StatementId> otherStatements, NormalContinuation normalContinuation,
@@ -849,7 +992,7 @@ public final class CobolSemanticProduct {
         public EvaluateFact { Objects.requireNonNull(header); Objects.requireNonNull(subject); arms = List.copyOf(arms);
             Objects.requireNonNull(otherArm); otherStatements = List.copyOf(otherStatements);
             Objects.requireNonNull(normalContinuation); gapCodes = List.copyOf(gapCodes);
-            require(!arms.isEmpty(), "EVALUATE needs a WHEN literal");
+            require(!arms.isEmpty(), "EVALUATE needs a WHEN arm");
             for (int i=0;i<arms.size();i++) require(arms.get(i).ordinal()==i, "WHEN ordinals preserve semantic order");
             require(normalContinuation.availability()!=ContinuationAvailability.NONE, "EVALUATE is not a terminal");
             subject.ifPresent(s -> require(s.role()==OperandRole.READ, "EVALUATE subject is read"));
@@ -867,7 +1010,7 @@ public final class CobolSemanticProduct {
             Objects.requireNonNull(targetEntry); Objects.requireNonNull(entryOrigin); gapCodes=List.copyOf(gapCodes);
             target.ifPresent(t -> require(t.id().unit().equals(header.id().unit()), "GO TO target is local"));
             require(targetEntry.isPresent()==entryOrigin.isPresent(), "GO TO entry and origin are paired");
-            require(gapCodes.isEmpty()==targetEntry.isPresent(), "GO TO precise entry requires complete proof");
+            require(!gapCodes.isEmpty() || targetEntry.isPresent(), "GO TO complete fact requires target entry");
             if(targetEntry.isPresent()) require(target.isPresent() && header.provenance().exact() && referenceOrigin.exact()
                     && target.get().paragraphOrigin().exact() && entryOrigin.get().exact(), "GO TO requires exact origins");
         }
@@ -930,17 +1073,29 @@ public final class CobolSemanticProduct {
     public record PerformVarying(int levels,List<VaryingOperand> controls) {
         public PerformVarying {require(levels>0,"varying levels");controls=List.copyOf(controls);}
     }
+    public enum PerformPublicationKind { LEGACY_PROFILE, STRUCTURAL_FACTS }
     public record ProcedurePerformFact(StatementHeader header, Optional<PerformTarget> start, Optional<PerformTarget> end,
-            List<PerformParagraph> procedures, NormalContinuation normalContinuation, Optional<PerformLoop> loop, Optional<PerformCount> times, Optional<PerformVarying> varying,List<String> gapCodes) implements StatementFact {
-        public ProcedurePerformFact { Objects.requireNonNull(header); Objects.requireNonNull(start); Objects.requireNonNull(end);
+            List<PerformParagraph> procedures, NormalContinuation normalContinuation, Optional<PerformLoop> loop, Optional<PerformCount> times, Optional<PerformVarying> varying,List<String> gapCodes, PerformPublicationKind publicationKind,Optional<StatementId> targetEntry) implements StatementFact {
+        public ProcedurePerformFact(StatementHeader header, Optional<PerformTarget> start, Optional<PerformTarget> end,
+                List<PerformParagraph> procedures, NormalContinuation normalContinuation, Optional<PerformLoop> loop,
+                Optional<PerformCount> times, Optional<PerformVarying> varying,List<String> gapCodes,PerformPublicationKind publicationKind) {
+            this(header,start,end,procedures,normalContinuation,loop,times,varying,gapCodes,publicationKind,
+                procedures.isEmpty()?Optional.empty():Optional.of(procedures.get(0).entry()));
+        }
+        public ProcedurePerformFact(StatementHeader header, Optional<PerformTarget> start, Optional<PerformTarget> end,
+                List<PerformParagraph> procedures, NormalContinuation normalContinuation, Optional<PerformLoop> loop,
+                Optional<PerformCount> times, Optional<PerformVarying> varying,List<String> gapCodes) {
+            this(header,start,end,procedures,normalContinuation,loop,times,varying,gapCodes,PerformPublicationKind.LEGACY_PROFILE);
+        }
+        public ProcedurePerformFact { Objects.requireNonNull(targetEntry); Objects.requireNonNull(publicationKind); Objects.requireNonNull(header); Objects.requireNonNull(start); Objects.requireNonNull(end);
             Objects.requireNonNull(normalContinuation); Objects.requireNonNull(loop);Objects.requireNonNull(times);Objects.requireNonNull(varying);require(loop.isEmpty()||times.isEmpty(),"one repetition kind");require(varying.isEmpty()||loop.isPresent()&&times.isEmpty(),"VARYING uses condition loop"); procedures=List.copyOf(procedures); gapCodes=List.copyOf(gapCodes);
-            if(gapCodes.isEmpty())require(start.isPresent() && end.isPresent() && !procedures.isEmpty()
+            if(publicationKind==PerformPublicationKind.LEGACY_PROFILE && gapCodes.isEmpty())require(start.isPresent() && end.isPresent() && !procedures.isEmpty()
                 && normalContinuation.statement().isPresent(), "PERFORM range needs endpoints, body and resume");
             if(!procedures.isEmpty())require(start.isPresent() && end.isPresent()
                 && procedures.get(0).id().equals(start.get().id()) && procedures.get(procedures.size()-1).id().equals(end.get().id()), "PERFORM range endpoints disagree");
-            if(gapCodes.isEmpty())times.ifPresent(t->require(t.profile()!=PerformCountProfile.UNAVAILABLE,"count must be proven"));
-            if(gapCodes.isEmpty())loop.ifPresent(l->require(l.condition().predicate().availability()==Availability.KNOWN,"loop predicate must be proven"));
-            if(gapCodes.isEmpty())varying.ifPresent(v->{
+            if(publicationKind==PerformPublicationKind.LEGACY_PROFILE && gapCodes.isEmpty())times.ifPresent(t->require(t.profile()!=PerformCountProfile.UNAVAILABLE,"count must be proven"));
+            if(publicationKind==PerformPublicationKind.LEGACY_PROFILE && gapCodes.isEmpty())loop.ifPresent(l->require(l.condition().predicate().availability()==Availability.KNOWN,"loop predicate must be proven"));
+            if(publicationKind==PerformPublicationKind.LEGACY_PROFILE && gapCodes.isEmpty())varying.ifPresent(v->{
                 require(v.levels()==1 && v.controls().size()==3,"single VARYING control profile");
                 for(var role:VaryingOperandRole.values()) {
                     var operands=v.controls().stream().filter(o->o.level()==1&&o.role()==role).toList();
@@ -1003,11 +1158,23 @@ public final class CobolSemanticProduct {
         public MoveTransfer { Objects.requireNonNull(source);Objects.requireNonNull(target);Objects.requireNonNull(effect);require(target.role()==OperandRole.WRITE,"transfer target requires WRITE");if(source instanceof DataReference r)require(r.role()==OperandRole.READ,"transfer source requires READ"); }
     }
 
+    /** A value transfer proved for one receiver independently of peer storage layout. */
+    public record LogicalTransfer(OperandId target,TextValue value) {
+        public LogicalTransfer { Objects.requireNonNull(target);Objects.requireNonNull(value); }
+    }
     public record MoveFact(StatementHeader header, MoveSource source,
                            DataReference target, CopySemantics copySemantics,
-                           NormalContinuation normalContinuation, Optional<TextAdjustment> textAdjustment, Optional<RegionalMove> regionalMove, List<MoveTransfer> additionalTransfers) implements StatementFact {
+                           NormalContinuation normalContinuation, Optional<TextAdjustment> textAdjustment, Optional<RegionalMove> regionalMove, List<MoveTransfer> additionalTransfers,List<LogicalTransfer> logicalTransfers) implements StatementFact {
         public MoveFact {
-            additionalTransfers=List.copyOf(additionalTransfers);
+            additionalTransfers=List.copyOf(additionalTransfers);logicalTransfers=List.copyOf(logicalTransfers);
+            require(logicalTransfers.isEmpty()||source instanceof LiteralSource literal&&literal.logicalValue().isPresent(),"logical transfer requires a proved literal");
+            var logicalTargets=new HashSet<OperandId>();
+            for(var transfer:logicalTransfers) {
+                require(logicalTargets.add(transfer.target()),"logical receiver may appear once");
+                var receiver=transfer.target().equals(target.id())?target:additionalTransfers.stream()
+                    .map(MoveTransfer::target).filter(r->r.id().equals(transfer.target())).findFirst().orElse(null);
+                require(receiver!=null&&receiver.logicalWholeItem().isPresent(),"logical transfer requires a whole receiver");
+            }
             require(additionalTransfers.isEmpty()||regionalMove.isPresent()&&copySemantics==CopySemantics.UNAVAILABLE,"additional transfers require regional effects exclusively");
             Objects.requireNonNull(regionalMove);
             copySemantics = Objects.requireNonNull(copySemantics);
@@ -1036,6 +1203,10 @@ public final class CobolSemanticProduct {
             if (source instanceof DataReference data) require(data.role() == OperandRole.READ, "MOVE data source requires READ");
             if (target.role() != OperandRole.WRITE)
                 throw new IllegalArgumentException("MOVE target must have WRITE role");
+        }
+        public MoveFact(StatementHeader header,MoveSource source,DataReference target,CopySemantics copySemantics,
+                NormalContinuation normalContinuation,Optional<TextAdjustment> textAdjustment,Optional<RegionalMove> regionalMove,List<MoveTransfer> additionalTransfers) {
+            this(header,source,target,copySemantics,normalContinuation,textAdjustment,regionalMove,additionalTransfers,List.of());
         }
         public MoveFact(StatementHeader header,MoveSource source,DataReference target,CopySemantics copySemantics,
                 NormalContinuation normalContinuation,Optional<TextAdjustment> textAdjustment,Optional<RegionalMove> regionalMove) {
@@ -1192,10 +1363,13 @@ public final class CobolSemanticProduct {
                     require(refs.keySet().containsAll(ids),"effect must reference an owned operand");
                 }
                 require(e.mayWrites().stream().allMatch(id->refs.get(id).role()==OperandRole.WRITE),"effect write role");
-                require(e.mustOverwrite().isEmpty()||e.proof()==EffectProof.INITIALIZE_TARGETS,"only exact INITIALIZE is MUST in this slice");
-                require(e.mustOverwrite().stream().allMatch(id->refs.get(id).regionalAccess().isPresent()),"MUST requires a physical access");
-                if(e.proof()!=EffectProof.DISPLAY_SIMPLE&&e.proof()!=EffectProof.NO_OP)require(e.values()==EffectValueTransform.UNKNOWN
-                    &&(e.unknownWriteBound()!=EffectBound.NONE||!e.mayWrites().isEmpty()),"receiver effect must retain writes or unknown bound");
+                require(e.mustOverwrite().isEmpty()||e.proof()==EffectProof.INITIALIZE_TARGETS||e.proof()==EffectProof.ACCEPT_TARGET,
+                    "MUST requires an explicit supported receiver proof");
+                require(e.mustOverwrite().stream().allMatch(id->
+                    e.proof()==EffectProof.ACCEPT_TARGET?refs.get(id).wholeItemAccess().isPresent():refs.get(id).regionalAccess().isPresent()),
+                    "MUST requires an exact whole item or physical access");
+                if(e.proof()!=EffectProof.DISPLAY_SIMPLE&&e.proof()!=EffectProof.NO_OP)require(e.values()==EffectValueTransform.UNKNOWN,
+                    "receiver value transform remains uninterpreted");
                 require(e.knownReads().stream().allMatch(id->refs.get(id).role()==OperandRole.READ),"effect read role");
                 if(e.proof()==EffectProof.NO_OP)require(e.knownReads().isEmpty()&&e.mayWrites().isEmpty()&&e.mustOverwrite().isEmpty()&&e.exposedRegions().isEmpty()&&e.unknownReadBound()==EffectBound.NONE&&e.unknownWriteBound()==EffectBound.NONE&&e.unknownExposureBound()==EffectBound.NONE&&e.environment()==EnvironmentEffect.NONE&&e.values()==EffectValueTransform.NONE,"NO_OP proof shape");
                 if(e.proof()==EffectProof.DISPLAY_SIMPLE)require(e.mayWrites().isEmpty()&&e.mustOverwrite().isEmpty()&&e.exposedRegions().isEmpty()
@@ -1534,17 +1708,67 @@ public final class CobolSemanticProduct {
         public static SourceDependencyInventory unavailable(){return new SourceDependencyInventory(Availability.UNAVAILABLE,List.of(),List.of("SOURCE_DEPENDENCIES_UNAVAILABLE"));}
     }
 
+    /** Positive successor of an ordinary occurrence; absence makes no termination claim. */
+    public record OrdinaryContinuation(StatementId statement, StatementId destination, Provenance provenance) {
+        public OrdinaryContinuation { Objects.requireNonNull(statement); Objects.requireNonNull(destination); Objects.requireNonNull(provenance); }
+    }
+
     /** One immutable, closed publication with a cardinality-independent envelope. */
     public record State(UnitId unit, Policy policy,
                         List<DataDeclaration> dataDeclarations,
                         List<StatementFact> statements,
-                        List<Gap> gaps, CoverageSummary coverage, EntryInventory entryInventory, IndependentStorageSet storageIndependence, StorageInventory storage, FileInventory fileInventory, SourceDependencyInventory sourceDependencies) {
+                        List<Gap> gaps, CoverageSummary coverage, EntryInventory entryInventory, IndependentStorageSet storageIndependence, StorageInventory storage, FileInventory fileInventory, SourceDependencyInventory sourceDependencies, List<OrdinaryContinuation> ordinaryContinuations, Optional<ControlTopology> controlTopology, Optional<FactDependencies> factDependencies) {
+        public State(UnitId unit, Policy policy,List<DataDeclaration> dataDeclarations,List<StatementFact> statements,
+                List<Gap> gaps,CoverageSummary coverage,EntryInventory entryInventory,IndependentStorageSet storageIndependence,
+                StorageInventory storage,FileInventory fileInventory,SourceDependencyInventory sourceDependencies,
+                List<OrdinaryContinuation> ordinaryContinuations,Optional<ControlTopology> controlTopology) {
+            this(unit,policy,dataDeclarations,statements,gaps,coverage,entryInventory,storageIndependence,storage,fileInventory,sourceDependencies,ordinaryContinuations,controlTopology,Optional.empty());
+        }
+        public State(UnitId unit, Policy policy, List<DataDeclaration> dataDeclarations, List<StatementFact> statements,
+                List<Gap> gaps, CoverageSummary coverage, EntryInventory entryInventory, IndependentStorageSet storageIndependence,
+                StorageInventory storage, FileInventory fileInventory, SourceDependencyInventory sourceDependencies, List<OrdinaryContinuation> ordinaryContinuations) {
+            this(unit,policy,dataDeclarations,statements,gaps,coverage,entryInventory,storageIndependence,storage,fileInventory,sourceDependencies,ordinaryContinuations,Optional.empty());
+        }
+        public State(UnitId unit, Policy policy, List<DataDeclaration> dataDeclarations, List<StatementFact> statements,
+                List<Gap> gaps, CoverageSummary coverage, EntryInventory entryInventory, IndependentStorageSet storageIndependence,
+                StorageInventory storage, FileInventory fileInventory, SourceDependencyInventory sourceDependencies) {
+            this(unit,policy,dataDeclarations,statements,gaps,coverage,entryInventory,storageIndependence,storage,fileInventory,sourceDependencies,List.of());
+        }
         public State(UnitId unit, Policy policy, List<DataDeclaration> dataDeclarations, List<StatementFact> statements,
                 List<Gap> gaps, CoverageSummary coverage, EntryInventory entryInventory, IndependentStorageSet storageIndependence,
                 StorageInventory storage, FileInventory fileInventory) {
             this(unit,policy,dataDeclarations,statements,gaps,coverage,entryInventory,storageIndependence,storage,fileInventory,SourceDependencyInventory.unavailable());
         }
         public State {
+            Objects.requireNonNull(factDependencies);
+            if(factDependencies.isPresent()) {
+                require(controlTopology.isPresent(),"fact dependencies require topology contract");
+                FactDependencyContract.validate(factDependencies.get(),storage);
+            }
+            Objects.requireNonNull(controlTopology);
+            if(controlTopology.isPresent()) {
+                var published=statements.stream().map(s->"statement:"+s.header().id().localId()).collect(java.util.stream.Collectors.toSet());
+                require(published.equals(controlTopology.get().occurrences().stream().map(ControlTopology.Occurrence::statement).collect(java.util.stream.Collectors.toSet())),"topology occurrence inventory equals publication");
+            }
+            ordinaryContinuations = List.copyOf(ordinaryContinuations);
+            var ordinaryIds = new HashSet<StatementId>();
+            var byId = new HashMap<StatementId,StatementFact>();
+            statements.forEach(f -> byId.put(f.header().id(),f));
+            for (var relation : ordinaryContinuations) {
+                var from=byId.get(relation.statement());
+                require(ordinaryIds.add(relation.statement()) && relation.statement().unit().equals(unit)
+                    && byId.containsKey(relation.destination()) && relation.destination().unit().equals(unit)
+                    && !relation.statement().equals(relation.destination()) && relation.provenance().exact(),
+                    "ordinary continuation requires unique closed endpoints and exact origin");
+                require(from instanceof MoveFact || from instanceof IfFact || from instanceof EvaluateFact
+                    || from instanceof PerformFact || from instanceof ProcedurePerformFact,
+                    "ordinary continuation requires a supported completing construction");
+                var intrinsic=from instanceof MoveFact m?m.normalContinuation():from instanceof IfFact f?f.normalContinuation():
+                    from instanceof EvaluateFact e?e.normalContinuation():from instanceof PerformFact f?f.normalContinuation():
+                    ((ProcedurePerformFact)from).normalContinuation();
+                require(intrinsic.statement().isEmpty() || intrinsic.statement().equals(Optional.of(relation.destination())),
+                    "ordinary and intrinsic successors agree when both known");
+            }
             Objects.requireNonNull(sourceDependencies);
             unit = Objects.requireNonNull(unit, "unit");
             policy = Objects.requireNonNull(policy, "policy");
@@ -1871,13 +2095,15 @@ public final class CobolSemanticProduct {
             var result=new ArrayList<DataReference>();if(move.source() instanceof DataReference r)result.add(r);result.add(move.target());
             for(var t:move.additionalTransfers()){if(t.source() instanceof DataReference r)result.add(r);result.add(t.target());}return List.copyOf(result);
         }
+        if (statement instanceof CicsHandlerFact cics) return java.util.stream.Stream.concat(cics.programTarget().filter(DataReference.class::isInstance).map(DataReference.class::cast).stream(),cics.options().stream().flatMap(o->o.reference().stream())).toList();
         if (statement instanceof CicsFileFact cics) return java.util.stream.Stream.concat(cics.target().filter(DataReference.class::isInstance).map(DataReference.class::cast).stream(),cics.options().stream().flatMap(o->o.reference().stream())).toList();
         if (statement instanceof CicsFact cics) return java.util.stream.Stream.concat(cics.target().filter(DataReference.class::isInstance).map(DataReference.class::cast).stream(),cics.options().stream().flatMap(o->o.reference().stream())).toList();
         if (statement instanceof CallFact call) return call.target() instanceof DataReference data ? List.of(data) : List.of();
         if (statement instanceof IfFact branch) return branch.condition().references();
         if (statement instanceof ProcedurePerformFact p) return java.util.stream.Stream.concat(java.util.stream.Stream.concat(p.loop().stream().flatMap(l->l.condition().references().stream()),p.times().stream().flatMap(t->t.reference().stream())),p.varying().stream().flatMap(v->v.controls().stream()).flatMap(v->v.references().stream())).toList();
         if (statement instanceof ConditionalGoToFact g) return g.selector().stream().toList();
-        if (statement instanceof EvaluateFact e) return e.subject().stream().toList();
+        if (statement instanceof EvaluateFact e) return java.util.stream.Stream.concat(e.subject().stream(),
+                e.arms().stream().flatMap(a -> a.conditionReads().stream())).toList();
         if (statement instanceof ObservedStatement observed) return observed.knownReferences();
         return List.of();
     }
@@ -1889,6 +2115,8 @@ public final class CobolSemanticProduct {
             if (statement instanceof MoveFact move) {
                 var all=new ArrayList<OperandId>();all.add(move.source().id());all.add(move.target().id());
                 for(var t:move.additionalTransfers()){all.add(t.source().id());all.add(t.target().id());}operands=List.copyOf(all);
+            } else if (statement instanceof CicsHandlerFact cics) {
+                operands=java.util.stream.Stream.concat(cics.programTarget().stream().map(CallTarget::id),cics.options().stream().flatMap(o->o.reference().stream()).map(DataReference::id)).toList();
             } else if (statement instanceof CicsFileFact cics) {
                 operands=java.util.stream.Stream.concat(cics.target().stream().map(CallTarget::id),cics.options().stream().flatMap(o->o.reference().stream()).map(DataReference::id)).toList();
             } else if (statement instanceof CicsFact cics) {
@@ -1904,7 +2132,8 @@ public final class CobolSemanticProduct {
                 operands=references(p).stream().map(DataReference::id).toList();
             } else if (statement instanceof EvaluateFact e) {
                 var ids = new ArrayList<OperandId>(); e.subject().ifPresent(s -> ids.add(s.id()));
-                e.arms().forEach(a -> ids.add(a.selection().id())); operands = ids;
+                e.arms().forEach(a -> { a.selection().ifPresent(s -> ids.add(s.id()));
+                    a.conditionReads().forEach(r -> ids.add(r.id())); }); operands = ids;
             } else if(statement instanceof ObservedStatement observed) {
                 operands=observed.knownReferences().stream().map(DataReference::id).toList();
             } else {
@@ -1926,6 +2155,11 @@ public final class CobolSemanticProduct {
         var goToTargets=new HashMap<ProcedureId,StatementId>();
         var procedureOrigins=new HashMap<ProcedureId,Provenance>();
         for (StatementFact statement : statements.values()) {
+            if(statement instanceof CicsHandlerFact h)h.targetEntry().ifPresent(id->{
+                var target=statements.get(id);
+                require(target!=null&&target.header().provenance().equals(h.entryOrigin().orElseThrow()),"handler entry is published with its canonical provenance");
+                require(target.header().containment().branch()==Branch.ROOT,"handler entry is a procedure root statement");
+            });
             if (statement instanceof GoToFact g) g.targetEntry().ifPresent(id -> {
                 require(id.unit().equals(g.header().id().unit()) && statements.containsKey(id), "GO TO entry is published in same unit");
                 var previousOrigin=procedureOrigins.putIfAbsent(g.target().orElseThrow().id(),g.target().orElseThrow().paragraphOrigin());
@@ -1953,6 +2187,10 @@ public final class CobolSemanticProduct {
                 });
             }
             if(statement instanceof ProcedurePerformFact p) {
+                p.targetEntry().ifPresent(id->require(p.start().isPresent() && id.unit().equals(p.header().id().unit())
+                    && statements.containsKey(id) && statements.get(id).header().containment().branch()==Branch.ROOT,
+                    "PERFORM target entry references local published root"));
+                if(!p.procedures().isEmpty())require(p.targetEntry().filter(p.procedures().get(0).entry()::equals).isPresent(),"PERFORM entry agrees with range");
                 var members=new HashSet<StatementId>();var paragraphs=new HashSet<ProcedureId>();
                 for(var paragraph:p.procedures()) {
                     require(paragraphs.add(paragraph.id()) && paragraph.id().unit().equals(p.header().id().unit()), "unique local range paragraph");
@@ -1961,7 +2199,7 @@ public final class CobolSemanticProduct {
                     require(paragraph.statements().containsAll(paragraph.completions()), "paragraph completion belongs to body");
                 }
                 p.normalContinuation().statement().ifPresent(id->require(statements.containsKey(id), "published range resume"));
-                if(p.gapCodes().isEmpty())require(!members.contains(p.header().id()) && p.normalContinuation().statement().filter(members::contains).isEmpty(), "activation/resume outside range");
+                if(p.publicationKind()==PerformPublicationKind.LEGACY_PROFILE && p.gapCodes().isEmpty())require(!members.contains(p.header().id()) && p.normalContinuation().statement().filter(members::contains).isEmpty(), "activation/resume outside range");
             }
             if (statement instanceof PerformFact basic && basic.profile() == PerformProfile.BASIC_PROCEDURE_PERFORM) {
                 var seen=new HashSet<StatementId>();

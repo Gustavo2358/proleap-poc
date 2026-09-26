@@ -121,12 +121,14 @@ public final class ScalarMoveSemantics {
             });
             // Reuse the already immutable canonical relation index; do not rebuild it.
             Map<Integer, Integer> next = Map.of();
+            Map<Integer, Integer> ordinaryNext = Map.of();
             boolean procedureSeen = false;
             for (var division : unit.program().divisions()) {
                 if (division.divisionKind() != Ast.DivisionKind.PROCEDURE) continue;
                 if (procedureSeen) throw new IllegalArgumentException("duplicate procedure division");
                 procedureSeen = true;
                 next = division.normalContinuations();
+                ordinaryNext = division.ordinaryContinuations();
             }
             var attributes = unit.program().attributes();
             boolean ordinary = inputComplete && !attributes.initial() && !attributes.recursive()
@@ -147,15 +149,16 @@ public final class ScalarMoveSemantics {
                 if (node instanceof Ast.CallStatement call) {
                     var key = new NodeKey(unit.id(), call.meta().id());
                     calls.put(key, new Call(Optional.empty(), inputComplete
-                            ? Optional.ofNullable(next.get(call.meta().id())) : Optional.empty(), inputComplete));
+                            ? Optional.ofNullable(ordinaryNext.get(call.meta().id())) : Optional.empty(), inputComplete));
                     if (call.target() instanceof Ast.DataReference target)
                         callTargets.put(new NodeKey(unit.id(), target.meta().id()), call);
                 }
                 if (node instanceof Ast.MoveStatement move) {
                     counts[4]++;
                     var key = new NodeKey(unit.id(), move.meta().id());
+                    // The parser publishes this structural edge independently of COPY expansion.
                     moves.put(key, fact(Optional.empty(), Copy.UNAVAILABLE,
-                            inputComplete ? Optional.ofNullable(next.get(move.meta().id())) : Optional.empty()));
+                            Optional.ofNullable(next.get(move.meta().id()))));
                     if (!move.corresponding() && (move.source() instanceof Ast.LiteralExpression || move.source() instanceof Ast.DataReference)
                             && move.targets().size() == 1 && move.targets().get(0) instanceof Ast.DataReference target)
                         targets.put(new NodeKey(unit.id(), target.meta().id()), move);
@@ -282,20 +285,8 @@ public final class ScalarMoveSemantics {
         var performs = PerformSemantics.analyze(frontend, tables, resolution, report, completingMoves, ifs, goTos);
         var evaluates = EvaluateSemantics.analyze(frontend, resolution, report, declarations);
         var procedurePerforms = ProcedurePerformSemantics.analyze(frontend, tables, resolution, report, declarations, moves, ifs, evaluates, goTos, performs,numbers,cics);
-        performs = performs.restrictOpenRanges(procedurePerforms);
-        // Ordinary execution crosses grammar-owned paragraph boundaries. Never replace
-        // an intrinsic activation's published completion with that ordinary fallthrough.
-        // This new proof is qualified only in units containing the conditional-transfer slice.
-        var conditionalUnits=goTos.conditionalUnits();
-        for(var unit:frontend.compilationUnit().programUnits())if(report.inputComplete(unit.id()))for(var division:unit.program().divisions())
-            if(conditionalUnits.contains(unit.id())&&division.divisionKind()==Ast.DivisionKind.PROCEDURE)for(var edge:division.ordinaryContinuations().entrySet()) {
-                var key=new NodeKey(unit.id(),edge.getKey());var move=moves.get(key);
-                if(move!=null&&move.nextStatement().isEmpty()&&!performs.intrinsicExit(unit.id(),key.node())
-                        &&!procedurePerforms.paragraphEnd(unit.id(),key.node())) {
-                    moves.put(key,new Move(move.wholeItem(),move.copy(),Optional.of(edge.getValue()),
-                        move.gaps().stream().filter(g->g!=Gap.NORMAL_CONTINUATION_NOT_AVAILABLE).toList(),move.adjustment(),move.sourceWholeItem()));
-                }
-            }
+        performs = performs.restrictPrimaryRanges(procedurePerforms);
+        // Ordinary flow is published independently in SP 2.37, never promoted by a peer feature.
         return new ScalarMoveSemantics(declarations, moves, calls,
                 new Metrics(counts[0], counts[1], counts[2], counts[3], counts[4]),
                 ifs, performs, evaluates,
@@ -312,12 +303,12 @@ public final class ScalarMoveSemantics {
     }
 
     private static Optional<ScalarText> possibleReceiver(Ast.DataEntry entry) {
-        if(!entry.children().isEmpty()||entry.filler()||!entry.meta().provenance().exact())return Optional.empty();
+        if(!entry.children().isEmpty()||entry.filler()||entry.visibility()!=Ast.DeclarationVisibility.LOCAL||!entry.meta().provenance().exact())return Optional.empty();
         Optional<Integer> extent=Optional.empty();int pictures=0,usages=0;
         for(var clause:entry.clauses()) {
             if(clause instanceof Ast.PictureClause picture){pictures++;extent=picture.textExtent();}
             else if(clause instanceof Ast.UsageClause usage&&usage.display())usages++;
-            else if(!(clause instanceof Ast.ValueClause)&&!(clause instanceof Ast.RedefinesClause))return Optional.empty();
+            else if(!(clause instanceof Ast.ValueClause)&&!(clause instanceof Ast.RedefinesClause)&&!(clause instanceof Ast.PreservedDataClause))return Optional.empty();
         }
         return pictures==1&&usages<=1?extent.map(ScalarText::new):Optional.empty();
     }
@@ -332,7 +323,7 @@ public final class ScalarMoveSemantics {
             counts[0]++;
             if (clause instanceof Ast.PictureClause picture) { pictures++; extent = picture.textExtent(); }
             else if (clause instanceof Ast.UsageClause usage && usage.display()) usages++;
-            else return Optional.empty();
+            else if(!(clause instanceof Ast.PreservedDataClause))return Optional.empty();
         }
         return pictures == 1 && usages <= 1 ? extent.map(ScalarText::new) : Optional.empty();
     }

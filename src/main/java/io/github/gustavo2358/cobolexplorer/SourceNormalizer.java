@@ -94,10 +94,10 @@ final class SourceNormalizer {
     private static Result normalizeFixed(String raw, String file, DebugLinePolicy debugLinePolicy) {
         long started = System.nanoTime();
         List<NormalizedLine> output = new ArrayList<>();
-        List<PhysicalLine> physicalLines = physicalLines(raw);
+        FixedTabs tabs = expandFixedTabs(raw);
+        List<PhysicalLine> physicalLines = physicalLines(tabs == null ? raw : tabs.text());
         for (PhysicalLine physical : physicalLines) {
             String line = physical.content();
-            validateFixedCharacters(line, physical.start());
             UnicodeText indexedLine = new UnicodeText(line);
             int lineLength = indexedLine.length();
             String padded = lineLength < 7 ? line + " ".repeat(7 - lineLength) : line;
@@ -131,7 +131,7 @@ final class SourceNormalizer {
             }
         }
         List<NormalizedLine> normalized = normalizeCommentEntries(output, file);
-        Result result = mappedResult(normalized, raw, file);
+        Result result = mappedResult(normalized, raw, file, tabs);
         LOG.debug("event=normalization_completed source={} phase=NORMALIZATION elapsedMs={} physicalLines={} outputLines={} diagnostics={}",
                 file, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - started), physicalLines.size(),
                 normalized.size(), result.diagnostics().size());
@@ -473,23 +473,86 @@ final class SourceNormalizer {
         return result;
     }
 
-    private static void validateFixedCharacters(String line, int rawStart) {
-        int offset = 0;
-        for (int index = 0; index < line.length(); offset++) {
-            int character = line.codePointAt(index);
-            if (character == '\t' && offset >= 6 && hasNonWhitespaceAfter(line, index)) {
-                throw new IllegalArgumentException("Unsupported tab in fixed-format source at offset "
-                        + (rawStart + offset));
-            }
-            index += Character.charCount(character);
+    // Import policy, not a COBOL dialect rule: separators advance to columns 5, 9, 13, ... .
+    // Literal/comment payload remains verbatim. Both source and COPY enter this normalizer.
+    private record FixedTabs(String text, int[] origins) {
+        int original(int offset) {
+            int encoded = origins[offset];
+            return encoded < 0 ? -encoded - 1 : encoded;
         }
     }
 
-    private static boolean hasNonWhitespaceAfter(String line, int index) {
-        for (int following = index + 1; following < line.length(); following++) {
-            if (!Character.isWhitespace(line.charAt(following))) return true;
+    private static FixedTabs expandFixedTabs(String raw) {
+        if (raw.indexOf('\t') < 0) return null;
+        StringBuilder expanded = new StringBuilder(raw.length());
+        List<Integer> origins = new ArrayList<>();
+        for (PhysicalLine line : physicalLines(raw)) {
+            int column = 0;
+            int rawOffset = line.start();
+            int quote = 0; // fixed-format continued literals reopen on each record
+            boolean comment = false;
+            for (int index = 0; index < line.content().length();) {
+                int cp = line.content().codePointAt(index);
+                int width = Character.charCount(cp);
+                if (column == 6) {
+                    comment = cp == '*' || cp == '/';
+                    if (cp == '-') quote = 0; // continuation has its own opening delimiter
+                }
+                if (column >= 7 && column < 72 && !comment) {
+                    if (quote == 0 && cp == '*' && index + 1 < line.content().length()
+                            && line.content().charAt(index + 1) == '>') comment = true;
+                    if (!comment && (cp == '\'' || cp == '"')) {
+                        if (quote == 0) quote = cp;
+                        else if (quote == cp) quote = 0;
+                    }
+                }
+                if (cp == '\t' && column < 72 && (column < 7 || quote == 0 && !comment)) {
+                    int spaces = 4 - column % 4;
+                    expanded.append(" ".repeat(spaces));
+                    for (int n = 0; n < spaces; n++) origins.add(-rawOffset - 1);
+                    column += spaces;
+                } else {
+                    expanded.appendCodePoint(cp);
+                    origins.add(rawOffset);
+                    column++;
+                }
+                index += width;
+                rawOffset++;
+            }
+            expanded.append(line.terminator());
+            for (int n = line.contentEnd(); n < line.end(); n++) origins.add(n);
         }
-        return false;
+        return new FixedTabs(expanded.toString(), origins.stream().mapToInt(Integer::intValue).toArray());
+    }
+
+    private static List<SourceMap.Segment> originalTabSegments(
+            List<SourceMap.Segment> input, FixedTabs tabs) {
+        if (tabs == null) return input;
+        List<SourceMap.Segment> result = new ArrayList<>();
+        for (SourceMap.Segment segment : input) {
+            int from = segment.originalStart();
+            int to = segment.originalEnd();
+            if (!segment.exact()) {
+                int rawFrom = from < tabs.origins().length ? tabs.original(from)
+                        : tabs.original(from - 1) + 1;
+                int rawTo = to > from ? tabs.original(to - 1) + 1 : rawFrom;
+                result.add(new SourceMap.Segment(segment.start(), segment.end(), segment.sourceFile(),
+                        rawFrom, rawTo, segment.includeChain(), false));
+                continue;
+            }
+            while (from < to) {
+                int end = from + 1;
+                boolean exact = tabs.origins()[from] >= 0;
+                while (end < to && (exact ? tabs.origins()[end] >= 0
+                        && tabs.original(end) == tabs.original(end - 1) + 1
+                        : tabs.origins()[end] == tabs.origins()[from])) end++;
+                result.add(new SourceMap.Segment(segment.start() + from - segment.originalStart(),
+                        segment.start() + end - segment.originalStart(), segment.sourceFile(),
+                        tabs.original(from), tabs.original(end - 1) + 1, segment.includeChain(), exact));
+                from = end;
+            }
+        }
+        return result;
     }
 
     private static NormalizedLine transformedLine(String content, PhysicalLine physical) {
@@ -531,7 +594,11 @@ final class SourceNormalizer {
             throw continuationFailure(physical,
                     "continuation cannot follow a comment or excluded source record");
         }
-        String previous = previousLine.content().stripTrailing();
+        String previous = previousLine.content();
+        int previousEnd = previous.length();
+        while (previousEnd > 0 && previous.charAt(previousEnd - 1) != '\t'
+                && Character.isWhitespace(previous.charAt(previousEnd - 1))) previousEnd--;
+        previous = previous.substring(0, previousEnd);
         String continuation = area.stripLeading();
         ContinuationKind kind = continuationKind(previous, physical);
         switch (kind) {
@@ -615,7 +682,8 @@ final class SourceNormalizer {
                 false, originalTerminator && original.terminatorExact(), original.role());
     }
 
-    private static Result mappedResult(List<NormalizedLine> lines, String raw, String file) {
+    private static Result mappedResult(List<NormalizedLine> lines, String raw, String file,
+                                       FixedTabs tabs) {
         StringBuilder text = new StringBuilder();
         List<SourceMap.Segment> segments = new ArrayList<>();
         int offset = 0;
@@ -625,7 +693,7 @@ final class SourceNormalizer {
             offset = appendMapped(text, segments, offset, file, line.terminator(), line.terminatorOriginalStart(),
                     line.terminatorOriginalEnd(), line.terminatorExact());
         }
-        SourceMap sourceMap = SourceMap.mapped(text.toString(), file, raw, segments);
+        SourceMap sourceMap = SourceMap.mapped(text.toString(), file, raw, originalTabSegments(segments, tabs));
         return new Result(sourceMap, List.of(), SourceFormat.FIXED);
     }
 

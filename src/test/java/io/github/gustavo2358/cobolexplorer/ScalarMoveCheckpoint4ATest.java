@@ -53,7 +53,7 @@ class ScalarMoveCheckpoint4ATest {
     }
     // JSON-only assertions have no frontend joins and deliberately erase textual readiness.
     static void assertJson(JsonNode doc) {
-        assertEquals("2.28.0", doc.path("contractVersion").asText());
+        assertEquals("2.39.0", doc.path("contractVersion").asText());
         var data = doc.path("dataDeclarations").get(0);
         var statements = doc.path("statements");
         JsonNode move = null, goback = null;
@@ -118,8 +118,7 @@ class ScalarMoveCheckpoint4ATest {
                 new String[]{"01 WS-X PIC X(5).", "WS-X(1:5)"},
                 new String[]{"01 WS-X PIC X(5).", "WS-X(1)"},
                 new String[]{"01 WS-X PIC X(5) EXTERNAL.", "WS-X"},
-                new String[]{"01 WS-X PIC X(5) GLOBAL.", "WS-X"},
-                new String[]{"01 WS-X PIC X(5) JUSTIFIED RIGHT.", "WS-X"});
+                new String[]{"01 WS-X PIC X(5) GLOBAL.", "WS-X"});
         for (var c : cases) {
             var port = publish(program(c[0], "MOVE 'PROGA' TO " + c[1] + ".\nGOBACK."));
             assertEquals(1, port.moves().size(), Arrays.toString(c));
@@ -240,7 +239,7 @@ class ScalarMoveCheckpoint4ATest {
         var none = new NormalContinuation(ContinuationAvailability.NONE, Optional.empty(), move.header().provenance());
         assertTrue(none.statement().isEmpty()); // Representable; never inferred from physical end by this profile.
     }
-    @Test void inputIncompleteDoesNotProveWholeCopyOrContinuation() {
+    @Test void inputIncompleteDoesNotProveWholeCopyButKeepsParsedContinuation() {
         var a = AstBoundaryTestSupport.analyze(program("01 WS-X PIC X(5).", "MOVE 'PROGA' TO WS-X.\nGOBACK."), "scalar.cbl");
         var incomplete = new ResolutionAnalysisReport.FrontendState(0, 0, 0, List.of(new Diagnostic("COBOL",
                 Diagnostic.Phase.PREPROCESSOR, Diagnostic.Code.UNRESOLVED_COPY, "scalar.cbl", 3, 0,
@@ -253,7 +252,8 @@ class ScalarMoveCheckpoint4ATest {
         assertTrue(port.moves().get(0).target().wholeItemAccess().isEmpty());
         assertEquals(CopySemantics.POSSIBLE_TEXT, port.moves().get(0).copySemantics());
         assertTrue(port.moves().get(0).target().logicalWholeItem().isPresent());
-        assertEquals(ContinuationAvailability.UNAVAILABLE, port.moves().get(0).normalContinuation().availability());
+        assertEquals(ContinuationAvailability.KNOWN, port.moves().get(0).normalContinuation().availability());
+        assertTrue(port.moves().get(0).normalContinuation().statement().isPresent());
     }
 
     @Test void baselineCp3PayloadRemainsCompatibleAcrossMinorVersion() throws Exception {
@@ -264,7 +264,7 @@ class ScalarMoveCheckpoint4ATest {
         var a = AstBoundaryTestSupport.analyze(Files.readString(fixture), fixture.getFileName().toString());
         var port = CobolSemanticProductProjector.open(products(a), a.model().programUnits().get(0).id());
         var current = mapper.readTree(SemanticProductJsonWriter.serialize(port));
-        assertEquals("2.28.0", current.path("contractVersion").asText());
+        assertEquals("2.39.0", current.path("contractVersion").asText());
         assertEquals("GOBACK", previous.path("statements").get(0).path("variant").asText());
         assertEquals("NONE", previous.path("statements").get(0).path("localContinuation").asText());
         ((com.fasterxml.jackson.databind.node.ObjectNode) previous).remove("contractVersion");
@@ -279,6 +279,9 @@ class ScalarMoveCheckpoint4ATest {
         assertEquals("KNOWN", current.path("fileInventory").path("availability").asText());
         assertTrue(current.path("fileInventory").path("declarations").isEmpty());
         ((com.fasterxml.jackson.databind.node.ObjectNode) current).remove("fileInventory");
+        assertEquals("FRONTEND_CONTROL_TOPOLOGY_R1", current.path("controlTopology").path("authority").asText());
+        assertEquals(current.path("statements").size(), current.path("controlTopology").path("occurrences").size());
+        ((com.fasterxml.jackson.databind.node.ObjectNode) current).remove("controlTopology");
         assertEquals(previous, current, "all CP3 facts, provenance, coverage and gaps must be unchanged");
     }
 

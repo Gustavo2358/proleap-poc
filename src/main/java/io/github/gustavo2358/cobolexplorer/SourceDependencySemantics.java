@@ -11,19 +11,42 @@ public final class SourceDependencySemantics {
             CompilationUnitBuildResult frontend,List<SourceDependencyFact> facts,List<String> sourceGaps) {
         var collected=new LinkedHashMap<ResolutionContracts.ProgramUnitId,List<SourceDependencyInventory.Occurrence>>();
         var units=frontend.compilationUnit().programUnits();
-        var byFile=new HashMap<String,TreeMap<Long,CompilationUnitModel.ProgramUnit>>();
+        // A Program provenance may collapse to its PROGRAM-ID line when its body
+        // crosses COPY expansions. Bound each owner by proved original AST nodes.
+        var extents=new ArrayList<SourceExtent>();
         for(var unit:units) {
             collected.put(unit.id(),new ArrayList<>());
-            var location=unit.program().meta().provenance().original();
-            byFile.computeIfAbsent(location.file(),unused->new TreeMap<>()).put(position(location.startLine(),location.startColumn()),unit);
+            var start=unit.program().meta().provenance().original();
+            extents.add(new SourceExtent(unit,start.file(),position(start.startLine(),start.startColumn()),
+                maxOriginalEnd(unit.program(),start.file()),unit.id().structuralPath().size()));
         }
         for(var fact:facts) {
-            var source=fact.rootSite();var index=byFile.get(source.file());
-            var entry=index==null?null:index.floorEntry(position(source.startLine(),source.startColumn()));
-            var owner=entry==null?null:entry.getValue();
-            while(owner!=null && position(source.endLine(),source.endColumn())>end(owner.program().meta().provenance().original()))
-                owner=owner.parentId()==null?null:frontend.compilationUnit().find(owner.parentId()).orElse(null);
-            if(owner==null)throw new IllegalArgumentException("SOURCE_DEPENDENCY_OWNER_UNPROVED: nominal occurrence cannot be assigned safely");
+            var source=fact.rootSite();var first=position(source.startLine(),source.startColumn());
+            var last=position(source.endLine(),source.endColumn());
+            CompilationUnitModel.ProgramUnit owner=null;int depth=-1;boolean ambiguous=false;
+            for(var extent:extents) {
+                if(!extent.file().equals(source.file())||first<extent.start()||last>extent.end())continue;
+                if(extent.depth()>depth) {owner=extent.unit();depth=extent.depth();ambiguous=false;}
+                else if(extent.depth()==depth) ambiguous=true;
+            }
+            // A root COPY can contain the complete program, so no program node
+            // has a provenance location in the including file. Match the proved
+            // include frame to the captured root occurrence.
+            if(owner==null&&!ambiguous) {
+                for(var unit:units) {
+                    if(!matchesRootCopy(fact,unit))continue;
+                    if(owner!=null) {ambiguous=true;break;}
+                    owner=unit;
+                }
+            }
+            // A trailing COPY may be the last source construct and leave no AST node
+            // after it. With exactly one root program in that physical source, its
+            // ownership is unique even when the directive itself was preprocessed away.
+            if(owner==null&&!ambiguous&&extents.size()==1) {
+                var only=extents.get(0);
+                if(only.file().equals(source.file())&&first>=only.start())owner=only.unit();
+            }
+            if(owner==null||ambiguous)throw new IllegalArgumentException("SOURCE_DEPENDENCY_OWNER_UNPROVED: nominal occurrence cannot be assigned safely");
             var target=collected.get(owner.id());var p=fact.provenance();
             target.add(new SourceDependencyInventory.Occurrence("source-"+target.size(),
                 SourceDependencyInventory.Kind.valueOf(fact.kind().name()),fact.name(),fact.qualification(),
@@ -42,7 +65,24 @@ public final class SourceDependencySemantics {
         }
         return Map.copyOf(result);
     }
+    private static boolean matchesRootCopy(SourceDependencyFact fact,CompilationUnitModel.ProgramUnit unit) {
+        var chain=unit.program().meta().provenance().includeChain();
+        if(chain.isEmpty())return false;
+        var root=chain.get(0);
+        var site=fact.rootSite();
+        if(!root.includingFile().equals(site.file())||root.includeLine()!=site.startLine())return false;
+        var factChain=fact.provenance().includeChain();
+        return factChain.isEmpty()
+            ? fact.kind()==SourceDependencyFact.Kind.COPYBOOK&&root.requestedName().equals(fact.name())
+            : root.equals(factChain.get(0));
+    }
+    private record SourceExtent(CompilationUnitModel.ProgramUnit unit,String file,long start,long end,int depth) {}
+    private static long maxOriginalEnd(Ast.Node node,String file) {
+        var place=node.meta().provenance().original();
+        long end=place.file().equals(file)?position(place.endLine(),place.endColumn()):Long.MIN_VALUE;
+        for(var child:Ast.children(node))end=Math.max(end,maxOriginalEnd(child,file));
+        return end;
+    }
     private static long position(int line,int column){return ((long)line<<32)+(column&0xffffffffL);}
-    private static long end(Ast.SourceLocation p){return position(p.endLine(),p.endColumn());}
     private static Location location(Ast.SourceLocation p){return new Location(p.file(),p.startLine(),p.startColumn(),p.endLine(),p.endColumn());}
 }

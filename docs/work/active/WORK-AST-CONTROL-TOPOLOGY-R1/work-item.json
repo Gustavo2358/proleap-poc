@@ -1,0 +1,10 @@
+{
+  "id": "WORK-AST-CONTROL-TOPOLOGY-R1",
+  "title": "Frontend control topology authority after CardDemo D0",
+  "status": "IN_PROGRESS",
+  "scope": [
+    "SP 2.39 topology authority and legacy separation",
+    "Region completion, contextual bindings and shared FILE target inventory",
+    "Real F2/F3/F7 witnesses, CardDemo 73 and historical control gates; Draft review, no merge"
+  ]
+}

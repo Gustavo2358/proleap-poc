@@ -16,9 +16,8 @@ class RecallFirstEntryTest {
         assertEquals(List.of(215,217,214,199,193,64,64,64),c.bytes());
         assertTrue(c.gapCodes().contains("ENTRY_STATE_NOT_PROVEN"));
     }
-    @Test void unknownStatementDoesNotEraseSourceSupportedEntryBytes() {
-        // DISPLAY gains a typed no-write proof in RF-W2; EXHIBIT remains unknown.
-        possible("EXHIBIT LIT-PGM.\nCALL LIT-PGM.");
+    @Test void unknownStatementCoverageDoesNotWeakenEntryBytes() {
+        invariant(VALUE+"01 FLAG PIC X.\n01 INPUT-PGM PIC X(8).\n","EXHIBIT LIT-PGM.\nCALL LIT-PGM.");
     }
     @Test void futureMustWriteDoesNotEraseEntryButIsStillAnExecutableWrite() {
         possible("MOVE 'PROGB' TO LIT-PGM.\nCALL LIT-PGM.");

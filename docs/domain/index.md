@@ -1,5 +1,7 @@
 # Domínio
 
+[SP 2.42 — explicit CICS ABEND events](cics-abend-events.md), preserving the SP 2.41 handler operation contract.
+
 Documentos de domínio descrevem como cada subsistema funciona semanticamente hoje. Cada um deve explicitar entradas, saídas, superfície suportada, fronteiras não suportadas, incerteza, provenance, custo esperado e links para invariantes, ADRs e evals relevantes.
 
 Domínios disponíveis, na ordem do pipeline:
@@ -22,3 +24,7 @@ embarcadas e descoberta final de dependências também não devem ser apresentad
 como domínio atual sem contrato materializado.
 
 - Current [SP1.8 compositional/partial boundary](../architecture/compositional-partial-lowering.md) and [BASIC PERFORM](perform-basic.md).
+
+- [Positive memory topology and storage coverage](scoped-storage-uncertainty.md): POSITIVE_MEMORY_TOPOLOGY W1 supported textual projection.
+
+- [R7 exceptional handler source semantics](cics-exceptional-handlers.md) — SP2.45, source-only selection and entry.

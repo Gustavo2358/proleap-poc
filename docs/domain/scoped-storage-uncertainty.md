@@ -1,40 +1,45 @@
-# EP-W3 — scoped storage uncertainty
+# Storage coverage and positive topology
 
-## Decision before implementation
+## POSITIVE_MEMORY_TOPOLOGY W1 decision
 
-Replace the Unit-wide allocation boolean with explicit uncertainty records. Each
-record identifies the source owner/root, provenance, affected dimensions and the
-scope for which proof is missing. A root allocation assessment is derived from
-those records. Scope is not inferred from names, IDs, order or a keyword list.
+The earlier EP-W3 unit-wide alias fallback for an uninterpreted data clause is
+superseded. Source coverage is distinct from executable allocation facts. A generic
+`Ast.PreservedDataClause` retains its owner, root, provenance and declaration-level
+LAYOUT diagnostic. It does not add ALLOCATION, ALIAS or LIFETIME uncertainty and
+does not deny unrelated or enclosing supported textual layout.
 
-An unmodeled data clause is not harmless. Its layout uncertainty starts at its
-declaration and propagates through the existing offset/extent/component equations.
-Without an alias bound, its allocation uncertainty can cover the unit. That broad
-remainder is retained explicitly with its owner/provenance; it cannot erase VALUE
-support. We do not claim that every unknown data clause affects only its own root.
-Nonlocal storage visibility likewise leaves unit separation unproved.
+A supported PIC X/DISPLAY leaf supplies its existing positive character width.
+Structural group lengths and member starts use the existing sum of component
+footprints; REDEFINES uses the maximum extent on the same base, and RENAMES retains
+its supported endpoint interval. An omitted representation clause contributes
+nothing to these equations. These coordinates describe the product's supported
+projection; they do not promise complete COBOL physical fidelity. The explicit IBM
+profile still selects IBM1047 for represented text. No profile means no byte codec.
 
-Known nested REDEFINES and RENAMES scope rules already distinguish a record from
-an unbounded root relation. Preserve those positive bounds and counterexamples.
-The new assessment keeps layout measures separate: missing allocation proof does
-not change a known offset/extent into a fabricated zero or a proved alias relation.
-The current SP base allocation enum remains a projection of the assessment. No
-normative/wire change is required: it still promises independence only when proved.
+The rule is based on the typed aspect, not a keyword list: SYNC, JUSTIFIED and a
+synthetic arbitrary preserved clause exercise the same path. Unsupported numeric
+pictures, OCCURS, non-DISPLAY usage, malformed relationships and nonlocal lifetime
+are not newly implemented by W1. Their existing diagnostics and validation remain;
+no unknown extent is replaced with zero. General projection of those aspects is
+pending the appropriate later vertical, not authority to restore compensating
+uncertainty to the W1 supported textual projection.
+
+Distinct published bases are independent identities in the supported model.
+Known shared storage uses a common component/base. Different source names alone
+are not a reason to split a known overlay. This changes the earlier requirement
+for negative source-completeness proof while preserving positive relation checks.
 
 ## Algorithm and oracles
 
-Collect immutable owner/scope/reason/dimension records while visiting declarations;
-index unit-wide and root-scoped uncertainty once. Evaluate a base from its indexed
-scope records; no pairwise alias graph, language whitelist or extra dataflow is
-introduced. O(declarations + uncertainty records + bases), excluding existing
-component/layout work. Logical source evidence remains a separate W1 obligation.
+Collection and indexed assessment remain linear in declarations and diagnostic
+records. Diagnostics are not used to enumerate additional allocation targets.
+`PositiveMemoryTopologyTest` verifies independent and same-family partial text,
+3+5 source versus 4+4 destination group copy, preserved overlays/RENAMES, physical
+profile separation and no numeric-width invention. It is part of FAST.
+`EvidenceMetamorphicTest` checks an arbitrary preserved AST clause and requires
+unchanged supported entry authority, not merely a retained candidate. Existing
+source coverage findings remain available in the Semantic Product.
 
-Generic AST JOHNDOE, unknown numeric layout, unknown subordinate/root relations,
-and uncertainty moved between declarations/units must preserve independent VALUE
-support. Tests inspect both the scope/provenance record and known physical bounds.
-Consumer controls remove separation premises and rename/reorder bases: neither
-change may turn unproved aliases into disjoint storage or give them kill authority.
-
-Limits: broad alias uncertainty remains broad when no smaller bound is known.
-This wave does not implement padding/alignment semantics or claim source-complete
-layout. A smaller scope requires positive evidence, not a desired candidate count.
+Group MOVE continues to copy the whole supported sequence using existing
+correspondence, not matched child names. Downstream W1 tests establish snapshots,
+BEFORE observation and the separate consumer physical opt-in.

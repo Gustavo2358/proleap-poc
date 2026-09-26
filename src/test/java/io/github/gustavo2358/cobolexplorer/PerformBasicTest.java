@@ -33,7 +33,7 @@ class PerformBasicTest {
             if (name.equals("copy")) { assertInstanceOf(DataReference.class, bodyFacts.get(1).source()); assertEquals(Availability.KNOWN, port.storageIndependence().availability()); }
             var json = SemanticProductJsonWriter.serialize(port);
             assertArrayEquals(json, SemanticProductJsonWriter.serialize(ScalarMoveCheckpoint4ATest.publish(source)));
-            var tree = new ObjectMapper().readTree(json); assertEquals("2.28.0", tree.path("contractVersion").asText());
+            var tree = new ObjectMapper().readTree(json); assertEquals("2.39.0", tree.path("contractVersion").asText());
             Path out = Path.of("target/perform-basic"); Files.createDirectories(out);
             Files.write(out.resolve(name + ".json"), json); Files.writeString(out.resolve(name + ".cbl"), source);
         }
@@ -54,7 +54,9 @@ class PerformBasicTest {
         sources.forEach((name, source) -> {
             var port = ScalarMoveCheckpoint4ATest.publish(source);
             assertTrue(port.performs().isEmpty(), name);
-            assertTrue(port.observedStatements().stream().anyMatch(s -> s.observedKind().equals("PERFORM")), name);
+            assertTrue(port.observedStatements().stream().anyMatch(s -> s.observedKind().equals("PERFORM"))
+                || port.statements().stream().anyMatch(s -> s instanceof io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.ProcedurePerformFact p
+                    && p.publicationKind()==io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.PerformPublicationKind.STRUCTURAL_FACTS), name);
         });
     }
     @Test void namesDoNotSelectPrimaryOrTarget() {

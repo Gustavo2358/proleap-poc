@@ -2,6 +2,7 @@ package io.github.gustavo2358.cobolexplorer;
 
 import java.nio.file.*;
 import java.util.*;
+import io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.SourceDependencyInventory;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import static org.junit.jupiter.api.Assertions.*;
@@ -94,6 +95,48 @@ class SourceDependencyProducerTest {
         assertEquals("CB",result.get(b).occurrences().get(0).name());
         var outside=new Ast.SourceLocation("outside.cbl",1,0,1,5);
         assertThrows(IllegalArgumentException.class,()->SourceDependencySemantics.associate(frontend,List.of(fact("X",outside)),List.of()));
+        var afterBoth=new Ast.SourceLocation("program.cbl",1,81,1,85);
+        assertThrows(IllegalArgumentException.class,()->SourceDependencySemantics.associate(frontend,List.of(fact("AFTER-BOTH",afterBoth)),List.of()));
+    }
+    @Test void sourceOwnershipUsesProvedBodyNodesWhenProgramHeaderProvenanceIsShort() {
+        var id=new ResolutionContracts.ProgramUnitId("source",List.of(0),"A");
+        var header=program("A",5,10);
+        var bodyPlace=new Ast.SourceLocation("program.cbl",10,0,10,20);
+        var body=new Ast.Division(new Ast.Meta(1,new Ast.SourceSpan(10,0,10,20,1,1),
+            new Ast.ParseTreeOrigin(1,"procedureDivision",1),
+            new Ast.SourceProvenance(bodyPlace,bodyPlace,List.of(),true)),Ast.DivisionKind.PROCEDURE,List.of());
+        var program=new Ast.Program(header.meta(),"A",List.of(body));
+        var model=new CompilationUnitModel("source",List.of(new CompilationUnitModel.ProgramUnit(id,null,program)));
+        var coverage=new HashMap<ResolutionContracts.ProgramUnitId,SemanticCoverage.Report>();coverage.put(id,null);
+        var frontend=new CompilationUnitBuildResult(model,coverage,Map.of(id,List.of()));
+        var inside=new Ast.SourceLocation("program.cbl",5,0,5,10);
+        var result=SourceDependencySemantics.associate(frontend,List.of(fact("COPY-IN-BODY",inside)),List.of());
+        assertEquals("COPY-IN-BODY",result.get(id).occurrences().get(0).name());
+        var trailingCopy=new Ast.SourceLocation("program.cbl",11,0,11,10);
+        assertEquals("TRAILING-COPY",SourceDependencySemantics.associate(frontend,
+            List.of(fact("TRAILING-COPY",trailingCopy)),List.of()).get(id).occurrences().get(0).name());
+        var before=new Ast.SourceLocation("program.cbl",1,0,1,4);
+        assertThrows(IllegalArgumentException.class,()->SourceDependencySemantics.associate(frontend,List.of(fact("BEFORE-PROGRAM",before)),List.of()));
+    }
+    @Test void sourceOwnershipFollowsRootCopyWhenItContainsTheWholeProgram() {
+        var id=new ResolutionContracts.ProgramUnitId("source",List.of(0),"A");
+        var site=new Ast.SourceLocation("main.cbl",1,7,1,16);
+        var copied=new Ast.SourceLocation("UNIT.cpy",1,7,1,31);
+        var frame=new Ast.CopyFrame("main.cbl","UNIT","UNIT.cpy",1);
+        var meta=new Ast.Meta(0,new Ast.SourceSpan(1,0,10,0,0,10),new Ast.ParseTreeOrigin(0,"programUnit",10),
+            new Ast.SourceProvenance(copied,copied,List.of(frame),false));
+        var program=new Ast.Program(meta,"A",List.of());
+        var model=new CompilationUnitModel("source",List.of(new CompilationUnitModel.ProgramUnit(id,null,program)));
+        var coverage=new HashMap<ResolutionContracts.ProgramUnitId,SemanticCoverage.Report>();coverage.put(id,null);
+        var frontend=new CompilationUnitBuildResult(model,coverage,Map.of(id,List.of()));
+        var root=fact("UNIT",site);
+        var nestedPlace=new Ast.SourceLocation("UNIT.cpy",2,0,2,10);
+        var nested=new SourceDependencyFact(SourceDependencyFact.Kind.COPYBOOK,"FIELDS","",
+            SourceDependencyFact.Resolution.UNRESOLVED,"","COPY_SYNTAX",
+            new Ast.SourceProvenance(nestedPlace,nestedPlace,List.of(frame),true),site);
+        var result=SourceDependencySemantics.associate(frontend,List.of(root,nested),List.of());
+        assertEquals(List.of("UNIT","FIELDS"),result.get(id).occurrences().stream().map(SourceDependencyInventory.Occurrence::name).toList());
+        assertThrows(IllegalArgumentException.class,()->SourceDependencySemantics.associate(frontend,List.of(fact("OTHER",site)),List.of()));
     }
     private static SourceDependencyFact fact(String name,Ast.SourceLocation location) {
         return new SourceDependencyFact(SourceDependencyFact.Kind.COPYBOOK,name,"",SourceDependencyFact.Resolution.UNRESOLVED,"","COPY_SYNTAX",new Ast.SourceProvenance(location,location,List.of(),true),location);

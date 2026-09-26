@@ -17,9 +17,18 @@ class ScalarMoveScaleTest {
         String small = Files.readString(ScalarMoveCheckpoint4ATest.FIXTURE);
         String source = small.replace("       PROCEDURE DIVISION.",
                 "      * irrelevant physical line\n".repeat(60_000) + "       PROCEDURE DIVISION.");
+        run("physical-base", small, 1, 1);
         var observation = run("physical", source, 1, 1);
         assertTrue(observation.physicalLines() >= 60_000);
-        assertTrue(observation.jsonBytes() < 8_000, "physical text must not expand semantic publication");
+        var mapper = new ObjectMapper();
+        var padded = (com.fasterxml.jackson.databind.node.ObjectNode) mapper.readTree(Path.of("target/checkpoint-4a/physical.semantic-product.json").toFile());
+        var baseline = mapper.readTree(Path.of("target/checkpoint-4a/physical-base.semantic-product.json").toFile());
+        var topology = padded.remove("controlTopology");
+        assertTrue(mapper.writeValueAsBytes(padded).length < 8_000,
+                "historical payload retains its frozen size bound");
+        eraseLineCoordinates(topology);
+        var baseTopology = baseline.path("controlTopology"); eraseLineCoordinates(baseTopology);
+        assertEquals(baseTopology, topology, "physical comments change provenance lines, not topology");
         assertTrue(observation.metrics().nodeVisits() < 100);
     }
     @Test void declarationsAndReferencesHaveLinearVisitsAndCardinality() throws Exception {
@@ -52,6 +61,14 @@ class ScalarMoveScaleTest {
         assertEquals(10_000, observation.metrics().scalarLookups());
         assertEquals(10_000, observation.metrics().moveVisits());
         assertTrue(observation.metrics().nodeVisits() < 6L * 10_000 + 30);
+    }
+    private static void eraseLineCoordinates(com.fasterxml.jackson.databind.JsonNode node) {
+        if (node.isObject()) {
+            var object = (com.fasterxml.jackson.databind.node.ObjectNode) node;
+            if (object.has("startLine")) object.put("startLine", 0);
+            if (object.has("endLine")) object.put("endLine", 0);
+        }
+        node.forEach(ScalarMoveScaleTest::eraseLineCoordinates);
     }
     private static Observation run(String label, String source, int dataCount, int moveCount) throws Exception {
         long started = System.nanoTime();

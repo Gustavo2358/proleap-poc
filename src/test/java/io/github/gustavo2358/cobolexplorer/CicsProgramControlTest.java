@@ -46,7 +46,7 @@ class CicsProgramControlTest {
         var bytes=io.github.gustavo2358.cobolexplorer.semanticproduct.transport.SemanticProductJsonWriter.serialize(
             io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticPort.open(state));
         var json=new com.fasterxml.jackson.databind.ObjectMapper().readTree(bytes);
-        assertEquals("2.28.0",json.path("contractVersion").asText());assertEquals("CICS_PROGRAM_CONTROL",json.path("statements").get(0).path("variant").asText());
+        assertEquals("2.39.0",json.path("contractVersion").asText());assertEquals("CICS_PROGRAM_CONTROL",json.path("statements").get(0).path("variant").asText());
         var disabled=io.github.gustavo2358.cobolexplorer.semanticproduct.projection.CobolSemanticProductProjector.project(source,unit);
         assertTrue(disabled.statements().get(0) instanceof io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.ObservedStatement);
         if(System.getProperty("cics.fixture.output")!=null)java.nio.file.Files.write(java.nio.file.Path.of(System.getProperty("cics.fixture.output")),bytes);
@@ -134,7 +134,9 @@ class CicsProgramControlTest {
             var port=ExplorerMain.publishSemanticProduct(a.model().programUnits().get(0).id(),a.build(),a.tables(),a.occurrences(),a.resolution(),a.report(),StorageLayoutSemantics.Profile.IBM_ENTERPRISE_6_4_FIXED_DISPLAY_1047,StorageInitialSemantics.EntryMode.UNKNOWN,mode);
             var p=port.statements().stream().filter(io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.ProcedurePerformFact.class::isInstance).map(io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.ProcedurePerformFact.class::cast).findFirst().orElseThrow();
             if(mode==CicsProgramControlAnalyzer.EntryMode.DISABLED) {
-                assertTrue(p.gapCodes().contains("PERFORM_PARAGRAPH_BOUNDARY_NOT_PROVEN"),p.gapCodes().toString());assertTrue(p.procedures().isEmpty());
+                assertTrue(p.gapCodes().contains("PERFORM_RANGE_CONTROL_NOT_PROVEN"),p.gapCodes().toString());
+                assertEquals(1,p.procedures().size());assertTrue(p.procedures().get(0).completions().isEmpty());
+                assertTrue(p.targetEntry().isPresent());
                 assertTrue(port.statements().stream().noneMatch(io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.CicsFact.class::isInstance));
             } else {assertTrue(p.gapCodes().isEmpty(),p.gapCodes().toString());assertEquals(1,p.procedures().get(0).completions().size());}
         }

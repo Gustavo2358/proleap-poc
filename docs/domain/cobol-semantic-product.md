@@ -1,5 +1,9 @@
 # COBOL Semantic Product
 
+Produção corrente: [SP 2.44.0 — terminal SEND tipado](terminal-send-r7-r7b.md), herdando [SP 2.43.0 — comandos CICS delimitados](cics-command-facts.md), herdando [SP 2.42.0 — eventos explícitos CICS ABEND](cics-abend-events.md), preservando SP 2.41.0/CICS_HANDLER e SP 2.40.0/FactDependencies. As versões por feature e seções históricas abaixo não autorizam downgrade dessa publicação.
+
+Current compositional control: [W7 contract](control-composition.md). SP2.38 independent MOVE receivers are specified below. Historical profile qualification below does not gate independent branch entries or predicate coverage.
+
 Writer corrente: [controle condicional FILE / SP 2.25.0](file-dependencies.md), storage 1.8.0
 ([source evidence](evidence-preserving-entry.md)),
 com prova tipada por condição de entrada, preservando [CICS Program Control](cics-program-control.md).
@@ -484,14 +488,34 @@ em source/target/regionalMove. Ordem do array é semântica; lower não usa nome
 para ordenar ou descobrir receivers. FIT_TEXT significa ajuste à direita com
 SPACE, ao extent explícito do target. FITTED_LITERAL_BYTES conserva o literal
 original e publica o vetor após esse ajuste; LITERAL_BYTES continua byte-exato.
-Múltiplos receivers admitem valores exatos somente sem alteração potencial de
-origem; em sobreposição todos os valores da sequência têm gap explícito.
+Múltiplos receivers com fonte DATA admitem efeitos regionais exatos somente quando
+captura do emissor e interferência são provadas; sobreposição de origem permanece
+conservadora. SP2.38 acrescenta uma prova lógica separada para literal textual,
+que não depende de layout físico e pode coexistir com gaps regionais.
 
 ST-W6.4 consumes the same SP2.11 transfer sequence: canonical fixed textual
 CORRESPONDING publishes each implicit pair with declaration identity/origin and
 its own regional effect. Both primary and additional sources can differ. The
 sequence contains only selected pairs; unmatched bytes are not written. Matching
 is owned by StorageCorrespondence, never by a projector or downstream consumer.
+
+### W8 / SP2.38: MOVE por receiver
+
+Quando um MOVE multi-receiver publica ao menos uma transferência lógica provada ou
+uma sequência regional parcialmente indisponível, o writer seleciona `2.38.0`.
+`source`, `target` e `regionalMove` continuam a primeira transferência;
+`additionalTransfers[]` mantém a ordem e cada efeito regional próprio, inclusive
+`UNAVAILABLE` com gap localizado. O campo opcional `logicalTransfers[]` contém
+`{target,value}` para cada receiver textual inteiro cujo literal de origem e
+extent escalar estão provados. `value` é o texto ajustado por padding/truncamento
+para aquele receiver; o target referencia um operand WRITE publicado no mesmo MOVE.
+Uma transferência lógica não certifica bytes, codec ou acesso regional.
+
+A ausência de `logicalTransfers` mantém os bytes históricos. SP2.37 não aceita a
+semântica de sequência regional parcialmente indisponível nem o novo campo.
+Receivers com alias explícito mantêm a mesma identidade de storage no downstream;
+o source literal é estável durante a sequência. Fonte DATA com overlap requer
+prova de captura e não herda esta regra de literal.
 
 ### ST-W7.1 / SP2.12, storage1.3
 
@@ -539,3 +563,65 @@ provas em [DVI](declarative-value-inference.md).
 [Dependency preservation](dependency-preservation.md) defines occurrence-local
 `POSSIBLE_TEXT`, its validation and canonical whole CICS host references independent
 of physical layout. The writer emits 2.32.0 only when this new evidence is present.
+
+## Positive topology W2 — SP 2.33.0
+
+An EVALUATE arm whose condition is not interpreted preserves its ordinal, body,
+known read references and condition provenance. It omits the literal `selection`
+and publishes `conditionReads` and `conditionOrigin`; see
+[EVALUATE](evaluate-semantic-product.md). The writer emits 2.33.0 only when that
+arm shape is present. Other SP versions and supported literal arms retain their
+existing wire shape. Missing interpretation stays in coverage and does not imply
+global memory or control effects.
+
+## W3-R1 — SP 2.34.0 / storage 1.10.0
+
+`storage.logicalExactViews` transports local, complete TEXT view identity as
+`node`, `representative`, `length` in logical characters. It does not publish
+physical bytes, codec, offset, extent or allocation. The producer emits a group
+only when recognized WORKING-STORAGE declarations belong to one proved storage
+component and every member is elementary, locally modeled, has the same logical
+length and interpretation, and the relation chain is proved. A missing COPY
+remains `INPUT_MISSING`; it does not suppress this local declaration proof.
+
+The lower validates member closure, shared source component, positive relations,
+and compatibility with any published text transfer. It may bind distinct AIR
+objects to the same logical Cell. Silence in this field is not alias proof.
+SP 2.34.0 is emitted only when this fact is present; storage version is 1.10.0.
+The earlier `logicalTextViews` inventory and physical layout contracts retain
+their own admission rules. The parser's recognized MOVE continuation is published
+even if another source artifact is missing; it is not inferred from array order.
+
+## W3-R1 FILE record grounding — SP 2.35.0 / storage 1.11.0
+
+The same `logicalExactViews(node, representative, length)` wire fact now also
+carries a complete local TEXT group-to-descendant chain. Each group in the
+chain has exactly one complete child component; the terminal elementary view
+has a supported positive logical character length. Partial children, partial
+REDEFINES, FILLER, distinct components and nonlocal declarations do not acquire
+this identity. An independently complete elementary root may publish a
+singleton exact view to establish its logical TEXT domain. A singleton asserts
+no alias with another declaration. The proof depends on declarations and
+positive local relations, not on FILE statements, literals, missing input or
+physical byte layout. The earlier SP 2.34.0/storage 1.10.0 sibling-overlay
+shape remains decodable by compatible lowers.
+
+## W5 — SP 2.36 partial structural facts
+
+[Contract and availability](partial-structural-facts.md): `PERFORM_PROCEDURE` can
+publish `STRUCTURAL_FACTS` and an independent `targetEntry`. Existing wire shapes
+and legacy specialization behavior remain versioned. Structural facts do not
+assert whole-body/effects precision and do not select an executable AIR strategy.
+
+## Control topology authority — 2.39.0
+
+The new contract and legacy boundary are specified in [control-topology.md](control-topology.md).
+
+## SP 2.40 fact dependency locality
+
+[Fact dependency locality](fact-dependency-locality.md) defines the new causal proof
+graph. 2.40 requires it alongside R1 topology; <=2.39 retains historical meaning.
+
+## SP 2.45 — exceptional source-event authority
+
+[Exceptional CICS events](cics-exceptional-handlers.md) add `ControlTopology.exceptionalEvents` descriptors with closed runtime premises. No handler destination is selected in SP. Ordinary topology and FactDependencies retain their meaning. Empty event inventories are omitted from historical wire.

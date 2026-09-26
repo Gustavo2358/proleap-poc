@@ -104,6 +104,8 @@ final class ReferenceOccurrenceCollector {
         }
         if(node instanceof Ast.EmbeddedLanguageStatement embedded) {
             for(var host:embedded.hostOperands())visit(host.reference(),host.role()==Ast.EmbeddedHostRole.WRITE?ResolutionContracts.ReferenceRole.VALUE_WRITE:ResolutionContracts.ReferenceRole.VALUE_READ,preservation);
+            for(var host:embedded.expressionOperands())visit(host.expression(),host.expression() instanceof Ast.SpecialRegisterExpression?ResolutionContracts.ReferenceRole.DECLARATION_RELATION:ResolutionContracts.ReferenceRole.VALUE_READ,preservation);
+            for(var reference:embedded.procedureOperands())visit(reference,ResolutionContracts.ReferenceRole.CICS_HANDLER_TARGET,preservation);
             return;
         }
         if (node instanceof Ast.CallStatement statement) {
@@ -293,7 +295,7 @@ final class ReferenceOccurrenceCollector {
                                         List<Ast.StatementClause> clauses,
                                         ReferenceOccurrences.Preservation preservation) {
         var reads=new java.util.HashSet<Integer>();var writes=new java.util.HashSet<Integer>();
-        effects.ifPresent(e->{e.knownReads().forEach(r->reads.add(r.meta().id()));e.mayWrites().forEach(r->writes.add(r.meta().id()));});
+        effects.ifPresent(e->{e.knownReads().forEach(r->reads.add(r.meta().id()));e.sourceTargets().forEach(r->writes.add(r.meta().id()));});
         for (Ast.StatementOperand operand : operands) {
             ResolutionContracts.ReferenceRole role = operand.value() instanceof Ast.FileReference
                     ? ResolutionContracts.ReferenceRole.FILE_OPERATION

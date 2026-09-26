@@ -1,0 +1,3 @@
+       EXEC CICS HANDLE ABEND
+           LABEL(ERR-HANDLER)
+       END-EXEC.

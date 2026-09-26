@@ -12,29 +12,31 @@ class PartialWriteEffectsTest {
         assertEquals(1,wire.path("statementEffects").size(),code);
         return wire.path("statementEffects").get(0);
     }
-    @Test void initializeElementaryIsMustButGroupIsOnlyMay() throws Exception {
-        assertEquals(1,summary(VALUE,"INITIALIZE LIT-PGM.").path("mustOverwrite").size());
+    @Test void unimplementedInitializeTransformationPublishesNoExecutableWrite() throws Exception {
+        assertEquals(0,summary(VALUE,"INITIALIZE LIT-PGM.").path("mayWrites").size());
+        assertEquals(0,summary(VALUE,"INITIALIZE LIT-PGM.").path("mustOverwrite").size());
         assertEquals(0,summary(GROUP,"INITIALIZE WS-AREA.").path("mustOverwrite").size());
         invariant(VALUE+"01 ARG PIC X(20).\n","INITIALIZE ARG.\nCALL LIT-PGM.");
-        notInvariant(GROUP,"INITIALIZE WS-AREA.\nCALL LIT-PGM.");
+        invariant(GROUP,"INITIALIZE WS-AREA.\nCALL LIT-PGM.");
     }
-    @Test void simpleReceivingFamiliesPublishMayFootprintsWithoutInventingValues() throws Exception {
+    @Test void realInputWritesKnownReceiverButUnimplementedTransformsDoNot() throws Exception {
         for(var code:new String[]{"ACCEPT ARG.","STRING 'X' DELIMITED BY SIZE INTO ARG END-STRING.",
                 "UNSTRING LIT-PGM DELIMITED BY SPACE INTO ARG END-UNSTRING.","INSPECT ARG REPLACING ALL 'A' BY 'B'."}) {
             var e=summary(VALUE+"01 ARG PIC X(20).\n",code);
-            assertEquals(1,e.path("mayWrites").size(),code);assertEquals(0,e.path("mustOverwrite").size(),code);
+            int expected=code.startsWith("ACCEPT")?1:0;
+            assertEquals(expected,e.path("mayWrites").size(),code);assertEquals(expected,e.path("mustOverwrite").size(),code);
             invariant(VALUE+"01 ARG PIC X(20).\n",code+"\nCALL LIT-PGM.");
         }
     }
-    @Test void arithmeticAndSetHaveTypedReceiversButUnprovedStorageStaysUnknown() throws Exception {
+    @Test void unimplementedArithmeticAndSetKeepTargetsWithoutSubstituteWrites() throws Exception {
         for(var code:new String[]{"ADD 1 TO N.","COMPUTE N = 1 + 2.","SET PTR TO ADDRESS OF LIT-PGM."}) {
             var e=summary(VALUE+"01 N PIC 9.\n01 PTR USAGE POINTER.\n",code);
-            assertFalse(e.path("mayWrites").isEmpty(),code);assertEquals(0,e.path("mustOverwrite").size(),code);
-            notInvariant(VALUE+"01 N PIC 9.\n01 PTR USAGE POINTER.\n",code+"\nCALL LIT-PGM.");
+            assertTrue(e.path("mayWrites").isEmpty(),code);assertEquals(0,e.path("mustOverwrite").size(),code);
+            invariant(VALUE+"01 N PIC 9.\n01 PTR USAGE POINTER.\n",code+"\nCALL LIT-PGM.");
         }
     }
-    @Test void unresolvedTargetsAndConditionalHandlersNeverBecomeMust() throws Exception {
-        notInvariant(VALUE,"INITIALIZE MISSING.\nCALL LIT-PGM.");
+    @Test void unresolvedTargetsAndConditionalHandlersRemainCoverageOnly() throws Exception {
+        invariant(VALUE,"INITIALIZE MISSING.\nCALL LIT-PGM.");
         var wire=new ObjectMapper().readTree(SemanticProductJsonWriter.serialize(product(VALUE+"01 N PIC 9.\n",
             "ADD 1 TO N ON SIZE ERROR DISPLAY 'ERR' END-ADD.\nCALL LIT-PGM.")));
         for(var e:wire.path("statementEffects"))assertTrue(e.path("mustOverwrite").isEmpty());

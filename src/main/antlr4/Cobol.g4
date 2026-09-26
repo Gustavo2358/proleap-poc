@@ -1503,7 +1503,7 @@ exhibitOperand
 // exit statement
 
 exitStatement
-   : EXIT PROGRAM?
+   : EXIT (PROGRAM | PARAGRAPH | SECTION | PERFORM CYCLE?)?
    ;
 
 // generate statement
@@ -2995,6 +2995,8 @@ PADDING : P A D D I N G;
 PAGE : P A G E;
 PAGE_COUNTER : P A G E MINUSCHAR C O U N T E R;
 PASSWORD : P A S S W O R D;
+PARAGRAPH : P A R A G R A P H;
+CYCLE : C Y C L E;
 PERFORM : P E R F O R M;
 PF : P F;
 PH : P H;

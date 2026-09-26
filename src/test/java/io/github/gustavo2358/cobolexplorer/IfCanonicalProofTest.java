@@ -52,7 +52,10 @@ class IfCanonicalProofTest {
             var b = build(a, unit.program(), Map.of(unit.id(), new SemanticCoverage.Report(findings)));
             var proof = ScalarMoveSemantics.analyze(b, a.tables(), a.resolution(), a.report()).ifs();
             assertFalse(proof.fact(unit.id(), branch.meta().id()).simpleProfile());
-            if (!(node instanceof Ast.MoveStatement)) assertNotEquals(IfSemantics.Availability.KNOWN, proof.fact(unit.id(), branch.meta().id()).predicate().availability());
+            if (node instanceof Ast.IfStatement) {
+                assertEquals(IfSemantics.Availability.KNOWN,proof.fact(unit.id(),branch.meta().id()).predicate().availability());
+                assertTrue(proof.fact(unit.id(),branch.meta().id()).thenArm().entry().isPresent());
+            } else if (!(node instanceof Ast.MoveStatement)) assertNotEquals(IfSemantics.Availability.KNOWN, proof.fact(unit.id(), branch.meta().id()).predicate().availability());
             if (node instanceof Ast.DataEntry || node instanceof Ast.PictureClause) assertNotEquals(IfSemantics.Availability.KNOWN, proof.storage(unit.id()).availability());
         }
     }

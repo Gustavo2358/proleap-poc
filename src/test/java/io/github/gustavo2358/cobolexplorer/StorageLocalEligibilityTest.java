@@ -44,7 +44,7 @@ class StorageLocalEligibilityTest {
     }
     @Test void unresolvedRelationsAndOpaqueAllocationRemainConservative() {
         for(var extra:List.of("01 BAD-AREA REDEFINES MISSING-AREA PIC X(8).","01 BAD-AREA PIC X(8) EXTERNAL.",
-                "01 BAD-AREA PIC X(8) GLOBAL.","01 BAD-AREA PIC X(8) JUSTIFIED RIGHT.")) {
+                "01 BAD-AREA PIC X(8) GLOBAL.")) {
             var s=state("01 WS-PGM PIC X(8).\n"+extra,"MOVE 'PGM00001' TO WS-PGM.\nCALL WS-PGM.");
             assertTrue(s.dataDeclarations().stream().filter(d->d.canonicalName().equals("WS-PGM")).findFirst().orElseThrow().scalarText().isEmpty(),extra);
             assertTrue(((MoveFact)s.statements().get(0)).target().wholeItemAccess().isEmpty(),extra);

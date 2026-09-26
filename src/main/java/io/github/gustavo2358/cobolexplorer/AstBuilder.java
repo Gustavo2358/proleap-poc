@@ -29,6 +29,7 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
     private final CobolParser parser;
     private final UnicodeText indexedSource;
     private final SourceMap sourceMap;
+    private final boolean inputIntegrityKnown;
     private final Map<CobolParser.ProgramUnitContext,UnitInputProof> inputProofs=new IdentityHashMap<>();
     private final IdentityHashMap<ParseTree, Integer> parseIds;
     private final IdentityHashMap<ParseTree, Integer> parseSubtreeSizes;
@@ -38,6 +39,7 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
             new IdentityHashMap<>();
     private int nextId;
     private Ast.ParseTreeOrigin embeddedOperandOrigin;
+    private boolean retainedEmbeddedOperand;
 
     private record CoverageDraft(String grammarRule, Ast.Meta meta, String writtenText,
                                  int astNodeId) { }
@@ -59,12 +61,21 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
     AstBuilder(Parser parser, String source, SourceMap sourceMap,
                IdentityHashMap<ParseTree, Integer> parseIds,
                IdentityHashMap<ParseTree, Integer> parseSubtreeSizes) {
+        this(parser, source, sourceMap, parseIds, parseSubtreeSizes, false);
+    }
+
+    /** EOF qualification requires the caller's lexer/preprocessor integrity evidence.
+     * The older internal constructor deliberately supplies no such evidence. */
+    AstBuilder(Parser parser, String source, SourceMap sourceMap,
+               IdentityHashMap<ParseTree, Integer> parseIds,
+               IdentityHashMap<ParseTree, Integer> parseSubtreeSizes, boolean inputIntegrityKnown) {
         if (!(parser instanceof CobolParser cobolParser)) {
             throw new IllegalArgumentException("AstBuilder requires the versioned COBOL parser");
         }
         this.parser = cobolParser;
         this.indexedSource = new UnicodeText(source);
         this.sourceMap = sourceMap;
+        this.inputIntegrityKnown = inputIntegrityKnown && source.equals(sourceMap.text());
         this.parseIds = parseIds;
         this.parseSubtreeSizes = parseSubtreeSizes;
     }
@@ -591,7 +602,8 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
                         || current instanceof Ast.PerformStatement || current instanceof Ast.EvaluateStatement
                         || current instanceof Ast.GoToStatement g && g.goToKind()==Ast.GoToKind.DEPENDING_ON
                         || current instanceof Ast.CallStatement call && !call.surface().hasHandlers()
-                        || FileIoSyntax.isNativeStatement(context) || sequentialOpaque(context);
+                        || FileIoSyntax.isNativeStatement(context) || sequentialOpaque(context)
+                        || ordinaryStructuredStatement(current, context);
                 // Positional host boundary only; no embedded-language success/return claim.
                 if(current instanceof Ast.EmbeddedLanguageStatement) {
                     if(next!=null)embedded.put(current.meta().id(),next.meta().id());
@@ -625,6 +637,8 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
                     else if(clause instanceof CobolParser.WriteNotAtEndOfPagePhraseContext x)body=x.statement();
                     if(body!=null)pending.push(new CompletionRegion(body,next,ordinaryNext));
                 }
+                if(context.performStatement()!=null&&context.performStatement().performInlineStatement()!=null)
+                    pending.push(new CompletionRegion(context.performStatement().performInlineStatement().statement(),null,null));
                 // An unmaterialized direct statement is a barrier, never skipped.
                 next = current;ordinaryNext=current;
             }
@@ -632,15 +646,28 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
         return roots.isEmpty()?paragraphNext:roots.get(0).entryStatement()==null?builtStatements.get(roots.get(0)):null;
     }
 
-    /** Only normal completion is asserted; no values, file or arithmetic semantics.
-     * Handler bodies are barriers until their control is independently published. */
+    /** Plain EXIT is neutral; the special transfer forms remain unmodeled. */
+    private static boolean plainExit(CobolParser.ExitStatementContext e) {
+        return e.PROGRAM()==null && e.PARAGRAPH()==null && e.SECTION()==null && e.PERFORM()==null;
+    }
+    /** Only normal completion; no value, file or arithmetic semantics. */
     private static boolean sequentialOpaque(CobolParser.StatementContext c) {
         return c.continueStatement() != null
-            || c.exitStatement()!=null&&c.exitStatement().PROGRAM()==null
+            || c.exitStatement()!=null&&plainExit(c.exitStatement())
             || c.displayStatement() != null && c.displayStatement().onExceptionClause() == null && c.displayStatement().notOnExceptionClause() == null
             || c.readStatement() != null && c.readStatement().atEndPhrase() == null
                 && c.readStatement().notAtEndPhrase() == null && c.readStatement().invalidKeyPhrase() == null
                 && c.readStatement().notInvalidKeyPhrase() == null;
+    }
+
+    /** A materialized, ordinary statement retains its grammar-owned successor even
+     * when its value transformation has no executable summary. Explicit exits and
+     * handler-bearing DISPLAY surfaces use their own control contracts. */
+    private static boolean ordinaryStructuredStatement(Ast.Statement current, CobolParser.StatementContext c) {
+        if (!(current instanceof Ast.ModeledStatement || current instanceof Ast.PreservedStatement)) return false;
+        if (c.stopStatement() != null || c.exitStatement() != null && !plainExit(c.exitStatement())) return false;
+        if (c.displayStatement() != null) return sequentialOpaque(c);
+        return true;
     }
 
     private record CompletionRegion(List<CobolParser.StatementContext> statements,
@@ -708,9 +735,14 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
         return inputProofs.computeIfAbsent(program,this::computeUnitInputProof);
     }
     private UnitInputProof computeUnitInputProof(CobolParser.ProgramUnitContext program) {
-        if (!(program.getParent() instanceof CobolParser.CompilationUnitContext)
-                || program.endProgramStatement() == null) return UnitInputProof.unknown();
-        int start=program.getStart().getStartIndex(), end=program.endProgramStatement().getStop().getStopIndex()+1;
+        if (!(program.getParent() instanceof CobolParser.CompilationUnitContext))
+            return UnitInputProof.unknown();
+        int end;
+        if (program.endProgramStatement() != null)
+            end = program.endProgramStatement().getStop().getStopIndex() + 1;
+        else if (hasQualifiedEofBoundary(program)) end = sourceMap.length();
+        else return UnitInputProof.unknown();
+        int start = program.getStart().getStartIndex();
         Set<Diagnostic> qualified=Collections.newSetFromMap(new IdentityHashMap<>());
         Set<Diagnostic> rejected=Collections.newSetFromMap(new IdentityHashMap<>());
         for(var region:sourceMap.inputGapRegions()) {
@@ -720,12 +752,43 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
         qualified.removeIf(rejected::contains);
         // Preserve SourceMap occurrence order; never infer ownership from diagnostic text/line.
         return new UnitInputProof(sourceMap.inputGapRegions().stream().map(SourceMap.Segment::inputGap)
-            .filter(qualified::contains).distinct().toList());
+            .filter(qualified::contains).distinct().toList(), sourceMap.inputGapRegions().stream()
+            .filter(r->qualified.contains(r.inputGap())).map(r->sourceMap.provenance(r.start(),r.end())).toList());
     }
+    /** IBM Enterprise COBOL 6.4: only the final, non-containing outermost
+     * program may omit END PROGRAM. Physical EOF qualifies ownership, never content.
+     * No parser recovery (even elsewhere in the compilation) is positive evidence. */
+    private boolean hasQualifiedEofBoundary(CobolParser.ProgramUnitContext program) {
+        if (!inputIntegrityKnown || parser.getNumberOfSyntaxErrors() != 0
+                || !(program.getParent() instanceof CobolParser.CompilationUnitContext compilation)
+                || !program.programUnit().isEmpty()
+                || !(compilation.getParent() instanceof CobolParser.StartRuleContext root)
+                || root.EOF() == null || root.EOF() instanceof ErrorNode
+                || program.getStart() == null || program.getStop() == null)
+            return false;
+        var units = compilation.programUnit();
+        if (units.isEmpty() || units.get(units.size() - 1) != program
+                || program.getStop() != compilation.getStop()) return false;
+        for (int i = 0; i < units.size() - 1; i++)
+            if (units.get(i).endProgramStatement() == null) return false;
+        var eof = root.EOF().getSymbol();
+        if (eof.getType() != Token.EOF || eof.getTokenIndex() < 0
+                || eof.getStartIndex() != sourceMap.length()
+                || program.getStart().getTokenIndex() < 0
+                || program.getStart().getStartIndex() < 0
+                || program.getStop().getStopIndex() >= eof.getStartIndex()) return false;
+        var physical = sourceMap.physicalBoundary();
+        if (physical.isEmpty()) return false;
+        var start = sourceMap.provenance(program.getStart().getStartIndex(),
+                program.getStart().getStopIndex() + 1);
+        return start.exact() && start.includeChain().isEmpty()
+                && start.original().file().equals(physical.orElseThrow().sourceFile());
+    }
+
     private List<Diagnostic> separateUnitCopies(CobolParser.ProgramUnitContext program) {
         if(sourceMap.inputGapRegions().isEmpty())return List.of();
         if (!(program.getParent() instanceof CobolParser.CompilationUnitContext compilation)
-                || program.endProgramStatement() == null) return List.of();
+                || program.endProgramStatement() == null && !hasQualifiedEofBoundary(program)) return List.of();
         return compilation.programUnit().stream().filter(p->p!=program)
             .flatMap(p->unitInputProof(p).copies().stream()).toList();
     }
@@ -1067,7 +1130,7 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
     private static Optional<StatementEffectSummary> statementEffects(ParserRuleContext context,List<Ast.StatementOperand> operands,
             List<Ast.StatementClause> clauses,Map<ParserRuleContext,Ast.Node> nodes) {
         if(context instanceof CobolParser.DisplayStatementContext)return displayEffects(context,operands,clauses);
-        if(context instanceof CobolParser.ContinueStatementContext||context instanceof CobolParser.ExitStatementContext e&&e.PROGRAM()==null)
+        if(context instanceof CobolParser.ContinueStatementContext||context instanceof CobolParser.ExitStatementContext e&&plainExit(e))
             return Optional.of(new StatementEffectSummary(List.of(),List.of(),List.of(),List.of(),StatementEffectSummary.Bound.NONE,StatementEffectSummary.Bound.NONE,StatementEffectSummary.Bound.NONE,StatementEffectSummary.Environment.NONE,StatementEffectSummary.ValueTransform.NONE,StatementEffectSummary.Proof.NO_OP));
         var targets=new ArrayList<ParserRuleContext>();StatementEffectSummary.Proof proof;
         boolean closed=clauses.isEmpty();
@@ -1119,12 +1182,14 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
                 if(!writeIds.contains(r.meta().id()))reads.add(r);
             } else closed=false;
         }
-        // This footprint bounds writes only. Receiver reads/value transforms are
-        // deliberately open (ADD/INSPECT/STRING may read their old destination).
-        return Optional.of(new StatementEffectSummary(reads,writes,List.of(),List.of(),StatementEffectSummary.Bound.ALL,
-            closed?StatementEffectSummary.Bound.NONE:StatementEffectSummary.Bound.ALL,
-            closed?StatementEffectSummary.Bound.NONE:StatementEffectSummary.Bound.ALL,
-            environment,StatementEffectSummary.ValueTransform.UNKNOWN,proof));
+        // Publish the references and effects this source abstraction actually models.
+        // An unsupported option or value transform is coverage, not a global footprint.
+        var modeledWrites=proof==StatementEffectSummary.Proof.ACCEPT_TARGET?writes:List.<Ast.DataReference>of();
+        var mustOverwrite=proof==StatementEffectSummary.Proof.ACCEPT_TARGET?writes:List.<Ast.DataReference>of();
+        return Optional.of(new StatementEffectSummary(reads,modeledWrites,mustOverwrite,List.of(),StatementEffectSummary.Bound.NONE,
+            StatementEffectSummary.Bound.NONE,
+            StatementEffectSummary.Bound.NONE,
+            environment,StatementEffectSummary.ValueTransform.UNKNOWN,proof,writes));
     }
 
     private static Optional<StatementEffectSummary> displayEffects(ParserRuleContext context,
@@ -1367,16 +1432,38 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
 
     private Ast.EmbeddedLanguageStatement buildEmbedded(ParserRuleContext context, Ast.EmbeddedLanguage language) {
         var anchor=meta(context);String raw=sourceText(context).strip();var operands=new ArrayList<Ast.EmbeddedHostOperand>();
+        var anchors=new ArrayList<Ast.EmbeddedOperandAnchor>();
+        boolean handler=language==Ast.EmbeddedLanguage.CICS&&CicsHandlerSyntax.parse(raw).isPresent();
+        if(handler) for(var operand:CicsHandlerSyntax.targetOperand(raw)) {
+            int offset=context.getStart().getStartIndex();
+            anchors.add(new Ast.EmbeddedOperandAnchor(operand.option(),operand.optionStart(),operand.syntax(),
+                    sourceMap.embeddedOperandProvenance(offset+operand.start(),offset+operand.end())));
+        }
         if(language==Ast.EmbeddedLanguage.CICS)for(var host:CicsHostSyntax.parse(raw,context.getStart().getStartIndex(),context.getStart().getLine(),context.getStart().getCharPositionInLine(),context.getStart().getTokenIndex())) {
             // The operand grammar is a separate tree. UI navigation points to its real EXEC container,
             // while the operand retains its own expanded offsets and conservative SourceMap provenance.
             var previous=embeddedOperandOrigin;embeddedOperandOrigin=anchor.origin();
+            boolean previousRetained=retainedEmbeddedOperand;retainedEmbeddedOperand=handler&&host.option().equals("PROGRAM")||CicsCommandSemantics.parse(raw).filter(c->c.command()==CicsCommandSemantics.Kind.SEND_TERMINAL).isPresent();
             try {
                 var expression=identifierExpression(host.identifier());
                 if(expression instanceof Ast.DataReference reference)operands.add(new Ast.EmbeddedHostOperand(host.option(),host.optionStart(),host.role(),reference));
-            } finally { embeddedOperandOrigin=previous; }
+            } finally { embeddedOperandOrigin=previous;retainedEmbeddedOperand=previousRetained; }
         }
-        return new Ast.EmbeddedLanguageStatement(anchor, language, raw, operands);
+        var procedures=new ArrayList<Ast.ProcedureReference>();
+        if(language==Ast.EmbeddedLanguage.CICS) {
+            var label=CicsHandlerSyntax.label(raw,context.getStart().getStartIndex(),context.getStart().getLine(),context.getStart().getCharPositionInLine(),context.getStart().getTokenIndex());
+            var previous=embeddedOperandOrigin;embeddedOperandOrigin=anchor.origin();
+            boolean previousRetained=retainedEmbeddedOperand;retainedEmbeddedOperand=handler;
+            try {label.ifPresent(tree->procedures.add(procedureReference(tree)));}
+            finally {embeddedOperandOrigin=previous;retainedEmbeddedOperand=previousRetained;}
+        }
+        var expressions=new ArrayList<Ast.EmbeddedExpressionOperand>();
+        if(language==Ast.EmbeddedLanguage.CICS)for(var host:EmbeddedExpressionSyntax.parse(raw,context.getStart().getStartIndex(),context.getStart().getLine(),context.getStart().getCharPositionInLine(),context.getStart().getTokenIndex())) {
+            var previous=embeddedOperandOrigin;embeddedOperandOrigin=anchor.origin();boolean retained=retainedEmbeddedOperand;retainedEmbeddedOperand=true;
+            try {expressions.add(new Ast.EmbeddedExpressionOperand(host.option(),host.optionStart(),expression(host.tree(),"embedded value")));}
+            finally {embeddedOperandOrigin=previous;retainedEmbeddedOperand=retained;}
+        }
+        return new Ast.EmbeddedLanguageStatement(anchor, language, raw, operands,procedures,anchors,expressions);
     }
 
     private Ast.Expression expression(ParserRuleContext context, String role) {
@@ -2047,7 +2134,8 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
         int startOffset = start == null ? 0 : Math.max(0, start.getStartIndex());
         int endOffset = stop == null ? startOffset : Math.min(indexedSource.length(), stop.getStopIndex() + 1);
         return new Ast.Meta(id, span, new Ast.ParseTreeOrigin(-1, grammarRule, 0),
-                sourceMap.provenance(startOffset, endOffset));
+                retainedEmbeddedOperand ? sourceMap.embeddedOperandProvenance(startOffset, endOffset)
+                        : sourceMap.provenance(startOffset, endOffset));
     }
 
     private static Ast.SourceSpan spanOf(TerminalNode terminal) {
@@ -2304,7 +2392,8 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
                 !parseIds.containsKey(context)&&embeddedOperandOrigin!=null?embeddedOperandOrigin:
                     new Ast.ParseTreeOrigin(parseIds.getOrDefault(context, -1), rule(context),
                         parseSubtreeSizes.getOrDefault(context, 1)),
-                sourceMap.provenance(startOffset, endOffset));
+                retainedEmbeddedOperand ? sourceMap.embeddedOperandProvenance(startOffset, endOffset)
+                        : sourceMap.provenance(startOffset, endOffset));
     }
 
     /** Written arm anchor; children and owner retain their own complete provenance.

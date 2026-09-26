@@ -7,8 +7,51 @@ import static io.github.gustavo2358.cobolexplorer.StorageLayoutSemantics.*;
 
 /** IBM SC27-8713-03 (2026-04-28), READ p431 and SAME RECORD AREA p157. */
 class FileStorageLayoutTest {
+    @Test void recordTopologyIgnoresStatementsAndOrthogonalInputDiagnostics() {
+        String control="SELECT F ASSIGN TO CLIENTDD.";
+        String records="FD F.\n01 R.\n 02 K PIC X(8).";
+        var declarationOnly=fixture(control,records,"01 BUF PIC X(8).","GOBACK.");
+        var withEffects=fixture(control,records,"01 BUF PIC X(8).","READ F INTO BUF.\nWRITE R FROM BUF.\nGOBACK.");
+        assertEquals(declarationOnly.product().logicalExactViews(),withEffects.product().logicalExactViews());
+        for(int diagnostics:new int[]{1,50}) {
+            var withGaps=fixture(control,records,"COPY MISSINGDP.\n".repeat(diagnostics)+"01 BUF PIC X(8).","GOBACK.");
+            var record=withGaps.product().logicalExactViews().stream()
+                .filter(v->v.node().equals(withGaps.view("R").node())||v.node().equals(withGaps.view("K").node())).toList();
+            assertEquals(2,record.size());
+            assertEquals(record.get(0).representative(),record.get(1).representative());
+            assertTrue(record.stream().allMatch(v->v.length().equals(java.math.BigInteger.valueOf(8))));
+            assertTrue(withGaps.layout().reasons().contains(Reason.INPUT_MISSING));
+        }
+    }
+    @Test void completeTextRecordAndOnlyChildPublishLocalLogicalIdentity() {
+        var f=fixture("SELECT F ASSIGN TO CLIENTDD.","FD F.\n01 R.\n 02 K PIC X(8).","01 BUF PIC X(8).");
+        var exact=f.product().logicalExactViews().stream()
+            .filter(v->v.node().equals(f.view("R").node())||v.node().equals(f.view("K").node())).toList();
+        assertEquals(2,exact.size());
+        assertEquals(exact.get(0).representative(),exact.get(1).representative());
+        assertTrue(exact.stream().allMatch(v->v.length().equals(java.math.BigInteger.valueOf(8))));
+        assertNotEquals(exact.get(0).node(),exact.get(1).node());
+    }
+    @Test void partialChildrenAndIndependentRecordsDoNotBecomeCompleteAliases() {
+        var split=fixture("SELECT F ASSIGN TO CLIENTDD.","FD F.\n01 R.\n 02 A PIC X(4).\n 02 B PIC X(4).","");
+        assertTrue(split.product().logicalExactViews().isEmpty());
+        var partial=fixture("SELECT F ASSIGN TO CLIENTDD.",
+            "FD F.\n01 R.\n 02 A PIC X(8).\n 02 B REDEFINES A PIC X(4).","");
+        assertTrue(partial.product().logicalExactViews().isEmpty());
+        var separate=fixture("SELECT F ASSIGN TO CLIENTDD.\nSELECT G ASSIGN TO OTHERDD.",
+            "FD F.\n01 R.\n 02 K PIC X(8).\nFD G.\n01 S.\n 02 L PIC X(8).","01 BUF PIC X(8).");
+        var exact=separate.product().logicalExactViews().stream()
+            .filter(v->v.node().equals(separate.view("R").node())||v.node().equals(separate.view("K").node())
+                ||v.node().equals(separate.view("S").node())||v.node().equals(separate.view("L").node())).toList();
+        assertEquals(4,exact.size());
+        assertEquals(2,exact.stream().map(LogicalExactView::representative).distinct().count());
+        assertNotEquals(separate.view("R").base(),separate.view("S").base());
+    }
     static Fixture fixture(String control,String records,String working) {
-        var source="IDENTIFICATION DIVISION.\nPROGRAM-ID. FILEMEM.\nENVIRONMENT DIVISION.\nINPUT-OUTPUT SECTION.\nFILE-CONTROL.\n"+control+"\nDATA DIVISION.\nFILE SECTION.\n"+records+"\nWORKING-STORAGE SECTION.\n"+working+"\nPROCEDURE DIVISION.\nGOBACK.\n";
+        return fixture(control,records,working,"GOBACK.");
+    }
+    static Fixture fixture(String control,String records,String working,String body) {
+        var source="IDENTIFICATION DIVISION.\nPROGRAM-ID. FILEMEM.\nENVIRONMENT DIVISION.\nINPUT-OUTPUT SECTION.\nFILE-CONTROL.\n"+control+"\nDATA DIVISION.\nFILE SECTION.\n"+records+"\nWORKING-STORAGE SECTION.\n"+working+"\nPROCEDURE DIVISION.\n"+body+"\n";
         var a=AstBoundaryTestSupport.analyze(source,"file-storage.cbl");
         var product=StorageLayoutSemantics.analyze(a.build(),a.tables(),a.resolution(),a.report(),Profile.IBM_ENTERPRISE_6_4_FIXED_DISPLAY_1047);
         return new Fixture(a,product,product.layout(a.model().programUnits().get(0).id()));

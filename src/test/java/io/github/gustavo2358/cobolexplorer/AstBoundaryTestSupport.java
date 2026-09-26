@@ -53,8 +53,12 @@ final class AstBoundaryTestSupport {
         GrammarBinding binding = Bindings.cobol();
         assertEquals(0, preprocessing.errors(), "fixture must preprocess without errors");
         String source = preprocessing.text();
-        Parser parser = binding.cobolParser(new CommonTokenStream(
-                binding.cobolLexer(CharStreams.fromString(source, sourceName))));
+        var lexer = binding.cobolLexer(CharStreams.fromString(source, sourceName));
+        var lexerDiagnostics = new ArrayList<Diagnostic>();
+        lexer.removeErrorListeners();
+        lexer.addErrorListener(new AntlrDiagnosticListener(binding.name(), Diagnostic.Phase.LEXER,
+                sourceName, lexerDiagnostics));
+        Parser parser = binding.cobolParser(new CommonTokenStream(lexer));
         ParseTree tree = binding.cobolStart(parser);
         assertEquals(0, parser.getNumberOfSyntaxErrors(), "fixture must be valid for the configured grammar");
 
@@ -62,7 +66,7 @@ final class AstBoundaryTestSupport {
         IdentityHashMap<ParseTree, Integer> parseSizes = new IdentityHashMap<>();
         index(tree, parseIds, parseSizes, new int[]{0});
         CompilationUnitBuildResult build = new AstBuilder(parser, source,
-                preprocessing.sourceMap(), parseIds, parseSizes)
+                preprocessing.sourceMap(), parseIds, parseSizes, lexerDiagnostics.isEmpty())
                 .buildCompilationUnit(tree, sourceName);
         CompilationUnitModel model = build.compilationUnit();
         CompilationUnitSymbolTables tables = new CompilationUnitSymbolTableBuilder().build(model);

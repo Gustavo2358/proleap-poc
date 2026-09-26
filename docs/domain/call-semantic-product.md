@@ -12,10 +12,12 @@ podem ter mudado. Alinhamento alfanumérico sem JUSTIFIED preenche à direita qu
 o receptor é maior. Essas regras não provam que uma chamada retorne nem pureza.
 
 O builder conserva presença das cinco cláusulas pelos contextos diretos CALL.
-Sua relação `Division.normalContinuations` cobre MOVE e CALL sem handlers nas
-listas canônicas de statements diretos da mesma região de sentences. Não atravessa
-fim de paragraph/section, declaratives ou statement não materializado. W2A estende
-completion a MOVE/IF dos braços; CALL aninhado continua fora desta prova. Handler presente torna essa relação indisponível: não se confunde a
+Sua relação `Division.normalContinuations` cobre MOVE sem handlers nas
+listas canônicas de statements diretos da mesma região de sentences. Para CALL,
+W3 usa `Division.ordinaryContinuations`, que conserva o sucessor ordinário
+materializado inclusive quando ele é o primeiro statement do próximo paragraph.
+Ausência desse sucessor permanece `UNAVAILABLE`; não é uma prova de não retorno.
+W2A estende completion a MOVE/IF dos braços; CALL aninhado continua fora desta prova. Handler presente torna essa relação indisponível: não se confunde a
 continuação externa da chamada com o corpo de NOT ON EXCEPTION.
 
 `ScalarMoveSemantics` indexa os targets CALL durante o mesmo walk que já identifica

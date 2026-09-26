@@ -134,7 +134,8 @@ public final class ExplorerMain {
         progress.phase = "AST_BUILD";
         phaseStarted = System.nanoTime();
         CompilationUnitBuildResult compilationBuild = new AstBuilder(parser, normalized,
-                preprocessed.sourceMap(), parseIds, parseSubtreeSizes)
+                preprocessed.sourceMap(), parseIds, parseSubtreeSizes,
+                preprocessed.errors() == 0 && lexerErrors == 0 && parserErrors == 0)
                 .buildCompilationUnit(tree, source.getFileName().toString());
         CompilationUnitModel compilationUnit = compilationBuild.compilationUnit();
         if (compilationUnit.programUnits().isEmpty())
@@ -328,6 +329,7 @@ public final class ExplorerMain {
         var components=StorageComponents.analyze(frontend,symbolTables,resolution);
         var layout=StorageLayoutSemantics.analyze(frontend,symbolTables,resolution,report,storageProfile,components,logicalText);
         var cics=new CicsProgramControlAnalyzer().analyze(frontend,report,cicsMode);
+        if(cicsMode!=CicsProgramControlAnalyzer.EntryMode.DISABLED)cics=cics.withHandlers(CicsHandlerSemantics.analyze(frontend,symbolTables,resolution)).withAbendEvents(CicsAbendSemantics.analyze(frontend)).withCommands(CicsCommandSemantics.analyze(frontend));
         var storage=StorageAccessSemantics.analyze(frontend,resolution,layout,entryMode,cics);
         return new CobolSemanticProductProjector.FrontendProducts(frontend,symbolTables,occurrences,resolution,report,
             ScalarMoveSemantics.analyze(frontend,symbolTables,resolution,report,components,java.util.Optional.of(storage),cics),java.util.Optional.of(storage),java.util.Optional.of(cics));

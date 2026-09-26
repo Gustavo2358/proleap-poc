@@ -44,3 +44,10 @@ Its syntactic resume alone cannot exclude execution of body CALL sites. The
 `control-body` regression protects this boundary without adding precise CALL bodies
 or general PERFORM semantics. Observed DISPLAY with exception handlers likewise
 retains open control; only handler-free DISPLAY publishes a sole normal successor.
+
+## W5 partial BASIC
+
+The historical BASIC profile above still governs normalization. Failure of that
+profile no longer hides a proved paragraph target/entry/resume. Those facts use
+[SP 2.36 partial structural facts](partial-structural-facts.md); CALL, nested PERFORM
+and independent coverage gaps do not erase them.

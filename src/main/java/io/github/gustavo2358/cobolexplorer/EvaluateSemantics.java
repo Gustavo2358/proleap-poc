@@ -38,8 +38,10 @@ public final class EvaluateSemantics {
                 var node = pending.pop();
                 if (node instanceof Ast.EvaluateStatement e) {
                     boolean shape = supportedShape(e);
-                    boolean structure = shape && input && e.meta().provenance().exact()
-                            && e.branches().stream().allMatch(a -> a.meta().provenance().exact());
+                    boolean structure = input && e.explicitlyTerminated() && e.meta().provenance().exact()
+                            && e.branches().stream().anyMatch(a -> !a.other())
+                            && e.branches().stream().allMatch(a -> a.meta().provenance().exact())
+                            && (shape || e.branches().stream().allMatch(a -> !a.statements().isEmpty()));
                     Optional<ResolutionContracts.SemanticEntityId> whole = Optional.empty();
                     if (shape && structure) {
                         var ref = refs.get(new ScalarMoveSemantics.NodeKey(unit.id(), e.subjects().get(0).meta().id()));

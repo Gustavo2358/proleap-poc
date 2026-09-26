@@ -103,14 +103,14 @@ public final class IfSemantics {
             }
             for (Visit visit : branches) {
                     Ast.IfStatement branch = (Ast.IfStatement) visit.node();
-                    boolean intact = input && modeled(branch, coverage);
+                    boolean intact = input && branch.meta().provenance().exact();
                     Predicate predicate = predicate(branch.condition(), unit.id(), intact, input, reads, completeScalars, coverage, work);
                     Arm thenArm = arm(branch.thenBranch(), Ast.BranchPresence.PRESENT, branch.thenProvenance(),
                             unit.id(), intact, input, moves, coverage, work);
                     Arm elseArm = arm(branch.elseBranch(), branch.elsePresence(), branch.elseProvenance(),
                             unit.id(), intact, input, moves, coverage, work);
                     Optional<Integer> successor = intact ? Optional.ofNullable(next.get(branch.meta().id())) : Optional.empty();
-                    boolean simple = !visit.insideStatement() && branch.explicitlyTerminated()
+                    boolean simple = !visit.insideStatement() && branch.explicitlyTerminated() && modeled(branch,coverage)
                             && predicate.availability() == Availability.KNOWN
                             && thenArm.contentAvailability() == Availability.KNOWN
                             && elseArm.contentAvailability() == Availability.KNOWN && successor.isPresent();

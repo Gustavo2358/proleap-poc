@@ -347,7 +347,7 @@ class CobolSemanticProductProjectorTest {
         CobolSemanticProduct.IfFact branch = port.ifs().get(0);
 
         assertEquals(List.of(port.moves().get(0).header().id(),
-                        observedByKind(port, "PERFORM").header().id()),
+                        port.statements().stream().filter(CobolSemanticProduct.ProcedurePerformFact.class::isInstance).findFirst().orElseThrow().header().id()),
                 ids(port.children(branch.header().id(), CobolSemanticProduct.Branch.THEN)));
         assertTrue(port.children(branch.header().id(),
                 CobolSemanticProduct.Branch.ELSE).isEmpty());
@@ -705,7 +705,7 @@ class CobolSemanticProductProjectorTest {
 
     private static CobolSemanticProduct.State portState(CobolSemanticPort port) {
         return new CobolSemanticProduct.State(port.unit(), port.policy(),
-                port.dataDeclarations(), port.statements(), port.gaps(), port.coverage(), port.entryInventory(), port.storageIndependence(),port.storage(),port.fileInventory());
+                port.dataDeclarations(), port.statements(), port.gaps(), port.coverage(), port.entryInventory(), port.storageIndependence(),port.storage(),port.fileInventory(),port.sourceDependencies(),port.ordinaryContinuations(),port.controlTopology());
     }
 
     private static CobolSemanticProduct.StatementId statementId(

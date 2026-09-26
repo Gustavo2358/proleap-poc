@@ -109,3 +109,5 @@ docs/                    documentação canônica
 scripts/harness/         gates de verificação
 dist/                    saída gerada, pronta para abrir
 ```
+
+[SP2.44 terminal SEND contract and bounded executable stop](docs/domain/terminal-send-r7-r7b.md).

@@ -103,7 +103,7 @@ class StorageOverlayTest {
         var absent=fixture("01 RAW-AREA PIC X(8).\n01 VIEW-AREA REDEFINES RAW-AREA PIC X(8).",Profile.UNSPECIFIED);
         assertEquals(1,absent.layout().bases().size());assertTrue(absent.layout().bases().get(0).extent().value().isEmpty());
         assertFalse(absent.layout().bases().get(0).independent());assertTrue(absent.layout().views().stream().noneMatch(View::textual));
-        for(var clause:List.of("GLOBAL","EXTERNAL","JUSTIFIED RIGHT")) {
+        for(var clause:List.of("GLOBAL","EXTERNAL")) {
             var f=fixture("01 RAW-AREA PIC X(8).\n01 VIEW-AREA REDEFINES RAW-AREA PIC X(8) "+clause+".\n01 SAFE-AREA PIC X(8).");
             assertTrue(f.layout().bases().stream().noneMatch(Base::independent),clause);
         }
