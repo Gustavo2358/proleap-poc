@@ -1,0 +1,15 @@
+{
+  "tables": [
+    "DBPROD.CLIENTE:SELECT:READ",
+    "CLIENTE:SELECT:READ"
+  ],
+  "remainder": false,
+  "sqlStatements": 1,
+  "locations": [
+    {
+      "file": "program.cbl",
+      "line": 7,
+      "relationship": "DIRECT"
+    }
+  ]
+}

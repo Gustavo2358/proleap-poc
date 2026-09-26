@@ -76,7 +76,11 @@ public final class SemanticProductJsonWriter {
             addBranch(port, branches, branch.header().id(), CobolSemanticProduct.Branch.ELSE);
         }
 
-        return new SemanticProductDocument(SCHEMA, port.storage().logicalTextViews().isEmpty()?CONTRACT_VERSION:"2.29.0",
+        boolean preservation=port.statements().stream().anyMatch(s ->
+            s instanceof CobolSemanticProduct.MoveFact m && m.copySemantics()==CobolSemanticProduct.CopySemantics.POSSIBLE_TEXT
+            || s instanceof CobolSemanticProduct.CicsFact c && c.target().filter(t -> t instanceof CobolSemanticProduct.DataReference d && d.logicalWholeItem().isPresent()).isPresent()
+            || s instanceof CobolSemanticProduct.CicsFileFact c && c.target().filter(t -> t instanceof CobolSemanticProduct.DataReference d && d.logicalWholeItem().isPresent()).isPresent());
+        return new SemanticProductDocument(SCHEMA, preservation?"2.32.0":port.sourceDependencies().availability()!=CobolSemanticProduct.Availability.UNAVAILABLE?"2.31.0":port.storage().logicalTextViews().isEmpty()?CONTRACT_VERSION:"2.29.0",
                 unit(port.unit()), policy(port.policy()), declarations, statements,
                 new StructureDocument(port.rootStatements().stream()
                         .map(SemanticProductJsonWriter::statementHandle).toList(),
@@ -84,7 +88,7 @@ public final class SemanticProductJsonWriter {
                 entryInventory(port.entryInventory()), storageIndependence(port.storageIndependence()), storage(port.storage()),
                 port.statements().stream().filter(CobolSemanticProduct.ObservedStatement.class::isInstance)
                     .map(CobolSemanticProduct.ObservedStatement.class::cast).filter(s->s.effects().isPresent())
-                    .map(s->effectDocument(s.header().id(),s.effects().orElseThrow())).toList(), fileInventory(port.fileInventory()));
+                    .map(s->effectDocument(s.header().id(),s.effects().orElseThrow())).toList(), fileInventory(port.fileInventory()),port.sourceDependencies().availability()==CobolSemanticProduct.Availability.UNAVAILABLE?null:port.sourceDependencies());
     }
 
     private static FileInventoryDocument fileInventory(CobolSemanticProduct.FileInventory inventory) {
@@ -448,7 +452,7 @@ public final class SemanticProductJsonWriter {
             StructureDocument structure,
             List<GapDocument> gaps,
             CoverageDocument coverage,
-            EntryInventoryDocument entryInventory, IndependentStorageDocument storageIndependence, StorageDocument storage,List<EffectDocument> statementEffects, FileInventoryDocument fileInventory) { }
+            EntryInventoryDocument entryInventory, IndependentStorageDocument storageIndependence, StorageDocument storage,List<EffectDocument> statementEffects, FileInventoryDocument fileInventory, @JsonInclude(JsonInclude.Include.NON_NULL) io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.SourceDependencyInventory sourceDependencies) { }
 
     private record EntryInventoryDocument(CobolSemanticProduct.InventoryStatus status,
                                           CobolSemanticProduct.EntryInventoryScope scope,

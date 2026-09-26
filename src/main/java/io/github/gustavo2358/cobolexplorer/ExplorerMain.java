@@ -38,12 +38,14 @@ public final class ExplorerMain {
         var entryMode=entryStorageState(argument(args,"--entry-storage-state","unknown"));
         var cicsMode=cicsEntryMode(argument(args,"--cics-entry-mode","unknown"));
 
+        String inventoryArgument=argument(args,"--source-inventory","");
+        var sourceInventory=inventoryArgument.isEmpty()?SourceArtifactInventory.empty():SourceArtifactInventory.read(project.resolve(inventoryArgument));
         AnalysisProgress progress = new AnalysisProgress();
         long analysisStarted = System.nanoTime();
         try (AnalysisLogContext logContext = AnalysisLogContext.open(source)) {
             LOG.info("event=analysis_started phase=ANALYSIS output={}", output);
             try {
-                analyze(source, copybooks, output, logContext, progress, analysisStarted, storageProfile,entryMode,cicsMode,logicalText);
+                analyze(source, copybooks, output, logContext, progress, analysisStarted, storageProfile,entryMode,cicsMode,logicalText,sourceInventory);
             } catch (Exception exception) {
                 LOG.error("event=analysis_failed phase={} elapsedMs={} reason={} impact=NO_RESULT",
                         progress.phase, elapsedMs(analysisStarted), exception.getClass().getSimpleName(), exception);
@@ -54,7 +56,7 @@ public final class ExplorerMain {
 
     private static void analyze(Path source, List<Path> copybooks, Path output,
                                 AnalysisLogContext logContext, AnalysisProgress progress,
-                                long analysisStarted, StorageLayoutSemantics.Profile storageProfile,StorageInitialSemantics.EntryMode entryMode,CicsProgramControlAnalyzer.EntryMode cicsMode,boolean logicalText) throws Exception {
+                                long analysisStarted, StorageLayoutSemantics.Profile storageProfile,StorageInitialSemantics.EntryMode entryMode,CicsProgramControlAnalyzer.EntryMode cicsMode,boolean logicalText,SourceArtifactInventory sourceInventory) throws Exception {
 
         GrammarBinding binding = Bindings.cobol();
         List<Diagnostic> diagnostics = new ArrayList<>();
@@ -76,7 +78,7 @@ public final class ExplorerMain {
         progress.phase = "PREPROCESSING";
         phaseStarted = System.nanoTime();
         PreprocessorEngine.Outcome preprocessed =
-                new PreprocessorEngine(binding, new CopybookLibrary(copybooks))
+                new PreprocessorEngine(binding, new CopybookLibrary(copybooks),sourceInventory)
                         .process(sourceNormalization.sourceMap(), source.getFileName().toString());
         String normalized = preprocessed.text();
         int unresolvedCopies = preprocessed.unresolved();
@@ -221,7 +223,7 @@ public final class ExplorerMain {
                 output.resolve("observed-dependencies.json"));
         progress.phase = "SEMANTIC_PRODUCT";
         long semanticProductStarted = System.nanoTime();
-        var compilationProduct=io.github.gustavo2358.cobolexplorer.semanticproduct.projection.CompilationSemanticProductProjector.project(semanticProducts(compilationBuild,symbolTables,occurrences,resolution,resolutionReport,storageProfile,entryMode,cicsMode,logicalText));
+        var compilationProduct=io.github.gustavo2358.cobolexplorer.semanticproduct.projection.CompilationSemanticProductProjector.project(semanticProducts(compilationBuild,symbolTables,occurrences,resolution,resolutionReport,storageProfile,entryMode,cicsMode,logicalText).withSourceDependencies(preprocessed.sourceDependencies(),preprocessed.sourceDependencyGaps()));
         io.github.gustavo2358.cobolexplorer.semanticproduct.transport.CompilationSemanticProductJsonWriter.write(compilationProduct,output.resolve("cobol-semantic-compilation.json"));
         CobolSemanticPort semanticProduct=compilationProduct.units().get(0).product();
         SemanticProductJsonWriter.write(semanticProduct,

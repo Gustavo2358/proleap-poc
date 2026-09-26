@@ -533,3 +533,9 @@ bytes é inferida se a própria declaração/codec/layout não tiver prova.
 O lower transporta a distinção por entry.possibilities@1; não há MOVE sintético,
 reseed em backedge ou reinterpretação do perfil PRESERVED. Contrato completo e
 provas em [DVI](declarative-value-inference.md).
+
+## Dependency preservation — SP 2.32.0
+
+[Dependency preservation](dependency-preservation.md) defines occurrence-local
+`POSSIBLE_TEXT`, its validation and canonical whole CICS host references independent
+of physical layout. The writer emits 2.32.0 only when this new evidence is present.

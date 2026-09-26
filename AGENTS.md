@@ -53,7 +53,7 @@ O mapa curto está em [ARCHITECTURE.md](ARCHITECTURE.md). Fronteiras detalhadas 
 - Corpus, fixtures e testes são evidência; não são a especificação isolada da linguagem.
 - Para regra COBOL, use a fonte oficial do dialeto configurado e registre como o projeto a representa no documento de domínio.
 - Prefira algoritmos derivados da semântica a regex, busca textual ou heurística de corpus.
-- Falhe de forma fechada diante de input ausente, construção não suportada ou dependência desconhecida.
+- Não afirme completude diante de input ausente, construção não suportada ou dependência desconhecida. Preserve evidência válida com gaps/remainder conforme o Dependency Preservation Principle do harness.
 - Preserve AST, símbolos, ocorrências, resolução, apresentação e os produtos downstream de CFG/dataflow como fronteiras distintas.
 - Binding nominal não autoriza inferir valores de runtime ou targets dinâmicos finais.
 - No Semantic Product, vertical slice limita capability semântica, não a quantidade de ocorrências suportadas na `ProgramUnit`; partial/unsupported observado não pode desaparecer.

@@ -1,5 +1,6 @@
 package io.github.gustavo2358.cobolexplorer.semanticproduct;
 
+import io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.SourceDependencyInventory;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -32,6 +33,8 @@ public interface CobolSemanticPort {
     default CobolSemanticProduct.StorageInventory storage() { return CobolSemanticProduct.StorageInventory.unavailable(); }
 
     default CobolSemanticProduct.FileInventory fileInventory() { return CobolSemanticProduct.FileInventory.unavailable(); }
+
+    default SourceDependencyInventory sourceDependencies(){return SourceDependencyInventory.unavailable();}
 
     List<CobolSemanticProduct.DataDeclaration> dataDeclarations();
 
@@ -90,6 +93,8 @@ final class MaterializedCobolSemanticPort implements CobolSemanticPort {
     private final List<CobolSemanticProduct.ObservedStatement> observedStatements;
 
     @Override public CobolSemanticProduct.FileInventory fileInventory() { return state.fileInventory(); }
+
+    @Override public SourceDependencyInventory sourceDependencies(){return state.sourceDependencies();}
 
     MaterializedCobolSemanticPort(CobolSemanticProduct.State state) {
         this.state = Objects.requireNonNull(state, "state");

@@ -318,7 +318,7 @@ public final class CobolSemanticProduct {
     }
     /** FULL_IDENTITY guarantees mandatory whole receiving-item overwrite without
      * conversion, padding or truncation. UNAVAILABLE makes no copy claim. */
-    public enum CopySemantics { FULL_IDENTITY, FITTED_TEXT, UNAVAILABLE }
+    public enum CopySemantics { FULL_IDENTITY, FITTED_TEXT, POSSIBLE_TEXT, UNAVAILABLE }
     public enum TextAdjustmentRule { RIGHT_PAD_SPACE }
     public record TextAdjustment(TextAdjustmentRule rule, int receiverExtent,
                                  TextValue result, Provenance provenance) {
@@ -1012,11 +1012,18 @@ public final class CobolSemanticProduct {
             Objects.requireNonNull(regionalMove);
             copySemantics = Objects.requireNonNull(copySemantics);
             textAdjustment = Objects.requireNonNull(textAdjustment);
-            require((copySemantics == CopySemantics.FITTED_TEXT) == textAdjustment.isPresent(),
+            require((copySemantics == CopySemantics.FITTED_TEXT || copySemantics == CopySemantics.POSSIBLE_TEXT) == textAdjustment.isPresent(),
                     "fitted copy requires adjustment; identity/unavailable omit it");
             if (copySemantics == CopySemantics.FITTED_TEXT)
                 require(source instanceof LiteralSource literal && literal.logicalValue().isPresent() && target.wholeItemAccess().isPresent(),
                         "fitting requires logical source and whole scalar target");
+            if(copySemantics==CopySemantics.POSSIBLE_TEXT) {
+                require(source instanceof LiteralSource literal&&literal.logicalValue().isPresent()&&target.logicalWholeItem().isPresent(),"possible text requires a whole logical receiver and literal");
+                var text=((LiteralSource)source).logicalValue().orElseThrow();
+                var adjustment=textAdjustment.orElseThrow();
+                require(text.logicalExtent()<=adjustment.receiverExtent(),"possible text cannot truncate");
+                require(adjustment.result().value().equals(text.value()+" ".repeat(adjustment.receiverExtent()-text.logicalExtent())),"possible text requires exact right padding");
+            }
             normalContinuation = Objects.requireNonNull(normalContinuation);
             if (copySemantics == CopySemantics.FULL_IDENTITY)
                 require((source instanceof LiteralSource literal && literal.logicalValue().isPresent()
@@ -1490,12 +1497,55 @@ public final class CobolSemanticProduct {
             require(handlerMembers.contains(s.header().id()),"FILE_HANDLER child absent from file surface");
     }
 
+    /** Source occurrences, independent from statement/runtime semantics. */
+    public record SourceDependencyInventory(Availability availability, List<Occurrence> occurrences, List<String> gapCodes) {
+        public enum Kind { COPYBOOK, DCLGEN, SQL_INCLUDE, DB2_TABLE }
+        public enum Resolution { RESOLVED, UNRESOLVED, CYCLIC, IO_ERROR, NOT_APPLICABLE }
+        public enum Operation { NONE, SELECT, INSERT, UPDATE, DELETE, MERGE }
+        public enum Access { NONE, READ, WRITE, READ_WRITE }
+        public record Occurrence(String id,Kind kind,String name,String qualification,Resolution resolution,
+                String artifact,String authority,Provenance provenance,Operation operation,Access access) {
+            public Occurrence(String id,Kind kind,String name,String qualification,Resolution resolution,String artifact,String authority,Provenance provenance){this(id,kind,name,qualification,resolution,artifact,authority,provenance,Operation.NONE,Access.NONE);}
+            public Occurrence {
+                Objects.requireNonNull(id);Objects.requireNonNull(kind);Objects.requireNonNull(resolution);
+                Objects.requireNonNull(name);Objects.requireNonNull(qualification);Objects.requireNonNull(artifact);
+                Objects.requireNonNull(authority);Objects.requireNonNull(provenance);Objects.requireNonNull(operation);Objects.requireNonNull(access);
+                if((kind==Kind.DB2_TABLE)!=authority.equals("STATIC_SQL_TABLE_POSITION")||(kind==Kind.DB2_TABLE)!=(resolution==Resolution.NOT_APPLICABLE))throw new IllegalArgumentException("DB2 authority/resolution");
+                boolean usage=operation==Operation.SELECT&&access==Access.READ||Set.of(Operation.INSERT,Operation.UPDATE,Operation.DELETE).contains(operation)&&access==Access.WRITE||operation==Operation.MERGE&&(access==Access.READ||access==Access.READ_WRITE);
+                if(kind==Kind.DB2_TABLE?!usage:operation!=Operation.NONE||access!=Access.NONE)throw new IllegalArgumentException("Invalid source usage");
+                if(id.isBlank()||name.isBlank()||!name.equals(name.toUpperCase(java.util.Locale.ROOT))||!qualification.equals(qualification.toUpperCase(java.util.Locale.ROOT)))
+                    throw new IllegalArgumentException("Source dependency needs canonical identity");
+                if(!Set.of("COPY_SYNTAX","CONFIGURED_DCLGEN","CONFIGURED_SQL_INCLUDE","BUILTIN_SQL_INCLUDE","UNKNOWN","STATIC_SQL_TABLE_POSITION").contains(authority))throw new IllegalArgumentException("Unknown source authority");
+                if((kind==Kind.COPYBOOK)!=authority.equals("COPY_SYNTAX"))throw new IllegalArgumentException("COPY authority mismatch");
+                if(kind==Kind.DCLGEN&&Set.of("SQLCA","SQLDA").contains(name))throw new IllegalArgumentException("Builtins are not DCLGEN");
+                if((kind==Kind.DCLGEN)!=authority.equals("CONFIGURED_DCLGEN"))throw new IllegalArgumentException("DCLGEN requires inventory evidence");
+                if((resolution==Resolution.RESOLVED)==artifact.isBlank())throw new IllegalArgumentException("Resolved dependency needs artifact");
+            }
+        }
+        public SourceDependencyInventory {
+            Objects.requireNonNull(availability);occurrences=List.copyOf(occurrences);gapCodes=List.copyOf(gapCodes);
+            if(availability==Availability.UNAVAILABLE&&!occurrences.isEmpty())throw new IllegalArgumentException("Unavailable source inventory has occurrences");
+            if(gapCodes.stream().anyMatch(String::isBlank))throw new IllegalArgumentException("Empty source gap");
+            var ids=new HashSet<String>();
+            for(var occurrence:occurrences)if(!ids.add(occurrence.id()))throw new IllegalArgumentException("Duplicate source occurrence");
+            if(availability==Availability.KNOWN&&!gapCodes.isEmpty())throw new IllegalArgumentException("Known inventory cannot have gaps");
+            if(availability!=Availability.KNOWN&&gapCodes.isEmpty())throw new IllegalArgumentException("Incomplete inventory requires reason");
+        }
+        public static SourceDependencyInventory unavailable(){return new SourceDependencyInventory(Availability.UNAVAILABLE,List.of(),List.of("SOURCE_DEPENDENCIES_UNAVAILABLE"));}
+    }
+
     /** One immutable, closed publication with a cardinality-independent envelope. */
     public record State(UnitId unit, Policy policy,
                         List<DataDeclaration> dataDeclarations,
                         List<StatementFact> statements,
-                        List<Gap> gaps, CoverageSummary coverage, EntryInventory entryInventory, IndependentStorageSet storageIndependence, StorageInventory storage, FileInventory fileInventory) {
+                        List<Gap> gaps, CoverageSummary coverage, EntryInventory entryInventory, IndependentStorageSet storageIndependence, StorageInventory storage, FileInventory fileInventory, SourceDependencyInventory sourceDependencies) {
+        public State(UnitId unit, Policy policy, List<DataDeclaration> dataDeclarations, List<StatementFact> statements,
+                List<Gap> gaps, CoverageSummary coverage, EntryInventory entryInventory, IndependentStorageSet storageIndependence,
+                StorageInventory storage, FileInventory fileInventory) {
+            this(unit,policy,dataDeclarations,statements,gaps,coverage,entryInventory,storageIndependence,storage,fileInventory,SourceDependencyInventory.unavailable());
+        }
         public State {
+            Objects.requireNonNull(sourceDependencies);
             unit = Objects.requireNonNull(unit, "unit");
             policy = Objects.requireNonNull(policy, "policy");
             dataDeclarations = List.copyOf(dataDeclarations);
@@ -1788,7 +1838,7 @@ public final class CobolSemanticProduct {
             }
             require(declaration.scalarText().orElseThrow().logicalExtent() == extent, "identity copy requires equal extents");
         }
-        if (statement instanceof MoveFact move && move.textAdjustment().isPresent()) {
+        if (statement instanceof MoveFact move && move.copySemantics()==CopySemantics.FITTED_TEXT) {
             var adjustment = move.textAdjustment().orElseThrow();
             var declaration = declarations.get(move.target().wholeItemAccess().orElseThrow().data());
             require(declaration != null && declaration.scalarText().isPresent(), "fitting requires scalar declaration");
