@@ -310,7 +310,7 @@ class SemanticProductCheckpoint7JsonTest {
     }
 
     @Test
-    void compositionRootWritesExactlyTheAdapterBytes(@TempDir Path directory)
+    void legacyCompositionRootWritesExactlyTheAdapterBytes(@TempDir Path directory)
             throws Exception {
         Path copybooks = Files.createDirectory(directory.resolve("copybooks"));
         Path output = directory.resolve("output");
@@ -318,7 +318,7 @@ class SemanticProductCheckpoint7JsonTest {
         ExplorerMain.main(new String[]{
                 "--source", FIXTURE.toAbsolutePath().toString(),
                 "--copybooks", copybooks.toString(),
-                "--output", output.toString()});
+                "--output", output.toString(), "--logical-text", "disabled"});
 
         Path artifact = output.resolve("semantic-product.json");
         assertTrue(Files.isRegularFile(artifact));

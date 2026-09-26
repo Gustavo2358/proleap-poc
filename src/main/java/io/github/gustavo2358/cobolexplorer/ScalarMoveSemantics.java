@@ -103,6 +103,12 @@ public final class ScalarMoveSemantics {
         for (var unit : frontend.compilationUnit().programUnits()) {
             boolean inputComplete=report.inputComplete(unit.id());
             Map<Integer, ScalarText> eligible = new HashMap<>();
+            storage.ifPresent(st->{
+                var leaves=new HashMap<Integer,StorageLayoutSemantics.Node>();
+                for(var n:st.layout().layout(unit.id()).nodes())if(n.kind()==StorageLayoutSemantics.Kind.ELEMENTARY&&!n.filler())leaves.put(n.id().node(),n);
+                for(var v:st.layout().logicalViews())if(v.node().unit().equals(unit.id())&&leaves.containsKey(v.node().node()))
+                    eligible.put(v.node().node(),new ScalarText(v.length().intValueExact()));
+            });
             // Reuse the already immutable canonical relation index; do not rebuild it.
             Map<Integer, Integer> next = Map.of();
             boolean procedureSeen = false;

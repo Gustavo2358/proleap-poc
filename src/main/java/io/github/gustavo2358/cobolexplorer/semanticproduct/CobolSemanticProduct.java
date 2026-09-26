@@ -299,7 +299,7 @@ public final class CobolSemanticProduct {
     public enum LogicalDomain { TEXT }
     public enum StorageClass { WORKING_STORAGE }
     public enum DeclarationScope { LOCAL }
-    /** Positive COBOL guarantee: standalone elementary textual DISPLAY value,
+    /** Positive COBOL guarantee: independent elementary textual DISPLAY value,
      * local ordinary WORKING-STORAGE, no relevant table/overlay/unknown clause. */
     public record ScalarText(int logicalExtent) {
         public ScalarText { require(logicalExtent > 0, "scalar extent must be positive"); }
@@ -639,13 +639,21 @@ public final class CobolSemanticProduct {
         public StorageEntryState {Objects.requireNonNull(mode);conditions=List.copyOf(conditions);}
         public static StorageEntryState unknown() {return new StorageEntryState(StorageEntryMode.UNKNOWN,List.of());}
     }
+    public record LogicalTextView(StorageNodeId node,StorageNodeId root,BigInteger start,BigInteger length) {
+        public LogicalTextView {Objects.requireNonNull(node);Objects.requireNonNull(root);Objects.requireNonNull(start);Objects.requireNonNull(length);
+            require(node.unit().equals(root.unit())&&start.signum()>=0&&length.signum()>0,"positive logical character range in one unit");}
+    }
     public record StorageInventory(StorageProfile profile, List<PhysicalNode> nodes, List<StorageBase> bases,
-            List<StorageView> views, List<String> gapCodes, List<StorageRelation> relations, List<StorageRenames> renames,StorageEntryState entryState) {
+            List<StorageView> views, List<String> gapCodes, List<StorageRelation> relations, List<StorageRenames> renames,StorageEntryState entryState,List<LogicalTextView> logicalTextViews) {
         public StorageInventory {
+            logicalTextViews=List.copyOf(logicalTextViews);
             Objects.requireNonNull(entryState);Objects.requireNonNull(profile); nodes = List.copyOf(nodes); bases = List.copyOf(bases);
             views = List.copyOf(views); gapCodes = List.copyOf(gapCodes); relations=List.copyOf(relations);renames=List.copyOf(renames);
             gapCodes.forEach(code -> requireText(code, "storage gap"));
             require(profile != StorageProfile.UNSPECIFIED || !gapCodes.isEmpty(), "absent environment requires a gap");
+        }
+        public StorageInventory(StorageProfile profile,List<PhysicalNode> nodes,List<StorageBase> bases,List<StorageView> views,List<String> gapCodes,List<StorageRelation> relations,List<StorageRenames> renames,StorageEntryState entryState) {
+            this(profile,nodes,bases,views,gapCodes,relations,renames,entryState,List.of());
         }
         public StorageInventory(StorageProfile profile,List<PhysicalNode> nodes,List<StorageBase> bases,List<StorageView> views,List<String> gapCodes,List<StorageRelation> relations,List<StorageRenames> renames) {
             this(profile,nodes,bases,views,gapCodes,relations,renames,StorageEntryState.unknown());

@@ -25,13 +25,18 @@ public final class StorageLayoutSemantics {
     public record Layout(Profile profile,List<Node> nodes,List<Base> bases,List<View> views,List<Reason> reasons,List<StorageComponents.Relation> relations,List<Renaming> renames) {
         public Layout { nodes=List.copyOf(nodes);bases=List.copyOf(bases);views=List.copyOf(views);reasons=List.copyOf(reasons);relations=List.copyOf(relations);renames=List.copyOf(renames); }
     }
+    /** Character positions only. This fact grants no physical extent, allocation or codec. */
+    public record LogicalView(Key node,Key root,BigInteger start,BigInteger length) { }
+    private final List<LogicalView> logicalViews;
+    public List<LogicalView> logicalViews(){return logicalViews;}
     private final Map<ResolutionContracts.ProgramUnitId,Layout> layouts;
     private final Map<String,Long> metrics;
     private final CompilationUnitBuildResult owner;
     private final ReferenceResolution bindings;
     private final CompilationUnitSymbolTables symbolTables;
     private StorageLayoutSemantics(Map<ResolutionContracts.ProgramUnitId,Layout> layouts,Map<String,Long> metrics,
-            CompilationUnitBuildResult owner,ReferenceResolution bindings,CompilationUnitSymbolTables symbolTables) {
+            CompilationUnitBuildResult owner,ReferenceResolution bindings,CompilationUnitSymbolTables symbolTables,List<LogicalView> logicalViews) {
+        this.logicalViews=List.copyOf(logicalViews);
         this.layouts=Map.copyOf(layouts);this.metrics=Map.copyOf(metrics);this.owner=owner;this.bindings=bindings;this.symbolTables=symbolTables;
     }
     CompilationUnitSymbolTables symbolTables(){return symbolTables;}
@@ -44,9 +49,14 @@ public final class StorageLayoutSemantics {
     }
     public static StorageLayoutSemantics analyze(CompilationUnitBuildResult frontend,CompilationUnitSymbolTables tables,
             ReferenceResolution resolution,ResolutionAnalysisReport report,Profile profile,StorageComponents components) {
+        return analyze(frontend,tables,resolution,report,profile,components,false);
+    }
+    public static StorageLayoutSemantics analyze(CompilationUnitBuildResult frontend,CompilationUnitSymbolTables tables,
+            ReferenceResolution resolution,ResolutionAnalysisReport report,Profile profile,StorageComponents components,boolean logicalText) {
         Objects.requireNonNull(profile);Objects.requireNonNull(resolution);
+        if(logicalText&&profile!=Profile.UNSPECIFIED)throw new IllegalArgumentException("logical text W1 requires unspecified physical profile");
         if(!components.belongsTo(frontend))throw new IllegalArgumentException("storage components belong to another snapshot");
-        var layouts=new LinkedHashMap<ResolutionContracts.ProgramUnitId,Layout>();long declarations=0,visits=0;
+        var layouts=new LinkedHashMap<ResolutionContracts.ProgramUnitId,Layout>();var logicalViews=new ArrayList<LogicalView>();long declarations=0,visits=0;
         for(var unit:frontend.compilationUnit().programUnits()) {
             boolean input=report.inputComplete(unit.id());
             var reasons=new LinkedHashSet<Reason>();
@@ -110,6 +120,12 @@ public final class StorageLayoutSemantics {
                     cursor=plus(cursor,footprints.get(component.representative()),Reason.UNKNOWN_OFFSET);
                 }
             }
+            if(logicalText&&input&&!attributes.initial()&&!attributes.recursive()&&!attributes.common()&&!attributes.library()&&!attributes.definition())
+                {
+                var textViews=logical(unit.id(),physical,shapes);
+                logicalViews.addAll(textViews);
+                logicalViews.addAll(StorageRenames.logical(unit.id(),physical,resolution,entities,coverage,nodes,textViews));
+            }
             var renames=StorageRenames.prove(unit.id(),physical,resolution,entities,coverage,nodes,views);
             if(renames.stream().anyMatch(r->!r.proved())) {
                 reasons.add(Reason.RENAMES_NOT_PROVEN);
@@ -119,7 +135,38 @@ public final class StorageLayoutSemantics {
             }
             layouts.put(unit.id(),new Layout(profile,nodes,bases,views,List.copyOf(reasons),physical.relations(),renames));
         }
-        return new StorageLayoutSemantics(layouts,Map.of("declarations",declarations,"layoutVisits",visits,"objectPairs",0L),frontend,resolution,tables);
+        return new StorageLayoutSemantics(layouts,Map.of("declarations",declarations,"layoutVisits",visits,"objectPairs",0L),frontend,resolution,tables,logicalViews);
+    }
+    private static List<LogicalView> logical(ResolutionContracts.ProgramUnitId unit,StorageComponents.Unit structure,Map<Integer,Shape> shapes) {
+        // The same source components/shape/footprint algorithm, in character coordinates only.
+        var excluded=new HashSet<Integer>();
+        for(var p:structure.positions())if(!shapes.get(p.data().meta().id()).supported()||structure.uncertainRoots().contains(p.root()))excluded.add(p.root());
+        var accepted=new HashSet<Integer>();
+        for(var c:structure.rootComponents())if(structure.structureProven()&&structure.rootRelationsProven()
+                &&c.members().stream().noneMatch(excluded::contains)&&c.members().stream().allMatch(id->structure.allocation(id).proved()))accepted.addAll(c.members());
+        var extents=new HashMap<Integer,Measure>();var ordered=structure.positions();
+        for(int i=ordered.size()-1;i>=0;i--) {
+            var p=ordered.get(i);if(!accepted.contains(p.root()))continue;
+            int id=p.data().meta().id();var shape=shapes.get(id);var length=shape.leafExtent().orElse(BigInteger.ZERO);
+            if(shape.kind()==Kind.GROUP)for(var c:structure.children().get(id))length=length.add(footprint(c,extents).value().orElseThrow());
+            extents.put(id,Measure.known(length));
+        }
+        var families=new HashMap<Integer,Integer>();
+        for(var c:structure.rootComponents())if(accepted.contains(c.representative())) {
+            int root=c.members().stream().max(Comparator.<Integer,BigInteger>comparing(id->extents.get(id).value().orElseThrow()).thenComparing(Comparator.reverseOrder())).orElseThrow();
+            for(int member:c.members())families.put(member,root);
+        }
+        var starts=new HashMap<Integer,BigInteger>();for(int root:accepted)starts.put(root,BigInteger.ZERO);
+        var result=new ArrayList<LogicalView>();
+        for(var p:ordered) {
+            if(!accepted.contains(p.root()))continue;int id=p.data().meta().id();var start=starts.get(id);
+            result.add(new LogicalView(new Key(unit,id),new Key(unit,families.get(p.root())),start,extents.get(id).value().orElseThrow()));
+            var cursor=start;for(var c:structure.children().get(id)) {
+                for(var child:c.members())starts.put(child,cursor);
+                cursor=cursor.add(footprint(c,extents).value().orElseThrow());
+            }
+        }
+        return result;
     }
     private static Measure footprint(StorageComponents.Component component,Map<Integer,Measure> extents) {
         BigInteger max=BigInteger.ZERO;
