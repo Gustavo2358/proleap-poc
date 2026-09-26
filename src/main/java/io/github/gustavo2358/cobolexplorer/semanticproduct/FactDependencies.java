@@ -42,7 +42,7 @@ public record FactDependencies(String authority,List<Input> inputs,List<Proof> p
             require(rs.containsKey(p.scope()),"proof region exists");refs(p.dependencies(),ps);refs(p.inputs(),ins);
             require(p.subject().equals(p.scope())||p.scope().equals(owners.get(p.subject())),"proof subject belongs to scope");
             require(switch(p.kind()) {
-                case SOURCE_SYNTAX -> true;
+                case SOURCE_SYNTAX,ALIAS_INVENTORY,ALIAS_CLOSURE -> true;
                 case DECLARATION_CONTEXT,LOGICAL_TYPE,PHYSICAL_VIEW -> owners.containsKey(p.subject());
                 default -> p.subject().equals(p.scope());
             },"proof kind has the required region/declaration subject");
@@ -65,7 +65,7 @@ public record FactDependencies(String authority,List<Input> inputs,List<Proof> p
             require(expected.equals(new TreeSet<>(p.inputs())),"proof input relation is complete");
             for(var dependency:p.dependencies()) {
                 var premise=ps.get(dependency);require(premise.scope().equals(p.scope()),"proof scope agreement");
-                if(premise.kind()==ProofKind.SOURCE_SYNTAX||premise.kind()==ProofKind.DECLARATION_CONTEXT)
+                if(premise.kind()==ProofKind.SOURCE_SYNTAX||premise.kind()==ProofKind.DECLARATION_CONTEXT||premise.kind()==ProofKind.ALIAS_INVENTORY)
                     require(premise.subject().equals(p.subject()),"proof declaration subject agreement");
             }
         }
@@ -86,7 +86,9 @@ public record FactDependencies(String authority,List<Input> inputs,List<Proof> p
             for(var p:f.dependencies()) {
                 var proof=ps.get(p);require(proof.scope().equals(f.region()),"fact proof scope");
                 boolean local=proof.kind()==ProofKind.SOURCE_SYNTAX||proof.kind()==ProofKind.LOGICAL_TYPE||proof.kind()==ProofKind.PHYSICAL_VIEW;
-                require(proof.subject().equals(local?f.subject():f.region()),"fact proof subject agreement");
+                require(proof.kind()==ProofKind.ALIAS_CLOSURE
+                    ?proof.subject().equals(f.subject())||proof.subject().equals(f.region())
+                    :proof.subject().equals(local?f.subject():f.region()),"fact proof subject agreement");
             }
             if(f.kind()==FactKind.LOCAL_CELL)cells.put(f.subject(),f);
             if(f.kind()==FactKind.STORAGE_IDENTITY)allocations.put(f.subject(),f);

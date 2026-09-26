@@ -18,7 +18,7 @@ final class CicsCommandControl {
         if(!local)remainder.add("handler-or-default-condition");
         // SEND MAP OVERFLOW is explicitly exempt from generic RESP/NOHANDLE rules.
         if(fact.command()==CicsCommandSemantics.Kind.SEND_MAP)remainder.add("overflow");
-        String command=switch(fact.command()) {case SYNCPOINT->"syncpoint";case RECEIVE_MAP->"receive-map";case SEND_MAP->"send-map";case SEND_TERMINAL->"send-terminal";};
+        String command=switch(fact.command()) {case SYNCPOINT->"syncpoint";case RECEIVE_MAP->"receive-map";case SEND_MAP->"send-map";case SEND_TERMINAL->"send-terminal";case RETRIEVE->"retrieve";};
         return Optional.of(new Qualification("cics-command-"+command+"-ordinary-return",remainder));
     }
 }

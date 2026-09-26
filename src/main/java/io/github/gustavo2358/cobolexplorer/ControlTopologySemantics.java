@@ -186,6 +186,24 @@ public final class ControlTopologySemantics {
                 }
                 continue;
             }
+            if(CicsConditionSyntax.effects(s).isPresent()&&s instanceof Ast.EmbeddedLanguageStatement embedded
+                    &&embedded.procedureOperands().stream().allMatch(r->targetDeclarations.containsKey(r.meta().id()))) {
+                var normal=proof(id+"/condition-registration",ProofKind.LOCAL_GRAMMAR,"cics-handle-condition-ordinary-return",s.meta().provenance(),List.of(p));
+                add(s,owner,OutcomeKind.NORMAL,"normal",next,"",normal);continue;
+            }
+            if(DliCommandSemantics.effects(s).isPresent()) {
+                var normal=proof(id+"/dli-normal",ProofKind.LOCAL_GRAMMAR,"dli-command-ordinary-return",s.meta().provenance(),List.of(p));
+                add(s,owner,OutcomeKind.NORMAL,"normal",next,"",normal);
+                var failure=proof(id+"/dli-failure",ProofKind.PARTIAL_UNKNOWN,"dli-command-failure",s.meta().provenance(),List.of(normal));
+                add(s,owner,OutcomeKind.UNKNOWN_LOCAL,"dli/failure",unknown(owner,failure),"",failure);
+                continue;
+            }
+            if(SqlNormalCompletion.proved(s)) {
+                var normal=proof(id+"/sql-normal",ProofKind.LOCAL_GRAMMAR,"db2-select-into-successful-return",s.meta().provenance(),List.of(p));
+                add(s,owner,OutcomeKind.NORMAL,"normal",next,"",normal);
+                var other=proof(id+"/sql-other",ProofKind.PARTIAL_UNKNOWN,"db2-select-into-other-outcomes",s.meta().provenance(),List.of(normal));
+                add(s,owner,OutcomeKind.UNKNOWN_LOCAL,"sql/other",unknown(owner,other),"",other);continue;
+            }
             boolean completion=division.normalCompletionStatements().contains(s.meta().id());
             if(s instanceof Ast.EmbeddedLanguageStatement)completion=cics!=null&&cics.boundedLocal(unit.id(),s);
             boolean registration=cics!=null&&cics.handlerOrdinaryCompletion(unit.id(),s);

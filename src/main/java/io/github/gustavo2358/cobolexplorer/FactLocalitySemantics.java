@@ -122,6 +122,11 @@ public final class FactLocalitySemantics {
             boolean allocated=(local||b.independent())&&context.getOrDefault(region,List.of()).isEmpty()&&StorageComponents.level(root)>0;
             boolean isolated=allocated&&closure.getOrDefault(region,List.of()).isEmpty()&&(aliases||wholeExact)&&section!=null;
             var cells=new HashMap<Integer,String>();
+            var independentPath=new HashMap<Integer,Boolean>();
+            boolean localAliases=structure.renames().stream().noneMatch(p->baseByNode.getOrDefault(p.root(),"").equals(region))
+                &&!structure.uncertainRoots().contains(rootId)
+                &&ns.stream().noneMatch(n->positions.get(n.id().node()).data().clauses().stream()
+                    .anyMatch(c->c instanceof Ast.OccursClause o&&o.dependingOn()!=null));
             for(var n:ns) {
                 int nid=n.id().node();var subject=node(nid);var ast=positions.get(nid).data();var shape=shapes.get(nid);
                 var s=proof(proofs,ProofKind.SOURCE_SYNTAX,subject,region,StorageComponents.level(ast)>0,List.of(),List.of(),n.origin());
@@ -132,8 +137,28 @@ public final class FactLocalitySemantics {
                 var physical=proof(proofs,ProofKind.PHYSICAL_VIEW,subject,region,v.offset().value().isPresent()&&v.extent().value().isPresent(),List.of(s,profile,ctx,closed),List.of(),n.origin());
                 fact(facts,FactKind.SOURCE_IDENTITY,subject,region,List.of(s));fact(facts,FactKind.LOGICAL_TEXT,subject,region,List.of(logical));
                 fact(facts,FactKind.PHYSICAL_VIEW,subject,region,List.of(physical));
-                fact(facts,FactKind.LOCAL_CELL,subject,region,List.of(logical,alias,allocation));
-                if(isolated&&text&&declarationInputs.getOrDefault(subject,List.of()).isEmpty()&&!n.filler()&&n.entity().isPresent())cells.put(nid,node(wholeExact?exacts.get(nid):nid));
+                String itemAlias=alias;
+                boolean itemIsolated=isolated;
+                if(!aliases&&!wholeExact) {
+                    var path=new ArrayDeque<Integer>();int current=nid;
+                    while(!independentPath.containsKey(current)) {
+                        path.push(current);var parent=positions.get(current).parent();
+                        if(parent.isEmpty())break;current=parent.orElseThrow();
+                    }
+                    boolean separate=independentPath.getOrDefault(current,true);
+                    while(!path.isEmpty()) {
+                        int at=path.pop();var component=structure.componentOf().get(at);
+                        separate &= component!=null&&component.members().size()==1
+                            &&positions.get(at).data().clauses().stream().noneMatch(c->c instanceof Ast.OccursClause||c instanceof Ast.RedefinesClause);
+                        independentPath.put(at,separate);
+                    }
+                    boolean itemInventory=localAliases&&independentPath.get(nid);
+                    var inventory=proof(proofs,ProofKind.ALIAS_INVENTORY,subject,region,itemInventory,List.of(s),List.of(),n.origin());
+                    itemAlias=proof(proofs,ProofKind.ALIAS_CLOSURE,subject,region,true,List.of(closed,inventory),List.of(),n.origin());
+                    itemIsolated=allocated&&closure.getOrDefault(region,List.of()).isEmpty()&&itemInventory&&section!=null;
+                }
+                fact(facts,FactKind.LOCAL_CELL,subject,region,List.of(logical,itemAlias,allocation));
+                if(itemIsolated&&text&&declarationInputs.getOrDefault(subject,List.of()).isEmpty()&&!n.filler()&&n.entity().isPresent())cells.put(nid,node(wholeExact?exacts.get(nid):nid));
             }
             var descendants=new HashMap<Integer,Set<String>>();
             if(!wholeExact)for(var cell:cells.entrySet()) {int current=cell.getKey();var visited=new HashSet<Integer>();

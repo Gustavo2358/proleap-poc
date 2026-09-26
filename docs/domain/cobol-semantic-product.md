@@ -625,3 +625,37 @@ graph. 2.40 requires it alongside R1 topology; <=2.39 retains historical meaning
 ## SP 2.45 — exceptional source-event authority
 
 [Exceptional CICS events](cics-exceptional-handlers.md) add `ControlTopology.exceptionalEvents` descriptors with closed runtime premises. No handler destination is selected in SP. Ordinary topology and FactDependencies retain their meaning. Empty event inventories are omitted from historical wire.
+
+### SP 2.46 — facts for dependency recall and precision
+
+This draft extends the canonical source facts described in
+[locality](recall-locality.md), [CICS host effects](cics-host-effects.md),
+[CICS condition registration](cics-condition-registration.md),
+[DLI host effects](dli-host-effects.md), [logical entry invariants](logical-entry-invariants.md),
+[text predicates](text-predicates.md), and [SQL normal completion](sql-normal-completion.md).
+The writer selects 2.46 when a new predicate, invariant, command effect or registration proof is present. Older shapes keep their previous version. Available SQL INCLUDE members expand through the existing source map; unavailable members remain explicit.
+
+A whole-item logical proof can now apply to a closed elementary member of a record. Equal whole overlays use their existing shared cell; they never become independent allocations. Unrelated EXTERNAL/GLOBAL declarations no longer revoke a separately proved local member. Missing declaration context, unresolved overlays, repetition on the target path and unavailable allocation remain barriers.
+
+Historical tests that expected all nested members/overlays to lack scalar facts now check these positive proofs and shared binding identity. Tests for incomplete slices, unknown input, ambiguous names and unsupported commands remain negative. No real corpus fixture or program name belongs to this implementation.
+
+
+## SP 2.47 — nominalValues
+
+`nominalValues` publica fatos de texto do fonte para candidatos condicionais.
+A autoridade `NOMINAL_TEXT_SOURCE_V1` contém `symbols(node, extent)`,
+`assignments(statement, target, source)`, `conditions(statement, predicate)` e
+`queries(statement, node)`. Termos são READ, LITERAL, SPACES, LOW_VALUES,
+HIGH_VALUES ou UNKNOWN; predicados são EQ, NOT, AND e OR. Todas as referências
+pertencem aos inventários canônicos da mesma unidade. Literais e nomes são
+obtidos dos fatos tipados; nomes de exibição não são mecanismo de correlação.
+
+O fato descreve o operando inteiro nominal e a operação escrita. Não atesta
+alocação, ausência de aliases, execução ou inicialização. Uma localização de
+fonte aproximada não apaga um operando estruturado e resolvido. O consumidor
+preserva essa limitação e a distingue das garantias do modelo executável.
+Campos sem essas garantias podem contribuir para descoberta de dependências.
+
+O produtor emite o bloco quando há uma consulta computada textual. Contratos
+anteriores continuam sem o bloco; um consumidor antigo deve recusar 2.47.
+Veja [regra e validação](../architecture/conditional-dependency-candidates.md).

@@ -23,7 +23,7 @@ class StorageInitialProductTest {
         assertEquals(PerformProfile.BASIC_PROCEDURE_PERFORM,p.performs().get(0).profile());
         var c=p.storage().entryState().conditions().get(0);assertEquals(InitialStorageKind.LITERAL_BYTES,c.kind());assertTrue(c.provenance().exact());
         var bytes=SemanticProductJsonWriter.serialize(p);var d=new ObjectMapper().readTree(bytes);
-        assertEquals("2.41.0",d.path("contractVersion").asText());assertEquals("1.8.0",d.path("storage").path("version").asText());
+        assertEquals("2.47.0",d.path("contractVersion").asText());assertEquals("1.8.0",d.path("storage").path("version").asText());
         assertEquals("INITIAL",d.path("storage").path("entryState").path("mode").asText());
         assertEquals(8,d.path("storage").path("entryState").path("conditions").get(0).path("bytes").size());
         if(System.getProperty("storage.fixture.output")!=null)java.nio.file.Files.write(java.nio.file.Path.of(System.getProperty("storage.fixture.output")),bytes);
@@ -39,7 +39,10 @@ class StorageInitialProductTest {
     @Test void unprovedRegionalMoveCannotCloseBasicPerformBody() {
         for(String body:List.of("MOVE PGM-TEXT TO PGM-TEXT.","MOVE 'X' TO PGM-TEXT(MISSING:1).")) {
             var p=initialSource(initialSource().replace("MOVE 'OTHERPGM' TO PGM-TEXT.",body),StorageInitialSemantics.EntryMode.INITIAL);
-            assertTrue(p.performs().isEmpty(),"unproved regional transfer must not certify BASIC body");
+            if(body.equals("MOVE PGM-TEXT TO PGM-TEXT.")) {
+                assertEquals(1,p.performs().size(),"closed local self-copy is a proved whole logical transfer");
+                assertEquals(CopySemantics.FULL_IDENTITY,p.moves().get(0).copySemantics());
+            } else assertTrue(p.performs().isEmpty(),"unproved slice must not certify BASIC body");
             assertFalse(p.gaps().isEmpty());assertEquals(2,p.calls().size());
         }
     }

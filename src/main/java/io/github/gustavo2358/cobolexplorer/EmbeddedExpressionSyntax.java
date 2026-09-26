@@ -28,9 +28,17 @@ final class EmbeddedExpressionSyntax {
     }
     static List<Host> parse(String raw,int offset,int line,int column,int tokenIndex) {
         var command=CicsCommandSemantics.parse(raw);
-        if(command.isEmpty()||command.get().command()!=CicsCommandSemantics.Kind.SEND_TERMINAL)return List.of();
+        var options=new ArrayList<CicsCommandSyntax.Option>();
+        if(command.filter(c->c.command()==CicsCommandSemantics.Kind.SEND_TERMINAL).isPresent())options.addAll(command.get().options());
+        // Non-reference LENGTH operands have their own identity; they are not a write to the measured item.
+        new CicsFileControlAnalyzer().parse(raw).ifPresent(file->{
+            for(var o:file.options())if(o.syntax().name().equals("LENGTH")&&o.syntax().operand().isPresent()) {
+                var parsed=parse(o.syntax().operand().orElseThrow());
+                if(parsed.isPresent()&&parsed.get().tree() instanceof CobolParser.IdentifierContext i&&i.specialRegister()!=null)options.add(o.syntax());
+            }
+        });
         var out=new ArrayList<Host>();
-        for(var option:command.get().options())if(option.name().equals("LENGTH")&&option.operand().isPresent()) {
+        for(var option:options)if(option.name().equals("LENGTH")&&option.operand().isPresent()) {
             var parsed=parse(option.operand().orElseThrow());if(parsed.isEmpty())continue;
             int begin=raw.indexOf('(',option.start())+1;
             for(var token:parsed.get().tokens().getTokens())if(token instanceof CommonToken t) {

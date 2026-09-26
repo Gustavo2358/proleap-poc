@@ -31,7 +31,7 @@ class StorageProductTest {
         var move=p.moves().get(0);assertEquals(RegionalMoveKind.LITERAL_BYTES,move.regionalMove().orElseThrow().kind());
         assertEquals(List.of(193,194,195,196,197,198,199,200),move.regionalMove().orElseThrow().bytes());
         assertTrue(move.target().wholeItemAccess().isEmpty());assertTrue(move.target().regionalAccess().isPresent());
-        var target=(DataReference)p.calls().get(0).target();assertTrue(target.wholeItemAccess().isEmpty());
+        var target=(DataReference)p.calls().get(0).target();assertTrue(target.wholeItemAccess().isPresent(),"closed elementary member retains whole logical access alongside the physical view");
         var view=storage.views().stream().filter(v->v.node().equals(target.regionalAccess().orElseThrow().view())).findFirst().orElseThrow();
         assertEquals(known(4),view.offset());assertEquals(known(4),view.extent());
         assertEquals(Optional.of("text.ebcdic.ibm1047@1"),view.codec());
@@ -60,7 +60,7 @@ class StorageProductTest {
     @Test void json28HasDeterministicClosedStorageTransport() throws Exception {
         var p=CobolSemanticPort.open(group());var bytes=SemanticProductJsonWriter.serialize(p);
         assertArrayEquals(bytes,SemanticProductJsonWriter.serialize(CobolSemanticPort.open(group())));
-        var doc=new ObjectMapper().readTree(bytes);assertEquals("2.41.0",doc.path("contractVersion").asText());
+        var doc=new ObjectMapper().readTree(bytes);assertEquals("2.47.0",doc.path("contractVersion").asText());
         assertEquals("ibm-enterprise-6.4-fixed-display-1047@1",doc.path("storage").path("profileId").asText());
         assertEquals("8",doc.path("storage").path("bases").get(0).path("extent").path("value").asText());
         assertTrue(doc.path("storage").path("bases").get(0).path("extent").path("value").isTextual());

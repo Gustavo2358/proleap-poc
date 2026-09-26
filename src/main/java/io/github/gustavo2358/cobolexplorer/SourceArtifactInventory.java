@@ -40,6 +40,8 @@ final class SourceArtifactInventory {
         }
         return new SourceArtifactInventory(entries,path.toAbsolutePath().getParent());
     }
+    Optional<Path> configuredPath(String name){return Optional.ofNullable(entries.get(name)).map(e->directory.resolve(e.artifact()));}
+    Optional<String> configuredArtifact(String name){return Optional.ofNullable(entries.get(name)).map(Entry::artifact);}
     SourceDependencyFact classify(SourceDependencyFact fact) {
         var entry=entries.get(fact.name());
         if(entry==null||fact.authority().equals("BUILTIN_SQL_INCLUDE"))return fact;

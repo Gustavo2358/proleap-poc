@@ -16,7 +16,8 @@ class StorageLocalEligibilityTest {
             var move=(MoveFact)s.statements().get(0);assertEquals(CopySemantics.FULL_IDENTITY,move.copySemantics());
             assertEquals(data.id(),move.target().wholeItemAccess().orElseThrow().data());
             var call=(CallFact)s.statements().get(1);assertEquals(data.id(),((DataReference)call.target()).wholeItemAccess().orElseThrow().data());
-            assertTrue(s.dataDeclarations().stream().filter(d->!d.id().equals(data.id())).allMatch(d->d.scalarText().isEmpty()));
+            assertSharedOverlayCell(s);
+            assertFalse(s.storageIndependence().members().stream().anyMatch(id->!id.equals(data.id())),"a shared cell never becomes two independent cells");
         }
     }
     @Test void localIndependenceAndIfPredicateUseTheSameStorageProof() {
@@ -36,9 +37,10 @@ class StorageLocalEligibilityTest {
     @Test void relatedAndLateFillerOverlaysStillDenySeparateScalarCells() {
         for(var data:List.of(OVERLAY,"01 RAW-AREA PIC X(8).\n01 FILLER REDEFINES RAW-AREA PIC X(8).")) {
             var s=state(data,"MOVE 'PGM00001' TO RAW-AREA.\nCALL RAW-AREA.");
-            assertTrue(s.dataDeclarations().stream().allMatch(d->d.scalarText().isEmpty()));
-            assertTrue(((MoveFact)s.statements().get(0)).target().wholeItemAccess().isEmpty());
-            assertTrue(((DataReference)((CallFact)s.statements().get(1)).target()).wholeItemAccess().isEmpty());
+            assertSharedOverlayCell(s);
+            assertTrue(((MoveFact)s.statements().get(0)).target().wholeItemAccess().isPresent());
+            assertTrue(((DataReference)((CallFact)s.statements().get(1)).target()).wholeItemAccess().isPresent());
+            assertTrue(s.storageIndependence().members().isEmpty(),"equal whole overlays share one cell");
             assertEquals(1,s.storage().bases().size());
         }
     }
@@ -46,8 +48,10 @@ class StorageLocalEligibilityTest {
         for(var extra:List.of("01 BAD-AREA REDEFINES MISSING-AREA PIC X(8).","01 BAD-AREA PIC X(8) EXTERNAL.",
                 "01 BAD-AREA PIC X(8) GLOBAL.")) {
             var s=state("01 WS-PGM PIC X(8).\n"+extra,"MOVE 'PGM00001' TO WS-PGM.\nCALL WS-PGM.");
-            assertTrue(s.dataDeclarations().stream().filter(d->d.canonicalName().equals("WS-PGM")).findFirst().orElseThrow().scalarText().isEmpty(),extra);
-            assertTrue(((MoveFact)s.statements().get(0)).target().wholeItemAccess().isEmpty(),extra);
+            boolean unknownAlias=extra.contains("REDEFINES MISSING");
+            assertEquals(unknownAlias,s.dataDeclarations().stream().filter(d->d.canonicalName().equals("WS-PGM")).findFirst().orElseThrow().scalarText().isEmpty(),extra);
+            assertEquals(unknownAlias,((MoveFact)s.statements().get(0)).target().wholeItemAccess().isEmpty(),extra);
+            assertTrue(s.dataDeclarations().stream().filter(d->d.canonicalName().equals("BAD-AREA")).findFirst().orElseThrow().scalarText().isEmpty(),"nonlocal item itself cannot own a local scalar cell");
         }
     }
     @Test void timesAndVaryingProfilesKeepTheirNumericProofOutsideOverlayComponents() throws Exception {
@@ -68,7 +72,8 @@ class StorageLocalEligibilityTest {
             var data=new StringBuilder();for(int i=0;i<n;i++)data.append(OVERLAY.replace("RAW-AREA","RAW-"+i).replace("VIEW-AREA","VIEW-"+i));
             data.append("01 WS-PGM PIC X(8).");
             var s=state(data.toString(),"MOVE 'PGM00001' TO WS-PGM.\nCALL WS-PGM.");
-            assertEquals(1,s.dataDeclarations().stream().filter(d->d.scalarText().isPresent()).count());
+            assertEquals(1,s.dataDeclarations().stream().filter(d->d.canonicalName().equals("WS-PGM")&&d.scalarText().isPresent()).count());
+            assertSharedOverlayCell(s);
             assertEquals(CopySemantics.FULL_IDENTITY,((MoveFact)s.statements().get(0)).copySemantics());
             assertEquals(n+1,s.storage().bases().size());
         }
@@ -80,5 +85,12 @@ class StorageLocalEligibilityTest {
         assertThrows(IllegalArgumentException.class,()->ScalarMoveSemantics.analyze(a.build(),a.tables(),a.resolution(),a.report(),index));
         assertThrows(IllegalArgumentException.class,()->NumericControlSemantics.analyze(a.build(),a.tables(),true,index));
         assertThrows(IllegalArgumentException.class,()->StorageLayoutSemantics.analyze(a.build(),a.tables(),a.resolution(),a.report(),StorageLayoutSemantics.Profile.UNSPECIFIED,index));
+    }
+    private static void assertSharedOverlayCell(State state) {
+        var graph=state.factDependencies().orElseThrow();
+        for(var region:graph.regions()) {
+            var cells=graph.bindings().stream().filter(b->b.region().equals(region.id())&&!b.exactCell().isEmpty()).map(b->b.exactCell()).distinct().toList();
+            assertEquals(1,cells.size(),"each exact-overlay component has one shared cell");
+        }
     }
 }

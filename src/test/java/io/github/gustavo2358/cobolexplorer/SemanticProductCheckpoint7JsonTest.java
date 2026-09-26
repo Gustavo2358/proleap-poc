@@ -31,10 +31,10 @@ class SemanticProductCheckpoint7JsonTest {
     private static final ObjectMapper JSON = new ObjectMapper();
     private static final List<String> ROOT_FIELD_ORDER = List.of(
             "schema", "contractVersion", "unit", "policy", "dataDeclarations",
-            "statements", "structure", "gaps", "coverage", "entryInventory", "storageIndependence", "storage", "statementEffects", "fileInventory", "controlTopology", "factDependencies");
+            "statements", "structure", "gaps", "coverage", "entryInventory", "storageIndependence", "storage", "statementEffects", "fileInventory", "controlTopology", "factDependencies", "nominalValues");
     private static final Set<String> ROOT_FIELDS = Set.of(
             "schema", "contractVersion", "unit", "policy", "dataDeclarations",
-            "statements", "structure", "gaps", "coverage", "entryInventory", "storageIndependence", "storage", "statementEffects", "fileInventory", "controlTopology", "factDependencies");
+            "statements", "structure", "gaps", "coverage", "entryInventory", "storageIndependence", "storage", "statementEffects", "fileInventory", "controlTopology", "factDependencies", "nominalValues");
     private static final Set<String> VOLATILE_FIELDS = Set.of(
             "timestamp", "elapsedms", "thread", "objectid", "memoryaddress",
             "generatedat", "nonce");
@@ -63,7 +63,7 @@ class SemanticProductCheckpoint7JsonTest {
         assertEquals(ROOT_FIELDS, fieldSet(document));
         assertEquals(ROOT_FIELD_ORDER, fieldList(document));
         assertEquals("cobol-semantic-product", document.path("schema").asText());
-        assertEquals("2.41.0", document.path("contractVersion").asText());
+        assertEquals("2.47.0", document.path("contractVersion").asText());
         assertEquals("SEMANTIC-TARGET",
                 document.path("unit").path("canonicalProgramName").asText());
         assertEquals(List.of(0), integerValues(document.path("unit").path("structuralPath")));
@@ -329,7 +329,7 @@ class SemanticProductCheckpoint7JsonTest {
                 legacy.unit(),legacy.policy(),legacy.dataDeclarations(),legacy.statements(),legacy.gaps(),legacy.coverage(),
                 legacy.entryInventory(),legacy.storageIndependence(),legacy.storage(),legacy.fileInventory(),
                 new io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.SourceDependencyInventory(
-                    io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.Availability.KNOWN,List.of(),List.of()),legacy.ordinaryContinuations(),legacy.controlTopology(),legacy.factDependencies()));
+                    io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.Availability.KNOWN,List.of(),List.of()),legacy.ordinaryContinuations(),legacy.controlTopology(),legacy.factDependencies(),legacy.nominalValues()));
         assertArrayEquals(SemanticProductJsonWriter.serialize(completeSource), actual);
         assertInternalReferences(parse(actual));
     }

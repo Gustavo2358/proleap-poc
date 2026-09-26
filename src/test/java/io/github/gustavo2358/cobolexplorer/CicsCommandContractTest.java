@@ -19,7 +19,7 @@ class CicsCommandContractTest {
     @Test void requiredTypedProbes() throws Exception {
         for(var pair:Map.of("SYNCPOINT","SYNCPOINT","RECEIVE MAP('M')","RECEIVE_MAP","RECEIVE MAP('M') RESP(RC)","RECEIVE_MAP",
             "RECEIVE MAP('M') RESP(RC) RESP2(RC2)","RECEIVE_MAP","SEND MAP('M')","SEND_MAP","SEND MAP('M') RESP(RC)","SEND_MAP").entrySet()) {
-            var j=one(pair.getKey());var c=command(j);assertEquals("2.43.0",j.path("contractVersion").asText());assertEquals(pair.getValue(),c.path("commandKind").asText());assertEquals("SUPPORTED",c.path("syntaxStatus").asText());
+            var j=one(pair.getKey());var c=command(j);assertEquals(pair.getKey().equals("SYNCPOINT")?"2.46.0":"2.43.0",j.path("contractVersion").asText());assertEquals(pair.getValue(),c.path("commandKind").asText());assertEquals("SUPPORTED",c.path("syntaxStatus").asText());
             var normals=outcomes(j,c).stream().filter(o->o.path("kind").asText().equals("NORMAL")).toList();assertEquals(1,normals.size());
             assertEquals(j.path("statements").get(1).path("header").path("id"),normals.get(0).path("target").path("reference"));
         }

@@ -958,7 +958,18 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
     @Override public Ast.Node visitExecCicsStatement(CobolParser.ExecCicsStatementContext ctx) { return buildEmbedded(ctx, Ast.EmbeddedLanguage.CICS); }
     @Override public Ast.Node visitExecSqlStatement(CobolParser.ExecSqlStatementContext ctx) { return buildEmbedded(ctx, Ast.EmbeddedLanguage.SQL); }
     @Override public Ast.Node visitExecDliStatement(CobolParser.ExecDliStatementContext ctx) {
-        return new Ast.EmbeddedLanguageStatement(meta(ctx), Ast.EmbeddedLanguage.DLI, DliRegion.payload(sourceText(ctx)));
+        var anchor=meta(ctx);String raw=DliRegion.payload(sourceText(ctx));
+        var operands=new ArrayList<Ast.EmbeddedHostOperand>();
+        var parsed=DliCommandSyntax.parse(raw);
+        if(parsed.isPresent())for(var host:parsed.get().hosts()) {
+            var tree=CicsHostSyntax.parseReference(host.operand(),raw,host.operandStart(),
+                ctx.getStart().getStartIndex()+DliRegion.PREFIX.length(),ctx.getStart().getLine(),
+                ctx.getStart().getCharPositionInLine()+DliRegion.PREFIX.length(),ctx.getStart().getTokenIndex()).orElseThrow();
+            var previous=embeddedOperandOrigin;embeddedOperandOrigin=anchor.origin();boolean retained=retainedEmbeddedOperand;retainedEmbeddedOperand=true;
+            try {operands.add(new Ast.EmbeddedHostOperand(host.option(),host.optionStart(),host.role(),(Ast.DataReference)identifierExpression(tree)));}
+            finally {embeddedOperandOrigin=previous;retainedEmbeddedOperand=retained;}
+        }
+        return new Ast.EmbeddedLanguageStatement(anchor,Ast.EmbeddedLanguage.DLI,raw,operands);
     }
     @Override public Ast.Node visitExecSqlImsStatement(CobolParser.ExecSqlImsStatementContext ctx) { return buildEmbedded(ctx, Ast.EmbeddedLanguage.SQLIMS); }
     @Override public Ast.Node visitExitStatement(CobolParser.ExitStatementContext ctx) { return modeled(ctx); }
@@ -1457,6 +1468,12 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
             try {label.ifPresent(tree->procedures.add(procedureReference(tree)));}
             finally {embeddedOperandOrigin=previous;retainedEmbeddedOperand=previousRetained;}
         }
+        if(language==Ast.EmbeddedLanguage.CICS)for(var option:CicsConditionSyntax.parse(raw).orElse(List.of()))if(option.operand().isPresent()) {
+            var label=CicsConditionSyntax.label(raw,option,context.getStart().getStartIndex(),context.getStart().getLine(),context.getStart().getCharPositionInLine(),context.getStart().getTokenIndex());
+            var previous=embeddedOperandOrigin;embeddedOperandOrigin=anchor.origin();boolean retained=retainedEmbeddedOperand;retainedEmbeddedOperand=true;
+            try {label.ifPresent(tree->procedures.add(procedureReference(tree)));}
+            finally {embeddedOperandOrigin=previous;retainedEmbeddedOperand=retained;}
+        }
         var expressions=new ArrayList<Ast.EmbeddedExpressionOperand>();
         if(language==Ast.EmbeddedLanguage.CICS)for(var host:EmbeddedExpressionSyntax.parse(raw,context.getStart().getStartIndex(),context.getStart().getLine(),context.getStart().getCharPositionInLine(),context.getStart().getTokenIndex())) {
             var previous=embeddedOperandOrigin;embeddedOperandOrigin=anchor.origin();boolean retained=retainedEmbeddedOperand;retainedEmbeddedOperand=true;
@@ -1724,8 +1741,15 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
         var integer=context instanceof CobolParser.IntegerLiteralContext n?n:numeric==null?null:numeric.integerLiteral();
         Optional<java.math.BigInteger> value=integer==null?Optional.empty():Optional.of(new java.math.BigInteger(integer.getText()));
         if(numeric!=null&&numeric.ZERO()!=null)value=Optional.of(java.math.BigInteger.ZERO);
+        var figurative=context instanceof CobolParser.LiteralContext l?l.figurativeConstant():null;
+        Optional<Ast.FigurativeText> textKind=Optional.empty();
+        if(figurative!=null&&figurative.ALL()==null) {
+            if(figurative.SPACE()!=null||figurative.SPACES()!=null)textKind=Optional.of(Ast.FigurativeText.SPACES);
+            else if(figurative.LOW_VALUE()!=null||figurative.LOW_VALUES()!=null)textKind=Optional.of(Ast.FigurativeText.LOW_VALUES);
+            else if(figurative.HIGH_VALUE()!=null||figurative.HIGH_VALUES()!=null)textKind=Optional.of(Ast.FigurativeText.HIGH_VALUES);
+        }
         return new Ast.LiteralExpression(meta(context), logical.map(Ast.LogicalText::value)
-                .orElseGet(() -> unquote(raw)), raw, logical, value);
+                .orElseGet(() -> unquote(raw)), raw, logical, value,textKind);
     }
 
     private static Optional<Ast.LogicalText> basicLogicalText(CobolParser.LiteralContext literal) {

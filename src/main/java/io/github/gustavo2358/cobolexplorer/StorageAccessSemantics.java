@@ -112,7 +112,7 @@ public final class StorageAccessSemantics {
                 var children=Ast.children(node);for(int i=children.size()-1;i>=0;i--)pending.push(new Visit(children.get(i),owner));
             }
             var coverage=new HashMap<Integer,SemanticCoverage.Finding>();
-            for(var statement:statementNodes)StatementEffectSummary.of(statement).ifPresent(e->{
+            for(var statement:statementNodes)StatementEffectSummary.of(statement).or(()->DliCommandSemantics.effects(statement)).or(()->CicsConditionSyntax.effects(statement)).ifPresent(e->{
                 var must=new ArrayList<>(e.mustOverwrite());
                 if(e.proof()==StatementEffectSummary.Proof.INITIALIZE_TARGETS&&e.completeMutationBound())for(var ref:e.mayWrites()) {
                     var access=accesses.get(new Key(unit.id(),ref.meta().id()));

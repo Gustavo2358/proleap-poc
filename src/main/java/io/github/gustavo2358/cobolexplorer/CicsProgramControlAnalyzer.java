@@ -41,6 +41,9 @@ public final class CicsProgramControlAnalyzer {
                     ||h.action()==CicsHandlerSemantics.Action.ACTIVATE&&h.targetKind()==CicsHandlerSemantics.TargetKind.LABEL
                         &&h.labelTarget().flatMap(CicsHandlerSemantics.LabelTarget::entry).isPresent())).isPresent();
         }
+        public boolean handlerRegistrationEffects(ResolutionContracts.ProgramUnitId unit,int statement) {
+            return commands.isPresent() && handlerFact(unit,statement).filter(CicsHandlerSemantics.Fact::registrationPreservesApplicationMemory).isPresent();
+        }
         public Contribution withHandlers(CicsHandlerSemantics contribution) {
             if(!contribution.belongsTo(owner))throw new IllegalArgumentException("handler contribution belongs to another frontend");
             return new Contribution(owner,facts,defaultHandlers,files,Optional.of(contribution),abends,commands);
