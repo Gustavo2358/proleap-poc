@@ -1,0 +1,4567 @@
+{
+  "source" : "/home/gustavo/workspace/teste-e2e/storage-semantics-st-w0-w5/runtime/carddemo-upstream/app/cbl/COBIL00C.cbl",
+  "unresolvedCopies" : 2,
+  "preprocessorErrors" : 0,
+  "parserDiagnostics" : [ ],
+  "statements" : [ {
+    "id" : 583,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 451,
+        "startColumn" : 4,
+        "endLine" : 451,
+        "endColumn" : 30
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 101,
+        "startColumn" : 11,
+        "endLine" : 101,
+        "endColumn" : 37
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 588,
+    "ordinaryNext" : 588,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 588,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 452,
+        "startColumn" : 4,
+        "endLine" : 452,
+        "endColumn" : 30
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 102,
+        "startColumn" : 11,
+        "endLine" : 102,
+        "endColumn" : 37
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 593,
+    "ordinaryNext" : 593,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 593,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 454,
+        "startColumn" : 4,
+        "endLine" : 455,
+        "endColumn" : 37
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 104,
+        "startColumn" : 11,
+        "endLine" : 105,
+        "endColumn" : 44
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 599,
+    "ordinaryNext" : 599,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 599,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 457,
+        "startColumn" : 4,
+        "endLine" : 494,
+        "endColumn" : 9
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 107,
+        "startColumn" : 11,
+        "endLine" : 144,
+        "endColumn" : 16
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 684,
+    "ordinaryNext" : 684,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 603,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 458,
+        "startColumn" : 8,
+        "endLine" : 458,
+        "endColumn" : 42
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 108,
+        "startColumn" : 15,
+        "endLine" : 108,
+        "endColumn" : 49
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 606,
+    "ordinaryNext" : 606,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 606,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 459,
+        "startColumn" : 8,
+        "endLine" : 459,
+        "endColumn" : 36
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 109,
+        "startColumn" : 15,
+        "endLine" : 109,
+        "endColumn" : 43
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 684,
+    "ordinaryNext" : 684,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 608,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 461,
+        "startColumn" : 8,
+        "endLine" : 461,
+        "endColumn" : 56
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 111,
+        "startColumn" : 15,
+        "endLine" : 111,
+        "endColumn" : 63
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 614,
+    "ordinaryNext" : 614,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 614,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 462,
+        "startColumn" : 8,
+        "endLine" : 493,
+        "endColumn" : 13
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 112,
+        "startColumn" : 15,
+        "endLine" : 143,
+        "endColumn" : 20
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 684,
+    "ordinaryNext" : 684,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 617,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 463,
+        "startColumn" : 12,
+        "endLine" : 463,
+        "endColumn" : 43
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 113,
+        "startColumn" : 19,
+        "endLine" : 113,
+        "endColumn" : 50
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 622,
+    "ordinaryNext" : 622,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 622,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 464,
+        "startColumn" : 12,
+        "endLine" : 464,
+        "endColumn" : 47
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 114,
+        "startColumn" : 19,
+        "endLine" : 114,
+        "endColumn" : 54
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 625,
+    "ordinaryNext" : 625,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 625,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 465,
+        "startColumn" : 12,
+        "endLine" : 465,
+        "endColumn" : 48
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 115,
+        "startColumn" : 19,
+        "endLine" : 115,
+        "endColumn" : 55
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 630,
+    "ordinaryNext" : 630,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 630,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 466,
+        "startColumn" : 12,
+        "endLine" : 471,
+        "endColumn" : 17
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 116,
+        "startColumn" : 19,
+        "endLine" : 121,
+        "endColumn" : 24
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 644,
+    "ordinaryNext" : 644,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 637,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 468,
+        "startColumn" : 16,
+        "endLine" : 469,
+        "endColumn" : 40
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 118,
+        "startColumn" : 23,
+        "endLine" : 119,
+        "endColumn" : 47
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 642,
+    "ordinaryNext" : 642,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 642,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 470,
+        "startColumn" : 16,
+        "endLine" : 470,
+        "endColumn" : 40
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 120,
+        "startColumn" : 23,
+        "endLine" : 120,
+        "endColumn" : 47
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 644,
+    "ordinaryNext" : 644,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 644,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 472,
+        "startColumn" : 12,
+        "endLine" : 472,
+        "endColumn" : 38
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 122,
+        "startColumn" : 19,
+        "endLine" : 122,
+        "endColumn" : 45
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 684,
+    "ordinaryNext" : 684,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 646,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 474,
+        "startColumn" : 12,
+        "endLine" : 474,
+        "endColumn" : 41
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 124,
+        "startColumn" : 19,
+        "endLine" : 124,
+        "endColumn" : 48
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 648,
+    "ordinaryNext" : 648,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 648,
+    "type" : "EvaluateStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 475,
+        "startColumn" : 12,
+        "endLine" : 492,
+        "endColumn" : 23
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 125,
+        "startColumn" : 19,
+        "endLine" : 142,
+        "endColumn" : 30
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 684,
+    "ordinaryNext" : 684,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 652,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 477,
+        "startColumn" : 20,
+        "endLine" : 477,
+        "endColumn" : 44
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 127,
+        "startColumn" : 27,
+        "endLine" : 127,
+        "endColumn" : 51
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 684,
+    "ordinaryNext" : 684,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 656,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 479,
+        "startColumn" : 20,
+        "endLine" : 484,
+        "endColumn" : 25
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 129,
+        "startColumn" : 27,
+        "endLine" : 134,
+        "endColumn" : 32
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 669,
+    "ordinaryNext" : 669,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 663,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 480,
+        "startColumn" : 24,
+        "endLine" : 480,
+        "endColumn" : 58
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 130,
+        "startColumn" : 31,
+        "endLine" : 130,
+        "endColumn" : 65
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 669,
+    "ordinaryNext" : 669,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 666,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 482,
+        "startColumn" : 24,
+        "endLine" : 483,
+        "endColumn" : 39
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 132,
+        "startColumn" : 31,
+        "endLine" : 133,
+        "endColumn" : 46
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 669,
+    "ordinaryNext" : 669,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 669,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 485,
+        "startColumn" : 20,
+        "endLine" : 485,
+        "endColumn" : 48
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 135,
+        "startColumn" : 27,
+        "endLine" : 135,
+        "endColumn" : 55
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 684,
+    "ordinaryNext" : 684,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 673,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 487,
+        "startColumn" : 20,
+        "endLine" : 487,
+        "endColumn" : 47
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 137,
+        "startColumn" : 27,
+        "endLine" : 137,
+        "endColumn" : 54
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 684,
+    "ordinaryNext" : 684,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 676,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 489,
+        "startColumn" : 20,
+        "endLine" : 489,
+        "endColumn" : 63
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 139,
+        "startColumn" : 27,
+        "endLine" : 139,
+        "endColumn" : 70
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 679,
+    "ordinaryNext" : 679,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 679,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 490,
+        "startColumn" : 20,
+        "endLine" : 490,
+        "endColumn" : 63
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 140,
+        "startColumn" : 27,
+        "endLine" : 140,
+        "endColumn" : 70
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 682,
+    "ordinaryNext" : 682,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 682,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 491,
+        "startColumn" : 20,
+        "endLine" : 491,
+        "endColumn" : 46
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 141,
+        "startColumn" : 27,
+        "endLine" : 141,
+        "endColumn" : 53
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 684,
+    "ordinaryNext" : 684,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 684,
+    "type" : "EmbeddedLanguageStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 496,
+        "startColumn" : 4,
+        "endLine" : 496,
+        "endColumn" : 121
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 146,
+        "startColumn" : 11,
+        "endLine" : 149,
+        "endColumn" : 19
+      },
+      "includeChain" : [ ],
+      "exact" : false
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : null,
+    "normalCompletionRecognized" : false
+  }, {
+    "id" : 687,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 505,
+        "startColumn" : 4,
+        "endLine" : 505,
+        "endColumn" : 26
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 156,
+        "startColumn" : 11,
+        "endLine" : 156,
+        "endColumn" : 33
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 692,
+    "ordinaryNext" : 692,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 692,
+    "type" : "EvaluateStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 507,
+        "startColumn" : 4,
+        "endLine" : 516,
+        "endColumn" : 15
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 158,
+        "startColumn" : 11,
+        "endLine" : 167,
+        "endColumn" : 22
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 718,
+    "ordinaryNext" : 718,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 703,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 509,
+        "startColumn" : 12,
+        "endLine" : 509,
+        "endColumn" : 37
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 160,
+        "startColumn" : 19,
+        "endLine" : 160,
+        "endColumn" : 44
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 706,
+    "ordinaryNext" : 706,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 706,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 510,
+        "startColumn" : 12,
+        "endLine" : 511,
+        "endColumn" : 37
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 161,
+        "startColumn" : 19,
+        "endLine" : 162,
+        "endColumn" : 44
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 709,
+    "ordinaryNext" : 709,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 709,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 512,
+        "startColumn" : 12,
+        "endLine" : 512,
+        "endColumn" : 48
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 163,
+        "startColumn" : 19,
+        "endLine" : 163,
+        "endColumn" : 55
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 714,
+    "ordinaryNext" : 714,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 714,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 513,
+        "startColumn" : 12,
+        "endLine" : 513,
+        "endColumn" : 38
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 164,
+        "startColumn" : 19,
+        "endLine" : 164,
+        "endColumn" : 45
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 718,
+    "ordinaryNext" : 718,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 717,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 515,
+        "startColumn" : 12,
+        "endLine" : 515,
+        "endColumn" : 19
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 166,
+        "startColumn" : 19,
+        "endLine" : 166,
+        "endColumn" : 26
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 718,
+    "ordinaryNext" : 718,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 718,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 518,
+        "startColumn" : 4,
+        "endLine" : 544,
+        "endColumn" : 9
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 169,
+        "startColumn" : 11,
+        "endLine" : 195,
+        "endColumn" : 16
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 776,
+    "ordinaryNext" : 776,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 721,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 519,
+        "startColumn" : 8,
+        "endLine" : 520,
+        "endColumn" : 49
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 170,
+        "startColumn" : 15,
+        "endLine" : 171,
+        "endColumn" : 56
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 727,
+    "ordinaryNext" : 727,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 727,
+    "type" : "EvaluateStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 522,
+        "startColumn" : 8,
+        "endLine" : 540,
+        "endColumn" : 19
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 173,
+        "startColumn" : 15,
+        "endLine" : 191,
+        "endColumn" : 26
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 768,
+    "ordinaryNext" : 768,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 734,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 525,
+        "startColumn" : 16,
+        "endLine" : 525,
+        "endColumn" : 39
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 176,
+        "startColumn" : 23,
+        "endLine" : 176,
+        "endColumn" : 46
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 739,
+    "ordinaryNext" : 739,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 739,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 526,
+        "startColumn" : 16,
+        "endLine" : 526,
+        "endColumn" : 40
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 177,
+        "startColumn" : 23,
+        "endLine" : 177,
+        "endColumn" : 47
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 768,
+    "ordinaryNext" : 768,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 744,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 529,
+        "startColumn" : 16,
+        "endLine" : 529,
+        "endColumn" : 43
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 180,
+        "startColumn" : 23,
+        "endLine" : 180,
+        "endColumn" : 50
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 746,
+    "ordinaryNext" : 746,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 746,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 530,
+        "startColumn" : 16,
+        "endLine" : 530,
+        "endColumn" : 41
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 181,
+        "startColumn" : 23,
+        "endLine" : 181,
+        "endColumn" : 48
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 768,
+    "ordinaryNext" : 768,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 752,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 533,
+        "startColumn" : 16,
+        "endLine" : 533,
+        "endColumn" : 40
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 184,
+        "startColumn" : 23,
+        "endLine" : 184,
+        "endColumn" : 47
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 768,
+    "ordinaryNext" : 768,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 755,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 535,
+        "startColumn" : 16,
+        "endLine" : 535,
+        "endColumn" : 41
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 186,
+        "startColumn" : 23,
+        "endLine" : 186,
+        "endColumn" : 48
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 758,
+    "ordinaryNext" : 758,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 758,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 536,
+        "startColumn" : 16,
+        "endLine" : 537,
+        "endColumn" : 41
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 187,
+        "startColumn" : 23,
+        "endLine" : 188,
+        "endColumn" : 48
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 761,
+    "ordinaryNext" : 761,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 761,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 538,
+        "startColumn" : 16,
+        "endLine" : 538,
+        "endColumn" : 51
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 189,
+        "startColumn" : 23,
+        "endLine" : 189,
+        "endColumn" : 58
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 766,
+    "ordinaryNext" : 766,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 766,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 539,
+        "startColumn" : 16,
+        "endLine" : 539,
+        "endColumn" : 42
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 190,
+        "startColumn" : 23,
+        "endLine" : 190,
+        "endColumn" : 49
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 768,
+    "ordinaryNext" : 768,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 768,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 542,
+        "startColumn" : 8,
+        "endLine" : 542,
+        "endColumn" : 40
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 193,
+        "startColumn" : 15,
+        "endLine" : 193,
+        "endColumn" : 47
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 771,
+    "ordinaryNext" : 771,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 771,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 543,
+        "startColumn" : 8,
+        "endLine" : 543,
+        "endColumn" : 51
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 194,
+        "startColumn" : 15,
+        "endLine" : 194,
+        "endColumn" : 58
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 776,
+    "ordinaryNext" : 776,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 776,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 546,
+        "startColumn" : 4,
+        "endLine" : 555,
+        "endColumn" : 9
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 197,
+        "startColumn" : 11,
+        "endLine" : 206,
+        "endColumn" : 16
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 804,
+    "ordinaryNext" : 804,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 779,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 547,
+        "startColumn" : 8,
+        "endLine" : 554,
+        "endColumn" : 13
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 198,
+        "startColumn" : 15,
+        "endLine" : 205,
+        "endColumn" : 20
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 804,
+    "ordinaryNext" : 804,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 791,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 549,
+        "startColumn" : 12,
+        "endLine" : 549,
+        "endColumn" : 37
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 200,
+        "startColumn" : 19,
+        "endLine" : 200,
+        "endColumn" : 44
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 794,
+    "ordinaryNext" : 794,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 794,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 550,
+        "startColumn" : 12,
+        "endLine" : 551,
+        "endColumn" : 37
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 201,
+        "startColumn" : 19,
+        "endLine" : 202,
+        "endColumn" : 44
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 797,
+    "ordinaryNext" : 797,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 797,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 552,
+        "startColumn" : 12,
+        "endLine" : 552,
+        "endColumn" : 48
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 203,
+        "startColumn" : 19,
+        "endLine" : 203,
+        "endColumn" : 55
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 802,
+    "ordinaryNext" : 802,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 802,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 553,
+        "startColumn" : 12,
+        "endLine" : 553,
+        "endColumn" : 38
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 204,
+        "startColumn" : 19,
+        "endLine" : 204,
+        "endColumn" : 45
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 804,
+    "ordinaryNext" : 804,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 804,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 557,
+        "startColumn" : 4,
+        "endLine" : 593,
+        "endColumn" : 9
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 208,
+        "startColumn" : 11,
+        "endLine" : 244,
+        "endColumn" : 16
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 893,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 807,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 559,
+        "startColumn" : 8,
+        "endLine" : 589,
+        "endColumn" : 13
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 210,
+        "startColumn" : 15,
+        "endLine" : 240,
+        "endColumn" : 20
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 889,
+    "ordinaryNext" : 889,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 809,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 560,
+        "startColumn" : 12,
+        "endLine" : 560,
+        "endColumn" : 36
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 211,
+        "startColumn" : 19,
+        "endLine" : 211,
+        "endColumn" : 43
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 811,
+    "ordinaryNext" : 811,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 811,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 561,
+        "startColumn" : 12,
+        "endLine" : 561,
+        "endColumn" : 38
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 212,
+        "startColumn" : 19,
+        "endLine" : 212,
+        "endColumn" : 45
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 814,
+    "ordinaryNext" : 814,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 814,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 562,
+        "startColumn" : 12,
+        "endLine" : 562,
+        "endColumn" : 40
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 213,
+        "startColumn" : 19,
+        "endLine" : 213,
+        "endColumn" : 47
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 816,
+    "ordinaryNext" : 816,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 816,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 563,
+        "startColumn" : 12,
+        "endLine" : 563,
+        "endColumn" : 41
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 214,
+        "startColumn" : 19,
+        "endLine" : 214,
+        "endColumn" : 48
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 818,
+    "ordinaryNext" : 818,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 818,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 564,
+        "startColumn" : 12,
+        "endLine" : 564,
+        "endColumn" : 38
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 215,
+        "startColumn" : 19,
+        "endLine" : 215,
+        "endColumn" : 45
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 820,
+    "ordinaryNext" : 820,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 820,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 565,
+        "startColumn" : 12,
+        "endLine" : 565,
+        "endColumn" : 45
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 216,
+        "startColumn" : 19,
+        "endLine" : 216,
+        "endColumn" : 52
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 823,
+    "ordinaryNext" : 823,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 823,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 566,
+        "startColumn" : 12,
+        "endLine" : 566,
+        "endColumn" : 34
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 217,
+        "startColumn" : 19,
+        "endLine" : 217,
+        "endColumn" : 41
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 828,
+    "ordinaryNext" : 828,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 828,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 567,
+        "startColumn" : 12,
+        "endLine" : 567,
+        "endColumn" : 33
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 218,
+        "startColumn" : 19,
+        "endLine" : 218,
+        "endColumn" : 40
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 831,
+    "ordinaryNext" : 831,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 831,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 568,
+        "startColumn" : 12,
+        "endLine" : 568,
+        "endColumn" : 47
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 219,
+        "startColumn" : 19,
+        "endLine" : 219,
+        "endColumn" : 54
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 834,
+    "ordinaryNext" : 834,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 834,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 569,
+        "startColumn" : 12,
+        "endLine" : 569,
+        "endColumn" : 52
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 220,
+        "startColumn" : 19,
+        "endLine" : 220,
+        "endColumn" : 59
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 837,
+    "ordinaryNext" : 837,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 837,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 570,
+        "startColumn" : 12,
+        "endLine" : 570,
+        "endColumn" : 51
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 221,
+        "startColumn" : 19,
+        "endLine" : 221,
+        "endColumn" : 58
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 840,
+    "ordinaryNext" : 840,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 840,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 571,
+        "startColumn" : 12,
+        "endLine" : 571,
+        "endColumn" : 51
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 222,
+        "startColumn" : 19,
+        "endLine" : 222,
+        "endColumn" : 58
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 843,
+    "ordinaryNext" : 843,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 843,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 572,
+        "startColumn" : 12,
+        "endLine" : 572,
+        "endColumn" : 52
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 223,
+        "startColumn" : 19,
+        "endLine" : 223,
+        "endColumn" : 59
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 846,
+    "ordinaryNext" : 846,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 846,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 573,
+        "startColumn" : 12,
+        "endLine" : 573,
+        "endColumn" : 48
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 224,
+        "startColumn" : 19,
+        "endLine" : 224,
+        "endColumn" : 55
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 849,
+    "ordinaryNext" : 849,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 849,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 574,
+        "startColumn" : 12,
+        "endLine" : 574,
+        "endColumn" : 53
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 225,
+        "startColumn" : 19,
+        "endLine" : 225,
+        "endColumn" : 60
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 852,
+    "ordinaryNext" : 852,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 852,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 575,
+        "startColumn" : 12,
+        "endLine" : 575,
+        "endColumn" : 56
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 226,
+        "startColumn" : 19,
+        "endLine" : 226,
+        "endColumn" : 63
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 855,
+    "ordinaryNext" : 855,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 855,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 576,
+        "startColumn" : 12,
+        "endLine" : 576,
+        "endColumn" : 58
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 227,
+        "startColumn" : 19,
+        "endLine" : 227,
+        "endColumn" : 65
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 858,
+    "ordinaryNext" : 858,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 858,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 577,
+        "startColumn" : 12,
+        "endLine" : 577,
+        "endColumn" : 58
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 228,
+        "startColumn" : 19,
+        "endLine" : 228,
+        "endColumn" : 65
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 861,
+    "ordinaryNext" : 861,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 861,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 578,
+        "startColumn" : 12,
+        "endLine" : 578,
+        "endColumn" : 57
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 229,
+        "startColumn" : 19,
+        "endLine" : 229,
+        "endColumn" : 64
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 864,
+    "ordinaryNext" : 864,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 864,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 579,
+        "startColumn" : 12,
+        "endLine" : 579,
+        "endColumn" : 40
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 230,
+        "startColumn" : 19,
+        "endLine" : 230,
+        "endColumn" : 47
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 866,
+    "ordinaryNext" : 866,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 866,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 580,
+        "startColumn" : 12,
+        "endLine" : 581,
+        "endColumn" : 52
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 231,
+        "startColumn" : 19,
+        "endLine" : 232,
+        "endColumn" : 59
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 870,
+    "ordinaryNext" : 870,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 870,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 582,
+        "startColumn" : 12,
+        "endLine" : 582,
+        "endColumn" : 38
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 233,
+        "startColumn" : 19,
+        "endLine" : 233,
+        "endColumn" : 45
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 872,
+    "ordinaryNext" : 872,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 872,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 583,
+        "startColumn" : 12,
+        "endLine" : 583,
+        "endColumn" : 59
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 234,
+        "startColumn" : 19,
+        "endLine" : 234,
+        "endColumn" : 66
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 879,
+    "ordinaryNext" : 879,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 879,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 584,
+        "startColumn" : 12,
+        "endLine" : 584,
+        "endColumn" : 38
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 235,
+        "startColumn" : 19,
+        "endLine" : 235,
+        "endColumn" : 45
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 889,
+    "ordinaryNext" : 889,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 881,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 586,
+        "startColumn" : 12,
+        "endLine" : 587,
+        "endColumn" : 37
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 237,
+        "startColumn" : 19,
+        "endLine" : 238,
+        "endColumn" : 44
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 884,
+    "ordinaryNext" : 884,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 884,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 588,
+        "startColumn" : 12,
+        "endLine" : 588,
+        "endColumn" : 48
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 239,
+        "startColumn" : 19,
+        "endLine" : 239,
+        "endColumn" : 55
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 889,
+    "ordinaryNext" : 889,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 889,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 591,
+        "startColumn" : 8,
+        "endLine" : 591,
+        "endColumn" : 34
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 242,
+        "startColumn" : 15,
+        "endLine" : 242,
+        "endColumn" : 41
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 893,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 893,
+    "type" : "EmbeddedLanguageStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 600,
+        "startColumn" : 4,
+        "endLine" : 600,
+        "endColumn" : 72
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 251,
+        "startColumn" : 11,
+        "endLine" : 253,
+        "endColumn" : 18
+      },
+      "includeChain" : [ ],
+      "exact" : false
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : null,
+    "normalCompletionRecognized" : false
+  }, {
+    "id" : 894,
+    "type" : "EmbeddedLanguageStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 603,
+        "startColumn" : 4,
+        "endLine" : 603,
+        "endColumn" : 173
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 255,
+        "startColumn" : 11,
+        "endLine" : 261,
+        "endColumn" : 18
+      },
+      "includeChain" : [ ],
+      "exact" : false
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : null,
+    "normalCompletionRecognized" : false
+  }, {
+    "id" : 895,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 606,
+        "startColumn" : 4,
+        "endLine" : 606,
+        "endColumn" : 26
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 263,
+        "startColumn" : 11,
+        "endLine" : 263,
+        "endColumn" : 33
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 898,
+    "ordinaryNext" : 898,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 898,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 607,
+        "startColumn" : 4,
+        "endLine" : 607,
+        "endColumn" : 46
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 264,
+        "startColumn" : 11,
+        "endLine" : 264,
+        "endColumn" : 53
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 904,
+    "ordinaryNext" : 904,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 904,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 608,
+        "startColumn" : 4,
+        "endLine" : 608,
+        "endColumn" : 46
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 265,
+        "startColumn" : 11,
+        "endLine" : 265,
+        "endColumn" : 53
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 910,
+    "ordinaryNext" : 910,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 910,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 609,
+        "startColumn" : 4,
+        "endLine" : 609,
+        "endColumn" : 46
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 266,
+        "startColumn" : 11,
+        "endLine" : 266,
+        "endColumn" : 53
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 915,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 915,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 618,
+        "startColumn" : 4,
+        "endLine" : 620,
+        "endColumn" : 9
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 275,
+        "startColumn" : 11,
+        "endLine" : 277,
+        "endColumn" : 16
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 925,
+    "ordinaryNext" : 925,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 922,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 619,
+        "startColumn" : 8,
+        "endLine" : 619,
+        "endColumn" : 42
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 276,
+        "startColumn" : 15,
+        "endLine" : 276,
+        "endColumn" : 49
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 925,
+    "ordinaryNext" : 925,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 925,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 621,
+        "startColumn" : 4,
+        "endLine" : 621,
+        "endColumn" : 41
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 278,
+        "startColumn" : 11,
+        "endLine" : 278,
+        "endColumn" : 48
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 928,
+    "ordinaryNext" : 928,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 928,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 622,
+        "startColumn" : 4,
+        "endLine" : 622,
+        "endColumn" : 42
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 279,
+        "startColumn" : 11,
+        "endLine" : 279,
+        "endColumn" : 49
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 931,
+    "ordinaryNext" : 931,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 931,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 623,
+        "startColumn" : 4,
+        "endLine" : 623,
+        "endColumn" : 41
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 280,
+        "startColumn" : 11,
+        "endLine" : 280,
+        "endColumn" : 48
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 934,
+    "ordinaryNext" : 934,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 934,
+    "type" : "EmbeddedLanguageStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 624,
+        "startColumn" : 4,
+        "endLine" : 624,
+        "endColumn" : 112
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 281,
+        "startColumn" : 11,
+        "endLine" : 284,
+        "endColumn" : 19
+      },
+      "includeChain" : [ ],
+      "exact" : false
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : null,
+    "normalCompletionRecognized" : false
+  }, {
+    "id" : 939,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 633,
+        "startColumn" : 4,
+        "endLine" : 633,
+        "endColumn" : 31
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 291,
+        "startColumn" : 11,
+        "endLine" : 291,
+        "endColumn" : 38
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 941,
+    "ordinaryNext" : 941,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 941,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 635,
+        "startColumn" : 4,
+        "endLine" : 635,
+        "endColumn" : 41
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 293,
+        "startColumn" : 11,
+        "endLine" : 293,
+        "endColumn" : 48
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 946,
+    "ordinaryNext" : 946,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 946,
+    "type" : "EmbeddedLanguageStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 637,
+        "startColumn" : 4,
+        "endLine" : 637,
+        "endColumn" : 173
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 295,
+        "startColumn" : 11,
+        "endLine" : 301,
+        "endColumn" : 19
+      },
+      "includeChain" : [ ],
+      "exact" : false
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : null,
+    "normalCompletionRecognized" : false
+  }, {
+    "id" : 949,
+    "type" : "EmbeddedLanguageStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 646,
+        "startColumn" : 4,
+        "endLine" : 646,
+        "endColumn" : 198
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 308,
+        "startColumn" : 11,
+        "endLine" : 314,
+        "endColumn" : 19
+      },
+      "includeChain" : [ ],
+      "exact" : false
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : null,
+    "normalCompletionRecognized" : false
+  }, {
+    "id" : 952,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 655,
+        "startColumn" : 4,
+        "endLine" : 655,
+        "endColumn" : 49
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 321,
+        "startColumn" : 11,
+        "endLine" : 321,
+        "endColumn" : 56
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 955,
+    "ordinaryNext" : 955,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 955,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 657,
+        "startColumn" : 4,
+        "endLine" : 657,
+        "endColumn" : 54
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 323,
+        "startColumn" : 11,
+        "endLine" : 323,
+        "endColumn" : 61
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 960,
+    "ordinaryNext" : 960,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 960,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 658,
+        "startColumn" : 4,
+        "endLine" : 658,
+        "endColumn" : 54
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 324,
+        "startColumn" : 11,
+        "endLine" : 324,
+        "endColumn" : 61
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 965,
+    "ordinaryNext" : 965,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 965,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 659,
+        "startColumn" : 4,
+        "endLine" : 659,
+        "endColumn" : 54
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 325,
+        "startColumn" : 11,
+        "endLine" : 325,
+        "endColumn" : 61
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 970,
+    "ordinaryNext" : 970,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 970,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 660,
+        "startColumn" : 4,
+        "endLine" : 660,
+        "endColumn" : 54
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 326,
+        "startColumn" : 11,
+        "endLine" : 326,
+        "endColumn" : 61
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 975,
+    "ordinaryNext" : 975,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 975,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 662,
+        "startColumn" : 4,
+        "endLine" : 662,
+        "endColumn" : 47
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 328,
+        "startColumn" : 11,
+        "endLine" : 328,
+        "endColumn" : 54
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 978,
+    "ordinaryNext" : 978,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 978,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 663,
+        "startColumn" : 4,
+        "endLine" : 663,
+        "endColumn" : 47
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 329,
+        "startColumn" : 11,
+        "endLine" : 329,
+        "endColumn" : 54
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 981,
+    "ordinaryNext" : 981,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 981,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 664,
+        "startColumn" : 4,
+        "endLine" : 664,
+        "endColumn" : 47
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 330,
+        "startColumn" : 11,
+        "endLine" : 330,
+        "endColumn" : 54
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 987,
+    "ordinaryNext" : 987,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 987,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 666,
+        "startColumn" : 4,
+        "endLine" : 666,
+        "endColumn" : 54
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 332,
+        "startColumn" : 11,
+        "endLine" : 332,
+        "endColumn" : 61
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 992,
+    "ordinaryNext" : 992,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 992,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 668,
+        "startColumn" : 4,
+        "endLine" : 668,
+        "endColumn" : 47
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 334,
+        "startColumn" : 11,
+        "endLine" : 334,
+        "endColumn" : 54
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 995,
+    "ordinaryNext" : 995,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 995,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 669,
+        "startColumn" : 4,
+        "endLine" : 669,
+        "endColumn" : 47
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 335,
+        "startColumn" : 11,
+        "endLine" : 335,
+        "endColumn" : 54
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 998,
+    "ordinaryNext" : 998,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 998,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 670,
+        "startColumn" : 4,
+        "endLine" : 670,
+        "endColumn" : 47
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 336,
+        "startColumn" : 11,
+        "endLine" : 336,
+        "endColumn" : 54
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1001,
+    "ordinaryNext" : 1001,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1001,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 672,
+        "startColumn" : 4,
+        "endLine" : 672,
+        "endColumn" : 54
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 338,
+        "startColumn" : 11,
+        "endLine" : 338,
+        "endColumn" : 61
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 1008,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1008,
+    "type" : "EmbeddedLanguageStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 679,
+        "startColumn" : 4,
+        "endLine" : 679,
+        "endColumn" : 309
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 345,
+        "startColumn" : 11,
+        "endLine" : 354,
+        "endColumn" : 18
+      },
+      "includeChain" : [ ],
+      "exact" : false
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : null,
+    "normalCompletionRecognized" : false
+  }, {
+    "id" : 1014,
+    "type" : "EvaluateStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 682,
+        "startColumn" : 4,
+        "endLine" : 698,
+        "endColumn" : 15
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 356,
+        "startColumn" : 11,
+        "endLine" : 372,
+        "endColumn" : 22
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 1063,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1020,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 684,
+        "startColumn" : 12,
+        "endLine" : 684,
+        "endColumn" : 19
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 358,
+        "startColumn" : 19,
+        "endLine" : 358,
+        "endColumn" : 26
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 1063,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1025,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 686,
+        "startColumn" : 12,
+        "endLine" : 686,
+        "endColumn" : 37
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 360,
+        "startColumn" : 19,
+        "endLine" : 360,
+        "endColumn" : 44
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1028,
+    "ordinaryNext" : 1028,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1028,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 687,
+        "startColumn" : 12,
+        "endLine" : 688,
+        "endColumn" : 37
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 361,
+        "startColumn" : 19,
+        "endLine" : 362,
+        "endColumn" : 44
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1031,
+    "ordinaryNext" : 1031,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1031,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 689,
+        "startColumn" : 12,
+        "endLine" : 689,
+        "endColumn" : 48
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 363,
+        "startColumn" : 19,
+        "endLine" : 363,
+        "endColumn" : 55
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1036,
+    "ordinaryNext" : 1036,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1036,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 690,
+        "startColumn" : 12,
+        "endLine" : 690,
+        "endColumn" : 38
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 364,
+        "startColumn" : 19,
+        "endLine" : 364,
+        "endColumn" : 45
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 1063,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1039,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 692,
+        "startColumn" : 12,
+        "endLine" : 692,
+        "endColumn" : 56
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 366,
+        "startColumn" : 19,
+        "endLine" : 366,
+        "endColumn" : 63
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1048,
+    "ordinaryNext" : 1048,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1048,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 693,
+        "startColumn" : 12,
+        "endLine" : 693,
+        "endColumn" : 37
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 367,
+        "startColumn" : 19,
+        "endLine" : 367,
+        "endColumn" : 44
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1051,
+    "ordinaryNext" : 1051,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1051,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 694,
+        "startColumn" : 12,
+        "endLine" : 695,
+        "endColumn" : 37
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 368,
+        "startColumn" : 19,
+        "endLine" : 369,
+        "endColumn" : 44
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1054,
+    "ordinaryNext" : 1054,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1054,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 696,
+        "startColumn" : 12,
+        "endLine" : 696,
+        "endColumn" : 48
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 370,
+        "startColumn" : 19,
+        "endLine" : 370,
+        "endColumn" : 55
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1059,
+    "ordinaryNext" : 1059,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1059,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 697,
+        "startColumn" : 12,
+        "endLine" : 697,
+        "endColumn" : 38
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 371,
+        "startColumn" : 19,
+        "endLine" : 371,
+        "endColumn" : 45
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 1063,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1063,
+    "type" : "EmbeddedLanguageStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 705,
+        "startColumn" : 4,
+        "endLine" : 705,
+        "endColumn" : 228
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 379,
+        "startColumn" : 11,
+        "endLine" : 385,
+        "endColumn" : 18
+      },
+      "includeChain" : [ ],
+      "exact" : false
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : null,
+    "normalCompletionRecognized" : false
+  }, {
+    "id" : 1064,
+    "type" : "EvaluateStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 708,
+        "startColumn" : 4,
+        "endLine" : 724,
+        "endColumn" : 15
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 387,
+        "startColumn" : 11,
+        "endLine" : 403,
+        "endColumn" : 22
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 1113,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1070,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 710,
+        "startColumn" : 12,
+        "endLine" : 710,
+        "endColumn" : 19
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 389,
+        "startColumn" : 19,
+        "endLine" : 389,
+        "endColumn" : 26
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 1113,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1075,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 712,
+        "startColumn" : 12,
+        "endLine" : 712,
+        "endColumn" : 37
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 391,
+        "startColumn" : 19,
+        "endLine" : 391,
+        "endColumn" : 44
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1078,
+    "ordinaryNext" : 1078,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1078,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 713,
+        "startColumn" : 12,
+        "endLine" : 714,
+        "endColumn" : 37
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 392,
+        "startColumn" : 19,
+        "endLine" : 393,
+        "endColumn" : 44
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1081,
+    "ordinaryNext" : 1081,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1081,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 715,
+        "startColumn" : 12,
+        "endLine" : 715,
+        "endColumn" : 48
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 394,
+        "startColumn" : 19,
+        "endLine" : 394,
+        "endColumn" : 55
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1086,
+    "ordinaryNext" : 1086,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1086,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 716,
+        "startColumn" : 12,
+        "endLine" : 716,
+        "endColumn" : 38
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 395,
+        "startColumn" : 19,
+        "endLine" : 395,
+        "endColumn" : 45
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 1113,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1089,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 718,
+        "startColumn" : 12,
+        "endLine" : 718,
+        "endColumn" : 56
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 397,
+        "startColumn" : 19,
+        "endLine" : 397,
+        "endColumn" : 63
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1098,
+    "ordinaryNext" : 1098,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1098,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 719,
+        "startColumn" : 12,
+        "endLine" : 719,
+        "endColumn" : 37
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 398,
+        "startColumn" : 19,
+        "endLine" : 398,
+        "endColumn" : 44
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1101,
+    "ordinaryNext" : 1101,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1101,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 720,
+        "startColumn" : 12,
+        "endLine" : 721,
+        "endColumn" : 37
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 399,
+        "startColumn" : 19,
+        "endLine" : 400,
+        "endColumn" : 44
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1104,
+    "ordinaryNext" : 1104,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1104,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 722,
+        "startColumn" : 12,
+        "endLine" : 722,
+        "endColumn" : 48
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 401,
+        "startColumn" : 19,
+        "endLine" : 401,
+        "endColumn" : 55
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1109,
+    "ordinaryNext" : 1109,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1109,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 723,
+        "startColumn" : 12,
+        "endLine" : 723,
+        "endColumn" : 38
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 402,
+        "startColumn" : 19,
+        "endLine" : 402,
+        "endColumn" : 45
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 1113,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1113,
+    "type" : "EmbeddedLanguageStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 731,
+        "startColumn" : 4,
+        "endLine" : 731,
+        "endColumn" : 307
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 410,
+        "startColumn" : 11,
+        "endLine" : 418,
+        "endColumn" : 18
+      },
+      "includeChain" : [ ],
+      "exact" : false
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : null,
+    "normalCompletionRecognized" : false
+  }, {
+    "id" : 1119,
+    "type" : "EvaluateStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 734,
+        "startColumn" : 4,
+        "endLine" : 750,
+        "endColumn" : 15
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 420,
+        "startColumn" : 11,
+        "endLine" : 436,
+        "endColumn" : 22
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 1168,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1125,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 736,
+        "startColumn" : 12,
+        "endLine" : 736,
+        "endColumn" : 19
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 422,
+        "startColumn" : 19,
+        "endLine" : 422,
+        "endColumn" : 26
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 1168,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1130,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 738,
+        "startColumn" : 12,
+        "endLine" : 738,
+        "endColumn" : 37
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 424,
+        "startColumn" : 19,
+        "endLine" : 424,
+        "endColumn" : 44
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1133,
+    "ordinaryNext" : 1133,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1133,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 739,
+        "startColumn" : 12,
+        "endLine" : 740,
+        "endColumn" : 37
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 425,
+        "startColumn" : 19,
+        "endLine" : 426,
+        "endColumn" : 44
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1136,
+    "ordinaryNext" : 1136,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1136,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 741,
+        "startColumn" : 12,
+        "endLine" : 741,
+        "endColumn" : 48
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 427,
+        "startColumn" : 19,
+        "endLine" : 427,
+        "endColumn" : 55
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1141,
+    "ordinaryNext" : 1141,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1141,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 742,
+        "startColumn" : 12,
+        "endLine" : 742,
+        "endColumn" : 38
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 428,
+        "startColumn" : 19,
+        "endLine" : 428,
+        "endColumn" : 45
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 1168,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1144,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 744,
+        "startColumn" : 12,
+        "endLine" : 744,
+        "endColumn" : 56
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 430,
+        "startColumn" : 19,
+        "endLine" : 430,
+        "endColumn" : 63
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1153,
+    "ordinaryNext" : 1153,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1153,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 745,
+        "startColumn" : 12,
+        "endLine" : 745,
+        "endColumn" : 37
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 431,
+        "startColumn" : 19,
+        "endLine" : 431,
+        "endColumn" : 44
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1156,
+    "ordinaryNext" : 1156,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1156,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 746,
+        "startColumn" : 12,
+        "endLine" : 747,
+        "endColumn" : 37
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 432,
+        "startColumn" : 19,
+        "endLine" : 433,
+        "endColumn" : 44
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1159,
+    "ordinaryNext" : 1159,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1159,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 748,
+        "startColumn" : 12,
+        "endLine" : 748,
+        "endColumn" : 48
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 434,
+        "startColumn" : 19,
+        "endLine" : 434,
+        "endColumn" : 55
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1164,
+    "ordinaryNext" : 1164,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1164,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 749,
+        "startColumn" : 12,
+        "endLine" : 749,
+        "endColumn" : 38
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 435,
+        "startColumn" : 19,
+        "endLine" : 435,
+        "endColumn" : 45
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 1168,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1168,
+    "type" : "EmbeddedLanguageStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 757,
+        "startColumn" : 4,
+        "endLine" : 757,
+        "endColumn" : 215
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 443,
+        "startColumn" : 11,
+        "endLine" : 449,
+        "endColumn" : 18
+      },
+      "includeChain" : [ ],
+      "exact" : false
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : null,
+    "normalCompletionRecognized" : false
+  }, {
+    "id" : 1169,
+    "type" : "EvaluateStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 760,
+        "startColumn" : 4,
+        "endLine" : 776,
+        "endColumn" : 15
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 451,
+        "startColumn" : 11,
+        "endLine" : 467,
+        "endColumn" : 22
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 1218,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1175,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 762,
+        "startColumn" : 12,
+        "endLine" : 762,
+        "endColumn" : 19
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 453,
+        "startColumn" : 19,
+        "endLine" : 453,
+        "endColumn" : 26
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 1218,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1180,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 764,
+        "startColumn" : 12,
+        "endLine" : 764,
+        "endColumn" : 37
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 455,
+        "startColumn" : 19,
+        "endLine" : 455,
+        "endColumn" : 44
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1183,
+    "ordinaryNext" : 1183,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1183,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 765,
+        "startColumn" : 12,
+        "endLine" : 766,
+        "endColumn" : 37
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 456,
+        "startColumn" : 19,
+        "endLine" : 457,
+        "endColumn" : 44
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1186,
+    "ordinaryNext" : 1186,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1186,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 767,
+        "startColumn" : 12,
+        "endLine" : 767,
+        "endColumn" : 48
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 458,
+        "startColumn" : 19,
+        "endLine" : 458,
+        "endColumn" : 55
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1191,
+    "ordinaryNext" : 1191,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1191,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 768,
+        "startColumn" : 12,
+        "endLine" : 768,
+        "endColumn" : 38
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 459,
+        "startColumn" : 19,
+        "endLine" : 459,
+        "endColumn" : 45
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 1218,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1194,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 770,
+        "startColumn" : 12,
+        "endLine" : 770,
+        "endColumn" : 56
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 461,
+        "startColumn" : 19,
+        "endLine" : 461,
+        "endColumn" : 63
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1203,
+    "ordinaryNext" : 1203,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1203,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 771,
+        "startColumn" : 12,
+        "endLine" : 771,
+        "endColumn" : 37
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 462,
+        "startColumn" : 19,
+        "endLine" : 462,
+        "endColumn" : 44
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1206,
+    "ordinaryNext" : 1206,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1206,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 772,
+        "startColumn" : 12,
+        "endLine" : 773,
+        "endColumn" : 37
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 463,
+        "startColumn" : 19,
+        "endLine" : 464,
+        "endColumn" : 44
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1209,
+    "ordinaryNext" : 1209,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1209,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 774,
+        "startColumn" : 12,
+        "endLine" : 774,
+        "endColumn" : 48
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 465,
+        "startColumn" : 19,
+        "endLine" : 465,
+        "endColumn" : 55
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1214,
+    "ordinaryNext" : 1214,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1214,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 775,
+        "startColumn" : 12,
+        "endLine" : 775,
+        "endColumn" : 38
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 466,
+        "startColumn" : 19,
+        "endLine" : 466,
+        "endColumn" : 45
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 1218,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1218,
+    "type" : "EmbeddedLanguageStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 783,
+        "startColumn" : 4,
+        "endLine" : 783,
+        "endColumn" : 292
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 474,
+        "startColumn" : 11,
+        "endLine" : 482,
+        "endColumn" : 18
+      },
+      "includeChain" : [ ],
+      "exact" : false
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : null,
+    "normalCompletionRecognized" : false
+  }, {
+    "id" : 1219,
+    "type" : "EvaluateStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 786,
+        "startColumn" : 4,
+        "endLine" : 798,
+        "endColumn" : 15
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 484,
+        "startColumn" : 11,
+        "endLine" : 496,
+        "endColumn" : 22
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 1258,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1225,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 788,
+        "startColumn" : 12,
+        "endLine" : 788,
+        "endColumn" : 19
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 486,
+        "startColumn" : 19,
+        "endLine" : 486,
+        "endColumn" : 26
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 1258,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1230,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 790,
+        "startColumn" : 12,
+        "endLine" : 790,
+        "endColumn" : 32
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 488,
+        "startColumn" : 19,
+        "endLine" : 488,
+        "endColumn" : 39
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 1258,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1234,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 792,
+        "startColumn" : 12,
+        "endLine" : 792,
+        "endColumn" : 56
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 490,
+        "startColumn" : 19,
+        "endLine" : 490,
+        "endColumn" : 63
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1243,
+    "ordinaryNext" : 1243,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1243,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 793,
+        "startColumn" : 12,
+        "endLine" : 793,
+        "endColumn" : 37
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 491,
+        "startColumn" : 19,
+        "endLine" : 491,
+        "endColumn" : 44
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1246,
+    "ordinaryNext" : 1246,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1246,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 794,
+        "startColumn" : 12,
+        "endLine" : 795,
+        "endColumn" : 37
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 492,
+        "startColumn" : 19,
+        "endLine" : 493,
+        "endColumn" : 44
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1249,
+    "ordinaryNext" : 1249,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1249,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 796,
+        "startColumn" : 12,
+        "endLine" : 796,
+        "endColumn" : 48
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 494,
+        "startColumn" : 19,
+        "endLine" : 494,
+        "endColumn" : 55
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1254,
+    "ordinaryNext" : 1254,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1254,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 797,
+        "startColumn" : 12,
+        "endLine" : 797,
+        "endColumn" : 38
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 495,
+        "startColumn" : 19,
+        "endLine" : 495,
+        "endColumn" : 45
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 1258,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1258,
+    "type" : "EmbeddedLanguageStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 805,
+        "startColumn" : 4,
+        "endLine" : 805,
+        "endColumn" : 81
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 503,
+        "startColumn" : 11,
+        "endLine" : 505,
+        "endColumn" : 19
+      },
+      "includeChain" : [ ],
+      "exact" : false
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : null,
+    "normalCompletionRecognized" : false
+  }, {
+    "id" : 1261,
+    "type" : "EmbeddedLanguageStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 814,
+        "startColumn" : 4,
+        "endLine" : 814,
+        "endColumn" : 289
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 512,
+        "startColumn" : 11,
+        "endLine" : 520,
+        "endColumn" : 18
+      },
+      "includeChain" : [ ],
+      "exact" : false
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : null,
+    "normalCompletionRecognized" : false
+  }, {
+    "id" : 1262,
+    "type" : "EvaluateStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 817,
+        "startColumn" : 4,
+        "endLine" : 842,
+        "endColumn" : 15
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 522,
+        "startColumn" : 11,
+        "endLine" : 547,
+        "endColumn" : 22
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 1338,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1268,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 819,
+        "startColumn" : 12,
+        "endLine" : 819,
+        "endColumn" : 40
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 524,
+        "startColumn" : 19,
+        "endLine" : 524,
+        "endColumn" : 47
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1270,
+    "ordinaryNext" : 1270,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1270,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 820,
+        "startColumn" : 12,
+        "endLine" : 820,
+        "endColumn" : 48
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 525,
+        "startColumn" : 19,
+        "endLine" : 525,
+        "endColumn" : 55
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1273,
+    "ordinaryNext" : 1273,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1273,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 821,
+        "startColumn" : 12,
+        "endLine" : 821,
+        "endColumn" : 58
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 526,
+        "startColumn" : 19,
+        "endLine" : 526,
+        "endColumn" : 65
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1278,
+    "ordinaryNext" : 1278,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1278,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 822,
+        "startColumn" : 12,
+        "endLine" : 826,
+        "endColumn" : 28
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 527,
+        "startColumn" : 19,
+        "endLine" : 531,
+        "endColumn" : 35
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1291,
+    "ordinaryNext" : 1291,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1291,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 827,
+        "startColumn" : 12,
+        "endLine" : 827,
+        "endColumn" : 38
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 532,
+        "startColumn" : 19,
+        "endLine" : 532,
+        "endColumn" : 45
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 1338,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1300,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 830,
+        "startColumn" : 12,
+        "endLine" : 830,
+        "endColumn" : 37
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 535,
+        "startColumn" : 19,
+        "endLine" : 535,
+        "endColumn" : 44
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1303,
+    "ordinaryNext" : 1303,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1303,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 831,
+        "startColumn" : 12,
+        "endLine" : 832,
+        "endColumn" : 37
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 536,
+        "startColumn" : 19,
+        "endLine" : 537,
+        "endColumn" : 44
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1306,
+    "ordinaryNext" : 1306,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1306,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 833,
+        "startColumn" : 12,
+        "endLine" : 833,
+        "endColumn" : 48
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 538,
+        "startColumn" : 19,
+        "endLine" : 538,
+        "endColumn" : 55
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1311,
+    "ordinaryNext" : 1311,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1311,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 834,
+        "startColumn" : 12,
+        "endLine" : 834,
+        "endColumn" : 38
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 539,
+        "startColumn" : 19,
+        "endLine" : 539,
+        "endColumn" : 45
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 1338,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1314,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 836,
+        "startColumn" : 12,
+        "endLine" : 836,
+        "endColumn" : 56
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 541,
+        "startColumn" : 19,
+        "endLine" : 541,
+        "endColumn" : 63
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1323,
+    "ordinaryNext" : 1323,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1323,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 837,
+        "startColumn" : 12,
+        "endLine" : 837,
+        "endColumn" : 37
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 542,
+        "startColumn" : 19,
+        "endLine" : 542,
+        "endColumn" : 44
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1326,
+    "ordinaryNext" : 1326,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1326,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 838,
+        "startColumn" : 12,
+        "endLine" : 839,
+        "endColumn" : 37
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 543,
+        "startColumn" : 19,
+        "endLine" : 544,
+        "endColumn" : 44
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1329,
+    "ordinaryNext" : 1329,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1329,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 840,
+        "startColumn" : 12,
+        "endLine" : 840,
+        "endColumn" : 48
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 545,
+        "startColumn" : 19,
+        "endLine" : 545,
+        "endColumn" : 55
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1334,
+    "ordinaryNext" : 1334,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1334,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 841,
+        "startColumn" : 12,
+        "endLine" : 841,
+        "endColumn" : 38
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 546,
+        "startColumn" : 19,
+        "endLine" : 546,
+        "endColumn" : 45
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 1338,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1338,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 849,
+        "startColumn" : 4,
+        "endLine" : 849,
+        "endColumn" : 32
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 554,
+        "startColumn" : 11,
+        "endLine" : 554,
+        "endColumn" : 39
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1340,
+    "ordinaryNext" : 1340,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1340,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 850,
+        "startColumn" : 4,
+        "endLine" : 850,
+        "endColumn" : 30
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 555,
+        "startColumn" : 11,
+        "endLine" : 555,
+        "endColumn" : 37
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 1344,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1344,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 857,
+        "startColumn" : 4,
+        "endLine" : 857,
+        "endColumn" : 47
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 562,
+        "startColumn" : 11,
+        "endLine" : 562,
+        "endColumn" : 54
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1349,
+    "ordinaryNext" : 1349,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1349,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 858,
+        "startColumn" : 4,
+        "endLine" : 861,
+        "endColumn" : 37
+      },
+      "original" : {
+        "file" : "COBIL00C.cbl",
+        "startLine" : 563,
+        "startColumn" : 11,
+        "endLine" : 566,
+        "endColumn" : 44
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : null,
+    "normalCompletionRecognized" : true
+  } ]
+}

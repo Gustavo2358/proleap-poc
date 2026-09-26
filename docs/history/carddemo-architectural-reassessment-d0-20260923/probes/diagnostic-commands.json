@@ -1,0 +1,39 @@
+[
+  {
+    "action": "compile external F7 probe",
+    "command": [
+      "/home/gustavo/.sdkman/candidates/java/21.0.12+1.1-tem/bin/javac",
+      "-cp",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w3-r1/runtime-final/classes/air-java__air-model__target__classes:/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w3-r1/runtime-final/classes/air-java__air-json__target__classes:/home/gustavo/workspace/teste-e2e/.positive-memory-topology/continuacao-w4-w9/evidence/w8/runtime-closure/classes/cobol-lower__core__target__classes:/home/gustavo/workspace/teste-e2e/.positive-memory-topology/continuacao-w4-w9/evidence/w8/runtime-closure/classes/cobol-lower__adapters__target__classes:/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w1/runtime-final/12-hash4j-0.30.0.jar:/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w1/runtime-final/5-jackson-databind-2.22.2.jar:/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w1/runtime-final/6-jackson-annotations-2.22.jar:/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w1/runtime-final/7-jackson-core-2.22.2.jar",
+      "-d",
+      "/home/gustavo/workspace/teste-e2e/artefatos-e2e/carddemo-architectural-reassessment-d0-20260923/probes/f7-classes",
+      "/home/gustavo/workspace/teste-e2e/artefatos-e2e/carddemo-architectural-reassessment-d0-20260923/tools/F7Probe.java"
+    ]
+  },
+  {
+    "action": "F7 03",
+    "command": [
+      "/home/gustavo/.sdkman/candidates/java/21.0.12+1.1-tem/bin/java",
+      "-Xmx2g",
+      "-cp",
+      "/home/gustavo/workspace/teste-e2e/artefatos-e2e/carddemo-architectural-reassessment-d0-20260923/probes/f7-classes:/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w3-r1/runtime-final/classes/air-java__air-model__target__classes:/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w3-r1/runtime-final/classes/air-java__air-json__target__classes:/home/gustavo/workspace/teste-e2e/.positive-memory-topology/continuacao-w4-w9/evidence/w8/runtime-closure/classes/cobol-lower__core__target__classes:/home/gustavo/workspace/teste-e2e/.positive-memory-topology/continuacao-w4-w9/evidence/w8/runtime-closure/classes/cobol-lower__adapters__target__classes:/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w1/runtime-final/12-hash4j-0.30.0.jar:/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w1/runtime-final/5-jackson-databind-2.22.2.jar:/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w1/runtime-final/6-jackson-annotations-2.22.jar:/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w1/runtime-final/7-jackson-core-2.22.2.jar",
+      "io.github.gustavo2358.lower.application.F7Probe",
+      "/home/gustavo/workspace/teste-e2e/artefatos-e2e/carddemo-validation-20260923/profile-pure-7/case-03/programs/app/cbl/CBACT04C.cbl/sp/cobol-semantic-product.json"
+    ],
+    "stdout": "/home/gustavo/workspace/teste-e2e/artefatos-e2e/carddemo-architectural-reassessment-d0-20260923/probes/f7-03.json",
+    "stderr": "/home/gustavo/workspace/teste-e2e/artefatos-e2e/carddemo-architectural-reassessment-d0-20260923/probes/f7-03.stderr"
+  },
+  {
+    "action": "F7 05",
+    "command": [
+      "/home/gustavo/.sdkman/candidates/java/21.0.12+1.1-tem/bin/java",
+      "-Xmx2g",
+      "-cp",
+      "/home/gustavo/workspace/teste-e2e/artefatos-e2e/carddemo-architectural-reassessment-d0-20260923/probes/f7-classes:/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w3-r1/runtime-final/classes/air-java__air-model__target__classes:/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w3-r1/runtime-final/classes/air-java__air-json__target__classes:/home/gustavo/workspace/teste-e2e/.positive-memory-topology/continuacao-w4-w9/evidence/w8/runtime-closure/classes/cobol-lower__core__target__classes:/home/gustavo/workspace/teste-e2e/.positive-memory-topology/continuacao-w4-w9/evidence/w8/runtime-closure/classes/cobol-lower__adapters__target__classes:/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w1/runtime-final/12-hash4j-0.30.0.jar:/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w1/runtime-final/5-jackson-databind-2.22.2.jar:/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w1/runtime-final/6-jackson-annotations-2.22.jar:/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w1/runtime-final/7-jackson-core-2.22.2.jar",
+      "io.github.gustavo2358.lower.application.F7Probe",
+      "/home/gustavo/workspace/teste-e2e/artefatos-e2e/carddemo-validation-20260923/profile-pure-7/case-05/programs/samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/CBACT04C.cbl/sp/cobol-semantic-product.json"
+    ],
+    "stdout": "/home/gustavo/workspace/teste-e2e/artefatos-e2e/carddemo-architectural-reassessment-d0-20260923/probes/f7-05.json",
+    "stderr": "/home/gustavo/workspace/teste-e2e/artefatos-e2e/carddemo-architectural-reassessment-d0-20260923/probes/f7-05.stderr"
+  }
+]

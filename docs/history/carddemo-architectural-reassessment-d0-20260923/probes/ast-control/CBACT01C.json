@@ -1,0 +1,4567 @@
+{
+  "source" : "/home/gustavo/workspace/teste-e2e/storage-semantics-st-w0-w5/runtime/carddemo-upstream/app/cbl/CBACT01C.cbl",
+  "unresolvedCopies" : 0,
+  "preprocessorErrors" : 0,
+  "parserDiagnostics" : [ ],
+  "statements" : [ {
+    "id" : 260,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 213,
+        "startColumn" : 4,
+        "endLine" : 213,
+        "endColumn" : 51
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 141,
+        "startColumn" : 11,
+        "endLine" : 141,
+        "endColumn" : 58
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 264,
+    "ordinaryNext" : 264,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 264,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 214,
+        "startColumn" : 4,
+        "endLine" : 214,
+        "endColumn" : 29
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 142,
+        "startColumn" : 11,
+        "endLine" : 142,
+        "endColumn" : 36
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 267,
+    "ordinaryNext" : 267,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 267,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 215,
+        "startColumn" : 4,
+        "endLine" : 215,
+        "endColumn" : 28
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 143,
+        "startColumn" : 11,
+        "endLine" : 143,
+        "endColumn" : 35
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 270,
+    "ordinaryNext" : 270,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 270,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 216,
+        "startColumn" : 4,
+        "endLine" : 216,
+        "endColumn" : 28
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 144,
+        "startColumn" : 11,
+        "endLine" : 144,
+        "endColumn" : 35
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 273,
+    "ordinaryNext" : 273,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 273,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 217,
+        "startColumn" : 4,
+        "endLine" : 217,
+        "endColumn" : 28
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 145,
+        "startColumn" : 11,
+        "endLine" : 145,
+        "endColumn" : 35
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 276,
+    "ordinaryNext" : 276,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 276,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 219,
+        "startColumn" : 4,
+        "endLine" : 226,
+        "endColumn" : 14
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 147,
+        "startColumn" : 11,
+        "endLine" : 154,
+        "endColumn" : 21
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 294,
+    "ordinaryNext" : 294,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 280,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 220,
+        "startColumn" : 8,
+        "endLine" : 225,
+        "endColumn" : 13
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 148,
+        "startColumn" : 15,
+        "endLine" : 153,
+        "endColumn" : 20
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : null,
+    "normalCompletionRecognized" : false
+  }, {
+    "id" : 284,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 221,
+        "startColumn" : 12,
+        "endLine" : 221,
+        "endColumn" : 41
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 149,
+        "startColumn" : 19,
+        "endLine" : 149,
+        "endColumn" : 48
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : null,
+    "normalCompletionRecognized" : false
+  }, {
+    "id" : 286,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 222,
+        "startColumn" : 12,
+        "endLine" : 224,
+        "endColumn" : 17
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 150,
+        "startColumn" : 19,
+        "endLine" : 152,
+        "endColumn" : 24
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : null,
+    "normalCompletionRecognized" : false
+  }, {
+    "id" : 290,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 223,
+        "startColumn" : 16,
+        "endLine" : 223,
+        "endColumn" : 37
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 151,
+        "startColumn" : 23,
+        "endLine" : 151,
+        "endColumn" : 44
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : null,
+    "normalCompletionRecognized" : false
+  }, {
+    "id" : 294,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 228,
+        "startColumn" : 4,
+        "endLine" : 228,
+        "endColumn" : 30
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 156,
+        "startColumn" : 11,
+        "endLine" : 156,
+        "endColumn" : 37
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 297,
+    "ordinaryNext" : 297,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 297,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 230,
+        "startColumn" : 4,
+        "endLine" : 230,
+        "endColumn" : 49
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 158,
+        "startColumn" : 11,
+        "endLine" : 158,
+        "endColumn" : 56
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 301,
+    "ordinaryNext" : 301,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 301,
+    "type" : "GobackStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 232,
+        "startColumn" : 4,
+        "endLine" : 232,
+        "endColumn" : 9
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 160,
+        "startColumn" : 11,
+        "endLine" : 160,
+        "endColumn" : 16
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : null,
+    "normalCompletionRecognized" : false
+  }, {
+    "id" : 304,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 238,
+        "startColumn" : 4,
+        "endLine" : 238,
+        "endColumn" : 41
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 166,
+        "startColumn" : 11,
+        "endLine" : 166,
+        "endColumn" : 48
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 310,
+    "ordinaryNext" : 310,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 310,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 239,
+        "startColumn" : 4,
+        "endLine" : 257,
+        "endColumn" : 9
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 167,
+        "startColumn" : 11,
+        "endLine" : 185,
+        "endColumn" : 16
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 349,
+    "ordinaryNext" : 349,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 314,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 240,
+        "startColumn" : 8,
+        "endLine" : 240,
+        "endColumn" : 28
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 168,
+        "startColumn" : 15,
+        "endLine" : 168,
+        "endColumn" : 35
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 317,
+    "ordinaryNext" : 317,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 317,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 241,
+        "startColumn" : 8,
+        "endLine" : 241,
+        "endColumn" : 31
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 169,
+        "startColumn" : 15,
+        "endLine" : 169,
+        "endColumn" : 38
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 320,
+    "ordinaryNext" : 320,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 320,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 242,
+        "startColumn" : 8,
+        "endLine" : 242,
+        "endColumn" : 39
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 170,
+        "startColumn" : 15,
+        "endLine" : 170,
+        "endColumn" : 46
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 322,
+    "ordinaryNext" : 322,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 322,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 243,
+        "startColumn" : 8,
+        "endLine" : 243,
+        "endColumn" : 37
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 171,
+        "startColumn" : 15,
+        "endLine" : 171,
+        "endColumn" : 44
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 324,
+    "ordinaryNext" : 324,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 324,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 244,
+        "startColumn" : 8,
+        "endLine" : 244,
+        "endColumn" : 37
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 172,
+        "startColumn" : 15,
+        "endLine" : 172,
+        "endColumn" : 44
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 326,
+    "ordinaryNext" : 326,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 326,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 245,
+        "startColumn" : 8,
+        "endLine" : 245,
+        "endColumn" : 38
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 173,
+        "startColumn" : 15,
+        "endLine" : 173,
+        "endColumn" : 45
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 328,
+    "ordinaryNext" : 328,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 328,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 246,
+        "startColumn" : 8,
+        "endLine" : 246,
+        "endColumn" : 37
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 174,
+        "startColumn" : 15,
+        "endLine" : 174,
+        "endColumn" : 44
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 330,
+    "ordinaryNext" : 330,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 330,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 247,
+        "startColumn" : 8,
+        "endLine" : 247,
+        "endColumn" : 27
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 175,
+        "startColumn" : 15,
+        "endLine" : 175,
+        "endColumn" : 34
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 333,
+    "ordinaryNext" : 333,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 333,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 248,
+        "startColumn" : 8,
+        "endLine" : 248,
+        "endColumn" : 37
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 176,
+        "startColumn" : 15,
+        "endLine" : 176,
+        "endColumn" : 44
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 335,
+    "ordinaryNext" : 335,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 335,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 249,
+        "startColumn" : 8,
+        "endLine" : 249,
+        "endColumn" : 36
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 177,
+        "startColumn" : 15,
+        "endLine" : 177,
+        "endColumn" : 43
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 337,
+    "ordinaryNext" : 337,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 337,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 250,
+        "startColumn" : 8,
+        "endLine" : 250,
+        "endColumn" : 36
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 178,
+        "startColumn" : 15,
+        "endLine" : 178,
+        "endColumn" : 43
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 349,
+    "ordinaryNext" : 349,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 339,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 252,
+        "startColumn" : 8,
+        "endLine" : 256,
+        "endColumn" : 13
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 180,
+        "startColumn" : 15,
+        "endLine" : 184,
+        "endColumn" : 20
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 349,
+    "ordinaryNext" : 349,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 343,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 253,
+        "startColumn" : 12,
+        "endLine" : 253,
+        "endColumn" : 33
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 181,
+        "startColumn" : 19,
+        "endLine" : 181,
+        "endColumn" : 40
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 349,
+    "ordinaryNext" : 349,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 346,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 255,
+        "startColumn" : 12,
+        "endLine" : 255,
+        "endColumn" : 33
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 183,
+        "startColumn" : 19,
+        "endLine" : 183,
+        "endColumn" : 40
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 349,
+    "ordinaryNext" : 349,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 349,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 258,
+        "startColumn" : 4,
+        "endLine" : 269,
+        "endColumn" : 9
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 186,
+        "startColumn" : 11,
+        "endLine" : 197,
+        "endColumn" : 16
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 367,
+    "ordinaryNext" : 367,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 351,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 259,
+        "startColumn" : 8,
+        "endLine" : 259,
+        "endColumn" : 15
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 187,
+        "startColumn" : 15,
+        "endLine" : 187,
+        "endColumn" : 22
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 367,
+    "ordinaryNext" : 367,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 352,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 261,
+        "startColumn" : 8,
+        "endLine" : 268,
+        "endColumn" : 13
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 189,
+        "startColumn" : 15,
+        "endLine" : 196,
+        "endColumn" : 20
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 367,
+    "ordinaryNext" : 367,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 354,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 262,
+        "startColumn" : 12,
+        "endLine" : 262,
+        "endColumn" : 34
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 190,
+        "startColumn" : 19,
+        "endLine" : 190,
+        "endColumn" : 41
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 367,
+    "ordinaryNext" : 367,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 357,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 264,
+        "startColumn" : 12,
+        "endLine" : 264,
+        "endColumn" : 47
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 192,
+        "startColumn" : 19,
+        "endLine" : 192,
+        "endColumn" : 54
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 360,
+    "ordinaryNext" : 360,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 360,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 265,
+        "startColumn" : 12,
+        "endLine" : 265,
+        "endColumn" : 44
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 193,
+        "startColumn" : 19,
+        "endLine" : 193,
+        "endColumn" : 51
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 363,
+    "ordinaryNext" : 363,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 363,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 266,
+        "startColumn" : 12,
+        "endLine" : 266,
+        "endColumn" : 41
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 194,
+        "startColumn" : 19,
+        "endLine" : 194,
+        "endColumn" : 48
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 365,
+    "ordinaryNext" : 365,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 365,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 267,
+        "startColumn" : 12,
+        "endLine" : 267,
+        "endColumn" : 37
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 195,
+        "startColumn" : 19,
+        "endLine" : 195,
+        "endColumn" : 44
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 367,
+    "ordinaryNext" : 367,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 367,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 270,
+        "startColumn" : 4,
+        "endLine" : 270,
+        "endColumn" : 7
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 198,
+        "startColumn" : 11,
+        "endLine" : 198,
+        "endColumn" : 14
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 370,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 370,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 273,
+        "startColumn" : 4,
+        "endLine" : 273,
+        "endColumn" : 48
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 201,
+        "startColumn" : 11,
+        "endLine" : 201,
+        "endColumn" : 55
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 375,
+    "ordinaryNext" : 375,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 375,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 274,
+        "startColumn" : 4,
+        "endLine" : 274,
+        "endColumn" : 59
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 202,
+        "startColumn" : 11,
+        "endLine" : 202,
+        "endColumn" : 66
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 380,
+    "ordinaryNext" : 380,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 380,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 275,
+        "startColumn" : 4,
+        "endLine" : 275,
+        "endColumn" : 54
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 203,
+        "startColumn" : 11,
+        "endLine" : 203,
+        "endColumn" : 61
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 385,
+    "ordinaryNext" : 385,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 385,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 276,
+        "startColumn" : 4,
+        "endLine" : 276,
+        "endColumn" : 58
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 204,
+        "startColumn" : 11,
+        "endLine" : 204,
+        "endColumn" : 65
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 390,
+    "ordinaryNext" : 390,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 390,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 277,
+        "startColumn" : 4,
+        "endLine" : 277,
+        "endColumn" : 63
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 205,
+        "startColumn" : 11,
+        "endLine" : 205,
+        "endColumn" : 70
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 395,
+    "ordinaryNext" : 395,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 395,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 278,
+        "startColumn" : 4,
+        "endLine" : 278,
+        "endColumn" : 55
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 206,
+        "startColumn" : 11,
+        "endLine" : 206,
+        "endColumn" : 62
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 400,
+    "ordinaryNext" : 400,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 400,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 279,
+        "startColumn" : 4,
+        "endLine" : 279,
+        "endColumn" : 60
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 207,
+        "startColumn" : 11,
+        "endLine" : 207,
+        "endColumn" : 67
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 405,
+    "ordinaryNext" : 405,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 405,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 280,
+        "startColumn" : 4,
+        "endLine" : 280,
+        "endColumn" : 58
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 208,
+        "startColumn" : 11,
+        "endLine" : 208,
+        "endColumn" : 65
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 410,
+    "ordinaryNext" : 410,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 410,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 281,
+        "startColumn" : 4,
+        "endLine" : 281,
+        "endColumn" : 61
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 209,
+        "startColumn" : 11,
+        "endLine" : 209,
+        "endColumn" : 68
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 415,
+    "ordinaryNext" : 415,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 415,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 282,
+        "startColumn" : 4,
+        "endLine" : 282,
+        "endColumn" : 60
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 210,
+        "startColumn" : 11,
+        "endLine" : 210,
+        "endColumn" : 67
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 420,
+    "ordinaryNext" : 420,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 420,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 283,
+        "startColumn" : 4,
+        "endLine" : 283,
+        "endColumn" : 54
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 211,
+        "startColumn" : 11,
+        "endLine" : 211,
+        "endColumn" : 61
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 425,
+    "ordinaryNext" : 425,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 425,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 284,
+        "startColumn" : 4,
+        "endLine" : 284,
+        "endColumn" : 62
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 212,
+        "startColumn" : 11,
+        "endLine" : 212,
+        "endColumn" : 69
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 428,
+    "ordinaryNext" : 428,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 428,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 285,
+        "startColumn" : 4,
+        "endLine" : 285,
+        "endColumn" : 7
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 213,
+        "startColumn" : 11,
+        "endLine" : 213,
+        "endColumn" : 14
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 431,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 431,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 288,
+        "startColumn" : 4,
+        "endLine" : 288,
+        "endColumn" : 50
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 216,
+        "startColumn" : 11,
+        "endLine" : 216,
+        "endColumn" : 57
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 435,
+    "ordinaryNext" : 435,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 435,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 289,
+        "startColumn" : 4,
+        "endLine" : 289,
+        "endColumn" : 61
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 217,
+        "startColumn" : 11,
+        "endLine" : 217,
+        "endColumn" : 68
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 439,
+    "ordinaryNext" : 439,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 439,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 290,
+        "startColumn" : 4,
+        "endLine" : 290,
+        "endColumn" : 56
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 218,
+        "startColumn" : 11,
+        "endLine" : 218,
+        "endColumn" : 63
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 443,
+    "ordinaryNext" : 443,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 443,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 291,
+        "startColumn" : 4,
+        "endLine" : 291,
+        "endColumn" : 60
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 219,
+        "startColumn" : 11,
+        "endLine" : 219,
+        "endColumn" : 67
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 447,
+    "ordinaryNext" : 447,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 447,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 292,
+        "startColumn" : 4,
+        "endLine" : 292,
+        "endColumn" : 63
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 220,
+        "startColumn" : 11,
+        "endLine" : 220,
+        "endColumn" : 70
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 451,
+    "ordinaryNext" : 451,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 451,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 293,
+        "startColumn" : 4,
+        "endLine" : 293,
+        "endColumn" : 57
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 221,
+        "startColumn" : 11,
+        "endLine" : 221,
+        "endColumn" : 64
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 455,
+    "ordinaryNext" : 455,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 455,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 294,
+        "startColumn" : 4,
+        "endLine" : 294,
+        "endColumn" : 62
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 222,
+        "startColumn" : 11,
+        "endLine" : 222,
+        "endColumn" : 69
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 459,
+    "ordinaryNext" : 459,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 459,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 295,
+        "startColumn" : 4,
+        "endLine" : 296,
+        "endColumn" : 54
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 223,
+        "startColumn" : 11,
+        "endLine" : 224,
+        "endColumn" : 61
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 464,
+    "ordinaryNext" : 464,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 464,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 297,
+        "startColumn" : 4,
+        "endLine" : 297,
+        "endColumn" : 52
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 225,
+        "startColumn" : 11,
+        "endLine" : 225,
+        "endColumn" : 59
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 468,
+    "ordinaryNext" : 468,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 468,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 298,
+        "startColumn" : 4,
+        "endLine" : 298,
+        "endColumn" : 55
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 226,
+        "startColumn" : 11,
+        "endLine" : 226,
+        "endColumn" : 62
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 472,
+    "ordinaryNext" : 472,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 472,
+    "type" : "CallStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 303,
+        "startColumn" : 4,
+        "endLine" : 303,
+        "endColumn" : 43
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 231,
+        "startColumn" : 11,
+        "endLine" : 231,
+        "endColumn" : 50
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 477,
+    "ordinaryNext" : 477,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 477,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 305,
+        "startColumn" : 4,
+        "endLine" : 305,
+        "endColumn" : 60
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 233,
+        "startColumn" : 11,
+        "endLine" : 233,
+        "endColumn" : 67
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 481,
+    "ordinaryNext" : 481,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 481,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 307,
+        "startColumn" : 4,
+        "endLine" : 307,
+        "endColumn" : 63
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 235,
+        "startColumn" : 11,
+        "endLine" : 235,
+        "endColumn" : 70
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 485,
+    "ordinaryNext" : 485,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 485,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 308,
+        "startColumn" : 4,
+        "endLine" : 310,
+        "endColumn" : 9
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 236,
+        "startColumn" : 11,
+        "endLine" : 238,
+        "endColumn" : 16
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 493,
+    "ordinaryNext" : 493,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 489,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 309,
+        "startColumn" : 8,
+        "endLine" : 309,
+        "endColumn" : 56
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 237,
+        "startColumn" : 15,
+        "endLine" : 237,
+        "endColumn" : 63
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 493,
+    "ordinaryNext" : 493,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 493,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 311,
+        "startColumn" : 4,
+        "endLine" : 311,
+        "endColumn" : 56
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 239,
+        "startColumn" : 11,
+        "endLine" : 239,
+        "endColumn" : 63
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 497,
+    "ordinaryNext" : 497,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 497,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 312,
+        "startColumn" : 4,
+        "endLine" : 312,
+        "endColumn" : 7
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 240,
+        "startColumn" : 11,
+        "endLine" : 240,
+        "endColumn" : 14
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 500,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 500,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 315,
+        "startColumn" : 4,
+        "endLine" : 315,
+        "endColumn" : 21
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 243,
+        "startColumn" : 11,
+        "endLine" : 243,
+        "endColumn" : 28
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 504,
+    "ordinaryNext" : 504,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 504,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 317,
+        "startColumn" : 4,
+        "endLine" : 322,
+        "endColumn" : 9
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 245,
+        "startColumn" : 11,
+        "endLine" : 250,
+        "endColumn" : 16
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 525,
+    "ordinaryNext" : 525,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 512,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 318,
+        "startColumn" : 7,
+        "endLine" : 318,
+        "endColumn" : 61
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 246,
+        "startColumn" : 14,
+        "endLine" : 246,
+        "endColumn" : 68
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 517,
+    "ordinaryNext" : 517,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 517,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 319,
+        "startColumn" : 7,
+        "endLine" : 319,
+        "endColumn" : 39
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 247,
+        "startColumn" : 14,
+        "endLine" : 247,
+        "endColumn" : 46
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 520,
+    "ordinaryNext" : 520,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 520,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 320,
+        "startColumn" : 7,
+        "endLine" : 320,
+        "endColumn" : 36
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 248,
+        "startColumn" : 14,
+        "endLine" : 248,
+        "endColumn" : 43
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 522,
+    "ordinaryNext" : 522,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 522,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 321,
+        "startColumn" : 7,
+        "endLine" : 321,
+        "endColumn" : 32
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 249,
+        "startColumn" : 14,
+        "endLine" : 249,
+        "endColumn" : 39
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 525,
+    "ordinaryNext" : 525,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 525,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 323,
+        "startColumn" : 4,
+        "endLine" : 323,
+        "endColumn" : 7
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 251,
+        "startColumn" : 11,
+        "endLine" : 251,
+        "endColumn" : 14
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 528,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 528,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 326,
+        "startColumn" : 4,
+        "endLine" : 326,
+        "endColumn" : 42
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 254,
+        "startColumn" : 11,
+        "endLine" : 254,
+        "endColumn" : 49
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 532,
+    "ordinaryNext" : 532,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 532,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 327,
+        "startColumn" : 4,
+        "endLine" : 327,
+        "endColumn" : 51
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 255,
+        "startColumn" : 11,
+        "endLine" : 255,
+        "endColumn" : 58
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 538,
+    "ordinaryNext" : 538,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 538,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 328,
+        "startColumn" : 4,
+        "endLine" : 328,
+        "endColumn" : 57
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 256,
+        "startColumn" : 11,
+        "endLine" : 256,
+        "endColumn" : 64
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 544,
+    "ordinaryNext" : 544,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 544,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 329,
+        "startColumn" : 4,
+        "endLine" : 329,
+        "endColumn" : 51
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 257,
+        "startColumn" : 11,
+        "endLine" : 257,
+        "endColumn" : 58
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 550,
+    "ordinaryNext" : 550,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 550,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 330,
+        "startColumn" : 4,
+        "endLine" : 330,
+        "endColumn" : 57
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 258,
+        "startColumn" : 11,
+        "endLine" : 258,
+        "endColumn" : 64
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 556,
+    "ordinaryNext" : 556,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 556,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 331,
+        "startColumn" : 4,
+        "endLine" : 331,
+        "endColumn" : 51
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 259,
+        "startColumn" : 11,
+        "endLine" : 259,
+        "endColumn" : 58
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 562,
+    "ordinaryNext" : 562,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 562,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 332,
+        "startColumn" : 4,
+        "endLine" : 332,
+        "endColumn" : 57
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 260,
+        "startColumn" : 11,
+        "endLine" : 260,
+        "endColumn" : 64
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 568,
+    "ordinaryNext" : 568,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 568,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 333,
+        "startColumn" : 4,
+        "endLine" : 333,
+        "endColumn" : 7
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 261,
+        "startColumn" : 11,
+        "endLine" : 261,
+        "endColumn" : 14
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 571,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 571,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 336,
+        "startColumn" : 4,
+        "endLine" : 336,
+        "endColumn" : 22
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 264,
+        "startColumn" : 11,
+        "endLine" : 264,
+        "endColumn" : 29
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 575,
+    "ordinaryNext" : 575,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 575,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 338,
+        "startColumn" : 4,
+        "endLine" : 345,
+        "endColumn" : 9
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 266,
+        "startColumn" : 11,
+        "endLine" : 273,
+        "endColumn" : 16
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 596,
+    "ordinaryNext" : 596,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 583,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 340,
+        "startColumn" : 7,
+        "endLine" : 341,
+        "endColumn" : 47
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 268,
+        "startColumn" : 14,
+        "endLine" : 269,
+        "endColumn" : 54
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 588,
+    "ordinaryNext" : 588,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 588,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 342,
+        "startColumn" : 7,
+        "endLine" : 342,
+        "endColumn" : 39
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 270,
+        "startColumn" : 14,
+        "endLine" : 270,
+        "endColumn" : 46
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 591,
+    "ordinaryNext" : 591,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 591,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 343,
+        "startColumn" : 7,
+        "endLine" : 343,
+        "endColumn" : 36
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 271,
+        "startColumn" : 14,
+        "endLine" : 271,
+        "endColumn" : 43
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 593,
+    "ordinaryNext" : 593,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 593,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 344,
+        "startColumn" : 7,
+        "endLine" : 344,
+        "endColumn" : 32
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 272,
+        "startColumn" : 14,
+        "endLine" : 272,
+        "endColumn" : 39
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 596,
+    "ordinaryNext" : 596,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 596,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 346,
+        "startColumn" : 4,
+        "endLine" : 346,
+        "endColumn" : 7
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 274,
+        "startColumn" : 11,
+        "endLine" : 274,
+        "endColumn" : 14
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 599,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 599,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 349,
+        "startColumn" : 4,
+        "endLine" : 350,
+        "endColumn" : 43
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 277,
+        "startColumn" : 11,
+        "endLine" : 278,
+        "endColumn" : 50
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 604,
+    "ordinaryNext" : 604,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 604,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 351,
+        "startColumn" : 4,
+        "endLine" : 351,
+        "endColumn" : 54
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 279,
+        "startColumn" : 11,
+        "endLine" : 279,
+        "endColumn" : 61
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 608,
+    "ordinaryNext" : 608,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 608,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 352,
+        "startColumn" : 4,
+        "endLine" : 352,
+        "endColumn" : 55
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 280,
+        "startColumn" : 11,
+        "endLine" : 280,
+        "endColumn" : 62
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 612,
+    "ordinaryNext" : 612,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 612,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 353,
+        "startColumn" : 4,
+        "endLine" : 353,
+        "endColumn" : 59
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 281,
+        "startColumn" : 11,
+        "endLine" : 281,
+        "endColumn" : 66
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 616,
+    "ordinaryNext" : 616,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 616,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 354,
+        "startColumn" : 4,
+        "endLine" : 354,
+        "endColumn" : 59
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 282,
+        "startColumn" : 11,
+        "endLine" : 282,
+        "endColumn" : 66
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 620,
+    "ordinaryNext" : 620,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 620,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 355,
+        "startColumn" : 4,
+        "endLine" : 355,
+        "endColumn" : 33
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 283,
+        "startColumn" : 11,
+        "endLine" : 283,
+        "endColumn" : 40
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 626,
+    "ordinaryNext" : 626,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 626,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 356,
+        "startColumn" : 4,
+        "endLine" : 356,
+        "endColumn" : 33
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 284,
+        "startColumn" : 11,
+        "endLine" : 284,
+        "endColumn" : 40
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 632,
+    "ordinaryNext" : 632,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 632,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 357,
+        "startColumn" : 4,
+        "endLine" : 357,
+        "endColumn" : 7
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 285,
+        "startColumn" : 11,
+        "endLine" : 285,
+        "endColumn" : 14
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 635,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 635,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 360,
+        "startColumn" : 4,
+        "endLine" : 360,
+        "endColumn" : 25
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 288,
+        "startColumn" : 11,
+        "endLine" : 288,
+        "endColumn" : 32
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 639,
+    "ordinaryNext" : 639,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 639,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 361,
+        "startColumn" : 4,
+        "endLine" : 361,
+        "endColumn" : 43
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 289,
+        "startColumn" : 11,
+        "endLine" : 289,
+        "endColumn" : 50
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 646,
+    "ordinaryNext" : 646,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 646,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 362,
+        "startColumn" : 4,
+        "endLine" : 362,
+        "endColumn" : 16
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 290,
+        "startColumn" : 11,
+        "endLine" : 290,
+        "endColumn" : 23
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 650,
+    "ordinaryNext" : 650,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 650,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 364,
+        "startColumn" : 4,
+        "endLine" : 371,
+        "endColumn" : 9
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 292,
+        "startColumn" : 11,
+        "endLine" : 299,
+        "endColumn" : 16
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 671,
+    "ordinaryNext" : 671,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 658,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 366,
+        "startColumn" : 7,
+        "endLine" : 367,
+        "endColumn" : 47
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 294,
+        "startColumn" : 14,
+        "endLine" : 295,
+        "endColumn" : 54
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 663,
+    "ordinaryNext" : 663,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 663,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 368,
+        "startColumn" : 7,
+        "endLine" : 368,
+        "endColumn" : 39
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 296,
+        "startColumn" : 14,
+        "endLine" : 296,
+        "endColumn" : 46
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 666,
+    "ordinaryNext" : 666,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 666,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 369,
+        "startColumn" : 7,
+        "endLine" : 369,
+        "endColumn" : 36
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 297,
+        "startColumn" : 14,
+        "endLine" : 297,
+        "endColumn" : 43
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 668,
+    "ordinaryNext" : 668,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 668,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 370,
+        "startColumn" : 7,
+        "endLine" : 370,
+        "endColumn" : 32
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 298,
+        "startColumn" : 14,
+        "endLine" : 298,
+        "endColumn" : 39
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 671,
+    "ordinaryNext" : 671,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 671,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 372,
+        "startColumn" : 4,
+        "endLine" : 372,
+        "endColumn" : 7
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 300,
+        "startColumn" : 11,
+        "endLine" : 300,
+        "endColumn" : 14
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 674,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 674,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 375,
+        "startColumn" : 4,
+        "endLine" : 375,
+        "endColumn" : 25
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 303,
+        "startColumn" : 11,
+        "endLine" : 303,
+        "endColumn" : 32
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 678,
+    "ordinaryNext" : 678,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 678,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 376,
+        "startColumn" : 4,
+        "endLine" : 376,
+        "endColumn" : 43
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 304,
+        "startColumn" : 11,
+        "endLine" : 304,
+        "endColumn" : 50
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 685,
+    "ordinaryNext" : 685,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 685,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 377,
+        "startColumn" : 4,
+        "endLine" : 377,
+        "endColumn" : 16
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 305,
+        "startColumn" : 11,
+        "endLine" : 305,
+        "endColumn" : 23
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 689,
+    "ordinaryNext" : 689,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 689,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 379,
+        "startColumn" : 4,
+        "endLine" : 386,
+        "endColumn" : 9
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 307,
+        "startColumn" : 11,
+        "endLine" : 314,
+        "endColumn" : 16
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 710,
+    "ordinaryNext" : 710,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 697,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 381,
+        "startColumn" : 7,
+        "endLine" : 382,
+        "endColumn" : 47
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 309,
+        "startColumn" : 14,
+        "endLine" : 310,
+        "endColumn" : 54
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 702,
+    "ordinaryNext" : 702,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 702,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 383,
+        "startColumn" : 7,
+        "endLine" : 383,
+        "endColumn" : 39
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 311,
+        "startColumn" : 14,
+        "endLine" : 311,
+        "endColumn" : 46
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 705,
+    "ordinaryNext" : 705,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 705,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 384,
+        "startColumn" : 7,
+        "endLine" : 384,
+        "endColumn" : 36
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 312,
+        "startColumn" : 14,
+        "endLine" : 312,
+        "endColumn" : 43
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 707,
+    "ordinaryNext" : 707,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 707,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 385,
+        "startColumn" : 7,
+        "endLine" : 385,
+        "endColumn" : 32
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 313,
+        "startColumn" : 14,
+        "endLine" : 313,
+        "endColumn" : 39
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 710,
+    "ordinaryNext" : 710,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 710,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 387,
+        "startColumn" : 4,
+        "endLine" : 387,
+        "endColumn" : 7
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 315,
+        "startColumn" : 11,
+        "endLine" : 315,
+        "endColumn" : 14
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 713,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 713,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 390,
+        "startColumn" : 4,
+        "endLine" : 390,
+        "endColumn" : 24
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 318,
+        "startColumn" : 11,
+        "endLine" : 318,
+        "endColumn" : 31
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 717,
+    "ordinaryNext" : 717,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 717,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 391,
+        "startColumn" : 4,
+        "endLine" : 391,
+        "endColumn" : 27
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 319,
+        "startColumn" : 11,
+        "endLine" : 319,
+        "endColumn" : 34
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 720,
+    "ordinaryNext" : 720,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 720,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 392,
+        "startColumn" : 4,
+        "endLine" : 396,
+        "endColumn" : 9
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 320,
+        "startColumn" : 11,
+        "endLine" : 324,
+        "endColumn" : 16
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 730,
+    "ordinaryNext" : 730,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 724,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 393,
+        "startColumn" : 8,
+        "endLine" : 393,
+        "endColumn" : 28
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 321,
+        "startColumn" : 15,
+        "endLine" : 321,
+        "endColumn" : 35
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 730,
+    "ordinaryNext" : 730,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 727,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 395,
+        "startColumn" : 8,
+        "endLine" : 395,
+        "endColumn" : 29
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 323,
+        "startColumn" : 15,
+        "endLine" : 323,
+        "endColumn" : 36
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 730,
+    "ordinaryNext" : 730,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 730,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 397,
+        "startColumn" : 4,
+        "endLine" : 404,
+        "endColumn" : 9
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 325,
+        "startColumn" : 11,
+        "endLine" : 332,
+        "endColumn" : 16
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 743,
+    "ordinaryNext" : 743,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 732,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 398,
+        "startColumn" : 8,
+        "endLine" : 398,
+        "endColumn" : 15
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 326,
+        "startColumn" : 15,
+        "endLine" : 326,
+        "endColumn" : 22
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 743,
+    "ordinaryNext" : 743,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 733,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 400,
+        "startColumn" : 8,
+        "endLine" : 400,
+        "endColumn" : 39
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 328,
+        "startColumn" : 15,
+        "endLine" : 328,
+        "endColumn" : 46
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 736,
+    "ordinaryNext" : 736,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 736,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 401,
+        "startColumn" : 8,
+        "endLine" : 401,
+        "endColumn" : 40
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 329,
+        "startColumn" : 15,
+        "endLine" : 329,
+        "endColumn" : 47
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 739,
+    "ordinaryNext" : 739,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 739,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 402,
+        "startColumn" : 8,
+        "endLine" : 402,
+        "endColumn" : 37
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 330,
+        "startColumn" : 15,
+        "endLine" : 330,
+        "endColumn" : 44
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 741,
+    "ordinaryNext" : 741,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 741,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 403,
+        "startColumn" : 8,
+        "endLine" : 403,
+        "endColumn" : 33
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 331,
+        "startColumn" : 15,
+        "endLine" : 331,
+        "endColumn" : 40
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 743,
+    "ordinaryNext" : 743,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 743,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 405,
+        "startColumn" : 4,
+        "endLine" : 405,
+        "endColumn" : 7
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 333,
+        "startColumn" : 11,
+        "endLine" : 333,
+        "endColumn" : 14
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 746,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 746,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 407,
+        "startColumn" : 4,
+        "endLine" : 407,
+        "endColumn" : 24
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 335,
+        "startColumn" : 11,
+        "endLine" : 335,
+        "endColumn" : 31
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 750,
+    "ordinaryNext" : 750,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 750,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 408,
+        "startColumn" : 4,
+        "endLine" : 408,
+        "endColumn" : 23
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 336,
+        "startColumn" : 11,
+        "endLine" : 336,
+        "endColumn" : 30
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 753,
+    "ordinaryNext" : 753,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 753,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 409,
+        "startColumn" : 4,
+        "endLine" : 413,
+        "endColumn" : 9
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 337,
+        "startColumn" : 11,
+        "endLine" : 341,
+        "endColumn" : 16
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 763,
+    "ordinaryNext" : 763,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 757,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 410,
+        "startColumn" : 8,
+        "endLine" : 410,
+        "endColumn" : 28
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 338,
+        "startColumn" : 15,
+        "endLine" : 338,
+        "endColumn" : 35
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 763,
+    "ordinaryNext" : 763,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 760,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 412,
+        "startColumn" : 8,
+        "endLine" : 412,
+        "endColumn" : 29
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 340,
+        "startColumn" : 15,
+        "endLine" : 340,
+        "endColumn" : 36
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 763,
+    "ordinaryNext" : 763,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 763,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 414,
+        "startColumn" : 4,
+        "endLine" : 421,
+        "endColumn" : 9
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 342,
+        "startColumn" : 11,
+        "endLine" : 349,
+        "endColumn" : 16
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 778,
+    "ordinaryNext" : 778,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 765,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 415,
+        "startColumn" : 8,
+        "endLine" : 415,
+        "endColumn" : 15
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 343,
+        "startColumn" : 15,
+        "endLine" : 343,
+        "endColumn" : 22
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 778,
+    "ordinaryNext" : 778,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 766,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 417,
+        "startColumn" : 8,
+        "endLine" : 417,
+        "endColumn" : 54
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 345,
+        "startColumn" : 15,
+        "endLine" : 345,
+        "endColumn" : 61
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 771,
+    "ordinaryNext" : 771,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 771,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 418,
+        "startColumn" : 8,
+        "endLine" : 418,
+        "endColumn" : 40
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 346,
+        "startColumn" : 15,
+        "endLine" : 346,
+        "endColumn" : 47
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 774,
+    "ordinaryNext" : 774,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 774,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 419,
+        "startColumn" : 8,
+        "endLine" : 419,
+        "endColumn" : 37
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 347,
+        "startColumn" : 15,
+        "endLine" : 347,
+        "endColumn" : 44
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 776,
+    "ordinaryNext" : 776,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 776,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 420,
+        "startColumn" : 8,
+        "endLine" : 420,
+        "endColumn" : 33
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 348,
+        "startColumn" : 15,
+        "endLine" : 348,
+        "endColumn" : 40
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 778,
+    "ordinaryNext" : 778,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 778,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 422,
+        "startColumn" : 4,
+        "endLine" : 422,
+        "endColumn" : 7
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 350,
+        "startColumn" : 11,
+        "endLine" : 350,
+        "endColumn" : 14
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 781,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 781,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 425,
+        "startColumn" : 4,
+        "endLine" : 425,
+        "endColumn" : 24
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 353,
+        "startColumn" : 11,
+        "endLine" : 353,
+        "endColumn" : 31
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 785,
+    "ordinaryNext" : 785,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 785,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 426,
+        "startColumn" : 4,
+        "endLine" : 426,
+        "endColumn" : 24
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 354,
+        "startColumn" : 11,
+        "endLine" : 354,
+        "endColumn" : 31
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 788,
+    "ordinaryNext" : 788,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 788,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 427,
+        "startColumn" : 4,
+        "endLine" : 431,
+        "endColumn" : 9
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 355,
+        "startColumn" : 11,
+        "endLine" : 359,
+        "endColumn" : 16
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 798,
+    "ordinaryNext" : 798,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 792,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 428,
+        "startColumn" : 8,
+        "endLine" : 428,
+        "endColumn" : 28
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 356,
+        "startColumn" : 15,
+        "endLine" : 356,
+        "endColumn" : 35
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 798,
+    "ordinaryNext" : 798,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 795,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 430,
+        "startColumn" : 8,
+        "endLine" : 430,
+        "endColumn" : 29
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 358,
+        "startColumn" : 15,
+        "endLine" : 358,
+        "endColumn" : 36
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 798,
+    "ordinaryNext" : 798,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 798,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 432,
+        "startColumn" : 4,
+        "endLine" : 439,
+        "endColumn" : 9
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 360,
+        "startColumn" : 11,
+        "endLine" : 367,
+        "endColumn" : 16
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 813,
+    "ordinaryNext" : 813,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 800,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 433,
+        "startColumn" : 8,
+        "endLine" : 433,
+        "endColumn" : 15
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 361,
+        "startColumn" : 15,
+        "endLine" : 361,
+        "endColumn" : 22
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 813,
+    "ordinaryNext" : 813,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 801,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 435,
+        "startColumn" : 8,
+        "endLine" : 435,
+        "endColumn" : 57
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 363,
+        "startColumn" : 15,
+        "endLine" : 363,
+        "endColumn" : 64
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 806,
+    "ordinaryNext" : 806,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 806,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 436,
+        "startColumn" : 8,
+        "endLine" : 436,
+        "endColumn" : 41
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 364,
+        "startColumn" : 15,
+        "endLine" : 364,
+        "endColumn" : 48
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 809,
+    "ordinaryNext" : 809,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 809,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 437,
+        "startColumn" : 8,
+        "endLine" : 437,
+        "endColumn" : 37
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 365,
+        "startColumn" : 15,
+        "endLine" : 365,
+        "endColumn" : 44
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 811,
+    "ordinaryNext" : 811,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 811,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 438,
+        "startColumn" : 8,
+        "endLine" : 438,
+        "endColumn" : 33
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 366,
+        "startColumn" : 15,
+        "endLine" : 366,
+        "endColumn" : 40
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 813,
+    "ordinaryNext" : 813,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 813,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 440,
+        "startColumn" : 4,
+        "endLine" : 440,
+        "endColumn" : 7
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 368,
+        "startColumn" : 11,
+        "endLine" : 368,
+        "endColumn" : 14
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 816,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 816,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 443,
+        "startColumn" : 4,
+        "endLine" : 443,
+        "endColumn" : 24
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 371,
+        "startColumn" : 11,
+        "endLine" : 371,
+        "endColumn" : 31
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 820,
+    "ordinaryNext" : 820,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 820,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 444,
+        "startColumn" : 4,
+        "endLine" : 444,
+        "endColumn" : 24
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 372,
+        "startColumn" : 11,
+        "endLine" : 372,
+        "endColumn" : 31
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 823,
+    "ordinaryNext" : 823,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 823,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 445,
+        "startColumn" : 4,
+        "endLine" : 449,
+        "endColumn" : 9
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 373,
+        "startColumn" : 11,
+        "endLine" : 377,
+        "endColumn" : 16
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 833,
+    "ordinaryNext" : 833,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 827,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 446,
+        "startColumn" : 8,
+        "endLine" : 446,
+        "endColumn" : 28
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 374,
+        "startColumn" : 15,
+        "endLine" : 374,
+        "endColumn" : 35
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 833,
+    "ordinaryNext" : 833,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 830,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 448,
+        "startColumn" : 8,
+        "endLine" : 448,
+        "endColumn" : 29
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 376,
+        "startColumn" : 15,
+        "endLine" : 376,
+        "endColumn" : 36
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 833,
+    "ordinaryNext" : 833,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 833,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 450,
+        "startColumn" : 4,
+        "endLine" : 457,
+        "endColumn" : 9
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 378,
+        "startColumn" : 11,
+        "endLine" : 385,
+        "endColumn" : 16
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 848,
+    "ordinaryNext" : 848,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 835,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 451,
+        "startColumn" : 8,
+        "endLine" : 451,
+        "endColumn" : 15
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 379,
+        "startColumn" : 15,
+        "endLine" : 379,
+        "endColumn" : 22
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 848,
+    "ordinaryNext" : 848,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 836,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 453,
+        "startColumn" : 8,
+        "endLine" : 453,
+        "endColumn" : 57
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 381,
+        "startColumn" : 15,
+        "endLine" : 381,
+        "endColumn" : 64
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 841,
+    "ordinaryNext" : 841,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 841,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 454,
+        "startColumn" : 8,
+        "endLine" : 454,
+        "endColumn" : 41
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 382,
+        "startColumn" : 15,
+        "endLine" : 382,
+        "endColumn" : 48
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 844,
+    "ordinaryNext" : 844,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 844,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 455,
+        "startColumn" : 8,
+        "endLine" : 455,
+        "endColumn" : 37
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 383,
+        "startColumn" : 15,
+        "endLine" : 383,
+        "endColumn" : 44
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 846,
+    "ordinaryNext" : 846,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 846,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 456,
+        "startColumn" : 8,
+        "endLine" : 456,
+        "endColumn" : 33
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 384,
+        "startColumn" : 15,
+        "endLine" : 384,
+        "endColumn" : 40
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 848,
+    "ordinaryNext" : 848,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 848,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 458,
+        "startColumn" : 4,
+        "endLine" : 458,
+        "endColumn" : 7
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 386,
+        "startColumn" : 11,
+        "endLine" : 386,
+        "endColumn" : 14
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 851,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 851,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 461,
+        "startColumn" : 4,
+        "endLine" : 461,
+        "endColumn" : 35
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 389,
+        "startColumn" : 11,
+        "endLine" : 389,
+        "endColumn" : 42
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 859,
+    "ordinaryNext" : 859,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 859,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 462,
+        "startColumn" : 4,
+        "endLine" : 462,
+        "endColumn" : 22
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 390,
+        "startColumn" : 11,
+        "endLine" : 390,
+        "endColumn" : 29
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 862,
+    "ordinaryNext" : 862,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 862,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 463,
+        "startColumn" : 4,
+        "endLine" : 467,
+        "endColumn" : 9
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 391,
+        "startColumn" : 11,
+        "endLine" : 395,
+        "endColumn" : 16
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 878,
+    "ordinaryNext" : 878,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 866,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 464,
+        "startColumn" : 8,
+        "endLine" : 464,
+        "endColumn" : 44
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 392,
+        "startColumn" : 15,
+        "endLine" : 392,
+        "endColumn" : 51
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 878,
+    "ordinaryNext" : 878,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 871,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 466,
+        "startColumn" : 8,
+        "endLine" : 466,
+        "endColumn" : 40
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 394,
+        "startColumn" : 15,
+        "endLine" : 394,
+        "endColumn" : 47
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 878,
+    "ordinaryNext" : 878,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 878,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 468,
+        "startColumn" : 4,
+        "endLine" : 475,
+        "endColumn" : 9
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 396,
+        "startColumn" : 11,
+        "endLine" : 403,
+        "endColumn" : 16
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 891,
+    "ordinaryNext" : 891,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 880,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 469,
+        "startColumn" : 8,
+        "endLine" : 469,
+        "endColumn" : 15
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 397,
+        "startColumn" : 15,
+        "endLine" : 397,
+        "endColumn" : 22
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 891,
+    "ordinaryNext" : 891,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 881,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 471,
+        "startColumn" : 8,
+        "endLine" : 471,
+        "endColumn" : 43
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 399,
+        "startColumn" : 15,
+        "endLine" : 399,
+        "endColumn" : 50
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 884,
+    "ordinaryNext" : 884,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 884,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 472,
+        "startColumn" : 8,
+        "endLine" : 472,
+        "endColumn" : 40
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 400,
+        "startColumn" : 15,
+        "endLine" : 400,
+        "endColumn" : 47
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 887,
+    "ordinaryNext" : 887,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 887,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 473,
+        "startColumn" : 8,
+        "endLine" : 473,
+        "endColumn" : 37
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 401,
+        "startColumn" : 15,
+        "endLine" : 401,
+        "endColumn" : 44
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 889,
+    "ordinaryNext" : 889,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 889,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 474,
+        "startColumn" : 8,
+        "endLine" : 474,
+        "endColumn" : 33
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 402,
+        "startColumn" : 15,
+        "endLine" : 402,
+        "endColumn" : 40
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 891,
+    "ordinaryNext" : 891,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 891,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 476,
+        "startColumn" : 4,
+        "endLine" : 476,
+        "endColumn" : 7
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 404,
+        "startColumn" : 11,
+        "endLine" : 404,
+        "endColumn" : 14
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 894,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 894,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 479,
+        "startColumn" : 4,
+        "endLine" : 479,
+        "endColumn" : 29
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 407,
+        "startColumn" : 11,
+        "endLine" : 407,
+        "endColumn" : 36
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 897,
+    "ordinaryNext" : 897,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 897,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 480,
+        "startColumn" : 4,
+        "endLine" : 480,
+        "endColumn" : 19
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 408,
+        "startColumn" : 11,
+        "endLine" : 408,
+        "endColumn" : 26
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 900,
+    "ordinaryNext" : 900,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 900,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 481,
+        "startColumn" : 4,
+        "endLine" : 481,
+        "endColumn" : 21
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 409,
+        "startColumn" : 11,
+        "endLine" : 409,
+        "endColumn" : 28
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 903,
+    "ordinaryNext" : 903,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 903,
+    "type" : "CallStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 482,
+        "startColumn" : 4,
+        "endLine" : 482,
+        "endColumn" : 38
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 410,
+        "startColumn" : 11,
+        "endLine" : 410,
+        "endColumn" : 45
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 911,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 911,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 486,
+        "startColumn" : 4,
+        "endLine" : 497,
+        "endColumn" : 9
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 414,
+        "startColumn" : 11,
+        "endLine" : 425,
+        "endColumn" : 16
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 952,
+    "ordinaryNext" : 952,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 918,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 488,
+        "startColumn" : 8,
+        "endLine" : 488,
+        "endColumn" : 41
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 416,
+        "startColumn" : 15,
+        "endLine" : 416,
+        "endColumn" : 48
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 924,
+    "ordinaryNext" : 924,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 924,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 489,
+        "startColumn" : 8,
+        "endLine" : 489,
+        "endColumn" : 40
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 417,
+        "startColumn" : 15,
+        "endLine" : 417,
+        "endColumn" : 47
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 927,
+    "ordinaryNext" : 927,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 927,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 490,
+        "startColumn" : 8,
+        "endLine" : 490,
+        "endColumn" : 39
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 418,
+        "startColumn" : 15,
+        "endLine" : 418,
+        "endColumn" : 46
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 930,
+    "ordinaryNext" : 930,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 930,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 491,
+        "startColumn" : 8,
+        "endLine" : 491,
+        "endColumn" : 46
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 419,
+        "startColumn" : 15,
+        "endLine" : 419,
+        "endColumn" : 53
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 933,
+    "ordinaryNext" : 933,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 933,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 492,
+        "startColumn" : 8,
+        "endLine" : 492,
+        "endColumn" : 50
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 420,
+        "startColumn" : 15,
+        "endLine" : 420,
+        "endColumn" : 57
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 952,
+    "ordinaryNext" : 952,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 938,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 494,
+        "startColumn" : 8,
+        "endLine" : 494,
+        "endColumn" : 34
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 422,
+        "startColumn" : 15,
+        "endLine" : 422,
+        "endColumn" : 41
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 941,
+    "ordinaryNext" : 941,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 941,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 495,
+        "startColumn" : 8,
+        "endLine" : 495,
+        "endColumn" : 42
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 423,
+        "startColumn" : 15,
+        "endLine" : 423,
+        "endColumn" : 49
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 947,
+    "ordinaryNext" : 947,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 947,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 496,
+        "startColumn" : 8,
+        "endLine" : 496,
+        "endColumn" : 50
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 424,
+        "startColumn" : 15,
+        "endLine" : 424,
+        "endColumn" : 57
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 952,
+    "ordinaryNext" : 952,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 952,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 498,
+        "startColumn" : 4,
+        "endLine" : 498,
+        "endColumn" : 7
+      },
+      "original" : {
+        "file" : "CBACT01C.cbl",
+        "startLine" : 426,
+        "startColumn" : 11,
+        "endLine" : 426,
+        "endColumn" : 14
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : null,
+    "normalCompletionRecognized" : true
+  } ]
+}

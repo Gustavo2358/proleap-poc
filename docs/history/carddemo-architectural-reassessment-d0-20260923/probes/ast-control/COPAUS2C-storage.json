@@ -1,0 +1,1425 @@
+{
+  "source" : "/home/gustavo/workspace/teste-e2e/storage-semantics-st-w0-w5/runtime/carddemo-upstream/app/app-authorization-ims-db2-mq/cbl/COPAUS2C.cbl",
+  "unresolvedCopies" : 0,
+  "preprocessorErrors" : 0,
+  "parserDiagnostics" : [ ],
+  "statements" : [ {
+    "id" : 172,
+    "type" : "EmbeddedLanguageStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 145,
+        "startColumn" : 4,
+        "endLine" : 145,
+        "endColumn" : 221
+      },
+      "original" : {
+        "file" : "COPAUS2C.cbl",
+        "startLine" : 91,
+        "startColumn" : 11,
+        "endLine" : 94,
+        "endColumn" : 18
+      },
+      "includeChain" : [ ],
+      "exact" : false
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : null,
+    "normalCompletionRecognized" : false
+  }, {
+    "id" : 173,
+    "type" : "EmbeddedLanguageStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 147,
+        "startColumn" : 4,
+        "endLine" : 147,
+        "endColumn" : 353
+      },
+      "original" : {
+        "file" : "COPAUS2C.cbl",
+        "startLine" : 95,
+        "startColumn" : 11,
+        "endLine" : 100,
+        "endColumn" : 18
+      },
+      "includeChain" : [ ],
+      "exact" : false
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : null,
+    "normalCompletionRecognized" : false
+  }, {
+    "id" : 174,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 149,
+        "startColumn" : 4,
+        "endLine" : 149,
+        "endColumn" : 46
+      },
+      "original" : {
+        "file" : "COPAUS2C.cbl",
+        "startLine" : 101,
+        "startColumn" : 11,
+        "endLine" : 101,
+        "endColumn" : 53
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 177,
+    "ordinaryNext" : 177,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 177,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 151,
+        "startColumn" : 4,
+        "endLine" : 151,
+        "endColumn" : 44
+      },
+      "original" : {
+        "file" : "COPAUS2C.cbl",
+        "startLine" : 103,
+        "startColumn" : 11,
+        "endLine" : 103,
+        "endColumn" : 51
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 183,
+    "ordinaryNext" : 183,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 183,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 152,
+        "startColumn" : 4,
+        "endLine" : 152,
+        "endColumn" : 44
+      },
+      "original" : {
+        "file" : "COPAUS2C.cbl",
+        "startLine" : 104,
+        "startColumn" : 11,
+        "endLine" : 104,
+        "endColumn" : 51
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 189,
+    "ordinaryNext" : 189,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 189,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 153,
+        "startColumn" : 4,
+        "endLine" : 153,
+        "endColumn" : 44
+      },
+      "original" : {
+        "file" : "COPAUS2C.cbl",
+        "startLine" : 105,
+        "startColumn" : 11,
+        "endLine" : 105,
+        "endColumn" : 51
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 195,
+    "ordinaryNext" : 195,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 195,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 155,
+        "startColumn" : 4,
+        "endLine" : 155,
+        "endColumn" : 53
+      },
+      "original" : {
+        "file" : "COPAUS2C.cbl",
+        "startLine" : 107,
+        "startColumn" : 11,
+        "endLine" : 107,
+        "endColumn" : 60
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 202,
+    "ordinaryNext" : 202,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 202,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 156,
+        "startColumn" : 4,
+        "endLine" : 156,
+        "endColumn" : 42
+      },
+      "original" : {
+        "file" : "COPAUS2C.cbl",
+        "startLine" : 108,
+        "startColumn" : 11,
+        "endLine" : 108,
+        "endColumn" : 49
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 208,
+    "ordinaryNext" : 208,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 208,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 157,
+        "startColumn" : 4,
+        "endLine" : 157,
+        "endColumn" : 42
+      },
+      "original" : {
+        "file" : "COPAUS2C.cbl",
+        "startLine" : 109,
+        "startColumn" : 11,
+        "endLine" : 109,
+        "endColumn" : 49
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 214,
+    "ordinaryNext" : 214,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 214,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 158,
+        "startColumn" : 4,
+        "endLine" : 158,
+        "endColumn" : 42
+      },
+      "original" : {
+        "file" : "COPAUS2C.cbl",
+        "startLine" : 110,
+        "startColumn" : 11,
+        "endLine" : 110,
+        "endColumn" : 49
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 220,
+    "ordinaryNext" : 220,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 220,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 159,
+        "startColumn" : 4,
+        "endLine" : 159,
+        "endColumn" : 43
+      },
+      "original" : {
+        "file" : "COPAUS2C.cbl",
+        "startLine" : 111,
+        "startColumn" : 11,
+        "endLine" : 111,
+        "endColumn" : 50
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 226,
+    "ordinaryNext" : 226,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 226,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 161,
+        "startColumn" : 4,
+        "endLine" : 161,
+        "endColumn" : 40
+      },
+      "original" : {
+        "file" : "COPAUS2C.cbl",
+        "startLine" : 113,
+        "startColumn" : 11,
+        "endLine" : 113,
+        "endColumn" : 47
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 229,
+    "ordinaryNext" : 229,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 229,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 162,
+        "startColumn" : 4,
+        "endLine" : 162,
+        "endColumn" : 39
+      },
+      "original" : {
+        "file" : "COPAUS2C.cbl",
+        "startLine" : 114,
+        "startColumn" : 11,
+        "endLine" : 114,
+        "endColumn" : 46
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 232,
+    "ordinaryNext" : 232,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 232,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 163,
+        "startColumn" : 4,
+        "endLine" : 163,
+        "endColumn" : 41
+      },
+      "original" : {
+        "file" : "COPAUS2C.cbl",
+        "startLine" : 115,
+        "startColumn" : 11,
+        "endLine" : 115,
+        "endColumn" : 48
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 235,
+    "ordinaryNext" : 235,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 235,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 164,
+        "startColumn" : 4,
+        "endLine" : 164,
+        "endColumn" : 48
+      },
+      "original" : {
+        "file" : "COPAUS2C.cbl",
+        "startLine" : 116,
+        "startColumn" : 11,
+        "endLine" : 116,
+        "endColumn" : 55
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 238,
+    "ordinaryNext" : 238,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 238,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 165,
+        "startColumn" : 4,
+        "endLine" : 165,
+        "endColumn" : 44
+      },
+      "original" : {
+        "file" : "COPAUS2C.cbl",
+        "startLine" : 117,
+        "startColumn" : 11,
+        "endLine" : 117,
+        "endColumn" : 51
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 241,
+    "ordinaryNext" : 241,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 241,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 166,
+        "startColumn" : 4,
+        "endLine" : 166,
+        "endColumn" : 46
+      },
+      "original" : {
+        "file" : "COPAUS2C.cbl",
+        "startLine" : 118,
+        "startColumn" : 11,
+        "endLine" : 118,
+        "endColumn" : 53
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 244,
+    "ordinaryNext" : 244,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 244,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 167,
+        "startColumn" : 4,
+        "endLine" : 167,
+        "endColumn" : 44
+      },
+      "original" : {
+        "file" : "COPAUS2C.cbl",
+        "startLine" : 119,
+        "startColumn" : 11,
+        "endLine" : 119,
+        "endColumn" : 51
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 247,
+    "ordinaryNext" : 247,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 247,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 168,
+        "startColumn" : 4,
+        "endLine" : 168,
+        "endColumn" : 46
+      },
+      "original" : {
+        "file" : "COPAUS2C.cbl",
+        "startLine" : 120,
+        "startColumn" : 11,
+        "endLine" : 120,
+        "endColumn" : 53
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 250,
+    "ordinaryNext" : 250,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 250,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 169,
+        "startColumn" : 4,
+        "endLine" : 169,
+        "endColumn" : 48
+      },
+      "original" : {
+        "file" : "COPAUS2C.cbl",
+        "startLine" : 121,
+        "startColumn" : 11,
+        "endLine" : 121,
+        "endColumn" : 55
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 253,
+    "ordinaryNext" : 253,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 253,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 170,
+        "startColumn" : 4,
+        "endLine" : 170,
+        "endColumn" : 47
+      },
+      "original" : {
+        "file" : "COPAUS2C.cbl",
+        "startLine" : 122,
+        "startColumn" : 11,
+        "endLine" : 122,
+        "endColumn" : 54
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 256,
+    "ordinaryNext" : 256,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 256,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 171,
+        "startColumn" : 4,
+        "endLine" : 171,
+        "endColumn" : 47
+      },
+      "original" : {
+        "file" : "COPAUS2C.cbl",
+        "startLine" : 123,
+        "startColumn" : 11,
+        "endLine" : 123,
+        "endColumn" : 54
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 259,
+    "ordinaryNext" : 259,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 259,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 172,
+        "startColumn" : 4,
+        "endLine" : 172,
+        "endColumn" : 44
+      },
+      "original" : {
+        "file" : "COPAUS2C.cbl",
+        "startLine" : 124,
+        "startColumn" : 11,
+        "endLine" : 124,
+        "endColumn" : 51
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 262,
+    "ordinaryNext" : 262,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 262,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 173,
+        "startColumn" : 4,
+        "endLine" : 174,
+        "endColumn" : 54
+      },
+      "original" : {
+        "file" : "COPAUS2C.cbl",
+        "startLine" : 125,
+        "startColumn" : 11,
+        "endLine" : 126,
+        "endColumn" : 61
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 265,
+    "ordinaryNext" : 265,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 265,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 175,
+        "startColumn" : 4,
+        "endLine" : 175,
+        "endColumn" : 49
+      },
+      "original" : {
+        "file" : "COPAUS2C.cbl",
+        "startLine" : 127,
+        "startColumn" : 11,
+        "endLine" : 127,
+        "endColumn" : 56
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 268,
+    "ordinaryNext" : 268,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 268,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 176,
+        "startColumn" : 4,
+        "endLine" : 176,
+        "endColumn" : 46
+      },
+      "original" : {
+        "file" : "COPAUS2C.cbl",
+        "startLine" : 128,
+        "startColumn" : 11,
+        "endLine" : 128,
+        "endColumn" : 53
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 271,
+    "ordinaryNext" : 271,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 271,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 177,
+        "startColumn" : 4,
+        "endLine" : 177,
+        "endColumn" : 43
+      },
+      "original" : {
+        "file" : "COPAUS2C.cbl",
+        "startLine" : 129,
+        "startColumn" : 11,
+        "endLine" : 129,
+        "endColumn" : 50
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 274,
+    "ordinaryNext" : 274,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 274,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 178,
+        "startColumn" : 4,
+        "endLine" : 178,
+        "endColumn" : 55
+      },
+      "original" : {
+        "file" : "COPAUS2C.cbl",
+        "startLine" : 130,
+        "startColumn" : 11,
+        "endLine" : 130,
+        "endColumn" : 62
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 278,
+    "ordinaryNext" : 278,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 278,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 179,
+        "startColumn" : 4,
+        "endLine" : 179,
+        "endColumn" : 50
+      },
+      "original" : {
+        "file" : "COPAUS2C.cbl",
+        "startLine" : 131,
+        "startColumn" : 11,
+        "endLine" : 131,
+        "endColumn" : 57
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 281,
+    "ordinaryNext" : 281,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 281,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 180,
+        "startColumn" : 4,
+        "endLine" : 180,
+        "endColumn" : 45
+      },
+      "original" : {
+        "file" : "COPAUS2C.cbl",
+        "startLine" : 132,
+        "startColumn" : 11,
+        "endLine" : 132,
+        "endColumn" : 52
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 284,
+    "ordinaryNext" : 284,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 284,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 181,
+        "startColumn" : 4,
+        "endLine" : 181,
+        "endColumn" : 46
+      },
+      "original" : {
+        "file" : "COPAUS2C.cbl",
+        "startLine" : 133,
+        "startColumn" : 11,
+        "endLine" : 133,
+        "endColumn" : 53
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 287,
+    "ordinaryNext" : 287,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 287,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 182,
+        "startColumn" : 4,
+        "endLine" : 182,
+        "endColumn" : 44
+      },
+      "original" : {
+        "file" : "COPAUS2C.cbl",
+        "startLine" : 134,
+        "startColumn" : 11,
+        "endLine" : 134,
+        "endColumn" : 51
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 290,
+    "ordinaryNext" : 290,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 290,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 183,
+        "startColumn" : 4,
+        "endLine" : 183,
+        "endColumn" : 46
+      },
+      "original" : {
+        "file" : "COPAUS2C.cbl",
+        "startLine" : 135,
+        "startColumn" : 11,
+        "endLine" : 135,
+        "endColumn" : 53
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 293,
+    "ordinaryNext" : 293,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 293,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 184,
+        "startColumn" : 4,
+        "endLine" : 184,
+        "endColumn" : 44
+      },
+      "original" : {
+        "file" : "COPAUS2C.cbl",
+        "startLine" : 136,
+        "startColumn" : 11,
+        "endLine" : 136,
+        "endColumn" : 51
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 296,
+    "ordinaryNext" : 296,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 296,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 185,
+        "startColumn" : 4,
+        "endLine" : 185,
+        "endColumn" : 42
+      },
+      "original" : {
+        "file" : "COPAUS2C.cbl",
+        "startLine" : 137,
+        "startColumn" : 11,
+        "endLine" : 137,
+        "endColumn" : 49
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 299,
+    "ordinaryNext" : 299,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 299,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 186,
+        "startColumn" : 4,
+        "endLine" : 186,
+        "endColumn" : 39
+      },
+      "original" : {
+        "file" : "COPAUS2C.cbl",
+        "startLine" : 138,
+        "startColumn" : 11,
+        "endLine" : 138,
+        "endColumn" : 46
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 302,
+    "ordinaryNext" : 302,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 302,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 187,
+        "startColumn" : 4,
+        "endLine" : 187,
+        "endColumn" : 39
+      },
+      "original" : {
+        "file" : "COPAUS2C.cbl",
+        "startLine" : 139,
+        "startColumn" : 11,
+        "endLine" : 139,
+        "endColumn" : 46
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 305,
+    "ordinaryNext" : 305,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 305,
+    "type" : "EmbeddedLanguageStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 189,
+        "startColumn" : 4,
+        "endLine" : 189,
+        "endColumn" : 3757
+      },
+      "original" : {
+        "file" : "COPAUS2C.cbl",
+        "startLine" : 141,
+        "startColumn" : 11,
+        "endLine" : 198,
+        "endColumn" : 18
+      },
+      "includeChain" : [ ],
+      "exact" : false
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : null,
+    "normalCompletionRecognized" : false
+  }, {
+    "id" : 306,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 191,
+        "startColumn" : 4,
+        "endLine" : 208,
+        "endColumn" : 9
+      },
+      "original" : {
+        "file" : "COPAUS2C.cbl",
+        "startLine" : 199,
+        "startColumn" : 11,
+        "endLine" : 216,
+        "endColumn" : 16
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 346,
+    "ordinaryNext" : 346,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 310,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 192,
+        "startColumn" : 7,
+        "endLine" : 192,
+        "endColumn" : 37
+      },
+      "original" : {
+        "file" : "COPAUS2C.cbl",
+        "startLine" : 200,
+        "startColumn" : 14,
+        "endLine" : 200,
+        "endColumn" : 44
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 315,
+    "ordinaryNext" : 315,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 315,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 193,
+        "startColumn" : 7,
+        "endLine" : 193,
+        "endColumn" : 47
+      },
+      "original" : {
+        "file" : "COPAUS2C.cbl",
+        "startLine" : 201,
+        "startColumn" : 14,
+        "endLine" : 201,
+        "endColumn" : 54
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 346,
+    "ordinaryNext" : 346,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 318,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 195,
+        "startColumn" : 7,
+        "endLine" : 207,
+        "endColumn" : 12
+      },
+      "original" : {
+        "file" : "COPAUS2C.cbl",
+        "startLine" : 203,
+        "startColumn" : 14,
+        "endLine" : 215,
+        "endColumn" : 19
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 346,
+    "ordinaryNext" : 346,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 322,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 196,
+        "startColumn" : 10,
+        "endLine" : 196,
+        "endColumn" : 29
+      },
+      "original" : {
+        "file" : "COPAUS2C.cbl",
+        "startLine" : 204,
+        "startColumn" : 17,
+        "endLine" : 204,
+        "endColumn" : 36
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 346,
+    "ordinaryNext" : 346,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 324,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 198,
+        "startColumn" : 10,
+        "endLine" : 198,
+        "endColumn" : 40
+      },
+      "original" : {
+        "file" : "COPAUS2C.cbl",
+        "startLine" : 206,
+        "startColumn" : 17,
+        "endLine" : 206,
+        "endColumn" : 47
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 329,
+    "ordinaryNext" : 329,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 329,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 200,
+        "startColumn" : 10,
+        "endLine" : 200,
+        "endColumn" : 46
+      },
+      "original" : {
+        "file" : "COPAUS2C.cbl",
+        "startLine" : 208,
+        "startColumn" : 17,
+        "endLine" : 208,
+        "endColumn" : 53
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 332,
+    "ordinaryNext" : 332,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 332,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 201,
+        "startColumn" : 10,
+        "endLine" : 201,
+        "endColumn" : 47
+      },
+      "original" : {
+        "file" : "COPAUS2C.cbl",
+        "startLine" : 209,
+        "startColumn" : 17,
+        "endLine" : 209,
+        "endColumn" : 54
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 335,
+    "ordinaryNext" : 335,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 335,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 203,
+        "startColumn" : 10,
+        "endLine" : 206,
+        "endColumn" : 19
+      },
+      "original" : {
+        "file" : "COPAUS2C.cbl",
+        "startLine" : 211,
+        "startColumn" : 17,
+        "endLine" : 214,
+        "endColumn" : 26
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 346,
+    "ordinaryNext" : 346,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 346,
+    "type" : "EmbeddedLanguageStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 210,
+        "startColumn" : 4,
+        "endLine" : 210,
+        "endColumn" : 89
+      },
+      "original" : {
+        "file" : "COPAUS2C.cbl",
+        "startLine" : 218,
+        "startColumn" : 11,
+        "endLine" : 219,
+        "endColumn" : 18
+      },
+      "includeChain" : [ ],
+      "exact" : false
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : null,
+    "normalCompletionRecognized" : false
+  }, {
+    "id" : 349,
+    "type" : "EmbeddedLanguageStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 214,
+        "startColumn" : 4,
+        "endLine" : 214,
+        "endColumn" : 452
+      },
+      "original" : {
+        "file" : "COPAUS2C.cbl",
+        "startLine" : 222,
+        "startColumn" : 11,
+        "endLine" : 229,
+        "endColumn" : 18
+      },
+      "includeChain" : [ ],
+      "exact" : false
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : null,
+    "normalCompletionRecognized" : false
+  }, {
+    "id" : 350,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 216,
+        "startColumn" : 4,
+        "endLine" : 229,
+        "endColumn" : 9
+      },
+      "original" : {
+        "file" : "COPAUS2C.cbl",
+        "startLine" : 230,
+        "startColumn" : 11,
+        "endLine" : 243,
+        "endColumn" : 16
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : null,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 354,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 217,
+        "startColumn" : 7,
+        "endLine" : 217,
+        "endColumn" : 37
+      },
+      "original" : {
+        "file" : "COPAUS2C.cbl",
+        "startLine" : 231,
+        "startColumn" : 14,
+        "endLine" : 231,
+        "endColumn" : 44
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 359,
+    "ordinaryNext" : 359,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 359,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 218,
+        "startColumn" : 7,
+        "endLine" : 218,
+        "endColumn" : 47
+      },
+      "original" : {
+        "file" : "COPAUS2C.cbl",
+        "startLine" : 232,
+        "startColumn" : 14,
+        "endLine" : 232,
+        "endColumn" : 54
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : null,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 362,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 220,
+        "startColumn" : 7,
+        "endLine" : 220,
+        "endColumn" : 37
+      },
+      "original" : {
+        "file" : "COPAUS2C.cbl",
+        "startLine" : 234,
+        "startColumn" : 14,
+        "endLine" : 234,
+        "endColumn" : 44
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 367,
+    "ordinaryNext" : 367,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 367,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 222,
+        "startColumn" : 7,
+        "endLine" : 222,
+        "endColumn" : 43
+      },
+      "original" : {
+        "file" : "COPAUS2C.cbl",
+        "startLine" : 236,
+        "startColumn" : 14,
+        "endLine" : 236,
+        "endColumn" : 50
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 370,
+    "ordinaryNext" : 370,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 370,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 223,
+        "startColumn" : 7,
+        "endLine" : 223,
+        "endColumn" : 44
+      },
+      "original" : {
+        "file" : "COPAUS2C.cbl",
+        "startLine" : 237,
+        "startColumn" : 14,
+        "endLine" : 237,
+        "endColumn" : 51
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 373,
+    "ordinaryNext" : 373,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 373,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 225,
+        "startColumn" : 7,
+        "endLine" : 228,
+        "endColumn" : 16
+      },
+      "original" : {
+        "file" : "COPAUS2C.cbl",
+        "startLine" : 239,
+        "startColumn" : 14,
+        "endLine" : 242,
+        "endColumn" : 23
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : null,
+    "normalCompletionRecognized" : true
+  } ],
+  "storageComponents" : [ {
+    "unit" : "ProgramUnitId[compilationUnitId=COPAUS2C.CBL, structuralPath=[0], canonicalProgramName=COPAUS2C]",
+    "roots" : [ {
+      "name" : "WS-VARIABLES",
+      "astId" : 5,
+      "parsedLevel" : 1,
+      "source" : {
+        "expanded" : {
+          "file" : "<preprocessed>",
+          "startLine" : 32,
+          "startColumn" : 0,
+          "endLine" : 33,
+          "endColumn" : 1
+        },
+        "original" : {
+          "file" : "COPAUS2C.cbl",
+          "startLine" : 32,
+          "startColumn" : 7,
+          "endLine" : 33,
+          "endColumn" : 8
+        },
+        "includeChain" : [ ],
+        "exact" : true
+      },
+      "level" : "01"
+    }, {
+      "name" : "FILLER",
+      "astId" : 70,
+      "parsedLevel" : -1,
+      "source" : {
+        "expanded" : {
+          "file" : "<preprocessed>",
+          "startLine" : 65,
+          "startColumn" : 4,
+          "endLine" : 68,
+          "endColumn" : 3
+        },
+        "original" : {
+          "file" : "COPAUS2C.cbl",
+          "startLine" : 65,
+          "startColumn" : 11,
+          "endLine" : 68,
+          "endColumn" : 10
+        },
+        "includeChain" : [ ],
+        "exact" : false
+      },
+      "level" : "SQL"
+    }, {
+      "name" : "FILLER",
+      "astId" : 71,
+      "parsedLevel" : -1,
+      "source" : {
+        "expanded" : {
+          "file" : "<preprocessed>",
+          "startLine" : 68,
+          "startColumn" : 4,
+          "endLine" : 72,
+          "endColumn" : 65
+        },
+        "original" : {
+          "file" : "COPAUS2C.cbl",
+          "startLine" : 68,
+          "startColumn" : 11,
+          "endLine" : 72,
+          "endColumn" : 80
+        },
+        "includeChain" : [ ],
+        "exact" : false
+      },
+      "level" : "SQL"
+    } ],
+    "structureProven" : false
+  } ]
+}

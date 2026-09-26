@@ -1,0 +1,367 @@
+[
+  {
+    "program": "app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
+    "sha256": "309468a5c4745f92c6dcf6ed28b396334b2f131ced78eb43eda962a63d2b174e",
+    "expected": "309468a5c4745f92c6dcf6ed28b396334b2f131ced78eb43eda962a63d2b174e"
+  },
+  {
+    "program": "app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+    "sha256": "224856ce6ef1b7417aefcec033a36a9315c0005decf9f11d21d11e9240e3f8fa",
+    "expected": "224856ce6ef1b7417aefcec033a36a9315c0005decf9f11d21d11e9240e3f8fa"
+  },
+  {
+    "program": "app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+    "sha256": "7ab6dadad6d9d738f6a0cb402f394c25ccda5f7fef26ad644feeb76c11065254",
+    "expected": "7ab6dadad6d9d738f6a0cb402f394c25ccda5f7fef26ad644feeb76c11065254"
+  },
+  {
+    "program": "app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+    "sha256": "27a969cbee69426fa1056053e676041430e99399912f0e27ee1f1a454093c21e",
+    "expected": "27a969cbee69426fa1056053e676041430e99399912f0e27ee1f1a454093c21e"
+  },
+  {
+    "program": "app/app-authorization-ims-db2-mq/cbl/COPAUS2C.cbl",
+    "sha256": "57232060f8bdaecc679b74e93fcf91d93cffd400326c001bd187ab5fad14789e",
+    "expected": "57232060f8bdaecc679b74e93fcf91d93cffd400326c001bd187ab5fad14789e"
+  },
+  {
+    "program": "app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+    "sha256": "13c409d1b14b52c4d334c9297aaa7dafa209901569f809127f3831d780722e33",
+    "expected": "13c409d1b14b52c4d334c9297aaa7dafa209901569f809127f3831d780722e33"
+  },
+  {
+    "program": "app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
+    "sha256": "5694a2ed8a12dd4dc82717b401c655866a0e1f9abb0acf395151ead2b0cb31a7",
+    "expected": "5694a2ed8a12dd4dc82717b401c655866a0e1f9abb0acf395151ead2b0cb31a7"
+  },
+  {
+    "program": "app/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL",
+    "sha256": "cf174417cd833193fec178a782fa8d7cabb95da9a8c2ca709af598c45f485625",
+    "expected": "cf174417cd833193fec178a782fa8d7cabb95da9a8c2ca709af598c45f485625"
+  },
+  {
+    "program": "app/app-transaction-type-db2/cbl/COBTUPDT.cbl",
+    "sha256": "0213fd5718c6aadd3fba6bbfb1818456d75d10843181bff63aca9ff57d39e87c",
+    "expected": "0213fd5718c6aadd3fba6bbfb1818456d75d10843181bff63aca9ff57d39e87c"
+  },
+  {
+    "program": "app/app-transaction-type-db2/cbl/COTRTLIC.cbl",
+    "sha256": "916a5fe2279ad626147990d8f86fac1e4b296f827889485b020cc310b5323601",
+    "expected": "916a5fe2279ad626147990d8f86fac1e4b296f827889485b020cc310b5323601"
+  },
+  {
+    "program": "app/app-transaction-type-db2/cbl/COTRTUPC.cbl",
+    "sha256": "c16e40c391c0ad2d3e797a0e01144ef5b78d3b0db0a1771411a95a9d08b01f67",
+    "expected": "c16e40c391c0ad2d3e797a0e01144ef5b78d3b0db0a1771411a95a9d08b01f67"
+  },
+  {
+    "program": "app/app-vsam-mq/cbl/COACCT01.cbl",
+    "sha256": "92776ed2801da1148839a9ed98b6537de4b41e0c7f050c8dcaae0d4e4ea543b5",
+    "expected": "92776ed2801da1148839a9ed98b6537de4b41e0c7f050c8dcaae0d4e4ea543b5"
+  },
+  {
+    "program": "app/app-vsam-mq/cbl/CODATE01.cbl",
+    "sha256": "97fcba3faa272c98778eb7ef50ef87faec7290168e24a9b1714996453d660ddb",
+    "expected": "97fcba3faa272c98778eb7ef50ef87faec7290168e24a9b1714996453d660ddb"
+  },
+  {
+    "program": "app/cbl/CBACT01C.cbl",
+    "sha256": "f8eb6e3a561ff96a1889a8f777a8998850a11dddae221da2c5018067d7b95551",
+    "expected": "f8eb6e3a561ff96a1889a8f777a8998850a11dddae221da2c5018067d7b95551"
+  },
+  {
+    "program": "app/cbl/CBACT02C.cbl",
+    "sha256": "d290cbbbec1e25859847d9dfe6b28040cd6b09c3b71747e39de7b4713d838e76",
+    "expected": "d290cbbbec1e25859847d9dfe6b28040cd6b09c3b71747e39de7b4713d838e76"
+  },
+  {
+    "program": "app/cbl/CBACT03C.cbl",
+    "sha256": "ee1019bc3ef7bc4e0f807b6e9b7167c9386ee7c2f647c63dfddc6fc464487855",
+    "expected": "ee1019bc3ef7bc4e0f807b6e9b7167c9386ee7c2f647c63dfddc6fc464487855"
+  },
+  {
+    "program": "app/cbl/CBACT04C.cbl",
+    "sha256": "5084bb8b0c9a0f0199f737487ae1863f12e43cabbdc459a62b6b67bedc683cc4",
+    "expected": "5084bb8b0c9a0f0199f737487ae1863f12e43cabbdc459a62b6b67bedc683cc4"
+  },
+  {
+    "program": "app/cbl/CBCUS01C.cbl",
+    "sha256": "233dbc3bc33a3b9ac555922085a92be56e88d16316bff624b5723c4c36c99714",
+    "expected": "233dbc3bc33a3b9ac555922085a92be56e88d16316bff624b5723c4c36c99714"
+  },
+  {
+    "program": "app/cbl/CBEXPORT.cbl",
+    "sha256": "598e3c9055b96b79266910e080bc24048eb308ee61afc828c06dbade9f501d38",
+    "expected": "598e3c9055b96b79266910e080bc24048eb308ee61afc828c06dbade9f501d38"
+  },
+  {
+    "program": "app/cbl/CBIMPORT.cbl",
+    "sha256": "0eccb28695cb3a8ea6f6ea7da26d1b48a4529787f6130b2c98bead33bc661967",
+    "expected": "0eccb28695cb3a8ea6f6ea7da26d1b48a4529787f6130b2c98bead33bc661967"
+  },
+  {
+    "program": "app/cbl/CBSTM03A.CBL",
+    "sha256": "23c8753b6b4e0c24d4560c83861fe8162626bab195faec0fe88cf80b8bf432b5",
+    "expected": "23c8753b6b4e0c24d4560c83861fe8162626bab195faec0fe88cf80b8bf432b5"
+  },
+  {
+    "program": "app/cbl/CBSTM03B.CBL",
+    "sha256": "ac004f7f40dcb3f2a14dfb83a743f83fed9383675bc93452f3424c40cb6475a7",
+    "expected": "ac004f7f40dcb3f2a14dfb83a743f83fed9383675bc93452f3424c40cb6475a7"
+  },
+  {
+    "program": "app/cbl/CBTRN01C.cbl",
+    "sha256": "55c2aebd59528aa42b28878ba5ca4d17a00b3548fc25e4ce1529710d366fd576",
+    "expected": "55c2aebd59528aa42b28878ba5ca4d17a00b3548fc25e4ce1529710d366fd576"
+  },
+  {
+    "program": "app/cbl/CBTRN02C.cbl",
+    "sha256": "708f3cadc555acab63f11e2f3238f5372ac7180e6b01197bf960d96bf0d2e83f",
+    "expected": "708f3cadc555acab63f11e2f3238f5372ac7180e6b01197bf960d96bf0d2e83f"
+  },
+  {
+    "program": "app/cbl/CBTRN03C.cbl",
+    "sha256": "8691e625502b7efcfd7ba4ae61797132e7b68f3fd5fedcdcc7dd6488f6871eef",
+    "expected": "8691e625502b7efcfd7ba4ae61797132e7b68f3fd5fedcdcc7dd6488f6871eef"
+  },
+  {
+    "program": "app/cbl/COACTUPC.cbl",
+    "sha256": "b5bb7d6ccad022e0fc91b4dd1e971f49d184adf89b56abdce14eccff35b39396",
+    "expected": "b5bb7d6ccad022e0fc91b4dd1e971f49d184adf89b56abdce14eccff35b39396"
+  },
+  {
+    "program": "app/cbl/COACTVWC.cbl",
+    "sha256": "4f1e55176f69edfb55b7af7a161aceb8c3bc3bd1b2924a704a76256e0e751b54",
+    "expected": "4f1e55176f69edfb55b7af7a161aceb8c3bc3bd1b2924a704a76256e0e751b54"
+  },
+  {
+    "program": "app/cbl/COADM01C.cbl",
+    "sha256": "4e49afda5f685f3ebeb95ed04a93cf88df93d39c66d8d7f9ba2b9a3e00a1f690",
+    "expected": "4e49afda5f685f3ebeb95ed04a93cf88df93d39c66d8d7f9ba2b9a3e00a1f690"
+  },
+  {
+    "program": "app/cbl/COBIL00C.cbl",
+    "sha256": "b5c46039eb8fd2f7ed7d3ca379172e56fa87385a369023bef706b04986fe1cfb",
+    "expected": "b5c46039eb8fd2f7ed7d3ca379172e56fa87385a369023bef706b04986fe1cfb"
+  },
+  {
+    "program": "app/cbl/COBSWAIT.cbl",
+    "sha256": "38a8d28235e58509776f5c8c74c113d5848a7ac68fab753c55ab887221c3b43a",
+    "expected": "38a8d28235e58509776f5c8c74c113d5848a7ac68fab753c55ab887221c3b43a"
+  },
+  {
+    "program": "app/cbl/COCRDLIC.cbl",
+    "sha256": "d6a9210ad3062bd657881fc3f0d2a7368db3ff4869594e0d6a878d8f410d87b6",
+    "expected": "d6a9210ad3062bd657881fc3f0d2a7368db3ff4869594e0d6a878d8f410d87b6"
+  },
+  {
+    "program": "app/cbl/COCRDSLC.cbl",
+    "sha256": "d5af307fb4b1a155f03df9eea14b402d866a332360e14a1e37dbefe59b73363b",
+    "expected": "d5af307fb4b1a155f03df9eea14b402d866a332360e14a1e37dbefe59b73363b"
+  },
+  {
+    "program": "app/cbl/COCRDUPC.cbl",
+    "sha256": "c245cf383a4a3f721773a13ca231eb76bd5ae75c1830d58c7aba898a554a0de9",
+    "expected": "c245cf383a4a3f721773a13ca231eb76bd5ae75c1830d58c7aba898a554a0de9"
+  },
+  {
+    "program": "app/cbl/COMEN01C.cbl",
+    "sha256": "c77747b4caaf00b45177a6449562b7f59ec336db832937595edef8b32fdce6fa",
+    "expected": "c77747b4caaf00b45177a6449562b7f59ec336db832937595edef8b32fdce6fa"
+  },
+  {
+    "program": "app/cbl/CORPT00C.cbl",
+    "sha256": "0b06bd5d4f38f17871de8985c439dfce7ed30d28e02b6ffeb8459e0cd8db4fc2",
+    "expected": "0b06bd5d4f38f17871de8985c439dfce7ed30d28e02b6ffeb8459e0cd8db4fc2"
+  },
+  {
+    "program": "app/cbl/COSGN00C.cbl",
+    "sha256": "4f901ae6b113eebae60ae1d94b30f8cb9906d031a4419770bf56980bdf97e377",
+    "expected": "4f901ae6b113eebae60ae1d94b30f8cb9906d031a4419770bf56980bdf97e377"
+  },
+  {
+    "program": "app/cbl/COTRN00C.cbl",
+    "sha256": "51479f131b4fb300008403f0c4f9fdbde56f22a7fb341c782492da29f0d23bbe",
+    "expected": "51479f131b4fb300008403f0c4f9fdbde56f22a7fb341c782492da29f0d23bbe"
+  },
+  {
+    "program": "app/cbl/COTRN01C.cbl",
+    "sha256": "fc24ff879ac6ae12bc6817554cb756f14c5e86e0ca2dd0037af49599887f03c0",
+    "expected": "fc24ff879ac6ae12bc6817554cb756f14c5e86e0ca2dd0037af49599887f03c0"
+  },
+  {
+    "program": "app/cbl/COTRN02C.cbl",
+    "sha256": "dc33b4c797a98d2732070a223f43cc78992c2846681163a032e376630742b1ed",
+    "expected": "dc33b4c797a98d2732070a223f43cc78992c2846681163a032e376630742b1ed"
+  },
+  {
+    "program": "app/cbl/COUSR00C.cbl",
+    "sha256": "831433c6ec8306038c85cb86a8307f91dca48c26ef33a997f402187cbd9f4e04",
+    "expected": "831433c6ec8306038c85cb86a8307f91dca48c26ef33a997f402187cbd9f4e04"
+  },
+  {
+    "program": "app/cbl/COUSR01C.cbl",
+    "sha256": "aa131b1e3382dc6d101b42f1c97d4fb0c2fdd706819ed9f9a0187c82b30f3019",
+    "expected": "aa131b1e3382dc6d101b42f1c97d4fb0c2fdd706819ed9f9a0187c82b30f3019"
+  },
+  {
+    "program": "app/cbl/COUSR02C.cbl",
+    "sha256": "85d36699cbd3079320e689576ea8406d07ad78901f4f3a68a129b869359b46ca",
+    "expected": "85d36699cbd3079320e689576ea8406d07ad78901f4f3a68a129b869359b46ca"
+  },
+  {
+    "program": "app/cbl/COUSR03C.cbl",
+    "sha256": "bcd68f08c145b3b9b9c809a7082834e9519d78b6f363a0d1c5ff9d9576dcf888",
+    "expected": "bcd68f08c145b3b9b9c809a7082834e9519d78b6f363a0d1c5ff9d9576dcf888"
+  },
+  {
+    "program": "app/cbl/CSUTLDTC.cbl",
+    "sha256": "58c165dcfc3927232c02c152c673e3dee551587b85e7fe56ca67325c980eebb6",
+    "expected": "58c165dcfc3927232c02c152c673e3dee551587b85e7fe56ca67325c980eebb6"
+  },
+  {
+    "program": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/CBACT01C.cbl",
+    "sha256": "426cf9bd190b777104bb964e9d5a2929197ed7621f8b334f229ef12e60e63966",
+    "expected": "426cf9bd190b777104bb964e9d5a2929197ed7621f8b334f229ef12e60e63966"
+  },
+  {
+    "program": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/CBACT02C.cbl",
+    "sha256": "f81506881aec5d44d340d8b125efe67e2b355343c8893ab6bc95e2cb72c292b7",
+    "expected": "f81506881aec5d44d340d8b125efe67e2b355343c8893ab6bc95e2cb72c292b7"
+  },
+  {
+    "program": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/CBACT03C.cbl",
+    "sha256": "2e16c29ee12fd20eec4500278f49d1430fe6aec4dd0a0963188ed62ccce9e171",
+    "expected": "2e16c29ee12fd20eec4500278f49d1430fe6aec4dd0a0963188ed62ccce9e171"
+  },
+  {
+    "program": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/CBACT04C.cbl",
+    "sha256": "76dea08b410b653ee2fa967c564e9f2e992b7c09f52b2d1fbb5a212149aefbce",
+    "expected": "76dea08b410b653ee2fa967c564e9f2e992b7c09f52b2d1fbb5a212149aefbce"
+  },
+  {
+    "program": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/CBCUS01C.cbl",
+    "sha256": "494b1ca4ab8a4334eef77d2b87cc7df266f80cbeab2a3f191e9c776d4437d497",
+    "expected": "494b1ca4ab8a4334eef77d2b87cc7df266f80cbeab2a3f191e9c776d4437d497"
+  },
+  {
+    "program": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/CBSTM03A.cbl",
+    "sha256": "382c4131561a7843704fb84212c5d15b69ed5fa7b69101ee999680880a1d8879",
+    "expected": "382c4131561a7843704fb84212c5d15b69ed5fa7b69101ee999680880a1d8879"
+  },
+  {
+    "program": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/CBSTM03B.cbl",
+    "sha256": "c183707f0dae0b5e9387373fc3624f0462ad95ccbbb6c8a34167591e206bcbf8",
+    "expected": "c183707f0dae0b5e9387373fc3624f0462ad95ccbbb6c8a34167591e206bcbf8"
+  },
+  {
+    "program": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/CBTRN01C.cbl",
+    "sha256": "18cebdd95bff49b5316c271204fb20f59d2dd72615bc1715498c9cc8a50187f7",
+    "expected": "18cebdd95bff49b5316c271204fb20f59d2dd72615bc1715498c9cc8a50187f7"
+  },
+  {
+    "program": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/CBTRN02C.cbl",
+    "sha256": "136ab808a10d01814269a4a29bd6c249b1b86952d0abded98419458db43f2aef",
+    "expected": "136ab808a10d01814269a4a29bd6c249b1b86952d0abded98419458db43f2aef"
+  },
+  {
+    "program": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/CBTRN03C.cbl",
+    "sha256": "c9c5428073cbe19c1cd19fc066ed99972560c209a80b4aea3bae3cc5e20a3536",
+    "expected": "c9c5428073cbe19c1cd19fc066ed99972560c209a80b4aea3bae3cc5e20a3536"
+  },
+  {
+    "program": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/COACTUPC.cl2",
+    "sha256": "e944b2b469cf737296489e87158801cfe1a174e2965b5bb9ad5006fc65a2b176",
+    "expected": "e944b2b469cf737296489e87158801cfe1a174e2965b5bb9ad5006fc65a2b176"
+  },
+  {
+    "program": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/COACTVWC.cl2",
+    "sha256": "4f1e55176f69edfb55b7af7a161aceb8c3bc3bd1b2924a704a76256e0e751b54",
+    "expected": "4f1e55176f69edfb55b7af7a161aceb8c3bc3bd1b2924a704a76256e0e751b54"
+  },
+  {
+    "program": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/COADM01C.cl2",
+    "sha256": "69842c4dd419ed70365682d65423d2744173f3eec695b25b5ed27bd29289608d",
+    "expected": "69842c4dd419ed70365682d65423d2744173f3eec695b25b5ed27bd29289608d"
+  },
+  {
+    "program": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/COBIL00C.cl2",
+    "sha256": "b5c46039eb8fd2f7ed7d3ca379172e56fa87385a369023bef706b04986fe1cfb",
+    "expected": "b5c46039eb8fd2f7ed7d3ca379172e56fa87385a369023bef706b04986fe1cfb"
+  },
+  {
+    "program": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/COCRDLIC.cl2",
+    "sha256": "d6a9210ad3062bd657881fc3f0d2a7368db3ff4869594e0d6a878d8f410d87b6",
+    "expected": "d6a9210ad3062bd657881fc3f0d2a7368db3ff4869594e0d6a878d8f410d87b6"
+  },
+  {
+    "program": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/COCRDSLC.cl2",
+    "sha256": "d5af307fb4b1a155f03df9eea14b402d866a332360e14a1e37dbefe59b73363b",
+    "expected": "d5af307fb4b1a155f03df9eea14b402d866a332360e14a1e37dbefe59b73363b"
+  },
+  {
+    "program": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/COCRDUPC.cl2",
+    "sha256": "3ffeeb3d3c53e64e632bde36771dbbcf080e92ed4168d30d90c21e4dc198e6ef",
+    "expected": "3ffeeb3d3c53e64e632bde36771dbbcf080e92ed4168d30d90c21e4dc198e6ef"
+  },
+  {
+    "program": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/COMEN01C.cl2",
+    "sha256": "ad5e376ac9221b21b8ce47597a5ca17fc1f39dc913793c814c6675e9b046fc09",
+    "expected": "ad5e376ac9221b21b8ce47597a5ca17fc1f39dc913793c814c6675e9b046fc09"
+  },
+  {
+    "program": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/CORPT00C.cl2",
+    "sha256": "0b06bd5d4f38f17871de8985c439dfce7ed30d28e02b6ffeb8459e0cd8db4fc2",
+    "expected": "0b06bd5d4f38f17871de8985c439dfce7ed30d28e02b6ffeb8459e0cd8db4fc2"
+  },
+  {
+    "program": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/COSGN00C.cl2",
+    "sha256": "4f901ae6b113eebae60ae1d94b30f8cb9906d031a4419770bf56980bdf97e377",
+    "expected": "4f901ae6b113eebae60ae1d94b30f8cb9906d031a4419770bf56980bdf97e377"
+  },
+  {
+    "program": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/COTRN00C.cl2",
+    "sha256": "51479f131b4fb300008403f0c4f9fdbde56f22a7fb341c782492da29f0d23bbe",
+    "expected": "51479f131b4fb300008403f0c4f9fdbde56f22a7fb341c782492da29f0d23bbe"
+  },
+  {
+    "program": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/COTRN01C.cl2",
+    "sha256": "fc24ff879ac6ae12bc6817554cb756f14c5e86e0ca2dd0037af49599887f03c0",
+    "expected": "fc24ff879ac6ae12bc6817554cb756f14c5e86e0ca2dd0037af49599887f03c0"
+  },
+  {
+    "program": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/COTRN02C.cl2",
+    "sha256": "dc33b4c797a98d2732070a223f43cc78992c2846681163a032e376630742b1ed",
+    "expected": "dc33b4c797a98d2732070a223f43cc78992c2846681163a032e376630742b1ed"
+  },
+  {
+    "program": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/COUSR00C.cl2",
+    "sha256": "831433c6ec8306038c85cb86a8307f91dca48c26ef33a997f402187cbd9f4e04",
+    "expected": "831433c6ec8306038c85cb86a8307f91dca48c26ef33a997f402187cbd9f4e04"
+  },
+  {
+    "program": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/COUSR01C.cl2",
+    "sha256": "aa131b1e3382dc6d101b42f1c97d4fb0c2fdd706819ed9f9a0187c82b30f3019",
+    "expected": "aa131b1e3382dc6d101b42f1c97d4fb0c2fdd706819ed9f9a0187c82b30f3019"
+  },
+  {
+    "program": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/COUSR02C.cl2",
+    "sha256": "85d36699cbd3079320e689576ea8406d07ad78901f4f3a68a129b869359b46ca",
+    "expected": "85d36699cbd3079320e689576ea8406d07ad78901f4f3a68a129b869359b46ca"
+  },
+  {
+    "program": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/COUSR03C.cl2",
+    "sha256": "bcd68f08c145b3b9b9c809a7082834e9519d78b6f363a0d1c5ff9d9576dcf888",
+    "expected": "bcd68f08c145b3b9b9c809a7082834e9519d78b6f363a0d1c5ff9d9576dcf888"
+  },
+  {
+    "program": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/CSUTLDTC.cbl",
+    "sha256": "05565b6ca61098097391bd6ae14268eb122d41c76570d2336253b0cdb5a961fa",
+    "expected": "05565b6ca61098097391bd6ae14268eb122d41c76570d2336253b0cdb5a961fa"
+  },
+  {
+    "program": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/SDSF.cbl",
+    "sha256": "d01b013e55ef4f7b76044ef98fa30fa077ec8d0a6847efab7f2c466087264027",
+    "expected": "d01b013e55ef4f7b76044ef98fa30fa077ec8d0a6847efab7f2c466087264027"
+  }
+]

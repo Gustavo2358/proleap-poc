@@ -1,0 +1,5383 @@
+{
+  "source" : "/home/gustavo/workspace/teste-e2e/storage-semantics-st-w0-w5/runtime/carddemo-upstream/app/cbl/CBEXPORT.cbl",
+  "unresolvedCopies" : 0,
+  "preprocessorErrors" : 0,
+  "parserDiagnostics" : [ ],
+  "statements" : [ {
+    "id" : 400,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 346,
+        "startColumn" : 4,
+        "endLine" : 346,
+        "endColumn" : 26
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 151,
+        "startColumn" : 11,
+        "endLine" : 151,
+        "endColumn" : 33
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 402,
+    "ordinaryNext" : 402,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 402,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 347,
+        "startColumn" : 4,
+        "endLine" : 347,
+        "endColumn" : 32
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 152,
+        "startColumn" : 11,
+        "endLine" : 152,
+        "endColumn" : 39
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 404,
+    "ordinaryNext" : 404,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 404,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 348,
+        "startColumn" : 4,
+        "endLine" : 348,
+        "endColumn" : 31
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 153,
+        "startColumn" : 11,
+        "endLine" : 153,
+        "endColumn" : 38
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 406,
+    "ordinaryNext" : 406,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 406,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 349,
+        "startColumn" : 4,
+        "endLine" : 349,
+        "endColumn" : 28
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 154,
+        "startColumn" : 11,
+        "endLine" : 154,
+        "endColumn" : 35
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 408,
+    "ordinaryNext" : 408,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 408,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 350,
+        "startColumn" : 4,
+        "endLine" : 350,
+        "endColumn" : 35
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 155,
+        "startColumn" : 11,
+        "endLine" : 155,
+        "endColumn" : 42
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 410,
+    "ordinaryNext" : 410,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 410,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 351,
+        "startColumn" : 4,
+        "endLine" : 351,
+        "endColumn" : 28
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 156,
+        "startColumn" : 11,
+        "endLine" : 156,
+        "endColumn" : 35
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 412,
+    "ordinaryNext" : 412,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 412,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 352,
+        "startColumn" : 4,
+        "endLine" : 352,
+        "endColumn" : 24
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 157,
+        "startColumn" : 11,
+        "endLine" : 157,
+        "endColumn" : 31
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 414,
+    "ordinaryNext" : 414,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 414,
+    "type" : "GobackStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 353,
+        "startColumn" : 4,
+        "endLine" : 353,
+        "endColumn" : 9
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 158,
+        "startColumn" : 11,
+        "endLine" : 158,
+        "endColumn" : 16
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : null,
+    "normalCompletionRecognized" : false
+  }, {
+    "id" : 417,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 358,
+        "startColumn" : 4,
+        "endLine" : 358,
+        "endColumn" : 52
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 163,
+        "startColumn" : 11,
+        "endLine" : 163,
+        "endColumn" : 59
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 420,
+    "ordinaryNext" : 420,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 420,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 360,
+        "startColumn" : 4,
+        "endLine" : 360,
+        "endColumn" : 34
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 165,
+        "startColumn" : 11,
+        "endLine" : 165,
+        "endColumn" : 41
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 422,
+    "ordinaryNext" : 422,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 422,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 361,
+        "startColumn" : 4,
+        "endLine" : 361,
+        "endColumn" : 26
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 166,
+        "startColumn" : 11,
+        "endLine" : 166,
+        "endColumn" : 33
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 424,
+    "ordinaryNext" : 424,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 424,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 363,
+        "startColumn" : 4,
+        "endLine" : 363,
+        "endColumn" : 51
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 168,
+        "startColumn" : 11,
+        "endLine" : 168,
+        "endColumn" : 58
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 429,
+    "ordinaryNext" : 429,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 429,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 364,
+        "startColumn" : 4,
+        "endLine" : 364,
+        "endColumn" : 51
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 169,
+        "startColumn" : 11,
+        "endLine" : 169,
+        "endColumn" : 58
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 436,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 436,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 370,
+        "startColumn" : 4,
+        "endLine" : 370,
+        "endColumn" : 44
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 175,
+        "startColumn" : 11,
+        "endLine" : 175,
+        "endColumn" : 51
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 439,
+    "ordinaryNext" : 439,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 439,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 371,
+        "startColumn" : 4,
+        "endLine" : 371,
+        "endColumn" : 35
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 176,
+        "startColumn" : 11,
+        "endLine" : 176,
+        "endColumn" : 42
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 442,
+    "ordinaryNext" : 442,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 442,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 374,
+        "startColumn" : 4,
+        "endLine" : 377,
+        "endColumn" : 13
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 179,
+        "startColumn" : 11,
+        "endLine" : 182,
+        "endColumn" : 20
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 455,
+    "ordinaryNext" : 455,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 455,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 380,
+        "startColumn" : 4,
+        "endLine" : 383,
+        "endColumn" : 13
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 185,
+        "startColumn" : 11,
+        "endLine" : 188,
+        "endColumn" : 20
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 468,
+    "ordinaryNext" : 468,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 468,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 386,
+        "startColumn" : 4,
+        "endLine" : 389,
+        "endColumn" : 13
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 191,
+        "startColumn" : 11,
+        "endLine" : 194,
+        "endColumn" : 20
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 481,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 481,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 395,
+        "startColumn" : 4,
+        "endLine" : 395,
+        "endColumn" : 28
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 200,
+        "startColumn" : 11,
+        "endLine" : 200,
+        "endColumn" : 35
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 484,
+    "ordinaryNext" : 484,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 484,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 396,
+        "startColumn" : 4,
+        "endLine" : 400,
+        "endColumn" : 9
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 201,
+        "startColumn" : 11,
+        "endLine" : 205,
+        "endColumn" : 16
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 494,
+    "ordinaryNext" : 494,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 487,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 397,
+        "startColumn" : 8,
+        "endLine" : 398,
+        "endColumn" : 33
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 202,
+        "startColumn" : 15,
+        "endLine" : 203,
+        "endColumn" : 40
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 492,
+    "ordinaryNext" : 492,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 492,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 399,
+        "startColumn" : 8,
+        "endLine" : 399,
+        "endColumn" : 33
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 204,
+        "startColumn" : 15,
+        "endLine" : 204,
+        "endColumn" : 40
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 494,
+    "ordinaryNext" : 494,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 494,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 402,
+        "startColumn" : 4,
+        "endLine" : 402,
+        "endColumn" : 27
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 207,
+        "startColumn" : 11,
+        "endLine" : 207,
+        "endColumn" : 34
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 497,
+    "ordinaryNext" : 497,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 497,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 403,
+        "startColumn" : 4,
+        "endLine" : 407,
+        "endColumn" : 9
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 208,
+        "startColumn" : 11,
+        "endLine" : 212,
+        "endColumn" : 16
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 507,
+    "ordinaryNext" : 507,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 500,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 404,
+        "startColumn" : 8,
+        "endLine" : 405,
+        "endColumn" : 32
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 209,
+        "startColumn" : 15,
+        "endLine" : 210,
+        "endColumn" : 39
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 505,
+    "ordinaryNext" : 505,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 505,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 406,
+        "startColumn" : 8,
+        "endLine" : 406,
+        "endColumn" : 33
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 211,
+        "startColumn" : 15,
+        "endLine" : 211,
+        "endColumn" : 40
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 507,
+    "ordinaryNext" : 507,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 507,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 409,
+        "startColumn" : 4,
+        "endLine" : 409,
+        "endColumn" : 24
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 214,
+        "startColumn" : 11,
+        "endLine" : 214,
+        "endColumn" : 31
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 510,
+    "ordinaryNext" : 510,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 510,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 410,
+        "startColumn" : 4,
+        "endLine" : 414,
+        "endColumn" : 9
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 215,
+        "startColumn" : 11,
+        "endLine" : 219,
+        "endColumn" : 16
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 520,
+    "ordinaryNext" : 520,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 513,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 411,
+        "startColumn" : 8,
+        "endLine" : 412,
+        "endColumn" : 29
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 216,
+        "startColumn" : 15,
+        "endLine" : 217,
+        "endColumn" : 36
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 518,
+    "ordinaryNext" : 518,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 518,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 413,
+        "startColumn" : 8,
+        "endLine" : 413,
+        "endColumn" : 33
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 218,
+        "startColumn" : 15,
+        "endLine" : 218,
+        "endColumn" : 40
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 520,
+    "ordinaryNext" : 520,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 520,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 416,
+        "startColumn" : 4,
+        "endLine" : 416,
+        "endColumn" : 31
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 221,
+        "startColumn" : 11,
+        "endLine" : 221,
+        "endColumn" : 38
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 523,
+    "ordinaryNext" : 523,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 523,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 417,
+        "startColumn" : 4,
+        "endLine" : 421,
+        "endColumn" : 9
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 222,
+        "startColumn" : 11,
+        "endLine" : 226,
+        "endColumn" : 16
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 533,
+    "ordinaryNext" : 533,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 526,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 418,
+        "startColumn" : 8,
+        "endLine" : 419,
+        "endColumn" : 36
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 223,
+        "startColumn" : 15,
+        "endLine" : 224,
+        "endColumn" : 43
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 531,
+    "ordinaryNext" : 531,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 531,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 420,
+        "startColumn" : 8,
+        "endLine" : 420,
+        "endColumn" : 33
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 225,
+        "startColumn" : 15,
+        "endLine" : 225,
+        "endColumn" : 40
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 533,
+    "ordinaryNext" : 533,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 533,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 423,
+        "startColumn" : 4,
+        "endLine" : 423,
+        "endColumn" : 24
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 228,
+        "startColumn" : 11,
+        "endLine" : 228,
+        "endColumn" : 31
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 536,
+    "ordinaryNext" : 536,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 536,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 424,
+        "startColumn" : 4,
+        "endLine" : 428,
+        "endColumn" : 9
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 229,
+        "startColumn" : 11,
+        "endLine" : 233,
+        "endColumn" : 16
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 546,
+    "ordinaryNext" : 546,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 539,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 425,
+        "startColumn" : 8,
+        "endLine" : 426,
+        "endColumn" : 29
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 230,
+        "startColumn" : 15,
+        "endLine" : 231,
+        "endColumn" : 36
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 544,
+    "ordinaryNext" : 544,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 544,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 427,
+        "startColumn" : 8,
+        "endLine" : 427,
+        "endColumn" : 33
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 232,
+        "startColumn" : 15,
+        "endLine" : 232,
+        "endColumn" : 40
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 546,
+    "ordinaryNext" : 546,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 546,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 430,
+        "startColumn" : 4,
+        "endLine" : 430,
+        "endColumn" : 28
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 235,
+        "startColumn" : 11,
+        "endLine" : 235,
+        "endColumn" : 35
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 549,
+    "ordinaryNext" : 549,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 549,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 431,
+        "startColumn" : 4,
+        "endLine" : 435,
+        "endColumn" : 9
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 236,
+        "startColumn" : 11,
+        "endLine" : 240,
+        "endColumn" : 16
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 561,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 552,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 432,
+        "startColumn" : 8,
+        "endLine" : 433,
+        "endColumn" : 31
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 237,
+        "startColumn" : 15,
+        "endLine" : 238,
+        "endColumn" : 38
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 557,
+    "ordinaryNext" : 557,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 557,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 434,
+        "startColumn" : 8,
+        "endLine" : 434,
+        "endColumn" : 33
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 239,
+        "startColumn" : 15,
+        "endLine" : 239,
+        "endColumn" : 40
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 561,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 561,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 440,
+        "startColumn" : 4,
+        "endLine" : 440,
+        "endColumn" : 50
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 245,
+        "startColumn" : 11,
+        "endLine" : 245,
+        "endColumn" : 57
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 564,
+    "ordinaryNext" : 564,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 564,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 442,
+        "startColumn" : 4,
+        "endLine" : 442,
+        "endColumn" : 36
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 247,
+        "startColumn" : 11,
+        "endLine" : 247,
+        "endColumn" : 43
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 566,
+    "ordinaryNext" : 566,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 566,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 444,
+        "startColumn" : 4,
+        "endLine" : 447,
+        "endColumn" : 14
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 249,
+        "startColumn" : 11,
+        "endLine" : 252,
+        "endColumn" : 21
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 572,
+    "ordinaryNext" : 572,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 568,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 445,
+        "startColumn" : 8,
+        "endLine" : 445,
+        "endColumn" : 43
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 250,
+        "startColumn" : 15,
+        "endLine" : 250,
+        "endColumn" : 50
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : null,
+    "normalCompletionRecognized" : false
+  }, {
+    "id" : 570,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 446,
+        "startColumn" : 8,
+        "endLine" : 446,
+        "endColumn" : 40
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 251,
+        "startColumn" : 15,
+        "endLine" : 251,
+        "endColumn" : 47
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : null,
+    "normalCompletionRecognized" : false
+  }, {
+    "id" : 572,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 449,
+        "startColumn" : 4,
+        "endLine" : 450,
+        "endColumn" : 39
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 254,
+        "startColumn" : 11,
+        "endLine" : 255,
+        "endColumn" : 46
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 579,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 579,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 455,
+        "startColumn" : 4,
+        "endLine" : 455,
+        "endColumn" : 22
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 260,
+        "startColumn" : 11,
+        "endLine" : 260,
+        "endColumn" : 29
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 582,
+    "ordinaryNext" : 582,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 582,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 457,
+        "startColumn" : 4,
+        "endLine" : 461,
+        "endColumn" : 9
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 262,
+        "startColumn" : 11,
+        "endLine" : 266,
+        "endColumn" : 16
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 597,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 588,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 458,
+        "startColumn" : 8,
+        "endLine" : 459,
+        "endColumn" : 33
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 263,
+        "startColumn" : 15,
+        "endLine" : 264,
+        "endColumn" : 40
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 593,
+    "ordinaryNext" : 593,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 593,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 460,
+        "startColumn" : 8,
+        "endLine" : 460,
+        "endColumn" : 33
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 265,
+        "startColumn" : 15,
+        "endLine" : 265,
+        "endColumn" : 40
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 597,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 597,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 466,
+        "startColumn" : 4,
+        "endLine" : 466,
+        "endColumn" : 27
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 271,
+        "startColumn" : 11,
+        "endLine" : 271,
+        "endColumn" : 34
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 600,
+    "ordinaryNext" : 600,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 600,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 469,
+        "startColumn" : 4,
+        "endLine" : 469,
+        "endColumn" : 30
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 274,
+        "startColumn" : 11,
+        "endLine" : 274,
+        "endColumn" : 37
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 603,
+    "ordinaryNext" : 603,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 603,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 470,
+        "startColumn" : 4,
+        "endLine" : 470,
+        "endColumn" : 50
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 275,
+        "startColumn" : 11,
+        "endLine" : 275,
+        "endColumn" : 57
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 606,
+    "ordinaryNext" : 606,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 606,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 471,
+        "startColumn" : 4,
+        "endLine" : 471,
+        "endColumn" : 31
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 276,
+        "startColumn" : 11,
+        "endLine" : 276,
+        "endColumn" : 38
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 611,
+    "ordinaryNext" : 611,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 611,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 472,
+        "startColumn" : 4,
+        "endLine" : 472,
+        "endColumn" : 50
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 277,
+        "startColumn" : 11,
+        "endLine" : 277,
+        "endColumn" : 57
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 614,
+    "ordinaryNext" : 614,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 614,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 473,
+        "startColumn" : 4,
+        "endLine" : 473,
+        "endColumn" : 34
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 278,
+        "startColumn" : 11,
+        "endLine" : 278,
+        "endColumn" : 41
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 617,
+    "ordinaryNext" : 617,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 617,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 474,
+        "startColumn" : 4,
+        "endLine" : 474,
+        "endColumn" : 37
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 279,
+        "startColumn" : 11,
+        "endLine" : 279,
+        "endColumn" : 44
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 620,
+    "ordinaryNext" : 620,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 620,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 477,
+        "startColumn" : 4,
+        "endLine" : 477,
+        "endColumn" : 30
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 282,
+        "startColumn" : 11,
+        "endLine" : 282,
+        "endColumn" : 37
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 623,
+    "ordinaryNext" : 623,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 623,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 478,
+        "startColumn" : 4,
+        "endLine" : 478,
+        "endColumn" : 46
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 283,
+        "startColumn" : 11,
+        "endLine" : 283,
+        "endColumn" : 53
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 626,
+    "ordinaryNext" : 626,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 626,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 479,
+        "startColumn" : 4,
+        "endLine" : 479,
+        "endColumn" : 48
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 284,
+        "startColumn" : 11,
+        "endLine" : 284,
+        "endColumn" : 55
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 629,
+    "ordinaryNext" : 629,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 629,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 480,
+        "startColumn" : 4,
+        "endLine" : 480,
+        "endColumn" : 44
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 285,
+        "startColumn" : 11,
+        "endLine" : 285,
+        "endColumn" : 51
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 632,
+    "ordinaryNext" : 632,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 632,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 481,
+        "startColumn" : 4,
+        "endLine" : 481,
+        "endColumn" : 49
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 286,
+        "startColumn" : 11,
+        "endLine" : 286,
+        "endColumn" : 56
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 637,
+    "ordinaryNext" : 637,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 637,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 482,
+        "startColumn" : 4,
+        "endLine" : 482,
+        "endColumn" : 49
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 287,
+        "startColumn" : 11,
+        "endLine" : 287,
+        "endColumn" : 56
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 642,
+    "ordinaryNext" : 642,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 642,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 483,
+        "startColumn" : 4,
+        "endLine" : 483,
+        "endColumn" : 49
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 288,
+        "startColumn" : 11,
+        "endLine" : 288,
+        "endColumn" : 56
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 647,
+    "ordinaryNext" : 647,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 647,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 484,
+        "startColumn" : 4,
+        "endLine" : 484,
+        "endColumn" : 52
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 289,
+        "startColumn" : 11,
+        "endLine" : 289,
+        "endColumn" : 59
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 650,
+    "ordinaryNext" : 650,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 650,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 485,
+        "startColumn" : 4,
+        "endLine" : 485,
+        "endColumn" : 56
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 290,
+        "startColumn" : 11,
+        "endLine" : 290,
+        "endColumn" : 63
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 653,
+    "ordinaryNext" : 653,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 653,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 486,
+        "startColumn" : 4,
+        "endLine" : 486,
+        "endColumn" : 42
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 291,
+        "startColumn" : 11,
+        "endLine" : 291,
+        "endColumn" : 49
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 656,
+    "ordinaryNext" : 656,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 656,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 487,
+        "startColumn" : 4,
+        "endLine" : 487,
+        "endColumn" : 49
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 292,
+        "startColumn" : 11,
+        "endLine" : 292,
+        "endColumn" : 56
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 661,
+    "ordinaryNext" : 661,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 661,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 488,
+        "startColumn" : 4,
+        "endLine" : 488,
+        "endColumn" : 49
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 293,
+        "startColumn" : 11,
+        "endLine" : 293,
+        "endColumn" : 56
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 666,
+    "ordinaryNext" : 666,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 666,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 489,
+        "startColumn" : 4,
+        "endLine" : 489,
+        "endColumn" : 32
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 294,
+        "startColumn" : 11,
+        "endLine" : 294,
+        "endColumn" : 39
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 669,
+    "ordinaryNext" : 669,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 669,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 490,
+        "startColumn" : 4,
+        "endLine" : 490,
+        "endColumn" : 54
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 295,
+        "startColumn" : 11,
+        "endLine" : 295,
+        "endColumn" : 61
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 672,
+    "ordinaryNext" : 672,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 672,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 491,
+        "startColumn" : 4,
+        "endLine" : 491,
+        "endColumn" : 54
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 296,
+        "startColumn" : 11,
+        "endLine" : 296,
+        "endColumn" : 61
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 675,
+    "ordinaryNext" : 675,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 675,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 492,
+        "startColumn" : 4,
+        "endLine" : 492,
+        "endColumn" : 54
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 297,
+        "startColumn" : 11,
+        "endLine" : 297,
+        "endColumn" : 61
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 678,
+    "ordinaryNext" : 678,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 678,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 493,
+        "startColumn" : 4,
+        "endLine" : 493,
+        "endColumn" : 64
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 298,
+        "startColumn" : 11,
+        "endLine" : 298,
+        "endColumn" : 71
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 681,
+    "ordinaryNext" : 681,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 681,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 494,
+        "startColumn" : 4,
+        "endLine" : 494,
+        "endColumn" : 60
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 299,
+        "startColumn" : 11,
+        "endLine" : 299,
+        "endColumn" : 67
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 684,
+    "ordinaryNext" : 684,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 684,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 496,
+        "startColumn" : 4,
+        "endLine" : 496,
+        "endColumn" : 48
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 301,
+        "startColumn" : 11,
+        "endLine" : 301,
+        "endColumn" : 55
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 689,
+    "ordinaryNext" : 689,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 689,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 498,
+        "startColumn" : 4,
+        "endLine" : 502,
+        "endColumn" : 9
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 303,
+        "startColumn" : 11,
+        "endLine" : 307,
+        "endColumn" : 16
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 699,
+    "ordinaryNext" : 699,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 692,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 499,
+        "startColumn" : 8,
+        "endLine" : 500,
+        "endColumn" : 31
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 304,
+        "startColumn" : 15,
+        "endLine" : 305,
+        "endColumn" : 38
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 697,
+    "ordinaryNext" : 697,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 697,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 501,
+        "startColumn" : 8,
+        "endLine" : 501,
+        "endColumn" : 33
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 306,
+        "startColumn" : 15,
+        "endLine" : 306,
+        "endColumn" : 40
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 699,
+    "ordinaryNext" : 699,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 699,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 504,
+        "startColumn" : 4,
+        "endLine" : 504,
+        "endColumn" : 40
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 309,
+        "startColumn" : 11,
+        "endLine" : 309,
+        "endColumn" : 47
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 704,
+    "ordinaryNext" : 704,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 704,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 505,
+        "startColumn" : 4,
+        "endLine" : 505,
+        "endColumn" : 37
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 310,
+        "startColumn" : 11,
+        "endLine" : 310,
+        "endColumn" : 44
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 711,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 711,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 509,
+        "startColumn" : 4,
+        "endLine" : 509,
+        "endColumn" : 49
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 314,
+        "startColumn" : 11,
+        "endLine" : 314,
+        "endColumn" : 56
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 714,
+    "ordinaryNext" : 714,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 714,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 511,
+        "startColumn" : 4,
+        "endLine" : 511,
+        "endColumn" : 35
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 316,
+        "startColumn" : 11,
+        "endLine" : 316,
+        "endColumn" : 42
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 716,
+    "ordinaryNext" : 716,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 716,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 513,
+        "startColumn" : 4,
+        "endLine" : 516,
+        "endColumn" : 14
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 318,
+        "startColumn" : 11,
+        "endLine" : 321,
+        "endColumn" : 21
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 722,
+    "ordinaryNext" : 722,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 718,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 514,
+        "startColumn" : 8,
+        "endLine" : 514,
+        "endColumn" : 42
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 319,
+        "startColumn" : 15,
+        "endLine" : 319,
+        "endColumn" : 49
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : null,
+    "normalCompletionRecognized" : false
+  }, {
+    "id" : 720,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 515,
+        "startColumn" : 8,
+        "endLine" : 515,
+        "endColumn" : 39
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 320,
+        "startColumn" : 15,
+        "endLine" : 320,
+        "endColumn" : 46
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : null,
+    "normalCompletionRecognized" : false
+  }, {
+    "id" : 722,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 518,
+        "startColumn" : 4,
+        "endLine" : 519,
+        "endColumn" : 38
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 323,
+        "startColumn" : 11,
+        "endLine" : 324,
+        "endColumn" : 45
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 729,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 729,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 524,
+        "startColumn" : 4,
+        "endLine" : 524,
+        "endColumn" : 21
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 329,
+        "startColumn" : 11,
+        "endLine" : 329,
+        "endColumn" : 28
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 732,
+    "ordinaryNext" : 732,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 732,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 526,
+        "startColumn" : 4,
+        "endLine" : 530,
+        "endColumn" : 9
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 331,
+        "startColumn" : 11,
+        "endLine" : 335,
+        "endColumn" : 16
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 747,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 738,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 527,
+        "startColumn" : 8,
+        "endLine" : 528,
+        "endColumn" : 32
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 332,
+        "startColumn" : 15,
+        "endLine" : 333,
+        "endColumn" : 39
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 743,
+    "ordinaryNext" : 743,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 743,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 529,
+        "startColumn" : 8,
+        "endLine" : 529,
+        "endColumn" : 33
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 334,
+        "startColumn" : 15,
+        "endLine" : 334,
+        "endColumn" : 40
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 747,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 747,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 535,
+        "startColumn" : 4,
+        "endLine" : 535,
+        "endColumn" : 27
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 340,
+        "startColumn" : 11,
+        "endLine" : 340,
+        "endColumn" : 34
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 750,
+    "ordinaryNext" : 750,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 750,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 538,
+        "startColumn" : 4,
+        "endLine" : 538,
+        "endColumn" : 30
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 343,
+        "startColumn" : 11,
+        "endLine" : 343,
+        "endColumn" : 37
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 753,
+    "ordinaryNext" : 753,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 753,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 539,
+        "startColumn" : 4,
+        "endLine" : 539,
+        "endColumn" : 50
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 344,
+        "startColumn" : 11,
+        "endLine" : 344,
+        "endColumn" : 57
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 756,
+    "ordinaryNext" : 756,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 756,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 540,
+        "startColumn" : 4,
+        "endLine" : 540,
+        "endColumn" : 31
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 345,
+        "startColumn" : 11,
+        "endLine" : 345,
+        "endColumn" : 38
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 761,
+    "ordinaryNext" : 761,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 761,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 541,
+        "startColumn" : 4,
+        "endLine" : 541,
+        "endColumn" : 50
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 346,
+        "startColumn" : 11,
+        "endLine" : 346,
+        "endColumn" : 57
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 764,
+    "ordinaryNext" : 764,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 764,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 542,
+        "startColumn" : 4,
+        "endLine" : 542,
+        "endColumn" : 34
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 347,
+        "startColumn" : 11,
+        "endLine" : 347,
+        "endColumn" : 41
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 767,
+    "ordinaryNext" : 767,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 767,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 543,
+        "startColumn" : 4,
+        "endLine" : 543,
+        "endColumn" : 37
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 348,
+        "startColumn" : 11,
+        "endLine" : 348,
+        "endColumn" : 44
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 770,
+    "ordinaryNext" : 770,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 770,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 546,
+        "startColumn" : 4,
+        "endLine" : 546,
+        "endColumn" : 30
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 351,
+        "startColumn" : 11,
+        "endLine" : 351,
+        "endColumn" : 37
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 773,
+    "ordinaryNext" : 773,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 773,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 547,
+        "startColumn" : 4,
+        "endLine" : 547,
+        "endColumn" : 52
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 352,
+        "startColumn" : 11,
+        "endLine" : 352,
+        "endColumn" : 59
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 776,
+    "ordinaryNext" : 776,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 776,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 548,
+        "startColumn" : 4,
+        "endLine" : 548,
+        "endColumn" : 42
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 353,
+        "startColumn" : 11,
+        "endLine" : 353,
+        "endColumn" : 49
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 779,
+    "ordinaryNext" : 779,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 779,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 549,
+        "startColumn" : 4,
+        "endLine" : 549,
+        "endColumn" : 50
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 354,
+        "startColumn" : 11,
+        "endLine" : 354,
+        "endColumn" : 57
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 782,
+    "ordinaryNext" : 782,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 782,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 550,
+        "startColumn" : 4,
+        "endLine" : 550,
+        "endColumn" : 60
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 355,
+        "startColumn" : 11,
+        "endLine" : 355,
+        "endColumn" : 67
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 785,
+    "ordinaryNext" : 785,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 785,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 551,
+        "startColumn" : 4,
+        "endLine" : 551,
+        "endColumn" : 44
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 356,
+        "startColumn" : 11,
+        "endLine" : 356,
+        "endColumn" : 51
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 788,
+    "ordinaryNext" : 788,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 788,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 552,
+        "startColumn" : 4,
+        "endLine" : 552,
+        "endColumn" : 54
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 357,
+        "startColumn" : 11,
+        "endLine" : 357,
+        "endColumn" : 61
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 791,
+    "ordinaryNext" : 791,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 791,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 553,
+        "startColumn" : 4,
+        "endLine" : 553,
+        "endColumn" : 50
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 358,
+        "startColumn" : 11,
+        "endLine" : 358,
+        "endColumn" : 57
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 794,
+    "ordinaryNext" : 794,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 794,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 554,
+        "startColumn" : 4,
+        "endLine" : 554,
+        "endColumn" : 56
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 359,
+        "startColumn" : 11,
+        "endLine" : 359,
+        "endColumn" : 63
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 797,
+    "ordinaryNext" : 797,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 797,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 555,
+        "startColumn" : 4,
+        "endLine" : 555,
+        "endColumn" : 54
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 360,
+        "startColumn" : 11,
+        "endLine" : 360,
+        "endColumn" : 61
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 800,
+    "ordinaryNext" : 800,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 800,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 556,
+        "startColumn" : 4,
+        "endLine" : 556,
+        "endColumn" : 42
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 361,
+        "startColumn" : 11,
+        "endLine" : 361,
+        "endColumn" : 49
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 803,
+    "ordinaryNext" : 803,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 803,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 557,
+        "startColumn" : 4,
+        "endLine" : 557,
+        "endColumn" : 42
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 362,
+        "startColumn" : 11,
+        "endLine" : 362,
+        "endColumn" : 49
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 806,
+    "ordinaryNext" : 806,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 806,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 559,
+        "startColumn" : 4,
+        "endLine" : 559,
+        "endColumn" : 48
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 364,
+        "startColumn" : 11,
+        "endLine" : 364,
+        "endColumn" : 55
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 811,
+    "ordinaryNext" : 811,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 811,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 561,
+        "startColumn" : 4,
+        "endLine" : 565,
+        "endColumn" : 9
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 366,
+        "startColumn" : 11,
+        "endLine" : 370,
+        "endColumn" : 16
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 821,
+    "ordinaryNext" : 821,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 814,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 562,
+        "startColumn" : 8,
+        "endLine" : 563,
+        "endColumn" : 31
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 367,
+        "startColumn" : 15,
+        "endLine" : 368,
+        "endColumn" : 38
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 819,
+    "ordinaryNext" : 819,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 819,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 564,
+        "startColumn" : 8,
+        "endLine" : 564,
+        "endColumn" : 33
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 369,
+        "startColumn" : 15,
+        "endLine" : 369,
+        "endColumn" : 40
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 821,
+    "ordinaryNext" : 821,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 821,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 567,
+        "startColumn" : 4,
+        "endLine" : 567,
+        "endColumn" : 39
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 372,
+        "startColumn" : 11,
+        "endLine" : 372,
+        "endColumn" : 46
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 826,
+    "ordinaryNext" : 826,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 826,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 568,
+        "startColumn" : 4,
+        "endLine" : 568,
+        "endColumn" : 37
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 373,
+        "startColumn" : 11,
+        "endLine" : 373,
+        "endColumn" : 44
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 833,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 833,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 573,
+        "startColumn" : 4,
+        "endLine" : 573,
+        "endColumn" : 57
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 378,
+        "startColumn" : 11,
+        "endLine" : 378,
+        "endColumn" : 64
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 836,
+    "ordinaryNext" : 836,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 836,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 575,
+        "startColumn" : 4,
+        "endLine" : 575,
+        "endColumn" : 32
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 380,
+        "startColumn" : 11,
+        "endLine" : 380,
+        "endColumn" : 39
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 838,
+    "ordinaryNext" : 838,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 838,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 577,
+        "startColumn" : 4,
+        "endLine" : 580,
+        "endColumn" : 14
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 382,
+        "startColumn" : 11,
+        "endLine" : 385,
+        "endColumn" : 21
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 844,
+    "ordinaryNext" : 844,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 840,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 578,
+        "startColumn" : 8,
+        "endLine" : 578,
+        "endColumn" : 45
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 383,
+        "startColumn" : 15,
+        "endLine" : 383,
+        "endColumn" : 52
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : null,
+    "normalCompletionRecognized" : false
+  }, {
+    "id" : 842,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 579,
+        "startColumn" : 8,
+        "endLine" : 579,
+        "endColumn" : 36
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 384,
+        "startColumn" : 15,
+        "endLine" : 384,
+        "endColumn" : 43
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : null,
+    "normalCompletionRecognized" : false
+  }, {
+    "id" : 844,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 582,
+        "startColumn" : 4,
+        "endLine" : 583,
+        "endColumn" : 35
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 387,
+        "startColumn" : 11,
+        "endLine" : 388,
+        "endColumn" : 42
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 851,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 851,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 588,
+        "startColumn" : 4,
+        "endLine" : 588,
+        "endColumn" : 18
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 393,
+        "startColumn" : 11,
+        "endLine" : 393,
+        "endColumn" : 25
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 854,
+    "ordinaryNext" : 854,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 854,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 590,
+        "startColumn" : 4,
+        "endLine" : 594,
+        "endColumn" : 9
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 395,
+        "startColumn" : 11,
+        "endLine" : 399,
+        "endColumn" : 16
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 869,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 860,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 591,
+        "startColumn" : 8,
+        "endLine" : 592,
+        "endColumn" : 29
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 396,
+        "startColumn" : 15,
+        "endLine" : 397,
+        "endColumn" : 36
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 865,
+    "ordinaryNext" : 865,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 865,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 593,
+        "startColumn" : 8,
+        "endLine" : 593,
+        "endColumn" : 33
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 398,
+        "startColumn" : 15,
+        "endLine" : 398,
+        "endColumn" : 40
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 869,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 869,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 599,
+        "startColumn" : 4,
+        "endLine" : 599,
+        "endColumn" : 27
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 404,
+        "startColumn" : 11,
+        "endLine" : 404,
+        "endColumn" : 34
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 872,
+    "ordinaryNext" : 872,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 872,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 602,
+        "startColumn" : 4,
+        "endLine" : 602,
+        "endColumn" : 30
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 407,
+        "startColumn" : 11,
+        "endLine" : 407,
+        "endColumn" : 37
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 875,
+    "ordinaryNext" : 875,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 875,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 603,
+        "startColumn" : 4,
+        "endLine" : 603,
+        "endColumn" : 50
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 408,
+        "startColumn" : 11,
+        "endLine" : 408,
+        "endColumn" : 57
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 878,
+    "ordinaryNext" : 878,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 878,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 604,
+        "startColumn" : 4,
+        "endLine" : 604,
+        "endColumn" : 31
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 409,
+        "startColumn" : 11,
+        "endLine" : 409,
+        "endColumn" : 38
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 883,
+    "ordinaryNext" : 883,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 883,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 605,
+        "startColumn" : 4,
+        "endLine" : 605,
+        "endColumn" : 50
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 410,
+        "startColumn" : 11,
+        "endLine" : 410,
+        "endColumn" : 57
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 886,
+    "ordinaryNext" : 886,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 886,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 606,
+        "startColumn" : 4,
+        "endLine" : 606,
+        "endColumn" : 34
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 411,
+        "startColumn" : 11,
+        "endLine" : 411,
+        "endColumn" : 41
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 889,
+    "ordinaryNext" : 889,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 889,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 607,
+        "startColumn" : 4,
+        "endLine" : 607,
+        "endColumn" : 37
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 412,
+        "startColumn" : 11,
+        "endLine" : 412,
+        "endColumn" : 44
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 892,
+    "ordinaryNext" : 892,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 892,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 610,
+        "startColumn" : 4,
+        "endLine" : 610,
+        "endColumn" : 42
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 415,
+        "startColumn" : 11,
+        "endLine" : 415,
+        "endColumn" : 49
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 895,
+    "ordinaryNext" : 895,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 895,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 611,
+        "startColumn" : 4,
+        "endLine" : 611,
+        "endColumn" : 40
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 416,
+        "startColumn" : 11,
+        "endLine" : 416,
+        "endColumn" : 47
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 898,
+    "ordinaryNext" : 898,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 898,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 612,
+        "startColumn" : 4,
+        "endLine" : 612,
+        "endColumn" : 40
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 417,
+        "startColumn" : 11,
+        "endLine" : 417,
+        "endColumn" : 47
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 901,
+    "ordinaryNext" : 901,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 901,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 614,
+        "startColumn" : 4,
+        "endLine" : 614,
+        "endColumn" : 48
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 419,
+        "startColumn" : 11,
+        "endLine" : 419,
+        "endColumn" : 55
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 906,
+    "ordinaryNext" : 906,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 906,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 616,
+        "startColumn" : 4,
+        "endLine" : 620,
+        "endColumn" : 9
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 421,
+        "startColumn" : 11,
+        "endLine" : 425,
+        "endColumn" : 16
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 916,
+    "ordinaryNext" : 916,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 909,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 617,
+        "startColumn" : 8,
+        "endLine" : 618,
+        "endColumn" : 31
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 422,
+        "startColumn" : 15,
+        "endLine" : 423,
+        "endColumn" : 38
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 914,
+    "ordinaryNext" : 914,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 914,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 619,
+        "startColumn" : 8,
+        "endLine" : 619,
+        "endColumn" : 33
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 424,
+        "startColumn" : 15,
+        "endLine" : 424,
+        "endColumn" : 40
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 916,
+    "ordinaryNext" : 916,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 916,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 622,
+        "startColumn" : 4,
+        "endLine" : 622,
+        "endColumn" : 36
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 427,
+        "startColumn" : 11,
+        "endLine" : 427,
+        "endColumn" : 43
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 921,
+    "ordinaryNext" : 921,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 921,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 623,
+        "startColumn" : 4,
+        "endLine" : 623,
+        "endColumn" : 37
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 428,
+        "startColumn" : 11,
+        "endLine" : 428,
+        "endColumn" : 44
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 928,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 928,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 628,
+        "startColumn" : 4,
+        "endLine" : 628,
+        "endColumn" : 53
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 433,
+        "startColumn" : 11,
+        "endLine" : 433,
+        "endColumn" : 60
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 931,
+    "ordinaryNext" : 931,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 931,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 630,
+        "startColumn" : 4,
+        "endLine" : 630,
+        "endColumn" : 39
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 435,
+        "startColumn" : 11,
+        "endLine" : 435,
+        "endColumn" : 46
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 933,
+    "ordinaryNext" : 933,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 933,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 632,
+        "startColumn" : 4,
+        "endLine" : 635,
+        "endColumn" : 14
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 437,
+        "startColumn" : 11,
+        "endLine" : 440,
+        "endColumn" : 21
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 939,
+    "ordinaryNext" : 939,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 935,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 633,
+        "startColumn" : 8,
+        "endLine" : 633,
+        "endColumn" : 39
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 438,
+        "startColumn" : 15,
+        "endLine" : 438,
+        "endColumn" : 46
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : null,
+    "normalCompletionRecognized" : false
+  }, {
+    "id" : 937,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 634,
+        "startColumn" : 8,
+        "endLine" : 634,
+        "endColumn" : 43
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 439,
+        "startColumn" : 15,
+        "endLine" : 439,
+        "endColumn" : 50
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : null,
+    "normalCompletionRecognized" : false
+  }, {
+    "id" : 939,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 637,
+        "startColumn" : 4,
+        "endLine" : 638,
+        "endColumn" : 35
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 442,
+        "startColumn" : 11,
+        "endLine" : 443,
+        "endColumn" : 42
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 946,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 946,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 643,
+        "startColumn" : 4,
+        "endLine" : 643,
+        "endColumn" : 25
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 448,
+        "startColumn" : 11,
+        "endLine" : 448,
+        "endColumn" : 32
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 949,
+    "ordinaryNext" : 949,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 949,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 645,
+        "startColumn" : 4,
+        "endLine" : 649,
+        "endColumn" : 9
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 450,
+        "startColumn" : 11,
+        "endLine" : 454,
+        "endColumn" : 16
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 964,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 955,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 646,
+        "startColumn" : 8,
+        "endLine" : 647,
+        "endColumn" : 36
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 451,
+        "startColumn" : 15,
+        "endLine" : 452,
+        "endColumn" : 43
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 960,
+    "ordinaryNext" : 960,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 960,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 648,
+        "startColumn" : 8,
+        "endLine" : 648,
+        "endColumn" : 33
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 453,
+        "startColumn" : 15,
+        "endLine" : 453,
+        "endColumn" : 40
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 964,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 964,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 654,
+        "startColumn" : 4,
+        "endLine" : 654,
+        "endColumn" : 27
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 459,
+        "startColumn" : 11,
+        "endLine" : 459,
+        "endColumn" : 34
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 967,
+    "ordinaryNext" : 967,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 967,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 657,
+        "startColumn" : 4,
+        "endLine" : 657,
+        "endColumn" : 30
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 462,
+        "startColumn" : 11,
+        "endLine" : 462,
+        "endColumn" : 37
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 970,
+    "ordinaryNext" : 970,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 970,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 658,
+        "startColumn" : 4,
+        "endLine" : 658,
+        "endColumn" : 50
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 463,
+        "startColumn" : 11,
+        "endLine" : 463,
+        "endColumn" : 57
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 973,
+    "ordinaryNext" : 973,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 973,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 659,
+        "startColumn" : 4,
+        "endLine" : 659,
+        "endColumn" : 31
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 464,
+        "startColumn" : 11,
+        "endLine" : 464,
+        "endColumn" : 38
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 978,
+    "ordinaryNext" : 978,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 978,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 660,
+        "startColumn" : 4,
+        "endLine" : 660,
+        "endColumn" : 50
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 465,
+        "startColumn" : 11,
+        "endLine" : 465,
+        "endColumn" : 57
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 981,
+    "ordinaryNext" : 981,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 981,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 661,
+        "startColumn" : 4,
+        "endLine" : 661,
+        "endColumn" : 34
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 466,
+        "startColumn" : 11,
+        "endLine" : 466,
+        "endColumn" : 41
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 984,
+    "ordinaryNext" : 984,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 984,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 662,
+        "startColumn" : 4,
+        "endLine" : 662,
+        "endColumn" : 37
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 467,
+        "startColumn" : 11,
+        "endLine" : 467,
+        "endColumn" : 44
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 987,
+    "ordinaryNext" : 987,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 987,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 665,
+        "startColumn" : 4,
+        "endLine" : 665,
+        "endColumn" : 30
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 470,
+        "startColumn" : 11,
+        "endLine" : 470,
+        "endColumn" : 37
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 990,
+    "ordinaryNext" : 990,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 990,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 666,
+        "startColumn" : 4,
+        "endLine" : 666,
+        "endColumn" : 40
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 471,
+        "startColumn" : 11,
+        "endLine" : 471,
+        "endColumn" : 47
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 993,
+    "ordinaryNext" : 993,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 993,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 667,
+        "startColumn" : 4,
+        "endLine" : 667,
+        "endColumn" : 38
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 472,
+        "startColumn" : 11,
+        "endLine" : 472,
+        "endColumn" : 45
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 996,
+    "ordinaryNext" : 996,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 996,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 668,
+        "startColumn" : 4,
+        "endLine" : 668,
+        "endColumn" : 38
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 473,
+        "startColumn" : 11,
+        "endLine" : 473,
+        "endColumn" : 45
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 999,
+    "ordinaryNext" : 999,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 999,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 669,
+        "startColumn" : 4,
+        "endLine" : 669,
+        "endColumn" : 34
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 474,
+        "startColumn" : 11,
+        "endLine" : 474,
+        "endColumn" : 41
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1002,
+    "ordinaryNext" : 1002,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1002,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 670,
+        "startColumn" : 4,
+        "endLine" : 670,
+        "endColumn" : 32
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 475,
+        "startColumn" : 11,
+        "endLine" : 475,
+        "endColumn" : 39
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1005,
+    "ordinaryNext" : 1005,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1005,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 671,
+        "startColumn" : 4,
+        "endLine" : 671,
+        "endColumn" : 48
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 476,
+        "startColumn" : 11,
+        "endLine" : 476,
+        "endColumn" : 55
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1008,
+    "ordinaryNext" : 1008,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1008,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 672,
+        "startColumn" : 4,
+        "endLine" : 672,
+        "endColumn" : 52
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 477,
+        "startColumn" : 11,
+        "endLine" : 477,
+        "endColumn" : 59
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1011,
+    "ordinaryNext" : 1011,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1011,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 673,
+        "startColumn" : 4,
+        "endLine" : 673,
+        "endColumn" : 52
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 478,
+        "startColumn" : 11,
+        "endLine" : 478,
+        "endColumn" : 59
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1014,
+    "ordinaryNext" : 1014,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1014,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 674,
+        "startColumn" : 4,
+        "endLine" : 674,
+        "endColumn" : 50
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 479,
+        "startColumn" : 11,
+        "endLine" : 479,
+        "endColumn" : 57
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1017,
+    "ordinaryNext" : 1017,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1017,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 675,
+        "startColumn" : 4,
+        "endLine" : 675,
+        "endColumn" : 42
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 480,
+        "startColumn" : 11,
+        "endLine" : 480,
+        "endColumn" : 49
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1020,
+    "ordinaryNext" : 1020,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1020,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 676,
+        "startColumn" : 4,
+        "endLine" : 676,
+        "endColumn" : 40
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 481,
+        "startColumn" : 11,
+        "endLine" : 481,
+        "endColumn" : 47
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1023,
+    "ordinaryNext" : 1023,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1023,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 677,
+        "startColumn" : 4,
+        "endLine" : 677,
+        "endColumn" : 40
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 482,
+        "startColumn" : 11,
+        "endLine" : 482,
+        "endColumn" : 47
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1026,
+    "ordinaryNext" : 1026,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1026,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 679,
+        "startColumn" : 4,
+        "endLine" : 679,
+        "endColumn" : 48
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 484,
+        "startColumn" : 11,
+        "endLine" : 484,
+        "endColumn" : 55
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1031,
+    "ordinaryNext" : 1031,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1031,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 681,
+        "startColumn" : 4,
+        "endLine" : 685,
+        "endColumn" : 9
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 486,
+        "startColumn" : 11,
+        "endLine" : 490,
+        "endColumn" : 16
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1041,
+    "ordinaryNext" : 1041,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1034,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 682,
+        "startColumn" : 8,
+        "endLine" : 683,
+        "endColumn" : 31
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 487,
+        "startColumn" : 15,
+        "endLine" : 488,
+        "endColumn" : 38
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1039,
+    "ordinaryNext" : 1039,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1039,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 684,
+        "startColumn" : 8,
+        "endLine" : 684,
+        "endColumn" : 33
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 489,
+        "startColumn" : 15,
+        "endLine" : 489,
+        "endColumn" : 40
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1041,
+    "ordinaryNext" : 1041,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1041,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 687,
+        "startColumn" : 4,
+        "endLine" : 687,
+        "endColumn" : 36
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 492,
+        "startColumn" : 11,
+        "endLine" : 492,
+        "endColumn" : 43
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1046,
+    "ordinaryNext" : 1046,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1046,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 688,
+        "startColumn" : 4,
+        "endLine" : 688,
+        "endColumn" : 37
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 493,
+        "startColumn" : 11,
+        "endLine" : 493,
+        "endColumn" : 44
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 1053,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1053,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 693,
+        "startColumn" : 4,
+        "endLine" : 693,
+        "endColumn" : 46
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 498,
+        "startColumn" : 11,
+        "endLine" : 498,
+        "endColumn" : 53
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1056,
+    "ordinaryNext" : 1056,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1056,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 695,
+        "startColumn" : 4,
+        "endLine" : 695,
+        "endColumn" : 32
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 500,
+        "startColumn" : 11,
+        "endLine" : 500,
+        "endColumn" : 39
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1058,
+    "ordinaryNext" : 1058,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1058,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 697,
+        "startColumn" : 4,
+        "endLine" : 700,
+        "endColumn" : 14
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 502,
+        "startColumn" : 11,
+        "endLine" : 505,
+        "endColumn" : 21
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1064,
+    "ordinaryNext" : 1064,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1060,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 698,
+        "startColumn" : 8,
+        "endLine" : 698,
+        "endColumn" : 45
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 503,
+        "startColumn" : 15,
+        "endLine" : 503,
+        "endColumn" : 52
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : null,
+    "normalCompletionRecognized" : false
+  }, {
+    "id" : 1062,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 699,
+        "startColumn" : 8,
+        "endLine" : 699,
+        "endColumn" : 36
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 504,
+        "startColumn" : 15,
+        "endLine" : 504,
+        "endColumn" : 43
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : null,
+    "normalCompletionRecognized" : false
+  }, {
+    "id" : 1064,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 702,
+        "startColumn" : 4,
+        "endLine" : 703,
+        "endColumn" : 35
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 507,
+        "startColumn" : 11,
+        "endLine" : 508,
+        "endColumn" : 42
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 1071,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1071,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 708,
+        "startColumn" : 4,
+        "endLine" : 708,
+        "endColumn" : 18
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 513,
+        "startColumn" : 11,
+        "endLine" : 513,
+        "endColumn" : 25
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1074,
+    "ordinaryNext" : 1074,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1074,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 710,
+        "startColumn" : 4,
+        "endLine" : 714,
+        "endColumn" : 9
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 515,
+        "startColumn" : 11,
+        "endLine" : 519,
+        "endColumn" : 16
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 1089,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1080,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 711,
+        "startColumn" : 8,
+        "endLine" : 712,
+        "endColumn" : 29
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 516,
+        "startColumn" : 15,
+        "endLine" : 517,
+        "endColumn" : 36
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1085,
+    "ordinaryNext" : 1085,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1085,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 713,
+        "startColumn" : 8,
+        "endLine" : 713,
+        "endColumn" : 33
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 518,
+        "startColumn" : 15,
+        "endLine" : 518,
+        "endColumn" : 40
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 1089,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1089,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 719,
+        "startColumn" : 4,
+        "endLine" : 719,
+        "endColumn" : 27
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 524,
+        "startColumn" : 11,
+        "endLine" : 524,
+        "endColumn" : 34
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1092,
+    "ordinaryNext" : 1092,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1092,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 722,
+        "startColumn" : 4,
+        "endLine" : 722,
+        "endColumn" : 30
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 527,
+        "startColumn" : 11,
+        "endLine" : 527,
+        "endColumn" : 37
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1095,
+    "ordinaryNext" : 1095,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1095,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 723,
+        "startColumn" : 4,
+        "endLine" : 723,
+        "endColumn" : 50
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 528,
+        "startColumn" : 11,
+        "endLine" : 528,
+        "endColumn" : 57
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1098,
+    "ordinaryNext" : 1098,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1098,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 724,
+        "startColumn" : 4,
+        "endLine" : 724,
+        "endColumn" : 31
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 529,
+        "startColumn" : 11,
+        "endLine" : 529,
+        "endColumn" : 38
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1103,
+    "ordinaryNext" : 1103,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1103,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 725,
+        "startColumn" : 4,
+        "endLine" : 725,
+        "endColumn" : 50
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 530,
+        "startColumn" : 11,
+        "endLine" : 530,
+        "endColumn" : 57
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1106,
+    "ordinaryNext" : 1106,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1106,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 726,
+        "startColumn" : 4,
+        "endLine" : 726,
+        "endColumn" : 34
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 531,
+        "startColumn" : 11,
+        "endLine" : 531,
+        "endColumn" : 41
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1109,
+    "ordinaryNext" : 1109,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1109,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 727,
+        "startColumn" : 4,
+        "endLine" : 727,
+        "endColumn" : 37
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 532,
+        "startColumn" : 11,
+        "endLine" : 532,
+        "endColumn" : 44
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1112,
+    "ordinaryNext" : 1112,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1112,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 730,
+        "startColumn" : 4,
+        "endLine" : 730,
+        "endColumn" : 32
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 535,
+        "startColumn" : 11,
+        "endLine" : 535,
+        "endColumn" : 39
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1115,
+    "ordinaryNext" : 1115,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1115,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 731,
+        "startColumn" : 4,
+        "endLine" : 731,
+        "endColumn" : 40
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 536,
+        "startColumn" : 11,
+        "endLine" : 536,
+        "endColumn" : 47
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1118,
+    "ordinaryNext" : 1118,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1118,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 732,
+        "startColumn" : 4,
+        "endLine" : 732,
+        "endColumn" : 38
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 537,
+        "startColumn" : 11,
+        "endLine" : 537,
+        "endColumn" : 45
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1121,
+    "ordinaryNext" : 1121,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1121,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 733,
+        "startColumn" : 4,
+        "endLine" : 733,
+        "endColumn" : 52
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 538,
+        "startColumn" : 11,
+        "endLine" : 538,
+        "endColumn" : 59
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1124,
+    "ordinaryNext" : 1124,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1124,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 734,
+        "startColumn" : 4,
+        "endLine" : 734,
+        "endColumn" : 54
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 539,
+        "startColumn" : 11,
+        "endLine" : 539,
+        "endColumn" : 61
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1127,
+    "ordinaryNext" : 1127,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1127,
+    "type" : "MoveStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 735,
+        "startColumn" : 4,
+        "endLine" : 735,
+        "endColumn" : 52
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 540,
+        "startColumn" : 11,
+        "endLine" : 540,
+        "endColumn" : 59
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1130,
+    "ordinaryNext" : 1130,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1130,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 737,
+        "startColumn" : 4,
+        "endLine" : 737,
+        "endColumn" : 48
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 542,
+        "startColumn" : 11,
+        "endLine" : 542,
+        "endColumn" : 55
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1135,
+    "ordinaryNext" : 1135,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1135,
+    "type" : "IfStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 739,
+        "startColumn" : 4,
+        "endLine" : 743,
+        "endColumn" : 9
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 544,
+        "startColumn" : 11,
+        "endLine" : 548,
+        "endColumn" : 16
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1145,
+    "ordinaryNext" : 1145,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1138,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 740,
+        "startColumn" : 8,
+        "endLine" : 741,
+        "endColumn" : 31
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 545,
+        "startColumn" : 15,
+        "endLine" : 546,
+        "endColumn" : 38
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1143,
+    "ordinaryNext" : 1143,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1143,
+    "type" : "PerformStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 742,
+        "startColumn" : 8,
+        "endLine" : 742,
+        "endColumn" : 33
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 547,
+        "startColumn" : 15,
+        "endLine" : 547,
+        "endColumn" : 40
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1145,
+    "ordinaryNext" : 1145,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1145,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 745,
+        "startColumn" : 4,
+        "endLine" : 745,
+        "endColumn" : 36
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 550,
+        "startColumn" : 11,
+        "endLine" : 550,
+        "endColumn" : 43
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1150,
+    "ordinaryNext" : 1150,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1150,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 746,
+        "startColumn" : 4,
+        "endLine" : 746,
+        "endColumn" : 37
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 551,
+        "startColumn" : 11,
+        "endLine" : 551,
+        "endColumn" : 44
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 1157,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1157,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 751,
+        "startColumn" : 4,
+        "endLine" : 751,
+        "endColumn" : 23
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 556,
+        "startColumn" : 11,
+        "endLine" : 556,
+        "endColumn" : 30
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1160,
+    "ordinaryNext" : 1160,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1160,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 752,
+        "startColumn" : 4,
+        "endLine" : 752,
+        "endColumn" : 22
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 557,
+        "startColumn" : 11,
+        "endLine" : 557,
+        "endColumn" : 29
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1163,
+    "ordinaryNext" : 1163,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1163,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 753,
+        "startColumn" : 4,
+        "endLine" : 753,
+        "endColumn" : 19
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 558,
+        "startColumn" : 11,
+        "endLine" : 558,
+        "endColumn" : 26
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1166,
+    "ordinaryNext" : 1166,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1166,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 754,
+        "startColumn" : 4,
+        "endLine" : 754,
+        "endColumn" : 26
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 559,
+        "startColumn" : 11,
+        "endLine" : 559,
+        "endColumn" : 33
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1169,
+    "ordinaryNext" : 1169,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1169,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 755,
+        "startColumn" : 4,
+        "endLine" : 755,
+        "endColumn" : 19
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 560,
+        "startColumn" : 11,
+        "endLine" : 560,
+        "endColumn" : 26
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1172,
+    "ordinaryNext" : 1172,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1172,
+    "type" : "ModeledStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 756,
+        "startColumn" : 4,
+        "endLine" : 756,
+        "endColumn" : 22
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 561,
+        "startColumn" : 11,
+        "endLine" : 561,
+        "endColumn" : 29
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1175,
+    "ordinaryNext" : 1175,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1175,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 758,
+        "startColumn" : 4,
+        "endLine" : 758,
+        "endColumn" : 39
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 563,
+        "startColumn" : 11,
+        "endLine" : 563,
+        "endColumn" : 46
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1178,
+    "ordinaryNext" : 1178,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1178,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 759,
+        "startColumn" : 4,
+        "endLine" : 760,
+        "endColumn" : 39
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 564,
+        "startColumn" : 11,
+        "endLine" : 565,
+        "endColumn" : 46
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1183,
+    "ordinaryNext" : 1183,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1183,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 761,
+        "startColumn" : 4,
+        "endLine" : 762,
+        "endColumn" : 38
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 566,
+        "startColumn" : 11,
+        "endLine" : 567,
+        "endColumn" : 45
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1188,
+    "ordinaryNext" : 1188,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1188,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 763,
+        "startColumn" : 4,
+        "endLine" : 763,
+        "endColumn" : 64
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 568,
+        "startColumn" : 11,
+        "endLine" : 568,
+        "endColumn" : 71
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1193,
+    "ordinaryNext" : 1193,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1193,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 764,
+        "startColumn" : 4,
+        "endLine" : 765,
+        "endColumn" : 35
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 569,
+        "startColumn" : 11,
+        "endLine" : 570,
+        "endColumn" : 42
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1198,
+    "ordinaryNext" : 1198,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1198,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 766,
+        "startColumn" : 4,
+        "endLine" : 766,
+        "endColumn" : 64
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 571,
+        "startColumn" : 11,
+        "endLine" : 571,
+        "endColumn" : 71
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1203,
+    "ordinaryNext" : 1203,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1203,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 767,
+        "startColumn" : 4,
+        "endLine" : 768,
+        "endColumn" : 36
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 572,
+        "startColumn" : 11,
+        "endLine" : 573,
+        "endColumn" : 43
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : 1210,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1210,
+    "type" : "PreservedStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 773,
+        "startColumn" : 4,
+        "endLine" : 773,
+        "endColumn" : 39
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 578,
+        "startColumn" : 11,
+        "endLine" : 578,
+        "endColumn" : 46
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : 1213,
+    "ordinaryNext" : 1213,
+    "normalCompletionRecognized" : true
+  }, {
+    "id" : 1213,
+    "type" : "CallStatement",
+    "source" : {
+      "expanded" : {
+        "file" : "<preprocessed>",
+        "startLine" : 774,
+        "startColumn" : 4,
+        "endLine" : 774,
+        "endColumn" : 17
+      },
+      "original" : {
+        "file" : "CBEXPORT.cbl",
+        "startLine" : 579,
+        "startColumn" : 11,
+        "endLine" : 579,
+        "endColumn" : 24
+      },
+      "includeChain" : [ ],
+      "exact" : true
+    },
+    "paragraphLocalNext" : null,
+    "ordinaryNext" : null,
+    "normalCompletionRecognized" : true
+  } ]
+}

@@ -1,0 +1,330 @@
+package io.github.gustavo2358.cobolexplorer;
+
+import java.util.*;
+
+/** Canonical, immutable post-binding facts for the elementary textual MOVE profile.
+ * This product has no boundary, AIR, CFG or runtime-value dependencies. */
+public final class ScalarMoveSemantics {
+    public record NodeKey(ResolutionContracts.ProgramUnitId unit, int node) { }
+    /** Local standalone elementary DISPLAY item in ordinary WORKING-STORAGE. */
+    public record ScalarText(int extent) {
+        public ScalarText { if (extent <= 0) throw new IllegalArgumentException("positive extent required"); }
+    }
+    public enum Copy { FULL_IDENTITY, FITTED_TEXT, POSSIBLE_TEXT, UNAVAILABLE }
+    public record TextAdjustment(int receiverExtent, String result) { }
+    public record Call(Optional<ResolutionContracts.SemanticEntityId> wholeItem,
+                       Optional<Integer> nextStatement, boolean inputComplete) { }
+    public enum Gap { SCALAR_WHOLE_ITEM_NOT_PROVEN, MOVE_IDENTITY_NOT_PROVEN, NORMAL_CONTINUATION_NOT_AVAILABLE }
+    public record Move(Optional<ResolutionContracts.SemanticEntityId> wholeItem,
+                       Copy copy, Optional<Integer> nextStatement, List<Gap> gaps, Optional<TextAdjustment> adjustment,
+                       Optional<ResolutionContracts.SemanticEntityId> sourceWholeItem) {
+        public Move {
+            wholeItem = Objects.requireNonNull(wholeItem);
+            copy = Objects.requireNonNull(copy);
+            nextStatement = Objects.requireNonNull(nextStatement);
+            gaps = List.copyOf(gaps);
+            if (copy == Copy.FULL_IDENTITY && wholeItem.isEmpty())
+                throw new IllegalArgumentException("identity copy requires whole item proof");
+        }
+    }
+    public record Metrics(long nodeVisits, long declarationVisits, long referenceVisits,
+                          long scalarLookups, long moveVisits) { }
+    private final Map<ResolutionContracts.SemanticEntityId, ScalarText> declarations;
+    private final Map<NodeKey, Move> moves;
+    private final NumericControlSemantics numbers;
+    public NumericControlSemantics numbers() { return numbers; }
+    private final Metrics metrics;
+    private final GoToSemantics goTos;
+    public GoToSemantics goTos() { return goTos; }
+    private final EvaluateSemantics evaluates;
+    public EvaluateSemantics evaluates() { return evaluates; }
+    private final IfSemantics ifs;
+    private final PerformSemantics performs;
+    private final ProcedurePerformSemantics procedurePerforms;
+    public ProcedurePerformSemantics procedurePerforms() { return procedurePerforms; }
+    public PerformSemantics performs() { return performs; }
+    public IfSemantics ifs() { return ifs; }
+    private final Map<NodeKey, Call> calls;
+    public Call call(ResolutionContracts.ProgramUnitId unit, int node) {
+        return calls.getOrDefault(new NodeKey(unit, node), new Call(Optional.empty(), Optional.empty(), false));
+    }
+
+    private ScalarMoveSemantics(Map<ResolutionContracts.SemanticEntityId, ScalarText> declarations,
+                                Map<NodeKey, Move> moves, Map<NodeKey, Call> calls, Metrics metrics, IfSemantics ifs, PerformSemantics performs, EvaluateSemantics evaluates, GoToSemantics goTos, ProcedurePerformSemantics procedurePerforms, NumericControlSemantics numbers) {
+        this.declarations = Map.copyOf(declarations);
+        this.numbers=numbers;
+        this.moves = Map.copyOf(moves);
+        this.metrics = metrics;
+        this.ifs = Objects.requireNonNull(ifs);
+        this.goTos = Objects.requireNonNull(goTos);
+        this.evaluates = Objects.requireNonNull(evaluates);
+        this.performs = Objects.requireNonNull(performs);
+        this.procedurePerforms = Objects.requireNonNull(procedurePerforms);
+        this.calls = Map.copyOf(calls);
+    }
+    public Optional<ScalarText> declaration(ResolutionContracts.SemanticEntityId id) {
+        return Optional.ofNullable(declarations.get(id));
+    }
+    public Move move(ResolutionContracts.ProgramUnitId unit, int node) {
+        Move result = moves.get(new NodeKey(unit, node));
+        return result != null ? result : fact(Optional.empty(), Copy.UNAVAILABLE, Optional.empty());
+    }
+    public Metrics metrics() { return metrics; }
+
+    /** One AST walk, one symbol pass and one resolution pass; no MOVE scans DATA.
+     * The transient target index holds occurrences, never copied declarations. */
+    public static ScalarMoveSemantics analyze(CompilationUnitBuildResult frontend,
+            CompilationUnitSymbolTables tables, ReferenceResolution resolution,
+            ResolutionAnalysisReport report) {
+        return analyze(frontend,tables,resolution,report,StorageComponents.analyze(frontend,tables,resolution));
+    }
+    public static ScalarMoveSemantics analyze(CompilationUnitBuildResult frontend,
+            CompilationUnitSymbolTables tables,ReferenceResolution resolution,
+            ResolutionAnalysisReport report,StorageComponents components) {
+        return analyze(frontend,tables,resolution,report,components,Optional.empty());
+    }
+    public static ScalarMoveSemantics analyze(CompilationUnitBuildResult frontend,
+            CompilationUnitSymbolTables tables,ReferenceResolution resolution,
+            ResolutionAnalysisReport report,StorageComponents components,Optional<StorageAccessSemantics> storage) {
+        return analyze(frontend,tables,resolution,report,components,storage,new CicsProgramControlAnalyzer().analyze(frontend,report,CicsProgramControlAnalyzer.EntryMode.DISABLED));
+    }
+    public static ScalarMoveSemantics analyze(CompilationUnitBuildResult frontend,
+            CompilationUnitSymbolTables tables,ReferenceResolution resolution,ResolutionAnalysisReport report,
+            StorageComponents components,Optional<StorageAccessSemantics> storage,CicsProgramControlAnalyzer.Contribution cics) {
+        if(!cics.belongsTo(frontend))throw new IllegalArgumentException("CICS facts belong to another frontend");
+        storage.ifPresent(s->{if(!s.belongsTo(frontend,resolution))throw new IllegalArgumentException("storage facts belong to another snapshot");});
+        if(!components.belongsTo(frontend))throw new IllegalArgumentException("storage components belong to another snapshot");
+        Map<ResolutionContracts.SemanticEntityId, ScalarText> declarations = new HashMap<>();
+        Map<NodeKey, Ast.MoveStatement> targets = new HashMap<>();
+        Map<ResolutionContracts.SemanticEntityId, ScalarText> possibleText = new HashMap<>();
+        Map<NodeKey, Move> moves = new HashMap<>();
+        Map<NodeKey, Ast.CallStatement> callTargets = new HashMap<>();
+        Map<NodeKey, Call> calls = new HashMap<>();
+        long[] counts = new long[5];
+        for (var unit : frontend.compilationUnit().programUnits()) {
+            boolean inputComplete=report.inputComplete(unit.id());
+            Map<Integer, ScalarText> eligible = new HashMap<>();
+            var localText=new HashMap<Integer,ScalarText>();
+            var repeated=new HashSet<Integer>();
+            for(var position:components.unit(unit.id()).positions()) {
+                var declaration=position.data();
+                boolean repeat=position.parent().filter(repeated::contains).isPresent()
+                    ||declaration.clauses().stream().anyMatch(c->c instanceof Ast.OccursClause||c instanceof Ast.UsageClause u&&!u.display());
+                if(repeat)repeated.add(declaration.meta().id());
+                if(!repeat)possibleReceiver(declaration).ifPresent(shape->localText.put(declaration.meta().id(),shape));
+            }
+            storage.ifPresent(st->{
+                var leaves=new HashMap<Integer,StorageLayoutSemantics.Node>();
+                for(var n:st.layout().layout(unit.id()).nodes())if(n.kind()==StorageLayoutSemantics.Kind.ELEMENTARY&&!n.filler())leaves.put(n.id().node(),n);
+                for(var v:st.layout().logicalViews())if(v.node().unit().equals(unit.id())&&leaves.containsKey(v.node().node()))
+                    eligible.put(v.node().node(),new ScalarText(v.length().intValueExact()));
+            });
+            // Reuse the already immutable canonical relation index; do not rebuild it.
+            Map<Integer, Integer> next = Map.of();
+            Map<Integer, Integer> ordinaryNext = Map.of();
+            boolean procedureSeen = false;
+            for (var division : unit.program().divisions()) {
+                if (division.divisionKind() != Ast.DivisionKind.PROCEDURE) continue;
+                if (procedureSeen) throw new IllegalArgumentException("duplicate procedure division");
+                procedureSeen = true;
+                next = division.normalContinuations();
+                ordinaryNext = division.ordinaryContinuations();
+            }
+            var attributes = unit.program().attributes();
+            boolean ordinary = inputComplete && !attributes.initial() && !attributes.recursive()
+                    && !attributes.common() && !attributes.library() && !attributes.definition();
+            Deque<Ast.Node> pending = new ArrayDeque<>();
+            pending.push(unit.program());
+            while (!pending.isEmpty()) {
+                Ast.Node node = pending.pop();
+                counts[0]++;
+                if (node instanceof Ast.Section section
+                        && section.dataSectionKind() == Ast.DataSectionKind.WORKING_STORAGE && ordinary) {
+                    // The complete component index includes later overlays and anonymous owners.
+                    for (Ast.Node child : section.children()) {
+                        if (child instanceof Ast.DataEntry entry&&components.unit(unit.id()).standaloneIndependent(entry.meta().id())) scalar(entry, counts)
+                                .ifPresent(shape -> eligible.put(entry.meta().id(), shape));
+                    }
+                }
+                if (node instanceof Ast.CallStatement call) {
+                    var key = new NodeKey(unit.id(), call.meta().id());
+                    calls.put(key, new Call(Optional.empty(), inputComplete
+                            ? Optional.ofNullable(ordinaryNext.get(call.meta().id())) : Optional.empty(), inputComplete));
+                    if (call.target() instanceof Ast.DataReference target)
+                        callTargets.put(new NodeKey(unit.id(), target.meta().id()), call);
+                }
+                if (node instanceof Ast.MoveStatement move) {
+                    counts[4]++;
+                    var key = new NodeKey(unit.id(), move.meta().id());
+                    // The parser publishes this structural edge independently of COPY expansion.
+                    moves.put(key, fact(Optional.empty(), Copy.UNAVAILABLE,
+                            Optional.ofNullable(next.get(move.meta().id()))));
+                    if (!move.corresponding() && (move.source() instanceof Ast.LiteralExpression || move.source() instanceof Ast.DataReference)
+                            && move.targets().size() == 1 && move.targets().get(0) instanceof Ast.DataReference target)
+                        targets.put(new NodeKey(unit.id(), target.meta().id()), move);
+                }
+                for (var child : Ast.children(node)) pending.push(child);
+            }
+            for (var symbol : tables.forProgramUnit(unit.id()).orElseThrow().symbolTable().symbols()) {
+                counts[1]++;
+                ScalarText shape = eligible.get(symbol.declarationAstNodeId());
+                if(localText.containsKey(symbol.declarationAstNodeId())&&symbol.namespace()==SymbolTable.Namespace.DATA
+                    &&symbol.kind()==SymbolTable.SymbolKind.DATA_ITEM)
+                    possibleText.put(new ResolutionContracts.SemanticEntityId(unit.id(),ResolutionContracts.SemanticEntityDomain.DATA_SYMBOL,symbol.id()),localText.get(symbol.declarationAstNodeId()));
+                if (shape != null && symbol.namespace() == SymbolTable.Namespace.DATA
+                        && symbol.kind() == SymbolTable.SymbolKind.DATA_ITEM)
+                    declarations.put(new ResolutionContracts.SemanticEntityId(unit.id(),
+                            ResolutionContracts.SemanticEntityDomain.DATA_SYMBOL, symbol.id()), shape);
+            }
+        }
+        Map<NodeKey, ReferenceResolution.Entry> byOccurrence = new HashMap<>();
+        for (var entry : resolution.entries())
+            byOccurrence.put(new NodeKey(entry.occurrence().programUnitId(), entry.occurrence().referenceAstNodeId()), entry);
+        for (var entry : resolution.entries()) {
+            counts[2]++;
+            var occurrence = entry.occurrence();
+            boolean inputComplete=report.inputComplete(occurrence.programUnitId());
+            var occurrenceKey = new NodeKey(occurrence.programUnitId(), occurrence.referenceAstNodeId());
+            var call = callTargets.get(occurrenceKey);
+            if (call != null) {
+                var target = (Ast.DataReference) call.target();
+                Optional<ResolutionContracts.SemanticEntityId> whole = Optional.empty();
+                if (inputComplete && entry.status() == ResolutionContracts.ResolutionStatus.RESOLVED
+                        && occurrence.role() == ResolutionContracts.ReferenceRole.CALL_TARGET
+                        && target.understanding() == Ast.ReferenceUnderstanding.STRUCTURED
+                        && target.subscriptGroups().isEmpty() && target.referenceModification() == null
+                        && target.qualifiers().isEmpty()) {
+                    var selected = entry.selectedCandidate().orElseThrow();
+                    counts[3]++;
+                    if (declarations.containsKey(selected.entityId())) whole = Optional.of(selected.entityId());
+                }
+                var key = new NodeKey(occurrence.programUnitId(), call.meta().id());
+                calls.put(key, new Call(whole, calls.get(key).nextStatement(), inputComplete));
+            }
+            var move = targets.get(occurrenceKey);
+            if (move == null) continue;
+            var target = (Ast.DataReference) move.targets().get(0);
+            Optional<ResolutionContracts.SemanticEntityId> whole = Optional.empty();
+            Optional<ResolutionContracts.SemanticEntityId> sourceWhole = Optional.empty();
+            Copy copy = Copy.UNAVAILABLE;
+            Optional<TextAdjustment> adjustment = Optional.empty();
+            if (inputComplete && entry.status() == ResolutionContracts.ResolutionStatus.RESOLVED
+                    && occurrence.role() == ResolutionContracts.ReferenceRole.VALUE_WRITE
+                    && target.understanding() == Ast.ReferenceUnderstanding.STRUCTURED
+                    && target.subscriptGroups().isEmpty() && target.referenceModification() == null
+                    && target.qualifiers().isEmpty()) {
+                var selected = entry.selectedCandidate().orElseThrow();
+                counts[3]++;
+                ScalarText shape = declarations.get(selected.entityId());
+                if (shape != null) {
+                    whole = Optional.of(selected.entityId());
+                    if (move.source() instanceof Ast.LiteralExpression literal) {
+                        // IBM elementary alphanumeric MOVE with equal logical lengths:
+                        // mandatory complete receiving-item write, no conversion or fitting.
+                        if (literal.logicalText().isPresent()
+                                && literal.logicalText().get().extent() == shape.extent()) copy = Copy.FULL_IDENTITY;
+                        else if (literal.logicalText().isPresent()
+                                && literal.logicalText().get().extent() < shape.extent()) {
+                            // IBM 6.4 elementary alphanumeric MOVE, non-JUSTIFIED DISPLAY receiver:
+                            // left alignment fills the remaining logical positions with spaces.
+                            var text = literal.logicalText().get();
+                            copy = Copy.FITTED_TEXT;
+                            adjustment = Optional.of(new TextAdjustment(shape.extent(),
+                                    text.value() + " ".repeat(shape.extent() - text.extent())));
+                        }
+                    } else if (move.source() instanceof Ast.DataReference source) {
+                        var sourceEntry = byOccurrence.get(new NodeKey(occurrence.programUnitId(), source.meta().id()));
+                        counts[2]++;
+                        if (sourceEntry != null && sourceEntry.status() == ResolutionContracts.ResolutionStatus.RESOLVED
+                                && sourceEntry.candidates().size() == 1
+                                && sourceEntry.occurrence().role() == ResolutionContracts.ReferenceRole.VALUE_READ
+                                && source.understanding() == Ast.ReferenceUnderstanding.STRUCTURED
+                                && source.qualifiers().isEmpty() && source.subscriptGroups().isEmpty()
+                                && source.referenceModification() == null) {
+                            var sourceId = sourceEntry.selectedCandidate().orElseThrow().entityId();
+                            counts[3]++;
+                            var sourceShape = declarations.get(sourceId);
+                            if (sourceShape != null) {
+                                sourceWhole = Optional.of(sourceId);
+                                if (sourceShape.extent() == shape.extent()) copy = Copy.FULL_IDENTITY;
+                            }
+                        }
+                    }
+                }
+            }
+            // Occurrence-local value evidence does not prove physical allocation or kill authority.
+            if(copy==Copy.UNAVAILABLE&&storage.map(st->st.move(new StorageLayoutSemantics.Key(occurrence.programUnitId(),move.meta().id())).kind()==StorageAccessSemantics.MoveKind.UNAVAILABLE).orElse(true)
+                &&move.targets().size()==1&&move.meta().provenance().exact()
+                &&target.meta().provenance().exact()&&target.understanding()==Ast.ReferenceUnderstanding.STRUCTURED
+                &&target.subscriptGroups().isEmpty()&&target.referenceModification()==null
+                &&entry.status()==ResolutionContracts.ResolutionStatus.RESOLVED
+                &&move.source() instanceof Ast.LiteralExpression literal&&literal.logicalText().isPresent()) {
+                var selected=entry.selectedCandidate().orElseThrow().entityId();var shape=possibleText.get(selected);
+                var text=literal.logicalText().orElseThrow();
+                if(shape!=null&&text.extent()<=shape.extent()) {
+                    copy=Copy.POSSIBLE_TEXT;whole=Optional.of(selected);
+                    adjustment=Optional.of(new TextAdjustment(shape.extent(),text.value()+" ".repeat(shape.extent()-text.extent())));
+                }
+            }
+            NodeKey key = new NodeKey(occurrence.programUnitId(), move.meta().id());
+            var basic = fact(whole, copy, moves.get(key).nextStatement());
+            moves.put(key, new Move(whole, copy, basic.nextStatement(), basic.gaps(), adjustment, sourceWhole));
+        }
+        var numbers=NumericControlSemantics.analyze(frontend,tables,report::inputComplete,components);
+        var ifs = IfSemantics.analyze(frontend, tables, resolution, report, declarations, moves,numbers,components);
+        var goTos = GoToSemantics.analyze(frontend, tables, resolution, report,numbers);
+        var completingMoves=new HashSet<NodeKey>();
+        moves.forEach((key,move)->{if(move.copy()!=Copy.UNAVAILABLE)completingMoves.add(key);});
+        storage.ifPresent(s->s.moves().forEach(move->{
+            var sequence=s.sequence(move.statement());
+            if(!sequence.isEmpty()&&sequence.stream().allMatch(t->t.origin().exact()&&switch(t.kind()) {
+                case LITERAL_BYTES,FITTED_LITERAL_BYTES,COPY_BYTES,FIT_TEXT,LOGICAL_FIT_TEXT->true;
+                case MUST_UNKNOWN,UNAVAILABLE->false;
+            }))completingMoves.add(new NodeKey(move.statement().unit(),move.statement().node()));
+        }));
+        var performs = PerformSemantics.analyze(frontend, tables, resolution, report, completingMoves, ifs, goTos);
+        var evaluates = EvaluateSemantics.analyze(frontend, resolution, report, declarations);
+        var procedurePerforms = ProcedurePerformSemantics.analyze(frontend, tables, resolution, report, declarations, moves, ifs, evaluates, goTos, performs,numbers,cics);
+        performs = performs.restrictPrimaryRanges(procedurePerforms);
+        // Ordinary flow is published independently in SP 2.37, never promoted by a peer feature.
+        return new ScalarMoveSemantics(declarations, moves, calls,
+                new Metrics(counts[0], counts[1], counts[2], counts[3], counts[4]),
+                ifs, performs, evaluates,
+                goTos, procedurePerforms,numbers);
+    }
+
+    private static Move fact(Optional<ResolutionContracts.SemanticEntityId> whole,
+                             Copy copy, Optional<Integer> next) {
+        List<Gap> gaps = new ArrayList<>(3);
+        if (whole.isEmpty()) gaps.add(Gap.SCALAR_WHOLE_ITEM_NOT_PROVEN);
+        if (copy == Copy.UNAVAILABLE) gaps.add(Gap.MOVE_IDENTITY_NOT_PROVEN);
+        if (next.isEmpty()) gaps.add(Gap.NORMAL_CONTINUATION_NOT_AVAILABLE);
+        return new Move(whole, copy, next, gaps, Optional.empty(), Optional.empty());
+    }
+
+    private static Optional<ScalarText> possibleReceiver(Ast.DataEntry entry) {
+        if(!entry.children().isEmpty()||entry.filler()||entry.visibility()!=Ast.DeclarationVisibility.LOCAL||!entry.meta().provenance().exact())return Optional.empty();
+        Optional<Integer> extent=Optional.empty();int pictures=0,usages=0;
+        for(var clause:entry.clauses()) {
+            if(clause instanceof Ast.PictureClause picture){pictures++;extent=picture.textExtent();}
+            else if(clause instanceof Ast.UsageClause usage&&usage.display())usages++;
+            else if(!(clause instanceof Ast.ValueClause)&&!(clause instanceof Ast.RedefinesClause)&&!(clause instanceof Ast.PreservedDataClause))return Optional.empty();
+        }
+        return pictures==1&&usages<=1?extent.map(ScalarText::new):Optional.empty();
+    }
+    private static Optional<ScalarText> scalar(Ast.DataEntry entry, long[] counts) {
+        if (!entry.children().isEmpty() || entry.filler()
+                || entry.visibility() != Ast.DeclarationVisibility.LOCAL
+                || !(entry.level().equals("01") || entry.levelKind() == Ast.DataLevelKind.STANDALONE_77))
+            return Optional.empty();
+        Optional<Integer> extent = Optional.empty();
+        int pictures = 0, usages = 0;
+        for (Ast.DataClause clause : entry.clauses()) {
+            counts[0]++;
+            if (clause instanceof Ast.PictureClause picture) { pictures++; extent = picture.textExtent(); }
+            else if (clause instanceof Ast.UsageClause usage && usage.display()) usages++;
+            else if(!(clause instanceof Ast.PreservedDataClause))return Optional.empty();
+        }
+        return pictures == 1 && usages <= 1 ? extent.map(ScalarText::new) : Optional.empty();
+    }
+}

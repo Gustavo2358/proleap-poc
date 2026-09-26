@@ -1,0 +1,194 @@
+[
+  {
+    "repo": "proleap-poc",
+    "path": "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/proleap-poc/src/main/java/io/github/gustavo2358/cobolexplorer/AstBuilder.java",
+    "relativePath": "src/main/java/io/github/gustavo2358/cobolexplorer/AstBuilder.java",
+    "currentSha256": "6a3a6d0f371c1a50098cf93b1c3f003a1ded67f0529a15ba85285bcbee8a5edc",
+    "approvedW7R1Sha256": "6a3a6d0f371c1a50098cf93b1c3f003a1ded67f0529a15ba85285bcbee8a5edc",
+    "sameAsApproved": true
+  },
+  {
+    "repo": "proleap-poc",
+    "path": "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/proleap-poc/src/main/java/io/github/gustavo2358/cobolexplorer/Ast.java",
+    "relativePath": "src/main/java/io/github/gustavo2358/cobolexplorer/Ast.java",
+    "currentSha256": "d61c8a55231516946c77b7f83547226a0a51b3f29a8a86f42c94a965593256a3",
+    "approvedW7R1Sha256": "d61c8a55231516946c77b7f83547226a0a51b3f29a8a86f42c94a965593256a3",
+    "sameAsApproved": true
+  },
+  {
+    "repo": "proleap-poc",
+    "path": "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/proleap-poc/src/main/java/io/github/gustavo2358/cobolexplorer/ProcedurePerformSemantics.java",
+    "relativePath": "src/main/java/io/github/gustavo2358/cobolexplorer/ProcedurePerformSemantics.java",
+    "currentSha256": "1c1f635973ff368d790c122a22f0296aa013d01fe3a8c25d5580bd4febc93178",
+    "approvedW7R1Sha256": "1c1f635973ff368d790c122a22f0296aa013d01fe3a8c25d5580bd4febc93178",
+    "sameAsApproved": true
+  },
+  {
+    "repo": "proleap-poc",
+    "path": "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/proleap-poc/src/main/java/io/github/gustavo2358/cobolexplorer/EvaluateSemantics.java",
+    "relativePath": "src/main/java/io/github/gustavo2358/cobolexplorer/EvaluateSemantics.java",
+    "currentSha256": "8ee2147ab81fede6d477859d17fc95c4810b758781223a01fea035cb1a0ed1c6",
+    "approvedW7R1Sha256": "8ee2147ab81fede6d477859d17fc95c4810b758781223a01fea035cb1a0ed1c6",
+    "sameAsApproved": true
+  },
+  {
+    "repo": "proleap-poc",
+    "path": "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/proleap-poc/src/main/java/io/github/gustavo2358/cobolexplorer/IfSemantics.java",
+    "relativePath": "src/main/java/io/github/gustavo2358/cobolexplorer/IfSemantics.java",
+    "currentSha256": "5e66ab6be9aa6b336603b7533334dae1bb3883be15f803fd471bd1c5dfd8f26f",
+    "approvedW7R1Sha256": "5e66ab6be9aa6b336603b7533334dae1bb3883be15f803fd471bd1c5dfd8f26f",
+    "sameAsApproved": true
+  },
+  {
+    "repo": "proleap-poc",
+    "path": "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/proleap-poc/src/main/java/io/github/gustavo2358/cobolexplorer/PerformSemantics.java",
+    "relativePath": "src/main/java/io/github/gustavo2358/cobolexplorer/PerformSemantics.java",
+    "currentSha256": "49b0490f448a88a136b2720244579a14a80336eebe8348f72a50b74d8be369b0",
+    "approvedW7R1Sha256": "49b0490f448a88a136b2720244579a14a80336eebe8348f72a50b74d8be369b0",
+    "sameAsApproved": true
+  },
+  {
+    "repo": "proleap-poc",
+    "path": "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/proleap-poc/src/main/java/io/github/gustavo2358/cobolexplorer/StorageLayoutSemantics.java",
+    "relativePath": "src/main/java/io/github/gustavo2358/cobolexplorer/StorageLayoutSemantics.java",
+    "currentSha256": "dfdfaa4e9411700a64f7f822cdbd2e1bb52c65dec82ef0864bc7cb1eb30291cd",
+    "approvedW7R1Sha256": "dfdfaa4e9411700a64f7f822cdbd2e1bb52c65dec82ef0864bc7cb1eb30291cd",
+    "sameAsApproved": true
+  },
+  {
+    "repo": "proleap-poc",
+    "path": "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/proleap-poc/src/main/java/io/github/gustavo2358/cobolexplorer/StorageComponents.java",
+    "relativePath": "src/main/java/io/github/gustavo2358/cobolexplorer/StorageComponents.java",
+    "currentSha256": "3de2a70c0e78e6ea59e5af432d2ff3be82070565b1dab0c048c2a4ca6e65a9fc",
+    "approvedW7R1Sha256": "3de2a70c0e78e6ea59e5af432d2ff3be82070565b1dab0c048c2a4ca6e65a9fc",
+    "sameAsApproved": true
+  },
+  {
+    "repo": "proleap-poc",
+    "path": "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/proleap-poc/src/main/java/io/github/gustavo2358/cobolexplorer/ScalarMoveSemantics.java",
+    "relativePath": "src/main/java/io/github/gustavo2358/cobolexplorer/ScalarMoveSemantics.java",
+    "currentSha256": "7381d75a65c17d2e5bc7459485939dbdce1cf999ea7c011921b27dad8a77c6cf",
+    "approvedW7R1Sha256": "7381d75a65c17d2e5bc7459485939dbdce1cf999ea7c011921b27dad8a77c6cf",
+    "sameAsApproved": true
+  },
+  {
+    "repo": "proleap-poc",
+    "path": "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/proleap-poc/src/main/java/io/github/gustavo2358/cobolexplorer/ResolutionAnalysisReport.java",
+    "relativePath": "src/main/java/io/github/gustavo2358/cobolexplorer/ResolutionAnalysisReport.java",
+    "currentSha256": "99a10444a187cc03be03dfbe95afc5cd10ec0d752a50b29f8b719fe125cfa98e",
+    "approvedW7R1Sha256": "99a10444a187cc03be03dfbe95afc5cd10ec0d752a50b29f8b719fe125cfa98e",
+    "sameAsApproved": true
+  },
+  {
+    "repo": "proleap-poc",
+    "path": "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/proleap-poc/src/main/java/io/github/gustavo2358/cobolexplorer/CicsProgramControlAnalyzer.java",
+    "relativePath": "src/main/java/io/github/gustavo2358/cobolexplorer/CicsProgramControlAnalyzer.java",
+    "currentSha256": "cf7a7f67ef3fba8522241e7568c29aceafa23901e657adf332577df28e18ac49",
+    "approvedW7R1Sha256": "cf7a7f67ef3fba8522241e7568c29aceafa23901e657adf332577df28e18ac49",
+    "sameAsApproved": true
+  },
+  {
+    "repo": "proleap-poc",
+    "path": "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/proleap-poc/src/main/java/io/github/gustavo2358/cobolexplorer/SourceNormalizer.java",
+    "relativePath": "src/main/java/io/github/gustavo2358/cobolexplorer/SourceNormalizer.java",
+    "currentSha256": "20bbd737d96e016874c1236a42d4464ff9f6dd4c840f576e443330fb3b220049",
+    "approvedW7R1Sha256": "20bbd737d96e016874c1236a42d4464ff9f6dd4c840f576e443330fb3b220049",
+    "sameAsApproved": true
+  },
+  {
+    "repo": "proleap-poc",
+    "path": "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/proleap-poc/src/main/java/io/github/gustavo2358/cobolexplorer/CopybookLibrary.java",
+    "relativePath": "src/main/java/io/github/gustavo2358/cobolexplorer/CopybookLibrary.java",
+    "currentSha256": "740b834d9db16661ac4887c6ab814c98974c85e94061602eccfcb4418d5e4df8",
+    "approvedW7R1Sha256": "740b834d9db16661ac4887c6ab814c98974c85e94061602eccfcb4418d5e4df8",
+    "sameAsApproved": true
+  },
+  {
+    "repo": "proleap-poc",
+    "path": "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/proleap-poc/src/main/java/io/github/gustavo2358/cobolexplorer/semanticproduct/projection/CobolSemanticProductProjector.java",
+    "relativePath": "src/main/java/io/github/gustavo2358/cobolexplorer/semanticproduct/projection/CobolSemanticProductProjector.java",
+    "currentSha256": "df8ba786a0b1b49c8fbd730b45c8ee127a4c5f6820cdffa1bde0e8ca144043e3",
+    "approvedW7R1Sha256": "0c73d13952f6d594e76617d14a224585a5a78a7058e56b602ac86546b1c099c5",
+    "sameAsApproved": false
+  },
+  {
+    "repo": "cobol-lower",
+    "path": "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/cobol-lower/core/src/main/java/io/github/gustavo2358/lower/application/ProcedurePerformAdmission.java",
+    "relativePath": "core/src/main/java/io/github/gustavo2358/lower/application/ProcedurePerformAdmission.java",
+    "currentSha256": "350c0e80d534d1146561843316b807d81b1621b764c2eaacd5aee071597a91a0",
+    "approvedW7R1Sha256": "350c0e80d534d1146561843316b807d81b1621b764c2eaacd5aee071597a91a0",
+    "sameAsApproved": true
+  },
+  {
+    "repo": "cobol-lower",
+    "path": "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/cobol-lower/core/src/main/java/io/github/gustavo2358/lower/application/EvaluateAdmission.java",
+    "relativePath": "core/src/main/java/io/github/gustavo2358/lower/application/EvaluateAdmission.java",
+    "currentSha256": "e8af0b3ac7972fffae3b34880c49f582a471f4bcfc729d117af89481a90cd3ee",
+    "approvedW7R1Sha256": "e8af0b3ac7972fffae3b34880c49f582a471f4bcfc729d117af89481a90cd3ee",
+    "sameAsApproved": true
+  },
+  {
+    "repo": "cobol-lower",
+    "path": "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/cobol-lower/core/src/main/java/io/github/gustavo2358/lower/application/PartialProgramAdmission.java",
+    "relativePath": "core/src/main/java/io/github/gustavo2358/lower/application/PartialProgramAdmission.java",
+    "currentSha256": "29538a3623fb5e903c6ce3c6793330159bbc60c88151d3fecaeaca128fe914b5",
+    "approvedW7R1Sha256": "baa5b2e51efad907f897880c7727352bdb2716bc430ea9ea4d1f7da2db4eaf26",
+    "sameAsApproved": false
+  },
+  {
+    "repo": "cobol-lower",
+    "path": "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/cobol-lower/core/src/main/java/io/github/gustavo2358/lower/application/CompositionalPerformAdmission.java",
+    "relativePath": "core/src/main/java/io/github/gustavo2358/lower/application/CompositionalPerformAdmission.java",
+    "currentSha256": "caedae54c7901ecf9539452fb86c0cb277d8ce9807c14e352c3798d1fd412198",
+    "approvedW7R1Sha256": "caedae54c7901ecf9539452fb86c0cb277d8ce9807c14e352c3798d1fd412198",
+    "sameAsApproved": true
+  },
+  {
+    "repo": "cobol-lower",
+    "path": "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/cobol-lower/core/src/main/java/io/github/gustavo2358/lower/application/PartialProgramAssembler.java",
+    "relativePath": "core/src/main/java/io/github/gustavo2358/lower/application/PartialProgramAssembler.java",
+    "currentSha256": "7e6a033ce7547816f76084ad2d6ab09ee60fd529951fd510af1cb10e64802037",
+    "approvedW7R1Sha256": "7e6a033ce7547816f76084ad2d6ab09ee60fd529951fd510af1cb10e64802037",
+    "sameAsApproved": true
+  },
+  {
+    "repo": "cobol-lower",
+    "path": "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/cobol-lower/core/src/main/java/io/github/gustavo2358/lower/application/PerformActivationDemand.java",
+    "relativePath": "core/src/main/java/io/github/gustavo2358/lower/application/PerformActivationDemand.java",
+    "currentSha256": "304602dd34416db44a213a6ac57b7537fc925452bca6a2ed33ec253aa0bf39b2",
+    "approvedW7R1Sha256": "304602dd34416db44a213a6ac57b7537fc925452bca6a2ed33ec253aa0bf39b2",
+    "sameAsApproved": true
+  },
+  {
+    "repo": "cobol-lower",
+    "path": "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/cobol-lower/core/src/main/java/io/github/gustavo2358/lower/application/FileControlLowering.java",
+    "relativePath": "core/src/main/java/io/github/gustavo2358/lower/application/FileControlLowering.java",
+    "currentSha256": "cd20c6eeb2ed2cffad1c84354d4646b25945a9c64520e204531a126f4c958410",
+    "approvedW7R1Sha256": "cd20c6eeb2ed2cffad1c84354d4646b25945a9c64520e204531a126f4c958410",
+    "sameAsApproved": true
+  },
+  {
+    "repo": "cobol-lower",
+    "path": "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/cobol-lower/core/src/main/java/io/github/gustavo2358/lower/application/LocalIds.java",
+    "relativePath": "core/src/main/java/io/github/gustavo2358/lower/application/LocalIds.java",
+    "currentSha256": "ba902ef10d809f1a6744c70e833bab3987bbdf178b062168967fdb1339d7a040",
+    "approvedW7R1Sha256": "ba902ef10d809f1a6744c70e833bab3987bbdf178b062168967fdb1339d7a040",
+    "sameAsApproved": true
+  },
+  {
+    "repo": "cobol-lower",
+    "path": "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/cobol-lower/core/src/main/java/io/github/gustavo2358/lower/application/PartialProgramLowerer.java",
+    "relativePath": "core/src/main/java/io/github/gustavo2358/lower/application/PartialProgramLowerer.java",
+    "currentSha256": "79760b017e52fc6308f670bec7beb7e79e8ea4c9fe115fbd49f49a3eca713767",
+    "approvedW7R1Sha256": "79760b017e52fc6308f670bec7beb7e79e8ea4c9fe115fbd49f49a3eca713767",
+    "sameAsApproved": true
+  },
+  {
+    "repo": "cobol-lower",
+    "path": "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/cobol-lower/core/src/main/java/io/github/gustavo2358/lower/application/OutputAssessment.java",
+    "relativePath": "core/src/main/java/io/github/gustavo2358/lower/application/OutputAssessment.java",
+    "currentSha256": "f11e657398b301f66b35ff2f10b08600540930d1582e23541c15167e08caacb3",
+    "approvedW7R1Sha256": "f11e657398b301f66b35ff2f10b08600540930d1582e23541c15167e08caacb3",
+    "sameAsApproved": true
+  }
+]

@@ -1,0 +1,313 @@
+[
+  {
+    "wave": "pre-positive",
+    "runtime": "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w0-r1/runtime.json",
+    "runtimeSha256": "c97e3f5f02c966b95b03214ec46f245c69371fd7490931e96d1d30e81b8f1f82",
+    "historicalHashes": {
+      "/home/gustavo/.m2/repository/ch/qos/logback/logback-classic/1.6.3/logback-classic-1.6.3.jar": {
+        "expected": "beebede8db065fe1b72909ecc66bb49acda618901635d86c25fce14a5915e37e",
+        "actual": "beebede8db065fe1b72909ecc66bb49acda618901635d86c25fce14a5915e37e"
+      },
+      "/home/gustavo/.m2/repository/ch/qos/logback/logback-core/1.6.3/logback-core-1.6.3.jar": {
+        "expected": "a6967a28c8b086dee75a694d2f6fb8830c71153539866d7d8af065c9b6df91e0",
+        "actual": "a6967a28c8b086dee75a694d2f6fb8830c71153539866d7d8af065c9b6df91e0"
+      },
+      "/home/gustavo/.m2/repository/com/fasterxml/jackson/core/jackson-annotations/2.22/jackson-annotations-2.22.jar": {
+        "expected": "21ddb598807d3a51a876704eb979d9296e1c6a6f47ab1826ff88c6d6a127a2d0",
+        "actual": "21ddb598807d3a51a876704eb979d9296e1c6a6f47ab1826ff88c6d6a127a2d0"
+      },
+      "/home/gustavo/.m2/repository/com/fasterxml/jackson/core/jackson-core/2.22.2/jackson-core-2.22.2.jar": {
+        "expected": "ff167a6317be15895706c26668f45b898efe40ab8780970658210fe1393d52a6",
+        "actual": "ff167a6317be15895706c26668f45b898efe40ab8780970658210fe1393d52a6"
+      },
+      "/home/gustavo/.m2/repository/com/fasterxml/jackson/core/jackson-databind/2.22.2/jackson-databind-2.22.2.jar": {
+        "expected": "d0da14c12b16b5d54719aa172d83b542ff4abeb8b0fb7db476fde8ceece760ca",
+        "actual": "d0da14c12b16b5d54719aa172d83b542ff4abeb8b0fb7db476fde8ceece760ca"
+      },
+      "/home/gustavo/.m2/repository/org/antlr/antlr4-runtime/4.13.2/antlr4-runtime-4.13.2.jar": {
+        "expected": "dd3e8a13a2d669bf84fb8d834de35ce4875f27157698d206241ec8488aadcaf7",
+        "actual": "dd3e8a13a2d669bf84fb8d834de35ce4875f27157698d206241ec8488aadcaf7"
+      },
+      "/home/gustavo/.m2/repository/org/slf4j/slf4j-api/2.0.18/slf4j-api-2.0.18.jar": {
+        "expected": "44508fd1576500688c790b190acdd16fec4f8c79a3e0b900afd70503cf055f55",
+        "actual": "44508fd1576500688c790b190acdd16fec4f8c79a3e0b900afd70503cf055f55"
+      },
+      "/home/gustavo/workspace/teste-e2e/.cics-program-control/m2/com/dynatrace/hash4j/hash4j/0.30.0/hash4j-0.30.0.jar": {
+        "expected": "d3224b113ea835ce3452097747e5209ec760cf443dbed770d6ba68a0d480178f",
+        "actual": "d3224b113ea835ce3452097747e5209ec760cf443dbed770d6ba68a0d480178f"
+      },
+      "/home/gustavo/workspace/teste-e2e/.dependency-preservation/analysis-cfg/analysis-adapters/target/classes": {
+        "expected": "ce81d9a21a050595ea4b9230d058c726a9f3efe4e388ec0f21d3fdd2ac623ba6",
+        "actual": "ce81d9a21a050595ea4b9230d058c726a9f3efe4e388ec0f21d3fdd2ac623ba6"
+      },
+      "/home/gustavo/workspace/teste-e2e/.dependency-preservation/analysis-cfg/analysis-dataflow/target/classes": {
+        "expected": "daf7e64f03e7153c754cb5f755dcce796e75bed95f4d0e918bb1b9650f8651aa",
+        "actual": "daf7e64f03e7153c754cb5f755dcce796e75bed95f4d0e918bb1b9650f8651aa"
+      },
+      "/home/gustavo/workspace/teste-e2e/.dependency-preservation/analysis-cfg/analysis-dependencies/target/classes": {
+        "expected": "40a590f29f09a3ae2eb44272916a9367c4fa2b7dd7d69aa0c7745fb138f964fa",
+        "actual": "40a590f29f09a3ae2eb44272916a9367c4fa2b7dd7d69aa0c7745fb138f964fa"
+      },
+      "/home/gustavo/workspace/teste-e2e/.dependency-preservation/analysis-cfg/analysis-kernel/target/classes": {
+        "expected": "edf16eed19ca4a7b7ed21750eada035608704d6f817108995b8fbe8516f3b36f",
+        "actual": "edf16eed19ca4a7b7ed21750eada035608704d6f817108995b8fbe8516f3b36f"
+      },
+      "/home/gustavo/workspace/teste-e2e/.dependency-preservation/analysis-cfg/analysis-launcher/target/classes": {
+        "expected": "ed2023506114e2f53af73b7c7b7057d4f38293ac3e46d573cfec2c8c3a44be94",
+        "actual": "ed2023506114e2f53af73b7c7b7057d4f38293ac3e46d573cfec2c8c3a44be94"
+      },
+      "/home/gustavo/workspace/teste-e2e/.dependency-preservation/analysis-cfg/analysis-values/target/classes": {
+        "expected": "af1b6e3111b84a9f324c2eb90694932f276ee2d03c766763a836bb7885bce02d",
+        "actual": "af1b6e3111b84a9f324c2eb90694932f276ee2d03c766763a836bb7885bce02d"
+      },
+      "/home/gustavo/workspace/teste-e2e/.dependency-preservation/analysis-cfg/cfg-adapters/target/classes": {
+        "expected": "0963a7fb6efbfc46bce3ea3ad5dc664a9d10f37f3f7a1eba3ff90229373271a2",
+        "actual": "0963a7fb6efbfc46bce3ea3ad5dc664a9d10f37f3f7a1eba3ff90229373271a2"
+      },
+      "/home/gustavo/workspace/teste-e2e/.dependency-preservation/analysis-cfg/cfg-kernel/target/classes": {
+        "expected": "36b166c2ac48e5a104b45952c0c0b43c91e5c6acd5b7b0da612778932fa9b4bb",
+        "actual": "36b166c2ac48e5a104b45952c0c0b43c91e5c6acd5b7b0da612778932fa9b4bb"
+      },
+      "/home/gustavo/workspace/teste-e2e/.dependency-preservation/analysis-cfg/cfg-launcher/target/classes": {
+        "expected": "51ef7b649a636d92a1230c46dc37ab00a7a26066e9e7feb79895ec8ac84d1d7b",
+        "actual": "51ef7b649a636d92a1230c46dc37ab00a7a26066e9e7feb79895ec8ac84d1d7b"
+      },
+      "/home/gustavo/workspace/teste-e2e/.dependency-preservation/cobol-lower/adapters/target/classes": {
+        "expected": "67e58124f0a4f94258375d1bbc603650f7d38c0b56cb828b1f8b2bb3a367f555",
+        "actual": "67e58124f0a4f94258375d1bbc603650f7d38c0b56cb828b1f8b2bb3a367f555"
+      },
+      "/home/gustavo/workspace/teste-e2e/.dependency-preservation/cobol-lower/core/target/classes": {
+        "expected": "4f454c94001ae74cadc29d1538b3283589bdaa93b7f57e3585ededec16e4a6cf",
+        "actual": "4f454c94001ae74cadc29d1538b3283589bdaa93b7f57e3585ededec16e4a6cf"
+      },
+      "/home/gustavo/workspace/teste-e2e/.dependency-preservation/proleap-poc/target/classes": {
+        "expected": "6b046b8e34111d3884dfd40f17d54c1d52f343514f151950bce7a31fd9658b16",
+        "actual": "6b046b8e34111d3884dfd40f17d54c1d52f343514f151950bce7a31fd9658b16"
+      },
+      "/home/gustavo/workspace/teste-e2e/.logical-text-w1/air-java/air-json/target/classes": {
+        "expected": "c41baf1053ed38e3efdc945e815cb5b7ae6d8cbc69d75a7c2addd44af34a901c",
+        "actual": "c41baf1053ed38e3efdc945e815cb5b7ae6d8cbc69d75a7c2addd44af34a901c"
+      },
+      "/home/gustavo/workspace/teste-e2e/.logical-text-w1/air-java/air-model/target/classes": {
+        "expected": "e399a49b614c7a1fff81951022308582e1b2bf5e361c89697df5c1bc894d4750",
+        "actual": "e399a49b614c7a1fff81951022308582e1b2bf5e361c89697df5c1bc894d4750"
+      }
+    },
+    "sources": {
+      "frontend": "edb64520a6269be9fa6d71cd47e6974112fbfece",
+      "lower": "f8e181f95929c650181c989318f8ba23d1e68a1a",
+      "cfg": "98fa57c3db2edf9f70bb7a99bb667dbf36d28104",
+      "air": "646ca3ab1687d43f7d2063fc2a8f3837ab3cf9fa"
+    },
+    "currentRuntimeFingerprints": {
+      "/home/gustavo/workspace/teste-e2e/.dependency-preservation/proleap-poc/target/classes": "6b046b8e34111d3884dfd40f17d54c1d52f343514f151950bce7a31fd9658b16",
+      "/home/gustavo/.m2/repository/org/antlr/antlr4-runtime/4.13.2/antlr4-runtime-4.13.2.jar": "dd3e8a13a2d669bf84fb8d834de35ce4875f27157698d206241ec8488aadcaf7",
+      "/home/gustavo/.m2/repository/org/slf4j/slf4j-api/2.0.18/slf4j-api-2.0.18.jar": "44508fd1576500688c790b190acdd16fec4f8c79a3e0b900afd70503cf055f55",
+      "/home/gustavo/.m2/repository/ch/qos/logback/logback-classic/1.6.3/logback-classic-1.6.3.jar": "beebede8db065fe1b72909ecc66bb49acda618901635d86c25fce14a5915e37e",
+      "/home/gustavo/.m2/repository/ch/qos/logback/logback-core/1.6.3/logback-core-1.6.3.jar": "a6967a28c8b086dee75a694d2f6fb8830c71153539866d7d8af065c9b6df91e0",
+      "/home/gustavo/.m2/repository/com/fasterxml/jackson/core/jackson-databind/2.22.2/jackson-databind-2.22.2.jar": "d0da14c12b16b5d54719aa172d83b542ff4abeb8b0fb7db476fde8ceece760ca",
+      "/home/gustavo/.m2/repository/com/fasterxml/jackson/core/jackson-annotations/2.22/jackson-annotations-2.22.jar": "21ddb598807d3a51a876704eb979d9296e1c6a6f47ab1826ff88c6d6a127a2d0",
+      "/home/gustavo/.m2/repository/com/fasterxml/jackson/core/jackson-core/2.22.2/jackson-core-2.22.2.jar": "ff167a6317be15895706c26668f45b898efe40ab8780970658210fe1393d52a6",
+      "/home/gustavo/workspace/teste-e2e/.logical-text-w1/air-java/air-model/target/classes": "e399a49b614c7a1fff81951022308582e1b2bf5e361c89697df5c1bc894d4750",
+      "/home/gustavo/workspace/teste-e2e/.logical-text-w1/air-java/air-json/target/classes": "c41baf1053ed38e3efdc945e815cb5b7ae6d8cbc69d75a7c2addd44af34a901c",
+      "/home/gustavo/workspace/teste-e2e/.dependency-preservation/cobol-lower/core/target/classes": "4f454c94001ae74cadc29d1538b3283589bdaa93b7f57e3585ededec16e4a6cf",
+      "/home/gustavo/workspace/teste-e2e/.dependency-preservation/cobol-lower/adapters/target/classes": "67e58124f0a4f94258375d1bbc603650f7d38c0b56cb828b1f8b2bb3a367f555",
+      "/home/gustavo/workspace/teste-e2e/.cics-program-control/m2/com/dynatrace/hash4j/hash4j/0.30.0/hash4j-0.30.0.jar": "d3224b113ea835ce3452097747e5209ec760cf443dbed770d6ba68a0d480178f",
+      "/home/gustavo/workspace/teste-e2e/.dependency-preservation/analysis-cfg/analysis-adapters/target/classes": "ce81d9a21a050595ea4b9230d058c726a9f3efe4e388ec0f21d3fdd2ac623ba6",
+      "/home/gustavo/workspace/teste-e2e/.dependency-preservation/analysis-cfg/analysis-dataflow/target/classes": "daf7e64f03e7153c754cb5f755dcce796e75bed95f4d0e918bb1b9650f8651aa",
+      "/home/gustavo/workspace/teste-e2e/.dependency-preservation/analysis-cfg/analysis-dependencies/target/classes": "40a590f29f09a3ae2eb44272916a9367c4fa2b7dd7d69aa0c7745fb138f964fa",
+      "/home/gustavo/workspace/teste-e2e/.dependency-preservation/analysis-cfg/analysis-kernel/target/classes": "edf16eed19ca4a7b7ed21750eada035608704d6f817108995b8fbe8516f3b36f",
+      "/home/gustavo/workspace/teste-e2e/.dependency-preservation/analysis-cfg/analysis-launcher/target/classes": "ed2023506114e2f53af73b7c7b7057d4f38293ac3e46d573cfec2c8c3a44be94",
+      "/home/gustavo/workspace/teste-e2e/.dependency-preservation/analysis-cfg/analysis-values/target/classes": "af1b6e3111b84a9f324c2eb90694932f276ee2d03c766763a836bb7885bce02d",
+      "/home/gustavo/workspace/teste-e2e/.dependency-preservation/analysis-cfg/cfg-adapters/target/classes": "0963a7fb6efbfc46bce3ea3ad5dc664a9d10f37f3f7a1eba3ff90229373271a2",
+      "/home/gustavo/workspace/teste-e2e/.dependency-preservation/analysis-cfg/cfg-kernel/target/classes": "36b166c2ac48e5a104b45952c0c0b43c91e5c6acd5b7b0da612778932fa9b4bb",
+      "/home/gustavo/workspace/teste-e2e/.dependency-preservation/analysis-cfg/cfg-launcher/target/classes": "51ef7b649a636d92a1230c46dc37ab00a7a26066e9e7feb79895ec8ac84d1d7b"
+    },
+    "status": "EXECUTED"
+  },
+  {
+    "wave": "w5",
+    "runtime": "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/continuacao-w4-w9/evidence/w5/runtime-w5.json",
+    "runtimeSha256": "4166be08627ea4682aa729f58a7dd9b05b548d6d273a0bc65eefcd3780d51f01",
+    "sources": {
+      "proleap-poc": "aa059545e6eeb2fdee3751d0b0f1bf33b24b3937",
+      "cobol-lower": "00354bbc48ffc9990494bff983b658edddaac714",
+      "air-java": "980d4989a18f876996390cc61af41419a595eb7b",
+      "analysis-cfg": "7a4a2104d3c284e8efc1700413839f33551b474f",
+      "analysis-ir": "b628e4c1a62de61a157cac85ae71ba4cd111052e"
+    },
+    "currentRuntimeFingerprints": {
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/continuacao-w4-w9/evidence/w5/runtime-final/proleap-poc__target__classes": "d4ea66b6ea211515d00cd66834461a74160709667e4c005e94fa0105c8f75aa8",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w1/runtime-final/1-antlr4-runtime-4.13.2.jar": "dd3e8a13a2d669bf84fb8d834de35ce4875f27157698d206241ec8488aadcaf7",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w1/runtime-final/2-slf4j-api-2.0.18.jar": "44508fd1576500688c790b190acdd16fec4f8c79a3e0b900afd70503cf055f55",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w1/runtime-final/3-logback-classic-1.6.3.jar": "beebede8db065fe1b72909ecc66bb49acda618901635d86c25fce14a5915e37e",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w1/runtime-final/4-logback-core-1.6.3.jar": "a6967a28c8b086dee75a694d2f6fb8830c71153539866d7d8af065c9b6df91e0",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w1/runtime-final/5-jackson-databind-2.22.2.jar": "d0da14c12b16b5d54719aa172d83b542ff4abeb8b0fb7db476fde8ceece760ca",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w1/runtime-final/6-jackson-annotations-2.22.jar": "21ddb598807d3a51a876704eb979d9296e1c6a6f47ab1826ff88c6d6a127a2d0",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w1/runtime-final/7-jackson-core-2.22.2.jar": "ff167a6317be15895706c26668f45b898efe40ab8780970658210fe1393d52a6",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w3-r1/runtime-final/classes/air-java__air-model__target__classes": "f5928f27dad3c81880580af9aed51abea4688113718867c50197695087e15060",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w3-r1/runtime-final/classes/air-java__air-json__target__classes": "7c6e1736d953613746f8edd5722aaac2db00661b1c8783f0274f70cbfe077eb9",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/continuacao-w4-w9/evidence/w5/runtime-final/cobol-lower__core__target__classes": "fa2f059231d93274765b8a3f497500f92533600356586ace3faaec2d3cc6ecac",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/continuacao-w4-w9/evidence/w5/runtime-final/cobol-lower__adapters__target__classes": "744b500ee8e8a575d190bf8e469a57519fca2efd3aa9e62f3c57f010fc06f946",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w1/runtime-final/12-hash4j-0.30.0.jar": "d3224b113ea835ce3452097747e5209ec760cf443dbed770d6ba68a0d480178f",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w3-r1/runtime-final/classes/analysis-cfg__analysis-adapters__target__classes": "ce81d9a21a050595ea4b9230d058c726a9f3efe4e388ec0f21d3fdd2ac623ba6",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w3-r1/runtime-final/classes/analysis-cfg__analysis-dataflow__target__classes": "daf7e64f03e7153c754cb5f755dcce796e75bed95f4d0e918bb1b9650f8651aa",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w3-r1/runtime-final/classes/analysis-cfg__analysis-dependencies__target__classes": "deff9bc6eb0b1e022c46690666710b36ad778d74ae7be13db23cba9f5e24b5df",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w3-r1/runtime-final/classes/analysis-cfg__analysis-kernel__target__classes": "0b33b2eacbad4fb3d2541aaefe70d473b4b007777f686d4bfcba61eeadefeaa7",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w3-r1/runtime-final/classes/analysis-cfg__analysis-launcher__target__classes": "ed2023506114e2f53af73b7c7b7057d4f38293ac3e46d573cfec2c8c3a44be94",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w3-r1/runtime-final/classes/analysis-cfg__analysis-values__target__classes": "9f56d1e2d92472a7e9e08ed8acea341a323b4081de8d6fbd1975fef6625857b2",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w3-r1/runtime-final/classes/analysis-cfg__cfg-adapters__target__classes": "0963a7fb6efbfc46bce3ea3ad5dc664a9d10f37f3f7a1eba3ff90229373271a2",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w3-r1/runtime-final/classes/analysis-cfg__cfg-kernel__target__classes": "36b166c2ac48e5a104b45952c0c0b43c91e5c6acd5b7b0da612778932fa9b4bb",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w3-r1/runtime-final/classes/analysis-cfg__cfg-launcher__target__classes": "51ef7b649a636d92a1230c46dc37ab00a7a26066e9e7feb79895ec8ac84d1d7b"
+    },
+    "status": "EXECUTED"
+  },
+  {
+    "wave": "w6",
+    "runtime": "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/continuacao-w4-w9/evidence/w6/runtime-w6.json",
+    "runtimeSha256": "0aae9bc8bfbde92ed159c2bc7d9ceabdcb89936ee09fea6cc9b47f8261e88a2e",
+    "sources": {
+      "proleap-poc": "aa059545e6eeb2fdee3751d0b0f1bf33b24b3937",
+      "cobol-lower": "8bb58b7e13451db736646d20660e268f32530b48",
+      "air-java": "980d4989a18f876996390cc61af41419a595eb7b",
+      "analysis-cfg": "7a4a2104d3c284e8efc1700413839f33551b474f",
+      "analysis-ir": "b628e4c1a62de61a157cac85ae71ba4cd111052e"
+    },
+    "currentRuntimeFingerprints": {
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/continuacao-w4-w9/evidence/w6/runtime-final/proleap-poc__target__classes": "d4ea66b6ea211515d00cd66834461a74160709667e4c005e94fa0105c8f75aa8",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w1/runtime-final/1-antlr4-runtime-4.13.2.jar": "dd3e8a13a2d669bf84fb8d834de35ce4875f27157698d206241ec8488aadcaf7",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w1/runtime-final/2-slf4j-api-2.0.18.jar": "44508fd1576500688c790b190acdd16fec4f8c79a3e0b900afd70503cf055f55",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w1/runtime-final/3-logback-classic-1.6.3.jar": "beebede8db065fe1b72909ecc66bb49acda618901635d86c25fce14a5915e37e",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w1/runtime-final/4-logback-core-1.6.3.jar": "a6967a28c8b086dee75a694d2f6fb8830c71153539866d7d8af065c9b6df91e0",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w1/runtime-final/5-jackson-databind-2.22.2.jar": "d0da14c12b16b5d54719aa172d83b542ff4abeb8b0fb7db476fde8ceece760ca",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w1/runtime-final/6-jackson-annotations-2.22.jar": "21ddb598807d3a51a876704eb979d9296e1c6a6f47ab1826ff88c6d6a127a2d0",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w1/runtime-final/7-jackson-core-2.22.2.jar": "ff167a6317be15895706c26668f45b898efe40ab8780970658210fe1393d52a6",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w3-r1/runtime-final/classes/air-java__air-model__target__classes": "f5928f27dad3c81880580af9aed51abea4688113718867c50197695087e15060",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w3-r1/runtime-final/classes/air-java__air-json__target__classes": "7c6e1736d953613746f8edd5722aaac2db00661b1c8783f0274f70cbfe077eb9",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/continuacao-w4-w9/evidence/w6/runtime-final/cobol-lower__core__target__classes": "506b7e88c23cf3e39acbc034c40b9c15310b6aed3d676633d52d44b4a4ef5cc8",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/continuacao-w4-w9/evidence/w6/runtime-final/cobol-lower__adapters__target__classes": "744b500ee8e8a575d190bf8e469a57519fca2efd3aa9e62f3c57f010fc06f946",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w1/runtime-final/12-hash4j-0.30.0.jar": "d3224b113ea835ce3452097747e5209ec760cf443dbed770d6ba68a0d480178f",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w3-r1/runtime-final/classes/analysis-cfg__analysis-adapters__target__classes": "ce81d9a21a050595ea4b9230d058c726a9f3efe4e388ec0f21d3fdd2ac623ba6",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w3-r1/runtime-final/classes/analysis-cfg__analysis-dataflow__target__classes": "daf7e64f03e7153c754cb5f755dcce796e75bed95f4d0e918bb1b9650f8651aa",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w3-r1/runtime-final/classes/analysis-cfg__analysis-dependencies__target__classes": "deff9bc6eb0b1e022c46690666710b36ad778d74ae7be13db23cba9f5e24b5df",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w3-r1/runtime-final/classes/analysis-cfg__analysis-kernel__target__classes": "0b33b2eacbad4fb3d2541aaefe70d473b4b007777f686d4bfcba61eeadefeaa7",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w3-r1/runtime-final/classes/analysis-cfg__analysis-launcher__target__classes": "ed2023506114e2f53af73b7c7b7057d4f38293ac3e46d573cfec2c8c3a44be94",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w3-r1/runtime-final/classes/analysis-cfg__analysis-values__target__classes": "9f56d1e2d92472a7e9e08ed8acea341a323b4081de8d6fbd1975fef6625857b2",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w3-r1/runtime-final/classes/analysis-cfg__cfg-adapters__target__classes": "0963a7fb6efbfc46bce3ea3ad5dc664a9d10f37f3f7a1eba3ff90229373271a2",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w3-r1/runtime-final/classes/analysis-cfg__cfg-kernel__target__classes": "36b166c2ac48e5a104b45952c0c0b43c91e5c6acd5b7b0da612778932fa9b4bb",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w3-r1/runtime-final/classes/analysis-cfg__cfg-launcher__target__classes": "51ef7b649a636d92a1230c46dc37ab00a7a26066e9e7feb79895ec8ac84d1d7b"
+    },
+    "status": "EXECUTED"
+  },
+  {
+    "wave": "w6-r1",
+    "runtime": "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/continuacao-w4-w9/evidence/w6-r1/runtime-r1.json",
+    "runtimeSha256": "e0b04c11be5d5eb00339f7cb369a713534521e348bacf65ffd13f8e63a10a11b",
+    "sources": {
+      "proleap-poc": "aa059545e6eeb2fdee3751d0b0f1bf33b24b3937",
+      "cobol-lower": "4a97f5f7c066e9beec1503242c3d5fd90ffb6bc3",
+      "air-java": "980d4989a18f876996390cc61af41419a595eb7b",
+      "analysis-cfg": "7a4a2104d3c284e8efc1700413839f33551b474f",
+      "analysis-ir": "b628e4c1a62de61a157cac85ae71ba4cd111052e"
+    },
+    "currentRuntimeFingerprints": {
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/continuacao-w4-w9/evidence/w6-r1/runtime-final/proleap-poc__target__classes": "d4ea66b6ea211515d00cd66834461a74160709667e4c005e94fa0105c8f75aa8",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w1/runtime-final/1-antlr4-runtime-4.13.2.jar": "dd3e8a13a2d669bf84fb8d834de35ce4875f27157698d206241ec8488aadcaf7",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w1/runtime-final/2-slf4j-api-2.0.18.jar": "44508fd1576500688c790b190acdd16fec4f8c79a3e0b900afd70503cf055f55",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w1/runtime-final/3-logback-classic-1.6.3.jar": "beebede8db065fe1b72909ecc66bb49acda618901635d86c25fce14a5915e37e",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w1/runtime-final/4-logback-core-1.6.3.jar": "a6967a28c8b086dee75a694d2f6fb8830c71153539866d7d8af065c9b6df91e0",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w1/runtime-final/5-jackson-databind-2.22.2.jar": "d0da14c12b16b5d54719aa172d83b542ff4abeb8b0fb7db476fde8ceece760ca",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w1/runtime-final/6-jackson-annotations-2.22.jar": "21ddb598807d3a51a876704eb979d9296e1c6a6f47ab1826ff88c6d6a127a2d0",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w1/runtime-final/7-jackson-core-2.22.2.jar": "ff167a6317be15895706c26668f45b898efe40ab8780970658210fe1393d52a6",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w3-r1/runtime-final/classes/air-java__air-model__target__classes": "f5928f27dad3c81880580af9aed51abea4688113718867c50197695087e15060",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w3-r1/runtime-final/classes/air-java__air-json__target__classes": "7c6e1736d953613746f8edd5722aaac2db00661b1c8783f0274f70cbfe077eb9",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/continuacao-w4-w9/evidence/w6-r1/runtime-final/cobol-lower__core__target__classes": "59e62e09a78b9a10ed2cd790fd5ad1db05f8a58c96845cbaaacf5ba288281894",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/continuacao-w4-w9/evidence/w6-r1/runtime-final/cobol-lower__adapters__target__classes": "744b500ee8e8a575d190bf8e469a57519fca2efd3aa9e62f3c57f010fc06f946",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w1/runtime-final/12-hash4j-0.30.0.jar": "d3224b113ea835ce3452097747e5209ec760cf443dbed770d6ba68a0d480178f",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w3-r1/runtime-final/classes/analysis-cfg__analysis-adapters__target__classes": "ce81d9a21a050595ea4b9230d058c726a9f3efe4e388ec0f21d3fdd2ac623ba6",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w3-r1/runtime-final/classes/analysis-cfg__analysis-dataflow__target__classes": "daf7e64f03e7153c754cb5f755dcce796e75bed95f4d0e918bb1b9650f8651aa",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w3-r1/runtime-final/classes/analysis-cfg__analysis-dependencies__target__classes": "deff9bc6eb0b1e022c46690666710b36ad778d74ae7be13db23cba9f5e24b5df",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w3-r1/runtime-final/classes/analysis-cfg__analysis-kernel__target__classes": "0b33b2eacbad4fb3d2541aaefe70d473b4b007777f686d4bfcba61eeadefeaa7",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w3-r1/runtime-final/classes/analysis-cfg__analysis-launcher__target__classes": "ed2023506114e2f53af73b7c7b7057d4f38293ac3e46d573cfec2c8c3a44be94",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w3-r1/runtime-final/classes/analysis-cfg__analysis-values__target__classes": "9f56d1e2d92472a7e9e08ed8acea341a323b4081de8d6fbd1975fef6625857b2",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w3-r1/runtime-final/classes/analysis-cfg__cfg-adapters__target__classes": "0963a7fb6efbfc46bce3ea3ad5dc664a9d10f37f3f7a1eba3ff90229373271a2",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w3-r1/runtime-final/classes/analysis-cfg__cfg-kernel__target__classes": "36b166c2ac48e5a104b45952c0c0b43c91e5c6acd5b7b0da612778932fa9b4bb",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w3-r1/runtime-final/classes/analysis-cfg__cfg-launcher__target__classes": "51ef7b649a636d92a1230c46dc37ab00a7a26066e9e7feb79895ec8ac84d1d7b"
+    },
+    "status": "EXECUTED"
+  },
+  {
+    "wave": "w7",
+    "runtime": "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/continuacao-w4-w9/evidence/w7/runtime-w7.json",
+    "runtimeSha256": "aa781962fcf6acc592e6feda7861f26b6d18359e399cc71d8a216efd19315251",
+    "sources": {
+      "proleap-poc": "f62a4140f34f074db62143f24031ec4988456063",
+      "cobol-lower": "be2acf93696e3e87802ac97576bc668269278832",
+      "air-java": "980d4989a18f876996390cc61af41419a595eb7b",
+      "analysis-cfg": "7a4a2104d3c284e8efc1700413839f33551b474f",
+      "analysis-ir": "b628e4c1a62de61a157cac85ae71ba4cd111052e"
+    },
+    "currentRuntimeFingerprints": {
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/continuacao-w4-w9/evidence/w7/runtime-final/proleap-poc__target__classes": "ea0f43fd66f8e081411b706bdb182bdcee7779ca548ac1594e8d3062a2a913fe",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w1/runtime-final/1-antlr4-runtime-4.13.2.jar": "dd3e8a13a2d669bf84fb8d834de35ce4875f27157698d206241ec8488aadcaf7",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w1/runtime-final/2-slf4j-api-2.0.18.jar": "44508fd1576500688c790b190acdd16fec4f8c79a3e0b900afd70503cf055f55",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w1/runtime-final/3-logback-classic-1.6.3.jar": "beebede8db065fe1b72909ecc66bb49acda618901635d86c25fce14a5915e37e",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w1/runtime-final/4-logback-core-1.6.3.jar": "a6967a28c8b086dee75a694d2f6fb8830c71153539866d7d8af065c9b6df91e0",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w1/runtime-final/5-jackson-databind-2.22.2.jar": "d0da14c12b16b5d54719aa172d83b542ff4abeb8b0fb7db476fde8ceece760ca",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w1/runtime-final/6-jackson-annotations-2.22.jar": "21ddb598807d3a51a876704eb979d9296e1c6a6f47ab1826ff88c6d6a127a2d0",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w1/runtime-final/7-jackson-core-2.22.2.jar": "ff167a6317be15895706c26668f45b898efe40ab8780970658210fe1393d52a6",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w3-r1/runtime-final/classes/air-java__air-model__target__classes": "f5928f27dad3c81880580af9aed51abea4688113718867c50197695087e15060",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w3-r1/runtime-final/classes/air-java__air-json__target__classes": "7c6e1736d953613746f8edd5722aaac2db00661b1c8783f0274f70cbfe077eb9",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/continuacao-w4-w9/evidence/w7/runtime-final/cobol-lower__core__target__classes": "79b9b06cb86fbbd3a50a241a3ddfcf10f2b09cd2a6f23808c1bbdcf86853a742",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/continuacao-w4-w9/evidence/w7/runtime-final/cobol-lower__adapters__target__classes": "4a8e60c041500eab3e9b5a3c9f003a293b61fab2e4de5b5191111092e73305d9",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w1/runtime-final/12-hash4j-0.30.0.jar": "d3224b113ea835ce3452097747e5209ec760cf443dbed770d6ba68a0d480178f",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w3-r1/runtime-final/classes/analysis-cfg__analysis-adapters__target__classes": "ce81d9a21a050595ea4b9230d058c726a9f3efe4e388ec0f21d3fdd2ac623ba6",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w3-r1/runtime-final/classes/analysis-cfg__analysis-dataflow__target__classes": "daf7e64f03e7153c754cb5f755dcce796e75bed95f4d0e918bb1b9650f8651aa",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w3-r1/runtime-final/classes/analysis-cfg__analysis-dependencies__target__classes": "deff9bc6eb0b1e022c46690666710b36ad778d74ae7be13db23cba9f5e24b5df",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w3-r1/runtime-final/classes/analysis-cfg__analysis-kernel__target__classes": "0b33b2eacbad4fb3d2541aaefe70d473b4b007777f686d4bfcba61eeadefeaa7",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w3-r1/runtime-final/classes/analysis-cfg__analysis-launcher__target__classes": "ed2023506114e2f53af73b7c7b7057d4f38293ac3e46d573cfec2c8c3a44be94",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w3-r1/runtime-final/classes/analysis-cfg__analysis-values__target__classes": "9f56d1e2d92472a7e9e08ed8acea341a323b4081de8d6fbd1975fef6625857b2",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w3-r1/runtime-final/classes/analysis-cfg__cfg-adapters__target__classes": "0963a7fb6efbfc46bce3ea3ad5dc664a9d10f37f3f7a1eba3ff90229373271a2",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w3-r1/runtime-final/classes/analysis-cfg__cfg-kernel__target__classes": "36b166c2ac48e5a104b45952c0c0b43c91e5c6acd5b7b0da612778932fa9b4bb",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w3-r1/runtime-final/classes/analysis-cfg__cfg-launcher__target__classes": "51ef7b649a636d92a1230c46dc37ab00a7a26066e9e7feb79895ec8ac84d1d7b"
+    },
+    "status": "EXECUTED"
+  },
+  {
+    "wave": "w7-r1",
+    "runtime": "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/continuacao-w4-w9/evidence/w7-r1/runtime-r1.json",
+    "runtimeSha256": "9bc44c2963cdf189d974708bc5a455f1d03bbd7d35c05940bb24be622babf74f",
+    "sources": {
+      "proleap-poc": "f62a4140f34f074db62143f24031ec4988456063",
+      "cobol-lower": "8fafe2ef3b9665d6e5d834be34ff48f2f0a84aae",
+      "air-java": "980d4989a18f876996390cc61af41419a595eb7b",
+      "analysis-cfg": "7a4a2104d3c284e8efc1700413839f33551b474f",
+      "analysis-ir": "b628e4c1a62de61a157cac85ae71ba4cd111052e"
+    },
+    "currentRuntimeFingerprints": {
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/continuacao-w4-w9/evidence/w7-r1/runtime-final/proleap-poc__target__classes": "ea0f43fd66f8e081411b706bdb182bdcee7779ca548ac1594e8d3062a2a913fe",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w1/runtime-final/1-antlr4-runtime-4.13.2.jar": "dd3e8a13a2d669bf84fb8d834de35ce4875f27157698d206241ec8488aadcaf7",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w1/runtime-final/2-slf4j-api-2.0.18.jar": "44508fd1576500688c790b190acdd16fec4f8c79a3e0b900afd70503cf055f55",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w1/runtime-final/3-logback-classic-1.6.3.jar": "beebede8db065fe1b72909ecc66bb49acda618901635d86c25fce14a5915e37e",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w1/runtime-final/4-logback-core-1.6.3.jar": "a6967a28c8b086dee75a694d2f6fb8830c71153539866d7d8af065c9b6df91e0",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w1/runtime-final/5-jackson-databind-2.22.2.jar": "d0da14c12b16b5d54719aa172d83b542ff4abeb8b0fb7db476fde8ceece760ca",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w1/runtime-final/6-jackson-annotations-2.22.jar": "21ddb598807d3a51a876704eb979d9296e1c6a6f47ab1826ff88c6d6a127a2d0",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w1/runtime-final/7-jackson-core-2.22.2.jar": "ff167a6317be15895706c26668f45b898efe40ab8780970658210fe1393d52a6",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w3-r1/runtime-final/classes/air-java__air-model__target__classes": "f5928f27dad3c81880580af9aed51abea4688113718867c50197695087e15060",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w3-r1/runtime-final/classes/air-java__air-json__target__classes": "7c6e1736d953613746f8edd5722aaac2db00661b1c8783f0274f70cbfe077eb9",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/continuacao-w4-w9/evidence/w7-r1/runtime-final/cobol-lower__core__target__classes": "8366b9fae4b900307fa30d5c667d93be0939d59ce8267515a1d7e3dad0909d3c",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/continuacao-w4-w9/evidence/w7-r1/runtime-final/cobol-lower__adapters__target__classes": "8ed294194a4071c89e0d76e39688880f91230671f169de74f83e0d72061a9ef6",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w1/runtime-final/12-hash4j-0.30.0.jar": "d3224b113ea835ce3452097747e5209ec760cf443dbed770d6ba68a0d480178f",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w3-r1/runtime-final/classes/analysis-cfg__analysis-adapters__target__classes": "ce81d9a21a050595ea4b9230d058c726a9f3efe4e388ec0f21d3fdd2ac623ba6",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w3-r1/runtime-final/classes/analysis-cfg__analysis-dataflow__target__classes": "daf7e64f03e7153c754cb5f755dcce796e75bed95f4d0e918bb1b9650f8651aa",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w3-r1/runtime-final/classes/analysis-cfg__analysis-dependencies__target__classes": "deff9bc6eb0b1e022c46690666710b36ad778d74ae7be13db23cba9f5e24b5df",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w3-r1/runtime-final/classes/analysis-cfg__analysis-kernel__target__classes": "0b33b2eacbad4fb3d2541aaefe70d473b4b007777f686d4bfcba61eeadefeaa7",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w3-r1/runtime-final/classes/analysis-cfg__analysis-launcher__target__classes": "ed2023506114e2f53af73b7c7b7057d4f38293ac3e46d573cfec2c8c3a44be94",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w3-r1/runtime-final/classes/analysis-cfg__analysis-values__target__classes": "9f56d1e2d92472a7e9e08ed8acea341a323b4081de8d6fbd1975fef6625857b2",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w3-r1/runtime-final/classes/analysis-cfg__cfg-adapters__target__classes": "0963a7fb6efbfc46bce3ea3ad5dc664a9d10f37f3f7a1eba3ff90229373271a2",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w3-r1/runtime-final/classes/analysis-cfg__cfg-kernel__target__classes": "36b166c2ac48e5a104b45952c0c0b43c91e5c6acd5b7b0da612778932fa9b4bb",
+      "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/evidence/w3-r1/runtime-final/classes/analysis-cfg__cfg-launcher__target__classes": "51ef7b649a636d92a1230c46dc37ab00a7a26066e9e7feb79895ec8ac84d1d7b"
+    },
+    "status": "EXECUTED"
+  }
+]

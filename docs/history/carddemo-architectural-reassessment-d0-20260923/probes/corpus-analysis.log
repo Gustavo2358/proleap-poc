@@ -1,0 +1,48 @@
+classification fields dict_keys(['path', 'programName', 'sourceSha256', 'firstBlockingFamily', 'latentFamilyUnderProfileProbe', 'firstBlockingStage', 'frontendState', 'frontendExit', 'lowerState', 'lowerExit', 'cfgState', 'dependencyState', 'spVersion', 'spObserved', 'spPartial', 'spUnsupported', 'entryInventory', 'storageGapCodes', 'unresolvedDependencyOccurrences', 'unresolvedDependencyNames', 'rawDirectory'])
+F2 programs 46 site-paragraph rows 1964
+app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl 36 20 0 {'EXIT': 40, 'SET': 15, 'CONTINUE': 6, 'STRING': 2} {'normal completion cannot override explicit control': 29, 'intrinsic normal edge stays in paragraph': 34} True False
+app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl 44 0 0 {'SET': 28, 'CONTINUE': 3} {'normal completion cannot override explicit control': 7, 'intrinsic normal edge stays in paragraph': 24} True False
+app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl 34 0 0 {'SET': 8} {'intrinsic normal edge stays in paragraph': 8} True False
+app/app-transaction-type-db2/cbl/COBTUPDT.cbl 13 0 0 {'EXIT': 24} {'normal completion cannot override explicit control': 12, 'intrinsic normal edge stays in paragraph': 12} True False
+app/app-transaction-type-db2/cbl/COTRTUPC.cbl 40 40 0 {'SET': 58, 'EXIT': 82, 'STRING': 2, 'CONTINUE': 14} {'intrinsic normal edge stays in paragraph': 106, 'normal completion cannot override explicit control': 50} False True
+app/app-vsam-mq/cbl/COACCT01.cbl 32 0 1 {'SET': 7, 'ADD': 4} {'intrinsic normal edge stays in paragraph': 7, 'normal completion cannot override explicit control': 4} True False
+app/app-vsam-mq/cbl/CODATE01.cbl 28 0 1 {'SET': 7, 'ADD': 4} {'intrinsic normal edge stays in paragraph': 7, 'normal completion cannot override explicit control': 4} True False
+app/cbl/CBACT01C.cbl 34 0 0 {'EXIT': 28} {'normal completion cannot override explicit control': 14, 'intrinsic normal edge stays in paragraph': 14} True False
+app/cbl/CBACT02C.cbl 9 0 0 {'EXIT': 6} {'normal completion cannot override explicit control': 3, 'intrinsic normal edge stays in paragraph': 3} True False
+app/cbl/CBACT03C.cbl 9 0 0 {'EXIT': 6} {'normal completion cannot override explicit control': 3, 'intrinsic normal edge stays in paragraph': 3} True False
+app/cbl/CBCUS01C.cbl 9 0 0 {'EXIT': 6} {'normal completion cannot override explicit control': 3, 'intrinsic normal edge stays in paragraph': 3} True False
+app/cbl/CBEXPORT.cbl 40 0 0 {'DISPLAY': 14, 'STRING': 2, 'ADD': 10} {'normal completion cannot override explicit control': 13, 'intrinsic normal edge stays in paragraph': 13} True False
+app/cbl/CBIMPORT.cbl 28 0 0 {'DISPLAY': 6, 'ADD': 12} {'normal completion cannot override explicit control': 9, 'intrinsic normal edge stays in paragraph': 9} True False
+app/cbl/CBSTM03A.CBL 25 2 0 {'EXIT': 24} {'normal completion cannot override explicit control': 12, 'intrinsic normal edge stays in paragraph': 12} True False
+app/cbl/CBTRN01C.cbl 41 0 0 {'EXIT': 26, 'DISPLAY': 2} {'normal completion cannot override explicit control': 13, 'intrinsic normal edge stays in paragraph': 15} True False
+app/cbl/CBTRN02C.cbl 60 0 0 {'EXIT': 44, 'CONTINUE': 4} {'normal completion cannot override explicit control': 24, 'intrinsic normal edge stays in paragraph': 24} True False
+app/cbl/CBTRN03C.cbl 71 0 0 {'EXIT': 68, 'DISPLAY': 1} {'normal completion cannot override explicit control': 34, 'intrinsic normal edge stays in paragraph': 35} True False
+app/cbl/COACTUPC.cbl 61 61 0 {'SET': 138, 'EXIT': 156, 'CONTINUE': 35, 'STRING': 3} {'intrinsic normal edge stays in paragraph': 187, 'normal completion cannot override explicit control': 145} False True
+app/cbl/COACTVWC.cbl 18 18 0 {'SET': 34, 'EXIT': 36, 'STRING': 3} {'intrinsic normal edge stays in paragraph': 53, 'normal completion cannot override explicit control': 20} True False
+app/cbl/COBIL00C.cbl 38 0 0 {'CONTINUE': 6} {'intrinsic normal edge stays in paragraph': 6} True False
+app/cbl/COCRDLIC.cbl 27 23 0 {'SET': 32, 'EXIT': 46, 'CONTINUE': 10} {'intrinsic normal edge stays in paragraph': 58, 'normal completion cannot override explicit control': 30} True False
+app/cbl/COCRDSLC.cbl 19 19 0 {'SET': 36, 'EXIT': 38} {'intrinsic normal edge stays in paragraph': 52, 'normal completion cannot override explicit control': 22} True False
+app/cbl/COCRDUPC.cbl 26 26 0 {'SET': 52, 'EXIT': 52, 'CONTINUE': 9} {'intrinsic normal edge stays in paragraph': 76, 'normal completion cannot override explicit control': 37} False True
+app/cbl/CORPT00C.cbl 33 0 0 {'CONTINUE': 1} {'intrinsic normal edge stays in paragraph': 1} True False
+app/cbl/COTRN00C.cbl 38 0 0 {'CONTINUE': 12} {'intrinsic normal edge stays in paragraph': 12} True False
+app/cbl/COTRN01C.cbl 17 0 0 {'CONTINUE': 1} {'intrinsic normal edge stays in paragraph': 1} True False
+app/cbl/COTRN02C.cbl 61 0 0 {'CONTINUE': 6} {'intrinsic normal edge stays in paragraph': 6} True False
+app/cbl/COUSR00C.cbl 37 0 0 {'CONTINUE': 12} {'intrinsic normal edge stays in paragraph': 12} True False
+samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/CBACT01C.cbl 10 0 0 {'EXIT': 8} {'normal completion cannot override explicit control': 4, 'intrinsic normal edge stays in paragraph': 4} True False
+samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/CBACT02C.cbl 9 0 0 {'EXIT': 6} {'normal completion cannot override explicit control': 3, 'intrinsic normal edge stays in paragraph': 3} True False
+samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/CBACT03C.cbl 9 0 0 {'EXIT': 6} {'normal completion cannot override explicit control': 3, 'intrinsic normal edge stays in paragraph': 3} True False
+samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/CBCUS01C.cbl 9 0 0 {'EXIT': 6} {'normal completion cannot override explicit control': 3, 'intrinsic normal edge stays in paragraph': 3} True False
+samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/CBTRN01C.cbl 41 0 0 {'EXIT': 26, 'DISPLAY': 2} {'normal completion cannot override explicit control': 13, 'intrinsic normal edge stays in paragraph': 15} True False
+samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/CBTRN02C.cbl 60 0 0 {'EXIT': 44, 'CONTINUE': 4} {'normal completion cannot override explicit control': 24, 'intrinsic normal edge stays in paragraph': 24} True False
+samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/CBTRN03C.cbl 71 0 0 {'EXIT': 68, 'DISPLAY': 1} {'normal completion cannot override explicit control': 34, 'intrinsic normal edge stays in paragraph': 35} True False
+samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/COACTUPC.cl2 61 61 0 {'SET': 138, 'EXIT': 156, 'CONTINUE': 35, 'STRING': 3} {'intrinsic normal edge stays in paragraph': 187, 'normal completion cannot override explicit control': 145} False True
+samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/COACTVWC.cl2 18 18 0 {'SET': 34, 'EXIT': 36, 'STRING': 3} {'intrinsic normal edge stays in paragraph': 53, 'normal completion cannot override explicit control': 20} True False
+samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/COBIL00C.cl2 38 0 0 {'CONTINUE': 6} {'intrinsic normal edge stays in paragraph': 6} True False
+samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/COCRDLIC.cl2 27 23 0 {'SET': 32, 'EXIT': 46, 'CONTINUE': 10} {'intrinsic normal edge stays in paragraph': 58, 'normal completion cannot override explicit control': 30} True False
+samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/COCRDSLC.cl2 19 19 0 {'SET': 36, 'EXIT': 38} {'intrinsic normal edge stays in paragraph': 52, 'normal completion cannot override explicit control': 22} True False
+samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/COCRDUPC.cl2 26 26 0 {'SET': 52, 'EXIT': 52, 'CONTINUE': 9} {'intrinsic normal edge stays in paragraph': 76, 'normal completion cannot override explicit control': 37} False True
+samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/CORPT00C.cl2 33 0 0 {'CONTINUE': 1} {'intrinsic normal edge stays in paragraph': 1} True False
+samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/COTRN00C.cl2 38 0 0 {'CONTINUE': 12} {'intrinsic normal edge stays in paragraph': 12} True False
+samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/COTRN01C.cl2 17 0 0 {'CONTINUE': 1} {'intrinsic normal edge stays in paragraph': 1} True False
+samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/COTRN02C.cl2 61 0 0 {'CONTINUE': 6} {'intrinsic normal edge stays in paragraph': 6} True False
+samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/COUSR00C.cl2 37 0 0 {'CONTINUE': 12} {'intrinsic normal edge stays in paragraph': 12} True False

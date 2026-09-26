@@ -1,0 +1,57 @@
+{
+  "capturedAt": "2026-09-23T23:52:15.086099+00:00",
+  "approvedW7R1": {
+    "proleap-poc": "f62a4140f34f074db62143f24031ec4988456063",
+    "cobol-lower": "8fafe2ef3b9665d6e5d834be34ff48f2f0a84aae",
+    "air-java": "980d4989a18f876996390cc61af41419a595eb7b",
+    "analysis-ir": "b628e4c1a62de61a157cac85ae71ba4cd111052e",
+    "analysis-cfg": "7a4a2104d3c284e8efc1700413839f33551b474f"
+  },
+  "currentW8": {
+    "proleap-poc": {
+      "path": "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/proleap-poc",
+      "head": "5d8cad6b8d1e4be12720e852ce1d56eb47e969bf",
+      "branch": "feat/positive-memory-topology",
+      "status": "",
+      "diffSha256": "451fef86c1fa167230d0fdfc7cb9940a2037fa5174a1e08e7299d2ce60146d41",
+      "untrackedSha256": {},
+      "diffStat": " docs/domain/cobol-semantic-product.md              | 26 ++++++++--\n .../cobolexplorer/SourceDependencySemantics.java   | 60 ++++++++++++++++++----\n .../semanticproduct/CobolSemanticProduct.java      | 20 +++++++-\n .../projection/CobolSemanticProductProjector.java  | 45 ++++++++++++----\n .../transport/SemanticProductJsonWriter.java       | 13 +++--\n .../SourceDependencyProducerTest.java              | 43 ++++++++++++++++\n 6 files changed, 179 insertions(+), 28 deletions(-)\n"
+    },
+    "cobol-lower": {
+      "path": "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/cobol-lower",
+      "head": "cc5226e744da0048d0c3064b402bae1123a0be45",
+      "branch": "feat/positive-memory-topology",
+      "status": "",
+      "diffSha256": "5e0330d2ffbdf4ffa475f8e6f92cd8c339634e85c4a49c0f9aae168b294273d5",
+      "untrackedSha256": {},
+      "diffStat": " .../lower/adapters/sp/SpJsonDecoder.java           |  64 +++++++-\n .../lower/adapters/testing/CicsAspectSuite.java    |  53 +++++++\n .../testing/CicsFileLogicalOptionSuite.java        |  34 +++++\n .../lower/adapters/testing/MoveAspectSuite.java    |  72 +++++++++\n .../test/resources/sp/w8/cics-options-known.json   |   1 +\n .../src/test/resources/sp/w8/move-good-gap.json    |   1 +\n .../src/test/resources/sp/w8/r01-file-sysid.json   |   1 +\n .../lower/application/CallAdmission.java           |  19 +++\n .../lower/application/CicsFileInvokeHandler.java   |   9 +-\n .../lower/application/CicsInvokeHandler.java       |   9 +-\n .../lower/application/CompilationContext.java      |   2 +-\n .../lower/application/OpaqueOperands.java          |   4 +-\n .../lower/application/PartialIdentityFacts.java    |   4 +\n .../lower/application/PartialProgramAdmission.java |   3 +-\n .../lower/application/RegionalDataTranslator.java  |   3 +-\n .../lower/application/RegionalMoveHandler.java     |  44 +++++-\n .../application/RegionalTransferAdmission.java     |   2 +-\n .../lower/application/ScalarDataTranslator.java    |  10 +-\n .../github/gustavo2358/lower/domain/SpInput.java   |  11 +-\n .../lower/application/OpaqueExposureSuite.java     |  39 +++++\n docs/domain/dependency-preservation.md             |   4 +-\n docs/domain/positive-memory-topology.md            |  30 ++++\n docs/sources/sources.lock.json                     | 162 ++++++++++-----------\n 23 files changed, 478 insertions(+), 103 deletions(-)\n"
+    },
+    "air-java": {
+      "path": "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/air-java",
+      "head": "980d4989a18f876996390cc61af41419a595eb7b",
+      "branch": "feat/positive-memory-topology",
+      "status": "",
+      "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "untrackedSha256": {},
+      "diffStat": ""
+    },
+    "analysis-ir": {
+      "path": "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/analysis-ir",
+      "head": "b628e4c1a62de61a157cac85ae71ba4cd111052e",
+      "branch": "feat/positive-memory-topology",
+      "status": "",
+      "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "untrackedSha256": {},
+      "diffStat": ""
+    },
+    "analysis-cfg": {
+      "path": "/home/gustavo/workspace/teste-e2e/.positive-memory-topology/analysis-cfg",
+      "head": "bae087c89a3a851d91a70a053a37fb3bb25af097",
+      "branch": "feat/positive-memory-topology",
+      "status": "",
+      "diffSha256": "1b4fe091598576d180607a5ba7229ac000b50b85280f3a699e9810a24a2ea041",
+      "untrackedSha256": {},
+      "diffStat": " .../adapters/FileCheckpointOracleTest.java         |  2 +-\n .../analysis/adapters/W1dEffectsTest.java          |  7 ++-\n .../analysis/values/ForeignEffectTransfer.java     | 34 +++++++++--\n .../gustavo2358/analysis/values/TextProfile.java   |  2 +-\n .../analysis/values/LocalForeignEffectTest.java    | 50 ++++++++++++++++\n docs/architecture/analysis-dependency-result-v1.md | 15 +++--\n docs/evals/cp6/fast-test-inventory.json            |  2 +-\n docs/evals/cp6/w1d-w3-inventory.json               | 23 +++++++-\n docs/sources/sources.lock.json                     | 16 ++---\n scripts/project/e2e_partial.py                     | 68 ++++++++++++++++++----\n scripts/project/e2e_w2d.py                         | 21 +++++--\n 11 files changed, 200 insertions(+), 40 deletions(-)\n"
+    }
+  }
+}

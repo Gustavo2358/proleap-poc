@@ -1,0 +1,63 @@
+{
+  "commands": {
+    "frontend": [
+      "/home/gustavo/.sdkman/candidates/java/21.0.12+1.1-tem/bin/java",
+      "-Xmx2g",
+      "-cp",
+      "/home/gustavo/workspace/teste-e2e/.dependency-preservation/proleap-poc/target/classes:/home/gustavo/.m2/repository/org/antlr/antlr4-runtime/4.13.2/antlr4-runtime-4.13.2.jar:/home/gustavo/.m2/repository/org/slf4j/slf4j-api/2.0.18/slf4j-api-2.0.18.jar:/home/gustavo/.m2/repository/ch/qos/logback/logback-classic/1.6.3/logback-classic-1.6.3.jar:/home/gustavo/.m2/repository/ch/qos/logback/logback-core/1.6.3/logback-core-1.6.3.jar:/home/gustavo/.m2/repository/com/fasterxml/jackson/core/jackson-databind/2.22.2/jackson-databind-2.22.2.jar:/home/gustavo/.m2/repository/com/fasterxml/jackson/core/jackson-annotations/2.22/jackson-annotations-2.22.jar:/home/gustavo/.m2/repository/com/fasterxml/jackson/core/jackson-core/2.22.2/jackson-core-2.22.2.jar",
+      "io.github.gustavo2358.cobolexplorer.ExplorerMain"
+    ],
+    "lower": [
+      "/home/gustavo/.sdkman/candidates/java/21.0.12+1.1-tem/bin/java",
+      "-Xmx2g",
+      "-cp",
+      "/home/gustavo/workspace/teste-e2e/.logical-text-w1/air-java/air-model/target/classes:/home/gustavo/workspace/teste-e2e/.logical-text-w1/air-java/air-json/target/classes:/home/gustavo/workspace/teste-e2e/.dependency-preservation/cobol-lower/core/target/classes:/home/gustavo/workspace/teste-e2e/.dependency-preservation/cobol-lower/adapters/target/classes:/home/gustavo/workspace/teste-e2e/.cics-program-control/m2/com/dynatrace/hash4j/hash4j/0.30.0/hash4j-0.30.0.jar:/home/gustavo/.m2/repository/com/fasterxml/jackson/core/jackson-databind/2.22.2/jackson-databind-2.22.2.jar:/home/gustavo/.m2/repository/com/fasterxml/jackson/core/jackson-annotations/2.22/jackson-annotations-2.22.jar:/home/gustavo/.m2/repository/com/fasterxml/jackson/core/jackson-core/2.22.2/jackson-core-2.22.2.jar",
+      "io.github.gustavo2358.lower.adapters.cli.CobolLower"
+    ],
+    "cfg": [
+      "/home/gustavo/.sdkman/candidates/java/21.0.12+1.1-tem/bin/java",
+      "-Xmx2g",
+      "-cp",
+      "/home/gustavo/workspace/teste-e2e/.logical-text-w1/air-java/air-model/target/classes:/home/gustavo/workspace/teste-e2e/.logical-text-w1/air-java/air-json/target/classes:/home/gustavo/workspace/teste-e2e/.dependency-preservation/analysis-cfg/analysis-adapters/target/classes:/home/gustavo/workspace/teste-e2e/.dependency-preservation/analysis-cfg/analysis-dataflow/target/classes:/home/gustavo/workspace/teste-e2e/.dependency-preservation/analysis-cfg/analysis-dependencies/target/classes:/home/gustavo/workspace/teste-e2e/.dependency-preservation/analysis-cfg/analysis-kernel/target/classes:/home/gustavo/workspace/teste-e2e/.dependency-preservation/analysis-cfg/analysis-launcher/target/classes:/home/gustavo/workspace/teste-e2e/.dependency-preservation/analysis-cfg/analysis-values/target/classes:/home/gustavo/workspace/teste-e2e/.dependency-preservation/analysis-cfg/cfg-adapters/target/classes:/home/gustavo/workspace/teste-e2e/.dependency-preservation/analysis-cfg/cfg-kernel/target/classes:/home/gustavo/workspace/teste-e2e/.dependency-preservation/analysis-cfg/cfg-launcher/target/classes",
+      "io.github.gustavo2358.analysis.cfg.launcher.AnalysisCfg"
+    ],
+    "dependency": [
+      "/home/gustavo/.sdkman/candidates/java/21.0.12+1.1-tem/bin/java",
+      "-Xmx2g",
+      "-cp",
+      "/home/gustavo/workspace/teste-e2e/.logical-text-w1/air-java/air-model/target/classes:/home/gustavo/workspace/teste-e2e/.logical-text-w1/air-java/air-json/target/classes:/home/gustavo/workspace/teste-e2e/.dependency-preservation/analysis-cfg/analysis-adapters/target/classes:/home/gustavo/workspace/teste-e2e/.dependency-preservation/analysis-cfg/analysis-dataflow/target/classes:/home/gustavo/workspace/teste-e2e/.dependency-preservation/analysis-cfg/analysis-dependencies/target/classes:/home/gustavo/workspace/teste-e2e/.dependency-preservation/analysis-cfg/analysis-kernel/target/classes:/home/gustavo/workspace/teste-e2e/.dependency-preservation/analysis-cfg/analysis-launcher/target/classes:/home/gustavo/workspace/teste-e2e/.dependency-preservation/analysis-cfg/analysis-values/target/classes:/home/gustavo/workspace/teste-e2e/.dependency-preservation/analysis-cfg/cfg-adapters/target/classes:/home/gustavo/workspace/teste-e2e/.dependency-preservation/analysis-cfg/cfg-kernel/target/classes:/home/gustavo/workspace/teste-e2e/.dependency-preservation/analysis-cfg/cfg-launcher/target/classes",
+      "io.github.gustavo2358.analysis.launcher.AnalysisDependencies"
+    ]
+  },
+  "classpathSha256": {
+    "/home/gustavo/.m2/repository/ch/qos/logback/logback-classic/1.6.3/logback-classic-1.6.3.jar": "beebede8db065fe1b72909ecc66bb49acda618901635d86c25fce14a5915e37e",
+    "/home/gustavo/.m2/repository/ch/qos/logback/logback-core/1.6.3/logback-core-1.6.3.jar": "a6967a28c8b086dee75a694d2f6fb8830c71153539866d7d8af065c9b6df91e0",
+    "/home/gustavo/.m2/repository/com/fasterxml/jackson/core/jackson-annotations/2.22/jackson-annotations-2.22.jar": "21ddb598807d3a51a876704eb979d9296e1c6a6f47ab1826ff88c6d6a127a2d0",
+    "/home/gustavo/.m2/repository/com/fasterxml/jackson/core/jackson-core/2.22.2/jackson-core-2.22.2.jar": "ff167a6317be15895706c26668f45b898efe40ab8780970658210fe1393d52a6",
+    "/home/gustavo/.m2/repository/com/fasterxml/jackson/core/jackson-databind/2.22.2/jackson-databind-2.22.2.jar": "d0da14c12b16b5d54719aa172d83b542ff4abeb8b0fb7db476fde8ceece760ca",
+    "/home/gustavo/.m2/repository/org/antlr/antlr4-runtime/4.13.2/antlr4-runtime-4.13.2.jar": "dd3e8a13a2d669bf84fb8d834de35ce4875f27157698d206241ec8488aadcaf7",
+    "/home/gustavo/.m2/repository/org/slf4j/slf4j-api/2.0.18/slf4j-api-2.0.18.jar": "44508fd1576500688c790b190acdd16fec4f8c79a3e0b900afd70503cf055f55",
+    "/home/gustavo/workspace/teste-e2e/.cics-program-control/m2/com/dynatrace/hash4j/hash4j/0.30.0/hash4j-0.30.0.jar": "d3224b113ea835ce3452097747e5209ec760cf443dbed770d6ba68a0d480178f",
+    "/home/gustavo/workspace/teste-e2e/.dependency-preservation/analysis-cfg/analysis-adapters/target/classes": "ce81d9a21a050595ea4b9230d058c726a9f3efe4e388ec0f21d3fdd2ac623ba6",
+    "/home/gustavo/workspace/teste-e2e/.dependency-preservation/analysis-cfg/analysis-dataflow/target/classes": "daf7e64f03e7153c754cb5f755dcce796e75bed95f4d0e918bb1b9650f8651aa",
+    "/home/gustavo/workspace/teste-e2e/.dependency-preservation/analysis-cfg/analysis-dependencies/target/classes": "40a590f29f09a3ae2eb44272916a9367c4fa2b7dd7d69aa0c7745fb138f964fa",
+    "/home/gustavo/workspace/teste-e2e/.dependency-preservation/analysis-cfg/analysis-kernel/target/classes": "edf16eed19ca4a7b7ed21750eada035608704d6f817108995b8fbe8516f3b36f",
+    "/home/gustavo/workspace/teste-e2e/.dependency-preservation/analysis-cfg/analysis-launcher/target/classes": "ed2023506114e2f53af73b7c7b7057d4f38293ac3e46d573cfec2c8c3a44be94",
+    "/home/gustavo/workspace/teste-e2e/.dependency-preservation/analysis-cfg/analysis-values/target/classes": "af1b6e3111b84a9f324c2eb90694932f276ee2d03c766763a836bb7885bce02d",
+    "/home/gustavo/workspace/teste-e2e/.dependency-preservation/analysis-cfg/cfg-adapters/target/classes": "0963a7fb6efbfc46bce3ea3ad5dc664a9d10f37f3f7a1eba3ff90229373271a2",
+    "/home/gustavo/workspace/teste-e2e/.dependency-preservation/analysis-cfg/cfg-kernel/target/classes": "36b166c2ac48e5a104b45952c0c0b43c91e5c6acd5b7b0da612778932fa9b4bb",
+    "/home/gustavo/workspace/teste-e2e/.dependency-preservation/analysis-cfg/cfg-launcher/target/classes": "51ef7b649a636d92a1230c46dc37ab00a7a26066e9e7feb79895ec8ac84d1d7b",
+    "/home/gustavo/workspace/teste-e2e/.dependency-preservation/cobol-lower/adapters/target/classes": "67e58124f0a4f94258375d1bbc603650f7d38c0b56cb828b1f8b2bb3a367f555",
+    "/home/gustavo/workspace/teste-e2e/.dependency-preservation/cobol-lower/core/target/classes": "4f454c94001ae74cadc29d1538b3283589bdaa93b7f57e3585ededec16e4a6cf",
+    "/home/gustavo/workspace/teste-e2e/.dependency-preservation/proleap-poc/target/classes": "6b046b8e34111d3884dfd40f17d54c1d52f343514f151950bce7a31fd9658b16",
+    "/home/gustavo/workspace/teste-e2e/.logical-text-w1/air-java/air-json/target/classes": "c41baf1053ed38e3efdc945e815cb5b7ae6d8cbc69d75a7c2addd44af34a901c",
+    "/home/gustavo/workspace/teste-e2e/.logical-text-w1/air-java/air-model/target/classes": "e399a49b614c7a1fff81951022308582e1b2bf5e361c89697df5c1bc894d4750"
+  },
+  "baselinePins": {
+    "frontend": "edb64520a6269be9fa6d71cd47e6974112fbfece",
+    "lower": "f8e181f95929c650181c989318f8ba23d1e68a1a",
+    "cfg": "98fa57c3db2edf9f70bb7a99bb667dbf36d28104",
+    "air": "646ca3ab1687d43f7d2063fc2a8f3837ab3cf9fa"
+  },
+  "cfgBuildEquivalence": "a6d703ac66341ccd046f3f2e33e4c3bc13388d54 has identical production sources/poms to CFG baseline"
+}
