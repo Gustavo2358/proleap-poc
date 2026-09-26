@@ -10,15 +10,18 @@ public final class CicsCommandSyntax {
         public Command {options=List.copyOf(options);gaps=List.copyOf(gaps);}
     }
     public static Optional<Command> parse(String raw) {
+        return parseEmbedded(raw,"CICS");
+    }
+    static Optional<Command> parseEmbedded(String raw,String language) {
         var cursor=new Cursor(raw);cursor.space();
         if(cursor.at("*>EXECCICS")){cursor.position+=10;cursor.space();}
-        if(!cursor.word().equalsIgnoreCase("EXEC")||!cursor.word().equalsIgnoreCase("CICS"))return Optional.empty();
+        if(!cursor.word().equalsIgnoreCase("EXEC")||!cursor.word().equalsIgnoreCase(language))return Optional.empty();
         String name=cursor.word().toUpperCase(Locale.ROOT);if(name.isEmpty())return Optional.empty();
         var options=new ArrayList<Option>();var gaps=new LinkedHashSet<String>();boolean ended=false;
         while(cursor.position<raw.length()) {
             cursor.space();int start=cursor.position;String option=cursor.word().toUpperCase(Locale.ROOT);
             if(option.equals("END-EXEC")){ended=true;break;}
-            if(option.isEmpty()){gaps.add("CICS_INVALID_OPTION_SYNTAX");break;}
+            if(option.isEmpty()){gaps.add(language+"_INVALID_OPTION_SYNTAX");break;}
             cursor.space();Optional<String> operand=Optional.empty();
             if(cursor.at("(")) {
                 int begin=++cursor.position,depth=1;char quote=0;
@@ -28,13 +31,13 @@ public final class CicsCommandSyntax {
                     else if(c=='\''||c=='"')quote=c;
                     else if(c=='(')depth++;else if(c==')')depth--;
                 }
-                if(depth!=0||quote!=0){gaps.add("CICS_TRUNCATED_OPERAND");options.add(new Option(option,Optional.empty(),start,cursor.position));break;}
+                if(depth!=0||quote!=0){gaps.add(language+"_TRUNCATED_OPERAND");options.add(new Option(option,Optional.empty(),start,cursor.position));break;}
                 operand=Optional.of(raw.substring(begin,cursor.position-1));
             }
             options.add(new Option(option,operand,start,cursor.position));
         }
         cursor.space();if(cursor.at(".")){cursor.position++;cursor.space();}
-        if(!ended||cursor.position!=raw.length())gaps.add("CICS_INCOMPLETE_PAYLOAD");
+        if(!ended||cursor.position!=raw.length())gaps.add(language+"_INCOMPLETE_PAYLOAD");
         return Optional.of(new Command(name,options,List.copyOf(gaps),ended));
     }
     public static Optional<String> literal(String value) {

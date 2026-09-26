@@ -39,7 +39,10 @@ class StorageInitialProductTest {
     @Test void unprovedRegionalMoveCannotCloseBasicPerformBody() {
         for(String body:List.of("MOVE PGM-TEXT TO PGM-TEXT.","MOVE 'X' TO PGM-TEXT(MISSING:1).")) {
             var p=initialSource(initialSource().replace("MOVE 'OTHERPGM' TO PGM-TEXT.",body),StorageInitialSemantics.EntryMode.INITIAL);
-            assertTrue(p.performs().isEmpty(),"unproved regional transfer must not certify BASIC body");
+            if(body.equals("MOVE PGM-TEXT TO PGM-TEXT.")) {
+                assertEquals(1,p.performs().size(),"closed local self-copy is a proved whole logical transfer");
+                assertEquals(CopySemantics.FULL_IDENTITY,p.moves().get(0).copySemantics());
+            } else assertTrue(p.performs().isEmpty(),"unproved slice must not certify BASIC body");
             assertFalse(p.gaps().isEmpty());assertEquals(2,p.calls().size());
         }
     }

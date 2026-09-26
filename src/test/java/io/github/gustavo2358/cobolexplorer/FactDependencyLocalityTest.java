@@ -46,6 +46,34 @@ class FactDependencyLocalityTest {
         var out=Path.of("target/fact-dependency-r2");Files.createDirectories(out);
         Files.write(out.resolve("closed-copy.json"),SemanticProductJsonWriter.serialize(closed));Files.write(out.resolve("open-copy.json"),SemanticProductJsonWriter.serialize(open));
     }
+    @Test void unrelatedRepeatedAndOverlaidSiblingsDoNotEraseWholeItemIdentity() {
+        for(var sibling:List.of("05 TABLE-A OCCURS 3 TIMES.\n 10 ELEMENT-A PIC X(4).",
+                "05 BUFFER-A PIC X(4).\n05 BUFFER-B REDEFINES BUFFER-A PIC X(2).")) {
+            var p=publish("01 RECORD-A.\n05 TARGET PIC X(8).\n"+sibling+"\n01 SENTINEL PIC X.");
+            assertTrue(known(p,"TARGET",FactKind.LOCAL_CELL),"unrelated sibling is not an alias of TARGET");
+            var binding=p.factDependencies().orElseThrow().bindings().stream().filter(b->b.node().equals(node(p,"TARGET"))).findFirst().orElseThrow();
+            assertEquals(node(p,"TARGET"),binding.exactCell());
+            assertTrue(p.dataDeclarations().stream().filter(d->d.canonicalName().equals("TARGET")).findFirst().orElseThrow().scalarText().isPresent(),"proved local cell must reach scalar MOVE capability");
+        }
+        for(var data:List.of("01 RECORD-A.\n05 ITEMS OCCURS 3 TIMES.\n10 TARGET PIC X(8).",
+                "01 RECORD-A.\n05 AREA-A PIC X(8).\n05 AREA-B REDEFINES AREA-A.\n10 TARGET PIC X(8).",
+                "01 RECORD-A.\n05 ITEMS OCCURS 1 TO 3 DEPENDING ON N.\n10 ELEMENT-A PIC X.\n05 TARGET PIC X(8).\n01 N PIC 9."))
+            assertFalse(known(publish(data+"\n01 SENTINEL PIC X."),"TARGET",FactKind.LOCAL_CELL),"ancestor participates in repeated/overlaid storage");
+    }
+
+    @Test void localDataCopyUsesBothClosedCellProofs() throws Exception {
+        String data="01 RECORD-A.\n05 TARGET PIC X(8).\n05 TABLE-A OCCURS 3 TIMES.\n10 ELEMENT-A PIC X.\n01 SOURCE-A PIC X(8) VALUE 'PROGA001'.\n01 SENTINEL PIC X.\nCOPY UNKNOWN-DATA.";
+        var a=AstBoundaryTestSupport.analyze(ScalarMoveCheckpoint4ATest.program(data,"MOVE SOURCE-A TO TARGET.\nCALL TARGET.\nGOBACK."),"local-copy.cbl");
+        var p=ExplorerMain.publishSemanticProduct(a.model().programUnits().get(0).id(),a.build(),a.tables(),a.occurrences(),a.resolution(),a.report());
+        assertTrue(known(p,"TARGET",FactKind.LOCAL_CELL));
+        assertTrue(known(p,"SOURCE-A",FactKind.LOCAL_CELL));
+        var json=new ObjectMapper().readTree(SemanticProductJsonWriter.serialize(p));
+        var move=json.path("statements").get(0);
+        assertEquals("FULL_IDENTITY",move.path("copySemantics").asText());
+        var out=Path.of("target/fact-dependency-r2");Files.createDirectories(out);
+        Files.write(out.resolve("local-copy.json"),SemanticProductJsonWriter.serialize(p));
+    }
+
     @Test void aliasAndOpaqueIncludeDoNotProduceFalseCells() throws Exception {
         var alias=publish("01 RECORD-A.\n 05 TARGET PIC X(8).\n 05 ALIAS REDEFINES TARGET PIC X(4).\n01 SENTINEL PIC X.");
         assertFalse(known(alias,"TARGET",FactKind.LOCAL_CELL));
@@ -134,4 +162,20 @@ class FactDependencyLocalityTest {
         Files.writeString(out.resolve("measurements.json"),new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(rows));
     }
 
+    @Test void anUnavailablePrefixCannotChooseTheStorageSection() throws Exception {
+        String tail="01 RECORD-A.\n05 TARGET PIC X(8).\n01 SENTINEL PIC X.";
+        var missing=publish("COPY UNKNOWN-PREFIX.\n"+tail);
+        var working=publish(tail);
+        var linkage=publish("LINKAGE SECTION.\n"+tail);
+        assertTrue(known(missing,"TARGET",FactKind.SOURCE_IDENTITY));
+        assertFalse(known(missing,"TARGET",FactKind.LOCAL_CELL));
+        assertTrue(known(working,"TARGET",FactKind.LOCAL_CELL));
+        assertTrue(linkage.dataDeclarations().stream().filter(d->d.canonicalName().equals("TARGET")).findFirst().orElseThrow().scalarText().isEmpty());
+        // Both completions retain the written PIC/name; only one owns persistent local storage.
+        assertEquals(working.dataDeclarations().stream().filter(d->d.canonicalName().equals("TARGET")).count(),linkage.dataDeclarations().stream().filter(d->d.canonicalName().equals("TARGET")).count());
+        var out=Path.of("target/fact-dependency-r2/prefix-boundary");Files.createDirectories(out);
+        Files.write(out.resolve("missing.json"),SemanticProductJsonWriter.serialize(missing));
+        Files.write(out.resolve("working.json"),SemanticProductJsonWriter.serialize(working));
+        Files.write(out.resolve("linkage.json"),SemanticProductJsonWriter.serialize(linkage));
+    }
 }

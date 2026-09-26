@@ -93,7 +93,7 @@ final class PreprocessorEngine {
         List<SourceDependencyFact> sourceDependencies = new ArrayList<>();
         SourceMap document = processRecursive(normalized, file,
                 diagnostics, compilerOptions, toleratedPreprocessorDiagnostics,
-                new HashSet<>(), logSummary, sourceDependencies, List.of(), null);
+                new HashSet<>(), logSummary, sourceDependencies, List.of(), null, false);
         long errors = diagnostics.stream().filter(d -> d.phase() == Diagnostic.Phase.PREPROCESSOR)
                 .count() - toleratedPreprocessorDiagnostics[0];
         ResolutionContracts.PgmnameMode pgmnameMode = compilerOptions.stream()
@@ -133,7 +133,7 @@ final class PreprocessorEngine {
                                        List<CompilerOption> compilerOptions,
                                        int[] toleratedPreprocessorDiagnostics,
                                        Set<Path> expansionStack, LogSummary logSummary, List<SourceDependencyFact> sourceDependencies,
-                                       List<Ast.CopyFrame> includeChain, Ast.SourceLocation rootSite) {
+                                       List<Ast.CopyFrame> includeChain, Ast.SourceLocation rootSite, boolean sqlMember) {
         String source = document.text();
         UnicodeText indexedSource = new UnicodeText(source);
         Lexer lexer = binding.preprocessorLexer(CharStreams.fromString(source, file));
@@ -235,7 +235,7 @@ final class PreprocessorEngine {
                             qualification.isEmpty() ? includedFile : "", "COPY_SYNTAX", dependencyProvenance, dependencyRoot));
                         SourceMap copyText = processRecursive(copySource, includedFile,
                                 diagnostics, compilerOptions,
-                                toleratedPreprocessorDiagnostics, expansionStack, logSummary, sourceDependencies, nestedChain, dependencyRoot);
+                                toleratedPreprocessorDiagnostics, expansionStack, logSummary, sourceDependencies, nestedChain, dependencyRoot, sqlMember);
                         List<CopyReplacement> replacements = copyReplacements(
                                 context, parser.getRuleNames(), indexedSource);
                         for (CopyReplacement replacement : replacements) {
@@ -275,9 +275,31 @@ final class PreprocessorEngine {
                         String name = SourceDependencyFact.canonical(significant.get(3).getText());
                         var p = document.provenance(start,end);
                         boolean builtin = name.equals("SQLCA")||name.equals("SQLDA");
-                        sourceDependencies.add(inventory.classify(new SourceDependencyFact(SourceDependencyFact.Kind.SQL_INCLUDE,name,"",
+                        if(sqlMember)throw new UnsupportedOperationException("Nested SQL INCLUDE is not permitted by Db2: "+name);
+                        var fact=inventory.classify(new SourceDependencyFact(SourceDependencyFact.Kind.SQL_INCLUDE,name,"",
                             SourceDependencyFact.Resolution.UNRESOLVED,"",builtin?"BUILTIN_SQL_INCLUDE":"UNKNOWN",
-                            new Ast.SourceProvenance(p.expanded(),p.original(),includeChain,p.exact()),rootSite==null?p.original():rootSite)));
+                            new Ast.SourceProvenance(p.expanded(),p.original(),includeChain,p.exact()),rootSite==null?p.original():rootSite));
+                        int dependencyIndex=sourceDependencies.size();sourceDependencies.add(fact);
+                        var configured=inventory.configuredPath(name);
+                        var member=configured.isPresent()?configured.filter(java.nio.file.Files::isRegularFile):library.resolve(name);
+                        if(member.isPresent()) {
+                            var path=member.orElseThrow().toAbsolutePath().normalize();
+                            if(!expansionStack.add(path))throw new UnsupportedOperationException("Cyclic SQL INCLUDE expansion: "+name);
+                            try {
+                                var included=path.getFileName().toString();var nestedChain=new ArrayList<>(includeChain);
+                                var frame=new Ast.CopyFrame(file,name,included,p.original().startLine());nestedChain.add(frame);
+                                var expanded=processRecursive(library.readNormalized(path),included,diagnostics,compilerOptions,
+                                    toleratedPreprocessorDiagnostics,expansionStack,logSummary,sourceDependencies,nestedChain,fact.rootSite(),true);
+                                sourceDependencies.set(dependencyIndex,new SourceDependencyFact(fact.kind(),fact.name(),fact.qualification(),
+                                    SourceDependencyFact.Resolution.RESOLVED,inventory.configuredArtifact(name).orElse(included),fact.authority(),fact.provenance(),fact.rootSite()));
+                                edits.add(new Edit(start,end,expanded.withCopyFrame(frame)));continue;
+                            } catch(IOException failure) {
+                                logSummary.ioFailures++;
+                                sourceDependencies.set(dependencyIndex,new SourceDependencyFact(fact.kind(),fact.name(),fact.qualification(),
+                                    SourceDependencyFact.Resolution.IO_ERROR,"",fact.authority(),fact.provenance(),fact.rootSite()));
+                                diagnostics.add(sourceDiagnostic(document,Diagnostic.Phase.IO,start,end,failure.getMessage(),name,failure.getClass().getName()));
+                            } finally {expansionStack.remove(path);}
+                        }
                     } else if(count>2 && significant.get(2).getText().equalsIgnoreCase("INCLUDE")) {
                         logSummary.sourceDependencyGaps.add("SQL_INCLUDE_FORM_UNPROVED");
                     }

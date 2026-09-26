@@ -66,6 +66,36 @@ class SourceDependencyProducerTest {
         assertEquals(SourceDependencyFact.Kind.DCLGEN,missing.kind());
         assertEquals(SourceDependencyFact.Resolution.UNRESOLVED,missing.resolution());
     }
+    @Test void availableSqlIncludeExpandsThroughTheSourceMap()throws Exception {
+        Files.writeString(directory.resolve("PROC-A.cpy"),"       HELPER.\n           CALL 'PROGA001'.\n");
+        var outcome=process("PROCEDURE DIVISION.\nEXEC SQL INCLUDE PROC-A END-EXEC.\n");
+        assertTrue(outcome.text().contains("CALL 'PROGA001'"));
+        assertFalse(outcome.text().contains("*>EXECSQL"));
+        var dependency=outcome.sourceDependencies().get(0);
+        assertEquals(SourceDependencyFact.Kind.SQL_INCLUDE,dependency.kind());
+        assertEquals(SourceDependencyFact.Resolution.RESOLVED,dependency.resolution());
+        int at=outcome.text().indexOf("CALL");var p=outcome.sourceMap().provenance(at,at+4);
+        assertEquals("PROC-A.cpy",p.original().file());assertEquals("PROC-A",p.includeChain().get(0).requestedName());
+        Files.writeString(directory.resolve("PROC-A.cpy"),"           EXEC SQL INCLUDE SECOND END-EXEC\n");
+        assertThrows(UnsupportedOperationException.class,()->process("EXEC SQL INCLUDE PROC-A END-EXEC\n"));
+    }
+    @Test void configuredBuiltinIncludeRetainsTheActualArtifact() throws Exception {
+        Files.createDirectories(directory.resolve("members"));
+        Files.writeString(directory.resolve("members/custom.cpy"), "       01 SQL-STATUS PIC X.\n");
+        var inventory=directory.resolve("inventory.json");
+        Files.writeString(inventory, """
+            {"version":"1.0.0","artifacts":[{"name":"SQLCA","kind":"SQL_INCLUDE","artifact":"members/custom.cpy"}]}
+            """);
+        var producer=new PreprocessorEngine(Bindings.cobol(),new CopybookLibrary(directory),SourceArtifactInventory.read(inventory));
+        var source="EXEC SQL INCLUDE SQLCA END-EXEC\n";
+        var outcome=producer.process(SourceMap.identity(source,"program.cbl"),"program.cbl");
+        var fact=outcome.sourceDependencies().get(0);
+        assertEquals(SourceDependencyFact.Resolution.RESOLVED,fact.resolution());
+        assertEquals("members/custom.cpy",fact.artifact());
+        assertEquals("BUILTIN_SQL_INCLUDE",fact.authority());
+        assertEquals(SourceDependencyFact.Kind.SQL_INCLUDE,fact.kind());
+        assertTrue(outcome.text().contains("SQL-STATUS"));
+    }
     @Test void rejectsInventoryThatWouldMisclassifySqlca() throws Exception {
         var inventory=directory.resolve("inventory.json");
         Files.writeString(inventory,"""

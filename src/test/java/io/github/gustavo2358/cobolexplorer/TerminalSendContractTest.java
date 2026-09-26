@@ -13,7 +13,7 @@ class TerminalSendContractTest {
     static List<JsonNode> outcomes(JsonNode j){return CicsCommandContractTest.outcomes(j,c(j));}
     @Test void requiredProbes()throws Exception {
         for(var options:List.of("FROM(WS-AREA)","FROM(WS-AREA) LENGTH(80)","FROM(WS-AREA) LENGTH(LENGTH OF WS-AREA)","FROM(WS-AREA) NOHANDLE","FROM(WS-AREA) ERASE","FROM(WS-AREA) LENGTH(LENGTH OF WS-AREA) NOHANDLE ERASE")) {
-            var j=one(options);var f=c(j);assertEquals("2.44.0",j.path("contractVersion").asText());assertEquals("SEND_TERMINAL",f.path("commandKind").asText());assertEquals("SUPPORTED",f.path("syntaxStatus").asText());
+            var j=one(options);var f=c(j);assertEquals("2.46.0",j.path("contractVersion").asText());assertEquals("SEND_TERMINAL",f.path("commandKind").asText());assertEquals("SUPPORTED",f.path("syntaxStatus").asText());
             assertEquals("RESOLVED",f.path("options").get(0).path("reference").path("binding").path("status").asText());
             var normal=outcomes(j).stream().filter(o->o.path("kind").asText().equals("NORMAL")).toList();assertEquals(1,normal.size());
             assertEquals(!options.contains("NOHANDLE"),outcomes(j).stream().anyMatch(o->o.path("kind").asText().equals("UNKNOWN_LOCAL")));

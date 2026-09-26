@@ -521,9 +521,11 @@ public final class Ast {
         public LogicalText { value = Objects.requireNonNull(value); }
         public int extent() { return value.codePointCount(0, value.length()); }
     }
+    public enum FigurativeText { SPACES, LOW_VALUES, HIGH_VALUES }
     public record LiteralExpression(Meta meta, String value, String rawLexeme,
-                                    Optional<LogicalText> logicalText, Optional<java.math.BigInteger> integerValue) implements Expression {
-        public LiteralExpression { logicalText = Objects.requireNonNull(logicalText); integerValue=Objects.requireNonNull(integerValue); }
+                                    Optional<LogicalText> logicalText, Optional<java.math.BigInteger> integerValue, Optional<FigurativeText> figurativeText) implements Expression {
+        public LiteralExpression { logicalText = Objects.requireNonNull(logicalText); integerValue=Objects.requireNonNull(integerValue);figurativeText=Objects.requireNonNull(figurativeText); }
+        public LiteralExpression(Meta meta,String value,String rawLexeme,Optional<LogicalText> logicalText,Optional<java.math.BigInteger> integerValue) { this(meta,value,rawLexeme,logicalText,integerValue,Optional.empty()); }
         public LiteralExpression(Meta meta,String value,String rawLexeme,Optional<LogicalText> logicalText) { this(meta,value,rawLexeme,logicalText,Optional.empty()); }
         public LiteralExpression(Meta meta, String value, String rawLexeme) {
             this(meta, value, rawLexeme, Optional.empty());

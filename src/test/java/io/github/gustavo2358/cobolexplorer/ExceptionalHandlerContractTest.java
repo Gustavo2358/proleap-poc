@@ -36,7 +36,7 @@ class ExceptionalHandlerContractTest {
                     assertFalse(proof.path("provenance").path("includeChain").isEmpty());found=true;
                 }assertTrue(found);
             }
-            if(defaults>0)assertEquals("2.45.0",json.path("contractVersion").asText());
+            if(defaults>0)assertEquals("2.46.0",json.path("contractVersion").asText());
             for(var fact:json.path("statements"))if(fact.path("variant").asText().equals("CICS_PROGRAM_CONTROL")&&fact.path("command").asText().equals("XCTL")&&defaults>0)
                 for(var outcome:json.path("controlTopology").path("outcomes"))if(outcome.path("statement").equals(fact.path("header").path("id")))
                     assertNotEquals("NORMAL",outcome.path("kind").asText(),"exceptional event never creates XCTL ordinary return");

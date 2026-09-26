@@ -610,12 +610,12 @@ public final class CobolSemanticProduct {
         }
     }
     public enum StorageEntryMode { UNKNOWN, INITIAL, PRESERVED }
-    public enum InitialStorageKind { LITERAL_BYTES, POSSIBLE_LITERAL_BYTES, POSSIBLE_LOGICAL_TEXT, PRESERVE, UNKNOWN }
+    public enum InitialStorageKind { LITERAL_BYTES, POSSIBLE_LITERAL_BYTES, POSSIBLE_LOGICAL_TEXT, LOGICAL_TEXT, PRESERVE, UNKNOWN }
     /** Source entry proof, versioned by storage 1.6.0. */
     public enum InitialStorageProof { NONE, EXPLICIT_INITIAL, EXPLICIT_PRESERVED, PROGRAM_INITIAL, DECLARATIVE_INVARIANT, DECLARATIVE_POSSIBILITY }
     public record StorageInitialCondition(StorageNodeId node,InitialStorageKind kind,List<Integer> bytes,List<String> gapCodes,Provenance provenance,InitialStorageProof proof,Optional<String> logicalText) {
         public StorageInitialCondition {
-            Objects.requireNonNull(logicalText);require((kind==InitialStorageKind.POSSIBLE_LOGICAL_TEXT)==logicalText.isPresent(),"logical source text has its own initial kind");
+            Objects.requireNonNull(logicalText);require((kind==InitialStorageKind.POSSIBLE_LOGICAL_TEXT||kind==InitialStorageKind.LOGICAL_TEXT)==logicalText.isPresent(),"logical source text has its own initial kind");
             Objects.requireNonNull(proof);
             Objects.requireNonNull(node);Objects.requireNonNull(kind);Objects.requireNonNull(provenance);bytes=List.copyOf(bytes);gapCodes=List.copyOf(gapCodes);
             require(bytes.stream().allMatch(b->b>=0&&b<=255),"invalid initial octet");
@@ -752,15 +752,29 @@ public final class CobolSemanticProduct {
      * Surface retained for structural IF facts. Predicate normalization remains
      * a later post-binding product; references here are only those already known.
      */
+    public enum TextPredicateKind { EQUAL_TEXT, EQUAL_SPACES, EQUAL_LOW_VALUES, EQUAL_HIGH_VALUES, NOT, AND, OR }
+    public record TextPredicate(TextPredicateKind kind,Optional<OperandId> reference,Optional<String> text,List<TextPredicate> children) {
+        public TextPredicate {
+            Objects.requireNonNull(kind);Objects.requireNonNull(reference);Objects.requireNonNull(text);children=List.copyOf(children);
+            boolean leaf=kind.name().startsWith("EQUAL_");
+            require(leaf?reference.isPresent()&&children.isEmpty():reference.isEmpty()&&!children.isEmpty(),"text predicate shape");
+            require((kind==TextPredicateKind.EQUAL_TEXT)==text.isPresent(),"text payload only on literal equality");
+            require(kind!=TextPredicateKind.NOT||children.size()==1,"NOT needs one child");
+            require(kind!=TextPredicateKind.AND&&kind!=TextPredicateKind.OR||children.size()>=2,"combined predicate needs children");
+        }
+        public Set<OperandId> reads(){var result=new java.util.LinkedHashSet<OperandId>();reference.ifPresent(result::add);children.forEach(c->result.addAll(c.reads()));return Set.copyOf(result);}
+    }
     public record ConditionSurface(String shape, List<DataReference> references,
-                                   Provenance provenance, PredicateGuarantee predicate) {
+                                   Provenance provenance, PredicateGuarantee predicate,Optional<TextPredicate> textPredicate) {
         public ConditionSurface {
             shape = requireText(shape, "shape");
             references = List.copyOf(references);
             provenance = Objects.requireNonNull(provenance, "provenance");
             if (references.stream().anyMatch(reference -> reference.role() != OperandRole.READ))
                 throw new IllegalArgumentException("condition references must have READ role");
-            Objects.requireNonNull(predicate);
+            Objects.requireNonNull(predicate);Objects.requireNonNull(textPredicate);
+            final var predicateOrigin=provenance;final var predicateReferences=references;
+            textPredicate.ifPresent(t->require(predicateOrigin.exact()&&t.reads().stream().allMatch(id->predicateReferences.stream().anyMatch(r->r.id().equals(id)&&r.wholeItemAccess().isPresent()&&r.provenance().exact()&&r.binding().status()==ResolutionStatus.RESOLVED)),"text predicate needs resolved whole text reads"));
             require(predicate.knownReads().equals(references.stream().map(DataReference::id).toList()),
                     "predicate must preserve every known read occurrence");
             if (predicate.availability() == Availability.KNOWN)
@@ -771,6 +785,7 @@ public final class CobolSemanticProduct {
                             && reference.binding().status() == ResolutionStatus.RESOLVED),
                         "predicate proof requires complete resolved whole-item read and origin");
         }
+        public ConditionSurface(String shape,List<DataReference> references,Provenance provenance,PredicateGuarantee predicate){this(shape,references,provenance,predicate,Optional.empty());}
         public ConditionSurface(String shape, List<DataReference> references, Provenance provenance) {
             this(shape, references, provenance, PredicateGuarantee.unavailable(references, provenance));
         }
@@ -782,7 +797,7 @@ public final class CobolSemanticProduct {
         StatementHeader header();
     }
 
-    public enum CicsCommandKind { SYNCPOINT, RECEIVE_MAP, SEND_MAP, SEND_TERMINAL }
+    public enum CicsCommandKind { SYNCPOINT, RECEIVE_MAP, SEND_MAP, SEND_TERMINAL, RETRIEVE }
     public enum OperandExpressionKind { INTEGER, DATA_REFERENCE, LENGTH_OF }
     /** Source expression structure; LENGTH_OF refers to a declaration, not its stored value. */
     public record OperandExpression(OperandExpressionKind kind,Optional<java.math.BigInteger> integer,
@@ -795,14 +810,18 @@ public final class CobolSemanticProduct {
         }
     }
     public enum CicsCommandSyntaxStatus { SUPPORTED, UNAVAILABLE }
+    public record CicsHostEffects(List<Integer> literalOptions) {
+        public CicsHostEffects { literalOptions=List.copyOf(literalOptions);require(new java.util.HashSet<>(literalOptions).size()==literalOptions.size(),"unique literal option proofs"); }
+    }
     /** Explicit source options; no control decision, handler target or runtime value. */
     public record CicsCommandFact(StatementHeader header,CicsCommandKind commandKind,CicsCommandSyntaxStatus syntaxStatus,
-            String rawText,List<CicsOption> options,List<String> gapCodes,Optional<OperandExpression> length) implements StatementFact {
+            String rawText,List<CicsOption> options,List<String> gapCodes,Optional<OperandExpression> length,Optional<CicsHostEffects> hostEffects) implements StatementFact {
         public CicsCommandFact {
             Objects.requireNonNull(header);Objects.requireNonNull(commandKind);Objects.requireNonNull(syntaxStatus);Objects.requireNonNull(rawText);Objects.requireNonNull(length);
             options=List.copyOf(options);gapCodes=List.copyOf(gapCodes);
             var names=new java.util.HashSet<String>();int last=0;boolean shape=true;
             var allowed=new java.util.HashSet<>(java.util.Set.of("RESP","RESP2","NOHANDLE"));
+            if(commandKind==CicsCommandKind.RETRIEVE)allowed.add("INTO");
             if(commandKind==CicsCommandKind.SEND_TERMINAL)allowed.addAll(java.util.Set.of("FROM","LENGTH","ERASE"));
             if(commandKind==CicsCommandKind.SEND_MAP||commandKind==CicsCommandKind.RECEIVE_MAP)allowed.addAll(java.util.Set.of("MAP","MAPSET",commandKind==CicsCommandKind.SEND_MAP?"FROM":"INTO"));
             if(commandKind==CicsCommandKind.SEND_MAP)allowed.addAll(java.util.Set.of("CURSOR","ERASE","FREEKB"));
@@ -815,15 +834,29 @@ public final class CobolSemanticProduct {
                     require(r.role()==(java.util.Set.of("RESP","RESP2","INTO").contains(o.name())?OperandRole.WRITE:OperandRole.READ),"command operand role");});
             }
             if(syntaxStatus==CicsCommandSyntaxStatus.SUPPORTED) {
-                require(shape&&(commandKind==CicsCommandKind.SYNCPOINT||names.contains(commandKind==CicsCommandKind.SEND_TERMINAL?"FROM":"MAP")),"supported command syntax");
+                require(shape&&(commandKind==CicsCommandKind.SYNCPOINT||names.contains(commandKind==CicsCommandKind.RETRIEVE?"INTO":commandKind==CicsCommandKind.SEND_TERMINAL?"FROM":"MAP")),"supported command syntax");
                 require(gapCodes.stream().allMatch(g->g.equals("CICS_COMMAND_EFFECTS_NOT_MODELED")),"supported syntax has no syntax gap");
             } else require(gapCodes.stream().anyMatch(g->!g.isBlank()&&!g.equals("CICS_COMMAND_EFFECTS_NOT_MODELED")),"unavailable command reason");
             require(length.isEmpty()||commandKind==CicsCommandKind.SEND_TERMINAL&&names.contains("LENGTH"),"length belongs to terminal LENGTH option");
             if(commandKind==CicsCommandKind.SEND_TERMINAL&&syntaxStatus==CicsCommandSyntaxStatus.SUPPORTED)
                 require(length.isPresent()==names.contains("LENGTH"),"supported LENGTH has structural expression");
             length.flatMap(OperandExpression::reference).ifPresent(r->require(r.id().statement().equals(header.id()),"expression operand owner"));
+            Objects.requireNonNull(hostEffects);
+            if(hostEffects.isPresent()) {
+                require(syntaxStatus==CicsCommandSyntaxStatus.SUPPORTED,"host effects require supported syntax");
+                require(commandKind!=CicsCommandKind.RECEIVE_MAP||names.contains("INTO"),"RECEIVE host area must be explicit");
+                require(commandKind!=CicsCommandKind.SEND_MAP||names.contains("FROM"),"SEND host area must be explicit");
+                var literals=new java.util.HashSet<>(hostEffects.orElseThrow().literalOptions());
+                for(var option:options) {
+                    if(literals.remove(option.start()))require(java.util.Set.of("MAP","MAPSET").contains(option.name())&&option.reference().isEmpty(),"literal proof belongs to a name parameter");
+                    else if(option.operand().isPresent()&&!option.name().equals("LENGTH"))require(option.reference().filter(r->r.logicalWholeItem().isPresent()).isPresent(),"every host operand must have a whole reference");
+                }
+                require(literals.isEmpty(),"literal proof refers to a published option");
+            }
+
         }
-        public CicsCommandFact(StatementHeader h,CicsCommandKind k,CicsCommandSyntaxStatus s,String raw,List<CicsOption> o,List<String> g){this(h,k,s,raw,o,g,Optional.empty());}
+        public CicsCommandFact(StatementHeader h,CicsCommandKind k,CicsCommandSyntaxStatus s,String raw,List<CicsOption> o,List<String> g,Optional<OperandExpression> l){this(h,k,s,raw,o,g,l,Optional.empty());}
+        public CicsCommandFact(StatementHeader h,CicsCommandKind k,CicsCommandSyntaxStatus s,String raw,List<CicsOption> o,List<String> g){this(h,k,s,raw,o,g,Optional.empty(),Optional.empty());}
     }
 
     public enum CicsAbendEventKind { ABEND }
@@ -864,12 +897,24 @@ public final class CobolSemanticProduct {
         public CicsHandlerLabelTarget {Objects.requireNonNull(id);Objects.requireNonNull(declarationOrigin);}
     }
     /** Operation on successful execution, not handler state, execution evidence or a dispatch edge. */
+    public enum CicsRegistrationEffects { NO_APPLICATION_MEMORY }
     public record CicsHandlerFact(StatementHeader header,CicsHandlerKind handlerKind,CicsHandlerAction action,
             CicsHandlerTargetKind targetKind,Optional<String> targetSyntax,Optional<ResolutionStatus> labelBindingStatus,
             Optional<CicsHandlerLabelTarget> labelTarget,Optional<StatementId> targetEntry,Optional<Provenance> entryOrigin,
             Optional<Provenance> targetOrigin,Optional<CallTarget> programTarget,CicsHandlerScope scope,String rawText,
-            List<CicsOption> options,List<String> gapCodes) implements StatementFact {
+            List<CicsOption> options,List<String> gapCodes,Optional<CicsRegistrationEffects> registrationEffects) implements StatementFact {
+        public CicsHandlerFact(StatementHeader header,CicsHandlerKind handlerKind,CicsHandlerAction action,
+            CicsHandlerTargetKind targetKind,Optional<String> targetSyntax,Optional<ResolutionStatus> labelBindingStatus,
+            Optional<CicsHandlerLabelTarget> labelTarget,Optional<StatementId> targetEntry,Optional<Provenance> entryOrigin,
+            Optional<Provenance> targetOrigin,Optional<CallTarget> programTarget,CicsHandlerScope scope,String rawText,
+            List<CicsOption> options,List<String> gapCodes) {
+            this(header,handlerKind,action,targetKind,targetSyntax,labelBindingStatus,labelTarget,targetEntry,entryOrigin,targetOrigin,programTarget,scope,rawText,options,gapCodes,Optional.empty());
+        }
         public CicsHandlerFact {
+            Objects.requireNonNull(registrationEffects);
+            if(registrationEffects.isPresent())require((action==CicsHandlerAction.CANCEL||action==CicsHandlerAction.RESET
+                ||action==CicsHandlerAction.ACTIVATE&&targetKind==CicsHandlerTargetKind.LABEL&&targetEntry.isPresent())
+                &&options.stream().allMatch(o->Set.of("ABEND","LABEL","CANCEL","RESET","NOHANDLE").contains(o.name())&&o.reference().isEmpty()),"closed handler registration footprint");
             Objects.requireNonNull(header);Objects.requireNonNull(handlerKind);Objects.requireNonNull(action);Objects.requireNonNull(targetKind);
             Objects.requireNonNull(targetSyntax);Objects.requireNonNull(labelBindingStatus);Objects.requireNonNull(labelTarget);
             Objects.requireNonNull(targetEntry);Objects.requireNonNull(entryOrigin);Objects.requireNonNull(targetOrigin);
@@ -1329,7 +1374,7 @@ public final class CobolSemanticProduct {
     public enum EffectBound { NONE, ALL }
     public enum EnvironmentEffect { OUTPUT, INPUT, UNKNOWN, NONE }
     public enum EffectValueTransform { NONE, UNKNOWN }
-    public enum EffectProof { NO_OP, DISPLAY_SIMPLE, INITIALIZE_TARGETS, ACCEPT_TARGET, SET_TARGETS, ARITHMETIC_TARGETS, STRING_TARGETS, UNSTRING_TARGETS, INSPECT_TARGETS }
+    public enum EffectProof { NO_OP, DISPLAY_SIMPLE, INITIALIZE_TARGETS, ACCEPT_TARGET, SET_TARGETS, ARITHMETIC_TARGETS, STRING_TARGETS, UNSTRING_TARGETS, INSPECT_TARGETS, DLI_HOST_OPERANDS, CICS_CONDITION_REGISTRATION }
     public record EffectSummary(List<OperandId> knownReads,List<OperandId> mayWrites,List<OperandId> mustOverwrite,
             List<OperandId> exposedRegions,EffectBound unknownReadBound,EffectBound unknownWriteBound,
             EffectBound unknownExposureBound,EnvironmentEffect environment,EffectValueTransform values,EffectProof proof) {
@@ -1371,6 +1416,11 @@ public final class CobolSemanticProduct {
                 if(e.proof()!=EffectProof.DISPLAY_SIMPLE&&e.proof()!=EffectProof.NO_OP)require(e.values()==EffectValueTransform.UNKNOWN,
                     "receiver value transform remains uninterpreted");
                 require(e.knownReads().stream().allMatch(id->refs.get(id).role()==OperandRole.READ),"effect read role");
+                if(e.proof()==EffectProof.DLI_HOST_OPERANDS||e.proof()==EffectProof.CICS_CONDITION_REGISTRATION)require(
+                    e.mustOverwrite().isEmpty()&&e.exposedRegions().isEmpty()&&e.unknownReadBound()==EffectBound.NONE
+                    &&e.unknownWriteBound()==EffectBound.NONE&&e.unknownExposureBound()==EffectBound.NONE
+                    &&e.environment()==EnvironmentEffect.UNKNOWN,"embedded bounded footprint retains external environment");
+                if(e.proof()==EffectProof.CICS_CONDITION_REGISTRATION)require(e.knownReads().isEmpty()&&e.mayWrites().isEmpty(),"condition registration has no application memory operands");
                 if(e.proof()==EffectProof.NO_OP)require(e.knownReads().isEmpty()&&e.mayWrites().isEmpty()&&e.mustOverwrite().isEmpty()&&e.exposedRegions().isEmpty()&&e.unknownReadBound()==EffectBound.NONE&&e.unknownWriteBound()==EffectBound.NONE&&e.unknownExposureBound()==EffectBound.NONE&&e.environment()==EnvironmentEffect.NONE&&e.values()==EffectValueTransform.NONE,"NO_OP proof shape");
                 if(e.proof()==EffectProof.DISPLAY_SIMPLE)require(e.mayWrites().isEmpty()&&e.mustOverwrite().isEmpty()&&e.exposedRegions().isEmpty()
                     &&e.unknownWriteBound()==EffectBound.NONE&&e.unknownExposureBound()==EffectBound.NONE
@@ -1745,6 +1795,12 @@ public final class CobolSemanticProduct {
                 require(controlTopology.isPresent(),"fact dependencies require topology contract");
                 FactDependencyContract.validate(factDependencies.get(),storage);
             }
+            for(var condition:storage.entryState().conditions())if(condition.kind()==InitialStorageKind.LOGICAL_TEXT) {
+                require(factDependencies.isPresent(),"logical invariant requires local-cell proof");
+                var graph=factDependencies.orElseThrow();var available=graph.proofAvailability();
+                require(graph.facts().stream().anyMatch(f->f.kind()==FactDependencies.FactKind.LOCAL_CELL
+                    &&f.subject().equals("storage-node:"+condition.node().localId())&&f.dependencies().stream().allMatch(p->Boolean.TRUE.equals(available.get(p)))),"logical invariant has a closed local cell");
+            }
             Objects.requireNonNull(controlTopology);
             if(controlTopology.isPresent()) {
                 var published=statements.stream().map(s->"statement:"+s.header().id().localId()).collect(java.util.stream.Collectors.toSet());
@@ -1910,7 +1966,8 @@ public final class CobolSemanticProduct {
         var initialNodes=new HashSet<StorageNodeId>();
         for(var condition:inventory.entryState().conditions()) {
             require(nodes.containsKey(condition.node())&&initialNodes.add(condition.node()),"initial condition needs unique existing physical node");
-            if(condition.kind()==InitialStorageKind.POSSIBLE_LOGICAL_TEXT) {
+            if(condition.kind()==InitialStorageKind.POSSIBLE_LOGICAL_TEXT||condition.kind()==InitialStorageKind.LOGICAL_TEXT) {
+                require(condition.kind()!=InitialStorageKind.LOGICAL_TEXT||condition.proof()==InitialStorageProof.DECLARATIVE_INVARIANT&&inventory.entryState().mode()==StorageEntryMode.UNKNOWN,"logical invariant proof and lifecycle");
                 require(condition.provenance().exact(),"logical source evidence requires exact provenance");
             } else if(condition.kind()==InitialStorageKind.POSSIBLE_LITERAL_BYTES) {
                 require(condition.provenance().exact()&&inventory.profile()==StorageProfile.IBM_ENTERPRISE_6_4_FIXED_DISPLAY_1047,

@@ -53,7 +53,10 @@ final class CicsHandlerSyntax {
         if(operation.isEmpty()||operation.get().targetKind()!=TargetKind.LABEL)return Optional.empty();
         var option=operation.get().options().stream().filter(o->o.name().equals("LABEL")).findFirst().orElseThrow();
         int begin=raw.indexOf('(',option.start())+1;
-        var lexer=new CobolLexer(CharStreams.fromString(option.operand().orElseThrow()));lexer.removeErrorListeners();
+        return labelOperand(raw,option.operand().orElseThrow(),begin,offset,line,column,anchorToken);
+    }
+    static Optional<CobolParser.ProcedureNameContext> labelOperand(String raw,String syntax,int begin,int offset,int line,int column,int anchorToken) {
+        var lexer=new CobolLexer(CharStreams.fromString(syntax));lexer.removeErrorListeners();
         var failed=new boolean[1];lexer.addErrorListener(new BaseErrorListener(){@Override public void syntaxError(Recognizer<?,?> r,Object symbol,int l,int c,String msg,RecognitionException e){failed[0]=true;}});
         var tokens=new CommonTokenStream(lexer);tokens.fill();var parser=new CobolParser(tokens);
         parser.removeErrorListeners();parser.setErrorHandler(new BailErrorStrategy());

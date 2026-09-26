@@ -26,7 +26,7 @@ class ExecDliOpaqueTest {
             assertEquals(1, dli.size());
             assertEquals("DLI", dli.get(0).language().name());
             assertEquals("EXEC DLI " + payload + " END-EXEC", dli.get(0).rawText());
-            assertTrue(dli.get(0).hostOperands().isEmpty());
+            assertEquals(payload.startsWith("SCHD")?1:0,dli.get(0).hostOperands().size());
             assertEquals(suffix.contains("GOBACK") ? 1 : 0, AstBoundaryTestSupport.nodes(analysis, Ast.GobackStatement.class).size());
             assertEquals(suffix.contains("MOVE") ? 1 : 0, AstBoundaryTestSupport.nodes(analysis, Ast.MoveStatement.class).size());
             assertEquals(suffix.startsWith(".") && suffix.contains("MOVE") ? 2 : 1,

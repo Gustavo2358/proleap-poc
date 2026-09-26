@@ -70,3 +70,20 @@ O preprocessor não resolve símbolos COBOL, não interpreta payload de SQL/CICS
 ## Relações
 
 Evals: EVAL-PRE-001, EVAL-PRE-002, EVAL-PROV-001 e EVAL-COV-003. Invariantes: INV-PROV-001, INV-PROV-002, INV-COV-001, INV-COV-002 e INV-COV-003. ADRs: ADR-0002, ADR-0007, ADR-0008 e ADR-0009.
+
+## SQL INCLUDE with available source
+
+Recall discovery found a PROCEDURE DIVISION member present in the configured
+libraries whose COBOL CALL never reached the parser. The directive was inventoried
+but its body was always left opaque. Under the [Db2 13 INCLUDE rule](https://www.ibm.com/docs/en/db2-for-zos/13.0.0?topic=statements-include),
+INCLUDE replaces the directive with host-language/SQL source. It is legal in COBOL
+Data/Procedure divisions; included members cannot contain another SQL INCLUDE.
+
+The preprocessor now expands a grammar-proved SQL INCLUDE when its member is
+available through explicit artifact configuration or configured source libraries.
+It reuses normalization, source maps, include frames, active expansion protection
+and recursive preprocessing. An explicit artifact mapping takes precedence over
+library lookup. This does not classify a file as DCLGEN by name or extension.
+Missing members retain the opaque input boundary; I/O failure remains explicit.
+Nested SQL INCLUDE fails rather than publishing a fabricated expansion. Parsing,
+nominal resolution and control qualification still run on the expanded program.

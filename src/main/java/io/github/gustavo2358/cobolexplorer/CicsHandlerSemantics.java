@@ -13,6 +13,11 @@ public final class CicsHandlerSemantics {
                        Optional<Ast.SourceProvenance> targetOrigin,Optional<String> programLiteral,
                        List<CicsProgramControlAnalyzer.Option> options,List<String> gaps) {
         public Fact { options=List.copyOf(options);gaps=List.copyOf(gaps); }
+        public boolean registrationPreservesApplicationMemory() {
+            return gaps.isEmpty() && (action==Action.CANCEL || action==Action.RESET
+                || action==Action.ACTIVATE && targetKind==TargetKind.LABEL && labelTarget.flatMap(LabelTarget::entry).isPresent())
+                && options.stream().allMatch(o->Set.of("ABEND","LABEL","CANCEL","RESET","NOHANDLE").contains(o.name()));
+        }
     }
     private final CompilationUnitBuildResult owner;
     private final Map<CicsProgramControlAnalyzer.Key,Fact> facts;

@@ -98,7 +98,7 @@ class IfCheckpointW2ATest {
             assertEquals(2, result.independent().size());
             var bytes = SemanticProductJsonWriter.serialize(port);
             assertArrayEquals(bytes, SemanticProductJsonWriter.serialize(ScalarMoveCheckpoint4ATest.publish(fixture(name))));
-            assertEquals("2.39.0", new ObjectMapper().readTree(bytes).path("contractVersion").asText());
+            assertEquals("2.46.0", new ObjectMapper().readTree(bytes).path("contractVersion").asText());
         }
     }
     @Test void multipleStatementsInEachArmFollowDirectRelations() throws Exception {
@@ -136,7 +136,9 @@ class IfCheckpointW2ATest {
                 "FUNCTION UPPER-CASE(FLAG) = 'Y'", "FLAG + 1 = 2", "FLAG = 'Y' OR FLAG = 'N'", "NOT FLAG = 'Y'")) {
             var d = publish(fixture("closed").replace("FLAG = 'Y'", condition), "condition-negative-" + Integer.toUnsignedString(condition.hashCode()));
             noPredicate(d);
-            for (var reference : one(d, "IF").path("condition").path("references")) assertTrue(reference.path("wholeItemAccess").isNull());
+            boolean typed=condition.equals("FLAG = 'Y' OR FLAG = 'N'")||condition.equals("NOT FLAG = 'Y'");
+            assertEquals(typed,one(d,"IF").path("condition").path("textPredicate").isObject());
+            for (var reference : one(d, "IF").path("condition").path("references")) assertEquals(typed,reference.path("wholeItemAccess").isObject());
         }
     }
     @Test void ambiguityAndUnresolvedKeepBindingsWithoutWholeAccess() throws Exception {
