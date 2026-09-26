@@ -1,5 +1,11 @@
 # FILE-DEPENDENCIES — frontend / SP
 
+**MERGED / COMPLETE.** Core N+C em main; smoke final PASS. W10 DEFERRED /
+OPTIONAL_EXTENSION / NOT_PART_OF_CORE, requer nova autorização.
+[Handoff final](https://github.com/Gustavo2358/analysis-cfg/blob/main/docs/product/file-dependencies/closeout.md).
+
+## Checkpoints históricos
+
 CORE N+C qualificado; closeout/merges autorizados. W10 DEFERRED / OPTIONAL_EXTENSION,
 NOT_PART_OF_CORE, requer nova autorização. [Estado canônico](https://github.com/Gustavo2358/analysis-cfg/blob/main/docs/product/file-dependencies/closeout.md).
 As seções abaixo registram checkpoints históricos.
