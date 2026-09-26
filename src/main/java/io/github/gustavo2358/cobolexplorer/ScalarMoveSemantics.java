@@ -42,6 +42,8 @@ public final class ScalarMoveSemantics {
     Map<ResolutionContracts.ProgramUnitId,LogicalInitialSemantics.Result> logicalInitial(){return logicalInitial;}
     private final Map<NodeKey,TextConditionSemantics.Predicate> textPredicates;
     public Optional<TextConditionSemantics.Predicate> textPredicate(ResolutionContracts.ProgramUnitId unit,int statement){return Optional.ofNullable(textPredicates.get(new NodeKey(unit,statement)));}
+    private final NominalValueSemantics nominalValues;
+    public NominalValueSemantics nominalValues(){return nominalValues;}
     private final Metrics metrics;
     private final GoToSemantics goTos;
     public GoToSemantics goTos() { return goTos; }
@@ -59,8 +61,8 @@ public final class ScalarMoveSemantics {
     }
 
     private ScalarMoveSemantics(Map<ResolutionContracts.SemanticEntityId, ScalarText> declarations,
-                                Map<NodeKey, Move> moves, Map<NodeKey, Call> calls, Metrics metrics, IfSemantics ifs, PerformSemantics performs, EvaluateSemantics evaluates, GoToSemantics goTos, ProcedurePerformSemantics procedurePerforms, NumericControlSemantics numbers,Map<ResolutionContracts.ProgramUnitId,io.github.gustavo2358.cobolexplorer.semanticproduct.FactDependencies> factDependencies,Map<ResolutionContracts.ProgramUnitId,LogicalInitialSemantics.Result> logicalInitial,Map<NodeKey,TextConditionSemantics.Predicate> textPredicates) {
-        this.declarations = Map.copyOf(declarations);this.textPredicates=Map.copyOf(textPredicates);
+                                Map<NodeKey, Move> moves, Map<NodeKey, Call> calls, Metrics metrics, IfSemantics ifs, PerformSemantics performs, EvaluateSemantics evaluates, GoToSemantics goTos, ProcedurePerformSemantics procedurePerforms, NumericControlSemantics numbers,Map<ResolutionContracts.ProgramUnitId,io.github.gustavo2358.cobolexplorer.semanticproduct.FactDependencies> factDependencies,Map<ResolutionContracts.ProgramUnitId,LogicalInitialSemantics.Result> logicalInitial,Map<NodeKey,TextConditionSemantics.Predicate> textPredicates,NominalValueSemantics nominalValues) {
+        this.nominalValues=nominalValues;this.declarations = Map.copyOf(declarations);this.textPredicates=Map.copyOf(textPredicates);
         this.factDependencies=Map.copyOf(factDependencies);this.logicalInitial=Map.copyOf(logicalInitial);
         this.numbers=numbers;
         this.moves = Map.copyOf(moves);
@@ -317,7 +319,7 @@ public final class ScalarMoveSemantics {
         return new ScalarMoveSemantics(declarations, moves, calls,
                 new Metrics(counts[0], counts[1], counts[2], counts[3], counts[4]),
                 ifs, performs, evaluates,
-                goTos, procedurePerforms,numbers,factDependencies,storage.map(st->LogicalInitialSemantics.analyze(frontend,resolution,report,st,factDependencies,cics)).orElse(Map.of()),TextConditionSemantics.analyze(frontend,resolution,declarations));
+                goTos, procedurePerforms,numbers,factDependencies,storage.map(st->LogicalInitialSemantics.analyze(frontend,resolution,report,st,factDependencies,cics)).orElse(Map.of()),TextConditionSemantics.analyze(frontend,resolution,declarations),NominalValueSemantics.analyze(frontend,resolution,possibleText,storage));
     }
 
     private static Move fact(Optional<ResolutionContracts.SemanticEntityId> whole,

@@ -227,7 +227,19 @@ public final class CobolSemanticProductProjector {
                 statementIds, fileInventory, products.cics().orElse(null));
         return new ScopedProjection(new CobolSemanticProduct.State(inputs.boundaryUnit(),
                 policy(inputs.report().policy()), declarations.facts(),
-                statements, gaps, coverage, entries, storageIndependence(inputs, declarations.ids()), storage(inputs, declarations.ids()), fileInventory,products.sourceDependencies().getOrDefault(unitId,io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.SourceDependencyInventory.unavailable()),ordinaryContinuations(inputs,statementIds,statements),Optional.of(topology),Optional.ofNullable(products.factDependencies().get(unitId))),java.util.Collections.unmodifiableMap(new LinkedHashMap<>(declarations.ids())));
+                statements, gaps, coverage, entries, storageIndependence(inputs, declarations.ids()), storage(inputs, declarations.ids()), fileInventory,products.sourceDependencies().getOrDefault(unitId,io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticProduct.SourceDependencyInventory.unavailable()),ordinaryContinuations(inputs,statementIds,statements),Optional.of(topology),Optional.ofNullable(products.factDependencies().get(unitId)),nominalValues(products,unitId,statementIds)),java.util.Collections.unmodifiableMap(new LinkedHashMap<>(declarations.ids())));
+    }
+
+    private static Optional<io.github.gustavo2358.cobolexplorer.semanticproduct.NominalValues> nominalValues(
+            FrontendProducts products,ResolutionContracts.ProgramUnitId unit,Map<Ast.Statement,StatementId> statements) {
+        var ids=new HashMap<Integer,StatementId>();statements.forEach((ast,id)->ids.put(ast.meta().id(),id));
+        return products.scalarMoves().nominalValues().facts(unit).filter(f->!f.queries().isEmpty()).map(f->{
+            java.util.function.IntFunction<String> statement=n->"statement:"+Objects.requireNonNull(ids.get(n)).localId();
+            return new io.github.gustavo2358.cobolexplorer.semanticproduct.NominalValues("NOMINAL_TEXT_SOURCE_V1",f.symbols(),
+                f.assignments().stream().map(a->new io.github.gustavo2358.cobolexplorer.semanticproduct.NominalValues.Assignment(statement.apply(a.statement()),a.target(),a.source())).toList(),
+                f.conditions().stream().map(c->new io.github.gustavo2358.cobolexplorer.semanticproduct.NominalValues.Condition(statement.apply(c.statement()),c.predicate())).toList(),
+                f.queries().stream().map(q->new io.github.gustavo2358.cobolexplorer.semanticproduct.NominalValues.Query(statement.apply(q.statement()),q.node())).toList());
+        });
     }
 
     private static List<OrdinaryContinuation> ordinaryContinuations(ProjectionInputs inputs,

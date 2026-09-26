@@ -19,7 +19,7 @@ class LogicalInitialInvariantTest {
         var j=publish("01 REC-A.\n 05 NAME-A PIC X(8) VALUE 'PROGA001'.\n 05 OTHER-A PIC X(8).", "MOVE 'OTHER001' TO OTHER-A.\nCALL NAME-A.\nGOBACK.");
         var c=constant(j);assertEquals("LOGICAL_TEXT",c.path("kind").asText());assertEquals("DECLARATIVE_INVARIANT",c.path("proof").asText());
         assertEquals("UNKNOWN",j.path("storage").path("entryState").path("mode").asText());
-        assertEquals("2.46.0",j.path("contractVersion").asText());
+        assertEquals("2.47.0",j.path("contractVersion").asText());
         var out=java.nio.file.Path.of("target/recall-cics");java.nio.file.Files.createDirectories(out);
         java.nio.file.Files.writeString(out.resolve("logical-invariant.json"),j.toPrettyString());
     }

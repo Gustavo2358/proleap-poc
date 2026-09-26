@@ -4,18 +4,23 @@ import java.util.*;
 
 /** Typed source tree for a closed text comparison subset; no evaluation or control selection. */
 public final class TextConditionSemantics {
-    public enum Kind { EQUAL_TEXT, EQUAL_SPACES, EQUAL_LOW_VALUES, EQUAL_HIGH_VALUES, NOT, AND, OR }
-    public record Predicate(Kind kind,Optional<Integer> reference,Optional<String> text,List<Predicate> children) {
+    public enum Kind { EQUAL_REFERENCE, EQUAL_TEXT, EQUAL_SPACES, EQUAL_LOW_VALUES, EQUAL_HIGH_VALUES, NOT, AND, OR }
+    public record Predicate(Kind kind,Optional<Integer> reference,Optional<String> text,List<Predicate> children,Optional<Integer> comparedReference) {
+        public Predicate(Kind kind,Optional<Integer> reference,Optional<String> text,List<Predicate> children){this(kind,reference,text,children,Optional.empty());}
         public Predicate {children=List.copyOf(children);}
         public Set<Integer> reads() {
             var out=new LinkedHashSet<Integer>();var todo=new ArrayDeque<Predicate>();todo.push(this);
-            while(!todo.isEmpty()){var p=todo.pop();p.reference().ifPresent(out::add);p.children().forEach(todo::push);}
+            while(!todo.isEmpty()){var p=todo.pop();p.reference().ifPresent(out::add);p.comparedReference().ifPresent(out::add);p.children().forEach(todo::push);}
             return Set.copyOf(out);
         }
     }
     private record Result(Predicate predicate,Ast.DataReference subject,Ast.RelationOperator operator) { }
     public static Map<ScalarMoveSemantics.NodeKey,Predicate> analyze(CompilationUnitBuildResult frontend,
             ReferenceResolution resolution,Map<ResolutionContracts.SemanticEntityId,ScalarMoveSemantics.ScalarText> scalars) {
+        return analyze(frontend,resolution,scalars,false);
+    }
+    static Map<ScalarMoveSemantics.NodeKey,Predicate> analyze(CompilationUnitBuildResult frontend,
+            ReferenceResolution resolution,Map<ResolutionContracts.SemanticEntityId,ScalarMoveSemantics.ScalarText> scalars,boolean nominal) {
         var out=new HashMap<ScalarMoveSemantics.NodeKey,Predicate>();
         var byUnit=new HashMap<ResolutionContracts.ProgramUnitId,Set<Integer>>();
         for(var r:resolution.entries())if(r.status()==ResolutionContracts.ResolutionStatus.RESOLVED
@@ -28,13 +33,14 @@ public final class TextConditionSemantics {
                 var n=todo.pop();if(n instanceof Ast.Program&&n!=unit.program())continue;
                 if(n instanceof Ast.IfStatement branch) {
                     var result=normalize(branch.condition(),null,Ast.RelationOperator.UNAVAILABLE,eligible);
-                    if(result!=null)out.put(new ScalarMoveSemantics.NodeKey(unit.id(),branch.meta().id()),result.predicate());
+                    if(result!=null&&(nominal||!hasReferenceComparison(result.predicate())))out.put(new ScalarMoveSemantics.NodeKey(unit.id(),branch.meta().id()),result.predicate());
                 }
                 Ast.children(n).forEach(todo::push);
             }
         }
         return Map.copyOf(out);
     }
+    private static boolean hasReferenceComparison(Predicate p) {return p.kind()==Kind.EQUAL_REFERENCE||p.children().stream().anyMatch(TextConditionSemantics::hasReferenceComparison);}
     private static Result normalize(Ast.Expression e,Ast.DataReference subject,Ast.RelationOperator operator,Set<Integer> eligible) {
         if(!e.meta().provenance().exact())return null;
         if(e instanceof Ast.GroupedCondition g) {
@@ -62,6 +68,10 @@ public final class TextConditionSemantics {
         if(operator!=Ast.RelationOperator.EQUAL||subject==null||!eligible.contains(subject.meta().id())
             ||subject.understanding()!=Ast.ReferenceUnderstanding.STRUCTURED||!subject.subscriptGroups().isEmpty()
             ||subject.referenceModification()!=null||!subject.meta().provenance().exact())return null;
+        if(relation.object() instanceof Ast.DataReference ref&&eligible.contains(ref.meta().id())
+            &&ref.understanding()==Ast.ReferenceUnderstanding.STRUCTURED&&ref.subscriptGroups().isEmpty()
+            &&ref.referenceModification()==null&&ref.meta().provenance().exact())
+            return new Result(new Predicate(Kind.EQUAL_REFERENCE,Optional.of(subject.meta().id()),Optional.empty(),List.of(),Optional.of(ref.meta().id())),subject,operator);
         if(!(relation.object() instanceof Ast.LiteralExpression literal)||!literal.meta().provenance().exact())return null;
         Kind kind;Optional<String> text=Optional.empty();
         if(literal.logicalText().isPresent()){kind=Kind.EQUAL_TEXT;text=Optional.of(literal.logicalText().get().value());}

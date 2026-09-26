@@ -1767,7 +1767,13 @@ public final class CobolSemanticProduct {
     public record State(UnitId unit, Policy policy,
                         List<DataDeclaration> dataDeclarations,
                         List<StatementFact> statements,
-                        List<Gap> gaps, CoverageSummary coverage, EntryInventory entryInventory, IndependentStorageSet storageIndependence, StorageInventory storage, FileInventory fileInventory, SourceDependencyInventory sourceDependencies, List<OrdinaryContinuation> ordinaryContinuations, Optional<ControlTopology> controlTopology, Optional<FactDependencies> factDependencies) {
+                        List<Gap> gaps, CoverageSummary coverage, EntryInventory entryInventory, IndependentStorageSet storageIndependence, StorageInventory storage, FileInventory fileInventory, SourceDependencyInventory sourceDependencies, List<OrdinaryContinuation> ordinaryContinuations, Optional<ControlTopology> controlTopology, Optional<FactDependencies> factDependencies, Optional<NominalValues> nominalValues) {
+        public State(UnitId unit,Policy policy,List<DataDeclaration> dataDeclarations,List<StatementFact> statements,
+                List<Gap> gaps,CoverageSummary coverage,EntryInventory entryInventory,IndependentStorageSet storageIndependence,
+                StorageInventory storage,FileInventory fileInventory,SourceDependencyInventory sourceDependencies,
+                List<OrdinaryContinuation> ordinaryContinuations,Optional<ControlTopology> controlTopology,Optional<FactDependencies> factDependencies) {
+            this(unit,policy,dataDeclarations,statements,gaps,coverage,entryInventory,storageIndependence,storage,fileInventory,sourceDependencies,ordinaryContinuations,controlTopology,factDependencies,Optional.empty());
+        }
         public State(UnitId unit, Policy policy,List<DataDeclaration> dataDeclarations,List<StatementFact> statements,
                 List<Gap> gaps,CoverageSummary coverage,EntryInventory entryInventory,IndependentStorageSet storageIndependence,
                 StorageInventory storage,FileInventory fileInventory,SourceDependencyInventory sourceDependencies,
@@ -1790,6 +1796,8 @@ public final class CobolSemanticProduct {
             this(unit,policy,dataDeclarations,statements,gaps,coverage,entryInventory,storageIndependence,storage,fileInventory,SourceDependencyInventory.unavailable());
         }
         public State {
+            Objects.requireNonNull(nominalValues);
+            if(nominalValues.isPresent())nominalValues.get().validate(storage.nodes().stream().map(n->"storage-node:"+n.id().localId()).collect(java.util.stream.Collectors.toSet()),statements.stream().map(x->"statement:"+x.header().id().localId()).collect(java.util.stream.Collectors.toSet()));
             Objects.requireNonNull(factDependencies);
             if(factDependencies.isPresent()) {
                 require(controlTopology.isPresent(),"fact dependencies require topology contract");
