@@ -458,8 +458,12 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
             List<String> values = ((CobolParser.DataValueClauseContext) context).dataValueInterval().stream()
                     .map(this::sourceText).map(String::strip).toList();
             var intervals=((CobolParser.DataValueClauseContext)context).dataValueInterval();
-            var single=intervals.size()==1&&intervals.get(0).dataValueIntervalTo()==null?intervals.get(0).dataValueIntervalFrom().literal():null;
-            return new Ast.ValueClause(meta, values, writtenText,single==null?Optional.empty():basicLogicalText(single));
+            if(intervals.isEmpty()&&((CobolParser.DataValueClauseContext)context).FALSE()!=null)values=List.of("FALSE");
+            var single=intervals.size()==1&&intervals.get(0).dataValueIntervalTo()==null?intervals.get(0).dataValueIntervalFrom().dataValueLiteral():null;
+            return new Ast.ValueClause(meta, values, writtenText,single==null||single.NONNUMERICLITERAL()==null?Optional.empty():basicLogicalTextToken(single.NONNUMERICLITERAL().getText()),
+                intervals.stream().map(i->new Ast.ConditionRange(conditionValue(i.dataValueIntervalFrom().dataValueLiteral()),
+                    Optional.ofNullable(i.dataValueIntervalTo()).map(t->conditionValue(t.literal())))).toList(),
+                Optional.ofNullable(((CobolParser.DataValueClauseContext)context).literal()).map(this::conditionValue));
         }
         if (context instanceof CobolParser.DataRedefinesClauseContext) {
             return new Ast.RedefinesClause(meta,
@@ -502,6 +506,11 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
                         ? expression(node, "data clause") : nominalReference(node))
                 .map(Ast.Node.class::cast).toList();
         return new Ast.PreservedDataClause(meta, grammarRule, writtenText, references);
+    }
+
+    private Ast.ConditionValue conditionValue(ParserRuleContext literal) {
+        return literal==null?new Ast.ConditionValue(Ast.ConditionValueKind.UNAVAILABLE,""):
+            ConditionValueSyntax.literal(literal.getText());
     }
 
     private Ast.DataReference simpleDataReference(ParserRuleContext context) {
@@ -1163,7 +1172,23 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
         var effects=statementEffects(context,operands,clauses,operandNodes);
         return preserved
                 ? new Ast.PreservedStatement(meta, rule(context), sourceText(context).strip(), operands, clauses,effects,fileIo,context instanceof CobolParser.EntryStatementContext entry?Optional.of(new Ast.EntrySurface(basicLogicalText(entry.literal()),entry.identifier().size())):Optional.empty())
-                : new Ast.ModeledStatement(meta, rule(context), sourceText(context).strip(), operands, clauses,effects,fileIo,exitKind(context));
+                : new Ast.ModeledStatement(meta, rule(context), sourceText(context).strip(), operands, clauses,effects,fileIo,exitKind(context),conditionSet(context,operandNodes));
+    }
+
+    private static Optional<Ast.ConditionSetSurface> conditionSet(ParserRuleContext context,Map<ParserRuleContext,Ast.Node> nodes) {
+        if(!(context instanceof CobolParser.SetStatementContext set)||set.setUpDownByStatement()!=null)return Optional.empty();
+        var result=new ArrayList<Ast.ConditionSetTarget>();
+        for(var group:set.setToStatement()) {
+            if(group.setToValue().size()!=1)return Optional.empty();
+            var literal=group.setToValue().get(0).literal();
+            if(literal==null||literal.booleanLiteral()==null)return Optional.empty();
+            boolean truth=literal.booleanLiteral().TRUE()!=null;
+            for(var target:group.setTo()) {
+                if(!(nodes.get(target.identifier()) instanceof Ast.DataReference reference))return Optional.empty();
+                result.add(new Ast.ConditionSetTarget(reference,truth));
+            }
+        }
+        return result.isEmpty()?Optional.empty():Optional.of(new Ast.ConditionSetSurface(result));
     }
 
     private static Optional<Ast.ExitKind> exitKind(ParserRuleContext context) {
@@ -1421,7 +1446,7 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
                 ? Ast.EvaluateSelectorContext.OTHER
                 : correspondingBooleanSubject ? Ast.EvaluateSelectorContext.BOOLEAN_SUBJECT_NOMINAL
                 : Ast.EvaluateSelectorContext.VALUE_COMPARISON;
-        return new Ast.EvaluateSelector(expression, subjectIndex, selectorContext);
+        return new Ast.EvaluateSelector(expression, subjectIndex, selectorContext,condition.NOT()!=null);
     }
 
     private Ast.PerformStatement buildPerform(CobolParser.PerformStatementContext context) {
@@ -1813,6 +1838,12 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
         Optional<java.math.BigInteger> value=integer==null?Optional.empty():Optional.of(new java.math.BigInteger(integer.getText()));
         if(numeric!=null&&numeric.ZERO()!=null)value=Optional.of(java.math.BigInteger.ZERO);
         var figurative=context instanceof CobolParser.LiteralContext l?l.figurativeConstant():null;
+        if(figurative!=null&&figurative.ALL()==null&&(figurative.ZERO()!=null||figurative.ZEROS()!=null||figurative.ZEROES()!=null))value=Optional.of(java.math.BigInteger.ZERO);
+        Optional<java.math.BigDecimal> number=value.map(java.math.BigDecimal::new);
+        if(numeric!=null&&numeric.NUMERICLITERAL()!=null&&!numeric.NUMERICLITERAL().getText().contains(",")&&!numeric.NUMERICLITERAL().getText().toUpperCase(java.util.Locale.ROOT).contains("E")) {
+            try { number=Optional.of(new java.math.BigDecimal(numeric.NUMERICLITERAL().getText())); }
+            catch(NumberFormatException ex) { number=Optional.empty(); }
+        }
         Optional<Ast.FigurativeText> textKind=Optional.empty();
         if(figurative!=null&&figurative.ALL()==null) {
             if(figurative.SPACE()!=null||figurative.SPACES()!=null)textKind=Optional.of(Ast.FigurativeText.SPACES);
@@ -1820,7 +1851,7 @@ final class AstBuilder extends CobolBaseVisitor<Ast.Node> {
             else if(figurative.HIGH_VALUE()!=null||figurative.HIGH_VALUES()!=null)textKind=Optional.of(Ast.FigurativeText.HIGH_VALUES);
         }
         return new Ast.LiteralExpression(meta(context), logical.map(Ast.LogicalText::value)
-                .orElseGet(() -> unquote(raw)), raw, logical, value,textKind);
+                .orElseGet(() -> unquote(raw)), raw, logical, value,textKind,context instanceof CobolParser.LiteralContext l&&l.booleanLiteral()!=null?Optional.of(l.booleanLiteral().TRUE()!=null):Optional.empty(),number);
     }
 
     private static Optional<Ast.LogicalText> basicLogicalText(CobolParser.LiteralContext literal) {

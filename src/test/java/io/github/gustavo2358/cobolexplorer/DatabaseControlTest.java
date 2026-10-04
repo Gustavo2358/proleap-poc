@@ -8,7 +8,7 @@ class DatabaseControlTest {
         for(var sql:SQL) {
             assertTrue(SqlCommandSyntax.parse("EXEC SQL "+sql+" END-EXEC").isPresent(),sql);
             var p=CicsMemoryLocalityTest.publish("01 IN-X PIC X(20).\n01 OUT-X PIC X(20).\n01 FLAG-X PIC X.","EXEC SQL\n"+sql.replace(" WHERE ","\nWHERE ").replace(" INTO ","\nINTO ").replace(" SET ","\nSET ").replace(" VALUES ","\nVALUES ").replace(" AND ","\nAND ").replace(" OR ","\nOR ")+"\nEND-EXEC.\nCALL 'AFTERIO'.\nGOBACK.",false);
-            var j=CicsAbendContractTest.json(p);assertEquals("2.55.0",j.path("contractVersion").asText());
+            var j=CicsAbendContractTest.json(p);assertEquals("2.65.0",j.path("contractVersion").asText());
             var statement=j.path("statements").get(0);var o=CicsCommandContractTest.outcomes(j,statement);
             assertTrue(o.stream().anyMatch(x->x.path("kind").asText().equals("NORMAL")),sql);
             assertTrue(o.stream().anyMatch(x->x.path("kind").asText().equals("UNKNOWN_LOCAL")),sql);

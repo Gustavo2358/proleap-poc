@@ -1085,7 +1085,7 @@ dataUsingClause
    ;
 
 dataValueClause
-   : ((VALUE | VALUES) (IS | ARE)?)? dataValueInterval (COMMACHAR? dataValueInterval)*
+   : ((VALUE | VALUES) (IS | ARE)?)? (dataValueInterval (COMMACHAR? dataValueInterval)* | FALSE) (WHEN? SET? TO? FALSE IS? literal)?
    ;
 
 dataValueInterval
@@ -1093,7 +1093,13 @@ dataValueInterval
    ;
 
 dataValueIntervalFrom
-   : literal | cobolWord
+   : dataValueLiteral | cobolWord
+   ;
+
+// FALSE after a true-value list starts the level-88 false clause. Keeping it
+// out of this literal avoids a greedy/ambiguous list and does not enumerate values.
+dataValueLiteral
+   : NONNUMERICLITERAL | figurativeConstant | numericLiteral | TRUE | cicsDfhRespLiteral | cicsDfhValueLiteral
    ;
 
 dataValueIntervalTo

@@ -171,4 +171,10 @@ class DirectDataParserTest {
         var pre=new PreprocessorEngine(Bindings.cobol(),new CopybookLibrary(List.of(Path.of("corpus/carddemo/cpy"),Path.of("corpus/carddemo/cpy-bms"),Path.of("corpus/cpy"),Path.of("corpus/cpy-bms")))).process(normalized.sourceMap(),source.getFileName().toString());
         var result=equal(pre.sourceMap(),true);assertTrue(result.session().entries()>2000,"real MQ declarations must use the direct path");
     }
+    @Test void conditionValuesAndOptionalFalseWordsHaveIdenticalDirectAst() {
+        for(int mask=0;mask<16;mask++) {
+            String clause=((mask&1)!=0?"WHEN ":"")+((mask&2)!=0?"SET ":"")+((mask&4)!=0?"TO ":"")+"FALSE "+((mask&8)!=0?"IS ":"")+"0";
+            equal(program("01 ITEM PIC 9(9).\n88 READY VALUE 7 20 THRU 999999999 "+clause+"."),true);
+        }
+    }
 }

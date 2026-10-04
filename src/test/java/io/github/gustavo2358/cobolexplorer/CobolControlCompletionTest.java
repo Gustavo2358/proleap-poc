@@ -5,7 +5,7 @@ class CobolControlCompletionTest {
     static com.fasterxml.jackson.databind.JsonNode publish(String data,String body)throws Exception{return CicsAbendContractTest.json(CicsMemoryLocalityTest.publish(data,body,false));}
     @Test void nextSentenceHasItsOwnScopeEscape()throws Exception {
         var j=publish("01 FLAG-X PIC X.","PERFORM P\nCALL 'AFTERP'\nGOBACK.\nP.\nPERFORM 2 TIMES\nIF FLAG-X = 'Y' NEXT SENTENCE END-IF\nCALL 'SKIPPED'\nEND-PERFORM.\nCALL 'AFTERDOT'.");
-        assertEquals(!j.path("controlTopology").path("bindings").isEmpty()?"2.57.0":"2.56.0",j.path("contractVersion").asText());
+        assertEquals("2.65.0",j.path("contractVersion").asText());
         var t=j.path("controlTopology");assertTrue(t.path("regions").findValuesAsText("kind").contains("SENTENCE"));
         assertTrue(java.util.stream.StreamSupport.stream(t.path("outcomes").spliterator(),false).anyMatch(o->o.path("role").asText().equals("next-sentence")&&o.path("target").path("kind").asText().equals("ESCAPE")));
     }

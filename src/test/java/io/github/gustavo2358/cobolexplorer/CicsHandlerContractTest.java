@@ -16,7 +16,7 @@ class CicsHandlerContractTest {
     }
     @Test void registrationCancelAndResetAreSeparateOperations() throws Exception {
         var json=publish("EXEC CICS HANDLE ABEND LABEL(ERR) END-EXEC.\nEXEC CICS HANDLE ABEND CANCEL END-EXEC.\nEXEC CICS HANDLE ABEND RESET END-EXEC.\nGOBACK.\nERR.\nGOBACK.");
-        assertEquals("2.52.0",json.path("contractVersion").asText());
+        assertEquals("2.65.0",json.path("contractVersion").asText());
         assertFalse(json.path("controlTopology").path("sourceContinuations").isEmpty(),"incomplete historical CICS capability retains separately versioned source hypotheses");
         var statements=json.path("statements");
         for(int i=0;i<3;i++)assertEquals("CICS_HANDLER",statements.get(i).path("variant").asText());

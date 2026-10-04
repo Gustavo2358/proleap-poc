@@ -215,7 +215,7 @@ class ExternalClassificationProjectionTest {
                 () -> assertTrue(text.contains("\"includeChain\":[]")),
                 () -> assertTrue(text.contains("\"status\":\"UNRESOLVED\"")),
                 () -> assertEquals(4, occurrences(text, "\"status\":\"UNRESOLVED\"")),
-                () -> assertEquals(2, occurrences(text, "\"category\":\"EXTERNAL_CLASSIFICATION\"")));
+                () -> assertFalse(text.contains("\"category\":\"EXTERNAL_CLASSIFICATION\"")));
     }
 
     @Test
@@ -242,7 +242,7 @@ class ExternalClassificationProjectionTest {
 
         assertAll("composition root publishes binding and post-resolution classification",
                 () -> assertTrue(text.contains("\"externalClassifications\":2")),
-                () -> assertEquals(2, occurrences(text, "\"category\":\"EXTERNAL_CLASSIFICATION\"")),
+                () -> assertFalse(text.contains("\"category\":\"EXTERNAL_CLASSIFICATION\"")),
                 () -> assertEquals(4, occurrences(text, "\"status\":\"UNRESOLVED\"")));
     }
 

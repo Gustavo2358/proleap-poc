@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class PerformReentryPolicyTest {
     @Test void producerPublishesSourceReentryPrecondition()throws Exception {
         var j=CobolControlCompletionTest.publish("01 FLAG-X PIC X.","PERFORM P\nGOBACK.\nP.\nIF FLAG-X = 'Y' PERFORM P END-IF.");
-        assertEquals("2.57.0",j.path("contractVersion").asText());
+        assertEquals("2.65.0",j.path("contractVersion").asText());
         assertEquals(2,j.path("controlTopology").path("bindings").size());
         for(var b:j.path("controlTopology").path("bindings"))assertEquals("SOURCE_UNDEFINED",b.path("reentryPolicy").asText());
     }

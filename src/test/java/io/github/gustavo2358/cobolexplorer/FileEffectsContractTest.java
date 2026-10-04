@@ -30,7 +30,7 @@ class FileEffectsContractTest {
             "01 DEST PIC X(8).\n01 IO-STATUS PIC XX.\n01 SAFE-PGM PIC X(8) VALUE 'SAFE'.",
             "MOVE 'OLD' TO REC.\nREAD F INTO DEST AT END CALL 'EOFHAND' END-READ.\nCALL REC.\nCALL SAFE-PGM.");
         // Computed CALL operands publish nominalValues under SP 2.47.
-        var p=publish(f);assertEquals("2.47.0",p.path("contractVersion").asText());assertEquals("1.11.0",p.path("storage").path("version").asText());
+        var p=publish(f);assertEquals("2.65.0",p.path("contractVersion").asText());assertEquals("1.11.0",p.path("storage").path("version").asText());
         assertEquals("1.6.0",p.path("fileInventory").path("version").asText());var e=effect(p);assertEquals("KNOWN",e.path("availability").asText());
         assertFalse(e.path("unknownWriteBound").asBoolean());assertTrue(e.path("before").isEmpty());
         var cases=new HashMap<String,JsonNode>();for(var c:e.path("outcomes"))cases.put(c.path("outcome").asText(),c.path("steps"));

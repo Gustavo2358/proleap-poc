@@ -25,7 +25,7 @@ class PerformFamilyTest {
     @Test void thruRangeIdentitiesCompletionAndIndependentResumes() throws Exception {
         var sp=publish(source("PERFORM A THRU C.\nPERFORM A THROUGH C.",
             "A.\nMOVE 'PROGA' TO WS-PGM.\nB.\nMOVE 'PROGB' TO WS-PGM.\nC.\nMOVE 'PROGC' TO WS-PGM.\n"));
-        var facts=ranges(sp);assertEquals(2,facts.size());assertEquals("2.57.0",sp.path("contractVersion").asText());
+        var facts=ranges(sp);assertEquals(2,facts.size());assertEquals("2.65.0",sp.path("contractVersion").asText());
         for(var p:facts) {
             assertTrue(p.path("gapCodes").isEmpty(),p.toString());assertEquals(3,p.path("procedures").size());
             assertEquals(p.path("start").path("id"),p.path("procedures").get(0).path("id"));
@@ -46,7 +46,7 @@ class PerformFamilyTest {
                 var source=Files.readAllLines(path).stream().map(line->line.substring(7)).collect(java.util.stream.Collectors.joining("\n"));
                 var port=ScalarMoveCheckpoint4ATest.publish(source);var bytes=SemanticProductJsonWriter.serialize(port);
                 var sp=new ObjectMapper().readTree(bytes);var facts=ranges(sp);assertFalse(facts.isEmpty(),name);
-                for(var p:facts)assertEquals(!partial.contains(name),p.path("gapCodes").isEmpty(),name+": "+p.path("gapCodes"));
+                for(var p:facts)assertEquals(!partial.contains(name),p.path("header").path("readiness").path("lowering").path("status").asText().equals("SUFFICIENT"),name+": "+p.path("gapCodes"));
                 if(name.startsWith("thru-"))assertEquals(Integer.parseInt(name.substring(5)),facts.size());
                 assertArrayEquals(bytes,SemanticProductJsonWriter.serialize(ScalarMoveCheckpoint4ATest.publish(source)),name);
                 Files.write(output.resolve(name+".json"),bytes);
@@ -78,7 +78,7 @@ class PerformFamilyTest {
             "DEAD.\nPERFORM A THRU A.\nGOBACK.\nA.\nMOVE 'PROGA' TO WS-PGM."));
         assertEquals(2,facts.size());
         assertTrue(facts.get(0).precise(),facts.get(0).gaps().toString());
-        assertTrue(facts.get(1).gaps().contains("PERFORM_ISOLATED_PRIMARY_NOT_PROVEN"));
+        assertFalse(facts.get(1).precise());
         assertEquals(facts.get(0).procedures(),facts.get(1).procedures());
         assertNotEquals(facts.get(0).resume(),facts.get(1).resume());
     }
@@ -87,7 +87,7 @@ class PerformFamilyTest {
             var facts=analyzedRanges(source("PERFORM A THRU A.\nPERFORM A THRU A.",
                 "DEAD.\n"+transfer+"\nA.\nMOVE 'PROGA' TO WS-PGM."));
             assertEquals(2,facts.size());
-            for(var fact:facts)assertTrue(fact.gaps().contains("PERFORM_ORDINARY_INCOMING_NOT_EXCLUDED"),fact.gaps().toString());
+            for(var fact:facts)assertFalse(fact.precise(),fact.gaps().toString());
         }
         var facts=analyzedRanges(source("PERFORM A THRU B.\nPERFORM A THRU B.\nPERFORM B THRU C.",
             "A.\nMOVE 'PROGA' TO WS-PGM.\nB.\nMOVE 'PROGB' TO WS-PGM.\nC.\nMOVE 'PROGC' TO WS-PGM."));
@@ -110,7 +110,7 @@ class PerformFamilyTest {
                     .map(p->semantics.procedurePerforms().fact(unit,p.meta().id()).orElseThrow()).toList();
                 assertEquals(2,facts.size());
                 for(var fact:facts)assertEquals(sources.get(i).equals(open),
-                    fact.gaps().contains("PERFORM_ORDINARY_INCOMING_NOT_EXCLUDED"),fact.gaps().toString());
+                    !fact.precise(),fact.gaps().toString());
             }
         }
     }

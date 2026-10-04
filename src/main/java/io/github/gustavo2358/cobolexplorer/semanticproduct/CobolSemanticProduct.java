@@ -1041,7 +1041,7 @@ public final class CobolSemanticProduct {
             require(ordinal >= 0, "arm ordinal is non-negative"); Objects.requireNonNull(selection);
             conditionReads=List.copyOf(conditionReads); Objects.requireNonNull(conditionOrigin);
             statements=List.copyOf(statements); Objects.requireNonNull(control);
-            require(selection.isPresent() || conditionOrigin.exact(), "unmodeled WHEN retains exact source origin");
+            require(selection.isPresent() || conditionOrigin.exact() || control.contentAvailability()!=Availability.KNOWN&&!control.gapCodes().isEmpty(), "inexact WHEN retains explicit incomplete control proof");
             require(selection.isEmpty() || conditionReads.isEmpty(), "literal WHEN has no extra condition reads");
             require(conditionReads.stream().allMatch(r -> r.role()==OperandRole.READ), "WHEN condition operands are reads");
         }
@@ -1226,11 +1226,17 @@ public final class CobolSemanticProduct {
     public record LogicalTransfer(OperandId target,TextValue value) {
         public LogicalTransfer { Objects.requireNonNull(target);Objects.requireNonNull(value); }
     }
+    public record IntegerTransfer(OperandId target,Optional<java.math.BigInteger> value) {
+        public IntegerTransfer { Objects.requireNonNull(target);Objects.requireNonNull(value); }
+    }
     public record MoveFact(StatementHeader header, MoveSource source,
                            DataReference target, CopySemantics copySemantics,
-                           NormalContinuation normalContinuation, Optional<TextAdjustment> textAdjustment, Optional<RegionalMove> regionalMove, List<MoveTransfer> additionalTransfers,List<LogicalTransfer> logicalTransfers) implements StatementFact {
+                           NormalContinuation normalContinuation, Optional<TextAdjustment> textAdjustment, Optional<RegionalMove> regionalMove, List<MoveTransfer> additionalTransfers,List<LogicalTransfer> logicalTransfers,List<IntegerTransfer> integerTransfers) implements StatementFact {
+        public MoveFact(StatementHeader header,MoveSource source,DataReference target,CopySemantics copySemantics,NormalContinuation normalContinuation,Optional<TextAdjustment> textAdjustment,Optional<RegionalMove> regionalMove,List<MoveTransfer> additionalTransfers,List<LogicalTransfer> logicalTransfers) {
+            this(header,source,target,copySemantics,normalContinuation,textAdjustment,regionalMove,additionalTransfers,logicalTransfers,List.of());
+        }
         public MoveFact {
-            additionalTransfers=List.copyOf(additionalTransfers);logicalTransfers=List.copyOf(logicalTransfers);
+            additionalTransfers=List.copyOf(additionalTransfers);logicalTransfers=List.copyOf(logicalTransfers);integerTransfers=List.copyOf(integerTransfers);
             require(logicalTransfers.isEmpty()||source instanceof LiteralSource literal&&literal.logicalValue().isPresent(),"logical transfer requires a proved literal");
             var logicalTargets=new HashSet<OperandId>();
             for(var transfer:logicalTransfers) {
@@ -1796,7 +1802,14 @@ public final class CobolSemanticProduct {
     public record State(UnitId unit, Policy policy,
                         List<DataDeclaration> dataDeclarations,
                         List<StatementFact> statements,
-                        List<Gap> gaps, CoverageSummary coverage, EntryInventory entryInventory, IndependentStorageSet storageIndependence, StorageInventory storage, FileInventory fileInventory, SourceDependencyInventory sourceDependencies, List<OrdinaryContinuation> ordinaryContinuations, Optional<ControlTopology> controlTopology, Optional<FactDependencies> factDependencies, Optional<NominalValues> nominalValues) {
+                        List<Gap> gaps, CoverageSummary coverage, EntryInventory entryInventory, IndependentStorageSet storageIndependence, StorageInventory storage, FileInventory fileInventory, SourceDependencyInventory sourceDependencies, List<OrdinaryContinuation> ordinaryContinuations, Optional<ControlTopology> controlTopology, Optional<FactDependencies> factDependencies, Optional<NominalValues> nominalValues,Optional<ConditionNames> conditionNames) {
+        public State(UnitId unit,Policy policy,List<DataDeclaration> dataDeclarations,List<StatementFact> statements,
+                List<Gap> gaps,CoverageSummary coverage,EntryInventory entryInventory,IndependentStorageSet storageIndependence,
+                StorageInventory storage,FileInventory fileInventory,SourceDependencyInventory sourceDependencies,
+                List<OrdinaryContinuation> ordinaryContinuations,Optional<ControlTopology> controlTopology,
+                Optional<FactDependencies> factDependencies,Optional<NominalValues> nominalValues) {
+            this(unit,policy,dataDeclarations,statements,gaps,coverage,entryInventory,storageIndependence,storage,fileInventory,sourceDependencies,ordinaryContinuations,controlTopology,factDependencies,nominalValues,Optional.empty());
+        }
         public State(UnitId unit,Policy policy,List<DataDeclaration> dataDeclarations,List<StatementFact> statements,
                 List<Gap> gaps,CoverageSummary coverage,EntryInventory entryInventory,IndependentStorageSet storageIndependence,
                 StorageInventory storage,FileInventory fileInventory,SourceDependencyInventory sourceDependencies,
@@ -1825,6 +1838,8 @@ public final class CobolSemanticProduct {
             this(unit,policy,dataDeclarations,statements,gaps,coverage,entryInventory,storageIndependence,storage,fileInventory,SourceDependencyInventory.unavailable());
         }
         public State {
+            Objects.requireNonNull(conditionNames);
+            if(conditionNames.isPresent())ConditionNameContract.validate(conditionNames.get(),dataDeclarations,storage,statements);
             Objects.requireNonNull(nominalValues);
             if(nominalValues.isPresent())nominalValues.get().validate(storage.nodes().stream().map(n->"storage-node:"+n.id().localId()).collect(java.util.stream.Collectors.toSet()),statements.stream().map(x->"statement:"+x.header().id().localId()).collect(java.util.stream.Collectors.toSet()));
             Objects.requireNonNull(factDependencies);
@@ -1876,7 +1891,7 @@ public final class CobolSemanticProduct {
             gaps = List.copyOf(gaps);
             coverage = Objects.requireNonNull(coverage, "coverage");
             entryInventory = Objects.requireNonNull(entryInventory, "entryInventory");
-            validateState(unit, dataDeclarations, statements, gaps, coverage);
+            validateState(unit, dataDeclarations, statements, gaps, coverage, controlTopology,conditionNames);
             validateEntries(unit, statements, entryInventory);
             validateEntryTopology(entryInventory, controlTopology);
             validateStorage(unit, dataDeclarations, statements, Objects.requireNonNull(storage));
@@ -2125,7 +2140,7 @@ public final class CobolSemanticProduct {
 
     private static void validateState(UnitId unit, List<DataDeclaration> declarations,
                                       List<StatementFact> statements, List<Gap> gaps,
-                                      CoverageSummary coverage) {
+                                      CoverageSummary coverage, Optional<ControlTopology> topology,Optional<ConditionNames> conditions) {
         Map<DataItemId, DataDeclaration> dataById = new LinkedHashMap<>();
         for (DataDeclaration declaration : declarations) {
             require(declaration.id().unit().equals(unit),
@@ -2161,12 +2176,37 @@ public final class CobolSemanticProduct {
             gapsByStatement.computeIfAbsent(gap.statement(), ignored -> new java.util.ArrayList<>())
                     .add(gap);
         }
-        validateLocalizedIncompleteness(statements, gapsByStatement);
+        validateLocalizedIncompleteness(statements, gapsByStatement, new DiagnosticEvidence(topology),conditions.map(c->ConditionNameContract.completeSets(c,statements)).orElse(Set.of()),conditions.stream().flatMap(c->c.predicates().stream()).filter(p->p.role().equals("IF")&&p.tree().complete()).map(ConditionNames.Predicate::statement).collect(java.util.stream.Collectors.toSet()));
         validateCoverage(statements, coverage);
     }
 
     private static void validateReferences(StatementFact statement,
                                            Map<DataItemId, DataDeclaration> declarations) {
+        if(statement instanceof MoveFact move&&!move.integerTransfers().isEmpty()) {
+            var receivers=new HashMap<OperandId,DataReference>();receivers.put(move.target().id(),move.target());
+            move.additionalTransfers().forEach(t->receivers.put(t.target().id(),t.target()));
+            var ordered=new ArrayList<DataReference>();ordered.add(move.target());move.additionalTransfers().forEach(t->ordered.add(t.target()));
+            int ordinal=0;var seen=new HashSet<OperandId>();
+            require(move.header().provenance().exact()&&move.copySemantics()==CopySemantics.UNAVAILABLE,"integer MOVE requires exact source and its own transfer proof");
+            for(var proof:move.integerTransfers()) {
+                var receiver=receivers.get(proof.target());
+                require(seen.add(proof.target())&&receiver!=null&&receiver.wholeItemAccess().isPresent(),"distinct whole integer receiver required");
+                var d=declarations.get(receiver.wholeItemAccess().orElseThrow().data());
+                require(d!=null&&d.scalarInteger().isPresent()&&receiver.provenance().exact(),"integer receiver requires local type proof");
+                int digits=d.scalarInteger().orElseThrow().digits();
+                if(move.source() instanceof LiteralSource l) {
+                    require(l.kind()==LiteralKind.NUMERIC&&l.provenance().exact()&&proof.value().isPresent(),"integer literal proof required");
+                    var v=proof.value().orElseThrow();
+                    require(v.signum()>=0&&v.toString().length()<=digits&&new java.math.BigDecimal(l.value()).compareTo(new java.math.BigDecimal(v))==0,"integer value must equal source and fit receiver");
+                } else {
+                    var r=(DataReference)move.source();
+                    require(proof.value().isEmpty()&&r.wholeItemAccess().isPresent()&&r.provenance().exact(),"integer DATA proof required");
+                    var source=declarations.get(r.wholeItemAccess().orElseThrow().data());
+                    require(source!=null&&source.scalarInteger().isPresent()&&source.scalarInteger().orElseThrow().digits()<=digits,"integer DATA may not narrow");
+                    require(proof.target().equals(ordered.get(ordinal++).id()),"DATA transfer requires a proved prefix preserving the sending value");
+                }
+            }
+        }
         if(statement instanceof ConditionalGoToFact g && g.selectorInteger()) {
             var d=declarations.get(g.selector().orElseThrow().wholeItemAccess().orElseThrow().data());
             require(d!=null&&d.scalarInteger().isPresent(),"integer selector references integer declaration");
@@ -2492,12 +2532,21 @@ public final class CobolSemanticProduct {
     }
 
     private static void validateLocalizedIncompleteness(
-            List<StatementFact> statements, Map<StatementId, List<Gap>> gaps) {
+            List<StatementFact> statements, Map<StatementId, List<Gap>> gaps, DiagnosticEvidence evidence,Set<String> sets,Set<String> conditions) {
         for (StatementFact statement : statements) {
             StatementId id = statement.header().id();
             List<Gap> localized = gaps.getOrDefault(id, List.of());
+            String handle = "statement:" + id.localId();
+            boolean noOp = statement instanceof ObservedStatement o
+                    && o.effects().filter(e -> e.proof() == EffectProof.NO_OP).isPresent()
+                    && evidence.localControl(handle);
+            boolean modeledSet=sets.contains(handle)&&evidence.localControl(handle);
+            boolean currentCapability = statement instanceof MoveFact m&&m.integerTransfers().size()==1+m.additionalTransfers().size()&&evidence.localControl(handle) || noOp || modeledSet || conditions.contains(handle)&&evidence.localControl(handle) || statement instanceof ProcedurePerformFact && evidence.invocation(handle)
+                    || !(statement instanceof ObservedStatement) && statement.header().coverage() == CoverageStatus.PARTIAL
+                    && statement.header().readiness().lowering().status() == ReadinessStatus.SUFFICIENT
+                    && evidence.membership(handle);
             if (statement.header().coverage() != CoverageStatus.MODELED)
-                require(!localized.isEmpty(),
+                require(!localized.isEmpty() || statement.header().coverage() != CoverageStatus.INPUT_MISSING && currentCapability,
                         "non-modeled statement must retain a localized gap");
             if (statement instanceof CallFact call)
                 require(hasGap(localized, GapScope.RUNTIME_CALL_TARGET,
@@ -2511,13 +2560,13 @@ public final class CobolSemanticProduct {
                                 == GapScope.LITERAL_KIND),
                         "unknown literal kind must retain a literal-kind gap");
             }
-            if (statement instanceof ObservedStatement observed)
+            if (statement instanceof ObservedStatement observed && !noOp&&!modeledSet)
                 require(hasGap(localized, GapScope.CAPABILITY, observed.gapCode()),
                         "observed unmodeled statement must retain its capability gap");
             if (statement.header().containment().branch() == Branch.UNKNOWN) {
                 require(statement.header().coverage() != CoverageStatus.MODELED,
                         "unknown containment cannot be hidden by MODELED coverage");
-                require(localized.stream().anyMatch(gap -> gap.scope() == GapScope.STRUCTURE),
+                require(evidence.membership(handle) || localized.stream().anyMatch(gap -> gap.scope() == GapScope.STRUCTURE),
                         "unknown containment must retain a structural gap");
             }
             if (references(statement).stream()

@@ -112,11 +112,11 @@ class ControlTopologyAuthorityTest {
     }
     @Test void historicalTypedPortAndNewWireStaySeparate() throws Exception {
         var p=publish("MAIN.\nPERFORM P.\nGOBACK.\nP.\nCONTINUE.\nQ.\nDISPLAY 'DEAD'.\nGOBACK.\n");
-        var legacy=CobolSemanticPort.open(new CobolSemanticProduct.State(p.unit(),p.policy(),p.dataDeclarations(),p.statements(),p.gaps(),p.coverage(),p.entryInventory(),p.storageIndependence(),p.storage(),p.fileInventory(),p.sourceDependencies(),p.ordinaryContinuations()));
-        var mapper=new ObjectMapper();var old=mapper.readTree(SemanticProductJsonWriter.serialize(legacy));var current=mapper.readTree(SemanticProductJsonWriter.serialize(p));
-        assertEquals("2.36.0",old.path("contractVersion").asText());assertFalse(old.has("controlTopology"));
-        assertEquals("2.57.0",current.path("contractVersion").asText());
+        assertThrows(IllegalArgumentException.class, () -> new CobolSemanticProduct.State(p.unit(),p.policy(),p.dataDeclarations(),p.statements(),p.gaps(),p.coverage(),p.entryInventory(),p.storageIndependence(),p.storage(),p.fileInventory(),p.sourceDependencies(),p.ordinaryContinuations()),
+            "removing topology cannot keep gaps discharged by that authority");
+        var mapper=new ObjectMapper();var current=mapper.readTree(SemanticProductJsonWriter.serialize(p));
+        assertEquals("2.65.0",current.path("contractVersion").asText());
         assertTrue(current.path("controlTopology").path("bindings").findValuesAsText("reentryPolicy").stream().allMatch("SOURCE_UNDEFINED"::equals));assertEquals("FRONTEND_CONTROL_TOPOLOGY_R1",current.path("controlTopology").path("authority").asText());
-        var dir=Path.of("target/control-topology-r1");Files.createDirectories(dir);Files.write(dir.resolve("legacy.json"),SemanticProductJsonWriter.serialize(legacy));Files.write(dir.resolve("current.json"),SemanticProductJsonWriter.serialize(p));
+        var dir=Path.of("target/control-topology-r1");Files.createDirectories(dir);Files.write(dir.resolve("current.json"),SemanticProductJsonWriter.serialize(p));
     }
 }

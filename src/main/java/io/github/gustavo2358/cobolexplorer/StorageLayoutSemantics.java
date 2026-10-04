@@ -256,7 +256,7 @@ public final class StorageLayoutSemantics {
             else if(clause instanceof Ast.RedefinesClause) { /* Physical relation is proved by StorageComponents. */ }
             else known=false;
         }
-        var kind=data.children().stream().allMatch(c->c.levelKind()==Ast.DataLevelKind.RENAMES_66)?Kind.ELEMENTARY:Kind.GROUP;
+        var kind=data.children().stream().allMatch(c->c.levelKind()==Ast.DataLevelKind.RENAMES_66||c.levelKind()==Ast.DataLevelKind.CONDITION_88)?Kind.ELEMENTARY:Kind.GROUP;
         known&=usages<=1&&(kind==Kind.GROUP?pictures==0:pictures==1&&extent.isPresent());
         return new Shape(known?kind:Kind.OPAQUE,known,extent);
     }

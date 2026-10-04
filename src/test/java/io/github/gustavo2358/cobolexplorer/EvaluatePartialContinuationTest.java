@@ -30,8 +30,10 @@ class EvaluatePartialContinuationTest {
             var evaluate = p.statements().get(0);
             assertEquals(!split, evaluate.header().provenance().exact());
             if (split) {
-                assertInstanceOf(ObservedStatement.class, evaluate);
-                assertEquals(Branch.UNKNOWN, p.ifs().get(0).header().containment().branch());
+                var typed=assertInstanceOf(EvaluateFact.class, evaluate);
+                assertFalse(typed.gapCodes().isEmpty());
+                assertEquals(ContinuationAvailability.UNAVAILABLE,typed.normalContinuation().availability());
+                assertEquals(Branch.EVALUATE_ARM, p.ifs().get(0).header().containment().branch());
                 assertEquals(CoverageStatus.PARTIAL, p.ifs().get(0).header().coverage());
                 assertFalse(p.gaps().isEmpty());
             }

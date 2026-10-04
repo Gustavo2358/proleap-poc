@@ -21,7 +21,7 @@ class ReferenceResolutionManifestTest {
         Map<GrammarCoverageManifest.RuleKey, ReferenceResolutionManifest.Entry> indexed = entries.stream()
                 .collect(Collectors.toMap(ReferenceResolutionManifest.Entry::key, Function.identity()));
 
-        assertEquals(645, entries.size()); // includes JSON GENERATE and the embedded host entry rule
+        assertEquals(646, entries.size()); // includes the explicit data VALUE literal rule
         assertEquals(entries.size(), indexed.size());
         assertEquals(GrammarCoverageManifest.entries().stream().map(GrammarCoverageManifest.Entry::key).toList(),
                 entries.stream().map(ReferenceResolutionManifest.Entry::key).toList());
@@ -29,6 +29,7 @@ class ReferenceResolutionManifestTest {
         assertTrue(entries.stream().allMatch(entry -> !entry.policySection().isBlank()));
 
         assertEntry(indexed, "embeddedIdentifier", ReferenceResolutionManifest.RuleClass.NOT_REFERENCE, null);
+        assertEntry(indexed, "dataValueLiteral", ReferenceResolutionManifest.RuleClass.NOT_REFERENCE, null);
         assertEntry(indexed, "qualifiedDataName", ReferenceResolutionManifest.RuleClass.REFERENCE_ORIGIN,
                 ResolutionContracts.ReferenceKind.DATA);
         assertEntry(indexed, "conditionNameReference",

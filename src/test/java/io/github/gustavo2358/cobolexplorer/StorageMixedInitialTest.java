@@ -19,10 +19,12 @@ class StorageMixedInitialTest {
         assertTrue(p.calls().get(2).target() instanceof LiteralCallTarget);
         if(System.getProperty("storage.fixture.output")!=null)java.nio.file.Files.write(java.nio.file.Path.of(System.getProperty("storage.fixture.output")),SemanticProductJsonWriter.serialize(p));
     }
-    @Test void unprovedAllocationDoesNotAcquireIndependentScalarProof() {
+    @Test void unprovedPhysicalAllocationRetainsOnlyCausallyIsolatedIntegerCell() {
         var s=StorageProductTest.state(DATA+"\n01 EXTERNAL-DATA PIC X EXTERNAL.","MOVE 'PGM00001' TO WS-PGM.\nCALL 'LITERAL1'.");
         assertTrue(s.storage().bases().stream().allMatch(b->b.allocation()==AllocationProof.UNPROVEN));
-        assertTrue(s.dataDeclarations().stream().allMatch(d->d.scalarInteger().isEmpty()&&d.scalarText().isEmpty()));
+        assertEquals(List.of("WS-LEGACY"),s.dataDeclarations().stream().filter(d->d.scalarInteger().isPresent()).map(DataDeclaration::canonicalName).toList());
+        assertTrue(s.dataDeclarations().stream().allMatch(d->d.scalarText().isEmpty()));
+        assertTrue(s.dataDeclarations().stream().filter(d->d.canonicalName().equals("EXTERNAL-DATA")).allMatch(d->d.scalarInteger().isEmpty()));
         assertTrue(((CallFact)s.statements().get(1)).target() instanceof LiteralCallTarget);
     }
 }

@@ -553,7 +553,9 @@ class SemanticProductStatementInventoryTest {
         for (CobolSemanticProduct.StatementFact statement : state.statements()) {
             if (statement.header().coverage() == CobolSemanticProduct.CoverageStatus.MODELED)
                 continue;
-            assertTrue(state.gaps().stream().anyMatch(gap ->
+            boolean noOp = statement instanceof CobolSemanticProduct.ObservedStatement o
+                && o.effects().filter(e -> e.proof() == CobolSemanticProduct.EffectProof.NO_OP).isPresent();
+            assertTrue(noOp || state.gaps().stream().anyMatch(gap ->
                             gap.statement().equals(statement.header().id())),
                     () -> "missing localized reason for " + statement.header().id());
         }

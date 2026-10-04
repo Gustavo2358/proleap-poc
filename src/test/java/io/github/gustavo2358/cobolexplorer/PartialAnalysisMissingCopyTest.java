@@ -21,14 +21,14 @@ class PartialAnalysisMissingCopyTest {
                 () -> assertTrue(snapshot.contains("\"externalClassifications\":1")),
                 () -> assertEquals(2, occurrences(snapshot,
                         "\"copyInputCompleteness\":\"INCOMPLETE_UNRESOLVED_COPY\"")),
-                () -> assertTrue(snapshot.contains("\"claim\":\"INCOMPLETE\"")),
-                () -> assertTrue(snapshot.contains("\"dependencyAnalysisReady\":false")),
+                () -> assertTrue(snapshot.contains("\"inputDiagnostics\":[")),
+                () -> assertFalse(snapshot.contains("dependencyAnalysisReady")),
                 () -> assertTrue(snapshot.contains("\"unresolvedCopies\":2")),
                 () -> assertEquals(2, occurrences(snapshot, "\"code\":\"UNRESOLVED_COPY\"")),
                 () -> assertTrue(snapshot.contains("MISSINGA")),
                 () -> assertTrue(snapshot.contains("MISSINGB")),
-                () -> assertTrue(snapshot.contains("\"category\":\"EXTERNAL_CLASSIFICATION\"")),
-                () -> assertTrue(snapshot.contains("\"category\":\"REFERENCE_BINDING\"")),
+                () -> assertTrue(snapshot.contains("\"technology\":\"CICS\"")),
+                () -> assertFalse(snapshot.contains("\"gaps\":")),
                 () -> assertTrue(snapshot.contains("\"status\":\"UNRESOLVED\"")));
     }
 

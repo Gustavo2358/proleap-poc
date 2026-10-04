@@ -18,7 +18,7 @@ class AlternateEntryTest {
         assertEquals(Optional.of("SECOND"),e.externalName());assertEquals(call(p,"ALT"),e.start().statement().orElseThrow());
         var point=p.controlTopology().orElseThrow().entryPoints().get(0);
         assertEquals("statement:"+e.declaration().orElseThrow().localId(),point.declaration());assertEquals("statement:"+call(p,"ALT").localId(),point.target().reference());
-        assertEquals("2.61.0",CicsAbendContractTest.json(p).path("contractVersion").asText());
+        assertEquals("2.65.0",CicsAbendContractTest.json(p).path("contractVersion").asText());
     }
     @Test void consecutiveDeclarationsShareExecutableStartAndKeepOwnNames() {
         var p=publish("GOBACK.\nENTRY 'SECOND'.\nENTRY 'THIRD'.\nNEXT-PARA.\nCALL 'ALT'.\nGOBACK.");

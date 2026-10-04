@@ -46,7 +46,7 @@ class CicsProgramControlTest {
         var bytes=io.github.gustavo2358.cobolexplorer.semanticproduct.transport.SemanticProductJsonWriter.serialize(
             io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticPort.open(state));
         var json=new com.fasterxml.jackson.databind.ObjectMapper().readTree(bytes);
-        assertEquals("2.62.0",json.path("contractVersion").asText());
+        assertEquals("2.65.0",json.path("contractVersion").asText());
         assertEquals("LINK_PGMIDERR",json.path("controlTopology").path("exceptionalEvents").get(0).path("origin").asText());
         assertTrue(json.path("controlTopology").path("proofs").toString().contains("cics-link-successful-return"),"successful LINK return is independent of handler disposition");assertEquals("CICS_PROGRAM_CONTROL",json.path("statements").get(0).path("variant").asText());
         var disabled=io.github.gustavo2358.cobolexplorer.semanticproduct.projection.CobolSemanticProductProjector.project(source,unit);

@@ -1,0 +1,8 @@
+{
+  "id": "WORK-NUMERIC-MOVE-CP2",
+  "title": "Logical numeric values and integer DISPLAY MOVE",
+  "status": "IN_PROGRESS",
+  "scope": [
+    "Checkpoint 2 in PR86; canonical integer cells and per-receiver MOVE facts, SP2.65, CardDemo regression"
+  ]
+}

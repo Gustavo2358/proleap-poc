@@ -12,7 +12,7 @@ public final class PerformPredicateSemantics {
     static Predicate unavailable(Ast.SourceProvenance origin) {return new Predicate(IfSemantics.Availability.PARTIAL,Profile.UNAVAILABLE,Map.of(),origin);}
     static Predicate analyze(Ast.Expression expression,ResolutionContracts.ProgramUnitId unit,boolean complete,boolean numeric,
             Map<ScalarMoveSemantics.NodeKey,ReferenceResolution.Entry> reads,Map<ResolutionContracts.SemanticEntityId,ScalarMoveSemantics.ScalarText> scalars,
-            NumericControlSemantics numbers,Map<Integer,SemanticCoverage.Finding> coverage) {
+            IntegerSemantics numbers,Map<Integer,SemanticCoverage.Finding> coverage) {
         var text=IfSemantics.predicate(expression,unit,complete,complete,reads,scalars,coverage,new long[5]);
         if(text.availability()==IfSemantics.Availability.KNOWN)return new Predicate(text.availability(),Profile.SCALAR_TEXT_EQUALITY,
             Map.of(text.readNode().orElseThrow(),text.wholeItem().orElseThrow()),text.provenance());

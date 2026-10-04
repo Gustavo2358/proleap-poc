@@ -1,0 +1,13 @@
+{
+  "id": "WORK-GAP-RECONCILIATION-001",
+  "title": "Remove duplicate legacy diagnostics and publish current semantic gaps",
+  "status": "IN_PROGRESS",
+  "scope": [
+    "canonical SP 2.63 gap publication",
+    "single diagnostic UI",
+    "coordinated lower admission",
+    "CardDemo regression validation"
+  ],
+  "pr": "https://github.com/Gustavo2358/proleap-poc/pull/86",
+  "notes": "Implementation and 73-source regression complete; awaiting human review and merge. See docs/validation/active-gaps.md."
+}

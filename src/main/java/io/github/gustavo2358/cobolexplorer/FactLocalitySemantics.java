@@ -22,6 +22,7 @@ public final class FactLocalitySemantics {
             StorageLayoutSemantics storage) {
         var unit=frontend.compilationUnit().find(id).orElseThrow();var program=unit.program();
         var structure=StorageComponents.analyze(frontend,symbols,resolution).unit(id);var layout=storage.layout(id);
+        var integerShapes=IntegerSemantics.shapes(structure);
         var positions=new HashMap<Integer,StorageComponents.Position>();structure.positions().forEach(p->positions.put(p.data().meta().id(),p));
         var allDeclarations=new HashMap<Integer,Ast.DataEntry>();var pending=new ArrayDeque<Ast.Node>();pending.add(program);
         while(!pending.isEmpty()){var n=pending.remove();if(n instanceof Ast.DataEntry d)allDeclarations.put(d.meta().id(),d);pending.addAll(Ast.children(n));}
@@ -167,10 +168,11 @@ public final class FactLocalitySemantics {
                 var s=proof(proofs,ProofKind.SOURCE_SYNTAX,subject,region,StorageComponents.level(ast)>0,List.of(),List.of(),n.origin());
                 boolean text=wholeExact||shape.supported()&&shape.kind()==StorageLayoutSemantics.Kind.ELEMENTARY&&shape.leafExtent().filter(v->v.signum()>0).isPresent();
                 var header=proof(proofs,ProofKind.DECLARATION_CONTEXT,subject,region,true,List.of(s),declarationInputs.getOrDefault(subject,List.of()),n.origin());
-                var logical=proof(proofs,ProofKind.LOGICAL_TYPE,subject,region,text,List.of(s,header),List.of(),n.origin());
+                boolean integer=!attrs.initial()&&integerShapes.containsKey(nid);
+                var logical=proof(proofs,ProofKind.LOGICAL_TYPE,subject,region,text||integer,List.of(s,header),List.of(),n.origin());
                 var v=views.get(nid);
                 var physical=proof(proofs,ProofKind.PHYSICAL_VIEW,subject,region,v.offset().value().isPresent()&&v.extent().value().isPresent(),List.of(s,profile,ctx,closed),List.of(),n.origin());
-                fact(facts,FactKind.SOURCE_IDENTITY,subject,region,List.of(s));fact(facts,FactKind.LOGICAL_TEXT,subject,region,List.of(logical));
+                fact(facts,FactKind.SOURCE_IDENTITY,subject,region,List.of(s));fact(facts,integer?FactKind.LOGICAL_INTEGER:FactKind.LOGICAL_TEXT,subject,region,List.of(logical));
                 fact(facts,FactKind.PHYSICAL_VIEW,subject,region,List.of(physical));
                 String itemAlias=alias;
                 boolean itemIsolated=isolated;
@@ -193,7 +195,7 @@ public final class FactLocalitySemantics {
                     itemIsolated=allocated&&closure.getOrDefault(region,List.of()).isEmpty()&&itemInventory&&section!=null;
                 }
                 fact(facts,FactKind.LOCAL_CELL,subject,region,List.of(logical,itemAlias,allocation));
-                if(itemIsolated&&text&&declarationInputs.getOrDefault(subject,List.of()).isEmpty()&&!n.filler()&&n.entity().isPresent())cells.put(nid,node(wholeExact?exacts.get(nid):nid));
+                if(itemIsolated&&(text||integer)&&declarationInputs.getOrDefault(subject,List.of()).isEmpty()&&!n.filler()&&n.entity().isPresent())cells.put(nid,node(wholeExact?exacts.get(nid):nid));
             }
             var descendants=new HashMap<Integer,Set<String>>();
             if(!wholeExact)for(var cell:cells.entrySet()) {int current=cell.getKey();var visited=new HashSet<Integer>();

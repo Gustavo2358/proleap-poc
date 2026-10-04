@@ -1,0 +1,279 @@
+{
+  "checkpoint": 2,
+  "contractVersion": "2.65.0",
+  "scope": "logical numeric literals and proved unsigned unedited integer DISPLAY MOVE, 1–31 digits",
+  "baseline": {
+    "frontend": "b0a387c2bcecb0621a015a231543fb7de8dc65a4",
+    "lower": "424a678936e0a42c77dea0c590019e28e0bccb93"
+  },
+  "qualifiedCode": {
+    "frontend": "5cfa8d14f87826206dc03b65acaf6a2ba3ee67f5",
+    "lower": "5839d5495da1a86d68c675043d5259ff8133f8f9",
+    "air": "a4c49bcf5e07000cb78349c2cc6357ca2dfe7acd",
+    "cfg": "ae3b23d9e853f15fff64ebb49fa40be9391670ba",
+    "carddemo": "59cc6c2fd7ebd7ef7925cad552a01a4b8b6e4d5e"
+  },
+  "audit": {
+    "sources": 73,
+    "gapsBefore": 23960,
+    "gapsAfter": 22503,
+    "removed": 1457,
+    "facts": {
+      "astMoves": 7015,
+      "numericLiterals": 1132,
+      "integerMoves": 181,
+      "integerTransfers": 189,
+      "literalTransfers": 124,
+      "dataTransfers": 65,
+      "integerDeclarations": 1098
+    },
+    "gapBefore": {
+      "PERFORM_PROCEDURE_STRUCTURE_NOT_PROVEN": 171,
+      "PERFORM_ORDERED_RANGE_NOT_PROVEN": 240,
+      "PERFORM_RANGE_CONTROL_NOT_PROVEN": 2055,
+      "PERFORM_ENDPOINT_NOT_UNIQUE_LOCAL_PARAGRAPH": 75,
+      "PERFORM_RESUME_NOT_PROVEN": 401,
+      "CONDITION_SEMANTICS_NOT_AVAILABLE": 784,
+      "IF_OUTSIDE_SIMPLE_PROFILE": 948,
+      "LITERAL_KIND_NOT_PUBLISHED": 1329,
+      "SCALAR_WHOLE_ITEM_NOT_PROVEN": 4207,
+      "MOVE_IDENTITY_NOT_PROVEN": 5089,
+      "PRESERVED_REFERENCE_CONTAINER": 385,
+      "REFERENCE_UNSUPPORTED_UNSUPPORTED_GRAMMAR_FORM": 2,
+      "NORMAL_CONTINUATION_NOT_AVAILABLE": 254,
+      "REFERENCE_UNRESOLVED_DECLARATION_NOT_FOUND": 822,
+      "EVALUATE_SUBJECT_NOT_PROVEN": 6,
+      "EVALUATE_CONTINUATION_NOT_PROVEN": 300,
+      "PERFORM_PROVENANCE_INCOMPLETE": 1437,
+      "EVALUATE_PREDICATE_NOT_MODELED": 253,
+      "CONDITION_REFERENCE_KIND_NOT_PROJECTED": 80,
+      "OBSERVED_STATEMENT_PARTIAL": 660,
+      "OBSERVED_STATEMENT_UNSUPPORTED": 1133,
+      "MOVE_NON_DATA_TARGET_OUTSIDE_CAPABILITY": 9,
+      "PERFORM_INPUT_INCOMPLETE": 1297,
+      "PERFORM_OVERLAPPING_RANGES": 14,
+      "CICS_COMMAND_EFFECTS_NOT_MODELED": 215,
+      "EXTERNAL_INFERRED_CICS_POSSIBLE_INTRINSIC": 187,
+      "CALL_RUNTIME_NOT_RESOLVED": 91,
+      "CALL_SURFACE_OUTSIDE_FIRST_SLICE": 80,
+      "CALL_ARGUMENTS_NOT_PROJECTED": 80,
+      "CONTINUATION_NOT_PROJECTED": 142,
+      "CICS_FILE_OUTCOME_VALUES_UNKNOWN": 109,
+      "CICS_FILE_HOST_BINDING_UNAVAILABLE": 95,
+      "EVALUATE_ARM_ENTRY_NOT_PROVEN": 293,
+      "CONTROL_MEMBERSHIP_NOT_PROVEN": 3,
+      "MOVE_NON_LITERAL_SOURCE_OUTSIDE_CAPABILITY": 81,
+      "MOVE_TARGET_CARDINALITY_OUTSIDE_CAPABILITY": 161,
+      "CICS_EFFECTS_SIGNATURE_PARTIAL": 58,
+      "CICS_HANDLER_STATE_UNKNOWN": 57,
+      "PERFORM_UNTIL_PREDICATE_NOT_PROVEN": 15,
+      "PERFORM_VARYING_PREDICATE_NOT_PROVEN": 31,
+      "PERFORM_VARYING_CONTROL_ITEM_NOT_PROVEN": 31,
+      "CICS_CONDITION_VALUES_UNKNOWN": 1,
+      "CICS_COMMAND_DUPLICATE_FLAG_IGNORED": 1,
+      "GO_TO_PROVENANCE_INCOMPLETE": 74,
+      "REFERENCE_UNRESOLVED_INVALID_NAMESPACE_FOR_CONTEXT": 124,
+      "PERFORM_VARYING_FROM_NOT_PROVEN": 8,
+      "DYNAMIC_CALL_TARGET_VALUE_UNKNOWN": 1,
+      "CICS_HANDLER_EXECUTION_STATE_NOT_MODELED": 18,
+      "CICS_ABEND_DISPATCH_NOT_MODELED": 9,
+      "CALL_NORMAL_CONTINUATION_NOT_AVAILABLE": 4,
+      "GO_TO_ALTER_IN_UNIT": 28,
+      "CICS_FILE_HANDLER_STATE_UNKNOWN": 12
+    },
+    "gapAfter": {
+      "PERFORM_PROCEDURE_STRUCTURE_NOT_PROVEN": 171,
+      "PERFORM_ORDERED_RANGE_NOT_PROVEN": 240,
+      "PERFORM_RANGE_CONTROL_NOT_PROVEN": 2055,
+      "PERFORM_ENDPOINT_NOT_UNIQUE_LOCAL_PARAGRAPH": 75,
+      "PERFORM_RESUME_NOT_PROVEN": 401,
+      "CONDITION_SEMANTICS_NOT_AVAILABLE": 784,
+      "IF_OUTSIDE_SIMPLE_PROFILE": 948,
+      "PRESERVED_REFERENCE_CONTAINER": 385,
+      "REFERENCE_UNSUPPORTED_UNSUPPORTED_GRAMMAR_FORM": 2,
+      "SCALAR_WHOLE_ITEM_NOT_PROVEN": 4046,
+      "MOVE_IDENTITY_NOT_PROVEN": 4928,
+      "NORMAL_CONTINUATION_NOT_AVAILABLE": 254,
+      "REFERENCE_UNRESOLVED_DECLARATION_NOT_FOUND": 822,
+      "EVALUATE_SUBJECT_NOT_PROVEN": 6,
+      "EVALUATE_CONTINUATION_NOT_PROVEN": 300,
+      "PERFORM_PROVENANCE_INCOMPLETE": 1437,
+      "EVALUATE_PREDICATE_NOT_MODELED": 253,
+      "CONDITION_REFERENCE_KIND_NOT_PROJECTED": 80,
+      "OBSERVED_STATEMENT_PARTIAL": 660,
+      "OBSERVED_STATEMENT_UNSUPPORTED": 1133,
+      "MOVE_NON_DATA_TARGET_OUTSIDE_CAPABILITY": 9,
+      "PERFORM_INPUT_INCOMPLETE": 1297,
+      "PERFORM_OVERLAPPING_RANGES": 14,
+      "CICS_COMMAND_EFFECTS_NOT_MODELED": 215,
+      "EXTERNAL_INFERRED_CICS_POSSIBLE_INTRINSIC": 187,
+      "CALL_RUNTIME_NOT_RESOLVED": 91,
+      "CALL_SURFACE_OUTSIDE_FIRST_SLICE": 80,
+      "CALL_ARGUMENTS_NOT_PROJECTED": 80,
+      "CONTINUATION_NOT_PROJECTED": 142,
+      "CICS_FILE_OUTCOME_VALUES_UNKNOWN": 109,
+      "CICS_FILE_HOST_BINDING_UNAVAILABLE": 95,
+      "EVALUATE_ARM_ENTRY_NOT_PROVEN": 293,
+      "CONTROL_MEMBERSHIP_NOT_PROVEN": 3,
+      "MOVE_NON_LITERAL_SOURCE_OUTSIDE_CAPABILITY": 81,
+      "MOVE_TARGET_CARDINALITY_OUTSIDE_CAPABILITY": 147,
+      "LITERAL_KIND_NOT_PUBLISHED": 208,
+      "CICS_EFFECTS_SIGNATURE_PARTIAL": 58,
+      "CICS_HANDLER_STATE_UNKNOWN": 57,
+      "PERFORM_UNTIL_PREDICATE_NOT_PROVEN": 15,
+      "PERFORM_VARYING_PREDICATE_NOT_PROVEN": 31,
+      "PERFORM_VARYING_CONTROL_ITEM_NOT_PROVEN": 31,
+      "CICS_CONDITION_VALUES_UNKNOWN": 1,
+      "CICS_COMMAND_DUPLICATE_FLAG_IGNORED": 1,
+      "GO_TO_PROVENANCE_INCOMPLETE": 74,
+      "REFERENCE_UNRESOLVED_INVALID_NAMESPACE_FOR_CONTEXT": 124,
+      "PERFORM_VARYING_FROM_NOT_PROVEN": 8,
+      "DYNAMIC_CALL_TARGET_VALUE_UNKNOWN": 1,
+      "CICS_HANDLER_EXECUTION_STATE_NOT_MODELED": 18,
+      "CICS_ABEND_DISPATCH_NOT_MODELED": 9,
+      "CALL_NORMAL_CONTINUATION_NOT_AVAILABLE": 4,
+      "GO_TO_ALTER_IN_UNIT": 28,
+      "CICS_FILE_HANDLER_STATE_UNKNOWN": 12
+    },
+    "numericReceiverReasons": {
+      "MODELED": 189,
+      "RECEIVER_TYPE_OR_ACCESS_UNPROVEN": 1191,
+      "SOURCE_TYPE_OR_ACCESS_UNPROVEN": 362
+    },
+    "auditErrors": []
+  },
+  "conditions88Regression": {
+    "baseline": 3807,
+    "published": 3807,
+    "missing": 0,
+    "extra": 0,
+    "unconsumed": 0,
+    "read": 1988,
+    "write": 1819,
+    "gaps": 22503
+  },
+  "dependencies": {
+    "sources": 73,
+    "statusesBefore": {
+      "COMPLETE": 8,
+      "PARTIAL": 65
+    },
+    "statusesAfter": {
+      "COMPLETE": 8,
+      "PARTIAL": 65
+    },
+    "deltas": 0,
+    "lostCandidates": 0,
+    "addedCandidates": 0,
+    "missingSites": 0,
+    "sourceDependenciesIdentical": 73,
+    "fileDeclarationsIdentical": 73,
+    "observedDependenciesIdentical": 73,
+    "counts": {
+      "programs": {
+        "sitesBefore": 150,
+        "sitesAfter": 150,
+        "candidatesBefore": 209,
+        "candidatesAfter": 209
+      },
+      "files": {
+        "sitesBefore": 391,
+        "sitesAfter": 391,
+        "candidatesBefore": 378,
+        "candidatesAfter": 378
+      },
+      "qualified": {
+        "sitesBefore": 259,
+        "sitesAfter": 259,
+        "candidatesBefore": 95,
+        "candidatesAfter": 95
+      }
+    }
+  },
+  "gates": {
+    "frontendFast": {
+      "status": "PASS",
+      "tests": 806,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "frontendFull": {
+      "status": "PASS",
+      "tests": 1377,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 1,
+      "skip": "opt-in semantic.condition.required discovery"
+    },
+    "lowerFull": {
+      "status": "PASS"
+    },
+    "lowerFast": {
+      "status": "PASS"
+    },
+    "integrated": {
+      "status": "PASS",
+      "sources": 73,
+      "stages": 292
+    }
+  },
+  "pins": {
+    "SRC-SP": {
+      "commit": "5cfa8d14f87826206dc03b65acaf6a2ba3ee67f5",
+      "files": 141,
+      "allHashesMatch": true
+    },
+    "SRC-AIR-JAVA": {
+      "commit": "a4c49bcf5e07000cb78349c2cc6357ca2dfe7acd",
+      "files": 28,
+      "allHashesMatch": true
+    }
+  },
+  "bytecode": {
+    "frontend": {
+      "count": 2386,
+      "equal": true,
+      "sha256": "f19953af2e97b7594a851b034915a01ecd8e4d1eacbcc610163a3cdc7bd062ea"
+    },
+    "lower-core": {
+      "count": 541,
+      "equal": true,
+      "sha256": "a1e31ff2f4f2147ae84d4e5f36b95959671e4454f02066a1f3042065feac521e"
+    },
+    "lower-adapters": {
+      "count": 715,
+      "equal": true,
+      "sha256": "4c0924915aa418cdde001429eb6193433460fea42f8fc004b84e218d68a3b7fe"
+    },
+    "air-model": {
+      "count": 341,
+      "equal": true,
+      "sha256": "7ba4cef7908139df66346003d3225a45b4dea4b5757ebd274df4045627b5c22b"
+    },
+    "air-json": {
+      "count": 35,
+      "equal": true,
+      "sha256": "58a7acba466474c0447228d015f3a0fda309a6b1a1742ad9b7c78007b404094f"
+    }
+  },
+  "evidenceDirectory": "/home/gustavo/workspace/teste-e2e/.gap-reconciliation-20261003/numeric-evidence",
+  "evidenceHashes": {
+    "frontend-fast-qualified.log": "b421aa20c3ff8b19237109dda4e2e64c8acf9fdaab911cf7f26cf5c78e97804c",
+    "frontend-full-qualified.log": "634030cd64a7adfce7d9e3d8fb40475a10fadd18418e01fc2bbe88db18bfcfc0",
+    "lower-full-qualified.log": "c44665506c01ab1d56c9c7cef01beda7024ac06d8fa35a03719a6e8de6647148",
+    "lower-fast-qualified.log": "f85f8bf375cfc2ba2e160af85fbde226e7e9c098c5067ead9af19b5a0cf4ed9a",
+    "qualified-artifacts-manifest.json": "ed150c890e32747e74f4f2a44a4267f812fbcbfc46a3d666cd9926dd3ad21882",
+    "qualified-bytecode.json": "bd7ec3f09300163ab8164a15f68269b89d7928603aa16186b9227f9198034541",
+    "numeric-qualified/numeric-audit.json": "3cb9211a7ab4c1afe2e6744c8511e3f5755f4a831b196399934792871e0713fa",
+    "numeric-qualified/numeric-occurrences.csv": "eb6873b29b33d6a5b5242d82c2cc3c8b0f16f75661e665c4ed47f8717540071f",
+    "pipeline-qualified/dependency-comparison.json": "6cf39fe98910a2781f9bd0739d8dbacc6ada9ee8415b60ba47df72b29d8441b7",
+    "numeric-qualified/results.json": "024e3e9367107d41d6ca5460d4bb060d339077a227e2d65c7a7bede53527cbd6",
+    "pipeline-qualified/results.json": "4be4b42b2af2c5eb6302824a6f15fc8f4fbf02550c226335d9d41b4a2d998ea5",
+    "run-frontend.py": "f439f695a66977b69bb612f6cb57408b1d41b006ce90800b0a92fe0e1ab43f06",
+    "run-pipeline.py": "0b2227fdca32af1b80cc6a6efe74ec54cfaff7692b906c02f554cc463c0fa179",
+    "audit-numeric.py": "f0737705a972bc679d7336d362eb4f49e418636d5760d3a8c552ba6ab2096241",
+    "audit-conditions.py": "566b9c1bbcdd453594fa5d3c585fde2d20382b28fadda4708020dbb47f0c818c",
+    "compare-dependencies.py": "a1fa640cad08813d1b6c6ce62363c27000391ab73c6d6070a66bffcebb886587"
+  }
+}

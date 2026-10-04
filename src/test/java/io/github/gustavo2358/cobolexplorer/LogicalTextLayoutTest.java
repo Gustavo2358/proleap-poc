@@ -47,4 +47,11 @@ class LogicalTextLayoutTest {
         assertEquals(3,p.logicalViews().size());
         assertEquals(BigInteger.valueOf(2),p.logicalViews().get(p.logicalViews().size()-1).start());
     }
+    @Test void conditionNamesDoNotAllocateStorageOrInvalidateTheirParentView() {
+        var p=analyze("01 AREA-A.\n05 FLAG-A PIC X(8).\n88 ACTIVE-A VALUES 'Y' 'T'.\n05 SUFFIX-A PIC X(2).");
+        assertEquals(3,p.logicalViews().size());
+        assertEquals(List.of(BigInteger.TEN,BigInteger.valueOf(8),BigInteger.TWO),
+            p.logicalViews().stream().map(StorageLayoutSemantics.LogicalView::length).toList());
+    }
+
 }

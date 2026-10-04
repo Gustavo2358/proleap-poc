@@ -9,7 +9,7 @@ class CicsHostEffectsTest {
         for(var text:java.util.List.of("RECEIVE MAP('M') INTO(WS-AREA) RESP(RC)","SEND MAP(MAP-NAME) FROM(WS-AREA) RESP(RC)","SYNCPOINT NOHANDLE")) {
             var j=CicsCommandContractTest.one(text);var c=CicsCommandContractTest.command(j);
             assertTrue(c.hasNonNull("hostEffects"),text);
-            assertEquals("2.46.0",j.path("contractVersion").asText());
+            assertEquals("2.65.0",j.path("contractVersion").asText());
             assertTrue(CicsCommandContractTest.roles(j).contains("NORMAL:normal"));
         }
         var receive=CicsCommandContractTest.one("RECEIVE MAP('M') INTO(WS-AREA) RESP(RC)");
@@ -22,7 +22,7 @@ class CicsHostEffectsTest {
         var j=CicsCommandContractTest.publish("EXEC CICS HANDLE ABEND LABEL(ERR) END-EXEC.\nCALL 'NEXTONE'.\nGOBACK.\nERR.\nCALL 'HANDLER'.\nGOBACK.");
         var h=j.path("statements").get(0);
         assertEquals("NO_APPLICATION_MEMORY",h.path("registrationEffects").asText());
-        assertEquals("2.46.0",j.path("contractVersion").asText());
+        assertEquals("2.65.0",j.path("contractVersion").asText());
         var outcomes=CicsCommandContractTest.outcomes(j,h);
         assertEquals(1,outcomes.size());assertEquals("NORMAL",outcomes.get(0).path("kind").asText());
         assertEquals(j.path("statements").get(1).path("header").path("id"),outcomes.get(0).path("target").path("reference"));

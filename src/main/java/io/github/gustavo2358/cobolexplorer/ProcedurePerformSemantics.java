@@ -18,7 +18,7 @@ public final class ProcedurePerformSemantics {
     public record Facts(Optional<Endpoint> start, Optional<Endpoint> end, List<Paragraph> procedures,
                         Optional<Integer> resume, Ast.SourceProvenance resumeOrigin, Optional<Loop> loop, Optional<Count> times, Optional<Varying> varying,boolean structureKnown,List<String> gaps) {
         public Facts { procedures=List.copyOf(procedures); gaps=List.copyOf(gaps); }
-        public boolean precise() { return gaps.isEmpty(); }
+        public boolean precise() { return structureKnown && gaps.isEmpty(); }
     }
     private final Map<ScalarMoveSemantics.NodeKey,Facts> facts;
     private final Set<ScalarMoveSemantics.NodeKey> completions;
@@ -49,7 +49,7 @@ public final class ProcedurePerformSemantics {
             ReferenceResolution resolution,ResolutionAnalysisReport report,
             Map<ResolutionContracts.SemanticEntityId,ScalarMoveSemantics.ScalarText> scalars,
             Map<ScalarMoveSemantics.NodeKey,ScalarMoveSemantics.Move> moves,IfSemantics ifs,
-            EvaluateSemantics evaluates,GoToSemantics goTos,PerformSemantics basic,NumericControlSemantics numbers,CicsProgramControlAnalyzer.Contribution cics) {
+            EvaluateSemantics evaluates,GoToSemantics goTos,PerformSemantics basic,IntegerSemantics numbers,CicsProgramControlAnalyzer.Contribution cics,ConditionNameSemantics conditionNames) {
         var result=new HashMap<ScalarMoveSemantics.NodeKey,Facts>();
         var legacyRanges=new HashSet<ScalarMoveSemantics.NodeKey>();
         var refs=new HashMap<ScalarMoveSemantics.NodeKey,ReferenceResolution.Entry>();
@@ -107,7 +107,7 @@ public final class ProcedurePerformSemantics {
                     var predicate=condition.map(c->PerformPredicateSemantics.analyze(c,unit.id(),complete&&p.meta().provenance().exact(),p.repetition()==Ast.PerformRepetition.VARYING,refs,scalars,numbers,coverage))
                         .orElse(PerformPredicateSemantics.unavailable(p.meta().provenance()));
                     loop=Optional.of(new Loop(p.testMode(),condition,predicate));
-                    if(predicate.availability()!=IfSemantics.Availability.KNOWN)gaps.add(p.repetition()==Ast.PerformRepetition.VARYING?"PERFORM_VARYING_PREDICATE_NOT_PROVEN":"PERFORM_UNTIL_PREDICATE_NOT_PROVEN");
+                    if(predicate.availability()!=IfSemantics.Availability.KNOWN&&!conditionNames.complete(unit.id(),p.meta().id(),"PERFORM_UNTIL/"+(p.repetition()==Ast.PerformRepetition.VARYING?1:0)))gaps.add(p.repetition()==Ast.PerformRepetition.VARYING?"PERFORM_VARYING_PREDICATE_NOT_PROVEN":"PERFORM_UNTIL_PREDICATE_NOT_PROVEN");
                 }
                 Optional<Count> times=Optional.empty();
                 if(p.repetition()==Ast.PerformRepetition.TIMES) {
@@ -187,13 +187,13 @@ public final class ProcedurePerformSemantics {
                 if(!f.procedures().isEmpty() && !closed(f.procedures().get(0).entry(),members,boundary,next,nodes,unit.id(),moves,ifs,evaluates,goTos,basic,provisional,false,cics))
                     {qualified=false;gaps.add("PERFORM_RANGE_CONTROL_NOT_PROVEN");}
                 if(!primaryClosed||!primaryMembers.contains(p.meta().id())||f.resume().filter(primaryMembers::contains).isEmpty()
-                        ||members.stream().anyMatch(primaryMembers::contains)){qualified=false;gaps.add("PERFORM_ISOLATED_PRIMARY_NOT_PROVEN");}
+                        ||members.stream().anyMatch(primaryMembers::contains)){qualified=false;}
                 var incomingExcluded=incomingCache.get(members);
                 if(incomingExcluded==null) {
                     incomingExcluded=ordinaryIncomingExcluded(members,nodes,next,unit.id(),goTos);
                     incomingCache.put(Set.copyOf(members),incomingExcluded);
                 }
-                if(!incomingExcluded){qualified=false;gaps.add("PERFORM_ORDINARY_INCOMING_NOT_EXCLUDED");}
+                if(!incomingExcluded){qualified=false;}
                 for(var otherMembers:uniqueRanges) {
                     if(!members.equals(otherMembers)&&otherMembers.stream().anyMatch(members::contains)){qualified=false;gaps.add("PERFORM_OVERLAPPING_RANGES");}
                 }

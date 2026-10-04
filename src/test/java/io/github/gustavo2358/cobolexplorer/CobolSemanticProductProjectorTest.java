@@ -426,17 +426,16 @@ class CobolSemanticProductProjectorTest {
         assertTrue(port.children(branch.header().id(),
                 CobolSemanticProduct.Branch.ELSE).isEmpty());
         assertEquals(Optional.of(call), branch.continuation());
-        assertTrue(branch.condition().references().isEmpty(),
-                "the DATA-only ConditionSurface must not fabricate a condition-name identity");
-        assertTrue(port.gaps().stream().anyMatch(gap ->
+        var parent = port.dataDeclarations().stream().filter(d -> d.canonicalName().equals("FLAG")).findFirst().orElseThrow();
+        assertEquals(List.of(parent.id()), branch.condition().references().stream()
+                .map(r -> r.binding().selected().orElseThrow()).toList());
+        assertTrue(port.conditionNames().orElseThrow().predicates().stream().anyMatch(p ->
+                p.statement().equals("statement:" + branch.header().id().localId()) && p.tree().complete()));
+        assertFalse(port.gaps().stream().anyMatch(gap ->
                 gap.statement().equals(branch.header().id())
                         && gap.code().equals("CONDITION_REFERENCE_KIND_NOT_PROJECTED")));
-        assertTrue(port.gaps().stream().anyMatch(gap ->
-                gap.statement().equals(branch.header().id())
-                        && gap.code().equals("CONTAINMENT_NOT_PROJECTED")));
-        assertTrue(port.gaps().stream().anyMatch(gap ->
-                gap.statement().equals(call)
-                        && gap.code().equals("CONTAINMENT_NOT_PROJECTED")));
+        assertFalse(port.gaps().stream().anyMatch(gap -> gap.statement().equals(branch.header().id()) && gap.code().equals("CONTAINMENT_NOT_PROJECTED")));
+        assertFalse(port.gaps().stream().anyMatch(gap -> gap.statement().equals(call) && gap.code().equals("CONTAINMENT_NOT_PROJECTED")));
         assertFalse(port.gaps().stream().anyMatch(gap ->
                 gap.statement().equals(move)
                         && gap.code().equals("CONTAINMENT_NOT_PROJECTED")));
@@ -472,9 +471,9 @@ class CobolSemanticProductProjectorTest {
         assertTrue(port.calls().stream().allMatch(statement ->
                 statement.header().containment().equals(
                         CobolSemanticProduct.Containment.unknown())));
-        assertEquals(3, port.gaps().stream().filter(gap ->
-                gap.scope() == CobolSemanticProduct.GapScope.STRUCTURE
-                        && gap.code().equals("CONTAINMENT_NOT_PROJECTED")).count());
+        assertEquals(0, port.gaps().stream().filter(gap -> gap.code().equals("CONTAINMENT_NOT_PROJECTED")).count());
+        var evidence = new io.github.gustavo2358.cobolexplorer.semanticproduct.DiagnosticEvidence(port.controlTopology());
+        assertTrue(port.moves().stream().allMatch(m -> evidence.membership("statement:" + m.header().id().localId())));
     }
 
     @Test
@@ -513,14 +512,14 @@ class CobolSemanticProductProjectorTest {
     }
 
     @Test
-    void onlyCanonicalBasicTextLiteralsGainCategory() {
+    void canonicalTextAndNumericLiteralsGainTheirOwnCategory() {
         CobolSemanticPort port = CobolSemanticPort.open(project(
                 analyze(MULTIPLE_SOURCE, SOURCE_NAME)));
 
         assertEquals(List.of(CobolSemanticProduct.LiteralKind.ALPHANUMERIC,
-                CobolSemanticProduct.LiteralKind.ALPHANUMERIC, CobolSemanticProduct.LiteralKind.UNKNOWN),
+                CobolSemanticProduct.LiteralKind.ALPHANUMERIC, CobolSemanticProduct.LiteralKind.NUMERIC),
                 port.moves().stream().map(move -> ((LiteralSource) move.source()).kind()).toList());
-        assertEquals(1, port.gaps().stream().filter(gap ->
+        assertEquals(0, port.gaps().stream().filter(gap ->
                 gap.scope() == CobolSemanticProduct.GapScope.LITERAL_KIND
                         && gap.code().equals("LITERAL_KIND_NOT_PUBLISHED")).count());
     }

@@ -44,8 +44,10 @@ class ResolutionSnapshotTest {
         assertTrue(text.contains("\"astNodeId\":"));
         assertTrue(text.contains("\"parseNodeId\":"));
         assertTrue(text.contains("\"original\":{"));
-        assertTrue(text.contains("\"gaps\":["));
-        assertTrue(text.contains("\"dependencyAnalysisReady\":false"));
+        assertTrue(text.contains("\"inputDiagnostics\":["));
+        assertFalse(text.contains("dependencyAnalysisReady"));
+        assertFalse(text.contains("\"gaps\":"));
+        assertFalse(text.contains("blockingReasons"));
         assertEquals(1, occurrences(text, "\"sourceLines\":["),
                 "the source must be stored once, never repeated for every occurrence");
     }
@@ -59,7 +61,8 @@ class ResolutionSnapshotTest {
                 "status-filter", "reason-filter", "resolution-search"))
             assertTrue(html.contains("id=\"" + filter + "\""), filter);
         assertTrue(html.contains("id=\"candidate-inspector\""));
-        assertTrue(html.contains("id=\"coverage-panel\""));
+        assertFalse(html.contains("id=\"coverage-panel\""));
+        assertTrue(html.contains("href=\"gaps.html\""));
         assertTrue(script.contains("RESOLUTION_DATA"));
         assertFalse(html.contains("http://"));
         assertFalse(html.contains("https://"));

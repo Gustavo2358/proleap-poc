@@ -13,7 +13,7 @@ public final class PerformSemantics {
                         Ast.SourceProvenance resumeOrigin, List<Integer> primaryStatements,
                         List<String> gaps) {
         public Facts { primaryStatements = List.copyOf(primaryStatements); gaps = List.copyOf(gaps); }
-        public boolean simpleProfile() { return gaps.isEmpty(); }
+        public boolean simpleProfile() { return target.isPresent() && resume.isPresent() && gaps.isEmpty(); }
     }
     private final Map<ScalarMoveSemantics.NodeKey, Facts> facts;
     private final Set<ScalarMoveSemantics.NodeKey> intrinsicExits;
@@ -126,7 +126,6 @@ public final class PerformSemantics {
                 boolean isolated=mainSound && !ordinaryOpen && target!=null && target!=primary && bodies.containsKey(target)
                     && body.stream().noneMatch(s -> positions.containsKey(s) || ordinaryTargets.contains(s.meta().id()))
                     && positions.containsKey(perform) && resumeId!=null;
-                if (!isolated) gaps.add("PERFORM_ISOLATED_PRIMARY_FLOW_NOT_PROVEN");
                 Boolean linear=linearBodies.get(target);
                 if(linear==null) {
                     linear=!body.isEmpty();
@@ -137,12 +136,11 @@ public final class PerformSemantics {
                     }
                     linearBodies.put(target,linear);
                 }
-                if (!linear) gaps.add("PERFORM_LINEAR_MOVE_BODY_NOT_PROVEN");
                 boolean exact = perform.meta().provenance().exact() && primary != null && primary.meta().provenance().exact()
                     && target != null && target.meta().provenance().exact();
                 if (!exact) gaps.add("PERFORM_PROVENANCE_INCOMPLETE");
                 // Refused forms publish no control guarantees. Their observed inventory remains intact.
-                if (gaps.isEmpty()) {
+                if (isolated && linear && gaps.isEmpty()) {
                     var resume = nodes.get(resumeId);
                     result.put(new ScalarMoveSemantics.NodeKey(unit.id(), perform.meta().id()), new Facts(
                         Optional.of(new Target(identity, target.meta().id(), body.stream().map(s -> s.meta().id()).toList(),

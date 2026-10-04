@@ -428,8 +428,12 @@ final class DirectAstActions  {
             List<String> values = ((DirectSyntax.DataValueClauseFrame) context).dataValueInterval().stream()
                     .map(this::sourceText).map(String::strip).toList();
             var intervals=((DirectSyntax.DataValueClauseFrame)context).dataValueInterval();
-            var single=intervals.size()==1&&intervals.get(0).dataValueIntervalTo()==null?intervals.get(0).dataValueIntervalFrom().literal():null;
-            return new Ast.ValueClause(meta, values, writtenText,single==null?Optional.empty():basicLogicalText(single));
+            if(intervals.isEmpty()&&((DirectSyntax.DataValueClauseFrame)context).FALSE()!=null)values=List.of("FALSE");
+            var single=intervals.size()==1&&intervals.get(0).dataValueIntervalTo()==null?intervals.get(0).dataValueIntervalFrom().dataValueLiteral():null;
+            return new Ast.ValueClause(meta, values, writtenText,single==null||single.NONNUMERICLITERAL()==null?Optional.empty():basicLogicalTextToken(single.NONNUMERICLITERAL().getText()),
+                intervals.stream().map(i->new Ast.ConditionRange(conditionValue(i.dataValueIntervalFrom().dataValueLiteral()),
+                    Optional.ofNullable(i.dataValueIntervalTo()).map(t->conditionValue(t.literal())))).toList(),
+                Optional.ofNullable(((DirectSyntax.DataValueClauseFrame)context).literal()).map(this::conditionValue));
         }
         if (context instanceof DirectSyntax.DataRedefinesClauseFrame) {
             return new Ast.RedefinesClause(meta,
@@ -472,6 +476,11 @@ final class DirectAstActions  {
                         ? expression(node, "data clause") : nominalReference(node))
                 .map(Ast.Node.class::cast).toList();
         return new Ast.PreservedDataClause(meta, grammarRule, writtenText, references);
+    }
+
+    private Ast.ConditionValue conditionValue(DirectFrame literal) {
+        return literal==null?new Ast.ConditionValue(Ast.ConditionValueKind.UNAVAILABLE,""):
+            ConditionValueSyntax.literal(literal.getText());
     }
 
     private Ast.DataReference simpleDataReference(DirectFrame context) {
@@ -1133,7 +1142,23 @@ final class DirectAstActions  {
         var effects=statementEffects(context,operands,clauses,operandNodes);
         return preserved
                 ? new Ast.PreservedStatement(meta, rule(context), sourceText(context).strip(), operands, clauses,effects,fileIo,context instanceof DirectSyntax.EntryStatementFrame entry?Optional.of(new Ast.EntrySurface(basicLogicalText(entry.literal()),entry.identifier().size())):Optional.empty())
-                : new Ast.ModeledStatement(meta, rule(context), sourceText(context).strip(), operands, clauses,effects,fileIo,exitKind(context));
+                : new Ast.ModeledStatement(meta, rule(context), sourceText(context).strip(), operands, clauses,effects,fileIo,exitKind(context),conditionSet(context,operandNodes));
+    }
+
+    private static Optional<Ast.ConditionSetSurface> conditionSet(DirectFrame context,Map<DirectFrame,Ast.Node> nodes) {
+        if(!(context instanceof DirectSyntax.SetStatementFrame set)||set.setUpDownByStatement()!=null)return Optional.empty();
+        var result=new ArrayList<Ast.ConditionSetTarget>();
+        for(var group:set.setToStatement()) {
+            if(group.setToValue().size()!=1)return Optional.empty();
+            var literal=group.setToValue().get(0).literal();
+            if(literal==null||literal.booleanLiteral()==null)return Optional.empty();
+            boolean truth=literal.booleanLiteral().TRUE()!=null;
+            for(var target:group.setTo()) {
+                if(!(nodes.get(target.identifier()) instanceof Ast.DataReference reference))return Optional.empty();
+                result.add(new Ast.ConditionSetTarget(reference,truth));
+            }
+        }
+        return result.isEmpty()?Optional.empty():Optional.of(new Ast.ConditionSetSurface(result));
     }
 
     private static Optional<Ast.ExitKind> exitKind(DirectFrame context) {
@@ -1391,7 +1416,7 @@ final class DirectAstActions  {
                 ? Ast.EvaluateSelectorContext.OTHER
                 : correspondingBooleanSubject ? Ast.EvaluateSelectorContext.BOOLEAN_SUBJECT_NOMINAL
                 : Ast.EvaluateSelectorContext.VALUE_COMPARISON;
-        return new Ast.EvaluateSelector(expression, subjectIndex, selectorContext);
+        return new Ast.EvaluateSelector(expression, subjectIndex, selectorContext,condition.NOT()!=null);
     }
 
     private Ast.PerformStatement buildPerform(DirectSyntax.PerformStatementFrame context) {
@@ -1783,6 +1808,12 @@ final class DirectAstActions  {
         Optional<java.math.BigInteger> value=integer==null?Optional.empty():Optional.of(new java.math.BigInteger(integer.getText()));
         if(numeric!=null&&numeric.ZERO()!=null)value=Optional.of(java.math.BigInteger.ZERO);
         var figurative=context instanceof DirectSyntax.LiteralFrame l?l.figurativeConstant():null;
+        if(figurative!=null&&figurative.ALL()==null&&(figurative.ZERO()!=null||figurative.ZEROS()!=null||figurative.ZEROES()!=null))value=Optional.of(java.math.BigInteger.ZERO);
+        Optional<java.math.BigDecimal> number=value.map(java.math.BigDecimal::new);
+        if(numeric!=null&&numeric.NUMERICLITERAL()!=null&&!numeric.NUMERICLITERAL().getText().contains(",")&&!numeric.NUMERICLITERAL().getText().toUpperCase(java.util.Locale.ROOT).contains("E")) {
+            try { number=Optional.of(new java.math.BigDecimal(numeric.NUMERICLITERAL().getText())); }
+            catch(NumberFormatException ex) { number=Optional.empty(); }
+        }
         Optional<Ast.FigurativeText> textKind=Optional.empty();
         if(figurative!=null&&figurative.ALL()==null) {
             if(figurative.SPACE()!=null||figurative.SPACES()!=null)textKind=Optional.of(Ast.FigurativeText.SPACES);
@@ -1790,7 +1821,7 @@ final class DirectAstActions  {
             else if(figurative.HIGH_VALUE()!=null||figurative.HIGH_VALUES()!=null)textKind=Optional.of(Ast.FigurativeText.HIGH_VALUES);
         }
         return new Ast.LiteralExpression(meta(context), logical.map(Ast.LogicalText::value)
-                .orElseGet(() -> unquote(raw)), raw, logical, value,textKind);
+                .orElseGet(() -> unquote(raw)), raw, logical, value,textKind,context instanceof DirectSyntax.LiteralFrame l&&l.booleanLiteral()!=null?Optional.of(l.booleanLiteral().TRUE()!=null):Optional.empty(),number);
     }
 
     private static Optional<Ast.LogicalText> basicLogicalText(DirectSyntax.LiteralFrame literal) {
@@ -2609,96 +2640,96 @@ final class DirectAstActions  {
             case 4: return visitIdentificationDivision((DirectSyntax.IdentificationDivisionFrame)frame);
             case 13: return visitEnvironmentDivision((DirectSyntax.EnvironmentDivisionFrame)frame);
             case 78: return visitDataDivision((DirectSyntax.DataDivisionFrame)frame);
-            case 255: return visitProcedureDivision((DirectSyntax.ProcedureDivisionFrame)frame);
-            case 272: return visitAcceptStatement((DirectSyntax.AcceptStatementFrame)frame);
-            case 277: return visitAddStatement((DirectSyntax.AddStatementFrame)frame);
-            case 286: return visitAlterStatement((DirectSyntax.AlterStatementFrame)frame);
-            case 288: return visitCallStatement((DirectSyntax.CallStatementFrame)frame);
-            case 298: return visitCancelStatement((DirectSyntax.CancelStatementFrame)frame);
-            case 300: return visitCloseStatement((DirectSyntax.CloseStatementFrame)frame);
-            case 309: return visitComputeStatement((DirectSyntax.ComputeStatementFrame)frame);
-            case 311: return visitContinueStatement((DirectSyntax.ContinueStatementFrame)frame);
-            case 312: return visitDeleteStatement((DirectSyntax.DeleteStatementFrame)frame);
-            case 313: return visitDisableStatement((DirectSyntax.DisableStatementFrame)frame);
-            case 314: return visitDisplayStatement((DirectSyntax.DisplayStatementFrame)frame);
-            case 319: return visitDivideStatement((DirectSyntax.DivideStatementFrame)frame);
-            case 327: return visitEnableStatement((DirectSyntax.EnableStatementFrame)frame);
-            case 328: return visitEntryStatement((DirectSyntax.EntryStatementFrame)frame);
-            case 329: return visitEvaluateStatement((DirectSyntax.EvaluateStatementFrame)frame);
-            case 343: return visitExhibitStatement((DirectSyntax.ExhibitStatementFrame)frame);
-            case 339: return visitExecCicsStatement((DirectSyntax.ExecCicsStatementFrame)frame);
-            case 340: return visitExecSqlStatement((DirectSyntax.ExecSqlStatementFrame)frame);
-            case 342: return visitExecDliStatement((DirectSyntax.ExecDliStatementFrame)frame);
-            case 341: return visitExecSqlImsStatement((DirectSyntax.ExecSqlImsStatementFrame)frame);
-            case 345: return visitExitStatement((DirectSyntax.ExitStatementFrame)frame);
-            case 373: return visitJsonGenerateStatement((DirectSyntax.JsonGenerateStatementFrame)frame);
-            case 346: return visitGenerateStatement((DirectSyntax.GenerateStatementFrame)frame);
-            case 347: return visitGobackStatement((DirectSyntax.GobackStatementFrame)frame);
-            case 348: return visitGoToStatement((DirectSyntax.GoToStatementFrame)frame);
-            case 351: return visitIfStatement((DirectSyntax.IfStatementFrame)frame);
-            case 354: return visitInitializeStatement((DirectSyntax.InitializeStatementFrame)frame);
-            case 357: return visitInitiateStatement((DirectSyntax.InitiateStatementFrame)frame);
-            case 358: return visitInspectStatement((DirectSyntax.InspectStatementFrame)frame);
-            case 386: return visitMergeStatement((DirectSyntax.MergeStatementFrame)frame);
-            case 396: return visitMoveStatement((DirectSyntax.MoveStatementFrame)frame);
-            case 401: return visitMultiplyStatement((DirectSyntax.MultiplyStatementFrame)frame);
-            case 407: return visitNextSentenceStatement((DirectSyntax.NextSentenceStatementFrame)frame);
-            case 408: return visitOpenStatement((DirectSyntax.OpenStatementFrame)frame);
-            case 415: return visitPerformStatement((DirectSyntax.PerformStatementFrame)frame);
-            case 428: return visitPurgeStatement((DirectSyntax.PurgeStatementFrame)frame);
-            case 429: return visitReadStatement((DirectSyntax.ReadStatementFrame)frame);
-            case 433: return visitReceiveStatement((DirectSyntax.ReceiveStatementFrame)frame);
-            case 444: return visitReleaseStatement((DirectSyntax.ReleaseStatementFrame)frame);
-            case 445: return visitReturnStatement((DirectSyntax.ReturnStatementFrame)frame);
-            case 447: return visitRewriteStatement((DirectSyntax.RewriteStatementFrame)frame);
-            case 449: return visitSearchStatement((DirectSyntax.SearchStatementFrame)frame);
-            case 452: return visitSendStatement((DirectSyntax.SendStatementFrame)frame);
-            case 462: return visitSetStatement((DirectSyntax.SetStatementFrame)frame);
-            case 468: return visitSortStatement((DirectSyntax.SortStatementFrame)frame);
-            case 481: return visitStartStatement((DirectSyntax.StartStatementFrame)frame);
-            case 483: return visitStopStatement((DirectSyntax.StopStatementFrame)frame);
-            case 485: return visitStringStatement((DirectSyntax.StringStatementFrame)frame);
-            case 492: return visitSubtractStatement((DirectSyntax.SubtractStatementFrame)frame);
-            case 501: return visitTerminateStatement((DirectSyntax.TerminateStatementFrame)frame);
-            case 502: return visitUnstringStatement((DirectSyntax.UnstringStatementFrame)frame);
-            case 517: return visitWriteStatement((DirectSyntax.WriteStatementFrame)frame);
-            case 556: return visitIdentifier((DirectSyntax.IdentifierFrame)frame);
-            case 586: return visitFileName((DirectSyntax.FileNameFrame)frame);
-            case 588: return visitIndexName((DirectSyntax.IndexNameFrame)frame);
-            case 564: return visitQualifiedDataName((DirectSyntax.QualifiedDataNameFrame)frame);
-            case 547: return visitConditionNameReference((DirectSyntax.ConditionNameReferenceFrame)frame);
-            case 557: return visitTableCall((DirectSyntax.TableCallFrame)frame);
-            case 558: return visitFunctionCall((DirectSyntax.FunctionCallFrame)frame);
-            case 612: return visitSpecialRegister((DirectSyntax.SpecialRegisterFrame)frame);
-            case 535: return visitArithmeticExpression((DirectSyntax.ArithmeticExpressionFrame)frame);
-            case 537: return visitMultDivs((DirectSyntax.MultDivsFrame)frame);
-            case 539: return visitPowers((DirectSyntax.PowersFrame)frame);
-            case 541: return visitBasis((DirectSyntax.BasisFrame)frame);
-            case 542: return visitCondition((DirectSyntax.ConditionFrame)frame);
-            case 544: return visitCombinableCondition((DirectSyntax.CombinableConditionFrame)frame);
-            case 545: return visitSimpleCondition((DirectSyntax.SimpleConditionFrame)frame);
-            case 549: return visitRelationCondition((DirectSyntax.RelationConditionFrame)frame);
-            case 550: return visitRelationSignCondition((DirectSyntax.RelationSignConditionFrame)frame);
-            case 551: return visitRelationArithmeticComparison((DirectSyntax.RelationArithmeticComparisonFrame)frame);
-            case 552: return visitRelationCombinedComparison((DirectSyntax.RelationCombinedComparisonFrame)frame);
-            case 553: return visitRelationCombinedCondition((DirectSyntax.RelationCombinedConditionFrame)frame);
-            case 546: return visitClassCondition((DirectSyntax.ClassConditionFrame)frame);
-            case 555: return visitAbbreviation((DirectSyntax.AbbreviationFrame)frame);
-            case 562: return visitSubscript((DirectSyntax.SubscriptFrame)frame);
-            case 330: return visitEvaluateSelect((DirectSyntax.EvaluateSelectFrame)frame);
-            case 338: return visitEvaluateValue((DirectSyntax.EvaluateValueFrame)frame);
-            case 334: return visitEvaluateCondition((DirectSyntax.EvaluateConditionFrame)frame);
-            case 563: return visitArgument((DirectSyntax.ArgumentFrame)frame);
-            case 560: return visitCharacterPosition((DirectSyntax.CharacterPositionFrame)frame);
-            case 561: return visitLength((DirectSyntax.LengthFrame)frame);
-            case 425: return visitPerformFrom((DirectSyntax.PerformFromFrame)frame);
-            case 426: return visitPerformBy((DirectSyntax.PerformByFrame)frame);
-            case 605: return visitLiteral((DirectSyntax.LiteralFrame)frame);
-            case 608: return visitIntegerLiteral((DirectSyntax.IntegerLiteralFrame)frame);
-            case 607: return visitNumericLiteral((DirectSyntax.NumericLiteralFrame)frame);
-            case 606: return visitBooleanLiteral((DirectSyntax.BooleanLiteralFrame)frame);
-            case 609: return visitCicsDfhRespLiteral((DirectSyntax.CicsDfhRespLiteralFrame)frame);
-            case 610: return visitCicsDfhValueLiteral((DirectSyntax.CicsDfhValueLiteralFrame)frame);
+            case 256: return visitProcedureDivision((DirectSyntax.ProcedureDivisionFrame)frame);
+            case 273: return visitAcceptStatement((DirectSyntax.AcceptStatementFrame)frame);
+            case 278: return visitAddStatement((DirectSyntax.AddStatementFrame)frame);
+            case 287: return visitAlterStatement((DirectSyntax.AlterStatementFrame)frame);
+            case 289: return visitCallStatement((DirectSyntax.CallStatementFrame)frame);
+            case 299: return visitCancelStatement((DirectSyntax.CancelStatementFrame)frame);
+            case 301: return visitCloseStatement((DirectSyntax.CloseStatementFrame)frame);
+            case 310: return visitComputeStatement((DirectSyntax.ComputeStatementFrame)frame);
+            case 312: return visitContinueStatement((DirectSyntax.ContinueStatementFrame)frame);
+            case 313: return visitDeleteStatement((DirectSyntax.DeleteStatementFrame)frame);
+            case 314: return visitDisableStatement((DirectSyntax.DisableStatementFrame)frame);
+            case 315: return visitDisplayStatement((DirectSyntax.DisplayStatementFrame)frame);
+            case 320: return visitDivideStatement((DirectSyntax.DivideStatementFrame)frame);
+            case 328: return visitEnableStatement((DirectSyntax.EnableStatementFrame)frame);
+            case 329: return visitEntryStatement((DirectSyntax.EntryStatementFrame)frame);
+            case 330: return visitEvaluateStatement((DirectSyntax.EvaluateStatementFrame)frame);
+            case 344: return visitExhibitStatement((DirectSyntax.ExhibitStatementFrame)frame);
+            case 340: return visitExecCicsStatement((DirectSyntax.ExecCicsStatementFrame)frame);
+            case 341: return visitExecSqlStatement((DirectSyntax.ExecSqlStatementFrame)frame);
+            case 343: return visitExecDliStatement((DirectSyntax.ExecDliStatementFrame)frame);
+            case 342: return visitExecSqlImsStatement((DirectSyntax.ExecSqlImsStatementFrame)frame);
+            case 346: return visitExitStatement((DirectSyntax.ExitStatementFrame)frame);
+            case 374: return visitJsonGenerateStatement((DirectSyntax.JsonGenerateStatementFrame)frame);
+            case 347: return visitGenerateStatement((DirectSyntax.GenerateStatementFrame)frame);
+            case 348: return visitGobackStatement((DirectSyntax.GobackStatementFrame)frame);
+            case 349: return visitGoToStatement((DirectSyntax.GoToStatementFrame)frame);
+            case 352: return visitIfStatement((DirectSyntax.IfStatementFrame)frame);
+            case 355: return visitInitializeStatement((DirectSyntax.InitializeStatementFrame)frame);
+            case 358: return visitInitiateStatement((DirectSyntax.InitiateStatementFrame)frame);
+            case 359: return visitInspectStatement((DirectSyntax.InspectStatementFrame)frame);
+            case 387: return visitMergeStatement((DirectSyntax.MergeStatementFrame)frame);
+            case 397: return visitMoveStatement((DirectSyntax.MoveStatementFrame)frame);
+            case 402: return visitMultiplyStatement((DirectSyntax.MultiplyStatementFrame)frame);
+            case 408: return visitNextSentenceStatement((DirectSyntax.NextSentenceStatementFrame)frame);
+            case 409: return visitOpenStatement((DirectSyntax.OpenStatementFrame)frame);
+            case 416: return visitPerformStatement((DirectSyntax.PerformStatementFrame)frame);
+            case 429: return visitPurgeStatement((DirectSyntax.PurgeStatementFrame)frame);
+            case 430: return visitReadStatement((DirectSyntax.ReadStatementFrame)frame);
+            case 434: return visitReceiveStatement((DirectSyntax.ReceiveStatementFrame)frame);
+            case 445: return visitReleaseStatement((DirectSyntax.ReleaseStatementFrame)frame);
+            case 446: return visitReturnStatement((DirectSyntax.ReturnStatementFrame)frame);
+            case 448: return visitRewriteStatement((DirectSyntax.RewriteStatementFrame)frame);
+            case 450: return visitSearchStatement((DirectSyntax.SearchStatementFrame)frame);
+            case 453: return visitSendStatement((DirectSyntax.SendStatementFrame)frame);
+            case 463: return visitSetStatement((DirectSyntax.SetStatementFrame)frame);
+            case 469: return visitSortStatement((DirectSyntax.SortStatementFrame)frame);
+            case 482: return visitStartStatement((DirectSyntax.StartStatementFrame)frame);
+            case 484: return visitStopStatement((DirectSyntax.StopStatementFrame)frame);
+            case 486: return visitStringStatement((DirectSyntax.StringStatementFrame)frame);
+            case 493: return visitSubtractStatement((DirectSyntax.SubtractStatementFrame)frame);
+            case 502: return visitTerminateStatement((DirectSyntax.TerminateStatementFrame)frame);
+            case 503: return visitUnstringStatement((DirectSyntax.UnstringStatementFrame)frame);
+            case 518: return visitWriteStatement((DirectSyntax.WriteStatementFrame)frame);
+            case 557: return visitIdentifier((DirectSyntax.IdentifierFrame)frame);
+            case 587: return visitFileName((DirectSyntax.FileNameFrame)frame);
+            case 589: return visitIndexName((DirectSyntax.IndexNameFrame)frame);
+            case 565: return visitQualifiedDataName((DirectSyntax.QualifiedDataNameFrame)frame);
+            case 548: return visitConditionNameReference((DirectSyntax.ConditionNameReferenceFrame)frame);
+            case 558: return visitTableCall((DirectSyntax.TableCallFrame)frame);
+            case 559: return visitFunctionCall((DirectSyntax.FunctionCallFrame)frame);
+            case 613: return visitSpecialRegister((DirectSyntax.SpecialRegisterFrame)frame);
+            case 536: return visitArithmeticExpression((DirectSyntax.ArithmeticExpressionFrame)frame);
+            case 538: return visitMultDivs((DirectSyntax.MultDivsFrame)frame);
+            case 540: return visitPowers((DirectSyntax.PowersFrame)frame);
+            case 542: return visitBasis((DirectSyntax.BasisFrame)frame);
+            case 543: return visitCondition((DirectSyntax.ConditionFrame)frame);
+            case 545: return visitCombinableCondition((DirectSyntax.CombinableConditionFrame)frame);
+            case 546: return visitSimpleCondition((DirectSyntax.SimpleConditionFrame)frame);
+            case 550: return visitRelationCondition((DirectSyntax.RelationConditionFrame)frame);
+            case 551: return visitRelationSignCondition((DirectSyntax.RelationSignConditionFrame)frame);
+            case 552: return visitRelationArithmeticComparison((DirectSyntax.RelationArithmeticComparisonFrame)frame);
+            case 553: return visitRelationCombinedComparison((DirectSyntax.RelationCombinedComparisonFrame)frame);
+            case 554: return visitRelationCombinedCondition((DirectSyntax.RelationCombinedConditionFrame)frame);
+            case 547: return visitClassCondition((DirectSyntax.ClassConditionFrame)frame);
+            case 556: return visitAbbreviation((DirectSyntax.AbbreviationFrame)frame);
+            case 563: return visitSubscript((DirectSyntax.SubscriptFrame)frame);
+            case 331: return visitEvaluateSelect((DirectSyntax.EvaluateSelectFrame)frame);
+            case 339: return visitEvaluateValue((DirectSyntax.EvaluateValueFrame)frame);
+            case 335: return visitEvaluateCondition((DirectSyntax.EvaluateConditionFrame)frame);
+            case 564: return visitArgument((DirectSyntax.ArgumentFrame)frame);
+            case 561: return visitCharacterPosition((DirectSyntax.CharacterPositionFrame)frame);
+            case 562: return visitLength((DirectSyntax.LengthFrame)frame);
+            case 426: return visitPerformFrom((DirectSyntax.PerformFromFrame)frame);
+            case 427: return visitPerformBy((DirectSyntax.PerformByFrame)frame);
+            case 606: return visitLiteral((DirectSyntax.LiteralFrame)frame);
+            case 609: return visitIntegerLiteral((DirectSyntax.IntegerLiteralFrame)frame);
+            case 608: return visitNumericLiteral((DirectSyntax.NumericLiteralFrame)frame);
+            case 607: return visitBooleanLiteral((DirectSyntax.BooleanLiteralFrame)frame);
+            case 610: return visitCicsDfhRespLiteral((DirectSyntax.CicsDfhRespLiteralFrame)frame);
+            case 611: return visitCicsDfhValueLiteral((DirectSyntax.CicsDfhValueLiteralFrame)frame);
             case 223: return visitDataAlignedClause((DirectSyntax.DataAlignedClauseFrame)frame);
             case 224: return visitDataBlankWhenZeroClause((DirectSyntax.DataBlankWhenZeroClauseFrame)frame);
             case 225: return visitDataCommonOwnLocalClause((DirectSyntax.DataCommonOwnLocalClauseFrame)frame);
@@ -2720,7 +2751,7 @@ final class DirectAstActions  {
             case 248: return visitDataUsageClause((DirectSyntax.DataUsageClauseFrame)frame);
             case 249: return visitDataUsingClause((DirectSyntax.DataUsingClauseFrame)frame);
             case 250: return visitDataValueClause((DirectSyntax.DataValueClauseFrame)frame);
-            case 254: return visitDataWithLowerBoundsClause((DirectSyntax.DataWithLowerBoundsClauseFrame)frame);
+            case 255: return visitDataWithLowerBoundsClause((DirectSyntax.DataWithLowerBoundsClauseFrame)frame);
             default:
                 Ast.Node result=null;
                 for(int i=0;i<frame.getChildCount();i++) result=aggregateResult(result,visit(frame.getChild(i)));

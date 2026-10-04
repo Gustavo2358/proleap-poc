@@ -31,8 +31,10 @@ public final class ScalarMoveSemantics {
                           long scalarLookups, long moveVisits) { }
     private final Map<ResolutionContracts.SemanticEntityId, ScalarText> declarations;
     private final Map<NodeKey, Move> moves;
-    private final NumericControlSemantics numbers;
-    public NumericControlSemantics numbers() { return numbers; }
+    private final IntegerSemantics numbers;
+    private final IntegerMoveSemantics integerMoves;
+    public IntegerMoveSemantics integerMoves(){return integerMoves;}
+    public IntegerSemantics numbers() { return numbers; }
     private final Map<ResolutionContracts.ProgramUnitId,io.github.gustavo2358.cobolexplorer.semanticproduct.FactDependencies> factDependencies;
     public Map<ResolutionContracts.ProgramUnitId,io.github.gustavo2358.cobolexplorer.semanticproduct.FactDependencies> factDependencies(){return factDependencies;}
     private final Map<ResolutionContracts.ProgramUnitId,LogicalInitialSemantics.Result> logicalInitial;
@@ -42,6 +44,8 @@ public final class ScalarMoveSemantics {
     Map<ResolutionContracts.ProgramUnitId,LogicalInitialSemantics.Result> logicalInitial(){return logicalInitial;}
     private final Map<NodeKey,TextConditionSemantics.Predicate> textPredicates;
     public Optional<TextConditionSemantics.Predicate> textPredicate(ResolutionContracts.ProgramUnitId unit,int statement){return Optional.ofNullable(textPredicates.get(new NodeKey(unit,statement)));}
+    private final ConditionNameSemantics conditionNames;
+    public ConditionNameSemantics conditionNames(){return conditionNames;}
     private final NominalValueSemantics nominalValues;
     public NominalValueSemantics nominalValues(){return nominalValues;}
     private final Metrics metrics;
@@ -61,10 +65,10 @@ public final class ScalarMoveSemantics {
     }
 
     private ScalarMoveSemantics(Map<ResolutionContracts.SemanticEntityId, ScalarText> declarations,
-                                Map<NodeKey, Move> moves, Map<NodeKey, Call> calls, Metrics metrics, IfSemantics ifs, PerformSemantics performs, EvaluateSemantics evaluates, GoToSemantics goTos, ProcedurePerformSemantics procedurePerforms, NumericControlSemantics numbers,Map<ResolutionContracts.ProgramUnitId,io.github.gustavo2358.cobolexplorer.semanticproduct.FactDependencies> factDependencies,Map<ResolutionContracts.ProgramUnitId,LogicalInitialSemantics.Result> logicalInitial,Map<NodeKey,TextConditionSemantics.Predicate> textPredicates,NominalValueSemantics nominalValues) {
-        this.nominalValues=nominalValues;this.declarations = Map.copyOf(declarations);this.textPredicates=Map.copyOf(textPredicates);
+                                Map<NodeKey, Move> moves, Map<NodeKey, Call> calls, Metrics metrics, IfSemantics ifs, PerformSemantics performs, EvaluateSemantics evaluates, GoToSemantics goTos, ProcedurePerformSemantics procedurePerforms, IntegerSemantics numbers,IntegerMoveSemantics integerMoves,Map<ResolutionContracts.ProgramUnitId,io.github.gustavo2358.cobolexplorer.semanticproduct.FactDependencies> factDependencies,Map<ResolutionContracts.ProgramUnitId,LogicalInitialSemantics.Result> logicalInitial,Map<NodeKey,TextConditionSemantics.Predicate> textPredicates,NominalValueSemantics nominalValues,ConditionNameSemantics conditionNames) {
+        this.conditionNames=conditionNames;this.nominalValues=nominalValues;this.declarations = Map.copyOf(declarations);this.textPredicates=Map.copyOf(textPredicates);
         this.factDependencies=Map.copyOf(factDependencies);this.logicalInitial=Map.copyOf(logicalInitial);
-        this.numbers=numbers;
+        this.numbers=numbers;this.integerMoves=integerMoves;
         this.moves = Map.copyOf(moves);
         this.metrics = metrics;
         this.ifs = Objects.requireNonNull(ifs);
@@ -106,6 +110,7 @@ public final class ScalarMoveSemantics {
         if(!cics.belongsTo(frontend))throw new IllegalArgumentException("CICS facts belong to another frontend");
         storage.ifPresent(s->{if(!s.belongsTo(frontend,resolution))throw new IllegalArgumentException("storage facts belong to another snapshot");});
         if(!components.belongsTo(frontend))throw new IllegalArgumentException("storage components belong to another snapshot");
+        var conditionNames=ConditionNameSemantics.analyze(frontend,tables,resolution);
         var factDependencies=FactLocalitySemantics.prepare(frontend,tables,resolution,report,storage);
         Map<ResolutionContracts.SemanticEntityId, ScalarText> declarations = new HashMap<>();
         Map<NodeKey, Ast.MoveStatement> targets = new HashMap<>();
@@ -299,7 +304,7 @@ public final class ScalarMoveSemantics {
             var basic = fact(whole, copy, moves.get(key).nextStatement());
             moves.put(key, new Move(whole, copy, basic.nextStatement(), basic.gaps(), adjustment, sourceWhole));
         }
-        var numbers=NumericControlSemantics.analyze(frontend,tables,report::inputComplete,components);
+        var numbers=IntegerSemantics.analyze(frontend,tables,report::inputComplete,components,factDependencies);
         var ifs = IfSemantics.analyze(frontend, tables, resolution, report, declarations, moves,numbers,components);
         var goTos = GoToSemantics.analyze(frontend, tables, resolution, report,numbers);
         var completingMoves=new HashSet<NodeKey>();
@@ -313,13 +318,13 @@ public final class ScalarMoveSemantics {
         }));
         var performs = PerformSemantics.analyze(frontend, tables, resolution, report, completingMoves, ifs, goTos);
         var evaluates = EvaluateSemantics.analyze(frontend, resolution, report, declarations);
-        var procedurePerforms = ProcedurePerformSemantics.analyze(frontend, tables, resolution, report, declarations, moves, ifs, evaluates, goTos, performs,numbers,cics);
+        var procedurePerforms = ProcedurePerformSemantics.analyze(frontend, tables, resolution, report, declarations, moves, ifs, evaluates, goTos, performs,numbers,cics,conditionNames);
         performs = performs.restrictPrimaryRanges(procedurePerforms);
         // Ordinary flow is published independently in SP 2.37, never promoted by a peer feature.
         return new ScalarMoveSemantics(declarations, moves, calls,
                 new Metrics(counts[0], counts[1], counts[2], counts[3], counts[4]),
                 ifs, performs, evaluates,
-                goTos, procedurePerforms,numbers,factDependencies,storage.map(st->LogicalInitialSemantics.analyze(frontend,resolution,report,st,factDependencies,cics)).orElse(Map.of()),TextConditionSemantics.analyze(frontend,resolution,declarations),NominalValueSemantics.analyze(frontend,resolution,possibleText,storage,components));
+                goTos, procedurePerforms,numbers,IntegerMoveSemantics.analyze(frontend,numbers,byOccurrence),factDependencies,storage.map(st->LogicalInitialSemantics.analyze(frontend,resolution,report,st,factDependencies,cics)).orElse(Map.of()),TextConditionSemantics.analyze(frontend,resolution,declarations),NominalValueSemantics.analyze(frontend,resolution,possibleText,storage,components,conditionNames),conditionNames);
     }
 
     private static Move fact(Optional<ResolutionContracts.SemanticEntityId> whole,
@@ -348,7 +353,7 @@ public final class ScalarMoveSemantics {
         return pictures==1&&usages<=1?extent.map(ScalarText::new):Optional.empty();
     }
     private static Optional<ScalarText> scalar(Ast.DataEntry entry, long[] counts) {
-        if (!entry.children().isEmpty() || entry.filler()
+        if (entry.children().stream().anyMatch(c->c.levelKind()!=Ast.DataLevelKind.CONDITION_88) || entry.filler()
                 || entry.visibility() != Ast.DeclarationVisibility.LOCAL
                 || !(entry.level().equals("01") || entry.levelKind() == Ast.DataLevelKind.STANDALONE_77))
             return Optional.empty();

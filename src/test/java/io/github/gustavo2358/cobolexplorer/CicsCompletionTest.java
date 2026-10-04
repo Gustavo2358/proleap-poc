@@ -7,7 +7,7 @@ class CicsCompletionTest {
         for(var suffix:List.of("", " NOHANDLE", " RESP(RC)", " RESP2(RC2)")) {
             var j=CicsCommandContractTest.one("SYNCPOINT ROLLBACK"+suffix);
             var c=CicsCommandContractTest.command(j);
-            assertEquals("2.50.0",j.path("contractVersion").asText());
+            assertEquals("2.65.0",j.path("contractVersion").asText());
             assertEquals("SYNCPOINT_ROLLBACK",c.path("commandKind").asText());
             assertEquals("SUPPORTED",c.path("syntaxStatus").asText());
             assertTrue(c.hasNonNull("hostEffects"));
@@ -28,7 +28,7 @@ class CicsCompletionTest {
     @Test void cicsReturnExitsProgramAndOnlyErrorsMayContinueLocally()throws Exception {
         for(var cmd:List.of("RETURN","RETURN TRANSID('NEXT')", "RETURN COMMAREA(WS-AREA) LENGTH(8)")) {
             var j=CicsCommandContractTest.one(cmd);var c=CicsCommandContractTest.command(j);
-            assertEquals("RETURN",c.path("commandKind").asText());assertEquals("2.50.0",j.path("contractVersion").asText());
+            assertEquals("RETURN",c.path("commandKind").asText());assertEquals("2.65.0",j.path("contractVersion").asText());
             assertTrue(c.hasNonNull("hostEffects"));assertTrue(CicsCommandContractTest.roles(j).contains("PROGRAM_RETURN:return"));
             assertFalse(CicsCommandContractTest.roles(j).contains("NORMAL:normal"));
         }

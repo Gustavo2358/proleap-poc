@@ -17,9 +17,9 @@ class PerformVaryingTest {
                 var source=Files.readAllLines(path).stream().map(line->line.substring(7)).collect(java.util.stream.Collectors.joining("\n"));
                 var bytes=SemanticProductJsonWriter.serialize(ScalarMoveCheckpoint4ATest.publish(source));
                 var sp=new ObjectMapper().readTree(bytes);var facts=PerformFamilyTest.ranges(sp);
-                assertFalse(facts.isEmpty(),name);assertEquals(!sp.path("controlTopology").path("bindings").isEmpty()?"2.57.0":name.equals("varying-after-level")?"2.48.0":name.endsWith("-branches")?"2.46.0":sp.has("ordinaryContinuations")?"2.39.0":facts.stream().anyMatch(p->p.has("publicationKind"))?"2.36.0":"2.39.0",sp.path("contractVersion").asText());
+                assertFalse(facts.isEmpty(),name);assertEquals("2.65.0",sp.path("contractVersion").asText());
                 for(var p:facts) {
-                    assertEquals(precise.contains(name),p.path("gapCodes").isEmpty(),name+": "+p.path("gapCodes"));
+                    assertEquals(precise.contains(name),p.path("header").path("readiness").path("lowering").path("status").asText().equals("SUFFICIENT"),name+": "+p.path("gapCodes"));
                     assertTrue(p.path("varying").isObject(),name);assertTrue(p.path("loop").isObject(),name);
                     assertEquals(name.equals("varying-after-level")?2:1,p.path("varying").path("levels").asInt(),name);
                     if(name.equals("varying-subscript-control")) {

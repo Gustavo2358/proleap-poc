@@ -228,8 +228,18 @@ public final class Ast {
     public record UsageClause(Meta meta, String usage, String writtenText, boolean display) implements DataClause {
         public UsageClause(Meta meta, String usage, String writtenText) { this(meta, usage, writtenText, false); }
     }
-    public record ValueClause(Meta meta, List<String> values, String writtenText, Optional<LogicalText> logicalText) implements DataClause {
-        public ValueClause { values = List.copyOf(values); logicalText=Objects.requireNonNull(logicalText); }
+    public enum ConditionValueKind { TEXT, NUMBER, HEX, SPACES, LOW_VALUES, HIGH_VALUES, ZERO, QUOTE, ALL_TEXT, UNAVAILABLE }
+    /** Literal payload, not a second AST occurrence. Ranges retain written order. */
+    public record ConditionValue(ConditionValueKind kind, String value) {
+        public ConditionValue { Objects.requireNonNull(kind); Objects.requireNonNull(value); }
+    }
+    public record ConditionRange(ConditionValue first, Optional<ConditionValue> last) {
+        public ConditionRange { Objects.requireNonNull(first); Objects.requireNonNull(last); }
+    }
+    public record ValueClause(Meta meta, List<String> values, String writtenText, Optional<LogicalText> logicalText,
+            List<ConditionRange> ranges, Optional<ConditionValue> falseValue) implements DataClause {
+        public ValueClause { values = List.copyOf(values); logicalText=Objects.requireNonNull(logicalText); ranges=List.copyOf(ranges);Objects.requireNonNull(falseValue); }
+        public ValueClause(Meta meta,List<String> values,String writtenText,Optional<LogicalText> logicalText) {this(meta,values,writtenText,logicalText,List.of(),Optional.empty());}
         public ValueClause(Meta meta,List<String> values,String writtenText) {this(meta,values,writtenText,Optional.empty());}
     }
     public record RedefinesClause(Meta meta, DataReference target, String writtenText) implements DataClause {}
@@ -345,7 +355,9 @@ public final class Ast {
 
     /** A WHEN selection object and the zero-based EVALUATE subject it corresponds to through ALSO. */
     public record EvaluateSelector(Expression expression, int subjectIndex,
-                                   EvaluateSelectorContext context) {}
+                                   EvaluateSelectorContext context,boolean negated) {
+        public EvaluateSelector(Expression expression,int subjectIndex,EvaluateSelectorContext context){this(expression,subjectIndex,context,false);}
+    }
 
     /** Metadata for a PERFORM control; it is not an AST node and consumes no ID. */
     public record PerformControl(Expression expression, PerformControlContext context,int varyingLevel) {
@@ -477,10 +489,20 @@ public final class Ast {
 
     public enum ExitKind { PARAGRAPH, PERFORM, PERFORM_CYCLE, PROGRAM, STOP_RUN }
 
+    /** Aliases operands owned by ModeledStatement, preserving SET group/destination order. */
+    public record ConditionSetTarget(DataReference target, boolean truth) { }
+    public record ConditionSetSurface(List<ConditionSetTarget> assignments) {
+        public ConditionSetSurface { assignments=List.copyOf(assignments); if(assignments.isEmpty())throw new IllegalArgumentException("empty SET condition assignment"); }
+    }
+
     public record ModeledStatement(Meta meta, String grammarRule, String writtenText,
                                    List<StatementOperand> operands,
                                    List<StatementClause> clauses, Optional<StatementEffectSummary> effects,
-                                   Optional<FileIoSurface> fileIo, Optional<ExitKind> exitKind) implements Statement {
+                                   Optional<FileIoSurface> fileIo, Optional<ExitKind> exitKind,
+                                   Optional<ConditionSetSurface> conditionSet) implements Statement {
+        public ModeledStatement(Meta meta,String grammarRule,String writtenText,List<StatementOperand> operands,List<StatementClause> clauses,Optional<StatementEffectSummary> effects,Optional<FileIoSurface> fileIo,Optional<ExitKind> exitKind) {
+            this(meta,grammarRule,writtenText,operands,clauses,effects,fileIo,exitKind,Optional.empty());
+        }
         public ModeledStatement(Meta meta,String grammarRule,String writtenText,List<StatementOperand> operands,List<StatementClause> clauses,Optional<StatementEffectSummary> effects,Optional<FileIoSurface> fileIo) {
             this(meta,grammarRule,writtenText,operands,clauses,effects,fileIo,Optional.empty());
         }
@@ -491,7 +513,7 @@ public final class Ast {
             this(meta,grammarRule,writtenText,operands,clauses,Optional.empty());
         }
         public ModeledStatement {
-            Objects.requireNonNull(effects);Objects.requireNonNull(fileIo);
+            Objects.requireNonNull(effects);Objects.requireNonNull(fileIo);Objects.requireNonNull(conditionSet);
             operands = List.copyOf(operands);
             clauses = List.copyOf(clauses);
         }
@@ -539,8 +561,10 @@ public final class Ast {
     }
     public enum FigurativeText { SPACES, LOW_VALUES, HIGH_VALUES }
     public record LiteralExpression(Meta meta, String value, String rawLexeme,
-                                    Optional<LogicalText> logicalText, Optional<java.math.BigInteger> integerValue, Optional<FigurativeText> figurativeText) implements Expression {
-        public LiteralExpression { logicalText = Objects.requireNonNull(logicalText); integerValue=Objects.requireNonNull(integerValue);figurativeText=Objects.requireNonNull(figurativeText); }
+                                    Optional<LogicalText> logicalText, Optional<java.math.BigInteger> integerValue, Optional<FigurativeText> figurativeText,Optional<Boolean> booleanValue,Optional<java.math.BigDecimal> numericValue) implements Expression {
+        public LiteralExpression(Meta meta,String value,String rawLexeme,Optional<LogicalText> logicalText,Optional<java.math.BigInteger> integerValue,Optional<FigurativeText> figurativeText,Optional<Boolean> booleanValue) {this(meta,value,rawLexeme,logicalText,integerValue,figurativeText,booleanValue,integerValue.map(java.math.BigDecimal::new));}
+        public LiteralExpression(Meta meta,String value,String rawLexeme,Optional<LogicalText> logicalText,Optional<java.math.BigInteger> integerValue,Optional<FigurativeText> figurativeText) {this(meta,value,rawLexeme,logicalText,integerValue,figurativeText,Optional.empty());}
+        public LiteralExpression { logicalText = Objects.requireNonNull(logicalText); integerValue=Objects.requireNonNull(integerValue);figurativeText=Objects.requireNonNull(figurativeText);Objects.requireNonNull(booleanValue);Objects.requireNonNull(numericValue); }
         public LiteralExpression(Meta meta,String value,String rawLexeme,Optional<LogicalText> logicalText,Optional<java.math.BigInteger> integerValue) { this(meta,value,rawLexeme,logicalText,integerValue,Optional.empty()); }
         public LiteralExpression(Meta meta,String value,String rawLexeme,Optional<LogicalText> logicalText) { this(meta,value,rawLexeme,logicalText,Optional.empty()); }
         public LiteralExpression(Meta meta, String value, String rawLexeme) {

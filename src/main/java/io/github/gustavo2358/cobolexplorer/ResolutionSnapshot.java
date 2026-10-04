@@ -40,19 +40,14 @@ final class ResolutionSnapshot {
             field(out, "pgmnameMode", resolution.policy().pgmnameMode().name()); out.write(',');
             field(out, "dynamMode", resolution.policy().dynamMode().name()); out.write(',');
             field(out, "dllMode", resolution.policy().dllMode().name()); out.write(',');
-            field(out, "claim", report.analysisClaim().name()); out.write(',');
             field(out, "copyInputCompleteness", report.frontendState()
                     .copyInputCompleteness().name()); out.write(',');
             out.write("\"referenceBindingComplete\":" + report.completeness().referenceBindingComplete() + ',');
-            out.write("\"dependencyAnalysisReady\":" + report.completeness().dependencyAnalysisReady() + ',');
             out.write("\"programUnits\":" + model.programUnits().size() + ',');
             out.write("\"references\":" + resolution.entries().size() + ',');
             out.write("\"externalClassifications\":"
                     + report.externalClassifications().entries().size() + ',');
-            out.write("\"unresolvedCopies\":" + report.frontendState().unresolvedCopies() + ',');
-            out.write("\"gaps\":" + report.gaps().size() + "},\n");
-            writeCompleteness(out);
-            out.write(",\n");
+            out.write("\"unresolvedCopies\":" + report.frontendState().unresolvedCopies() + "},\n");
             writeCounts(out);
             out.write(",\n");
             writeMetrics(out);
@@ -65,19 +60,13 @@ final class ResolutionSnapshot {
             out.write(",\n");
             writeClassifications(out);
             out.write(",\n");
-            writeGaps(out);
+            writeInputDiagnostics(out);
             out.write(",\n");
             writeDiagnostics(out);
             out.write(",\n");
             writeRelations(out);
             out.write("};\n");
         }
-    }
-
-    private void writeCompleteness(Writer out) throws IOException {
-        out.write("\"completeness\":{\"blockingReasons\":[");
-        strings(out, report.completeness().blockingReasons());
-        out.write("]}");
     }
 
     private void writeCounts(Writer out) throws IOException {
@@ -146,7 +135,6 @@ final class ResolutionSnapshot {
                 out.write(",\"ambiguous\":" + summary.ambiguous());
                 out.write(",\"unresolved\":" + summary.unresolved());
                 out.write(",\"unsupported\":" + summary.unsupported());
-                out.write(",\"gaps\":" + summary.gaps());
                 out.write(",\"complete\":" + summary.referenceBindingComplete());
             }
             out.write('}');
@@ -277,11 +265,12 @@ final class ResolutionSnapshot {
         out.write(']');
     }
 
-    private void writeGaps(Writer out) throws IOException {
-        out.write("\"gaps\":[");
-        for (int index = 0; index < report.gaps().size(); index++) {
+    private void writeInputDiagnostics(Writer out) throws IOException {
+        out.write("\"inputDiagnostics\":[");
+        var input = report.gaps().stream().filter(g -> g.category() == ResolutionAnalysisReport.GapCategory.INPUT).toList();
+        for (int index = 0; index < input.size(); index++) {
             if (index > 0) out.write(',');
-            ResolutionAnalysisReport.Gap gap = report.gaps().get(index);
+            ResolutionAnalysisReport.Gap gap = input.get(index);
             out.write("{\"id\":" + gap.id() + ',');
             field(out, "category", gap.category().name()); out.write(',');
             field(out, "code", gap.code()); out.write(',');

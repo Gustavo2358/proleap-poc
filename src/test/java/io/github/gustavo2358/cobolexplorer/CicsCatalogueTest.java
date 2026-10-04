@@ -18,7 +18,7 @@ class CicsCatalogueTest {
     @Test void producerPublishesDirectionAndOpenEffects()throws Exception {
         for(var form:FORMS) {
             var p=CicsMemoryLocalityTest.publish("01 CLOCK-X PIC S9(15) COMP-3.\n01 AREA-X PIC X(80).\n01 RESP-CD PIC S9(9) COMP.","EXEC CICS "+form.replace(") ",")\n")+"\nNOHANDLE END-EXEC.\nCALL 'AFTERIO'.\nGOBACK.",false);
-            var j=CicsAbendContractTest.json(p);var c=CicsCommandContractTest.command(j);assertEquals("2.54.0",j.path("contractVersion").asText());
+            var j=CicsAbendContractTest.json(p);var c=CicsCommandContractTest.command(j);assertEquals("2.65.0",j.path("contractVersion").asText());
             assertEquals("SUPPORTED",c.path("syntaxStatus").asText());assertFalse(c.hasNonNull("hostEffects"),"implicit environment writes remain open");
             for(var o:c.path("options"))if(o.hasNonNull("reference")) {
                 var name=o.path("name").asText();boolean write=Set.of("RESP","RESP2","APPLID").contains(name)||form.startsWith("ASSIGN")||form.startsWith("ASKTIME")||form.startsWith("FORMATTIME")&&!Set.of("ABSTIME","DATESEP","TIMESEP").contains(name);

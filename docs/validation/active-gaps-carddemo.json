@@ -1,0 +1,2991 @@
+{
+  "date": "2026-10-03",
+  "baseline": {
+    "proleap-poc": "c43b1410ac9235d906ccc90392d5f3bf82399ac1",
+    "cobol-lower": "19cf1fe9a59997f48868a51332487417753e6fce",
+    "air-java": "7d77330099f46117281fdcbb08304e20d68f5672",
+    "analysis-ir": "fc229ef64eadf26c9ca093a544dad2928ae17dc2",
+    "analysis-cfg": "ae3b23d9e853f15fff64ebb49fa40be9391670ba"
+  },
+  "carddemo": "59cc6c2fd7ebd7ef7925cad552a01a4b8b6e4d5e",
+  "priorAssessmentCommit": "3a46c24bd96949573740e9cae7ed485797cce904",
+  "contractVersion": "2.63.0",
+  "rawEvidenceRoot": ".gap-reconciliation-20261003/active-evidence",
+  "verification": {
+    "sources": 73,
+    "stages": 292,
+    "failures": [],
+    "gapsBefore": 38824,
+    "gapsAfter": 28050,
+    "removed": 10774,
+    "structuralGapsPreservedUnderCurrentCode": 13,
+    "analysisStatus": {
+      "COMPLETE": 8,
+      "PARTIAL": 65
+    },
+    "checks": {
+      "canonical gaps equal prior proof-based pending inventory": 73,
+      "SP controlTopology unchanged": 73,
+      "SP nominalValues unchanged": 73,
+      "SP storage unchanged": 73,
+      "SP entryInventory unchanged": 73,
+      "SP factDependencies unchanged": 73,
+      "SP dataDeclarations unchanged": 73,
+      "SP fileInventory unchanged": 73,
+      "SP sourceDependencies unchanged": 73,
+      "SP ordinaryContinuations unchanged": 73,
+      "SP coverage unchanged": 73,
+      "statement inventory unchanged": 73,
+      "statement facts preserved": 17012,
+      "origin reference resolves": 2529680,
+      "removed AIR uncertainty content limited to retired gaps": 73,
+      "new AIR uncertainty only unresolved membership": 73,
+      "coverage uncertainty delta exactly explained by diagnostic delta": 146,
+      "uncertainty reference resolves": 652184,
+      "AIR executable structure values effects provenance and coverage unchanged": 73,
+      "complete CFG unchanged": 73,
+      "baseline qualified SP digest verified": 73,
+      "current qualified SP digest verified": 73,
+      "qualified AIR digest verified": 146,
+      "all qualified source facts derivations candidates and frontiers unchanged": 73,
+      "dependency origin table agrees with AIR": 146,
+      "every dependency origin resolves": 146,
+      "dependency fingerprints agree with qualified source": 146,
+      "dependency uncertainty delta explained by diagnostic delta": 73,
+      "dependencies of every type candidates supports provenance precision reasons and status unchanged": 73,
+      "observed dependencies byte-identical": 73,
+      "readiness change only for retired containment restriction": 9,
+      "only redundant containment readiness changes": 18
+    }
+  },
+  "retiredOccurrences": {
+    "OBSERVED_STATEMENT_UNSUPPORTED": 1139,
+    "CONDITION_SEMANTICS_NOT_AVAILABLE": 125,
+    "OBSERVED_STATEMENT_PARTIAL": 3,
+    "CONTAINMENT_NOT_PROJECTED": 3993,
+    "PERFORM_ISOLATED_PRIMARY_FLOW_NOT_PROVEN": 1506,
+    "PERFORM_ISOLATED_PRIMARY_NOT_PROVEN": 2055,
+    "PERFORM_LINEAR_MOVE_BODY_NOT_PROVEN": 1517,
+    "PERFORM_ORDINARY_INCOMING_NOT_EXCLUDED": 436
+  },
+  "activeGapCounts": {
+    "REFERENCE_UNRESOLVED_DECLARATION_NOT_FOUND": 120,
+    "CONDITION_REFERENCE_KIND_NOT_PROJECTED": 1587,
+    "CONDITION_SEMANTICS_NOT_AVAILABLE": 1835,
+    "IF_OUTSIDE_SIMPLE_PROFILE": 1996,
+    "SCALAR_WHOLE_ITEM_NOT_PROVEN": 4305,
+    "MOVE_IDENTITY_NOT_PROVEN": 5169,
+    "PERFORM_INPUT_INCOMPLETE": 1297,
+    "PERFORM_RANGE_CONTROL_NOT_PROVEN": 2055,
+    "CICS_COMMAND_EFFECTS_NOT_MODELED": 215,
+    "CICS_EFFECTS_SIGNATURE_PARTIAL": 58,
+    "CICS_HANDLER_STATE_UNKNOWN": 57,
+    "GO_TO_PROVENANCE_INCOMPLETE": 74,
+    "PERFORM_RESUME_NOT_PROVEN": 401,
+    "PERFORM_ENDPOINT_NOT_UNIQUE_LOCAL_PARAGRAPH": 75,
+    "PERFORM_ORDERED_RANGE_NOT_PROVEN": 240,
+    "PERFORM_VARYING_PREDICATE_NOT_PROVEN": 31,
+    "PERFORM_VARYING_CONTROL_ITEM_NOT_PROVEN": 31,
+    "LITERAL_KIND_NOT_PUBLISHED": 1329,
+    "CONTINUATION_NOT_PROJECTED": 142,
+    "PERFORM_VARYING_FROM_NOT_PROVEN": 8,
+    "NORMAL_CONTINUATION_NOT_AVAILABLE": 254,
+    "PERFORM_PROVENANCE_INCOMPLETE": 1437,
+    "PERFORM_UNTIL_PREDICATE_NOT_PROVEN": 32,
+    "CALL_SURFACE_OUTSIDE_FIRST_SLICE": 80,
+    "CALL_ARGUMENTS_NOT_PROJECTED": 80,
+    "DYNAMIC_CALL_TARGET_VALUE_UNKNOWN": 1,
+    "OBSERVED_STATEMENT_UNSUPPORTED": 3245,
+    "MOVE_NON_LITERAL_SOURCE_OUTSIDE_CAPABILITY": 81,
+    "MOVE_TARGET_CARDINALITY_OUTSIDE_CAPABILITY": 161,
+    "CONTROL_MEMBERSHIP_NOT_PROVEN": 13,
+    "OBSERVED_STATEMENT_PARTIAL": 660,
+    "CICS_HANDLER_EXECUTION_STATE_NOT_MODELED": 18,
+    "CICS_FILE_OUTCOME_VALUES_UNKNOWN": 109,
+    "CICS_FILE_HOST_BINDING_UNAVAILABLE": 95,
+    "EXTERNAL_INFERRED_CICS_POSSIBLE_INTRINSIC": 17,
+    "CICS_ABEND_DISPATCH_NOT_MODELED": 9,
+    "PRESERVED_REFERENCE_CONTAINER": 385,
+    "CALL_RUNTIME_NOT_RESOLVED": 91,
+    "PERFORM_OVERLAPPING_RANGES": 14,
+    "CICS_FILE_HANDLER_STATE_UNKNOWN": 12,
+    "PERFORM_PROCEDURE_STRUCTURE_NOT_PROVEN": 171,
+    "MOVE_NON_DATA_TARGET_OUTSIDE_CAPABILITY": 9,
+    "EVALUATE_SUBJECT_NOT_PROVEN": 5,
+    "GO_TO_ALTER_IN_UNIT": 28,
+    "EVALUATE_CONTINUATION_NOT_PROVEN": 7,
+    "CALL_NORMAL_CONTINUATION_NOT_AVAILABLE": 4,
+    "CICS_CONDITION_VALUES_UNKNOWN": 1,
+    "REFERENCE_UNSUPPORTED_UNSUPPORTED_GRAMMAR_FORM": 2,
+    "EVALUATE_PREDICATE_NOT_MODELED": 3,
+    "CICS_COMMAND_DUPLICATE_FLAG_IGNORED": 1
+  },
+  "runtimeTreeSha256": {
+    "frontend-review-classes": "f5f2ad8fb56c1e0e060671222d79909b77cd5fbc50c921ccc679269f2c4fb562",
+    "lower-core-review-classes": "978a295bea5e3b61181326ea2877dd34baa9c21f5f9227f28037adb680580bac",
+    "lower-adapters-review-classes": "c086e07325d893f0dd08b2fb2298ec21e8d120ba4770f5a12dd1701eda1b9eca"
+  },
+  "evidenceSha256": {
+    "frontend-fast-review.log": "9d552379242d7c873719cf1b8703810df330928395f1e64e00250eded5ee86c6",
+    "frontend-qualification-review.log": "c1d33fdc00922e94fab284bc70edbc18f1e4d0f0dda454a23ba21712d382c8e9",
+    "lower-fast-review.log": "a0533c8495fde6bb510c015a89934a12cd4ccb9815c3d018419ba79c58392368",
+    "lower-qualification-final.log": "3e80d70679a1152b3c3bb55e8c222538d1a1fc7d9ab9ab2efa79143ef9e1a8af",
+    "corpus-final.log": "b35c5877672cef20bead3e7c57a80cd68027e6da54dac70bca01ce0456f3114f",
+    "verify-corpus-final.log": "14505a790530a4d93d1315ae578a6aed91acf3803589ef597ea6d05c54c0e03d",
+    "verify-portable-smoke.log": "37805dee082247c871039cfd4362e71e45faf4c485c451cb1894b97b4e76a3e1",
+    "corpus-final/results.json": "9aaac16d28782cd49452c66a5323a0e354e266fac55b75aa15dcf6f1fde4e4c1",
+    "corpus-final/verification.json": "c2961b98ed06ae6fb44004fc5807aa8da8fbb9b1d927ce7ac1feefcb51fde193",
+    "corpus-final/summary.json": "b00bc1b418a0abde3fa167ef0356a82e2960b58eb40a8ef1ea7ebbb41dedb992",
+    "run-corpus.py": "47a48ac7f920edbdce00bf3e6a1914db305744f5305d1a299b9caac5c1d0b75a",
+    "verify-corpus.py": "b9ac05da7599a84d1e5e7c3befe80d413537093ab68017d2482cf90e8ad7bc63"
+  },
+  "programs": [
+    {
+      "source": "app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
+      "sourceSha256": "309468a5c4745f92c6dcf6ed28b396334b2f131ced78eb43eda962a63d2b174e",
+      "gapsBefore": 270,
+      "gapsAfter": 227,
+      "analysisStatus": "COMPLETE",
+      "localReadinessClaimsUpdated": 0,
+      "airUncertaintiesRemoved": 43,
+      "airUncertaintiesAdded": 0,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "fdf0a2c9355537679eb406bcca818b7c950e68e7d8484f321abcddffc0eb38c6",
+          "after": "611fe384fb4723c9369fafaf7d30434e6c2bba7edae18bab7bf3478d1264d0c6"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "70eebace714b480745246c00c0e80e748b0d438de7ba0009d2dbd37a64d061d2",
+          "after": "70eebace714b480745246c00c0e80e748b0d438de7ba0009d2dbd37a64d061d2"
+        },
+        "dependencies.json.zst": {
+          "before": "f80680283160c733f2c1f971e63a6c299eb065a7db3f27cf8eb269607da68e98",
+          "after": "9ea81dfbfe0df6331e29bb6a0d5e66b560417bb0e3a4595d30fe85d8bd643d01"
+        },
+        "cfg.json.zst": {
+          "before": "9f1bef8613913130079db5bcddfec021a63a4df9d4d3e954baa867d313660ea8",
+          "after": "5a26ca4d7063626af6e81d66f548f85379ab74305d54a4f5912b559240b05f36"
+        }
+      },
+      "currentArtifactHashes": {
+        "source-3081f60955224de22174d55b4520eadb3541eb661245330d3ed9517e878ef4b5.json.zst": "1e254531c8ce889488ed14fc6af95460c50972dce59c04b07ff11be26cf43128",
+        "air-18a4aaf847cb69aa3cc3600a479b4f692dde2e3011512d3b33b4bff96501bb1f.json.zst": "6f3e3a54b3e3a29a9c502e9eb7e4443011eae777672ca52b6ddbf4903e7eb7af",
+        "cfg.json.zst": "5a26ca4d7063626af6e81d66f548f85379ab74305d54a4f5912b559240b05f36",
+        "dependency-input.json.zst": "5f1adab986112df7998ad265e416a1873545e17f7faf31e7b7566deba9e4bc2c",
+        "dependencies.json.zst": "9ea81dfbfe0df6331e29bb6a0d5e66b560417bb0e3a4595d30fe85d8bd643d01",
+        "sp/cobol-semantic-product.json.zst": "611fe384fb4723c9369fafaf7d30434e6c2bba7edae18bab7bf3478d1264d0c6",
+        "sp/observed-dependencies.json.zst": "70eebace714b480745246c00c0e80e748b0d438de7ba0009d2dbd37a64d061d2",
+        "sp/cobol-semantic-compilation.json.zst": "582d6ff57ced9e8d48cd2554b72944254e34b471cb13e710fe932cff128f12fe",
+        "sp/semantic-product.json.zst": "611fe384fb4723c9369fafaf7d30434e6c2bba7edae18bab7bf3478d1264d0c6"
+      }
+    },
+    {
+      "source": "app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+      "sourceSha256": "224856ce6ef1b7417aefcec033a36a9315c0005decf9f11d21d11e9240e3f8fa",
+      "gapsBefore": 647,
+      "gapsAfter": 478,
+      "analysisStatus": "PARTIAL",
+      "localReadinessClaimsUpdated": 0,
+      "airUncertaintiesRemoved": 170,
+      "airUncertaintiesAdded": 1,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "92621864c9916f3e9b1c20c65494dd22113be259bf87a1fd2cf314dee1a50a9a",
+          "after": "7531a5f6903ab4e5371bfd2303f576cb80c8197b703d91ce65813699073f612c"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "69376c5f68554e532ec93e00bed330708711419dea1508dfb755607ae1d83362",
+          "after": "69376c5f68554e532ec93e00bed330708711419dea1508dfb755607ae1d83362"
+        },
+        "dependencies.json.zst": {
+          "before": "ee4909aee2bf0163ffff363fb950eeb3276834c4fd34959d51f994f936efd32b",
+          "after": "39eb2feb8496a46c63f4e51a894c16241352e417310b011a254f3a615c3c7e1e"
+        },
+        "cfg.json.zst": {
+          "before": "e4e9a6162ba0c794adc878a85f97f1a07260ffb45dcfe23653cde9d4928fdd7e",
+          "after": "6817f07e37b3033b108feb46daa578dd9afc4f820387638b94f5d8e82f2da993"
+        }
+      },
+      "currentArtifactHashes": {
+        "source-42a50c8bee956ac9c958683f289c55df57fb2a8b7b9f7e0e505bd33e0077d1c2.json.zst": "2a51b4f56594aa93b28449f3a950e184afa2444cfda84d1b27af4d09a539806c",
+        "cfg.json.zst": "6817f07e37b3033b108feb46daa578dd9afc4f820387638b94f5d8e82f2da993",
+        "dependency-input.json.zst": "0f244666a86b0b3bb63975675437013b07946154b446a074e989d909a14129be",
+        "air-f04d7be3903ef97167db734bc0f493c240ab221e9893522adb436d7964b27890.json.zst": "48fb31bf432c5ee8ad665145775b401181047a62a2858e59ff390b24d98cda6e",
+        "dependencies.json.zst": "39eb2feb8496a46c63f4e51a894c16241352e417310b011a254f3a615c3c7e1e",
+        "sp/cobol-semantic-product.json.zst": "7531a5f6903ab4e5371bfd2303f576cb80c8197b703d91ce65813699073f612c",
+        "sp/observed-dependencies.json.zst": "69376c5f68554e532ec93e00bed330708711419dea1508dfb755607ae1d83362",
+        "sp/cobol-semantic-compilation.json.zst": "5b520470e2374efb6349a33b67a10af9c5044106aac7282030db096baad62878",
+        "sp/semantic-product.json.zst": "7531a5f6903ab4e5371bfd2303f576cb80c8197b703d91ce65813699073f612c"
+      }
+    },
+    {
+      "source": "app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+      "sourceSha256": "7ab6dadad6d9d738f6a0cb402f394c25ccda5f7fef26ad644feeb76c11065254",
+      "gapsBefore": 1046,
+      "gapsAfter": 726,
+      "analysisStatus": "PARTIAL",
+      "localReadinessClaimsUpdated": 0,
+      "airUncertaintiesRemoved": 320,
+      "airUncertaintiesAdded": 0,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "7ea9701769fd4a55faa787e012df1daee79af132c882f6cafcf75b46a181937f",
+          "after": "c46dea684011ba6bc286cd1ebe43b58ffcafe5e8a70d0434b954cc3549bfb14f"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "3a1aacbb95b0a4b4808b4a4f449b00699524d6aeb43d32a4366c88b5a33c7115",
+          "after": "3a1aacbb95b0a4b4808b4a4f449b00699524d6aeb43d32a4366c88b5a33c7115"
+        },
+        "dependencies.json.zst": {
+          "before": "f95fc5cace7e9d2e1de060da99c9920747f41fc348b20266cde5c369ec64d5bf",
+          "after": "372a0aa52a4c5faa91919008902e49e76a624496a738cbaefb66e09b131f1688"
+        },
+        "cfg.json.zst": {
+          "before": "031651f72569943f64a053600433e21be318c609ff6c1998ad636687b9aaf3d1",
+          "after": "9ab28dde6901a27fc4e21e18ba40aebe6a16e6b98c0c48867593d87f718eef8d"
+        }
+      },
+      "currentArtifactHashes": {
+        "cfg.json.zst": "9ab28dde6901a27fc4e21e18ba40aebe6a16e6b98c0c48867593d87f718eef8d",
+        "dependency-input.json.zst": "bb742e763a056684bdd19b80251d60396a1218534cc37c25674028ba7533dc02",
+        "air-d6b27b1f98edae00a691707e28632dec68eb7641e7ae99c5d52d181e050448ff.json.zst": "92a8982537c23cb1715e9a38dc85f001db7f21e1da8852961578c1b442c20789",
+        "dependencies.json.zst": "372a0aa52a4c5faa91919008902e49e76a624496a738cbaefb66e09b131f1688",
+        "source-0ccccf47750e57980b62568e7cd47381b257646108a0a9d9d3439f237f41c23d.json.zst": "763b04cec4f439000d175c2fc9b6e32ee1ed9ed4efb4ff5fbe3ad8bca161c3a9",
+        "sp/cobol-semantic-product.json.zst": "c46dea684011ba6bc286cd1ebe43b58ffcafe5e8a70d0434b954cc3549bfb14f",
+        "sp/observed-dependencies.json.zst": "3a1aacbb95b0a4b4808b4a4f449b00699524d6aeb43d32a4366c88b5a33c7115",
+        "sp/cobol-semantic-compilation.json.zst": "de69ead3bd45a34875bca4bec1e2732ea7242a9f530b49e35ea9588e421c3105",
+        "sp/semantic-product.json.zst": "c46dea684011ba6bc286cd1ebe43b58ffcafe5e8a70d0434b954cc3549bfb14f"
+      }
+    },
+    {
+      "source": "app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+      "sourceSha256": "27a969cbee69426fa1056053e676041430e99399912f0e27ee1f1a454093c21e",
+      "gapsBefore": 516,
+      "gapsAfter": 376,
+      "analysisStatus": "PARTIAL",
+      "localReadinessClaimsUpdated": 0,
+      "airUncertaintiesRemoved": 140,
+      "airUncertaintiesAdded": 0,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "5aab288fc4ff0b7c6a51205689333a07019e7c5a77dcbb1e19915b50702f906e",
+          "after": "97fda5a67bac6a8c14b01f48542a3e4afe97063a38d92f55886d814046f777cc"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "e2d987f75556a82b2b5a0c56639b6b711dca392933d3c35aa41b97ccf6d80fc9",
+          "after": "e2d987f75556a82b2b5a0c56639b6b711dca392933d3c35aa41b97ccf6d80fc9"
+        },
+        "dependencies.json.zst": {
+          "before": "e745de2d63d952827a381b5bf09af21ef684e03a55bb8fd3c9e2e01e88d88a58",
+          "after": "075820f3b7273a554069f4abe80ea211b0fcfb13d1ee8b26d549ee4c92db5426"
+        },
+        "cfg.json.zst": {
+          "before": "92e04bafc3fd52a4cb58e95d71983e261dcd488128da1d0beb45fca747872f41",
+          "after": "21c0952c07bcf2d070fd8556a5084f6c1cd404768e1b6719bc148139a83d7db5"
+        }
+      },
+      "currentArtifactHashes": {
+        "cfg.json.zst": "21c0952c07bcf2d070fd8556a5084f6c1cd404768e1b6719bc148139a83d7db5",
+        "dependency-input.json.zst": "5a4ace3028189686085a93a1aceb00e598fc0f1181ac63feacb6ad6006c28bce",
+        "air-c5c3582ef86c83b7a9c365521c3af0771c168d7911a5c6a0a1845b11e06a0191.json.zst": "43333663d191fa9559b83345db6e855c74f5563ef438391dfae8532f5f4239c9",
+        "source-e1cbaf37cd4da3c515b866c48c7cfa53b6ea66d0eb23975a41bca0aca0163623.json.zst": "4636b56ef0611779a5449f3ea395b81379b4aea2b3547ddeb2cd684175b07fe6",
+        "dependencies.json.zst": "075820f3b7273a554069f4abe80ea211b0fcfb13d1ee8b26d549ee4c92db5426",
+        "sp/cobol-semantic-product.json.zst": "97fda5a67bac6a8c14b01f48542a3e4afe97063a38d92f55886d814046f777cc",
+        "sp/observed-dependencies.json.zst": "e2d987f75556a82b2b5a0c56639b6b711dca392933d3c35aa41b97ccf6d80fc9",
+        "sp/cobol-semantic-compilation.json.zst": "b423e7dcf82a95f45e7b441023f552664f77760812776eac7d4fec180f3255df",
+        "sp/semantic-product.json.zst": "97fda5a67bac6a8c14b01f48542a3e4afe97063a38d92f55886d814046f777cc"
+      }
+    },
+    {
+      "source": "app/app-authorization-ims-db2-mq/cbl/COPAUS2C.cbl",
+      "sourceSha256": "57232060f8bdaecc679b74e93fcf91d93cffd400326c001bd187ab5fad14789e",
+      "gapsBefore": 84,
+      "gapsAfter": 81,
+      "analysisStatus": "PARTIAL",
+      "localReadinessClaimsUpdated": 0,
+      "airUncertaintiesRemoved": 3,
+      "airUncertaintiesAdded": 0,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "261e730e061a610bd7d23bf608b34734abab0f08a8c0aff67dff67a1fda3b002",
+          "after": "63a250bbbbcbcbbb4412e0c43c0fb8c4dfcf9559f5459485673be2d1ea479c5d"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "ee801021371bae2e1ab53b02999e6c59c2e5c550704d28e2069e5752c91d590e",
+          "after": "ee801021371bae2e1ab53b02999e6c59c2e5c550704d28e2069e5752c91d590e"
+        },
+        "dependencies.json.zst": {
+          "before": "4620a070aaf7f957d610edd78e5f22bd534cb1742c928aae080672f7de3ca7c0",
+          "after": "e955a049ecd7cf6bd9461e5775e359d0db37744ca5af044a786a60cb7fa76e52"
+        },
+        "cfg.json.zst": {
+          "before": "e58d2bdaa9506870a283d72c7ae85e1b60486faffa2e027f1988151dd1e9a0a2",
+          "after": "1e81d63b69b6591f0b5ac76a16a02393f8e5b49cf40fb018b7ef8e639c4a94a5"
+        }
+      },
+      "currentArtifactHashes": {
+        "cfg.json.zst": "1e81d63b69b6591f0b5ac76a16a02393f8e5b49cf40fb018b7ef8e639c4a94a5",
+        "dependency-input.json.zst": "93631da8082599d0d36bd80cf951f6ee77f22c07cca743cdcbae40729d954b51",
+        "source-b01bbcca12c64d93a399e5219649a0f03d0e4293de1fb63e98057621ad85e388.json.zst": "f8c1c34c560770de8d8e59f175c48f693a491adc366b8ffc6fe8eb155125cbb3",
+        "dependencies.json.zst": "e955a049ecd7cf6bd9461e5775e359d0db37744ca5af044a786a60cb7fa76e52",
+        "air-1678821cc01a20374a9e59fbb913b6a0cf762ef202f22c2a371049e8bd92c22d.json.zst": "12904254c03aa84504a5c88c64933aa1492461dfa85aa714bccd45e1a796708b",
+        "sp/cobol-semantic-product.json.zst": "63a250bbbbcbcbbb4412e0c43c0fb8c4dfcf9559f5459485673be2d1ea479c5d",
+        "sp/observed-dependencies.json.zst": "ee801021371bae2e1ab53b02999e6c59c2e5c550704d28e2069e5752c91d590e",
+        "sp/cobol-semantic-compilation.json.zst": "2c037b41833b1f2f3a3e487e0f10259dce4459608351ff472592ea5b94349ca9",
+        "sp/semantic-product.json.zst": "63a250bbbbcbcbbb4412e0c43c0fb8c4dfcf9559f5459485673be2d1ea479c5d"
+      }
+    },
+    {
+      "source": "app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+      "sourceSha256": "13c409d1b14b52c4d334c9297aaa7dafa209901569f809127f3831d780722e33",
+      "gapsBefore": 139,
+      "gapsAfter": 113,
+      "analysisStatus": "COMPLETE",
+      "localReadinessClaimsUpdated": 0,
+      "airUncertaintiesRemoved": 26,
+      "airUncertaintiesAdded": 0,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "41b48282d2042cca6f6d07b435ea60ded900af82690a6da1b99a0ccaf3685b00",
+          "after": "e5540ea4b5f87d439df846e354c45e52f0db43f36fa31ff57cd7e5675fc1f47a"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "fb6b3b417ef5adbb489f159886484179ce60001ded6f7ccc063325563118662b",
+          "after": "fb6b3b417ef5adbb489f159886484179ce60001ded6f7ccc063325563118662b"
+        },
+        "dependencies.json.zst": {
+          "before": "821609db227d6cab12829b912400ff16ef48e65bbceb0fa019bb96a6c90dd871",
+          "after": "b921f473b8efe350509fc4e25be7684299c29205f35fbd4fa81dd8e9006b69e5"
+        },
+        "cfg.json.zst": {
+          "before": "af51bb6027ace634e22918cdc032b2d5e764209ebb1502824e6bfe3a26641611",
+          "after": "7c7ea55b3d0b3b0ea733c696e9649aae30490a64f95450bba433d569feb8f26b"
+        }
+      },
+      "currentArtifactHashes": {
+        "cfg.json.zst": "7c7ea55b3d0b3b0ea733c696e9649aae30490a64f95450bba433d569feb8f26b",
+        "dependency-input.json.zst": "95e973d7032358585ab2673a4ea6ae30626f3330250d5e889bd30ff6fe2053eb",
+        "air-4433efb74700486dba24d82b1f67b6497b437156c689a838aae4ed7f8e939727.json.zst": "a2d205b7c29524675bb5edc9c94d720681f6b405e7b7f4ef96be6664878a2cab",
+        "source-da418a9fc403bfdc4d75dfb0e8874537dfee10f2f24a01bbe809094fe571e18a.json.zst": "88f4df71fb528cf1d7ee5ed36333bd85a134119ea4b4ac0f0f725c72c471f260",
+        "dependencies.json.zst": "b921f473b8efe350509fc4e25be7684299c29205f35fbd4fa81dd8e9006b69e5",
+        "sp/cobol-semantic-product.json.zst": "e5540ea4b5f87d439df846e354c45e52f0db43f36fa31ff57cd7e5675fc1f47a",
+        "sp/observed-dependencies.json.zst": "fb6b3b417ef5adbb489f159886484179ce60001ded6f7ccc063325563118662b",
+        "sp/cobol-semantic-compilation.json.zst": "f4166446e1b6b6a0c9c595c1906292dff327cc468782b879016200dc62186c18",
+        "sp/semantic-product.json.zst": "e5540ea4b5f87d439df846e354c45e52f0db43f36fa31ff57cd7e5675fc1f47a"
+      }
+    },
+    {
+      "source": "app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
+      "sourceSha256": "5694a2ed8a12dd4dc82717b401c655866a0e1f9abb0acf395151ead2b0cb31a7",
+      "gapsBefore": 178,
+      "gapsAfter": 137,
+      "analysisStatus": "PARTIAL",
+      "localReadinessClaimsUpdated": 0,
+      "airUncertaintiesRemoved": 41,
+      "airUncertaintiesAdded": 0,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "1641a3e38a3ee6a751309fd13a5513180d26033121a04882a3351b1f3fb93785",
+          "after": "50d98936be82cfbab1cb80aa48780052955f6a72fb4a61cb04de79a55ca82cd9"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "570e0f043a56c7cbb2a2359318da583e2f64339360cef93612d91186a1065742",
+          "after": "570e0f043a56c7cbb2a2359318da583e2f64339360cef93612d91186a1065742"
+        },
+        "dependencies.json.zst": {
+          "before": "99760740c91eedc35a7d516b2f5b4ecbda7e16433d8afe916483e1b374b7427e",
+          "after": "02d0ba6211ebe93e4cd1220464a1a5bd74fe42694365c011d2335c071058ec8b"
+        },
+        "cfg.json.zst": {
+          "before": "4ae375a9b14e9bdf4da30a6d7709d5bd4b9ddc287a70421806447773166d29eb",
+          "after": "755bb978d1e644a1fb98b1365a658d01588daa9c6b98aa86580198bedab2d679"
+        }
+      },
+      "currentArtifactHashes": {
+        "air-9cbec1820aa27bc67b6dea3e562e530c317a666166a9779cd7ac496a619ac27a.json.zst": "207c9ab468fd74b38a555daf639132a1562d7603147cf79b049d954974299e41",
+        "cfg.json.zst": "755bb978d1e644a1fb98b1365a658d01588daa9c6b98aa86580198bedab2d679",
+        "dependency-input.json.zst": "52e12fd3b0cf7d0a1fe84c63bcfe98c0c1ee0fc6d340dbbeb5e99e56b0c36c8a",
+        "source-410305b744d0081190531c56adac7a257ce6496e22406a6db202334d4684a4e8.json.zst": "35cffee3c70025fcd341fcdf3cc957d0a602e0b37439ed8a5381461433586d6c",
+        "dependencies.json.zst": "02d0ba6211ebe93e4cd1220464a1a5bd74fe42694365c011d2335c071058ec8b",
+        "sp/cobol-semantic-product.json.zst": "50d98936be82cfbab1cb80aa48780052955f6a72fb4a61cb04de79a55ca82cd9",
+        "sp/observed-dependencies.json.zst": "570e0f043a56c7cbb2a2359318da583e2f64339360cef93612d91186a1065742",
+        "sp/cobol-semantic-compilation.json.zst": "f327ea66a5cd22744631b1f209f9fd4bd7dead04a97244bf551d89fd949e409c",
+        "sp/semantic-product.json.zst": "50d98936be82cfbab1cb80aa48780052955f6a72fb4a61cb04de79a55ca82cd9"
+      }
+    },
+    {
+      "source": "app/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL",
+      "sourceSha256": "cf174417cd833193fec178a782fa8d7cabb95da9a8c2ca709af598c45f485625",
+      "gapsBefore": 134,
+      "gapsAfter": 104,
+      "analysisStatus": "PARTIAL",
+      "localReadinessClaimsUpdated": 0,
+      "airUncertaintiesRemoved": 30,
+      "airUncertaintiesAdded": 0,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "882d94a2adc26bafcae5bf6ca4eedc4aa481baf56799e0e42bce85f6306ef2b9",
+          "after": "c0bcc6d4a8c1eb63835791ef949300895e36ce28916b1cdaa37d88ab4ccbddac"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "cc26028b1c690215ce29442f7635e56296a3ff22d1f626f9210d4f75fc3c140a",
+          "after": "cc26028b1c690215ce29442f7635e56296a3ff22d1f626f9210d4f75fc3c140a"
+        },
+        "dependencies.json.zst": {
+          "before": "c3eb83c1a863604ef726362932e1ad2b856f24eab07dcf92059304347e83d103",
+          "after": "ed9c99104e4e491c03b437fba0f1f18d650e57141da23b4a266c1d9369e3ba0f"
+        },
+        "cfg.json.zst": {
+          "before": "1ffc4367a14ec18e44a9884d1b2cb46c8576b1550413febdcd18318d5a1e53ac",
+          "after": "03e60ccaee8d86dd808cfd542ae3c0e44beb83826f096c294171ded5b12fe9a5"
+        }
+      },
+      "currentArtifactHashes": {
+        "cfg.json.zst": "03e60ccaee8d86dd808cfd542ae3c0e44beb83826f096c294171ded5b12fe9a5",
+        "air-706cfe174e67802149e6aaf6ce9a9d7e8019eb09fc58afb2a5264e7b29ca31ba.json.zst": "3acc621459e4477ae0bbd1e3c1aaca01e27e6bfb7ce93dd3428db7214866fe37",
+        "dependency-input.json.zst": "96f8072276aba76f76e1f6ddcf0bbb0102734472624ea22a46af9327bc9c13bd",
+        "source-a2339fd5b7d4610988ed44a3026996e9a5fb334448c167b78ec98176ae293bad.json.zst": "1e569c2503c6e6179bc3add5b7c6bfd6ae8f8e62b59ada620c66a955a50156eb",
+        "dependencies.json.zst": "ed9c99104e4e491c03b437fba0f1f18d650e57141da23b4a266c1d9369e3ba0f",
+        "sp/cobol-semantic-product.json.zst": "c0bcc6d4a8c1eb63835791ef949300895e36ce28916b1cdaa37d88ab4ccbddac",
+        "sp/observed-dependencies.json.zst": "cc26028b1c690215ce29442f7635e56296a3ff22d1f626f9210d4f75fc3c140a",
+        "sp/cobol-semantic-compilation.json.zst": "76279fbf7343751ff2289dad91e060bb958f16515973d00de5ff1b685bcb49d8",
+        "sp/semantic-product.json.zst": "c0bcc6d4a8c1eb63835791ef949300895e36ce28916b1cdaa37d88ab4ccbddac"
+      }
+    },
+    {
+      "source": "app/app-transaction-type-db2/cbl/COBTUPDT.cbl",
+      "sourceSha256": "0213fd5718c6aadd3fba6bbfb1818456d75d10843181bff63aca9ff57d39e87c",
+      "gapsBefore": 149,
+      "gapsAfter": 76,
+      "analysisStatus": "PARTIAL",
+      "localReadinessClaimsUpdated": 0,
+      "airUncertaintiesRemoved": 73,
+      "airUncertaintiesAdded": 0,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "24a45b42ba70bdd4197cbd88d0b6b618c35b18881f6391193b22376b85713615",
+          "after": "b3725739cad125d7f1c01e2d923738976a754cb0d0a91c3dacaddd8f9a684277"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "92aa9c99f6d6d32f612de85b70eba5ea1c68dbcd6f46b78dcfb8d1ede99439ff",
+          "after": "92aa9c99f6d6d32f612de85b70eba5ea1c68dbcd6f46b78dcfb8d1ede99439ff"
+        },
+        "dependencies.json.zst": {
+          "before": "b1830abc0c1c80d9ef3d91d1e0cda29b318103254d41f8cc39fc463bdd09b6e1",
+          "after": "93ef242d98d44f6d5a1cb3dbc77a66883ea48bb88ba5d54b8bfb93511d5aa88d"
+        },
+        "cfg.json.zst": {
+          "before": "07dea12b9ac036c14d0a3746793156a3e5d6ffb86bc34e33f6b6cf46bbfb989e",
+          "after": "cf618a86b799b8d0f13edaa5bd36f46670a9945e34c138cd955db972f1da58f6"
+        }
+      },
+      "currentArtifactHashes": {
+        "source-f7585ba5807d0ad51752b7b02cf8700aecc68c17d517a8651aee30ba240aabcd.json.zst": "7ecedee8de93f2b5cef4512a95a0aea931782dc1950faf87552147d88fee1cc6",
+        "cfg.json.zst": "cf618a86b799b8d0f13edaa5bd36f46670a9945e34c138cd955db972f1da58f6",
+        "dependency-input.json.zst": "16e57b467d8ee86f45f48a9e95b20ba337dd6312fdfb46b303617ca61b8085ff",
+        "air-c6109749e2f2fc96625e3410166e91d06850becaf7eb56a081798cf8c7d993f8.json.zst": "88e78ed0d8cfb8b150cdde10db8fd3b80f3f91a36f161edc8c326da635fa338c",
+        "dependencies.json.zst": "93ef242d98d44f6d5a1cb3dbc77a66883ea48bb88ba5d54b8bfb93511d5aa88d",
+        "sp/cobol-semantic-product.json.zst": "b3725739cad125d7f1c01e2d923738976a754cb0d0a91c3dacaddd8f9a684277",
+        "sp/observed-dependencies.json.zst": "92aa9c99f6d6d32f612de85b70eba5ea1c68dbcd6f46b78dcfb8d1ede99439ff",
+        "sp/cobol-semantic-compilation.json.zst": "97ae8f3bfd0318fbd4573769a5f146e7aba26a8611bc69a1467b1ca35a22a15e",
+        "sp/semantic-product.json.zst": "b3725739cad125d7f1c01e2d923738976a754cb0d0a91c3dacaddd8f9a684277"
+      }
+    },
+    {
+      "source": "app/app-transaction-type-db2/cbl/COTRTLIC.cbl",
+      "sourceSha256": "916a5fe2279ad626147990d8f86fac1e4b296f827889485b020cc310b5323601",
+      "gapsBefore": 1341,
+      "gapsAfter": 956,
+      "analysisStatus": "PARTIAL",
+      "localReadinessClaimsUpdated": 12,
+      "airUncertaintiesRemoved": 389,
+      "airUncertaintiesAdded": 4,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "2944562a6c16b45d58e23c0f0f7959c434d20e7732a73e288c8762e145a33420",
+          "after": "6a608362a7bb18f6a976af3ed77fdb94ec2fea6e0721e6cf2e4f99d7e66692e5"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "10f016fc5c7cfa03b5e4ab844f01d9305054843f06f1915476df13e8c0238e9d",
+          "after": "10f016fc5c7cfa03b5e4ab844f01d9305054843f06f1915476df13e8c0238e9d"
+        },
+        "dependencies.json.zst": {
+          "before": "9d6efd7ece9370410fc40e40d76a08a887a608170dd65016def38de95a7ed786",
+          "after": "9b9301572323222dc11704bb97143779f03b5f06d9f7db109794b572c1cfc1ce"
+        },
+        "cfg.json.zst": {
+          "before": "04b47dabc70a7ede0ed5b8432aec4b88aa7e93c89bf5a26c864ad60738292478",
+          "after": "151d2fe7707219664abd1135d3b1e936fbbe184b7995a717d1c4a47e47e86846"
+        }
+      },
+      "currentArtifactHashes": {
+        "cfg.json.zst": "151d2fe7707219664abd1135d3b1e936fbbe184b7995a717d1c4a47e47e86846",
+        "dependency-input.json.zst": "a8850b149d94a3bb17a3a549f98a079b26a3e0a771e06e4b8fedaadd9bc153a2",
+        "source-ae697bedbea92127f42f100b2385998e4c7916fad62d3e8b3ab554d694ff833e.json.zst": "b1c37eb1a40d4432d4a8094869cbe49ff2d54e82e265a05120290e351b3ddcd3",
+        "dependencies.json.zst": "9b9301572323222dc11704bb97143779f03b5f06d9f7db109794b572c1cfc1ce",
+        "air-b7e1c7d891d200c11e17c1c555711a51909206a43d11401af853537765cf2a90.json.zst": "398731941333810f2f5d476e75b1c9d584e64be37ba6213ef226c31445a9d1f0",
+        "sp/cobol-semantic-product.json.zst": "6a608362a7bb18f6a976af3ed77fdb94ec2fea6e0721e6cf2e4f99d7e66692e5",
+        "sp/observed-dependencies.json.zst": "10f016fc5c7cfa03b5e4ab844f01d9305054843f06f1915476df13e8c0238e9d",
+        "sp/cobol-semantic-compilation.json.zst": "eac0cdb9905fe5c423f96237e0c6db1144d13c4b2e4adf27787ec6b0abf8f66f",
+        "sp/semantic-product.json.zst": "6a608362a7bb18f6a976af3ed77fdb94ec2fea6e0721e6cf2e4f99d7e66692e5"
+      }
+    },
+    {
+      "source": "app/app-transaction-type-db2/cbl/COTRTUPC.cbl",
+      "sourceSha256": "c16e40c391c0ad2d3e797a0e01144ef5b78d3b0db0a1771411a95a9d08b01f67",
+      "gapsBefore": 864,
+      "gapsAfter": 590,
+      "analysisStatus": "PARTIAL",
+      "localReadinessClaimsUpdated": 2,
+      "airUncertaintiesRemoved": 278,
+      "airUncertaintiesAdded": 4,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "c35fce1d7c05209faffcbd984bec37a2c4e4e6cadeb496d00b96f630eee4f5e5",
+          "after": "fbee7d83a35e7aefed1f69d10282bb8a18c6ed7a58a8b1b066d5d42e4c9ddc3b"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "152ad4f497b95d1cb57dd89fac6cd904ecf0406a2642941dcedd507b9586abe4",
+          "after": "152ad4f497b95d1cb57dd89fac6cd904ecf0406a2642941dcedd507b9586abe4"
+        },
+        "dependencies.json.zst": {
+          "before": "42292dd1a9eaf228adff22569f2522d590615d0a498d5c0722ecf30d93591391",
+          "after": "19dfb6b15a779185a481e853ce4144b739ca90f1e1b9604ae4340c102c86b792"
+        },
+        "cfg.json.zst": {
+          "before": "3b3cc441f0f67e0847e9ea4e0536d22ebc03998ee8777add4d682a3c7b2f885d",
+          "after": "daa7ea5d0648356a425f654bb506a25c0c5633a1fd2cfb52953ee9b0a10e3b82"
+        }
+      },
+      "currentArtifactHashes": {
+        "cfg.json.zst": "daa7ea5d0648356a425f654bb506a25c0c5633a1fd2cfb52953ee9b0a10e3b82",
+        "source-a66eb272ea32100eb7e62973727379565614ede9434eabf41ec0f1dd22ffe150.json.zst": "978290dd88afc098d6903653c480cea4bae12082042b355d91e9c0fccc9d6ab8",
+        "dependency-input.json.zst": "61df5e7ab4d54dcc14f32d5c072c03874ce6f2d5e57c9306793e3f4fbff21a5d",
+        "dependencies.json.zst": "19dfb6b15a779185a481e853ce4144b739ca90f1e1b9604ae4340c102c86b792",
+        "air-9cbb8db408ae1edc0d1f43ae71bda873c5da9bd1e8033a3f3956adb914012ab0.json.zst": "9bfd009a3c4ddfd81c2c1106eb6083d07c7c70fdbc839fc7cb20874e941be82f",
+        "sp/cobol-semantic-product.json.zst": "fbee7d83a35e7aefed1f69d10282bb8a18c6ed7a58a8b1b066d5d42e4c9ddc3b",
+        "sp/observed-dependencies.json.zst": "152ad4f497b95d1cb57dd89fac6cd904ecf0406a2642941dcedd507b9586abe4",
+        "sp/cobol-semantic-compilation.json.zst": "85db5c1e6dc4cf08188560f8d62faf6384af88fdda28bc5a5556518d19fc258f",
+        "sp/semantic-product.json.zst": "fbee7d83a35e7aefed1f69d10282bb8a18c6ed7a58a8b1b066d5d42e4c9ddc3b"
+      }
+    },
+    {
+      "source": "app/app-vsam-mq/cbl/COACCT01.cbl",
+      "sourceSha256": "92776ed2801da1148839a9ed98b6537de4b41e0c7f050c8dcaae0d4e4ea543b5",
+      "gapsBefore": 545,
+      "gapsAfter": 362,
+      "analysisStatus": "PARTIAL",
+      "localReadinessClaimsUpdated": 0,
+      "airUncertaintiesRemoved": 183,
+      "airUncertaintiesAdded": 0,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "130ee41baf4b9e87c7b2cfb975bbbc11c9e3d7a85f3276d6e34784540d2f05bd",
+          "after": "d1066067f1ddf2843c4503296817f06f1e8370a8370d0b9942fac726ffb31597"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "1399567abfef33557d76784426a9216e4ea6fe80831af3b3baec8cbc59dbe202",
+          "after": "1399567abfef33557d76784426a9216e4ea6fe80831af3b3baec8cbc59dbe202"
+        },
+        "dependencies.json.zst": {
+          "before": "165af4042271726e51b6f5e4aa703d06292bcdedd5d498f4378463add809b7d0",
+          "after": "9fd9c0fba99a365741c001e863634566a3e3122520d11c19f6781eced158f24d"
+        },
+        "cfg.json.zst": {
+          "before": "89b08932d3379585bbef7ead70196f6cdebc266efdb82e565a45112ba4e02b75",
+          "after": "7545e0378695a8325f537892672bd04b8717d585e2eb50f370db4e5ecf57b50a"
+        }
+      },
+      "currentArtifactHashes": {
+        "cfg.json.zst": "7545e0378695a8325f537892672bd04b8717d585e2eb50f370db4e5ecf57b50a",
+        "dependency-input.json.zst": "ee8c4d9aa698e7d96e60bb940654c45ac4fc34c02cbfc31cbad2cca0634ff8bf",
+        "air-20d278ebb44fd8451345dd48f11658a677de7f92daafc9c0a187fbf52f98b6ad.json.zst": "2dca1df77e12625f1f8070493936da83d524f95fa658ec5d2dd4281d686cd8f4",
+        "dependencies.json.zst": "9fd9c0fba99a365741c001e863634566a3e3122520d11c19f6781eced158f24d",
+        "source-8aff180b16b492b2f96315499a8a2582a5c78ce0e57e6743db8ab123783f1997.json.zst": "9cff582f8baa69684c9a1bedf3ef579a619c20b47c600dc42a3091cc9f2ea6df",
+        "sp/cobol-semantic-product.json.zst": "d1066067f1ddf2843c4503296817f06f1e8370a8370d0b9942fac726ffb31597",
+        "sp/observed-dependencies.json.zst": "1399567abfef33557d76784426a9216e4ea6fe80831af3b3baec8cbc59dbe202",
+        "sp/cobol-semantic-compilation.json.zst": "c273036c379e8552d90c87fa45fd5c576956fc6171b78e44896996cb3cdf861c",
+        "sp/semantic-product.json.zst": "d1066067f1ddf2843c4503296817f06f1e8370a8370d0b9942fac726ffb31597"
+      }
+    },
+    {
+      "source": "app/app-vsam-mq/cbl/CODATE01.cbl",
+      "sourceSha256": "97fcba3faa272c98778eb7ef50ef87faec7290168e24a9b1714996453d660ddb",
+      "gapsBefore": 473,
+      "gapsAfter": 323,
+      "analysisStatus": "PARTIAL",
+      "localReadinessClaimsUpdated": 0,
+      "airUncertaintiesRemoved": 150,
+      "airUncertaintiesAdded": 0,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "84b5d145b6a07a0fbb59e8cb07bc526a2f302830ef91dd3df3b8a875e1f07343",
+          "after": "eaa2a22975d06f95c216e9f7c09004c4e49073ad1cc37cd68235c9bddc74f755"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "3e759043a91eb283efe490e6368b8b887c1d027c56209ad7fa2381d422ad292a",
+          "after": "3e759043a91eb283efe490e6368b8b887c1d027c56209ad7fa2381d422ad292a"
+        },
+        "dependencies.json.zst": {
+          "before": "a5b4b06430762ef8ca530e2b6638a769540768b91cfcbcdd2974496a5f4657bd",
+          "after": "f235debaf17695b594187d7ee73ac66cd2d20969f76921ded0c31e6f29907512"
+        },
+        "cfg.json.zst": {
+          "before": "266545f81c1fc933b3a5d18243a68b34bccf2cece3ae435819cab967c767973a",
+          "after": "86c108f2e2936217366c416bec071c5f6e25adaf6a8b0b105b51687b83d3dac0"
+        }
+      },
+      "currentArtifactHashes": {
+        "source-4c322741314ff3e87c5d9a78a74796f552e76d96c1e03d1e3bfa46fd5efc6ae8.json.zst": "bbe08bd3f77523c07470144466c5b9852cdcc072d5322892278be59142889662",
+        "air-dce691de2d7a3da8afdaebc0db5874735bef3746ecae4166d0bef89ddef69945.json.zst": "25e5069628bbc1914a34cdc3e9434ef7f17ffe5cac55c95b182d319c1fc08957",
+        "cfg.json.zst": "86c108f2e2936217366c416bec071c5f6e25adaf6a8b0b105b51687b83d3dac0",
+        "dependency-input.json.zst": "8dbc6a5aff04bfb9925743f16f0f2d2b9ba04297eb10198a22b1a3be9ba7f62a",
+        "dependencies.json.zst": "f235debaf17695b594187d7ee73ac66cd2d20969f76921ded0c31e6f29907512",
+        "sp/cobol-semantic-product.json.zst": "eaa2a22975d06f95c216e9f7c09004c4e49073ad1cc37cd68235c9bddc74f755",
+        "sp/observed-dependencies.json.zst": "3e759043a91eb283efe490e6368b8b887c1d027c56209ad7fa2381d422ad292a",
+        "sp/cobol-semantic-compilation.json.zst": "1161cd55d5b669f9a5d37ed8470f60af7738908767981fd37f63c60cf58e103f",
+        "sp/semantic-product.json.zst": "eaa2a22975d06f95c216e9f7c09004c4e49073ad1cc37cd68235c9bddc74f755"
+      }
+    },
+    {
+      "source": "app/cbl/CBACT01C.cbl",
+      "sourceSha256": "f8eb6e3a561ff96a1889a8f777a8998850a11dddae221da2c5018067d7b95551",
+      "gapsBefore": 453,
+      "gapsAfter": 328,
+      "analysisStatus": "PARTIAL",
+      "localReadinessClaimsUpdated": 0,
+      "airUncertaintiesRemoved": 125,
+      "airUncertaintiesAdded": 0,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "99808d5474b918a15b945fe65f57092400d2ea136c4145a72f99886195a27b06",
+          "after": "fa85a5e1c0e38e0297c3b02f35debc63c51373c2c0c2c85b521a9140d9a070d2"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "fd9e4fa216bb9a155da90a087b5baa961589544a42a4f6c091687b14707892ae",
+          "after": "fd9e4fa216bb9a155da90a087b5baa961589544a42a4f6c091687b14707892ae"
+        },
+        "dependencies.json.zst": {
+          "before": "5f754a84baefc963855590507be779948a6d152e20baa2003fb88e18a3077fba",
+          "after": "ba02e15bfaa0d0afabf76b08b183dd463426a34f48c625b454d7af65d3ba1b0c"
+        },
+        "cfg.json.zst": {
+          "before": "0398a006411473db2be49c35790f4f87596c1825db7a52b85b545f614bba54e7",
+          "after": "c9836fb72e520bef2a93ad58a5cbe4f50b56f1d9d0fe175202dedb4a6b7a51f3"
+        }
+      },
+      "currentArtifactHashes": {
+        "cfg.json.zst": "c9836fb72e520bef2a93ad58a5cbe4f50b56f1d9d0fe175202dedb4a6b7a51f3",
+        "dependency-input.json.zst": "56b43272e60b0d0baa078e887e1904ff65dc484f7f9077fbfde5d601a871e2d4",
+        "source-e9c9b5c447e2bd3ea1b1bfe754ce65a90c69a6fa55933e834739bb08aab067ae.json.zst": "519e94391e3afc4d126e5999207e387c4f3f01f3de7bdbe2f806f25f2ab68c53",
+        "air-2da483bfddb7ea879a63c9bb1a24aaceb0d6a12623b0e918e119ff14647e0418.json.zst": "5f007ce96d3db1ab1a1d065cc5d562bb1e52f27dd3215d2c3f2ee33c2ebf1784",
+        "dependencies.json.zst": "ba02e15bfaa0d0afabf76b08b183dd463426a34f48c625b454d7af65d3ba1b0c",
+        "sp/cobol-semantic-product.json.zst": "fa85a5e1c0e38e0297c3b02f35debc63c51373c2c0c2c85b521a9140d9a070d2",
+        "sp/observed-dependencies.json.zst": "fd9e4fa216bb9a155da90a087b5baa961589544a42a4f6c091687b14707892ae",
+        "sp/cobol-semantic-compilation.json.zst": "ee6c77a509206aa3fb9b0009667f0aa5812d68bc0741381b0e4fc9eb006a275a",
+        "sp/semantic-product.json.zst": "fa85a5e1c0e38e0297c3b02f35debc63c51373c2c0c2c85b521a9140d9a070d2"
+      }
+    },
+    {
+      "source": "app/cbl/CBACT02C.cbl",
+      "sourceSha256": "d290cbbbec1e25859847d9dfe6b28040cd6b09c3b71747e39de7b4713d838e76",
+      "gapsBefore": 147,
+      "gapsAfter": 111,
+      "analysisStatus": "PARTIAL",
+      "localReadinessClaimsUpdated": 0,
+      "airUncertaintiesRemoved": 36,
+      "airUncertaintiesAdded": 0,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "d4f82089217d5447a52cdb999f85fea75246f1667f5ef36cf65023b2bc33d6ce",
+          "after": "66170e8e7207c3b3b0434a413b9aa75d18fb073c8f69d1de4b26144af1602d87"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "7504869ea637f2ce37c975b80dd840b5f10d28cc103d58eeb169a6600fec6d7c",
+          "after": "7504869ea637f2ce37c975b80dd840b5f10d28cc103d58eeb169a6600fec6d7c"
+        },
+        "dependencies.json.zst": {
+          "before": "b6031a4c4eda8fbded0b070af792d7f51be3418af86953391e443830dceca689",
+          "after": "cac4826dc5484065d4ff25fa236d5ca3e74c7b4feb71ab1434eee6cfcf3fbd9a"
+        },
+        "cfg.json.zst": {
+          "before": "f7ef9ffba11dc5904c605bee2a5e79bbe2ae81c8c3435bef6beae45c44497a2c",
+          "after": "cfb59d3d41f70315233bff361b6245b30925c62e7878eeb3ea0dee1665e7122a"
+        }
+      },
+      "currentArtifactHashes": {
+        "air-182b0a2dc2f28b0194445b9dad92a841489de2671538a8a9357dbdb4c2d55278.json.zst": "65cb63e15e9ce1aa7d0f7b97dbd2de414c7c640a754e53033f4d60b76272f96c",
+        "cfg.json.zst": "cfb59d3d41f70315233bff361b6245b30925c62e7878eeb3ea0dee1665e7122a",
+        "dependency-input.json.zst": "9ca96d648aca0ce364cfab1c944e8dfbaed09a94980d34da5aa5f04b91a69808",
+        "source-26cde3faac3ed506de6a0af8d0d153cee2b371488d962ac8140555c4b5471dbb.json.zst": "192a8e89a3d5ec9462aa32155f343e478fd507294f300ebd0a819548137a91d7",
+        "dependencies.json.zst": "cac4826dc5484065d4ff25fa236d5ca3e74c7b4feb71ab1434eee6cfcf3fbd9a",
+        "sp/cobol-semantic-product.json.zst": "66170e8e7207c3b3b0434a413b9aa75d18fb073c8f69d1de4b26144af1602d87",
+        "sp/observed-dependencies.json.zst": "7504869ea637f2ce37c975b80dd840b5f10d28cc103d58eeb169a6600fec6d7c",
+        "sp/cobol-semantic-compilation.json.zst": "dd8d3488a64579ffa8f469d8b87f47d67670fb5c23269ef81b83712e084002c4",
+        "sp/semantic-product.json.zst": "66170e8e7207c3b3b0434a413b9aa75d18fb073c8f69d1de4b26144af1602d87"
+      }
+    },
+    {
+      "source": "app/cbl/CBACT03C.cbl",
+      "sourceSha256": "ee1019bc3ef7bc4e0f807b6e9b7167c9386ee7c2f647c63dfddc6fc464487855",
+      "gapsBefore": 149,
+      "gapsAfter": 113,
+      "analysisStatus": "PARTIAL",
+      "localReadinessClaimsUpdated": 0,
+      "airUncertaintiesRemoved": 36,
+      "airUncertaintiesAdded": 0,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "9eff04b0382a6ae790c503490039ecac6eb34d11f7409899afbfd0e4a194bd43",
+          "after": "2a2567bbcc2b690e16d8304e4809505cd6630524d5dd065a3120fbe63e4f28ae"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "be6684ef591045534b182e6c8fb5201eba02a7fcd894206cb82258f702fc47ea",
+          "after": "be6684ef591045534b182e6c8fb5201eba02a7fcd894206cb82258f702fc47ea"
+        },
+        "dependencies.json.zst": {
+          "before": "02bec7aaa83ac32b07bb8c24dad17bc000a2e05edc3f4f489281476844e2fd5d",
+          "after": "6ade7c59544601fcc98c7391dd85b51f67369cf32849e77ecdbc0ab0573e3490"
+        },
+        "cfg.json.zst": {
+          "before": "6a6566d0ee331579faa0501cea825b09977e4e929a0bf0cf70992b62df2130dc",
+          "after": "2a9ab6654af992194f9afd174ebc197468917b8054aaa03be1c859beb67fd11a"
+        }
+      },
+      "currentArtifactHashes": {
+        "air-b6e4f64d218f666f041c2b75417fa333a53fd3761f247c1ad1969683f324ce82.json.zst": "6b78aae31460ee8eed16acf9cec1b5f8ed994b9f5378aa32208a784de34ab85f",
+        "cfg.json.zst": "2a9ab6654af992194f9afd174ebc197468917b8054aaa03be1c859beb67fd11a",
+        "dependency-input.json.zst": "d42088cbad1c1e84cb3efeabac9c0a5da62e014484d56090937878107ab70559",
+        "source-90cb6dad6cb748e8bfa1a7b2e53a747bd2bf0f1b83628806286b9ae4a711d963.json.zst": "6aea2d7238972774b176062ae8cccdb1cd48200f161fa1497a7e8a5794f5685c",
+        "dependencies.json.zst": "6ade7c59544601fcc98c7391dd85b51f67369cf32849e77ecdbc0ab0573e3490",
+        "sp/cobol-semantic-product.json.zst": "2a2567bbcc2b690e16d8304e4809505cd6630524d5dd065a3120fbe63e4f28ae",
+        "sp/observed-dependencies.json.zst": "be6684ef591045534b182e6c8fb5201eba02a7fcd894206cb82258f702fc47ea",
+        "sp/cobol-semantic-compilation.json.zst": "3c7406688eca6b5d514b1b8406bce90b24f3ed84820c1677924810062fcfa1de",
+        "sp/semantic-product.json.zst": "2a2567bbcc2b690e16d8304e4809505cd6630524d5dd065a3120fbe63e4f28ae"
+      }
+    },
+    {
+      "source": "app/cbl/CBACT04C.cbl",
+      "sourceSha256": "5084bb8b0c9a0f0199f737487ae1863f12e43cabbdc459a62b6b67bedc683cc4",
+      "gapsBefore": 833,
+      "gapsAfter": 626,
+      "analysisStatus": "PARTIAL",
+      "localReadinessClaimsUpdated": 0,
+      "airUncertaintiesRemoved": 207,
+      "airUncertaintiesAdded": 0,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "c9b14aa30194f3419a654f66f8cd5c1a679f387054e7fe522e25918fc59a3855",
+          "after": "19fcdd992520cacb4c98eb046cafa75ad6473b26146b2aea8bb9a1568d4b3775"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "70b3969f60ce8848f62e2aff87e91779c2d0974934fc89f5a165a8311ca05f19",
+          "after": "70b3969f60ce8848f62e2aff87e91779c2d0974934fc89f5a165a8311ca05f19"
+        },
+        "dependencies.json.zst": {
+          "before": "10e33ab0b9ddd90ed77989648df6c5a81d2b3cd9ffdf367a82a4fd24cba6e01c",
+          "after": "4969f1dfe8431afb6eb7c3177c72e0da6dfaa54b3fea4371066b838f95b9dfe0"
+        },
+        "cfg.json.zst": {
+          "before": "2c632d6c03c5c21cfb034d1800b25375252421d0bfac4c28a03a6375be64ff44",
+          "after": "a09353b113d0f696e91c9abdeb94a6956918874c226e8d3ca81a0f0c86d30e1d"
+        }
+      },
+      "currentArtifactHashes": {
+        "cfg.json.zst": "a09353b113d0f696e91c9abdeb94a6956918874c226e8d3ca81a0f0c86d30e1d",
+        "dependency-input.json.zst": "ec05b81916982c0b77821be1eeeabd8be4aac6f239fa81eec88a5ecac76491d7",
+        "source-346b6d63f2d5168ad860c4904b3673e8ed04c3d4b6bb7608878ae87b73416e63.json.zst": "737244b424eca14d671ed0e253383e3b64fe54098de04aceef7673d96f8e2b4b",
+        "air-ac73d1a4626db57e98836037bc76601a8b1a591e37be944a85a3ba1a4a67a322.json.zst": "d69e40a2192bcc38dd1c1e2e3551349a2a389f974a020393ae48188ac767839e",
+        "dependencies.json.zst": "4969f1dfe8431afb6eb7c3177c72e0da6dfaa54b3fea4371066b838f95b9dfe0",
+        "sp/cobol-semantic-product.json.zst": "19fcdd992520cacb4c98eb046cafa75ad6473b26146b2aea8bb9a1568d4b3775",
+        "sp/observed-dependencies.json.zst": "70b3969f60ce8848f62e2aff87e91779c2d0974934fc89f5a165a8311ca05f19",
+        "sp/cobol-semantic-compilation.json.zst": "ed009e949d1451748f663a6dfac44b5dc9566d194a8f349f7a43d8934bf262e0",
+        "sp/semantic-product.json.zst": "19fcdd992520cacb4c98eb046cafa75ad6473b26146b2aea8bb9a1568d4b3775"
+      }
+    },
+    {
+      "source": "app/cbl/CBCUS01C.cbl",
+      "sourceSha256": "233dbc3bc33a3b9ac555922085a92be56e88d16316bff624b5723c4c36c99714",
+      "gapsBefore": 149,
+      "gapsAfter": 113,
+      "analysisStatus": "PARTIAL",
+      "localReadinessClaimsUpdated": 0,
+      "airUncertaintiesRemoved": 36,
+      "airUncertaintiesAdded": 0,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "f5b512896aa46fdd16c25c14b87099f8e30d74888e9cf0aacf4d879b6991c232",
+          "after": "9c9e74d81482093e48d249478feccd0e8ce2be3635547add21da7f4f1c571542"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "36f9f426cc26554d5066aceeda0a642edd8dee4b52fd5bc4bcb4cbff2cbfd9c9",
+          "after": "36f9f426cc26554d5066aceeda0a642edd8dee4b52fd5bc4bcb4cbff2cbfd9c9"
+        },
+        "dependencies.json.zst": {
+          "before": "f800cfd71e08316a4124ce133ec8284744820f2f58d090de1465f2f49b9404b0",
+          "after": "62620ef6a2f72a6c1a2cfd606c938d33d398ce1181a9e98f71109fa83ddf0074"
+        },
+        "cfg.json.zst": {
+          "before": "adc7e76ed07aeb62c95ff53a2cdbec5d8bc07da5dac09c4b1d6807ac4197ad82",
+          "after": "252968ca460a25219f4599a16faf596835b5f3bc5e285a6683f7c1a70642628d"
+        }
+      },
+      "currentArtifactHashes": {
+        "cfg.json.zst": "252968ca460a25219f4599a16faf596835b5f3bc5e285a6683f7c1a70642628d",
+        "dependency-input.json.zst": "6869a0027e1abbc32d3e6a351f8c6b24e62c62aa71c02377a9ce3f067428567a",
+        "source-c638ab0501fd79dfffa5e1e47e0d3363dd8a26b35daab82f058e2ae7cb03ae35.json.zst": "e83e5650b21c301f712b40ad0f2cb372cd4690231def84456361c2099bdfd7e0",
+        "air-ae00b5b398045c4a7299964eb7ceead646182d75b38f55c8bc2df2222908e7bd.json.zst": "6e095cd8d5b0b44aed980b902fb262aeaf6f7130a939a997244568352882a8d6",
+        "dependencies.json.zst": "62620ef6a2f72a6c1a2cfd606c938d33d398ce1181a9e98f71109fa83ddf0074",
+        "sp/cobol-semantic-product.json.zst": "9c9e74d81482093e48d249478feccd0e8ce2be3635547add21da7f4f1c571542",
+        "sp/observed-dependencies.json.zst": "36f9f426cc26554d5066aceeda0a642edd8dee4b52fd5bc4bcb4cbff2cbfd9c9",
+        "sp/cobol-semantic-compilation.json.zst": "5e3bf5737156179e32a21f6514f19b42ff5838bc927ab24b37babb9a97a4b36d",
+        "sp/semantic-product.json.zst": "9c9e74d81482093e48d249478feccd0e8ce2be3635547add21da7f4f1c571542"
+      }
+    },
+    {
+      "source": "app/cbl/CBEXPORT.cbl",
+      "sourceSha256": "598e3c9055b96b79266910e080bc24048eb308ee61afc828c06dbade9f501d38",
+      "gapsBefore": 536,
+      "gapsAfter": 408,
+      "analysisStatus": "PARTIAL",
+      "localReadinessClaimsUpdated": 0,
+      "airUncertaintiesRemoved": 128,
+      "airUncertaintiesAdded": 0,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "980ded973df9c4fe5672adafdbe67fd53316d01ccd6937e00130b80aa5bc4c11",
+          "after": "f077210636c63cf5b23bfbd603dc60b08dce42cdea22200769580b64ea229098"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "111008c75a38eb255f29332497cc3dbdf18396579d5084fddb7dfcc0b626b6fe",
+          "after": "111008c75a38eb255f29332497cc3dbdf18396579d5084fddb7dfcc0b626b6fe"
+        },
+        "dependencies.json.zst": {
+          "before": "7c9407de251bac267c5668888b22acbb24b069e40f134b4e06d37ba6af11c23d",
+          "after": "7584f282e5cea61e501639ee2e4b94d4c6f65f60abe8cf3cd810444048931956"
+        },
+        "cfg.json.zst": {
+          "before": "e5aa55cf315f925ca84489385b14d7b661a261719db475004dfb71c552d29f16",
+          "after": "0993e459309caf9e722d271701192fe53591c8137a5936b61f2337224bc1d194"
+        }
+      },
+      "currentArtifactHashes": {
+        "cfg.json.zst": "0993e459309caf9e722d271701192fe53591c8137a5936b61f2337224bc1d194",
+        "dependency-input.json.zst": "e0cdb07827c29f0ce9f40545210c8870c028914392a9a61da15302af69adeb03",
+        "air-19f24f891feeb41f9136ca7d5f5fcdf75257857464935a2c856ecbca513fe8cd.json.zst": "3ffdcdd6bd558a3edeaa5a168a163360c7e288a88f244c4f84f18461add016e1",
+        "source-0c8f1ffdbf77fdf2406d44f698050487df31630d2d81f6bff7974c4408048551.json.zst": "504a11d8d1c19c146cb034aeaa75d0505b5467624d2133e445330198cd568163",
+        "dependencies.json.zst": "7584f282e5cea61e501639ee2e4b94d4c6f65f60abe8cf3cd810444048931956",
+        "sp/cobol-semantic-product.json.zst": "f077210636c63cf5b23bfbd603dc60b08dce42cdea22200769580b64ea229098",
+        "sp/observed-dependencies.json.zst": "111008c75a38eb255f29332497cc3dbdf18396579d5084fddb7dfcc0b626b6fe",
+        "sp/cobol-semantic-compilation.json.zst": "a0d5a37dae68cab5118ef02b6171a3c5a71522c3b19e303dc0934ebe2c1f0cf5",
+        "sp/semantic-product.json.zst": "f077210636c63cf5b23bfbd603dc60b08dce42cdea22200769580b64ea229098"
+      }
+    },
+    {
+      "source": "app/cbl/CBIMPORT.cbl",
+      "sourceSha256": "0eccb28695cb3a8ea6f6ea7da26d1b48a4529787f6130b2c98bead33bc661967",
+      "gapsBefore": 374,
+      "gapsAfter": 290,
+      "analysisStatus": "PARTIAL",
+      "localReadinessClaimsUpdated": 0,
+      "airUncertaintiesRemoved": 84,
+      "airUncertaintiesAdded": 0,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "a47ef92d8641f1800cd78eaccb884dee5a0333be401863c8f129257ff6c5e9d5",
+          "after": "4a3f36834dcb64a84c0a0a49fd69502333e35a733205b371fcac0689ddf87432"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "dc77059462d2082b92dddb89c14b3caacea7c1ad4a3e4b670f89ddee8c4d8a53",
+          "after": "dc77059462d2082b92dddb89c14b3caacea7c1ad4a3e4b670f89ddee8c4d8a53"
+        },
+        "dependencies.json.zst": {
+          "before": "812a06492c5d03a32e94b382c9b453c04269ecf4f03e134d1f87fa5a15a6fe20",
+          "after": "4a021827b39105bd07c6c4c7476de2fe50863f8560fe547d56ab0a4323d6932e"
+        },
+        "cfg.json.zst": {
+          "before": "9d334ba4bcadd30695b11dc52edf9464648f26b9d7dd9da923feb8fc0628f746",
+          "after": "85fca526f6c6eca5787e6a1559efcc81fc6780979cb4adec524f64b6652ab785"
+        }
+      },
+      "currentArtifactHashes": {
+        "cfg.json.zst": "85fca526f6c6eca5787e6a1559efcc81fc6780979cb4adec524f64b6652ab785",
+        "dependency-input.json.zst": "75f7e89a0407f3bf9a6b7cab93fab8392a86d92165c43b67a3f105ed3e08fad7",
+        "source-ba86dd4fdbd035e560185ff3205cc5cf9fdbbb65489f7f7ce6948d9fe8a0bdc1.json.zst": "c7c3bda7294a30d492560f4d6de1cde2eaa7e679782d8f106b239cbcb7ef6e7d",
+        "air-5a292d648430d92275ce698997eed925c2028574fbc5ef166975c0682263068c.json.zst": "0217b949c3d3dee97487660ee4318bc6c0d9addae5627918f426bd91ced7aee1",
+        "dependencies.json.zst": "4a021827b39105bd07c6c4c7476de2fe50863f8560fe547d56ab0a4323d6932e",
+        "sp/cobol-semantic-product.json.zst": "4a3f36834dcb64a84c0a0a49fd69502333e35a733205b371fcac0689ddf87432",
+        "sp/observed-dependencies.json.zst": "dc77059462d2082b92dddb89c14b3caacea7c1ad4a3e4b670f89ddee8c4d8a53",
+        "sp/cobol-semantic-compilation.json.zst": "8054780d32c101de24d7a8b973666ec581429bf7ba259055b707021fcce57250",
+        "sp/semantic-product.json.zst": "4a3f36834dcb64a84c0a0a49fd69502333e35a733205b371fcac0689ddf87432"
+      }
+    },
+    {
+      "source": "app/cbl/CBSTM03A.CBL",
+      "sourceSha256": "23c8753b6b4e0c24d4560c83861fe8162626bab195faec0fe88cf80b8bf432b5",
+      "gapsBefore": 646,
+      "gapsAfter": 514,
+      "analysisStatus": "PARTIAL",
+      "localReadinessClaimsUpdated": 0,
+      "airUncertaintiesRemoved": 132,
+      "airUncertaintiesAdded": 0,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "0a484abf69bb8965c00aee0679616d8588f6161de9adc6f37e10595b5bee190f",
+          "after": "840cb5abc8d146f095a13530ef2a90c6be5c6e616a4b34b32688f8b463499b41"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "b4a65d72d8cf680703809ad13c34ba05f58dffd078435729e4ac5dd2ed7f9dec",
+          "after": "b4a65d72d8cf680703809ad13c34ba05f58dffd078435729e4ac5dd2ed7f9dec"
+        },
+        "dependencies.json.zst": {
+          "before": "8d6cb26601f7f6551651c469516ed4904d2c16f22c442a663b66b19857ed27d2",
+          "after": "79c8dab418b53790b22915c38c40ad9186fa37ded1424df0883e8da31144e232"
+        },
+        "cfg.json.zst": {
+          "before": "0a212964423922694344938a6b8e6549db8c14fd6aeaa46117b57cf2bd430d1d",
+          "after": "1e112b49b0c1aa742027c57309f17be1b1805ed730e10b1a21613ec4dd054794"
+        }
+      },
+      "currentArtifactHashes": {
+        "cfg.json.zst": "1e112b49b0c1aa742027c57309f17be1b1805ed730e10b1a21613ec4dd054794",
+        "dependency-input.json.zst": "aa4f3deeae4a2f4a683b3c3bc85e36b54a44ace4585776c7182ac25f1b93d038",
+        "air-1b8a1ba38e35fb9c76d03f7df8198ed6439a786632afebd41ee82b3bde50c512.json.zst": "45c93a4eb960b7ebeaa00cc93ecb1c43613ddae411abafa7770c409a287efbe9",
+        "source-56c6dca2e09af3eef7b3dc0b0684d07c74b2a5cd46e6b41d7f0cf70d104c65f2.json.zst": "4c4f9c24cfa25a11a639d1cbc3e84e196aa1564c8a35f2b894821518b94501bc",
+        "dependencies.json.zst": "79c8dab418b53790b22915c38c40ad9186fa37ded1424df0883e8da31144e232",
+        "sp/cobol-semantic-product.json.zst": "840cb5abc8d146f095a13530ef2a90c6be5c6e616a4b34b32688f8b463499b41",
+        "sp/observed-dependencies.json.zst": "b4a65d72d8cf680703809ad13c34ba05f58dffd078435729e4ac5dd2ed7f9dec",
+        "sp/cobol-semantic-compilation.json.zst": "c8e466e310855a790980a07f2974509e0e30a20cd9871bf4e78a18c8a2ffce49",
+        "sp/semantic-product.json.zst": "840cb5abc8d146f095a13530ef2a90c6be5c6e616a4b34b32688f8b463499b41"
+      }
+    },
+    {
+      "source": "app/cbl/CBSTM03B.CBL",
+      "sourceSha256": "ac004f7f40dcb3f2a14dfb83a743f83fed9383675bc93452f3424c40cb6475a7",
+      "gapsBefore": 93,
+      "gapsAfter": 80,
+      "analysisStatus": "PARTIAL",
+      "localReadinessClaimsUpdated": 2,
+      "airUncertaintiesRemoved": 13,
+      "airUncertaintiesAdded": 0,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "1a4612e16c40eecab6fac445a505fa485de4a9cd1834e1d23d17e1eedaf28ddd",
+          "after": "5d1352c5c12a18ebf9ab4236b416ed8f506aa840818ea02771b05a59a90aea33"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "70eebace714b480745246c00c0e80e748b0d438de7ba0009d2dbd37a64d061d2",
+          "after": "70eebace714b480745246c00c0e80e748b0d438de7ba0009d2dbd37a64d061d2"
+        },
+        "dependencies.json.zst": {
+          "before": "7fa9b38f87a259f75137043c2058bb9e21787494c4cd5c58ccc68d503b6c0728",
+          "after": "dfbd624bed69cd7cbe537903f6539ebb1ba035d5ac932a0c1c434de1671a39b3"
+        },
+        "cfg.json.zst": {
+          "before": "2384c47b4d815510a400cfd38dc00901eb1bdd33d7d06e6ee7254cd63ca2c406",
+          "after": "3531dec54e3cc4d177437826c2c3e367af19562e8e4dcb48c779bf2d1134dc63"
+        }
+      },
+      "currentArtifactHashes": {
+        "air-8595d04eec42f30ae77e4dac7688fc6f2d935ddc6ab71aece7a780fbe7a62448.json.zst": "e7faf48d9f2601d35ded177d1fc2ce23f0da1cada2b45afe19a488f93a353ab3",
+        "cfg.json.zst": "3531dec54e3cc4d177437826c2c3e367af19562e8e4dcb48c779bf2d1134dc63",
+        "source-d69ed6cb5fa299b3a91c0746b96037ef740a57e4837d409caf3dbc59582c751d.json.zst": "d662dd9f04ea970f0de70be6618491033a76a8436c43fbfa96cb0d1007f59ff1",
+        "dependency-input.json.zst": "b22b8678aeb21daeeb8a41149db1ec014025e411c21359f226e4e20d69670112",
+        "dependencies.json.zst": "dfbd624bed69cd7cbe537903f6539ebb1ba035d5ac932a0c1c434de1671a39b3",
+        "sp/cobol-semantic-product.json.zst": "5d1352c5c12a18ebf9ab4236b416ed8f506aa840818ea02771b05a59a90aea33",
+        "sp/observed-dependencies.json.zst": "70eebace714b480745246c00c0e80e748b0d438de7ba0009d2dbd37a64d061d2",
+        "sp/cobol-semantic-compilation.json.zst": "b43018edb61bcbe5e6884f5292f70679df1ac941bfb5d795825a0abcc2770be0",
+        "sp/semantic-product.json.zst": "5d1352c5c12a18ebf9ab4236b416ed8f506aa840818ea02771b05a59a90aea33"
+      }
+    },
+    {
+      "source": "app/cbl/CBTRN01C.cbl",
+      "sourceSha256": "55c2aebd59528aa42b28878ba5ca4d17a00b3548fc25e4ce1529710d366fd576",
+      "gapsBefore": 500,
+      "gapsAfter": 348,
+      "analysisStatus": "PARTIAL",
+      "localReadinessClaimsUpdated": 0,
+      "airUncertaintiesRemoved": 152,
+      "airUncertaintiesAdded": 0,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "e2ddaf7bba43ff3baaf0ae2d8ba089583c7e6ecc886b3354551c038d59d63b2a",
+          "after": "2edae2cc9f47f340192f2a01a706295d5f3b17414b8659c3c534b7248a64cd96"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "db3acb5aed2e5c7bcac019485be184c8349db9e788fdea6184c16fffc8c5742a",
+          "after": "db3acb5aed2e5c7bcac019485be184c8349db9e788fdea6184c16fffc8c5742a"
+        },
+        "dependencies.json.zst": {
+          "before": "bf4fbd54b4117378a4ed6eae2ac00fd2b13c07be4a0851c92e0972b6716baade",
+          "after": "37b690bfe87bbeeb87b73866bb8596bd3c2bab8d7c2e72de2d336a2457a62abc"
+        },
+        "cfg.json.zst": {
+          "before": "e9667ed599d1f967189a4a058e01b4adc76ef30ca772ea437a6e295afeb2a085",
+          "after": "11cfd06acdcb88c0f7ba7a68f5e6ecda30c7b289655ece8f4f845f2d1939feb6"
+        }
+      },
+      "currentArtifactHashes": {
+        "cfg.json.zst": "11cfd06acdcb88c0f7ba7a68f5e6ecda30c7b289655ece8f4f845f2d1939feb6",
+        "dependency-input.json.zst": "d95c487997fe2b0d576954a11b08dc21cc1efdab4db73cfa504e5be14cbba16d",
+        "source-5dfa1023a9b847b4d26ed75527b059238d4c360de2b7545f5c22a90a4052b07c.json.zst": "38ecb51edc1b2bb1af93f7b257d33164956f1ea308888bff8367157fb635e102",
+        "dependencies.json.zst": "37b690bfe87bbeeb87b73866bb8596bd3c2bab8d7c2e72de2d336a2457a62abc",
+        "air-d2856ee59dd684a6cec3dd253044a62267e09a6d215aed5ec47fd127a6d54f23.json.zst": "c11f7e2bc469a17252b9f50bb4fdaaa85c675c96f14f8c5ca627aa20b22f5a2b",
+        "sp/cobol-semantic-product.json.zst": "2edae2cc9f47f340192f2a01a706295d5f3b17414b8659c3c534b7248a64cd96",
+        "sp/observed-dependencies.json.zst": "db3acb5aed2e5c7bcac019485be184c8349db9e788fdea6184c16fffc8c5742a",
+        "sp/cobol-semantic-compilation.json.zst": "6e38f5cd3915a2cc39baa73f5ee547fe8be0cac08aad81d3dcf0a3fd5e07eaee",
+        "sp/semantic-product.json.zst": "2edae2cc9f47f340192f2a01a706295d5f3b17414b8659c3c534b7248a64cd96"
+      }
+    },
+    {
+      "source": "app/cbl/CBTRN02C.cbl",
+      "sourceSha256": "708f3cadc555acab63f11e2f3238f5372ac7180e6b01197bf960d96bf0d2e83f",
+      "gapsBefore": 801,
+      "gapsAfter": 572,
+      "analysisStatus": "PARTIAL",
+      "localReadinessClaimsUpdated": 0,
+      "airUncertaintiesRemoved": 229,
+      "airUncertaintiesAdded": 0,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "ba22ddc1e3877311f5500f9b937f2a8c77cefd8900b897d3bfc80d1c5b4c9300",
+          "after": "06cbc4a88da961ece3fc724a07ed63105297ab4cf71ed02b9802ab71ba37e8b4"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "9bc7864386aaa2ef8ed4dce53c4dd32939b13768d80c9d00af1f0c96f90763eb",
+          "after": "9bc7864386aaa2ef8ed4dce53c4dd32939b13768d80c9d00af1f0c96f90763eb"
+        },
+        "dependencies.json.zst": {
+          "before": "877632df70948c58d70bcb1029e659b36d6c3015ad0619c1c59b6eb3066897ff",
+          "after": "2c005e98c25f0b87a6f6e7d402322d20d33cef1c0dfd71252a4418514f467e64"
+        },
+        "cfg.json.zst": {
+          "before": "c6b9fb2d4f9d2655a0febf55a573483cdbf99139a7da3a2a7a45ae9bfc94553f",
+          "after": "bb6e6371516f23c4c2dc1ce2b6fb2048a8e6c505247b02423968cafacd921427"
+        }
+      },
+      "currentArtifactHashes": {
+        "air-8bd0d9829129e49e07a3df42282472a030f7daad33d20cf89cae4da0268c325a.json.zst": "8fb46b5eacdc15906809d2922ad1c68f78423d1b4eb2b3bbc68c708131bbff89",
+        "cfg.json.zst": "bb6e6371516f23c4c2dc1ce2b6fb2048a8e6c505247b02423968cafacd921427",
+        "dependency-input.json.zst": "e49912e5d3d15d628ac7b03d75bb56bdd8e4624ea008fa6cd4e289b410cb4cc4",
+        "source-adf8836a8bc061948060948dd443863be58e2ffd862cba48a733201a1f08dc13.json.zst": "6a6547cd4b9733c115fec53eb478f0df3d7e97a98d5d9eafb0e2a55b1568e824",
+        "dependencies.json.zst": "2c005e98c25f0b87a6f6e7d402322d20d33cef1c0dfd71252a4418514f467e64",
+        "sp/cobol-semantic-product.json.zst": "06cbc4a88da961ece3fc724a07ed63105297ab4cf71ed02b9802ab71ba37e8b4",
+        "sp/observed-dependencies.json.zst": "9bc7864386aaa2ef8ed4dce53c4dd32939b13768d80c9d00af1f0c96f90763eb",
+        "sp/cobol-semantic-compilation.json.zst": "545e1fc1a8de471b0b5740df71fb9f477eaf813dc00877e5c9eb3ceeb101f67a",
+        "sp/semantic-product.json.zst": "06cbc4a88da961ece3fc724a07ed63105297ab4cf71ed02b9802ab71ba37e8b4"
+      }
+    },
+    {
+      "source": "app/cbl/CBTRN03C.cbl",
+      "sourceSha256": "8691e625502b7efcfd7ba4ae61797132e7b68f3fd5fedcdcc7dd6488f6871eef",
+      "gapsBefore": 777,
+      "gapsAfter": 523,
+      "analysisStatus": "PARTIAL",
+      "localReadinessClaimsUpdated": 0,
+      "airUncertaintiesRemoved": 254,
+      "airUncertaintiesAdded": 0,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "1e5c50951a2a48e54ad0b904329595c943f7ff7cde6e01fa46bf1c31b76bec41",
+          "after": "f453327633ea23680211822ab9d6a23443e612a592f451a1b3bc3a28ebd1d4c5"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "d3d9db28ab50d1becc1813faded63793496daa4f8eebb1726688c4eb7baa43f5",
+          "after": "d3d9db28ab50d1becc1813faded63793496daa4f8eebb1726688c4eb7baa43f5"
+        },
+        "dependencies.json.zst": {
+          "before": "6526c142e3535e86ca11088c70db1996d6fc87d1b89f4a0be5500f72f800f662",
+          "after": "c7c7992c72a4b4b2632154cdc36e781048bf2e22de1330ef40ed2fda43bf8336"
+        },
+        "cfg.json.zst": {
+          "before": "2c780a1e1c23bbbe84c35de0b3a36c872416dc3dee433de52f5e9f98a130ee53",
+          "after": "ac2a0815952fba670b57455d4b480206bd8bbbf64202bd3a8783c7f0c9a4309f"
+        }
+      },
+      "currentArtifactHashes": {
+        "source-ac9060362d2b9b22b2c2823b116dc365edcee885a71b97bb8962bf16fd15e09d.json.zst": "1de372ad0ad925d02afda3b527160168ae7f37dd8230ba7c8aca6144701f7ff0",
+        "cfg.json.zst": "ac2a0815952fba670b57455d4b480206bd8bbbf64202bd3a8783c7f0c9a4309f",
+        "dependency-input.json.zst": "a6d711e4c5274fc3cb18c24117fe286091c6bfb351b1d9eaeecbb5f3755c2264",
+        "air-d01419832b8de5ead8c42a190ea2918ad02922d160ff35e0f8ce762e86f03478.json.zst": "45cc2ff8df90c809491d7b71b3482eace746cb7acf48525644530772eb0b8f15",
+        "dependencies.json.zst": "c7c7992c72a4b4b2632154cdc36e781048bf2e22de1330ef40ed2fda43bf8336",
+        "sp/cobol-semantic-product.json.zst": "f453327633ea23680211822ab9d6a23443e612a592f451a1b3bc3a28ebd1d4c5",
+        "sp/observed-dependencies.json.zst": "d3d9db28ab50d1becc1813faded63793496daa4f8eebb1726688c4eb7baa43f5",
+        "sp/cobol-semantic-compilation.json.zst": "db24cf3297c26b7aa8f826105d26fd5793b18038392397a6372b1b71ab492d84",
+        "sp/semantic-product.json.zst": "f453327633ea23680211822ab9d6a23443e612a592f451a1b3bc3a28ebd1d4c5"
+      }
+    },
+    {
+      "source": "app/cbl/COACTUPC.cbl",
+      "sourceSha256": "b5bb7d6ccad022e0fc91b4dd1e971f49d184adf89b56abdce14eccff35b39396",
+      "gapsBefore": 2713,
+      "gapsAfter": 2316,
+      "analysisStatus": "PARTIAL",
+      "localReadinessClaimsUpdated": 0,
+      "airUncertaintiesRemoved": 398,
+      "airUncertaintiesAdded": 1,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "37354d59b761fc86dc56d1c56830dfd5888703597b0606dfe944d5202a55ce54",
+          "after": "a8ba2f22a13e1cecae9e77ad76da316021c82b9a6d5e200de9a7692111f5f2df"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "9a4eb42b728f7d750ea023f97bd1bc9c0713da1950e961f43f982c435fedbe1e",
+          "after": "9a4eb42b728f7d750ea023f97bd1bc9c0713da1950e961f43f982c435fedbe1e"
+        },
+        "dependencies.json.zst": {
+          "before": "ab4a3a6412d0ffca31fab9a4151b4fe924df4e1908f2667a1c80d8ec9dc3e0a5",
+          "after": "bd3ddcf696facc492851554c720498b140b206df15846274a77077663ffddb90"
+        },
+        "cfg.json.zst": {
+          "before": "5af6d67cc654c9f23c0d4d4fc5945365117e5eb9dbb0fc37f412b00fe6b44384",
+          "after": "0d8302249cfd04f62ba17b48d34de53e6782003cbed6cdfe4d7c6d6ac67d6e6f"
+        }
+      },
+      "currentArtifactHashes": {
+        "air-b23f969239db1aea739f924ed2352a87a8c0b272f5aa203ea71117a9669069f3.json.zst": "1e993d100bdcc7b4cfd10201361d32ce20474464ed392dd59442b5a2893c25ad",
+        "cfg.json.zst": "0d8302249cfd04f62ba17b48d34de53e6782003cbed6cdfe4d7c6d6ac67d6e6f",
+        "source-7298e2c623da1367d2e0f7d0d6c3084e4612e05151d4d319abceec80fa49a774.json.zst": "948b7a7b64b83d602b5a01383efb1d6a2b988700c9e9ca33177a206aff8fc721",
+        "dependency-input.json.zst": "d4d153f37020de261e495166389ad566cd2d3a59284e74476b8d92933d049ffa",
+        "dependencies.json.zst": "bd3ddcf696facc492851554c720498b140b206df15846274a77077663ffddb90",
+        "sp/cobol-semantic-product.json.zst": "a8ba2f22a13e1cecae9e77ad76da316021c82b9a6d5e200de9a7692111f5f2df",
+        "sp/observed-dependencies.json.zst": "9a4eb42b728f7d750ea023f97bd1bc9c0713da1950e961f43f982c435fedbe1e",
+        "sp/cobol-semantic-compilation.json.zst": "084d0f60c4cf1b5938729af697def13ebfd42f534b8b38bab4f18b77462c4220",
+        "sp/semantic-product.json.zst": "a8ba2f22a13e1cecae9e77ad76da316021c82b9a6d5e200de9a7692111f5f2df"
+      }
+    },
+    {
+      "source": "app/cbl/COACTVWC.cbl",
+      "sourceSha256": "4f1e55176f69edfb55b7af7a161aceb8c3bc3bd1b2924a704a76256e0e751b54",
+      "gapsBefore": 530,
+      "gapsAfter": 389,
+      "analysisStatus": "PARTIAL",
+      "localReadinessClaimsUpdated": 0,
+      "airUncertaintiesRemoved": 141,
+      "airUncertaintiesAdded": 0,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "c88a0928c490184dcc2131c7341ff81f6b4ad9ca7e6934f92e504cae7328c8d1",
+          "after": "2e289dba0b5e6a6537e6998bb6366bfd122b60ab3d7a1b0254c0154ca6c59648"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "7bfe9600f34a958145d7c4669766ff575b04d753a2ce7dc323420782772b3f72",
+          "after": "7bfe9600f34a958145d7c4669766ff575b04d753a2ce7dc323420782772b3f72"
+        },
+        "dependencies.json.zst": {
+          "before": "b1fbfbe7d19256c536eab1650d7f803eccda624e8a74246b23b03b0946eab480",
+          "after": "d075e81b6dd40378ee082c9299845d625d50bb12dc5d0280d35872c5f30ead5d"
+        },
+        "cfg.json.zst": {
+          "before": "1d8409defacd349ac5fa935e2fcb338482674e5cc0178ac65b12f9d691850162",
+          "after": "8b691877f44e15a87a251f9cc3edbca13ac3aab073ef5c2ef79faa5582c4ddfa"
+        }
+      },
+      "currentArtifactHashes": {
+        "cfg.json.zst": "8b691877f44e15a87a251f9cc3edbca13ac3aab073ef5c2ef79faa5582c4ddfa",
+        "source-ef6184105d43f17b71282f3089db2954fb4821bce9d8ff24f454abd9c77cd0ee.json.zst": "62035309aae5f8556aec159380182a54c4e027f5a5ca905c610a63b185610a56",
+        "dependency-input.json.zst": "6ed2598d8b0beca0a3ecb2b32b6314279c64acc8697a957e5c4868ad6f69f913",
+        "air-4e29fedbfe416b0820d6bf66d3d64cd1d08ae4cb9815f54b252bf19ec85c4bd7.json.zst": "17b76852688aa76785648d5094c197b442d68bef1cfae7a1ea9169c307b47b24",
+        "dependencies.json.zst": "d075e81b6dd40378ee082c9299845d625d50bb12dc5d0280d35872c5f30ead5d",
+        "sp/cobol-semantic-product.json.zst": "2e289dba0b5e6a6537e6998bb6366bfd122b60ab3d7a1b0254c0154ca6c59648",
+        "sp/observed-dependencies.json.zst": "7bfe9600f34a958145d7c4669766ff575b04d753a2ce7dc323420782772b3f72",
+        "sp/cobol-semantic-compilation.json.zst": "322cbd996ed77ea9f7be72f27809c2cab9f361d2da36af012e07091941daab4b",
+        "sp/semantic-product.json.zst": "2e289dba0b5e6a6537e6998bb6366bfd122b60ab3d7a1b0254c0154ca6c59648"
+      }
+    },
+    {
+      "source": "app/cbl/COADM01C.cbl",
+      "sourceSha256": "4e49afda5f685f3ebeb95ed04a93cf88df93d39c66d8d7f9ba2b9a3e00a1f690",
+      "gapsBefore": 216,
+      "gapsAfter": 159,
+      "analysisStatus": "PARTIAL",
+      "localReadinessClaimsUpdated": 0,
+      "airUncertaintiesRemoved": 57,
+      "airUncertaintiesAdded": 0,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "1191b9df1f1756ab19a2e53a56a647d2b097161fc96008259063f42b6a2bb839",
+          "after": "a6e93097eff2f926e2aa7d2885a6c7036643c93ce54ed42f0d466382eb3ba678"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "b1e8c511740efbbcbda06714c07679e941da69e15bfbb54a22ebeda9bb0eda04",
+          "after": "b1e8c511740efbbcbda06714c07679e941da69e15bfbb54a22ebeda9bb0eda04"
+        },
+        "dependencies.json.zst": {
+          "before": "6c7e8a3c6241b96d5785fd661f40e359233516d6bb882a62c9d6ab562a4871b2",
+          "after": "4a9761324ae403234be1ca0ae28358b3fe93dd4c35ed5478804990ca6c14a08d"
+        },
+        "cfg.json.zst": {
+          "before": "61aaf4136d8aff9a8714fb261d091ce6c21df182c674543c3fb1e154b6b0001f",
+          "after": "f267d44a5fe1e0df0f8a30a41dadabf3ef9d664d7f290ac541d8aeb6f28f7a11"
+        }
+      },
+      "currentArtifactHashes": {
+        "cfg.json.zst": "f267d44a5fe1e0df0f8a30a41dadabf3ef9d664d7f290ac541d8aeb6f28f7a11",
+        "dependency-input.json.zst": "3a2832a0ede448a34df1c53322ceba9cad181624a6e2de6945c5b3193b64b9d1",
+        "source-e8a786e6528c9b85f5662b58b9171f1d8496d51c579ce08e9344424bfaad5f1d.json.zst": "45c228aa22a1caaeedb9db3caea264f2dd7ed39ada33518f3558844b7f9de12c",
+        "dependencies.json.zst": "4a9761324ae403234be1ca0ae28358b3fe93dd4c35ed5478804990ca6c14a08d",
+        "air-07b118a4a3dd02a3224a3a455942e330e2e79dd3854cca0f7941e6e20b700c20.json.zst": "25673c1286541115ea80e4090d1406650bff835444d5426fe69570751767507f",
+        "sp/cobol-semantic-product.json.zst": "a6e93097eff2f926e2aa7d2885a6c7036643c93ce54ed42f0d466382eb3ba678",
+        "sp/observed-dependencies.json.zst": "b1e8c511740efbbcbda06714c07679e941da69e15bfbb54a22ebeda9bb0eda04",
+        "sp/cobol-semantic-compilation.json.zst": "b31d1b8dbacbb8a16518628f82063693916e0bd76606e0a4cb173e0971a55cc7",
+        "sp/semantic-product.json.zst": "a6e93097eff2f926e2aa7d2885a6c7036643c93ce54ed42f0d466382eb3ba678"
+      }
+    },
+    {
+      "source": "app/cbl/COBIL00C.cbl",
+      "sourceSha256": "b5c46039eb8fd2f7ed7d3ca379172e56fa87385a369023bef706b04986fe1cfb",
+      "gapsBefore": 538,
+      "gapsAfter": 334,
+      "analysisStatus": "PARTIAL",
+      "localReadinessClaimsUpdated": 0,
+      "airUncertaintiesRemoved": 204,
+      "airUncertaintiesAdded": 0,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "1c072bc377f033f5bf0892639b4cd41487513d71bf459b1b1718115dcc593d7c",
+          "after": "a472f3ef9be8dd6c8447fd348772f79678c209cfb3b4cc36adaadd750c84262d"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "65074833100446668789cfba46ea093c6ec1be30f4f28c21943003a04dfc4bae",
+          "after": "65074833100446668789cfba46ea093c6ec1be30f4f28c21943003a04dfc4bae"
+        },
+        "dependencies.json.zst": {
+          "before": "829c1ee8e39252846c7817ffc271aa865a4c8741b7b0e553c15a375a0fe0888d",
+          "after": "677914bd624c536e9b96377f26ed7043a3e3e353168aa720f23e5cf30483d90b"
+        },
+        "cfg.json.zst": {
+          "before": "69a75ac2049b13ae77da2cb27cb6a0e092319ddf3f94662e1cd05b0a6c9bb948",
+          "after": "d6d2b92d7896644da9e05c99759dc0343c42c4554dbb6c90f7c29c777f4da4bb"
+        }
+      },
+      "currentArtifactHashes": {
+        "air-d52fbf8732fca1bf953e9f1137f3576d037edc76b132688d9f91fe75b24b64a5.json.zst": "5da48296401f6ab1f775a2d0be2bf446bfbd9806c9a25d1b17dfbd082e2276f3",
+        "cfg.json.zst": "d6d2b92d7896644da9e05c99759dc0343c42c4554dbb6c90f7c29c777f4da4bb",
+        "dependency-input.json.zst": "d0ac235e6c1f874a451ee730b7dd56bfa0d57cf3db0aeb2be6ad85289d9d456a",
+        "source-e1b10864bebda8109467bd11db13871228bff8355cb759822b9e92ddd7f3bfa3.json.zst": "9dd77fc0d1d5f1a7ad5cd187e54f2d8c6ddc245b68ab76469f05fd99bcb3f135",
+        "dependencies.json.zst": "677914bd624c536e9b96377f26ed7043a3e3e353168aa720f23e5cf30483d90b",
+        "sp/cobol-semantic-product.json.zst": "a472f3ef9be8dd6c8447fd348772f79678c209cfb3b4cc36adaadd750c84262d",
+        "sp/observed-dependencies.json.zst": "65074833100446668789cfba46ea093c6ec1be30f4f28c21943003a04dfc4bae",
+        "sp/cobol-semantic-compilation.json.zst": "8dc00335ef735f6658444fe1cd067950b4bdb1a34a91c29d25a2a09db3345ffa",
+        "sp/semantic-product.json.zst": "a472f3ef9be8dd6c8447fd348772f79678c209cfb3b4cc36adaadd750c84262d"
+      }
+    },
+    {
+      "source": "app/cbl/COBSWAIT.cbl",
+      "sourceSha256": "38a8d28235e58509776f5c8c74c113d5848a7ac68fab753c55ab887221c3b43a",
+      "gapsBefore": 9,
+      "gapsAfter": 9,
+      "analysisStatus": "COMPLETE",
+      "localReadinessClaimsUpdated": 0,
+      "airUncertaintiesRemoved": 0,
+      "airUncertaintiesAdded": 0,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "c5f381a2aaf28fbae92893d1abef3f0b7c61bf915da52ac62ae42193be00347f",
+          "after": "fae0968573d730c51e2e7e624a650acfbba58be3649d204201b2623564ba02cc"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "3e605c987111a63d1a983db9163ec2d8fbbbed6c6fc989fa1363e5279c87f680",
+          "after": "3e605c987111a63d1a983db9163ec2d8fbbbed6c6fc989fa1363e5279c87f680"
+        },
+        "dependencies.json.zst": {
+          "before": "f369d5da57dc82ac6e3123f3f9b29209d9f13a63f6ccdfc55d9c204e7d5ddfc1",
+          "after": "9c231ed282943eeee47ca05a399a60ac700e40e07257082897ee3cb385107f6f"
+        },
+        "cfg.json.zst": {
+          "before": "36d8a000341b7ff2f20f52bfe0338643a7b44aaef1d071bd25a33cf84b181e14",
+          "after": "cf4e091a735a9cc36921fef6c6a68295b0d9cbb9c0ea21d0bb667afa2a9c912f"
+        }
+      },
+      "currentArtifactHashes": {
+        "source-152ae31aeb6c24a0115f4bb50594a211d7bdd3ad2f4a52dc53cd783716d8158f.json.zst": "ccd89ed5e320afb265e1ae35ee72ccac9da1e717f9f5a88039131dbe40526a22",
+        "cfg.json.zst": "cf4e091a735a9cc36921fef6c6a68295b0d9cbb9c0ea21d0bb667afa2a9c912f",
+        "dependency-input.json.zst": "78c384a63a777393dbe45a598ba9baf309442c4a1f37b1e59504a34dbd9a256d",
+        "air-8e67b2ded462af004e959d6090be49dad6bad441d8e6d4c6c97e5314b6e59387.json.zst": "8da836fdf00dd2a3533fd822e1d25b33924b1676d2b29347a2524bedacf96bda",
+        "dependencies.json.zst": "9c231ed282943eeee47ca05a399a60ac700e40e07257082897ee3cb385107f6f",
+        "sp/cobol-semantic-product.json.zst": "fae0968573d730c51e2e7e624a650acfbba58be3649d204201b2623564ba02cc",
+        "sp/observed-dependencies.json.zst": "3e605c987111a63d1a983db9163ec2d8fbbbed6c6fc989fa1363e5279c87f680",
+        "sp/cobol-semantic-compilation.json.zst": "87afc3c575fb23496794e1ddb1fade5bd0f184c51ddb0bb0060530f86456a096",
+        "sp/semantic-product.json.zst": "fae0968573d730c51e2e7e624a650acfbba58be3649d204201b2623564ba02cc"
+      }
+    },
+    {
+      "source": "app/cbl/COCRDLIC.cbl",
+      "sourceSha256": "d6a9210ad3062bd657881fc3f0d2a7368db3ff4869594e0d6a878d8f410d87b6",
+      "gapsBefore": 983,
+      "gapsAfter": 720,
+      "analysisStatus": "PARTIAL",
+      "localReadinessClaimsUpdated": 0,
+      "airUncertaintiesRemoved": 263,
+      "airUncertaintiesAdded": 0,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "a8968b862d63f23d0f75d030cfbd836ef8c0dba5be2ad2e0b5ab89ca6a4d473f",
+          "after": "ae1d2f3fbfd763908c54cb23dc6fbb7334e6485e689b76901219fd4c24d5b8ee"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "6541f4590020763f74ab2f166a745a1ffe80512450b1f8610a82836688edf6c7",
+          "after": "6541f4590020763f74ab2f166a745a1ffe80512450b1f8610a82836688edf6c7"
+        },
+        "dependencies.json.zst": {
+          "before": "e86f65ccf20801c3810a2d1a3ad3cb32321ccad83f7766cd40f64eec540bb2e0",
+          "after": "ef210c7eb7cf715f2a542176906ff2f3f61662701eb424a8216e6af9be9b793d"
+        },
+        "cfg.json.zst": {
+          "before": "85577d56afb0686c79031fb6fb972cb03d29fdfea6cdf4b3236af4b9c4157460",
+          "after": "2596b4c2a323733370e0aa75be9a68096aedc72b54b63945f2301cefd2372b75"
+        }
+      },
+      "currentArtifactHashes": {
+        "cfg.json.zst": "2596b4c2a323733370e0aa75be9a68096aedc72b54b63945f2301cefd2372b75",
+        "source-6351e5955c045b656b14428b4ec2f0a9969cc182d14fd0f649971afc95b1826c.json.zst": "462ae8ea7c720bf088107536a431e1240f30c81174037c8fecd70e09b03484cb",
+        "dependency-input.json.zst": "837dc7c6001e1a99f6887cfc5d1eb3c86021d2a04308352198a37f3e7689a09d",
+        "air-9e44c2c28c7f2808448ce3ee1f0083b756fe7529efb885cffb27903e44d7a278.json.zst": "5c5732634854e3e4d8cabc2c5108c66be7a23f3ffd9ee1c4e5a8d315bf02b951",
+        "dependencies.json.zst": "ef210c7eb7cf715f2a542176906ff2f3f61662701eb424a8216e6af9be9b793d",
+        "sp/cobol-semantic-product.json.zst": "ae1d2f3fbfd763908c54cb23dc6fbb7334e6485e689b76901219fd4c24d5b8ee",
+        "sp/observed-dependencies.json.zst": "6541f4590020763f74ab2f166a745a1ffe80512450b1f8610a82836688edf6c7",
+        "sp/cobol-semantic-compilation.json.zst": "e79fbb3c5cf9fe027d84b578962a31f2340c9cdd7f3dafeeb624b70ce53b5e42",
+        "sp/semantic-product.json.zst": "ae1d2f3fbfd763908c54cb23dc6fbb7334e6485e689b76901219fd4c24d5b8ee"
+      }
+    },
+    {
+      "source": "app/cbl/COCRDSLC.cbl",
+      "sourceSha256": "d5af307fb4b1a155f03df9eea14b402d866a332360e14a1e37dbefe59b73363b",
+      "gapsBefore": 509,
+      "gapsAfter": 373,
+      "analysisStatus": "PARTIAL",
+      "localReadinessClaimsUpdated": 0,
+      "airUncertaintiesRemoved": 136,
+      "airUncertaintiesAdded": 0,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "928e6615e86e0008e5c24fb3037f39eb19780c811a0fe52771755db72992319c",
+          "after": "a6d203a31391b5289b615e34fb5c6ce3752e587c6fda10f90f3b7b13bd5c844c"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "97279f80c96e37e21e57fa886a53650890fed9f1c08ec43c3cc37c0ac2899888",
+          "after": "97279f80c96e37e21e57fa886a53650890fed9f1c08ec43c3cc37c0ac2899888"
+        },
+        "dependencies.json.zst": {
+          "before": "4cf0a3160b9844b1f4472fb9bf01120af7614186f639b2ae931b7ffad9bb6077",
+          "after": "e45b242bb65885097df7b548b22da0071463ce07c3baa4673080b1c818b6ce04"
+        },
+        "cfg.json.zst": {
+          "before": "0a815c477d8a614505b1eed9526e2112512fb51e480b1f46dc1bbda0443de4c9",
+          "after": "5c3da535c28e4cd0c45d87427e509cee6fbff1e75d9f058d6542edd1ff748503"
+        }
+      },
+      "currentArtifactHashes": {
+        "cfg.json.zst": "5c3da535c28e4cd0c45d87427e509cee6fbff1e75d9f058d6542edd1ff748503",
+        "air-708515254795956e6d89abe9a20f28e51b35f00f17f94907bc33fea11de356ba.json.zst": "1ed8a5694b20db2c7c72fb19b07c74184349b329f6056a60e54fc13f21c63773",
+        "source-9055c71f26f649324eff116754f453b315cec6f93c425f695f1eba6d56e343a1.json.zst": "7d80af15024416a39ab038946d18da88ec16cb46fe7d289170137860b1f11ee5",
+        "dependency-input.json.zst": "70dafd04b99a5891a99ef9a0755e09f6a9418e01e79c81093c8699bb2003158e",
+        "dependencies.json.zst": "e45b242bb65885097df7b548b22da0071463ce07c3baa4673080b1c818b6ce04",
+        "sp/cobol-semantic-product.json.zst": "a6d203a31391b5289b615e34fb5c6ce3752e587c6fda10f90f3b7b13bd5c844c",
+        "sp/observed-dependencies.json.zst": "97279f80c96e37e21e57fa886a53650890fed9f1c08ec43c3cc37c0ac2899888",
+        "sp/cobol-semantic-compilation.json.zst": "3fb7e002e0a04835cdeed796e04f6b876a10f40ae6fa5910e474dbf7f1ee6aa3",
+        "sp/semantic-product.json.zst": "a6d203a31391b5289b615e34fb5c6ce3752e587c6fda10f90f3b7b13bd5c844c"
+      }
+    },
+    {
+      "source": "app/cbl/COCRDUPC.cbl",
+      "sourceSha256": "c245cf383a4a3f721773a13ca231eb76bd5ae75c1830d58c7aba898a554a0de9",
+      "gapsBefore": 916,
+      "gapsAfter": 693,
+      "analysisStatus": "PARTIAL",
+      "localReadinessClaimsUpdated": 0,
+      "airUncertaintiesRemoved": 224,
+      "airUncertaintiesAdded": 1,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "aa947722cbe421c6c787c50934e13c08ef03b1b6a87a1713761665b29d7f9164",
+          "after": "9b78ee4543e30495ad2d0b8e1f3c41a8ca7bcd94eef1a748fe7822b2575c6fa9"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "00e840af12248f4b89bc5f145574030bd0bfce891caa343104f935a68a143dca",
+          "after": "00e840af12248f4b89bc5f145574030bd0bfce891caa343104f935a68a143dca"
+        },
+        "dependencies.json.zst": {
+          "before": "76cab9ee0daaf003049fbbc9951de6b651314c8fc67868af8643cf75aaf459c8",
+          "after": "adc1a302796b47c1d9f9c718f198507b4a2949f21b28ce5ed8737e3079bcc732"
+        },
+        "cfg.json.zst": {
+          "before": "c489e47680d90355ff90877119ad9f019b22e35ec74d7ec6534da59c3513f90c",
+          "after": "43c147b8cf59e0f5f2dcf8de79a929d9670341f6a9c47e45edee71d5b5c37897"
+        }
+      },
+      "currentArtifactHashes": {
+        "cfg.json.zst": "43c147b8cf59e0f5f2dcf8de79a929d9670341f6a9c47e45edee71d5b5c37897",
+        "dependency-input.json.zst": "0ee65f20a19fef541843f1b283ee351efa23337782ad527491dff89cba09b595",
+        "air-d55f5bfae3da31eb156433549efc64ea56cd725b9f186ed5e9b8ffe671bbd864.json.zst": "60cbe1b02a5234b4b699d05f20efcfbfeb6fd84d7f6ba81d1698740698a96371",
+        "source-c6cc3e3c76465601735a5b87f22d9dc0f4f78797cbd3929c099fd82309363017.json.zst": "ba61f5dafb38cba426dcdb08a4028c452af429d8b94c5d09ef5a06608ce21231",
+        "dependencies.json.zst": "adc1a302796b47c1d9f9c718f198507b4a2949f21b28ce5ed8737e3079bcc732",
+        "sp/cobol-semantic-product.json.zst": "9b78ee4543e30495ad2d0b8e1f3c41a8ca7bcd94eef1a748fe7822b2575c6fa9",
+        "sp/observed-dependencies.json.zst": "00e840af12248f4b89bc5f145574030bd0bfce891caa343104f935a68a143dca",
+        "sp/cobol-semantic-compilation.json.zst": "befee453a0d1a81271db087762f9feca942b1d34c3d010b1c7343298274d28bc",
+        "sp/semantic-product.json.zst": "9b78ee4543e30495ad2d0b8e1f3c41a8ca7bcd94eef1a748fe7822b2575c6fa9"
+      }
+    },
+    {
+      "source": "app/cbl/COMEN01C.cbl",
+      "sourceSha256": "c77747b4caaf00b45177a6449562b7f59ec336db832937595edef8b32fdce6fa",
+      "gapsBefore": 251,
+      "gapsAfter": 182,
+      "analysisStatus": "PARTIAL",
+      "localReadinessClaimsUpdated": 0,
+      "airUncertaintiesRemoved": 69,
+      "airUncertaintiesAdded": 0,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "05a69f936dd1fa6ad561717f61bf2d071a26b48413d18b5cdb99419ad7cd7ed8",
+          "after": "fcdb442abd27afaf3a2ce12e4c36d372f195e88467438ea163d7a795f82a9b20"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "5d1dda3050176f186da76821dbf123f09d1f7c95903b233f7c0dd6f41832f517",
+          "after": "5d1dda3050176f186da76821dbf123f09d1f7c95903b233f7c0dd6f41832f517"
+        },
+        "dependencies.json.zst": {
+          "before": "eed27c03bfd8851c84bdec6489680c3c28bffbff190ccfc8c070f24adf564bea",
+          "after": "772866490fa155f54ffb7b298c92dc8da039994af599dcafec6473fa698ef696"
+        },
+        "cfg.json.zst": {
+          "before": "e554cdd0b84131a6935b23e8094003b7c6e31e75d963a3aecb7780ea1ed9a169",
+          "after": "0fee3fe5517a69ab52321b826f6556df29e65d7b845c2a6680b0f147d5264e5c"
+        }
+      },
+      "currentArtifactHashes": {
+        "cfg.json.zst": "0fee3fe5517a69ab52321b826f6556df29e65d7b845c2a6680b0f147d5264e5c",
+        "dependency-input.json.zst": "e1fecec1efa86daaf6a93f7c0693cdf634de4c26b3c35d924d6c52e1a6cf3368",
+        "source-3d22842e8b8114678257a54b4d7c29565405f86c54aaa85ba3b02f53baecac21.json.zst": "6b26fdeab35f18a6a1b8ab413b87da29f701f1fdaa620e4e4c7c8898de35443a",
+        "air-c8a82e035d4d582b48049e2b8ec55fe1f8526a523ce155486f3ab483a696b58c.json.zst": "f5015c7562c28745ff3fd6f7051541c43e4342585face606f79499438fe2cbad",
+        "dependencies.json.zst": "772866490fa155f54ffb7b298c92dc8da039994af599dcafec6473fa698ef696",
+        "sp/cobol-semantic-product.json.zst": "fcdb442abd27afaf3a2ce12e4c36d372f195e88467438ea163d7a795f82a9b20",
+        "sp/observed-dependencies.json.zst": "5d1dda3050176f186da76821dbf123f09d1f7c95903b233f7c0dd6f41832f517",
+        "sp/cobol-semantic-compilation.json.zst": "992b8d3745480853f6445309cdef0b4ca9355032d3ee4fe8de0e0accd21cb2cb",
+        "sp/semantic-product.json.zst": "fcdb442abd27afaf3a2ce12e4c36d372f195e88467438ea163d7a795f82a9b20"
+      }
+    },
+    {
+      "source": "app/cbl/CORPT00C.cbl",
+      "sourceSha256": "0b06bd5d4f38f17871de8985c439dfce7ed30d28e02b6ffeb8459e0cd8db4fc2",
+      "gapsBefore": 586,
+      "gapsAfter": 349,
+      "analysisStatus": "PARTIAL",
+      "localReadinessClaimsUpdated": 0,
+      "airUncertaintiesRemoved": 237,
+      "airUncertaintiesAdded": 0,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "b5d8043272e69ad63ec54188fca4da7f2ea95e570dd62ce239a6952337c8c19f",
+          "after": "c74e2dcd3b6a4fb9ce178b7cd6e2cc758c1cab8a3741a0069ff33c5e481aed78"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "2ae3065984c14a46bcf7a0e259e07af8b13dd46edef8ecdce5a9384e6b765db2",
+          "after": "2ae3065984c14a46bcf7a0e259e07af8b13dd46edef8ecdce5a9384e6b765db2"
+        },
+        "dependencies.json.zst": {
+          "before": "cdeee1f26e2a600a069902fa39d4fb7150476dd99be31d22b5170db2661c564b",
+          "after": "21723f4819fdb9767ce32acc71ef202e2ee702a8ba2923d81410bf8fc04ecb16"
+        },
+        "cfg.json.zst": {
+          "before": "3304f44fab228e7f8a132b276dbe03e48c6624507bfb1ad8b8790d0e18a48c3c",
+          "after": "63f6e0b13e481016d4ad139bdf7c4d6fba9dd69462a3212ae19bd6f4ddb90834"
+        }
+      },
+      "currentArtifactHashes": {
+        "air-283a0bf9dcc9f9fba0eadc8eb332c38dda2d842760d53636eebe06952eef0e6a.json.zst": "727d1b987caabab477ed8013885e26cab0393ea9cd3e0f4d7a392550aa7ac8b1",
+        "cfg.json.zst": "63f6e0b13e481016d4ad139bdf7c4d6fba9dd69462a3212ae19bd6f4ddb90834",
+        "dependency-input.json.zst": "047487707cfcb6d51cf466e5b2a9d67ade28956bf2bce8592ba77bf3b196de4a",
+        "source-d7a1b564b10787ccfc0629cab84856947c2a11bca63867cfe48502db983d5910.json.zst": "6160f7227276e621710e19016fcd77b5b19bb95651571ac4ca14bf55a07a027e",
+        "dependencies.json.zst": "21723f4819fdb9767ce32acc71ef202e2ee702a8ba2923d81410bf8fc04ecb16",
+        "sp/cobol-semantic-product.json.zst": "c74e2dcd3b6a4fb9ce178b7cd6e2cc758c1cab8a3741a0069ff33c5e481aed78",
+        "sp/observed-dependencies.json.zst": "2ae3065984c14a46bcf7a0e259e07af8b13dd46edef8ecdce5a9384e6b765db2",
+        "sp/cobol-semantic-compilation.json.zst": "7a5116fbf2e1c9bceef3b7a87e1b8753496da125c19eebfe9f0b318cddf6858e",
+        "sp/semantic-product.json.zst": "c74e2dcd3b6a4fb9ce178b7cd6e2cc758c1cab8a3741a0069ff33c5e481aed78"
+      }
+    },
+    {
+      "source": "app/cbl/COSGN00C.cbl",
+      "sourceSha256": "4f901ae6b113eebae60ae1d94b30f8cb9906d031a4419770bf56980bdf97e377",
+      "gapsBefore": 184,
+      "gapsAfter": 126,
+      "analysisStatus": "COMPLETE",
+      "localReadinessClaimsUpdated": 0,
+      "airUncertaintiesRemoved": 58,
+      "airUncertaintiesAdded": 0,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "5b1214917085eae683a4b351bc871d571f14a44afd6f712c6f3bc4515c004834",
+          "after": "6ba720d3df288446ab444206ad7eb69cd05c66b8df4b8eae1a7840ebdca68b8d"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "4833394bf29656c7371e147987cbdc6816569d803a1be1d19d94bebc8b0137f5",
+          "after": "4833394bf29656c7371e147987cbdc6816569d803a1be1d19d94bebc8b0137f5"
+        },
+        "dependencies.json.zst": {
+          "before": "b7422602c34f7e531fd87a7c68ac268a88980a70bafcd1fb6a170de93d4366f7",
+          "after": "d074fbeaa8bbc75697a686ac08e67da7fb7c807102596a63f827e041855e5c3d"
+        },
+        "cfg.json.zst": {
+          "before": "0e6a36b7f0ae1154e85f00d194eb501b531f7f7b73390ef70db57376a20089a8",
+          "after": "e9e41b5659171d0c9106032df58059770c968bb8a44d33c81070b111881873a1"
+        }
+      },
+      "currentArtifactHashes": {
+        "air-76309e679186c017ce4c430a58d28d8f01bd9199aacd898cd364c90e4c79971a.json.zst": "a0e00f455698bc532b93e6324b3aa00d1f7111b28e99bc9d83f741d49497aff4",
+        "cfg.json.zst": "e9e41b5659171d0c9106032df58059770c968bb8a44d33c81070b111881873a1",
+        "source-ea73a0c69e0b5e1379cb82f16da4889b3d66489d2582e0fc3084e46d87943391.json.zst": "dda53f87e0d8d6965b51b9d7a7ed403666d68c07d5104a30864442f3ceed2aa1",
+        "dependency-input.json.zst": "352d75c8da38305d778233dfad0d8e88a14b3e8522c16e833ca88a3988d7ca26",
+        "dependencies.json.zst": "d074fbeaa8bbc75697a686ac08e67da7fb7c807102596a63f827e041855e5c3d",
+        "sp/cobol-semantic-product.json.zst": "6ba720d3df288446ab444206ad7eb69cd05c66b8df4b8eae1a7840ebdca68b8d",
+        "sp/observed-dependencies.json.zst": "4833394bf29656c7371e147987cbdc6816569d803a1be1d19d94bebc8b0137f5",
+        "sp/cobol-semantic-compilation.json.zst": "8104b2f63f9a0f4b111ef783e8565b0cdaa02e878fbd39fb712c300d66f8f57a",
+        "sp/semantic-product.json.zst": "6ba720d3df288446ab444206ad7eb69cd05c66b8df4b8eae1a7840ebdca68b8d"
+      }
+    },
+    {
+      "source": "app/cbl/COTRN00C.cbl",
+      "sourceSha256": "51479f131b4fb300008403f0c4f9fdbde56f22a7fb341c782492da29f0d23bbe",
+      "gapsBefore": 891,
+      "gapsAfter": 603,
+      "analysisStatus": "PARTIAL",
+      "localReadinessClaimsUpdated": 0,
+      "airUncertaintiesRemoved": 288,
+      "airUncertaintiesAdded": 0,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "5fca5aeca6f9c6caa03bf07d6de1cc84fb41b74d74e34f2217888621eb2c92b8",
+          "after": "750983a622f5ba81676a0da6830e1b9eb88554953eb47413332967892a31af2a"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "b7c6088083da48b0dd3cdfce7300bd6cc38c05d7b1658bd256e6c5512c5d497d",
+          "after": "b7c6088083da48b0dd3cdfce7300bd6cc38c05d7b1658bd256e6c5512c5d497d"
+        },
+        "dependencies.json.zst": {
+          "before": "6fe9cec491b257aaf321d60a6de5ece8e79ca1318dc33190f6dfcc7fa22b9195",
+          "after": "d9f8bacf0a47c2d9a424a502842a2c800427407cd255e30eafcf2f852f4236c6"
+        },
+        "cfg.json.zst": {
+          "before": "f94d46350948817df074ea3bc941ea317c60f47daa5b413e9316b1e1461fb3f8",
+          "after": "600572a4e605bef9c4048ad953d755f8445fdbdb6f85cd32dfc56195573d83da"
+        }
+      },
+      "currentArtifactHashes": {
+        "source-db4ed75ceac72b30ebabb056f74b6a2cc28a95624ac2c873a1b2144ed8cdac1b.json.zst": "8073cfec3827aebef5737b02a978703292f5f7fa20915823eb1bd574309a877d",
+        "cfg.json.zst": "600572a4e605bef9c4048ad953d755f8445fdbdb6f85cd32dfc56195573d83da",
+        "dependency-input.json.zst": "7abde28c955d9040be880731763a719ead14f174c8e3e5725a3246bd53771a54",
+        "air-65113372535ae7dc2c60a9e9dfe84b93f105968d84680d13ec406c7c8394af64.json.zst": "891d8d961db0016ca7593080cf3b673ba8aef08d33f0f4e1bea7ed234a3eed9e",
+        "dependencies.json.zst": "d9f8bacf0a47c2d9a424a502842a2c800427407cd255e30eafcf2f852f4236c6",
+        "sp/cobol-semantic-product.json.zst": "750983a622f5ba81676a0da6830e1b9eb88554953eb47413332967892a31af2a",
+        "sp/observed-dependencies.json.zst": "b7c6088083da48b0dd3cdfce7300bd6cc38c05d7b1658bd256e6c5512c5d497d",
+        "sp/cobol-semantic-compilation.json.zst": "4a4b34ea344f9082297c7e974cf00a94a74ada9163a539cd74f7047408c219ed",
+        "sp/semantic-product.json.zst": "750983a622f5ba81676a0da6830e1b9eb88554953eb47413332967892a31af2a"
+      }
+    },
+    {
+      "source": "app/cbl/COTRN01C.cbl",
+      "sourceSha256": "fc24ff879ac6ae12bc6817554cb756f14c5e86e0ca2dd0037af49599887f03c0",
+      "gapsBefore": 256,
+      "gapsAfter": 176,
+      "analysisStatus": "PARTIAL",
+      "localReadinessClaimsUpdated": 0,
+      "airUncertaintiesRemoved": 80,
+      "airUncertaintiesAdded": 0,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "3278e4ba87a4d888cc3e320066051e3a0a046395e130172003a9cd143f231afc",
+          "after": "db99ddd0e3b0ed8c56fd728e0f6d9051032492eee57ea70c7bbb8e812bdef48e"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "b0438d9e7a7657685acfa394f3752c679065d773b95836ccef58a6363e0e571a",
+          "after": "b0438d9e7a7657685acfa394f3752c679065d773b95836ccef58a6363e0e571a"
+        },
+        "dependencies.json.zst": {
+          "before": "ffa1e71211395826801399ef7d3d3651c54f3ba2f83d2fd13cc69fde511bda2e",
+          "after": "3ec493c3d69d546d1c6c4392baae753cf44f20b827724334fcdbe74e3e6543fc"
+        },
+        "cfg.json.zst": {
+          "before": "67fb4e167ce625923d1f0053577aaba25a26872cc96903be23b383e778ee1438",
+          "after": "20192f2203fc143d063e41684e53880fbfcf6354ad77aa4d0c040658d56d9212"
+        }
+      },
+      "currentArtifactHashes": {
+        "cfg.json.zst": "20192f2203fc143d063e41684e53880fbfcf6354ad77aa4d0c040658d56d9212",
+        "air-9c42d27efd446c7c013a64e26c3de84fe1705ca5a64c685890123f7c0738711d.json.zst": "d2d13ef5f19846a5fd2cbb58a894e1befb7270d7cfb965d2a609bb8eee93462f",
+        "dependency-input.json.zst": "d4c3759ff614ce0bf01e8ff2fb774a5265a333fa522c2faf00a3c0f2110285cf",
+        "source-4265b774055ea67549b4c89f7cf1d0e94c3103fb91523bebd8f3cdc0cddcad7f.json.zst": "7fcdf80bbb7ed34b7928ff5cf1a1c028ef94c7c8147d9759839fea3dc01753f1",
+        "dependencies.json.zst": "3ec493c3d69d546d1c6c4392baae753cf44f20b827724334fcdbe74e3e6543fc",
+        "sp/cobol-semantic-product.json.zst": "db99ddd0e3b0ed8c56fd728e0f6d9051032492eee57ea70c7bbb8e812bdef48e",
+        "sp/observed-dependencies.json.zst": "b0438d9e7a7657685acfa394f3752c679065d773b95836ccef58a6363e0e571a",
+        "sp/cobol-semantic-compilation.json.zst": "01ba2ad0c8311bec0385e2f351e8989ec45d44f8d018883d6c9c51639316365e",
+        "sp/semantic-product.json.zst": "db99ddd0e3b0ed8c56fd728e0f6d9051032492eee57ea70c7bbb8e812bdef48e"
+      }
+    },
+    {
+      "source": "app/cbl/COTRN02C.cbl",
+      "sourceSha256": "dc33b4c797a98d2732070a223f43cc78992c2846681163a032e376630742b1ed",
+      "gapsBefore": 857,
+      "gapsAfter": 508,
+      "analysisStatus": "PARTIAL",
+      "localReadinessClaimsUpdated": 0,
+      "airUncertaintiesRemoved": 349,
+      "airUncertaintiesAdded": 0,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "ec0b2b8cb83d29c09a48d21e29d33bf93c5c972785a7e3c30a1c9b430011d825",
+          "after": "5bc2945f30ac881dd2c16e864ba75ffc8289484469fb89216cae0a31b3443049"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "447362066d955b36fa26317fb44e25862ca719550c4b71af9b18034d1c83e527",
+          "after": "447362066d955b36fa26317fb44e25862ca719550c4b71af9b18034d1c83e527"
+        },
+        "dependencies.json.zst": {
+          "before": "ff3d19a17ded8c14eadedba3449a6ca829abe8cec8da849d5a1ca3e666a5471c",
+          "after": "9115c1f35b4705526f889a56f18588a8f941c74197f86f389e9bbc91e416a8a5"
+        },
+        "cfg.json.zst": {
+          "before": "f20dc7b969f9cfe2d2ed78d4d4db6e36c5340f72b6a60b2470240dae8abbc538",
+          "after": "be39690e36f692eef9720aec3b8a538d304d23dad784872781bc48944d326b59"
+        }
+      },
+      "currentArtifactHashes": {
+        "air-0020fb8ff7c45db3127553e20351a3302c8c81fc3bab74a90932e74276104b9a.json.zst": "6706e8c2f46a5e3df8febb299217b7cf92d9bf36f01d738b9c945d78eb113c9b",
+        "cfg.json.zst": "be39690e36f692eef9720aec3b8a538d304d23dad784872781bc48944d326b59",
+        "dependency-input.json.zst": "d1a9b6efcdb749ebe7e1eca0264f0e2fe3cd51148a0d77628c66a3ae442377d2",
+        "source-17d622a342b01ea759a21e023124f98ebaec057678a51f5af79472e471590d9c.json.zst": "d1f55048bbfa72e3160f44758cbe7afbfae9fd2a755a9f19e3e3873dc154d510",
+        "dependencies.json.zst": "9115c1f35b4705526f889a56f18588a8f941c74197f86f389e9bbc91e416a8a5",
+        "sp/cobol-semantic-product.json.zst": "5bc2945f30ac881dd2c16e864ba75ffc8289484469fb89216cae0a31b3443049",
+        "sp/observed-dependencies.json.zst": "447362066d955b36fa26317fb44e25862ca719550c4b71af9b18034d1c83e527",
+        "sp/cobol-semantic-compilation.json.zst": "d9ccf2145efc1fced990f3c9055bc32f013087493ac0a0aa4aa45e6989b6fcf0",
+        "sp/semantic-product.json.zst": "5bc2945f30ac881dd2c16e864ba75ffc8289484469fb89216cae0a31b3443049"
+      }
+    },
+    {
+      "source": "app/cbl/COUSR00C.cbl",
+      "sourceSha256": "831433c6ec8306038c85cb86a8307f91dca48c26ef33a997f402187cbd9f4e04",
+      "gapsBefore": 879,
+      "gapsAfter": 589,
+      "analysisStatus": "PARTIAL",
+      "localReadinessClaimsUpdated": 0,
+      "airUncertaintiesRemoved": 290,
+      "airUncertaintiesAdded": 0,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "ac0ed2063115c75cbc68e5630ed83967084168e92f6ad978f45a44689e2f152f",
+          "after": "0b3d1c5fe20f1fb9b85a3c189bec528552f363091a64610f84929276a9b99240"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "4e669b76eab4356b45267b87258548a6fe885cd547f99a6e83cb76b97882dbd7",
+          "after": "4e669b76eab4356b45267b87258548a6fe885cd547f99a6e83cb76b97882dbd7"
+        },
+        "dependencies.json.zst": {
+          "before": "65debde7d1cc56c0beb69a7647915ec2728b43179e84e7581417548b73265484",
+          "after": "5730cfff21f911c43ffc0c4debbd7761e49bae4b0ed253e3c51e6a262b0771e5"
+        },
+        "cfg.json.zst": {
+          "before": "c8d6b13a30b769fe1996225a7a6be8889de253c13430208f972c9bdaa6402874",
+          "after": "7c6c49fa4b0962f2371088515b9f3ad4f76e52eb6227489ed61b7cecd0f79d14"
+        }
+      },
+      "currentArtifactHashes": {
+        "cfg.json.zst": "7c6c49fa4b0962f2371088515b9f3ad4f76e52eb6227489ed61b7cecd0f79d14",
+        "dependency-input.json.zst": "7aaa34c2d32794f2f0f0b4af274d5a47723fdfa02e5689229145c0e60cdfd436",
+        "source-ab34448be21681662fd68f860ca4e77e398dcd4ced9c833ea2c1b4c0a395bae2.json.zst": "f73fc57d04c55ee2563166836bf9fcded631b29d8460027e30879337df49ddf0",
+        "air-2a8df4e5010f569582c78acf84225d0ca55b57dd3afe22fd8bda00ff5bede309.json.zst": "affe8f12deb52014fcd645a913006193ae3bdd865321de4109d4d310749558ef",
+        "dependencies.json.zst": "5730cfff21f911c43ffc0c4debbd7761e49bae4b0ed253e3c51e6a262b0771e5",
+        "sp/cobol-semantic-product.json.zst": "0b3d1c5fe20f1fb9b85a3c189bec528552f363091a64610f84929276a9b99240",
+        "sp/observed-dependencies.json.zst": "4e669b76eab4356b45267b87258548a6fe885cd547f99a6e83cb76b97882dbd7",
+        "sp/cobol-semantic-compilation.json.zst": "0a4e5643929a5e1474d0a0f3de9b146fc3aaf3f7b3c0f49eb45c1f02b1ac18c9",
+        "sp/semantic-product.json.zst": "0b3d1c5fe20f1fb9b85a3c189bec528552f363091a64610f84929276a9b99240"
+      }
+    },
+    {
+      "source": "app/cbl/COUSR01C.cbl",
+      "sourceSha256": "aa131b1e3382dc6d101b42f1c97d4fb0c2fdd706819ed9f9a0187c82b30f3019",
+      "gapsBefore": 273,
+      "gapsAfter": 168,
+      "analysisStatus": "PARTIAL",
+      "localReadinessClaimsUpdated": 0,
+      "airUncertaintiesRemoved": 105,
+      "airUncertaintiesAdded": 0,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "fba2895e10ca07ba2bdc703334c65910d1beeaa8cc5c2363db3da712553b9c85",
+          "after": "729631e5f730f7d85dfbd92f5ab9b1a314adc5bfc3cc6e85b52556182e2674c7"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "09c4300ade5df4b2fc0a737626f2cb4501238bc489c5cebe3d94989969bd84e5",
+          "after": "09c4300ade5df4b2fc0a737626f2cb4501238bc489c5cebe3d94989969bd84e5"
+        },
+        "dependencies.json.zst": {
+          "before": "d0791c48d9ba41c119d289dd59ef2bda752d33c6a1cae2f33e7bd278ba97c4e4",
+          "after": "b1e5db7a51cfe20fb241e0434ece02df59da139d0155bd5ef7149d32aacc4638"
+        },
+        "cfg.json.zst": {
+          "before": "43c49f8c1e0198f021e71afd5cd809e3f31824b3a395dda0938d0a4e2e3ed344",
+          "after": "5c5a8916c8b04cd3579c4c7d3845dea324f673b050d3cc10e24ad2d82e4614fe"
+        }
+      },
+      "currentArtifactHashes": {
+        "cfg.json.zst": "5c5a8916c8b04cd3579c4c7d3845dea324f673b050d3cc10e24ad2d82e4614fe",
+        "source-162b8a9be3c9642e1016303d63e05a2700484614cb1b6998983892a68481dcfc.json.zst": "31e3072bbedd48e908e5de9a3b11c5116d913a345c452d5472c86b5fe745bb61",
+        "dependency-input.json.zst": "4b29e69f7c26fc6dcb6ab0a891e1d88e87ce3bfe316074b283011515f12d6d02",
+        "air-79435efe91f0de9fef67da6c16de1a4a7e74a13ceccf7632760056dce7903a2f.json.zst": "fd0d03cace39e713251824e4866777347c1de7574161c4799266e6a9f11406a6",
+        "dependencies.json.zst": "b1e5db7a51cfe20fb241e0434ece02df59da139d0155bd5ef7149d32aacc4638",
+        "sp/cobol-semantic-product.json.zst": "729631e5f730f7d85dfbd92f5ab9b1a314adc5bfc3cc6e85b52556182e2674c7",
+        "sp/observed-dependencies.json.zst": "09c4300ade5df4b2fc0a737626f2cb4501238bc489c5cebe3d94989969bd84e5",
+        "sp/cobol-semantic-compilation.json.zst": "44e2bb2d30a402cfbbbd07a2ec255623ce393342d3ab0b85685721f4db1bc3f6",
+        "sp/semantic-product.json.zst": "729631e5f730f7d85dfbd92f5ab9b1a314adc5bfc3cc6e85b52556182e2674c7"
+      }
+    },
+    {
+      "source": "app/cbl/COUSR02C.cbl",
+      "sourceSha256": "85d36699cbd3079320e689576ea8406d07ad78901f4f3a68a129b869359b46ca",
+      "gapsBefore": 429,
+      "gapsAfter": 266,
+      "analysisStatus": "PARTIAL",
+      "localReadinessClaimsUpdated": 0,
+      "airUncertaintiesRemoved": 163,
+      "airUncertaintiesAdded": 0,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "c717f24b94eed40d36472ea3cb0cb0cbd70833cd6b641e84a3a37ae591af2ea7",
+          "after": "809e7719020bb262347eb3e54ccad0897516972284732dadb03b6fd1bf11cf93"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "d1de7f417882661d4aed52715d5aa360d81d82b6798209fefd24619bea9e2bd2",
+          "after": "d1de7f417882661d4aed52715d5aa360d81d82b6798209fefd24619bea9e2bd2"
+        },
+        "dependencies.json.zst": {
+          "before": "8fe4bd231f9033377fc1f95af8e8ba3cf8a7270bc318011b969ba2640d4f1730",
+          "after": "4e6ea63dabc9251ed3ce93af0decb70b34bb0c822e4e0080c7e66d1599cb2838"
+        },
+        "cfg.json.zst": {
+          "before": "e918e354d6e0ef94d42b6080f652902f48b0a832de130c1a975682e3921556e7",
+          "after": "835e7a9adaccd422b6ad52bad8c1c9b967c6a4dc7cca527f2f532c6e6752273d"
+        }
+      },
+      "currentArtifactHashes": {
+        "air-4dec591ea768d506e2a87cca47327dc90c57cf95450ec528bc9852e6e2767338.json.zst": "dc5e3f2d78f09d505bdecb54570a09b5f382eddff03027239b22003bcd2286c1",
+        "cfg.json.zst": "835e7a9adaccd422b6ad52bad8c1c9b967c6a4dc7cca527f2f532c6e6752273d",
+        "dependency-input.json.zst": "dbee842d9ff4684dfbae8679e1eaa479d255b6084ada0129826c22525dd4b2cf",
+        "source-881b28a96465ea4fa43134de31e6aa8221d294e725c9d4762e1c4bf49c96cffd.json.zst": "b527c284160f781b6baf2c62080c410fefd925a01eebe9d20b0cfd9b3c6a678f",
+        "dependencies.json.zst": "4e6ea63dabc9251ed3ce93af0decb70b34bb0c822e4e0080c7e66d1599cb2838",
+        "sp/cobol-semantic-product.json.zst": "809e7719020bb262347eb3e54ccad0897516972284732dadb03b6fd1bf11cf93",
+        "sp/observed-dependencies.json.zst": "d1de7f417882661d4aed52715d5aa360d81d82b6798209fefd24619bea9e2bd2",
+        "sp/cobol-semantic-compilation.json.zst": "1af5e1144d01d1320e66ed440a86f58df883a1f1ec00bcede946db7fe986ec80",
+        "sp/semantic-product.json.zst": "809e7719020bb262347eb3e54ccad0897516972284732dadb03b6fd1bf11cf93"
+      }
+    },
+    {
+      "source": "app/cbl/COUSR03C.cbl",
+      "sourceSha256": "bcd68f08c145b3b9b9c809a7082834e9519d78b6f363a0d1c5ff9d9576dcf888",
+      "gapsBefore": 346,
+      "gapsAfter": 214,
+      "analysisStatus": "PARTIAL",
+      "localReadinessClaimsUpdated": 0,
+      "airUncertaintiesRemoved": 132,
+      "airUncertaintiesAdded": 0,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "4b7cee5482d9f04c758e4e7f386f5474dfe0a47a1eb03052aae7967bedf6b6cc",
+          "after": "b423d644f3c0522e1563f0c1ca519aa90ea870caa1e60286027ce5f079047919"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "3637cfd400518acf32e68297f9d603149ff7bb5eb59d94044d96e6397d375f40",
+          "after": "3637cfd400518acf32e68297f9d603149ff7bb5eb59d94044d96e6397d375f40"
+        },
+        "dependencies.json.zst": {
+          "before": "1d0be605c13fdf68be7f472a6a28daae14da4b1d6506abbb72a30e3308bba933",
+          "after": "1daa3b7dc910e8c9a4cc978c17544276c5dff73cd0360a52c3cfcec352960dfe"
+        },
+        "cfg.json.zst": {
+          "before": "3b3770168c652bce041d80e80cb0dec4cc7f26c1feb5c4504167d82a3ca754ad",
+          "after": "40c8348325717464e95d072b0aba1763c026eb268a3e141c4fd22dc215f03267"
+        }
+      },
+      "currentArtifactHashes": {
+        "cfg.json.zst": "40c8348325717464e95d072b0aba1763c026eb268a3e141c4fd22dc215f03267",
+        "air-9bf69bea2e53c5e30ceed356ba63298eabb80e7cacdc95eda8981cefa859dee8.json.zst": "2a6bbcdfeac77ecc5262f2028ab1ef5a97ba8171c82338fa176169b7b579a3ad",
+        "dependency-input.json.zst": "46e04fd2726b3057083eea570745393f0e2312ffd6a9f5a9bdd361d0ff765786",
+        "source-3c90f18b90476921f11c53ed499374c5d82fafb0370e302b95eeeb598d6c96de.json.zst": "1d25b2f3fe27326138adb223ee5437d411e1f593f403823e26745a581fa51942",
+        "dependencies.json.zst": "1daa3b7dc910e8c9a4cc978c17544276c5dff73cd0360a52c3cfcec352960dfe",
+        "sp/cobol-semantic-product.json.zst": "b423d644f3c0522e1563f0c1ca519aa90ea870caa1e60286027ce5f079047919",
+        "sp/observed-dependencies.json.zst": "3637cfd400518acf32e68297f9d603149ff7bb5eb59d94044d96e6397d375f40",
+        "sp/cobol-semantic-compilation.json.zst": "7b26cfa9d2f0e64fabb855ef1cec9d7970bd47892b4a22ad760c0c987774feb0",
+        "sp/semantic-product.json.zst": "b423d644f3c0522e1563f0c1ca519aa90ea870caa1e60286027ce5f079047919"
+      }
+    },
+    {
+      "source": "app/cbl/CSUTLDTC.cbl",
+      "sourceSha256": "58c165dcfc3927232c02c152c673e3dee551587b85e7fe56ca67325c980eebb6",
+      "gapsBefore": 38,
+      "gapsAfter": 35,
+      "analysisStatus": "COMPLETE",
+      "localReadinessClaimsUpdated": 0,
+      "airUncertaintiesRemoved": 3,
+      "airUncertaintiesAdded": 0,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "c1682e7cc050265ce85943d437836c3f8c987e7bc5b93e6716887d408388f61e",
+          "after": "485f4822a25cbf7567c0960c98891ee233b7733f49ac7c446f54351e45f6acf8"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "2bd1097a87c696521c3936a27c4405ef6f50598135d2cf385e7af44a40a2bc62",
+          "after": "2bd1097a87c696521c3936a27c4405ef6f50598135d2cf385e7af44a40a2bc62"
+        },
+        "dependencies.json.zst": {
+          "before": "1696863465f9d4a46979cabf6cff8051b61c6930efeea8c5c8838da81200ca70",
+          "after": "e1967a4866e8bd23503a6574f53453b1c5f96b6513ed174fd38b603d36213a1e"
+        },
+        "cfg.json.zst": {
+          "before": "a975598180125ad9c9a33b0ec55a737f3e1d7ccae8c553a06ae37eaec16e3ec3",
+          "after": "a37c5b95a78d960e8b45e43557a572e6d0b30673e56722214aff6bcdaf59dee3"
+        }
+      },
+      "currentArtifactHashes": {
+        "air-01aab5db600c886b64c27c43d4d50724bd19f3aa5e6a376ccf1053ddb2f1fb8a.json.zst": "ade375480bd57bb3baffe0e03d6012fa11150aa5eff7f85c36880751c021daf8",
+        "cfg.json.zst": "a37c5b95a78d960e8b45e43557a572e6d0b30673e56722214aff6bcdaf59dee3",
+        "dependency-input.json.zst": "3bf5e4290771e9d9941ca57ccf11d5ef2a6fd997b7376c07575051ab424a7e2e",
+        "source-11b191ab6f3d3e48c01d42769337c7756d7e829a7d1b7cddb0de1f59a0305922.json.zst": "37c301eab5424489d5fbd8174ffa13f654fc03151e1287bbaf427e99b926ef12",
+        "dependencies.json.zst": "e1967a4866e8bd23503a6574f53453b1c5f96b6513ed174fd38b603d36213a1e",
+        "sp/cobol-semantic-product.json.zst": "485f4822a25cbf7567c0960c98891ee233b7733f49ac7c446f54351e45f6acf8",
+        "sp/observed-dependencies.json.zst": "2bd1097a87c696521c3936a27c4405ef6f50598135d2cf385e7af44a40a2bc62",
+        "sp/cobol-semantic-compilation.json.zst": "ec6f2a65f2025330c0d6fae8bf2569b90a9c412cc1f5104c7d966abd22bf110b",
+        "sp/semantic-product.json.zst": "485f4822a25cbf7567c0960c98891ee233b7733f49ac7c446f54351e45f6acf8"
+      }
+    },
+    {
+      "source": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/CBACT01C.cbl",
+      "sourceSha256": "426cf9bd190b777104bb964e9d5a2929197ed7621f8b334f229ef12e60e63966",
+      "gapsBefore": 174,
+      "gapsAfter": 134,
+      "analysisStatus": "PARTIAL",
+      "localReadinessClaimsUpdated": 0,
+      "airUncertaintiesRemoved": 40,
+      "airUncertaintiesAdded": 0,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "38b04348edd9e6cf6c83c6d6d67b1bf9a4bc2e52f040014bf17915bdf685dff5",
+          "after": "34247acb1113340b4f6cb9c0988017346c74d18f734047096b40179d06ef7c06"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "6899289d1f8a89697e9b80acd33ff5a0bd3803385db280d2c1d99a7583e9d9e2",
+          "after": "6899289d1f8a89697e9b80acd33ff5a0bd3803385db280d2c1d99a7583e9d9e2"
+        },
+        "dependencies.json.zst": {
+          "before": "e061caf8bfd409e147869f0afe2409dea58d74ca7dac1c6c83dde3e5362898fc",
+          "after": "17a6cd3f99d16a3f308fd19fdbae83547c05c9fbcbb9f595eddf00ab90c968b5"
+        },
+        "cfg.json.zst": {
+          "before": "95ed06f5c2116528f0527dfd2d5b52d28bbce39bae2460bd711b123d279dcd51",
+          "after": "4b8b7d524b85ac9a7cfa7389abf0fa6c798f9bab27435d80164adf99eb5e1e58"
+        }
+      },
+      "currentArtifactHashes": {
+        "air-4382d22b3566226b1ca9169520acf5b6bf769d3736bad976968504494745572a.json.zst": "9edae8b659648ffae874758fcbfcac8a4769dee66f4d3b9a6e461deda958dbd8",
+        "cfg.json.zst": "4b8b7d524b85ac9a7cfa7389abf0fa6c798f9bab27435d80164adf99eb5e1e58",
+        "dependency-input.json.zst": "25e5d76bc7d0680416a72148463f9d6377eb0ee1f8460c8c0883766f9021866f",
+        "source-fbe1bee2d1a19ae6e25471caa60cca7b1e97125b85fb377dd0ef470c2c86b817.json.zst": "6932b0cb4aa6a7bf6cd3ddcc3961841351e47df892279446017832e208b105c9",
+        "dependencies.json.zst": "17a6cd3f99d16a3f308fd19fdbae83547c05c9fbcbb9f595eddf00ab90c968b5",
+        "sp/cobol-semantic-product.json.zst": "34247acb1113340b4f6cb9c0988017346c74d18f734047096b40179d06ef7c06",
+        "sp/observed-dependencies.json.zst": "6899289d1f8a89697e9b80acd33ff5a0bd3803385db280d2c1d99a7583e9d9e2",
+        "sp/cobol-semantic-compilation.json.zst": "8f99b20137b07f361b2b6fed5df915b3cfe711a020ae5a9072aafaed11ca1724",
+        "sp/semantic-product.json.zst": "34247acb1113340b4f6cb9c0988017346c74d18f734047096b40179d06ef7c06"
+      }
+    },
+    {
+      "source": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/CBACT02C.cbl",
+      "sourceSha256": "f81506881aec5d44d340d8b125efe67e2b355343c8893ab6bc95e2cb72c292b7",
+      "gapsBefore": 145,
+      "gapsAfter": 109,
+      "analysisStatus": "PARTIAL",
+      "localReadinessClaimsUpdated": 0,
+      "airUncertaintiesRemoved": 36,
+      "airUncertaintiesAdded": 0,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "0f1252264d5865574f89a2f9d4a5b6aee4fc80f3518513d3170102bc2b830654",
+          "after": "d074a81c1474cad87dd1ae41976cb63c24a741bf352ab64c1c5a6e6688989b69"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "267e9edd08bed0ba8115468ca7383715520ddadb92b478ef3c68f59b7b99a681",
+          "after": "267e9edd08bed0ba8115468ca7383715520ddadb92b478ef3c68f59b7b99a681"
+        },
+        "dependencies.json.zst": {
+          "before": "9f8d1379f06a4f92cc79c239f7278164a3d0f62719b60ee7f3cc14977afecffe",
+          "after": "ba42734da2b26f7d661469027efa3c312dab3b248906d4dbb73c03d94100b6c2"
+        },
+        "cfg.json.zst": {
+          "before": "49e62209e26d4ac5c0ef9d589ae4f1a5900d3cd22836d57f457b6ab254fb5a5a",
+          "after": "e5ec86153949eea6b748650bf872c818038cf5008744ca2ac8526f3ac0cb5280"
+        }
+      },
+      "currentArtifactHashes": {
+        "cfg.json.zst": "e5ec86153949eea6b748650bf872c818038cf5008744ca2ac8526f3ac0cb5280",
+        "dependency-input.json.zst": "af34c6ac812488cbe923ba8d6c18033cb012c97740419aa0f7af4e9e8864a81a",
+        "source-bb2f96597c2fef9d4efdf3bdb4bfa2398a69629a1ddff6aac17826b462200872.json.zst": "bc5fd719823b9318b85d147aec0a5df016cc3fb6f4a851f6db6baa6b4d605909",
+        "dependencies.json.zst": "ba42734da2b26f7d661469027efa3c312dab3b248906d4dbb73c03d94100b6c2",
+        "air-d5a16faa822e18a4bd06214e7edd7a9285fb4fffacbdd52abb8677652d961eaf.json.zst": "4492f5cfad2344d069642997a5859ef42f8ffbb88dd46b7dec027105c9efead2",
+        "sp/cobol-semantic-product.json.zst": "d074a81c1474cad87dd1ae41976cb63c24a741bf352ab64c1c5a6e6688989b69",
+        "sp/observed-dependencies.json.zst": "267e9edd08bed0ba8115468ca7383715520ddadb92b478ef3c68f59b7b99a681",
+        "sp/cobol-semantic-compilation.json.zst": "70d5cb3a6ba8a73351f13d58dac920f4c2bebce7c044df92e56517b2f3b664e9",
+        "sp/semantic-product.json.zst": "d074a81c1474cad87dd1ae41976cb63c24a741bf352ab64c1c5a6e6688989b69"
+      }
+    },
+    {
+      "source": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/CBACT03C.cbl",
+      "sourceSha256": "2e16c29ee12fd20eec4500278f49d1430fe6aec4dd0a0963188ed62ccce9e171",
+      "gapsBefore": 147,
+      "gapsAfter": 111,
+      "analysisStatus": "PARTIAL",
+      "localReadinessClaimsUpdated": 0,
+      "airUncertaintiesRemoved": 36,
+      "airUncertaintiesAdded": 0,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "9496a61b6f00a081edce1bd1c655082d844740a50e6c9f0ae668c69c88f43c56",
+          "after": "f64d53ad5fe87bd468fdec2ac104f3a67c4705289e5d08156f83868c7faffc9a"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "9942cafde4d1aa080282e49b379725b768e8092d607f004bbab4ab348380c3bb",
+          "after": "9942cafde4d1aa080282e49b379725b768e8092d607f004bbab4ab348380c3bb"
+        },
+        "dependencies.json.zst": {
+          "before": "4f2be981105d7d5130acc7090205595ec6a9f0f77736b3de2a47af52a35eba23",
+          "after": "6431549a54b24f5a34567a269c3acfb1890c5d7014d2c98faa8f275442fc035a"
+        },
+        "cfg.json.zst": {
+          "before": "c4181efa5b0d9de50bb315cb556f0f465e641f25f8a9068890002667806c1db1",
+          "after": "163677ddc59ef3e23313acad72168843eb833d89995dca7e3d0049498ac38ff0"
+        }
+      },
+      "currentArtifactHashes": {
+        "air-ba67cee541f38fc9f52c8adfca971919eb776d97579c36b705d4727d234f61f2.json.zst": "8fe711f9f477d5f07b3bbaea4c78fe22eeb9e60fe73cf66dc2aa8023b1239bb2",
+        "cfg.json.zst": "163677ddc59ef3e23313acad72168843eb833d89995dca7e3d0049498ac38ff0",
+        "dependency-input.json.zst": "886f10a6efcc261e2f23a04edbb59cb3fcaa39caba2997a018293a77187ee91f",
+        "source-ce12472b7bf1b65d414d111ade8de3311cf011ff2d5026fe3671ca794fb0db87.json.zst": "7f964e452f5de8745136b342a6805532f01f62cd56ebcfec8336cf2f9c0dff12",
+        "dependencies.json.zst": "6431549a54b24f5a34567a269c3acfb1890c5d7014d2c98faa8f275442fc035a",
+        "sp/cobol-semantic-product.json.zst": "f64d53ad5fe87bd468fdec2ac104f3a67c4705289e5d08156f83868c7faffc9a",
+        "sp/observed-dependencies.json.zst": "9942cafde4d1aa080282e49b379725b768e8092d607f004bbab4ab348380c3bb",
+        "sp/cobol-semantic-compilation.json.zst": "d8f63e1c5908965184c572b19932d03f9e88b95e815a0eb17044ee8dc9a64901",
+        "sp/semantic-product.json.zst": "f64d53ad5fe87bd468fdec2ac104f3a67c4705289e5d08156f83868c7faffc9a"
+      }
+    },
+    {
+      "source": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/CBACT04C.cbl",
+      "sourceSha256": "76dea08b410b653ee2fa967c564e9f2e992b7c09f52b2d1fbb5a212149aefbce",
+      "gapsBefore": 831,
+      "gapsAfter": 624,
+      "analysisStatus": "PARTIAL",
+      "localReadinessClaimsUpdated": 0,
+      "airUncertaintiesRemoved": 207,
+      "airUncertaintiesAdded": 0,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "3248bb4f9eb661c3f165f9f03a6c68406fb2dc052260c8c867bad588f2d1cab1",
+          "after": "bd0ecd0b0cfb3ebd6adcb4efbbc39afde74ea89a174edfeee3fdc893df746590"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "44fbb67ad743de43c2ea3ddd39de3304a25e060e5a703acebfebd3df07df94e2",
+          "after": "44fbb67ad743de43c2ea3ddd39de3304a25e060e5a703acebfebd3df07df94e2"
+        },
+        "dependencies.json.zst": {
+          "before": "c3446fd3f41277e3e82fb80241f0a27a854e548c66d3a49afed8b4279cbe46b7",
+          "after": "b5bd1fe7a546d35a4af0e61098b6faae51c16c59c9c0c97cbaa80a79143faa45"
+        },
+        "cfg.json.zst": {
+          "before": "e29484dbe54b9fdb8246207aacf31bf13aa9f6be0388fcbf079b6f287f6650d2",
+          "after": "9eec0a6f58322594ff3493df3dfa3eeb48285f1038700a201951a2ce469821ab"
+        }
+      },
+      "currentArtifactHashes": {
+        "cfg.json.zst": "9eec0a6f58322594ff3493df3dfa3eeb48285f1038700a201951a2ce469821ab",
+        "dependency-input.json.zst": "ef073043cbd3916490e188a91dac4b67dae82bb4bc578d061e2d938520fe00f5",
+        "dependencies.json.zst": "b5bd1fe7a546d35a4af0e61098b6faae51c16c59c9c0c97cbaa80a79143faa45",
+        "air-d4ad07d33dcad3bda656d75a65b5c693572c0edab63677f84f3b23018b71a2b8.json.zst": "92a2c81c71170018f0bcf33cb62606b0b7697d58bbb57815fe7a3ad13b803cb5",
+        "source-f0a99d881090d44021d00a2c7f11bc7fbb0e61829c4058e68fcd171df68751ca.json.zst": "b130e4dcc615212e6ef826ef5a39eb153195981f1abdd31ebc1a747de0bd3127",
+        "sp/cobol-semantic-product.json.zst": "bd0ecd0b0cfb3ebd6adcb4efbbc39afde74ea89a174edfeee3fdc893df746590",
+        "sp/observed-dependencies.json.zst": "44fbb67ad743de43c2ea3ddd39de3304a25e060e5a703acebfebd3df07df94e2",
+        "sp/cobol-semantic-compilation.json.zst": "14044f0dd769c43f4f07b95da6bb9f49e5dcae3a9554f580ef97f0f046463147",
+        "sp/semantic-product.json.zst": "bd0ecd0b0cfb3ebd6adcb4efbbc39afde74ea89a174edfeee3fdc893df746590"
+      }
+    },
+    {
+      "source": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/CBCUS01C.cbl",
+      "sourceSha256": "494b1ca4ab8a4334eef77d2b87cc7df266f80cbeab2a3f191e9c776d4437d497",
+      "gapsBefore": 147,
+      "gapsAfter": 111,
+      "analysisStatus": "PARTIAL",
+      "localReadinessClaimsUpdated": 0,
+      "airUncertaintiesRemoved": 36,
+      "airUncertaintiesAdded": 0,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "9444b43106ea0f2b3874370f7f4720bd577fe7f300a0e5f3b5ef6de73f646ef4",
+          "after": "3e2254ae77893b34e4822c4b83e4c6971e732158ec73b51acd342c2bc6760aab"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "b9ce2a641a1582f4e115d379f6eacf355140ba3ec641efc80058c0ff00c9d130",
+          "after": "b9ce2a641a1582f4e115d379f6eacf355140ba3ec641efc80058c0ff00c9d130"
+        },
+        "dependencies.json.zst": {
+          "before": "72a30d000415a7d070f86af3b1a9f6c607ff279f34a6d5c06786db3320af40bb",
+          "after": "7fab8f26438160f716478c73fb8fd95fd3ab9d43a6d90c6e5d32dfbeaf6f23e6"
+        },
+        "cfg.json.zst": {
+          "before": "73d7bce4a4ed1701eb94b391dcfdd9a9a91d9343d136b787e2a52f14afa6bd2f",
+          "after": "6a263d03848c57e08d3354d30b61b6d9432e2aab5587aafa358eac2e8cb06d44"
+        }
+      },
+      "currentArtifactHashes": {
+        "source-d441a51e867b8fdec753a51d45d4ec5d60b6b1c751836117d0fbb0580b1d8ee0.json.zst": "8734b5da8bde1af1466357b58be95482c770da7fcfe5f76bbeea923825d5e730",
+        "cfg.json.zst": "6a263d03848c57e08d3354d30b61b6d9432e2aab5587aafa358eac2e8cb06d44",
+        "dependency-input.json.zst": "1855a9a800a6e5ec05499cdbac7df233b1958e7fbba3c6bd1f0421de61466ed3",
+        "air-7e54886ab1fd42b378d1cf59435ac0355106a6c875c511b46ef5081faff41d8e.json.zst": "dc9f8ce59248695dc3f405b3f08188ce366d6ea2742ee72fb6d611ae71c3bcfe",
+        "dependencies.json.zst": "7fab8f26438160f716478c73fb8fd95fd3ab9d43a6d90c6e5d32dfbeaf6f23e6",
+        "sp/cobol-semantic-product.json.zst": "3e2254ae77893b34e4822c4b83e4c6971e732158ec73b51acd342c2bc6760aab",
+        "sp/observed-dependencies.json.zst": "b9ce2a641a1582f4e115d379f6eacf355140ba3ec641efc80058c0ff00c9d130",
+        "sp/cobol-semantic-compilation.json.zst": "a3d3580e7e324cdacbd9a2b39697d0aa28d989d5f27b60d1e782c79d066f3a61",
+        "sp/semantic-product.json.zst": "3e2254ae77893b34e4822c4b83e4c6971e732158ec73b51acd342c2bc6760aab"
+      }
+    },
+    {
+      "source": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/CBSTM03A.cbl",
+      "sourceSha256": "382c4131561a7843704fb84212c5d15b69ed5fa7b69101ee999680880a1d8879",
+      "gapsBefore": 609,
+      "gapsAfter": 481,
+      "analysisStatus": "PARTIAL",
+      "localReadinessClaimsUpdated": 0,
+      "airUncertaintiesRemoved": 128,
+      "airUncertaintiesAdded": 0,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "b1466083cc94e294c4353646f46787950ceb98f2569feaf79c34c73484f05b17",
+          "after": "c92609784463e9fc89ca73c1dde69b24d4274d44fd7d57dc6995a3dfcd2c9ece"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "e758d6a2ac451e350c801f1ba8fd318bf8576c3d95994cc0d06126a4b5f15a80",
+          "after": "e758d6a2ac451e350c801f1ba8fd318bf8576c3d95994cc0d06126a4b5f15a80"
+        },
+        "dependencies.json.zst": {
+          "before": "3b84d58a505d4db3f9c3102aada02669267eeeabee927be83f80df98eb28c998",
+          "after": "775dc51907f00c76ac3b304d2bef4fad27ecff2f8294fd303c02f7405a4967bf"
+        },
+        "cfg.json.zst": {
+          "before": "89632bcdfe7a699eb1b7f1e2aad5496393b00518b3c5d43c149c72966ab7ce67",
+          "after": "a58857ed775f6f3ac3f63c17bfb4aa6fcb51f4a71c737305ac512223df214195"
+        }
+      },
+      "currentArtifactHashes": {
+        "cfg.json.zst": "a58857ed775f6f3ac3f63c17bfb4aa6fcb51f4a71c737305ac512223df214195",
+        "dependency-input.json.zst": "2ca6ea54fae7aa2dc79ef2088a93c8ef66e80fe906f4fd70b1a1806dc9649e79",
+        "source-31b341ed37e4e21319f9638b3eeea055d5bb187cf621539d758662463157b6a2.json.zst": "eac69f83bab2cc4c48bc3dcd272512d6a2df60f20f7ebf13b7dd79ee11da14ad",
+        "air-0b4b074b0ea7f2ae76927ac9baaa1e5278b33c926bf3c5e8dc4b66daf56ce2a4.json.zst": "bafb6cfb65ce920ceefb73e3889224bbe76121654101ee7a2170cc19dccfa2df",
+        "dependencies.json.zst": "775dc51907f00c76ac3b304d2bef4fad27ecff2f8294fd303c02f7405a4967bf",
+        "sp/cobol-semantic-product.json.zst": "c92609784463e9fc89ca73c1dde69b24d4274d44fd7d57dc6995a3dfcd2c9ece",
+        "sp/observed-dependencies.json.zst": "e758d6a2ac451e350c801f1ba8fd318bf8576c3d95994cc0d06126a4b5f15a80",
+        "sp/cobol-semantic-compilation.json.zst": "5385bd8f18f50400f37bd18e4e0e61513b220ae0ceb1d86efa281e8141551c1c",
+        "sp/semantic-product.json.zst": "c92609784463e9fc89ca73c1dde69b24d4274d44fd7d57dc6995a3dfcd2c9ece"
+      }
+    },
+    {
+      "source": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/CBSTM03B.cbl",
+      "sourceSha256": "c183707f0dae0b5e9387373fc3624f0462ad95ccbbb6c8a34167591e206bcbf8",
+      "gapsBefore": 93,
+      "gapsAfter": 80,
+      "analysisStatus": "PARTIAL",
+      "localReadinessClaimsUpdated": 2,
+      "airUncertaintiesRemoved": 13,
+      "airUncertaintiesAdded": 0,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "fa685e63497c922f4489e9a545ab129ac03f44ce4de98ca332239b49425a36d5",
+          "after": "9959405a53197a20b42fd6b5147133b563faa1bda1e631987246a3c2f024aa57"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "70eebace714b480745246c00c0e80e748b0d438de7ba0009d2dbd37a64d061d2",
+          "after": "70eebace714b480745246c00c0e80e748b0d438de7ba0009d2dbd37a64d061d2"
+        },
+        "dependencies.json.zst": {
+          "before": "be00c1e8ba999a29ca439a68c33053852cfa1887b71b2e4c979f25d8291592b9",
+          "after": "a5186df48d7fd699d963521a56d5a9079ed2bcd9f9f181a9f77c7ad2abae76d5"
+        },
+        "cfg.json.zst": {
+          "before": "c5d9261c43768918f6912e983005933388beb11e6f747cb128c498a736c95a5f",
+          "after": "5d06fd4b1c3140b592380f53c0053ef86ac456fd9bae92cf6d8a8e9c71ec5cbe"
+        }
+      },
+      "currentArtifactHashes": {
+        "source-3da854af68ed2e88982abec2027fe2e9e13715cea1dd20ea2e0421b4d3ae71b7.json.zst": "6d2d57e4731e7178b0cf5a6edd9d776108595790f0f451167c779d47936f7c34",
+        "cfg.json.zst": "5d06fd4b1c3140b592380f53c0053ef86ac456fd9bae92cf6d8a8e9c71ec5cbe",
+        "dependency-input.json.zst": "c21210800f2c8838d7e1df210e9ae4f6dc0a7f836486b2b496cc70d7e0b45ca7",
+        "air-043b6d8f44bbea6bcf09ed372eaa50b1195d84e4400c773d1e0bad6c458fc1ff.json.zst": "ee5423882c0bfd4ce80a5b209732428e99b6e4ea412356c1507f1a69b33960f2",
+        "dependencies.json.zst": "a5186df48d7fd699d963521a56d5a9079ed2bcd9f9f181a9f77c7ad2abae76d5",
+        "sp/cobol-semantic-product.json.zst": "9959405a53197a20b42fd6b5147133b563faa1bda1e631987246a3c2f024aa57",
+        "sp/observed-dependencies.json.zst": "70eebace714b480745246c00c0e80e748b0d438de7ba0009d2dbd37a64d061d2",
+        "sp/cobol-semantic-compilation.json.zst": "2f44abb6e431e7642e33b6e2be032602c47b6b5f5898e5b24280fe18a5043495",
+        "sp/semantic-product.json.zst": "9959405a53197a20b42fd6b5147133b563faa1bda1e631987246a3c2f024aa57"
+      }
+    },
+    {
+      "source": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/CBTRN01C.cbl",
+      "sourceSha256": "18cebdd95bff49b5316c271204fb20f59d2dd72615bc1715498c9cc8a50187f7",
+      "gapsBefore": 498,
+      "gapsAfter": 346,
+      "analysisStatus": "PARTIAL",
+      "localReadinessClaimsUpdated": 0,
+      "airUncertaintiesRemoved": 152,
+      "airUncertaintiesAdded": 0,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "483ad30e3c69c3edaf4b4489ba52fb36b8c512771061e3b2031b1d5e62c0b677",
+          "after": "8a72bb49f6fb4dc52421b65f61e9394855dd562e88cf8b16f9c509eee99bc467"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "8fc956d4ccc23f15d028d12bbcb25f65b0ecc53e30d6caf382e435bdea2f37e8",
+          "after": "8fc956d4ccc23f15d028d12bbcb25f65b0ecc53e30d6caf382e435bdea2f37e8"
+        },
+        "dependencies.json.zst": {
+          "before": "f447c208ea7371b22ad84332cdd705192875db04b514b65b3f055c21bb1bbd75",
+          "after": "3f61f34e31b63c3cd414ebb296709e5561e6f2e2111211c1904cee9c58d6fc32"
+        },
+        "cfg.json.zst": {
+          "before": "30ee9e8cef6274889bbc58e4d51e94f07e7794a095ec08c8c1dbf4f476020100",
+          "after": "f5e0d6e9fcee93311b8a4b664c4ca509eef5a26e670388b46f72f604cd568e2c"
+        }
+      },
+      "currentArtifactHashes": {
+        "cfg.json.zst": "f5e0d6e9fcee93311b8a4b664c4ca509eef5a26e670388b46f72f604cd568e2c",
+        "dependency-input.json.zst": "289f89af9172e60261ceed65782573e95c4899299f9a92a9b1e956ad18d91ef4",
+        "air-c109bf014bd2a50eb68001e570e94212261008d8a2fbbf33c54eb2dcd6177643.json.zst": "18aa8ce9b81c367aef07209e99646d8c61f6b9c2bd35932fe6dd26519936c03c",
+        "source-7c7cfa39865d6d65678dfbe942ed937ce6f7cc9d9de03160b5cdc96b63511eb9.json.zst": "727d95b6ad5493acb62088141944525035a82eda473490ecdcecc483b599e393",
+        "dependencies.json.zst": "3f61f34e31b63c3cd414ebb296709e5561e6f2e2111211c1904cee9c58d6fc32",
+        "sp/cobol-semantic-product.json.zst": "8a72bb49f6fb4dc52421b65f61e9394855dd562e88cf8b16f9c509eee99bc467",
+        "sp/observed-dependencies.json.zst": "8fc956d4ccc23f15d028d12bbcb25f65b0ecc53e30d6caf382e435bdea2f37e8",
+        "sp/cobol-semantic-compilation.json.zst": "00108e2a65630e8152a4cf9be6bb4e660401010ae62b47ae3d426d3d4668946f",
+        "sp/semantic-product.json.zst": "8a72bb49f6fb4dc52421b65f61e9394855dd562e88cf8b16f9c509eee99bc467"
+      }
+    },
+    {
+      "source": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/CBTRN02C.cbl",
+      "sourceSha256": "136ab808a10d01814269a4a29bd6c249b1b86952d0abded98419458db43f2aef",
+      "gapsBefore": 799,
+      "gapsAfter": 570,
+      "analysisStatus": "PARTIAL",
+      "localReadinessClaimsUpdated": 0,
+      "airUncertaintiesRemoved": 229,
+      "airUncertaintiesAdded": 0,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "07c58e3991f8c82dc5bf25d0d733e40baecb609df19827b6155921a3b67e8113",
+          "after": "0a6ca139360e09dc179bcc8e30c471dac6ce42d963b34dd25eded92ea354e730"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "64c6ae0e7fd3136fecac3ac46e2da0f375921df0ecbd29255c96ff7b6cbc1343",
+          "after": "64c6ae0e7fd3136fecac3ac46e2da0f375921df0ecbd29255c96ff7b6cbc1343"
+        },
+        "dependencies.json.zst": {
+          "before": "4ee8f8dd77ec78836ddc137fc294e27fb79e53269d587d94feb9eedf0487f3d3",
+          "after": "4f6bcd9059d1729a44ede0ff860e098a7a7d5444c8caa95aa6ae2d3203a1d4bd"
+        },
+        "cfg.json.zst": {
+          "before": "0b177afbb8e17e1691bd94b93c02a3c93311e7299d5c0c914a00d9d58e38cab9",
+          "after": "c41d6410a3ea0369fcae6a891157b3d3d779fa6ab760d2c73c772f7485404338"
+        }
+      },
+      "currentArtifactHashes": {
+        "cfg.json.zst": "c41d6410a3ea0369fcae6a891157b3d3d779fa6ab760d2c73c772f7485404338",
+        "source-fa2193f1f21f4dafa44080a8dbcead84bc8bcb539d1c6ba0f5d497461d04eb6e.json.zst": "7c7761ff030fde065cd3dd736f06ad2bd2e1cd2e7fdf762b11411c86d5cc9952",
+        "air-52cb97a8c1a72638abc3003a7daa669b98dd2e732047d4c05ee11b4d6e8ac099.json.zst": "6485d12e00440df5717ba37c3de7ff3b60ebc821eabf4f33d60e3445154af87e",
+        "dependency-input.json.zst": "971c31128a0c978019e52ccd0ff02651187cdebb5d56298ae3eb8f4f042689b1",
+        "dependencies.json.zst": "4f6bcd9059d1729a44ede0ff860e098a7a7d5444c8caa95aa6ae2d3203a1d4bd",
+        "sp/cobol-semantic-product.json.zst": "0a6ca139360e09dc179bcc8e30c471dac6ce42d963b34dd25eded92ea354e730",
+        "sp/observed-dependencies.json.zst": "64c6ae0e7fd3136fecac3ac46e2da0f375921df0ecbd29255c96ff7b6cbc1343",
+        "sp/cobol-semantic-compilation.json.zst": "16a7aa8af8b7af1c6066121fb447ad77818a822d888c3ea114eb7dea6f7534bc",
+        "sp/semantic-product.json.zst": "0a6ca139360e09dc179bcc8e30c471dac6ce42d963b34dd25eded92ea354e730"
+      }
+    },
+    {
+      "source": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/CBTRN03C.cbl",
+      "sourceSha256": "c9c5428073cbe19c1cd19fc066ed99972560c209a80b4aea3bae3cc5e20a3536",
+      "gapsBefore": 775,
+      "gapsAfter": 521,
+      "analysisStatus": "PARTIAL",
+      "localReadinessClaimsUpdated": 0,
+      "airUncertaintiesRemoved": 254,
+      "airUncertaintiesAdded": 0,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "63f18783418950d0f628353d516f47ca6add43140a0f8445ea76f06655ffbd96",
+          "after": "56fcdc16c5150ebbfa61be2f20491fc255d95237c0fe17209fc84c207eab49f7"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "44f67d21eadec29736cd568c4f004b1a80be2f7794767b2071c8992d38fe510f",
+          "after": "44f67d21eadec29736cd568c4f004b1a80be2f7794767b2071c8992d38fe510f"
+        },
+        "dependencies.json.zst": {
+          "before": "361db07d6f30886f373541d7ab6f3302bda515a0866db8b6cf98ac85368031dd",
+          "after": "f20926f8fa0e0dfc341f8e2f485e789aa57aeb413bc16439ff7a2e758c1dd2d7"
+        },
+        "cfg.json.zst": {
+          "before": "8047998e1d980f502ee3a82ddfcc61e2de329030a9e9e98bd0d3e75e89a531c1",
+          "after": "e50e62a0bbdd7b9c8e940152ab1a3d8f2260edcdf9810d915561adad774b159a"
+        }
+      },
+      "currentArtifactHashes": {
+        "cfg.json.zst": "e50e62a0bbdd7b9c8e940152ab1a3d8f2260edcdf9810d915561adad774b159a",
+        "dependency-input.json.zst": "90176a10084306e5e597b6994158ff37c3d7fcda054c6f61dd1bfcd767954d7f",
+        "air-f2ba925de09bd44c0e98df099d1178d37dd2fdf9b266b2ede008b659570dd93a.json.zst": "c28683948370b9a7909a1e54a1234a3756de5f2c20c27d549c5d01b5e979847e",
+        "source-5d9c3c64f8fe025eda69a8e57f452f66c9fcd20d3aa747edb34b0d08bac878a5.json.zst": "98b97e6f019b95645df940b9c4e49f5cd781e3a063adad50dc1fb15908af6311",
+        "dependencies.json.zst": "f20926f8fa0e0dfc341f8e2f485e789aa57aeb413bc16439ff7a2e758c1dd2d7",
+        "sp/cobol-semantic-product.json.zst": "56fcdc16c5150ebbfa61be2f20491fc255d95237c0fe17209fc84c207eab49f7",
+        "sp/observed-dependencies.json.zst": "44f67d21eadec29736cd568c4f004b1a80be2f7794767b2071c8992d38fe510f",
+        "sp/cobol-semantic-compilation.json.zst": "b08837226708cb97aa0d1a2618b61b32bfb71298cb980932904b00856da85255",
+        "sp/semantic-product.json.zst": "56fcdc16c5150ebbfa61be2f20491fc255d95237c0fe17209fc84c207eab49f7"
+      }
+    },
+    {
+      "source": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/COACTUPC.cl2",
+      "sourceSha256": "e944b2b469cf737296489e87158801cfe1a174e2965b5bb9ad5006fc65a2b176",
+      "gapsBefore": 2697,
+      "gapsAfter": 2306,
+      "analysisStatus": "PARTIAL",
+      "localReadinessClaimsUpdated": 0,
+      "airUncertaintiesRemoved": 392,
+      "airUncertaintiesAdded": 1,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "7f76a865e829acea75dc1c89d7fe2553a21ad16df938812a7f7551e978c3bbd6",
+          "after": "6ca69a3c74913a36f4d9b0b5dc72f14b71ac98744c3b89fe40c44bdfe19e88b4"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "637565dd32be84da08a0a48c4057dfd188c7eb6df4313e04c4ee49f388287953",
+          "after": "637565dd32be84da08a0a48c4057dfd188c7eb6df4313e04c4ee49f388287953"
+        },
+        "dependencies.json.zst": {
+          "before": "fa94a0a92d0e8f53cbb6d36f937ae2b2cb8223abebbaffd55d068cc2b6463540",
+          "after": "8a6c194b815df260b4bf48b18f0d8203242c72da399f85d6e941d396cec8c139"
+        },
+        "cfg.json.zst": {
+          "before": "3a694922e9aef26e72924169b154607dc2d4e1d14bbc6208808d4ca404868fad",
+          "after": "1b1150d826f0c532471e4db8e4c81f972a468a2fb55b4e2649f07efebbdb1121"
+        }
+      },
+      "currentArtifactHashes": {
+        "air-2412cbbbaf64a1755fab739d47a73a43712287fa7057a80a95051015deb8e903.json.zst": "e5db00d485e44a11e8d8af5fc353049422e5c26a5c8696be8fdf21c8ad94dec1",
+        "cfg.json.zst": "1b1150d826f0c532471e4db8e4c81f972a468a2fb55b4e2649f07efebbdb1121",
+        "dependency-input.json.zst": "d5d248cf270cc6767946c8f7208d962c2000be0521c087df4acaf27f59b3d9c5",
+        "source-3e9ad2b466ecfcbf52cb98bb3d6541e5201a257ecb6cbfa5aff0446e169a7c8a.json.zst": "59383649b7be624043a353700656d40abe0d31ed5ce2ce9ada94c780193bce2f",
+        "dependencies.json.zst": "8a6c194b815df260b4bf48b18f0d8203242c72da399f85d6e941d396cec8c139",
+        "sp/cobol-semantic-product.json.zst": "6ca69a3c74913a36f4d9b0b5dc72f14b71ac98744c3b89fe40c44bdfe19e88b4",
+        "sp/observed-dependencies.json.zst": "637565dd32be84da08a0a48c4057dfd188c7eb6df4313e04c4ee49f388287953",
+        "sp/cobol-semantic-compilation.json.zst": "060684721dd9946d156f92521415423c5e7bee38947cf45f8e4ebc79c60d1829",
+        "sp/semantic-product.json.zst": "6ca69a3c74913a36f4d9b0b5dc72f14b71ac98744c3b89fe40c44bdfe19e88b4"
+      }
+    },
+    {
+      "source": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/COACTVWC.cl2",
+      "sourceSha256": "4f1e55176f69edfb55b7af7a161aceb8c3bc3bd1b2924a704a76256e0e751b54",
+      "gapsBefore": 530,
+      "gapsAfter": 389,
+      "analysisStatus": "PARTIAL",
+      "localReadinessClaimsUpdated": 0,
+      "airUncertaintiesRemoved": 141,
+      "airUncertaintiesAdded": 0,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "5665bf234fbb9f16beff93621c7cfeff7ece8cf37b83ddeb287ec5d3b6abc0fc",
+          "after": "028b580c38bad31cbcab5e485a6f8f58e7cf07a7a47871ec5e18e21b4b3176ba"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "430d05dfd0c7de3a1ccbadbbf20255f3dbefe08407c7f1feda2cd69778df9fe2",
+          "after": "430d05dfd0c7de3a1ccbadbbf20255f3dbefe08407c7f1feda2cd69778df9fe2"
+        },
+        "dependencies.json.zst": {
+          "before": "dc43ffeb124f9d294834254e50f88497095c999efc2537cc73ac463d4b4fb3bc",
+          "after": "5a19b9543524586dc43d8444e5a5c7ea5a3b6c15f96b0b05c9a272ed9c6373c7"
+        },
+        "cfg.json.zst": {
+          "before": "ddf366091ed456f3bfb80634ea0d5deb75be13accc86008b6a8a1d6efd18e61c",
+          "after": "417b6ee134eb6b4c58018965e1dc433e737232a58246953f7f1bee12d9f80c3b"
+        }
+      },
+      "currentArtifactHashes": {
+        "cfg.json.zst": "417b6ee134eb6b4c58018965e1dc433e737232a58246953f7f1bee12d9f80c3b",
+        "dependency-input.json.zst": "d4d01d72971a0c3d178dab102eb4d0d7915ea459af7f7fe2206d20aed2d2258a",
+        "source-15d1c5f3ea6ca0ff246004b05611fd70c24baccd0a923fab895f7f238be31f56.json.zst": "249a1e47074ad5e36c0bf5f91d42611aa351b51b777985ec338566b33279929a",
+        "air-1856d405929c63d0b497a25d9c0be974bc2bde5bfe1ec4995196c0325503de0e.json.zst": "d1df3a4d9e6c36bf4e748d54ca4ed5c35a39e207a90258aea83b20b6b9748083",
+        "dependencies.json.zst": "5a19b9543524586dc43d8444e5a5c7ea5a3b6c15f96b0b05c9a272ed9c6373c7",
+        "sp/cobol-semantic-product.json.zst": "028b580c38bad31cbcab5e485a6f8f58e7cf07a7a47871ec5e18e21b4b3176ba",
+        "sp/observed-dependencies.json.zst": "430d05dfd0c7de3a1ccbadbbf20255f3dbefe08407c7f1feda2cd69778df9fe2",
+        "sp/cobol-semantic-compilation.json.zst": "3e5bf489298189105047bcb4a1d868ae4794e54e55e6a8d7b39b4c43b579e3a5",
+        "sp/semantic-product.json.zst": "028b580c38bad31cbcab5e485a6f8f58e7cf07a7a47871ec5e18e21b4b3176ba"
+      }
+    },
+    {
+      "source": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/COADM01C.cl2",
+      "sourceSha256": "69842c4dd419ed70365682d65423d2744173f3eec695b25b5ed27bd29289608d",
+      "gapsBefore": 204,
+      "gapsAfter": 150,
+      "analysisStatus": "PARTIAL",
+      "localReadinessClaimsUpdated": 0,
+      "airUncertaintiesRemoved": 54,
+      "airUncertaintiesAdded": 0,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "bc8a6876fca9b63574f17a6a80e3d0aee85a955c3c82fc55c5089b308d6ba161",
+          "after": "9700173bb41e7144339913ed0dcca42d8faf16247e9bf3674cecb003ae52e327"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "6628628303bc9e78db58da2cf06179ffe34314b33173326406efe2db0712d234",
+          "after": "6628628303bc9e78db58da2cf06179ffe34314b33173326406efe2db0712d234"
+        },
+        "dependencies.json.zst": {
+          "before": "1754e3c151990c9be86c71b701a7d94129575d66b287d2f489fc4c8e2cdd8450",
+          "after": "62da3d850f6e475930d83242d3ade12327758bd344daff6e98f86933831270e0"
+        },
+        "cfg.json.zst": {
+          "before": "39d78ca5cd566d05cd840e861006cc43ccb56d8d7f7f018338cef03538f489d1",
+          "after": "655d76644a0acf809b0d241d36c90428dccf4ef49cf46f8e977a7d7223114c0e"
+        }
+      },
+      "currentArtifactHashes": {
+        "air-1d83e2115d7927d36c9e91603d8447458194f6bcb49880402ba6d29129f994cc.json.zst": "712362a69533bca841af66476badd9fa8959f9d406cda54132d8c445522523ee",
+        "cfg.json.zst": "655d76644a0acf809b0d241d36c90428dccf4ef49cf46f8e977a7d7223114c0e",
+        "dependency-input.json.zst": "354418902b47d18f01478fd0abefff291a04e0b2a11bf0c2a8cb7376c331117c",
+        "source-c3c2c0b7e2cb1066895f66c0ba84b980c04c0ca2c745fed92540aad58c55e99e.json.zst": "8d451f2068169f08059d9d608ac73d801ef5e9c5d472c10d6adac50147208519",
+        "dependencies.json.zst": "62da3d850f6e475930d83242d3ade12327758bd344daff6e98f86933831270e0",
+        "sp/cobol-semantic-product.json.zst": "9700173bb41e7144339913ed0dcca42d8faf16247e9bf3674cecb003ae52e327",
+        "sp/observed-dependencies.json.zst": "6628628303bc9e78db58da2cf06179ffe34314b33173326406efe2db0712d234",
+        "sp/cobol-semantic-compilation.json.zst": "0cb6e8de81458069977ebc3a540214e17108d330a737cd1c5748e7d5568afd50",
+        "sp/semantic-product.json.zst": "9700173bb41e7144339913ed0dcca42d8faf16247e9bf3674cecb003ae52e327"
+      }
+    },
+    {
+      "source": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/COBIL00C.cl2",
+      "sourceSha256": "b5c46039eb8fd2f7ed7d3ca379172e56fa87385a369023bef706b04986fe1cfb",
+      "gapsBefore": 538,
+      "gapsAfter": 334,
+      "analysisStatus": "PARTIAL",
+      "localReadinessClaimsUpdated": 0,
+      "airUncertaintiesRemoved": 204,
+      "airUncertaintiesAdded": 0,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "36abfa6f1d254ce3419a490c05d1ae13b1ec85c844fb9cf14cb3f6abddc9151f",
+          "after": "5785129dc99b0452a6408164b3ae02958673d877393fda4abcb46700713bbf02"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "3417cf090dfb7131e3184634ae801d1ae2d1b8951833451e84e8d12b45a855aa",
+          "after": "3417cf090dfb7131e3184634ae801d1ae2d1b8951833451e84e8d12b45a855aa"
+        },
+        "dependencies.json.zst": {
+          "before": "6a1068610ea9eea7f27a25b7e790ae613dbf1cbf4aaeacf6ddfd6a83fba003d8",
+          "after": "2f2c05c6777f4615c297da290ccba5a0b6991eaacf0140dae40633235089e72c"
+        },
+        "cfg.json.zst": {
+          "before": "597786081d5fb7b339da2ffc5f33bef4b4311679a2d62739047888cee5e53c97",
+          "after": "2ccae4af67540296bd713b941cca2bbf77ddf80e0dfeaddf90398a0c0e6508cb"
+        }
+      },
+      "currentArtifactHashes": {
+        "cfg.json.zst": "2ccae4af67540296bd713b941cca2bbf77ddf80e0dfeaddf90398a0c0e6508cb",
+        "air-2323aa8a2b135e0c35b361da2ce211e39db5669c228d446002d8b15a21246b50.json.zst": "acd8259fb0eb5547a02664a64ed5e56a96292c33e6b943a0d4ba9d5a7e945f59",
+        "dependency-input.json.zst": "1df9f5f8e948fb52610422e0b5fa2f879c1a60984c532719aa12737c41b5a6e9",
+        "source-22cf88f0a1cfd61d2fa9a27815096bda369039e7bec04bb269434e2dc6d6ce0c.json.zst": "d20ab8b02786480b6417553fe1dd26ef81c87df24ff57e4edf692b4e12ddc09f",
+        "dependencies.json.zst": "2f2c05c6777f4615c297da290ccba5a0b6991eaacf0140dae40633235089e72c",
+        "sp/cobol-semantic-product.json.zst": "5785129dc99b0452a6408164b3ae02958673d877393fda4abcb46700713bbf02",
+        "sp/observed-dependencies.json.zst": "3417cf090dfb7131e3184634ae801d1ae2d1b8951833451e84e8d12b45a855aa",
+        "sp/cobol-semantic-compilation.json.zst": "7c6ddaf40ed8fd5be3299750eeada544e0e663fc930c312f3cfb812d0655762f",
+        "sp/semantic-product.json.zst": "5785129dc99b0452a6408164b3ae02958673d877393fda4abcb46700713bbf02"
+      }
+    },
+    {
+      "source": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/COCRDLIC.cl2",
+      "sourceSha256": "d6a9210ad3062bd657881fc3f0d2a7368db3ff4869594e0d6a878d8f410d87b6",
+      "gapsBefore": 983,
+      "gapsAfter": 720,
+      "analysisStatus": "PARTIAL",
+      "localReadinessClaimsUpdated": 0,
+      "airUncertaintiesRemoved": 263,
+      "airUncertaintiesAdded": 0,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "20873971ee6d507f2e406a2888b1a3462901bddb872bf2b6a6b92eb689b7c9f4",
+          "after": "1c66ed4c3d33b3bfb31ee6f4334ae3b13d51ac2554b90298c6eb77e6dee13e44"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "c57ec296635e636922c2917b854c81adbc1b309153df32d48db0f9b098dc696d",
+          "after": "c57ec296635e636922c2917b854c81adbc1b309153df32d48db0f9b098dc696d"
+        },
+        "dependencies.json.zst": {
+          "before": "121024d6f3e0e2a0ce9e0f0830e49d1e9cc289d14a8e815b6ff516f68bae0136",
+          "after": "37c949c3d371f055008ca47b66fcf0374b56296bd6b91d129fdf91990c17400a"
+        },
+        "cfg.json.zst": {
+          "before": "675343b18dcc8504dd6701ca2f51eff3786235cb7c6d446bc39111a90e503f09",
+          "after": "ccbc56fd4a5fbbb0418c567cea75e5ef1696e53cc5af9cab3e3e5210c4e87b80"
+        }
+      },
+      "currentArtifactHashes": {
+        "cfg.json.zst": "ccbc56fd4a5fbbb0418c567cea75e5ef1696e53cc5af9cab3e3e5210c4e87b80",
+        "dependency-input.json.zst": "fdec78b0bc721b787f207e7590d4010bd2287be5c10d47faaeab4c5e73d704f4",
+        "source-195f0347b8ae4d50e1a161da257204a16a15231b4496d638c4294671b5d165fd.json.zst": "ff22ec9d8016b35f4bcb8255e0d5eeb439bcfb022d5a3878dd04302c1f364285",
+        "air-0aa90e98020f2a2521f0ebbd35f11664590a54afe8322b54f529c343cf5692b3.json.zst": "98c02a68723a03d991d1fcd7df680903c5fe886a162f2b2ae3b2bf1ae3419617",
+        "dependencies.json.zst": "37c949c3d371f055008ca47b66fcf0374b56296bd6b91d129fdf91990c17400a",
+        "sp/cobol-semantic-product.json.zst": "1c66ed4c3d33b3bfb31ee6f4334ae3b13d51ac2554b90298c6eb77e6dee13e44",
+        "sp/observed-dependencies.json.zst": "c57ec296635e636922c2917b854c81adbc1b309153df32d48db0f9b098dc696d",
+        "sp/cobol-semantic-compilation.json.zst": "733b3bd8131aeb9fa0513083211819cde036b4f779e60610cf4bd16a3204aac9",
+        "sp/semantic-product.json.zst": "1c66ed4c3d33b3bfb31ee6f4334ae3b13d51ac2554b90298c6eb77e6dee13e44"
+      }
+    },
+    {
+      "source": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/COCRDSLC.cl2",
+      "sourceSha256": "d5af307fb4b1a155f03df9eea14b402d866a332360e14a1e37dbefe59b73363b",
+      "gapsBefore": 509,
+      "gapsAfter": 373,
+      "analysisStatus": "PARTIAL",
+      "localReadinessClaimsUpdated": 0,
+      "airUncertaintiesRemoved": 136,
+      "airUncertaintiesAdded": 0,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "ea24f98192fa2087fbe728338499f0ad586d0d23b22f0ff9d2f57b627af93e02",
+          "after": "4723a3c8b7421e8417cea37aed6f45cb2b059d5ba1fe77ce8804c8fd81698fd8"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "bcb7eeb3315b3db8774875b68db432de44aeafee17bd5e6a476fbd09e060993d",
+          "after": "bcb7eeb3315b3db8774875b68db432de44aeafee17bd5e6a476fbd09e060993d"
+        },
+        "dependencies.json.zst": {
+          "before": "9ed393c86e687e432d469ed78e57ed48f4b24cf6ad5eb66acd2e1988b25c123a",
+          "after": "1574191c13497ef9b32dedbc856f64f5f31e82639c4490d637eb32dac168d94c"
+        },
+        "cfg.json.zst": {
+          "before": "3957c2cb95ea636ebd3620f9aa353b461fb6e76203dd1c23744f7c3ecda3fe00",
+          "after": "79a07059229fae1f765f2391e6397615303c16c30895e4caee3912474b0f7b10"
+        }
+      },
+      "currentArtifactHashes": {
+        "source-545229e6362a5bc0e55052b4afb99e5160a148b69a17eb1a9459b7e38bac82c3.json.zst": "ba0c589fc81cc6890591e8d8cdc209d032b8a9b014eba4329d9685e7d1e72a5e",
+        "cfg.json.zst": "79a07059229fae1f765f2391e6397615303c16c30895e4caee3912474b0f7b10",
+        "dependency-input.json.zst": "c241c314f0a99a6e8ca8d8dcd6cb743875623db826b01996e10b9c93e4747fe8",
+        "air-a12ec3cf54ddc0d742a0c843a53b929ef8796e1e008799a7a9a34ddd63f5aff9.json.zst": "fbc51fc34b9bd1e779daf25bc34bc2dffe06a322a7a2e94d9ae4e9b598b067f8",
+        "dependencies.json.zst": "1574191c13497ef9b32dedbc856f64f5f31e82639c4490d637eb32dac168d94c",
+        "sp/cobol-semantic-product.json.zst": "4723a3c8b7421e8417cea37aed6f45cb2b059d5ba1fe77ce8804c8fd81698fd8",
+        "sp/observed-dependencies.json.zst": "bcb7eeb3315b3db8774875b68db432de44aeafee17bd5e6a476fbd09e060993d",
+        "sp/cobol-semantic-compilation.json.zst": "6c824ec6a647f49bd3a677355819c6d999e68e4f461dea097207a32fc44a4e79",
+        "sp/semantic-product.json.zst": "4723a3c8b7421e8417cea37aed6f45cb2b059d5ba1fe77ce8804c8fd81698fd8"
+      }
+    },
+    {
+      "source": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/COCRDUPC.cl2",
+      "sourceSha256": "3ffeeb3d3c53e64e632bde36771dbbcf080e92ed4168d30d90c21e4dc198e6ef",
+      "gapsBefore": 916,
+      "gapsAfter": 692,
+      "analysisStatus": "PARTIAL",
+      "localReadinessClaimsUpdated": 0,
+      "airUncertaintiesRemoved": 225,
+      "airUncertaintiesAdded": 1,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "7b1362b319c48e795fd3f2a3e4c720bd51b5f9b2b1d67ab0c7c5bb411a4d46a7",
+          "after": "96a6c447a997db1574f1e7c1e1075139fe26d0b4e47735869e14386cb7c3b422"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "75be0e074aff6920e0aa00a6a6118ac8916df7a3dc18aef2d907abfd385a9d31",
+          "after": "75be0e074aff6920e0aa00a6a6118ac8916df7a3dc18aef2d907abfd385a9d31"
+        },
+        "dependencies.json.zst": {
+          "before": "c98c7331e65655c0ba4c9b5c7daefbaaea20c18e0dc849048bbfa295d7361a57",
+          "after": "6aa397932d84551fac0468aa7174cfc0cc2531d6bf986b7ea3df6a035b50b50a"
+        },
+        "cfg.json.zst": {
+          "before": "6df0b36b7bd2857587e8a1c751c40bc62f90aabd8f0e0ba1a5510e789180d5da",
+          "after": "79c58139c1232b30a41dc92d5605f3223451194e8736a8a8adc76a1fe0a826cc"
+        }
+      },
+      "currentArtifactHashes": {
+        "cfg.json.zst": "79c58139c1232b30a41dc92d5605f3223451194e8736a8a8adc76a1fe0a826cc",
+        "dependency-input.json.zst": "e68a2e4406296d98a3309c83234ef0c96747d4f17a3308a461828c2b24ab2ec4",
+        "source-aaea38066bd40e7b98fbc4d01289a5c5820aeb9af96697040fb63460ee16e17c.json.zst": "3e3d8d2c5443246a4077e8d79136396bec904e6e46039cd4e668b0afbbfb7026",
+        "air-b5c9c51ffb4e8c9a5f51b4b9c210049aafaa4499abc63295a936cc94cfe07f74.json.zst": "7a2875ea558acaa8d718cf15f1d950710ca96bd818a69307f5bc1cb02c6332da",
+        "dependencies.json.zst": "6aa397932d84551fac0468aa7174cfc0cc2531d6bf986b7ea3df6a035b50b50a",
+        "sp/cobol-semantic-product.json.zst": "96a6c447a997db1574f1e7c1e1075139fe26d0b4e47735869e14386cb7c3b422",
+        "sp/observed-dependencies.json.zst": "75be0e074aff6920e0aa00a6a6118ac8916df7a3dc18aef2d907abfd385a9d31",
+        "sp/cobol-semantic-compilation.json.zst": "9697698d5f85875b052fbcb96674d9dd141d17588be96532b461fd40245e9813",
+        "sp/semantic-product.json.zst": "96a6c447a997db1574f1e7c1e1075139fe26d0b4e47735869e14386cb7c3b422"
+      }
+    },
+    {
+      "source": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/COMEN01C.cl2",
+      "sourceSha256": "ad5e376ac9221b21b8ce47597a5ca17fc1f39dc913793c814c6675e9b046fc09",
+      "gapsBefore": 223,
+      "gapsAfter": 164,
+      "analysisStatus": "PARTIAL",
+      "localReadinessClaimsUpdated": 0,
+      "airUncertaintiesRemoved": 59,
+      "airUncertaintiesAdded": 0,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "9dba4b94350346692a5099d3ea17568cacb17bff9705e2e46180485e6bb50287",
+          "after": "b690573f18e0b0913dc5325629d2531a46d6bd8c8fae1866dd2e91e35d6e6fbc"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "f7a3df8c53f75dff0bd8768c7fceffdc2725fc8a6292379d0cdd22f5626ac836",
+          "after": "f7a3df8c53f75dff0bd8768c7fceffdc2725fc8a6292379d0cdd22f5626ac836"
+        },
+        "dependencies.json.zst": {
+          "before": "3419b4ac4ee3a3e12ef97e5fd17b3e80f4a45d1983b807dfe972f4d98867fb5b",
+          "after": "eada9fceb3d348481e4fbc79f79af5c33f6fff1fdf0422c030bc624aca25c838"
+        },
+        "cfg.json.zst": {
+          "before": "f8dc06c667a1a97324da67d8268b02830d2854f4ad8498eed5e50e069c3ad3a6",
+          "after": "1ebbda9d52d9fb58f5e9b8de8633b1ccdc3c94684d9212471b484871ce580d69"
+        }
+      },
+      "currentArtifactHashes": {
+        "air-98a089ae3018b14b27db3aee658f00ee60b07a51ce1042f424591d185153f7c1.json.zst": "59847b231cb96b48fce6a82f69062cebd1aad935c86f62159bbeb16a2b2c9596",
+        "source-963707225811d68e3004284b6cfb93f65f73d9ea55e5d533b269fd54d678cad0.json.zst": "67fdcc0d4e65eb4aa220f337f52ef819d94f4145abb32597ff70b9e233ad21ed",
+        "cfg.json.zst": "1ebbda9d52d9fb58f5e9b8de8633b1ccdc3c94684d9212471b484871ce580d69",
+        "dependency-input.json.zst": "2b9226451de0faff561491581658dd9801f599706c66bd827234d16c6a41ef22",
+        "dependencies.json.zst": "eada9fceb3d348481e4fbc79f79af5c33f6fff1fdf0422c030bc624aca25c838",
+        "sp/cobol-semantic-product.json.zst": "b690573f18e0b0913dc5325629d2531a46d6bd8c8fae1866dd2e91e35d6e6fbc",
+        "sp/observed-dependencies.json.zst": "f7a3df8c53f75dff0bd8768c7fceffdc2725fc8a6292379d0cdd22f5626ac836",
+        "sp/cobol-semantic-compilation.json.zst": "59d4b9263ec11921d90db5a3fc4dc70740fa8dcd3fad9e45cf0c1b2a67f9ec1f",
+        "sp/semantic-product.json.zst": "b690573f18e0b0913dc5325629d2531a46d6bd8c8fae1866dd2e91e35d6e6fbc"
+      }
+    },
+    {
+      "source": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/CORPT00C.cl2",
+      "sourceSha256": "0b06bd5d4f38f17871de8985c439dfce7ed30d28e02b6ffeb8459e0cd8db4fc2",
+      "gapsBefore": 586,
+      "gapsAfter": 349,
+      "analysisStatus": "PARTIAL",
+      "localReadinessClaimsUpdated": 0,
+      "airUncertaintiesRemoved": 237,
+      "airUncertaintiesAdded": 0,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "8ef3bb28460ee550c4dcf3e16b1319f41eea22a65020d4871a43d385cf5d786a",
+          "after": "7372f00eea1f4ca194366aee4a71d067592ffc3a04ee275fe90468d0c8fe55a5"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "b4fb22eea71a88a63ee4f890d3fd3adcd36826653f354be456f5e1aa7a4092e6",
+          "after": "b4fb22eea71a88a63ee4f890d3fd3adcd36826653f354be456f5e1aa7a4092e6"
+        },
+        "dependencies.json.zst": {
+          "before": "6cb27e412c4d9326ea260e8f86ca032d00b861ca81cc0d7ff5986fa854a99bfa",
+          "after": "0192c876efc20888351e44560d6ac4a59ff38a3a0c25e6cb68926a1583c29bf7"
+        },
+        "cfg.json.zst": {
+          "before": "967cc1de8a067c22ad304548b16ff8abc726c78b7752aacf28b78a0ff41d801e",
+          "after": "82f53cd3dc246649c617d494175f0af9e551d8f86803576ac5cd828cdf53ff61"
+        }
+      },
+      "currentArtifactHashes": {
+        "source-6d30fbcb1cbdb42e771dad0edb1e8e1f3985cd47e29f26f970b6c10a546b08ef.json.zst": "ebca79da5e64b0eda3c261a1303684a0e513cee0c7535a78f5470ac191bb1d33",
+        "cfg.json.zst": "82f53cd3dc246649c617d494175f0af9e551d8f86803576ac5cd828cdf53ff61",
+        "dependency-input.json.zst": "6b6f757dd2a903a9da655ca3230d45ccd37e6d64b34cc4af43af299ea542fef3",
+        "air-a90969f8a7a65b81bafe0e5e42d03acc05a5fa0521b26f60d68f5e1cf136b42b.json.zst": "9dea30a1e27839e71b50103d47014097bae8dad67b677be82ced750e61c3026c",
+        "dependencies.json.zst": "0192c876efc20888351e44560d6ac4a59ff38a3a0c25e6cb68926a1583c29bf7",
+        "sp/cobol-semantic-product.json.zst": "7372f00eea1f4ca194366aee4a71d067592ffc3a04ee275fe90468d0c8fe55a5",
+        "sp/observed-dependencies.json.zst": "b4fb22eea71a88a63ee4f890d3fd3adcd36826653f354be456f5e1aa7a4092e6",
+        "sp/cobol-semantic-compilation.json.zst": "b9f140cfc937f4971369451a6f110c8951bc31bc073203375270ab5eca0fa273",
+        "sp/semantic-product.json.zst": "7372f00eea1f4ca194366aee4a71d067592ffc3a04ee275fe90468d0c8fe55a5"
+      }
+    },
+    {
+      "source": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/COSGN00C.cl2",
+      "sourceSha256": "4f901ae6b113eebae60ae1d94b30f8cb9906d031a4419770bf56980bdf97e377",
+      "gapsBefore": 184,
+      "gapsAfter": 126,
+      "analysisStatus": "COMPLETE",
+      "localReadinessClaimsUpdated": 0,
+      "airUncertaintiesRemoved": 58,
+      "airUncertaintiesAdded": 0,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "615fce6789f21101a6455f2299f9cc5bd82b769f2cf3d407d6d14ff7a0fadfc2",
+          "after": "108be431f69ce9cb60fd55b80bf0050b191db807c5cdf57fa41482a0fd47fc8a"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "e3e6e4e5fe0b30fd100405335a67b4f3cce2faf358de4c91ee3ec1f697040721",
+          "after": "e3e6e4e5fe0b30fd100405335a67b4f3cce2faf358de4c91ee3ec1f697040721"
+        },
+        "dependencies.json.zst": {
+          "before": "58093870adbe48494141d6181cfc913217c9f771ed63e959e9f741cd442f512e",
+          "after": "fa395a5594ac8eb689f31f7f3a922f6a21601b2ce935f56fa6d145e9e20f80bd"
+        },
+        "cfg.json.zst": {
+          "before": "138b9e2e144b98d18dd1d78a916659a4b7f0420a9e6cfbf8b0307ee9f5962a89",
+          "after": "1253e37adf87d36bf07218ef7b4eed1766197441c69359dfa31963cd06b5a190"
+        }
+      },
+      "currentArtifactHashes": {
+        "source-34375bf411b4cb6b944f94e68fa5b0bc80efebf9ade0d86f5e5152d5f071d859.json.zst": "b28f209fbc1b35db8a86035d4dc5a4741cfbaf13bff4a2a65ad987ed1cec0e84",
+        "cfg.json.zst": "1253e37adf87d36bf07218ef7b4eed1766197441c69359dfa31963cd06b5a190",
+        "air-b1fad99e049be920376397901a93b1a2af0667d6d2183ca71c0a022d6a6d418d.json.zst": "5b9234207468ff49e594fce94aab3e2df7c5418e4d74a1e58cf3dd7c6b3020b8",
+        "dependency-input.json.zst": "d124feda9fbc727622780c6a57bfc18f06f51be53639f1532dd987a468fe67f3",
+        "dependencies.json.zst": "fa395a5594ac8eb689f31f7f3a922f6a21601b2ce935f56fa6d145e9e20f80bd",
+        "sp/cobol-semantic-product.json.zst": "108be431f69ce9cb60fd55b80bf0050b191db807c5cdf57fa41482a0fd47fc8a",
+        "sp/observed-dependencies.json.zst": "e3e6e4e5fe0b30fd100405335a67b4f3cce2faf358de4c91ee3ec1f697040721",
+        "sp/cobol-semantic-compilation.json.zst": "d32cffb2024a0170c8949d4263f55197adc282df3047f3d766cae8d3dd691f8e",
+        "sp/semantic-product.json.zst": "108be431f69ce9cb60fd55b80bf0050b191db807c5cdf57fa41482a0fd47fc8a"
+      }
+    },
+    {
+      "source": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/COTRN00C.cl2",
+      "sourceSha256": "51479f131b4fb300008403f0c4f9fdbde56f22a7fb341c782492da29f0d23bbe",
+      "gapsBefore": 891,
+      "gapsAfter": 603,
+      "analysisStatus": "PARTIAL",
+      "localReadinessClaimsUpdated": 0,
+      "airUncertaintiesRemoved": 288,
+      "airUncertaintiesAdded": 0,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "f67f7e01859df87dfad2d7bafcceabc2715410068b55c136479610cbcc80b978",
+          "after": "0274b58ebae72de79154de614284d6e429381dccd6b5759bac49b88721770242"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "3daa63c7827af5f23a6854115a3db2abadfe0b4769b831a42b0ea00ff46ee623",
+          "after": "3daa63c7827af5f23a6854115a3db2abadfe0b4769b831a42b0ea00ff46ee623"
+        },
+        "dependencies.json.zst": {
+          "before": "f96396cff02eabf2391e8ec86ad692c12734a9d1d601ebeace877a84e108c50e",
+          "after": "c26f2d567855dcbff9a36c9234309b0df1b494b2548ec1872e2f38e334ea5184"
+        },
+        "cfg.json.zst": {
+          "before": "2fdf31e818047ea0e9d2f60dea3f67cbc1788bd09e480773a74f6bc101b0b93b",
+          "after": "9d314e1c21902922738009bd58d00340e44d729b206eef240e64c346f2a91a17"
+        }
+      },
+      "currentArtifactHashes": {
+        "cfg.json.zst": "9d314e1c21902922738009bd58d00340e44d729b206eef240e64c346f2a91a17",
+        "source-80b8cea39a3a6f2119cd03ae7326e553a9c6b6bfb09b23d2d9a66627aa12526f.json.zst": "edd38d8b8c79fefce726c1e1e56f60b3f00d086f45430b41405d484ce4ead614",
+        "dependency-input.json.zst": "db03073f40513e09a6f00628716a7f61a18ee64f612d0eda6c3a645a844681ed",
+        "air-94533673e28ff12070878454eb8069b3a8dd333a356968659810e9eba0d5b20b.json.zst": "4449af4562087b4287625ea3f7c98f52c47242c4284f655c85e92fc93beb0a7e",
+        "dependencies.json.zst": "c26f2d567855dcbff9a36c9234309b0df1b494b2548ec1872e2f38e334ea5184",
+        "sp/cobol-semantic-product.json.zst": "0274b58ebae72de79154de614284d6e429381dccd6b5759bac49b88721770242",
+        "sp/observed-dependencies.json.zst": "3daa63c7827af5f23a6854115a3db2abadfe0b4769b831a42b0ea00ff46ee623",
+        "sp/cobol-semantic-compilation.json.zst": "a88dc67f1226d00ba57dd6d2291c2dc9bff118723a9a5ec92f0fb3184fb3f751",
+        "sp/semantic-product.json.zst": "0274b58ebae72de79154de614284d6e429381dccd6b5759bac49b88721770242"
+      }
+    },
+    {
+      "source": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/COTRN01C.cl2",
+      "sourceSha256": "fc24ff879ac6ae12bc6817554cb756f14c5e86e0ca2dd0037af49599887f03c0",
+      "gapsBefore": 256,
+      "gapsAfter": 176,
+      "analysisStatus": "PARTIAL",
+      "localReadinessClaimsUpdated": 0,
+      "airUncertaintiesRemoved": 80,
+      "airUncertaintiesAdded": 0,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "3aea1c6e01e37799c76a5800e2215ba9da52e22419a339e0c64e4b4c65a02c2d",
+          "after": "5dafc4246363d2418ea7a6ecc935369b0ec38156aa09d7cd71fbe7cc1440838a"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "c7b368efad24b299c2f17c3cc205205abcee08699cd881d805de8f0458cb33dd",
+          "after": "c7b368efad24b299c2f17c3cc205205abcee08699cd881d805de8f0458cb33dd"
+        },
+        "dependencies.json.zst": {
+          "before": "bfa25329e8087c3a1c698c3362e5b639d6fb01644db0cacf2213a890a5aa9b78",
+          "after": "4c8e9899c1b6c014ae134e6f0053f94acb595ed670e64cbc7f0c6d288087fc63"
+        },
+        "cfg.json.zst": {
+          "before": "75ea8b1d4344ae01ef7cc9002a75622e554d581a457c70201d33b571900a6e3f",
+          "after": "ced91cd539a715106fca8959845bd164558939842d6858c4290c04038585412b"
+        }
+      },
+      "currentArtifactHashes": {
+        "cfg.json.zst": "ced91cd539a715106fca8959845bd164558939842d6858c4290c04038585412b",
+        "dependency-input.json.zst": "166833ec511e157162c90deb376abd92add0d261f13dd0fdd1f0f2539c503e6a",
+        "source-790cd99e4f7159b757c2ab996048d467e3eb329be485b3bec93c336aa8490464.json.zst": "16de697623b2f86237d9bf4033137f913c8478ea6c400a337132e5d7f58b4533",
+        "dependencies.json.zst": "4c8e9899c1b6c014ae134e6f0053f94acb595ed670e64cbc7f0c6d288087fc63",
+        "air-29c5204feead024f4739388959d6e240479471a2103b5fdbfc55e200e9614a1c.json.zst": "e14b89b05830cfa9eb5b347a4dc0dfff84b15927d46c7f9d669c9be113c1e386",
+        "sp/cobol-semantic-product.json.zst": "5dafc4246363d2418ea7a6ecc935369b0ec38156aa09d7cd71fbe7cc1440838a",
+        "sp/observed-dependencies.json.zst": "c7b368efad24b299c2f17c3cc205205abcee08699cd881d805de8f0458cb33dd",
+        "sp/cobol-semantic-compilation.json.zst": "b5ba395f6ff783c8867c1ea0de7563c348b7e371eccb30d8353eec0a6eb0c606",
+        "sp/semantic-product.json.zst": "5dafc4246363d2418ea7a6ecc935369b0ec38156aa09d7cd71fbe7cc1440838a"
+      }
+    },
+    {
+      "source": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/COTRN02C.cl2",
+      "sourceSha256": "dc33b4c797a98d2732070a223f43cc78992c2846681163a032e376630742b1ed",
+      "gapsBefore": 857,
+      "gapsAfter": 508,
+      "analysisStatus": "PARTIAL",
+      "localReadinessClaimsUpdated": 0,
+      "airUncertaintiesRemoved": 349,
+      "airUncertaintiesAdded": 0,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "2184d77e8364cebb407660ec03ec109eca07694e7f2499b609bb2e190b65d39e",
+          "after": "c176f8f358e6041086a768e8cf8d84c2689c91271106b52dbf2c252b97648e99"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "1b36b76f51b110bf650b08971b6b806de557f4ffb4b85ba0e7bdcce9feb63d2a",
+          "after": "1b36b76f51b110bf650b08971b6b806de557f4ffb4b85ba0e7bdcce9feb63d2a"
+        },
+        "dependencies.json.zst": {
+          "before": "373f3bd98acc7f9ab56f34b52608d34083e84bde05993fa8b2e88e7bb042bcd0",
+          "after": "4fc5d415f85b122f573b2437511d9b217ed6fe69a8784162490821934e0f5628"
+        },
+        "cfg.json.zst": {
+          "before": "cbb62ef5330b628d582bebcecc7d208d80ef3230b18de77ae4ed3a44070df898",
+          "after": "a568fde99e8f273235cea14e03f3914b46b727c5af0f2110bdb62301eb0575ce"
+        }
+      },
+      "currentArtifactHashes": {
+        "cfg.json.zst": "a568fde99e8f273235cea14e03f3914b46b727c5af0f2110bdb62301eb0575ce",
+        "dependency-input.json.zst": "3cd7a8b632d62382a23a7b5dfa0a99113b2c6148960cbb706ee35b6ec270207d",
+        "air-ac86c498fb9f95c776b1cfb5610d3c80de32570752324d81a270a7cfe32da74c.json.zst": "96a868e4c99c499e73a44fd860ee124e42e9a1b45e8c4d0111dce6544e141ec4",
+        "source-3a96f4dd47bfc54e65ebc8ccfb20989303d74ffb8aabfbe79cbef16d5572f5a2.json.zst": "0d64e5d7bb8b4cb76005c5f1979445322ddb33c35fe4f0969aa1b15297eb7943",
+        "dependencies.json.zst": "4fc5d415f85b122f573b2437511d9b217ed6fe69a8784162490821934e0f5628",
+        "sp/cobol-semantic-product.json.zst": "c176f8f358e6041086a768e8cf8d84c2689c91271106b52dbf2c252b97648e99",
+        "sp/observed-dependencies.json.zst": "1b36b76f51b110bf650b08971b6b806de557f4ffb4b85ba0e7bdcce9feb63d2a",
+        "sp/cobol-semantic-compilation.json.zst": "bafac301bd3a220a895d5e78781bb0d8e380ee96fe6909e3d1ed4c80b4624109",
+        "sp/semantic-product.json.zst": "c176f8f358e6041086a768e8cf8d84c2689c91271106b52dbf2c252b97648e99"
+      }
+    },
+    {
+      "source": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/COUSR00C.cl2",
+      "sourceSha256": "831433c6ec8306038c85cb86a8307f91dca48c26ef33a997f402187cbd9f4e04",
+      "gapsBefore": 879,
+      "gapsAfter": 589,
+      "analysisStatus": "PARTIAL",
+      "localReadinessClaimsUpdated": 0,
+      "airUncertaintiesRemoved": 290,
+      "airUncertaintiesAdded": 0,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "eb0a42ae2dcd6ddd1550970254b97de4bb3f6f1eccc7ffec42de498c8100606c",
+          "after": "019f454bacdf4c4293a24f970b381b244cb319871b6ce453bb2cecac24cb85ea"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "2beb8f30a9dd2ad9d4aad0b1b759203387a128c613159455aa5f95a0b5d149af",
+          "after": "2beb8f30a9dd2ad9d4aad0b1b759203387a128c613159455aa5f95a0b5d149af"
+        },
+        "dependencies.json.zst": {
+          "before": "93aa09ee586ce46ec142271596fd96c7c691769c1eba1d637e4a1b9895ba73df",
+          "after": "f58d1ded920a4ea24881f6716dc1f3f36cbf989c81de4bd70dabed8d4e49cedc"
+        },
+        "cfg.json.zst": {
+          "before": "5325f98bed8da2bb2c57950f2edf1b0c312b754caeac745a4fca3cd41d37a0db",
+          "after": "6fb66ac7df56e0adbe441203907c87ad4d6e29c004312eaf5e59e766627a56fe"
+        }
+      },
+      "currentArtifactHashes": {
+        "source-9bf97edfe30a0d9471b663ca6915b0dd2587efca23d2ecd18bbbcfeb041b36f4.json.zst": "86a27b3a4815a3f73ea3bf31b0493dd679c7f09850f6ff372508debb190665a7",
+        "cfg.json.zst": "6fb66ac7df56e0adbe441203907c87ad4d6e29c004312eaf5e59e766627a56fe",
+        "dependency-input.json.zst": "ac59f5e1c1c39003221f44fff0bd9a880156ef0ec21fdc66b920f32cb9c65c31",
+        "dependencies.json.zst": "f58d1ded920a4ea24881f6716dc1f3f36cbf989c81de4bd70dabed8d4e49cedc",
+        "air-9d8734f009abe09c2e43779d2678b5133528bdbef41132e1af46c412dca7c252.json.zst": "0792047efb45be9e5bd34f1531470656d12de56cd7413dad800f8122acf69fe7",
+        "sp/cobol-semantic-product.json.zst": "019f454bacdf4c4293a24f970b381b244cb319871b6ce453bb2cecac24cb85ea",
+        "sp/observed-dependencies.json.zst": "2beb8f30a9dd2ad9d4aad0b1b759203387a128c613159455aa5f95a0b5d149af",
+        "sp/cobol-semantic-compilation.json.zst": "bf9cd30a56ec2bbb0199474da5aabdbff170df530eb2ab993ee05bf2938fbf6b",
+        "sp/semantic-product.json.zst": "019f454bacdf4c4293a24f970b381b244cb319871b6ce453bb2cecac24cb85ea"
+      }
+    },
+    {
+      "source": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/COUSR01C.cl2",
+      "sourceSha256": "aa131b1e3382dc6d101b42f1c97d4fb0c2fdd706819ed9f9a0187c82b30f3019",
+      "gapsBefore": 273,
+      "gapsAfter": 168,
+      "analysisStatus": "PARTIAL",
+      "localReadinessClaimsUpdated": 0,
+      "airUncertaintiesRemoved": 105,
+      "airUncertaintiesAdded": 0,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "199a86d8318d0a56b7aaf94b9e204798df769122a410d3c5b1748125e67ceeaf",
+          "after": "f32d6486af05283ad182bb83683bfadd60b3e6da42dce8184f00a813eb79c7f0"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "5af149df71f3f139f661d4c44b36cde36bc89dd818efaf149b00e89493089486",
+          "after": "5af149df71f3f139f661d4c44b36cde36bc89dd818efaf149b00e89493089486"
+        },
+        "dependencies.json.zst": {
+          "before": "187c3a60a5774a32ee560ec8243a6fb08c3ac43dd6f54a8b7eea43e031276652",
+          "after": "8726783e9d57ff4f0d5d93e5ef676d3ae880043e6736694b16fca1fd4a1060b1"
+        },
+        "cfg.json.zst": {
+          "before": "867005d6c9f7121c94fc3ad9452e2a3d29d71c45ada477862aa1d8ab28e2ad0e",
+          "after": "a788ca4f03e35d9cb85466d87ba9837643e065f9679fda47b1d6c34cd6daf3a4"
+        }
+      },
+      "currentArtifactHashes": {
+        "cfg.json.zst": "a788ca4f03e35d9cb85466d87ba9837643e065f9679fda47b1d6c34cd6daf3a4",
+        "dependency-input.json.zst": "0a4188eb7d535bc69500fba140d1a6196f741c62e84aab68e4225ab5f4652609",
+        "source-f34905612d73c72fbd87edc2a9a18964f1530d2bf1acb2e5359b0686cfcd3d32.json.zst": "dbba997241103addc754c564c8017f250bf2e46c0eace1c59bbd886f462dd725",
+        "air-caed22c75a6503d62c590ff421109a01b6abdaac6c82a0fb07437e5143c55d2c.json.zst": "87d924aabe7dae0a62963235d496fd4623ec118928297fb1143db5766e375709",
+        "dependencies.json.zst": "8726783e9d57ff4f0d5d93e5ef676d3ae880043e6736694b16fca1fd4a1060b1",
+        "sp/cobol-semantic-product.json.zst": "f32d6486af05283ad182bb83683bfadd60b3e6da42dce8184f00a813eb79c7f0",
+        "sp/observed-dependencies.json.zst": "5af149df71f3f139f661d4c44b36cde36bc89dd818efaf149b00e89493089486",
+        "sp/cobol-semantic-compilation.json.zst": "4b5779af0ea2e5e45d118fff1e3049588668ef82cb7ade1305b1d2d1ff4bcfb4",
+        "sp/semantic-product.json.zst": "f32d6486af05283ad182bb83683bfadd60b3e6da42dce8184f00a813eb79c7f0"
+      }
+    },
+    {
+      "source": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/COUSR02C.cl2",
+      "sourceSha256": "85d36699cbd3079320e689576ea8406d07ad78901f4f3a68a129b869359b46ca",
+      "gapsBefore": 429,
+      "gapsAfter": 266,
+      "analysisStatus": "PARTIAL",
+      "localReadinessClaimsUpdated": 0,
+      "airUncertaintiesRemoved": 163,
+      "airUncertaintiesAdded": 0,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "5ae57dbc50344f0a2ac8ea5c1a841932d6160b6ed8f35f3207b23466690d2569",
+          "after": "258eb831d0783c15f32ca5f0931b1d044ca7ce72e3ff5b47f938f105fb7eefd8"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "45e3b10a5d1c84f0d3b2e2b60e8a42b0499c15e24b276e62e8978d884b09c005",
+          "after": "45e3b10a5d1c84f0d3b2e2b60e8a42b0499c15e24b276e62e8978d884b09c005"
+        },
+        "dependencies.json.zst": {
+          "before": "fabdc35faecc85aa66c2f94551f5b736476e897adcbdd4df58f9285d61f3683e",
+          "after": "075a9800bf9dcb5be53cc7ffa864936777199332d7724fa715ec7142ee79ee27"
+        },
+        "cfg.json.zst": {
+          "before": "f371edd953f88d3dc40e3e3a12bdb688fcc9d9937834a5d9637924091ee6de4f",
+          "after": "9c93d0e3e76086bfbf13bed4d5c537c4790ac233976dd982b9ac0ac20963b5e0"
+        }
+      },
+      "currentArtifactHashes": {
+        "cfg.json.zst": "9c93d0e3e76086bfbf13bed4d5c537c4790ac233976dd982b9ac0ac20963b5e0",
+        "dependency-input.json.zst": "7c38f7fb2b0fa52e8f8682ee0082f4b2ddc3c47a2fe8ec0eccaa11bca1d7dc80",
+        "air-9bbfc1eca90014a1231f73a6eae2ce8d545f7d7adc5a1879aed8b1f7cf50f7a9.json.zst": "4b10216e61639c0e3930b30858db20560d433a856df573d467bd89ebbf5e89ee",
+        "dependencies.json.zst": "075a9800bf9dcb5be53cc7ffa864936777199332d7724fa715ec7142ee79ee27",
+        "source-822924de1741e8aab6a567d436c9782a044b451245946159894e38049e55a5a9.json.zst": "787eb649194c20bd0081ab761b1bbfb5eb727649ac1e67dd28bb22f78e567a32",
+        "sp/cobol-semantic-product.json.zst": "258eb831d0783c15f32ca5f0931b1d044ca7ce72e3ff5b47f938f105fb7eefd8",
+        "sp/observed-dependencies.json.zst": "45e3b10a5d1c84f0d3b2e2b60e8a42b0499c15e24b276e62e8978d884b09c005",
+        "sp/cobol-semantic-compilation.json.zst": "6a687d3eff0443ff3ccaac5dd9cfc7ad6694ad4153f4101c7b688d2a81070418",
+        "sp/semantic-product.json.zst": "258eb831d0783c15f32ca5f0931b1d044ca7ce72e3ff5b47f938f105fb7eefd8"
+      }
+    },
+    {
+      "source": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/COUSR03C.cl2",
+      "sourceSha256": "bcd68f08c145b3b9b9c809a7082834e9519d78b6f363a0d1c5ff9d9576dcf888",
+      "gapsBefore": 346,
+      "gapsAfter": 214,
+      "analysisStatus": "PARTIAL",
+      "localReadinessClaimsUpdated": 0,
+      "airUncertaintiesRemoved": 132,
+      "airUncertaintiesAdded": 0,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "dad03caada4be966263a9318d590886d90b5136eeee75a4182aab8761fd133b9",
+          "after": "2d370487f5e9369a9dc5f2e9c80deea80c48ec849aa33f70d48e925aed805ea7"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "567d46b111ec6f63fc0e7ffc84b3c954bc31cf7fdc1b0b9efeda57adeef5c439",
+          "after": "567d46b111ec6f63fc0e7ffc84b3c954bc31cf7fdc1b0b9efeda57adeef5c439"
+        },
+        "dependencies.json.zst": {
+          "before": "22c22c641f5c1368f1b88151c45d45256f69d4f85892a07bfb423b4857b72976",
+          "after": "b8bba4c322c01e0b1d4e6afab76c14b086b2d069655cae3635964df5885cc56b"
+        },
+        "cfg.json.zst": {
+          "before": "950fc51df88297641941d5e0f10deaf542235f3289e56ddf0605d2e0adb147c9",
+          "after": "32830bfd8b7fec4257146db88390f21d4fb468b16c1b2649b44a27cc8cdd1a03"
+        }
+      },
+      "currentArtifactHashes": {
+        "cfg.json.zst": "32830bfd8b7fec4257146db88390f21d4fb468b16c1b2649b44a27cc8cdd1a03",
+        "dependency-input.json.zst": "a5c90cb93fe6aff2425825fffea5cfdfe2bad574cac0001b93093131b0789e62",
+        "air-93f9898209c89e85f1e190a1214c90d2a5d95eb90ed12ba9aee8a3b85a174e21.json.zst": "2575cacf80d99c458bf256c9f58342a2c4f6dd2bd9165d01311bcbfc3bb8ad58",
+        "source-22f0b14ceb45ed611c1e95abb95c2176e7b9658549e788f4b32cc7c4342a5967.json.zst": "630462c2f889f2681b37d6f3cc29f110b280ad138f33596a0879367cc3e6b5f5",
+        "dependencies.json.zst": "b8bba4c322c01e0b1d4e6afab76c14b086b2d069655cae3635964df5885cc56b",
+        "sp/cobol-semantic-product.json.zst": "2d370487f5e9369a9dc5f2e9c80deea80c48ec849aa33f70d48e925aed805ea7",
+        "sp/observed-dependencies.json.zst": "567d46b111ec6f63fc0e7ffc84b3c954bc31cf7fdc1b0b9efeda57adeef5c439",
+        "sp/cobol-semantic-compilation.json.zst": "40c053523122f10d94c8ccee863662041a1c42100a0d3b5c33fc5e592e5903d4",
+        "sp/semantic-product.json.zst": "2d370487f5e9369a9dc5f2e9c80deea80c48ec849aa33f70d48e925aed805ea7"
+      }
+    },
+    {
+      "source": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/CSUTLDTC.cbl",
+      "sourceSha256": "05565b6ca61098097391bd6ae14268eb122d41c76570d2336253b0cdb5a961fa",
+      "gapsBefore": 56,
+      "gapsAfter": 51,
+      "analysisStatus": "COMPLETE",
+      "localReadinessClaimsUpdated": 0,
+      "airUncertaintiesRemoved": 5,
+      "airUncertaintiesAdded": 0,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "46305c370c795cf9d43adf61bb167a895c46a6a90187d35322d49723d5597b02",
+          "after": "94b7a5fb637fe96865e8a2ea97bd5cff0fe1e8ea3414f06e969964a895eb4644"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "d394b9edfcc9de810c7c13d166365ee49d018f482a5fc607aa6c383a191c8512",
+          "after": "d394b9edfcc9de810c7c13d166365ee49d018f482a5fc607aa6c383a191c8512"
+        },
+        "dependencies.json.zst": {
+          "before": "feffc2ddddd147b10c2d05fea8947e201633ac94374ae11ed0edaf4ee4fd56fc",
+          "after": "a1f1f74706d59b7ea9ffac228cddd449624aad9e49ada661ee65344e9d60c3c9"
+        },
+        "cfg.json.zst": {
+          "before": "1b392618f4d4f8e3db92fa7a7d9c1bcb41e8a0cce42c15d40e1c8a6f461e4293",
+          "after": "fb6c23c9f96a18a8465a9ad4db43dce6f16079d396124865cd0426094ad647e2"
+        }
+      },
+      "currentArtifactHashes": {
+        "cfg.json.zst": "fb6c23c9f96a18a8465a9ad4db43dce6f16079d396124865cd0426094ad647e2",
+        "dependency-input.json.zst": "d7c897964742ae2e72406321d98165e1feefc559d36fcc9a04e7f314b96efc32",
+        "source-22ecb0f8bc11a34dfe29906b5ff1f78973fbee9e750d2c4021868fe262febe72.json.zst": "dfb8f118869fdf37fe2f05ffd6d4d29d039f84dfbceaffca0479835f3804424b",
+        "dependencies.json.zst": "a1f1f74706d59b7ea9ffac228cddd449624aad9e49ada661ee65344e9d60c3c9",
+        "air-3c4cefa74bc00e9e7da70bd43e8f0ef31992b8916736289294603bd76b6820d9.json.zst": "3c6af9a5d2c4d9f8a9b09b2419df5914059ae1e25d15632e6d079bc93a6678b6",
+        "sp/cobol-semantic-product.json.zst": "94b7a5fb637fe96865e8a2ea97bd5cff0fe1e8ea3414f06e969964a895eb4644",
+        "sp/observed-dependencies.json.zst": "d394b9edfcc9de810c7c13d166365ee49d018f482a5fc607aa6c383a191c8512",
+        "sp/cobol-semantic-compilation.json.zst": "f54b4733b9acce1ef424d9b0b880589400f8eb0a673d8a20c77741466a5c413a",
+        "sp/semantic-product.json.zst": "94b7a5fb637fe96865e8a2ea97bd5cff0fe1e8ea3414f06e969964a895eb4644"
+      }
+    },
+    {
+      "source": "samples/m2/unikix/UniKix_CardDemo_runtime_v1.zip!/migrated_app/cbl/SDSF.cbl",
+      "sourceSha256": "d01b013e55ef4f7b76044ef98fa30fa077ec8d0a6847efab7f2c466087264027",
+      "gapsBefore": 1,
+      "gapsAfter": 1,
+      "analysisStatus": "COMPLETE",
+      "localReadinessClaimsUpdated": 0,
+      "airUncertaintiesRemoved": 0,
+      "airUncertaintiesAdded": 0,
+      "comparisonHashes": {
+        "sp/cobol-semantic-product.json.zst": {
+          "before": "2ff801035e5ca8bb779081332e204f00cb0727734397287b6cf96d0e7b61f045",
+          "after": "744a3a482e8d9414b9dadbd24e166b748a12593e2fcfebbb9c7899d9f612bfc2"
+        },
+        "sp/observed-dependencies.json.zst": {
+          "before": "70eebace714b480745246c00c0e80e748b0d438de7ba0009d2dbd37a64d061d2",
+          "after": "70eebace714b480745246c00c0e80e748b0d438de7ba0009d2dbd37a64d061d2"
+        },
+        "dependencies.json.zst": {
+          "before": "0fa22fe1bc2d7761e015a014dfc405aedd9d6ebb0121701ad042c16fcac12003",
+          "after": "c6e843f175e3114f9ebf49f052a0df53c82959973ed3fe86bb5c1ca15a6588b7"
+        },
+        "cfg.json.zst": {
+          "before": "c82a3e6d905dfa7bea857f1b5486fcf18309539f0bc755a675d330761859f314",
+          "after": "3a38e87c641040aba10130c9026443146fe21de94fd7d8718dbeb753fd855e40"
+        }
+      },
+      "currentArtifactHashes": {
+        "cfg.json.zst": "3a38e87c641040aba10130c9026443146fe21de94fd7d8718dbeb753fd855e40",
+        "dependency-input.json.zst": "d04c0eae172b8ecf32afb4a36d3559375f442732093fc324c4af7a06de94abce",
+        "air-03f9c9e0a3ad9270912d19e902d976d3f92daeb19f848f6cb66dc1c3e4043132.json.zst": "a89d6d90388f02d17543d16afbf8acfe30d2f1b9b390f0e7d6e0c6a933da9f4f",
+        "source-2e52610557b7abce57e9dc70a5eff8b27213814f01ee181625b6e8a8f7ea29fd.json.zst": "83b9094a61cad6482c1f7145aa7e85b6af3be2bb316cf05bb3951f15f8315ff5",
+        "dependencies.json.zst": "c6e843f175e3114f9ebf49f052a0df53c82959973ed3fe86bb5c1ca15a6588b7",
+        "sp/cobol-semantic-product.json.zst": "744a3a482e8d9414b9dadbd24e166b748a12593e2fcfebbb9c7899d9f612bfc2",
+        "sp/observed-dependencies.json.zst": "70eebace714b480745246c00c0e80e748b0d438de7ba0009d2dbd37a64d061d2",
+        "sp/cobol-semantic-compilation.json.zst": "c3a8ca604667a33fd351948221cec27a834ae5e0a26e12c7d7b8b3ac36433e4b",
+        "sp/semantic-product.json.zst": "744a3a482e8d9414b9dadbd24e166b748a12593e2fcfebbb9c7899d9f612bfc2"
+      }
+    }
+  ]
+}

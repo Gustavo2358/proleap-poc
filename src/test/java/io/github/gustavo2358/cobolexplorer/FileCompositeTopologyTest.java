@@ -20,7 +20,7 @@ class FileCompositeTopologyTest {
                 "OPEN INPUT G F EXTEND H.\nCLOSE H F G.\nGOBACK.")) {
             var json=publish(procedure);var topology=json.path("controlTopology");var flows=topology.path("fileFlows");
             assertEquals(2,flows.size(),"OPEN and CLOSE each publish an internal flow");
-            assertEquals("2.51.0",json.path("contractVersion").asText());
+            assertEquals("2.65.0",json.path("contractVersion").asText());
             for(var flow:flows) {
                 var points=new HashMap<String,JsonNode>();for(var point:flow.path("points"))points.put(point.path("id").asText(),point);
                 var target=flow.path("entry");int ordinal=0;
@@ -93,7 +93,7 @@ class FileCompositeTopologyTest {
         var json=FileDeclarationContractTest.publish("SELECT A ASSIGN TO INA.\nSELECT B ASSIGN TO OUTB.",
             "FD A.\n01 RA PIC X.\nFD B.\n01 RB PIC X.","","OPEN INPUT A OUTPUT B.\nCLOSE A B.\nGOBACK.");
         assertEquals(2,json.path("controlTopology").path("fileFlows").size());
-        assertEquals("2.51.0",json.path("contractVersion").asText());
+        assertEquals("2.65.0",json.path("contractVersion").asText());
         assertEquals(4,json.path("fileInventory").path("operations").path("uses").size());
         assertTrue(json.path("factDependencies").path("facts").isEmpty());
         assertTrue(json.path("factDependencies").path("bindings").isEmpty());

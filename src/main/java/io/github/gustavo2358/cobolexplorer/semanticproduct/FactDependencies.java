@@ -14,7 +14,7 @@ public record FactDependencies(String authority,List<Input> inputs,List<Proof> p
     }
     public enum InputKind { MISSING_COPY, MODEL_STORAGE, OPAQUE_INCLUDE, UNLOCATED_INPUT, PHYSICAL_PROFILE }
     public enum ProofKind { SOURCE_SYNTAX, REGION_CONTEXT, DECLARATION_CONTEXT, REGION_BOUNDARY, REGION_CLOSURE, ALIAS_INVENTORY, ALIAS_CLOSURE, LOCAL_ALLOCATION, LOGICAL_TYPE, PROFILE, PHYSICAL_VIEW }
-    public enum FactKind { SOURCE_IDENTITY, LOGICAL_TEXT, STORAGE_IDENTITY, LOCAL_CELL, PHYSICAL_VIEW }
+    public enum FactKind { SOURCE_IDENTITY, LOGICAL_TEXT, LOGICAL_INTEGER, STORAGE_IDENTITY, LOCAL_CELL, PHYSICAL_VIEW }
     public record Input(String id,InputKind kind,boolean available,List<String> contextScopes,List<String> closureScopes,List<String> declarationScopes,Provenance provenance) {
         public Input {text(id);Objects.requireNonNull(kind);require(kind!=InputKind.MODEL_STORAGE||!available,"model storage is not physical proof");contextScopes=sorted(contextScopes);closureScopes=sorted(closureScopes);declarationScopes=sorted(declarationScopes);Objects.requireNonNull(provenance);}
     }
@@ -84,7 +84,7 @@ public record FactDependencies(String authority,List<Input> inputs,List<Proof> p
             require(f.kind()==FactKind.STORAGE_IDENTITY?f.subject().equals(f.region()):f.region().equals(owners.get(f.subject())),"fact subject belongs to region");
             kinds(f.dependencies(),ps,switch(f.kind()) {
                 case SOURCE_IDENTITY -> Set.of(ProofKind.SOURCE_SYNTAX);
-                case LOGICAL_TEXT -> Set.of(ProofKind.LOGICAL_TYPE);
+                case LOGICAL_TEXT,LOGICAL_INTEGER -> Set.of(ProofKind.LOGICAL_TYPE);
                 case STORAGE_IDENTITY -> Set.of(ProofKind.LOCAL_ALLOCATION);
                 case LOCAL_CELL -> Set.of(ProofKind.LOGICAL_TYPE,ProofKind.ALIAS_CLOSURE,ProofKind.LOCAL_ALLOCATION);
                 case PHYSICAL_VIEW -> Set.of(ProofKind.PHYSICAL_VIEW);

@@ -83,7 +83,7 @@ class StorageLocalEligibilityTest {
         var b=StorageAccessTest.fixture(OVERLAY+"01 WS-PGM PIC X(8).","CALL WS-PGM.").source();
         var index=StorageComponents.analyze(b.build());
         assertThrows(IllegalArgumentException.class,()->ScalarMoveSemantics.analyze(a.build(),a.tables(),a.resolution(),a.report(),index));
-        assertThrows(IllegalArgumentException.class,()->NumericControlSemantics.analyze(a.build(),a.tables(),true,index));
+        assertThrows(IllegalArgumentException.class,()->IntegerSemantics.analyze(a.build(),a.tables(),true,index));
         assertThrows(IllegalArgumentException.class,()->StorageLayoutSemantics.analyze(a.build(),a.tables(),a.resolution(),a.report(),StorageLayoutSemantics.Profile.UNSPECIFIED,index));
     }
     private static void assertSharedOverlayCell(State state) {

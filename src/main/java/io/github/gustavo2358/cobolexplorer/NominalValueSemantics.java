@@ -15,7 +15,7 @@ public final class NominalValueSemantics {
     private NominalValueSemantics(Map<ResolutionContracts.ProgramUnitId,Facts> units){this.units=Map.copyOf(units);}
     public Optional<Facts> facts(ResolutionContracts.ProgramUnitId unit){return Optional.ofNullable(units.get(unit));}
     static NominalValueSemantics analyze(CompilationUnitBuildResult frontend,ReferenceResolution resolution,
-            Map<ResolutionContracts.SemanticEntityId,ScalarMoveSemantics.ScalarText> shapes,Optional<StorageAccessSemantics> storage,StorageComponents components) {
+            Map<ResolutionContracts.SemanticEntityId,ScalarMoveSemantics.ScalarText> shapes,Optional<StorageAccessSemantics> storage,StorageComponents components,ConditionNameSemantics conditionNames) {
         var result=new HashMap<ResolutionContracts.ProgramUnitId,Facts>();
         if(storage.isEmpty())return new NominalValueSemantics(result);
         var predicates=TextConditionSemantics.analyze(frontend,resolution,shapes,true);
@@ -40,6 +40,9 @@ public final class NominalValueSemantics {
             for(var r:resolution.entries())if(r.occurrence().programUnitId().equals(unit.id())&&r.status()==ResolutionContracts.ResolutionStatus.RESOLVED)
                 r.selectedCandidate().map(c->nodes.get(c.entityId())).ifPresent(node->references.put(r.occurrence().referenceAstNodeId(),node));
             var assignments=new ArrayList<Assignment>();var conditions=new ArrayList<Condition>();var queries=new ArrayList<Query>();
+            var conditionUses=conditionNames.uses(unit.id());
+            var sourceConditions=new HashMap<Integer,io.github.gustavo2358.cobolexplorer.semanticproduct.ConditionNames.Tree>();
+            for(var p:conditionNames.predicates(unit.id()))if(p.role().equals("IF"))sourceConditions.put(p.statement(),p.tree());
             var todo=new ArrayDeque<Ast.Node>();todo.add(unit.program());
             while(!todo.isEmpty()) {
                 var n=todo.removeFirst();if(n instanceof Ast.Program&&n!=unit.program())continue;
@@ -52,8 +55,20 @@ public final class NominalValueSemantics {
                     assignments.addAll(table.writes(m,source));
                 }
                 if(n instanceof Ast.IfStatement branch) {
-                    var p=predicates.get(new ScalarMoveSemantics.NodeKey(unit.id(),branch.meta().id()));
-                    if(p!=null)conditions.add(new Condition(branch.meta().id(),predicate(p,references)));
+                    var tree=sourceConditions.get(branch.meta().id());
+                    var source=tree==null?Optional.<NominalValues.Predicate>empty():conditionPredicate(tree,conditionUses,nodes);
+                    if(source.isPresent())conditions.add(new Condition(branch.meta().id(),source.get()));
+                    else {var p=predicates.get(new ScalarMoveSemantics.NodeKey(unit.id(),branch.meta().id()));
+                        if(p!=null)conditions.add(new Condition(branch.meta().id(),predicate(p,references)));}
+                }
+                if(n instanceof Ast.ModeledStatement&&conditionNames.sets(unit.id()).containsKey(n.meta().id())) {
+                    // Sequential SET destinations may alias. The last write to a whole variable wins.
+                    var last=new LinkedHashMap<String,NominalValues.Term>();
+                    for(var a:conditionNames.sets(unit.id()).get(n.meta().id())) {
+                        var target=nodes.get(a.use().declaration().parent());
+                        if(target!=null&&a.use().indices().isEmpty())last.put(target,conditionTerm(a.value()).orElse(new NominalValues.Term("UNKNOWN","")));
+                    }
+                    last.forEach((target,value)->assignments.add(new Assignment(n.meta().id(),target,value)));
                 }
                 if(n instanceof Ast.CallStatement call){var t=term(call.target(),references,table);if(t.kind().equals("READ"))queries.add(new Query(call.meta().id(),t.value()));}
                 if(n instanceof Ast.EmbeddedLanguageStatement embedded&&embedded.language()==Ast.EmbeddedLanguage.CICS)
@@ -68,6 +83,30 @@ public final class NominalValueSemantics {
             result.put(unit.id(),new Facts(symbols,assignments,conditions,queries,table.fields()));
         }
         return new NominalValueSemantics(result);
+    }
+    private static Optional<NominalValues.Term> conditionTerm(Ast.ConditionValue value) {
+        return switch(value.kind()) {
+            case TEXT->Optional.of(new NominalValues.Term("LITERAL",value.value()));
+            case SPACES,LOW_VALUES,HIGH_VALUES->Optional.of(new NominalValues.Term(value.kind().name(),""));
+            default->Optional.empty();
+        };
+    }
+    private static Optional<NominalValues.Predicate> conditionPredicate(io.github.gustavo2358.cobolexplorer.semanticproduct.ConditionNames.Tree tree,
+            Map<Integer,ConditionNameSemantics.Use> uses,Map<ResolutionContracts.SemanticEntityId,String> nodes) {
+        if(tree.kind().equals("UNKNOWN"))return Optional.empty();
+        if(tree.kind().equals("TEST")) {
+            var use=uses.get(Integer.parseInt(tree.use().substring("condition-use:".length())));
+            var node=nodes.get(use.declaration().parent());if(node==null||!use.indices().isEmpty())return Optional.empty();
+            var alternatives=new ArrayList<NominalValues.Predicate>();
+            for(var range:use.declaration().ranges()) {
+                var value=conditionTerm(range.first());if(range.last().isPresent()||value.isEmpty())return Optional.empty();
+                alternatives.add(new NominalValues.Predicate("EQ",List.of(new NominalValues.Term("READ",node),value.get()),List.of()));
+            }
+            return Optional.of(alternatives.size()==1?alternatives.get(0):new NominalValues.Predicate("OR",List.of(),alternatives));
+        }
+        var children=new ArrayList<NominalValues.Predicate>();
+        for(var child:tree.children()){var p=conditionPredicate(child,uses,nodes);if(p.isEmpty())return Optional.empty();children.add(p.get());}
+        return Optional.of(new NominalValues.Predicate(tree.kind(),List.of(),children));
     }
     private static NominalValues.Term term(Ast.Expression e,Map<Integer,String> references,TableTextSemantics table) {
         { // Source coordinates may be approximate even when the parsed operand is structured.

@@ -384,12 +384,9 @@ export function assertUnitGapSummary(location, unit, units, gaps) {
   }
   const inputMissing = gaps.some(gap => gap.category === "INPUT"
       && (gap.unitId === null || ancestors.has(gap.unitId)));
-  const owned = gaps.filter(gap => gap.unitId === unit.id);
-  const count = owned.length + (inputMissing ? 1 : 0);
-  invariant(unit.gaps === count, `${location}.gaps`, `declared ${String(unit.gaps)}, derived ${count}`);
-  const complete = !inputMissing && owned.every(gap => gap.category === "CALL_SEMANTICS");
-  invariant(unit.complete === complete, `${location}.complete`,
-      `declared ${String(unit.complete)}, derived ${complete}`);
+  invariant(!Object.hasOwn(unit, "gaps"), `${location}.gaps`, "legacy counter must not be published");
+  invariant(!inputMissing || unit.complete === false, `${location}.complete`,
+      "missing input cannot claim complete binding");
 }
 
 function assertResolution(resolution, ast, tree, symbols, expectedSource) {
@@ -398,16 +395,17 @@ function assertResolution(resolution, ast, tree, symbols, expectedSource) {
   assertSource(location, resolution, expectedSource);
   const units = array(resolution.units, `${location}.units`);
   const entries = array(resolution.entries, `${location}.entries`);
-  const gaps = array(resolution.gaps, `${location}.gaps`);
+  const gaps = array(resolution.inputDiagnostics, `${location}.inputDiagnostics`);
+  invariant(gaps.every(g => g.category === "INPUT"), location, "input diagnostics cannot include legacy capability counters");
   const diagnostics = array(resolution.diagnostics, `${location}.diagnostics`);
   const relations = array(resolution.relations, `${location}.relations`);
   assertDeclaredCount(`${location}.meta.programUnits`, resolution.meta.programUnits, units);
   assertDeclaredCount(`${location}.meta.references`, resolution.meta.references, entries);
   assertDeclaredCount(`${location}.metrics.collectedReferences`,
       resolution.metrics?.collectedReferences, entries);
-  assertDeclaredCount(`${location}.meta.gaps`, resolution.meta.gaps, gaps);
+  invariant(!Object.hasOwn(resolution.meta, "gaps") && !Object.hasOwn(resolution, "gaps"), location, "legacy counters must not be published");
   assertIndexed(`${location}.entries`, entries);
-  assertIndexed(`${location}.gaps`, gaps);
+  invariant(new Set(gaps.map(g => g.id)).size === gaps.length, location, "unique input diagnostic ids");
   assertIndexed(`${location}.diagnostics`, diagnostics);
   assertIndexed(`${location}.relations`, relations);
 
@@ -462,18 +460,11 @@ function assertResolution(resolution, ast, tree, symbols, expectedSource) {
     assertUnitGapSummary(`${location}.units[${unit.id}]`, unit, units, gaps);
   }
 
-  const bindingComplete = gaps.every(gap => gap.category === "CALL_SEMANTICS");
-  const dependencyReady = gaps.length === 0;
-  invariant(resolution.meta.referenceBindingComplete === bindingComplete,
-      `${location}.meta.referenceBindingComplete`, "does not match gap categories");
-  invariant(resolution.meta.dependencyAnalysisReady === dependencyReady,
-      `${location}.meta.dependencyAnalysisReady`, "must be true exactly when gaps are empty");
-  invariant(resolution.meta.claim === (dependencyReady ? "COMPLETE" : "INCOMPLETE"),
-      `${location}.meta.claim`, "does not match dependency readiness");
-  const blockers = array(resolution.completeness?.blockingReasons,
-      `${location}.completeness.blockingReasons`);
-  invariant((blockers.length === 0) === dependencyReady,
-      `${location}.completeness.blockingReasons`, "must be empty exactly when analysis is ready");
+  const bindingMayBeComplete = gaps.length === 0 && entries.every(e => ["RESOLVED", "EXTERNAL_OBSERVED"].includes(e.status));
+  invariant(!resolution.meta.referenceBindingComplete || bindingMayBeComplete,
+      `${location}.meta.referenceBindingComplete`, "unresolved input or binding cannot claim completeness");
+  invariant(!Object.hasOwn(resolution.meta,"dependencyAnalysisReady") && !Object.hasOwn(resolution.meta,"claim")
+      && !Object.hasOwn(resolution,"completeness"), location, "nominal view must not publish global dependency readiness");
 }
 
 function assertCrossArtifactSources(bundle) {
@@ -500,7 +491,7 @@ export function assertCoactupcCopyInputs(bundle) {
         "ast-data.js modeled COPY sentinel", `missing structural model declaration ${name}`);
   }
   invariant(bundle.coverage.meta.complete === false
-      && bundle.resolution.meta.dependencyAnalysisReady === false,
+      && bundle.resolution.inputDiagnostics.some(g => g.code === "UNRESOLVED_COPY"),
       "modeled COPY completeness", "model declarations do not close missing input or runtime uncertainty");
 }
 
@@ -512,8 +503,8 @@ function assertCoactupc(bundle) {
       "COACTUPC source declares one program unit");
   invariant(bundle.resolution.meta.referenceBindingComplete === false,
       "resolution-data.js.meta.referenceBindingComplete", "COACTUPC binding is known incomplete");
-  invariant(bundle.resolution.meta.dependencyAnalysisReady === false,
-      "resolution-data.js.meta.dependencyAnalysisReady", "COACTUPC dependency analysis is not ready");
+  invariant(bundle.resolution.inputDiagnostics.some(g => g.code === "UNRESOLVED_COPY"),
+      "resolution-data.js.inputDiagnostics", "COACTUPC missing COPY remains explicit");
 
   const program = bundle.ast.nodes.filter(node =>
     node.t === "Program" && node.a?.programName === "COACTUPC");

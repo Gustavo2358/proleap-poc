@@ -28,7 +28,7 @@ class CicsMemoryLocalityTest {
             String name="MAPA"+(command.equals("RECEIVE")?"I":"O");
             var p=publish("01 "+name+" PIC X(80).","EXEC CICS "+command+" MAP('MAPA') NOHANDLE END-EXEC.\nGOBACK.",false);
             var j=CicsAbendContractTest.json(p);var c=CicsCommandContractTest.command(j);
-            assertEquals("2.53.0",j.path("contractVersion").asText());
+            assertEquals("2.65.0",j.path("contractVersion").asText());
             assertTrue(c.hasNonNull("implicitArea"));assertTrue(c.hasNonNull("hostEffects"));
             assertEquals(command.equals("RECEIVE")?"WRITE":"READ",c.path("implicitArea").path("role").asText());
             assertFalse(c.path("implicitArea").path("provenance").path("exact").asBoolean());

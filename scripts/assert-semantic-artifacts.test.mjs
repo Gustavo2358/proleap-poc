@@ -85,20 +85,20 @@ test("input summary follows ownership and ancestry without granting completeness
   const units = [{ id: "outer", parentId: null }, { id: "child", parentId: "outer" },
     { id: "peer", parentId: null }];
   const scoped = [{ unitId: "outer", category: "INPUT" }, { unitId: "outer", category: "INPUT" }];
-  assert.doesNotThrow(() => assertUnitGapSummary("outer", { ...units[0], gaps: 3, complete: false }, units, scoped));
-  assert.doesNotThrow(() => assertUnitGapSummary("child", { ...units[1], gaps: 1, complete: false }, units, scoped));
-  assert.doesNotThrow(() => assertUnitGapSummary("peer", { ...units[2], gaps: 0, complete: true }, units, scoped));
-  assert.throws(() => assertUnitGapSummary("outer", { ...units[0], gaps: 2, complete: false }, units, scoped), /declared 2, derived 3/);
-  assert.throws(() => assertUnitGapSummary("child", { ...units[1], gaps: 1, complete: true }, units, scoped), /complete/);
+  assert.doesNotThrow(() => assertUnitGapSummary("outer", { ...units[0], complete: false }, units, scoped));
+  assert.doesNotThrow(() => assertUnitGapSummary("child", { ...units[1], complete: false }, units, scoped));
+  assert.doesNotThrow(() => assertUnitGapSummary("peer", { ...units[2], complete: true }, units, scoped));
+  assert.throws(() => assertUnitGapSummary("outer", { ...units[0], gaps: 3, complete: false }, units, scoped), /legacy counter/);
+  assert.throws(() => assertUnitGapSummary("child", { ...units[1], complete: true }, units, scoped), /complete/);
   const global = [{ unitId: null, category: "INPUT" }];
-  assert.doesNotThrow(() => assertUnitGapSummary("peer", { ...units[2], gaps: 1, complete: false }, units, global));
+  assert.doesNotThrow(() => assertUnitGapSummary("peer", { ...units[2], complete: false }, units, global));
 });
 
 test("COACTUPC copy evidence distinguishes real absence from structural models", () => {
   const sample = () => ({
     tree: { meta: { unresolvedCopies: 1 } },
     coverage: { meta: { unresolvedCopies: 1, complete: false } },
-    resolution: { meta: { unresolvedCopies: 1, dependencyAnalysisReady: false } },
+    resolution: { meta: { unresolvedCopies: 1 }, inputDiagnostics: [{ code: "UNRESOLVED_COPY" }] },
     ast: { nodes: [
       { t: "DataEntry", a: { name: "DFHNULL" }, sf: "model:ibm-cics/structural-v2/DFHAID" },
       { t: "DataEntry", a: { name: "DFHBMUNP" }, sf: "model:ibm-cics/structural-v2/DFHBMSCA" },
@@ -112,7 +112,7 @@ test("COACTUPC copy evidence distinguishes real absence from structural models",
     }
   }
   for (const mutate of [b => b.ast.nodes.pop(), b => b.ast.nodes[0].sf = "real.cpy",
-    b => b.coverage.meta.complete = true, b => b.resolution.meta.dependencyAnalysisReady = true]) {
+    b => b.coverage.meta.complete = true, b => b.resolution.inputDiagnostics = []]) {
     const altered = sample(); mutate(altered);
     assert.throws(() => assertCoactupcCopyInputs(altered));
   }

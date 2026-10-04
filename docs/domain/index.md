@@ -28,3 +28,7 @@ como domínio atual sem contrato materializado.
 - [Positive memory topology and storage coverage](scoped-storage-uncertainty.md): POSITIVE_MEMORY_TOPOLOGY W1 supported textual projection.
 
 - [R7 exceptional handler source semantics](cics-exceptional-handlers.md) — SP2.45, source-only selection and entry.
+
+- [Gaps ativos do SP 2.63 e painel canônico](active-gaps.md).
+
+- [Valores numéricos e MOVE DISPLAY](numeric-move.md).

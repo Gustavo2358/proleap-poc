@@ -24,10 +24,12 @@
   configureFilters();
   bindEvents();
   renderList();
-  renderGaps();
   if (selectedId !== null) inspect(selectedId, false);
 
   function renderHeader() {
+    const input = data.inputDiagnostics || [];
+    $("#input-diagnostics").hidden = input.length === 0;
+    $("#input-diagnostic-list").textContent = input.map(d => `${d.code} · linha ${d.line}: ${d.message}`).join('\n');
     const statusCounts = data.counts.status;
     $("#resolution-metrics").innerHTML = [
       [statusCounts.RESOLVED, "resolved"], [statusCounts.AMBIGUOUS, "ambiguous"],
@@ -35,13 +37,8 @@
       [statusCounts.EXTERNAL_OBSERVED, "external-observed"],
       [classifications.length, "external-inferred"]
     ].map(([value, label]) => `<div class="metric ${label}"><b>${format(value)}</b><span>${label}</span></div>`).join("");
-    const ready = data.meta.dependencyAnalysisReady;
-    $("#resolution-status").className = `parse-status ${ready ? "ok" : "warn"}`;
+    $("#resolution-status").className = 'parse-status';
     $("#resolution-status").innerHTML = `<span></span>${escapeHtml(data.meta.source)} · ${format(data.meta.references)} referências`;
-    $("#completeness-banner").className = `coverage-banner ${ready ? "complete" : "incomplete"}`;
-    $("#completeness-banner").innerHTML = ready
-      ? `<b>Análise de dependências pronta neste estágio</b><span>Nenhuma lacuna bloqueante foi observada no frontend, coleta ou binding nominal.</span>`
-      : `<b>Análise de dependências incompleta</b><span>${format(data.meta.gaps)} lacunas bloqueantes. Não interprete o resultado como inventário completo de dependências.</span>`;
     $("#policy-strip").innerHTML = [
       ["Política", `${data.meta.policyId} @ ${data.meta.policyVersion}`],
       ["QUALIFY", data.meta.qualifyMode], ["Escopo", "artefato atual"],
@@ -139,6 +136,9 @@
     astLink.title = entry.unitId === primaryUnit ? "Abrir o uso na AST"
       : "A página AST legada exibe somente a unidade primária; a identidade namespaced foi preservada aqui.";
     $("#open-reference-parse").href = `index.html#node=${entry.parseNodeId}`;
+    const classificationDetail = $("#external-classification-detail");
+    classificationDetail.textContent = externalClassification
+      ? `${externalClassification.technology} · ${externalClassification.kind} · ${externalClassification.certainty} · ${externalClassification.reason} · ${externalClassification.coveredOccurrenceIds.length} referências` : '';
     const dynamicCall = entry.role === "CALL_TARGET" && entry.kind === "DATA";
     $("#resolution-insight").textContent = externalClassification?.copyInputCompleteness === "INCOMPLETE_UNRESOLVED_COPY"
       ? "Há uma hipótese externa inferida para este construct, mas COPYs ausentes tornam o universo nominal COBOL incompleto. O binding UNRESOLVED e essa incerteza permanecem observáveis."
@@ -151,7 +151,7 @@
       : entry.status === "AMBIGUOUS"
         ? "Todos os candidatos semanticamente válidos foram preservados. Nenhuma escolha arbitrária foi feita."
         : entry.status === "UNRESOLVED" || entry.status === "UNSUPPORTED"
-          ? "Esta lacuna permanece desconhecida e bloqueia uma afirmação de cobertura completa de dependências."
+          ? "Este binding nominal permanece desconhecido. Os gaps ativos do Semantic Product descrevem o impacto das provas disponíveis."
           : "O nome possui uma identidade única sob a política explícita desta execução.";
   }
 
@@ -176,25 +176,6 @@
     const rows = [];
     for (let line = start; line <= end; line++) rows.push(`<div class="source-preview-line ${line >= entry.span.startLine && line <= entry.span.endLine ? "selected" : ""}"><span>${line}</span><code>${escapeHtml(data.sourceLines[line - 1] || "")}</code></div>`);
     $("#resolution-source").innerHTML = rows.join("");
-  }
-
-  function renderGaps() {
-    $("#gap-count").textContent = `${format(data.gaps.length)} lacunas`;
-    $("#gap-list").innerHTML = data.gaps.length ? data.gaps.slice(0, 500).map((gap) => {
-      const classification = classificationsByRootOccurrence.get(`${gap.unitId}#${gap.occurrenceId}`);
-      const detail = classification
-        ? `${classification.technology} · ${classification.kind} · ${classification.certainty} · COPY ${classification.copyInputCompleteness} · ${format(classification.coveredOccurrenceIds.length)} occurrences cobertas`
-        : `${gap.grammarRule || "frontend"} · linha ${format(gap.line)}`;
-      const message = classification
-        ? `${classification.constructWrittenText} · ${classification.reason}` : gap.message;
-      return `<button class="gap-card" data-occurrence="${gap.occurrenceId}" data-unit="${escapeHtml(gap.unitId || "")}"><span>${escapeHtml(gap.category)}</span><b>${escapeHtml(gap.code)}</b><p>${escapeHtml(message)}</p><small>${escapeHtml(detail)}</small></button>`;
-    }).join("") : `<div class="empty-state"><b>Sem lacunas bloqueantes</b><span>O binding nominal está completo para a entrada observada.</span></div>`;
-    $$("#gap-list .gap-card").forEach((card) => card.addEventListener("click", () => {
-      const occurrence = Number(card.dataset.occurrence);
-      if (occurrence < 0) return;
-      const entry = data.entries.find((value) => value.unitId === card.dataset.unit && value.occurrenceId === occurrence);
-      if (entry) inspect(entry.id, true);
-    }));
   }
 
   function facts(values) {

@@ -20,7 +20,7 @@ class ControlCompositionTest {
         var base=publish(body);var peer=publish(body+"UNUSED.\nGO TO P-A P-B DEPENDING ON N.\nP-A.\nCONTINUE.\nP-B.\nGOBACK.\n");
         var a=facts(base,"MOVE").get(0);var b=facts(peer,"MOVE").get(0);
         assertEquals(a,b,"unrelated peer cannot mutate MOVE facts");
-        assertEquals("2.39.0",base.path("contractVersion").asText());
+        assertEquals("2.65.0",base.path("contractVersion").asText());
         assertEquals(base.path("ordinaryContinuations"),peer.path("ordinaryContinuations"));
         assertEquals(a.path("header").path("id"),base.path("ordinaryContinuations").get(0).path("statement"));
         assertEquals(facts(base,"CALL").get(0).path("header").path("id"),base.path("ordinaryContinuations").get(0).path("destination"));
@@ -40,11 +40,12 @@ class ControlCompositionTest {
             for(var relation:sp.path("ordinaryContinuations"))assertNotEquals(id,relation.path("statement"));
         }
     }
-    @Test void numericEvaluatePublishesArmsWithoutInventingScalarAccess() throws Exception {
+    @Test void numericEvaluatePublishesArmsAndProvedIntegerAccess() throws Exception {
         var sp=publish("MAIN.\nEVALUATE N WHEN 1 GO TO P-A WHEN OTHER GOBACK END-EVALUATE.\nP-A.\nCALL WS-TARGET.\nGOBACK.\n");
         var e=facts(sp,"EVALUATE").get(0);assertEquals(1,e.path("arms").size());
         assertEquals("KNOWN",e.path("arms").get(0).path("control").path("entry").path("availability").asText());
-        assertTrue(e.path("subject").path("wholeItemAccess").isMissingNode()||e.path("subject").path("wholeItemAccess").isNull());
+        assertTrue(e.path("subject").path("wholeItemAccess").isObject());
+        assertTrue(java.util.stream.StreamSupport.stream(sp.path("dataDeclarations").spliterator(),false).anyMatch(d->d.path("id").equals(e.path("subject").path("wholeItemAccess").path("data"))&&d.path("scalarInteger").isObject()));
         assertFalse(e.path("subject").path("binding").isNull());
     }
     @Test void transferAndSpecialExitNeverAcquireOrdinaryContinuation() throws Exception {

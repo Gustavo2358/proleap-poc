@@ -14,7 +14,7 @@ class SourcePossibilityTest {
     @Test void unknownEmbeddedCompletionHasOnlySourcePossibility() throws Exception {
         var p=product("EXEC SQL EXECUTE IMMEDIATE SQL-TEXT END-EXEC\nCALL 'AFTERIO'\nGOBACK.\n");
         var t=p.path("controlTopology");
-        assertEquals("2.52.0",p.path("contractVersion").asText());
+        assertEquals("2.65.0",p.path("contractVersion").asText());
         assertEquals(1,t.path("sourceContinuations").size());
         var c=t.path("sourceContinuations").get(0);
         assertEquals("OCCURRENCE",c.path("target").path("kind").asText());

@@ -37,18 +37,18 @@ public final class IfSemantics {
             ReferenceResolution resolution, ResolutionAnalysisReport report,
             Map<ResolutionContracts.SemanticEntityId, ScalarMoveSemantics.ScalarText> scalars,
             Map<ScalarMoveSemantics.NodeKey, ScalarMoveSemantics.Move> moves) {
-        return analyze(frontend,tables,resolution,report,scalars,moves,NumericControlSemantics.empty());
+        return analyze(frontend,tables,resolution,report,scalars,moves,IntegerSemantics.empty());
     }
     static IfSemantics analyze(CompilationUnitBuildResult frontend, CompilationUnitSymbolTables tables,
             ReferenceResolution resolution, ResolutionAnalysisReport report,
             Map<ResolutionContracts.SemanticEntityId, ScalarMoveSemantics.ScalarText> scalars,
-            Map<ScalarMoveSemantics.NodeKey, ScalarMoveSemantics.Move> moves, NumericControlSemantics numbers) {
+            Map<ScalarMoveSemantics.NodeKey, ScalarMoveSemantics.Move> moves, IntegerSemantics numbers) {
         return analyze(frontend,tables,resolution,report,scalars,moves,numbers,StorageComponents.analyze(frontend,tables,resolution));
     }
     static IfSemantics analyze(CompilationUnitBuildResult frontend, CompilationUnitSymbolTables tables,
             ReferenceResolution resolution, ResolutionAnalysisReport report,
             Map<ResolutionContracts.SemanticEntityId, ScalarMoveSemantics.ScalarText> scalars,
-            Map<ScalarMoveSemantics.NodeKey, ScalarMoveSemantics.Move> moves, NumericControlSemantics numbers,StorageComponents components) {
+            Map<ScalarMoveSemantics.NodeKey, ScalarMoveSemantics.Move> moves, IntegerSemantics numbers,StorageComponents components) {
         if(!components.belongsTo(frontend))throw new IllegalArgumentException("storage components belong to another snapshot");
         long[] work = new long[5];
         Map<ScalarMoveSemantics.NodeKey, ReferenceResolution.Entry> reads = new HashMap<>();

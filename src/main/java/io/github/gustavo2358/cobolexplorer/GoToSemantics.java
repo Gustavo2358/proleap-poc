@@ -51,7 +51,7 @@ public final class GoToSemantics {
         return simple(g)?fact(unit,g.meta().id()).entry().isPresent():depending(g)&&conditionalFact(unit,g.meta().id()).closed();
     }
     static GoToSemantics analyze(CompilationUnitBuildResult frontend,CompilationUnitSymbolTables tables,
-            ReferenceResolution resolution,ResolutionAnalysisReport report,NumericControlSemantics numbers) {
+            ReferenceResolution resolution,ResolutionAnalysisReport report,IntegerSemantics numbers) {
         var refs=new HashMap<ScalarMoveSemantics.NodeKey,ReferenceResolution.Entry>();
         for(var ref:resolution.entries()) refs.put(new ScalarMoveSemantics.NodeKey(ref.occurrence().programUnitId(),ref.occurrence().referenceAstNodeId()),ref);
         var result=new HashMap<ScalarMoveSemantics.NodeKey,Facts>();

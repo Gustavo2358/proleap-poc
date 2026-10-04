@@ -22,6 +22,7 @@
       <a class="journey-step completed" href="symbols.html"><span>03</span><div><b>Symbol Table</b><small>Declarações + escopos</small></div></a>
       <a class="journey-step active" href="resolution.html"><span>04</span><div><b>Resolução</b><small>Usos → candidatos</small></div></a>
     </nav>
+    <p class="semantic-gaps-link"><a href="gaps.html">Gaps ativos do Semantic Product →</a></p>
 
     <section class="hero resolution-hero">
       <div class="hero-copy">
@@ -43,7 +44,8 @@
     </section>
 
     <section class="resolution-contract panel" aria-label="Contrato operacional">
-      <div id="completeness-banner" class="coverage-banner"></div>
+      <p>Esta página mostra o binding nominal. Consulte os <a href="gaps.html">gaps ativos do Semantic Product</a> para investigar limitações da análise.</p>
+      <details id="input-diagnostics"><summary>Problemas na entrada</summary><div id="input-diagnostic-list"></div></details>
       <div class="policy-strip" id="policy-strip"></div>
     </section>
 
@@ -74,14 +76,10 @@
         <section class="inspector-section"><h4>Candidatos preservados</h4><div id="candidate-inspector" class="candidate-inspector"></div></section>
         <section class="inspector-section source-preview-section"><h4>Origem no fonte</h4><div class="source-preview" id="resolution-source"></div></section>
         <section class="inspector-section bridge-box"><h4>Pontes rastreáveis</h4><p>Volte ao uso nominal na AST ou à região concreta que o originou.</p><div class="bridge-actions"><a class="bridge-action" id="open-reference-ast" href="ast.html">AST ←</a><a class="bridge-action" id="open-reference-parse" href="index.html">Parse tree ←</a></div></section>
-        <section class="inspector-section insight-box" id="call-binding-insight"><h4>Binding não é dataflow</h4><p id="resolution-insight">Esta etapa escolhe identidades semânticas; não calcula valores em runtime.</p></section>
+        <section class="inspector-section insight-box" id="call-binding-insight"><h4>Binding não é dataflow</h4><p id="external-classification-detail"></p><p id="resolution-insight">Esta etapa escolhe identidades semânticas; não calcula valores em runtime.</p></section>
       </aside>
 
-      <aside class="coverage-panel panel" id="coverage-panel">
-        <div class="panel-heading"><div><span class="panel-index">03</span><h3>Cobertura</h3></div><span class="panel-meta" id="gap-count">—</span></div>
-        <div class="coverage-explanation">Uma lacuna bloqueante torna a análise de dependências incompleta. O painel mostra exatamente a regra e a linha responsáveis.</div>
-        <div class="gap-list" id="gap-list"></div>
-      </aside>
+
     </main>
 
     <footer><span>Binding imutável e separado · política e catálogo explícitos</span><span>Sem CFG · sem reaching definitions · sem valores de CALL · sem SQL</span></footer>

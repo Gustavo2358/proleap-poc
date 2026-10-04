@@ -41,7 +41,7 @@ class ResolutionLoggingTest {
     }
 
     @Test
-    void incompleteReportProducesOneAggregatedDegradationWarning(@TempDir Path directory) throws Exception {
+    void nominalReportDoesNotClaimGlobalDependencyReadiness(@TempDir Path directory) throws Exception {
         Path output = directory.resolve("output");
         List<ILoggingEvent> events = capture(ExplorerMain.class, Level.WARN,
                 () -> { ExplorerMain.main(new String[]{"--json-compression", "none","--source", FIXTURE.toAbsolutePath().toString(),
@@ -49,9 +49,10 @@ class ResolutionLoggingTest {
                         "--output", output.toString()}); return null; }).events();
 
         List<ILoggingEvent> warnings = events.stream().filter(event -> event.getLevel() == Level.WARN).toList();
-        assertEquals(1, warnings.size());
-        assertEvent(warnings, "event=analysis_degraded", "phase=REFERENCE_RESOLUTION", "gaps=", "blockingReasons=", "fallback=RESULT_PUBLISHED_WITH_GAPS", "impact=DEPENDENCY_ANALYSIS_NOT_READY");
-        assertTrue(Files.readString(output.resolve("resolution-data.js")).contains("\"dependencyAnalysisReady\":false"));
+        assertTrue(warnings.isEmpty());
+        assertFalse(Files.readString(output.resolve("resolution-data.js")).contains("dependencyAnalysisReady"));
+        assertTrue(Files.exists(output.resolve("gaps-data.js")));
+
     }
 
     private static ReferenceOccurrences collect(CompilationUnitModel model, CompilationUnitSymbolTables tables) {

@@ -904,3 +904,47 @@ gaps do not substitute for nominal gaps. Literal targets, ambiguous candidates,
 read/write roles and existing physical/control proof remain unchanged.
 `CicsNominalGapTest` covers unresolved/ambiguous names, missing input and isolation
 between statements.
+
+
+## Gaps atuais — SP 2.63
+
+SP 2.63 introduziu a regra para publicações com `controlTopology`. A obrigação de um gap localizado
+pode ser satisfeita pela prova positiva atual correspondente: membership,
+invocação de PERFORM ou NO_OP com controle local fechado. O predicado textual
+validado dispensa o gap de predicado indisponível. Perfis especializados continuam
+limitados; suas restrições de isolamento não são gaps da análise composicional.
+
+Esta regra substitui as exigências históricas acima de gap incondicional para
+OBSERVED ou containment UNKNOWN. Gaps de input, literal desconhecido, binding e
+runtime mantêm suas obrigações próprias. [Contrato atual e limites](active-gaps.md).
+
+
+## Condições 88 e SET — SP 2.64
+
+A versão 2.64.0 introduziu esta capacidade. `conditionNames` publica definições e usos
+nominais de 88, valores/intervalos, árvores de predicados e atribuições SET
+ordenadas. A semântica fica nos fatos canônicos do frontend; projector e consumidor
+somente traduzem esses fatos. Os 88 não alocam armazenamento nem tornam seu pai
+um grupo. Gaps redundantes de capability são satisfeitos por essas provas;
+obrigações independentes de input, controle, binding e runtime permanecem.
+
+[Contrato, regras, limites e complexidade](condition-names.md).
+
+## Valores numéricos e MOVE inteiro — SP 2.65
+
+A versão corrente do produtor é **2.65.0**. Literais de ponto fixo publicam
+`kind=NUMERIC` e `value` decimal canônico, independentemente da capacidade do
+receptor. ZERO/ZEROS/ZEROES têm valor numérico zero. A classificação não autoriza
+conversão para texto, ponto flutuante ou codificação física.
+
+`MoveFact.integerTransfers` contém `{target, value}` por receptor provado.
+`value` é o inteiro literal ou null para leitura do DATA original. Cada destino
+tem binding único e `wholeItemAccess` com `scalarInteger`; o DAG causal publica
+`LOGICAL_INTEGER` e `LOCAL_CELL` disponíveis. DATA de origem deve ter capacidade
+menor ou igual à dos receptores de um prefixo provado; literal não negativo deve caber.
+A lista mantém a ordem escrita e admite múltiplos destinos. Somente a lista
+completa remove os gaps de identidade/whole item do MOVE.
+
+O domínio compartilhado também serve aos controles numéricos existentes.
+Não há segunda interpretação de gaps, memória numérica paralela nem layout
+físico deduzido do PIC. Regras, limites e oracles: [MOVE numérico](numeric-move.md).

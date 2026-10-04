@@ -17,9 +17,9 @@ class PerformUntilTest {
                 var source=Files.readAllLines(path).stream().map(line->line.substring(7)).collect(java.util.stream.Collectors.joining("\n"));
                 var bytes=SemanticProductJsonWriter.serialize(ScalarMoveCheckpoint4ATest.publish(source));
                 var sp=new ObjectMapper().readTree(bytes);var facts=PerformFamilyTest.ranges(sp);
-                assertFalse(facts.isEmpty(),name);assertEquals(!sp.path("controlTopology").path("bindings").isEmpty()?"2.57.0":name.endsWith("-branches")?"2.46.0":sp.has("ordinaryContinuations")?"2.39.0":facts.stream().anyMatch(p->p.has("publicationKind"))?"2.36.0":"2.39.0",sp.path("contractVersion").asText());
+                assertFalse(facts.isEmpty(),name);assertEquals("2.65.0",sp.path("contractVersion").asText());
                 for(var p:facts) {
-                    assertEquals(!partial.contains(name),p.path("gapCodes").isEmpty(),name+": "+p.path("gapCodes"));
+                    assertEquals(!partial.contains(name),p.path("header").path("readiness").path("lowering").path("status").asText().equals("SUFFICIENT"),name+": "+p.path("gapCodes"));
                     if(name.equals("until-mixed")&&p.path("loop").isNull())continue;
                     assertFalse(p.path("loop").isMissingNode(),name);
                     assertEquals(name.equals("until-after")||name.equals("until-branches")||name.equals("until-thru")||name.equals("until-mixed")||name.matches("until-[0-9]+")?"AFTER":"BEFORE",p.path("loop").path("testMode").asText());

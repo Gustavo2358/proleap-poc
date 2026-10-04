@@ -35,6 +35,13 @@ final class ZstdArtifactTest {
         String fixture=Path.of("src/test/resources/cobol/semantic/semantic-product-entry-goback.cbl").toAbsolutePath().toString();
         ExplorerMain.main(new String[]{"--source",fixture,"--copybooks",directory.toString(),"--output",plain.toString(),"--json-compression","none"});
         ExplorerMain.main(new String[]{"--source",fixture,"--copybooks",directory.toString(),"--output",zipped.toString()});
+        assertFalse(Files.exists(zipped.resolve("semantic-gap-assessment.json.zst")));
+        assertFalse(Files.exists(zipped.resolve("gap-assessment-data.js")));
+        var mapper = new com.fasterxml.jackson.databind.json.JsonMapper();
+        String js = Files.readString(zipped.resolve("gaps-data.js"));
+        var snapshot = mapper.readTree(js.substring("window.SEMANTIC_GAPS=".length(), js.length()-2));
+        var product = mapper.readTree(JsonFiles.read(zipped.resolve("cobol-semantic-product.json.zst")));
+        assertEquals(product.get("gaps"), snapshot.path("units").get(0).get("gaps"));
         for(String name:java.util.List.of("cobol-semantic-product","cobol-semantic-compilation","observed-dependencies","semantic-product")) {
             assertFalse(Files.exists(zipped.resolve(name+".json")));
             assertArrayEquals(Files.readAllBytes(plain.resolve(name+".json")),JsonFiles.read(zipped.resolve(name+".json.zst")),name);

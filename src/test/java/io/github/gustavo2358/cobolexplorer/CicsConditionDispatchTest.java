@@ -14,7 +14,7 @@ class CicsConditionDispatchTest {
         assertEquals(ConditionAction.LABEL,r.action());assertEquals(TargetKind.REGION_ENTRY,r.target().get(0).kind());
         assertTrue(t.outcomes().stream().anyMatch(o->o.statement().equals(e.statement())&&o.kind()==OutcomeKind.NORMAL));
         assertEquals(EventEligibility.HANDLER_ELIGIBLE,e.eligibility());assertTrue(t.exceptionalEvents().stream().anyMatch(a->a.id().equals(e.defaultEvent())&&a.origin()==EventOrigin.LINK_PGMIDERR));
-        assertEquals("2.62.0",CicsAbendContractTest.json(p).path("contractVersion").asText());
+        assertEquals("2.65.0",CicsAbendContractTest.json(p).path("contractVersion").asText());
         assertTrue(publish("EXEC CICS HANDLE CONDITION PGMIDERR(ERR-P)\n END-EXEC.\nGOBACK.\nERR-P.\nGOBACK.").controlTopology().orElseThrow().conditionEvents().isEmpty());
     }
     @Test void omittedLabelAndIgnoreAreDistinctUpdates() {

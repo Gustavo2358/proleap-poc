@@ -251,6 +251,7 @@ COBOL	dataUsingClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOW
 COBOL	dataValueClause	DATA_DECLARATION	MODELED	DEPENDENCY_UNKNOWN	VALUE intervals and lexemes are structurally materialized; runtime and program-point values remain unknown.
 COBOL	dataValueInterval	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
 COBOL	dataValueIntervalFrom	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
+COBOL	dataValueLiteral	NAME_LITERAL	MODELED	NOT_DEPENDENCY_BEARING	Typed VALUE literal excluding the FALSE assignment-clause delimiter.
 COBOL	dataValueIntervalTo	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
 COBOL	dataWithLowerBoundsClause	DATA_DECLARATION	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Data declaration syntax is currently retained mainly as declaration text.
 COBOL	procedureDivision	PROCEDURE_STRUCTURE	PRESERVED_UNINTERPRETED	DEPENDENCY_UNKNOWN	Procedure structure is cataloged; signatures and some relationships remain unmodeled.

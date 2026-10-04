@@ -17,9 +17,9 @@ class PerformTimesTest {
                 var source=Files.readAllLines(path).stream().map(line->line.substring(7)).collect(java.util.stream.Collectors.joining("\n"));
                 var bytes=SemanticProductJsonWriter.serialize(ScalarMoveCheckpoint4ATest.publish(source));
                 var sp=new ObjectMapper().readTree(bytes);var facts=PerformFamilyTest.ranges(sp);
-                assertFalse(facts.isEmpty(),name);assertEquals(!sp.path("controlTopology").path("bindings").isEmpty()?"2.57.0":sp.has("ordinaryContinuations")?"2.39.0":facts.stream().anyMatch(p->p.has("publicationKind"))?"2.36.0":"2.39.0",sp.path("contractVersion").asText());
+                assertFalse(facts.isEmpty(),name);assertEquals("2.65.0",sp.path("contractVersion").asText());
                 for(var p:facts) {
-                    assertEquals(!partial.contains(name),p.path("gapCodes").isEmpty(),name+": "+p.path("gapCodes"));
+                    assertEquals(!partial.contains(name),p.path("header").path("readiness").path("lowering").path("status").asText().equals("SUFFICIENT"),name+": "+p.path("gapCodes"));
                     assertTrue(p.path("times").isObject(),name);
                     if(!partial.contains(name))assertEquals(name.equals("times-identifier")?"INTEGER_ITEM":"POSITIVE_INTEGER",p.path("times").path("profile").asText(),name);
                     if(name.equals("times-identifier"))assertTrue(p.path("times").path("reference").path("wholeItemAccess").isObject());

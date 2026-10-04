@@ -26,10 +26,10 @@ class CicsAbendContractTest {
     @Test void plainAbendIsEligible() throws Exception {event("","HANDLER_ELIGIBLE");}
     @Test void cancelBypassesHandlers() throws Exception {event("CANCEL","HANDLERS_BYPASSED");}
     @Test void versionReflectsNewEventOrPositiveControlFeature() throws Exception {
-        assertEquals("2.41.0",publish("GOBACK.").path("contractVersion").asText());
+        assertEquals("2.65.0",publish("GOBACK.").path("contractVersion").asText());
         // Mechanical version selection: explicit source-event authority was added in 2.45.
-        assertEquals("2.46.0",publish("EXEC CICS HANDLE ABEND CANCEL END-EXEC.\nGOBACK.").path("contractVersion").asText());
-        assertEquals("2.45.0",publish("EXEC CICS ABEND END-EXEC.").path("contractVersion").asText());
+        assertEquals("2.65.0",publish("EXEC CICS HANDLE ABEND CANCEL END-EXEC.\nGOBACK.").path("contractVersion").asText());
+        assertEquals("2.65.0",publish("EXEC CICS ABEND END-EXEC.").path("contractVersion").asText());
     }
     @Test void registrationIsSeparateFromEvent() throws Exception {
         var j=publish("EXEC CICS HANDLE ABEND END-EXEC.\nEXEC CICS ABEND END-EXEC.");

@@ -98,6 +98,7 @@ public final class StorageComponents {
                 Set.of(Dimension.ALLOCATION,Dimension.ALIAS),Reason.FILE_ALLOCATION_NOT_PROVEN,root.meta().provenance()));
             while(!pending.isEmpty()) {
                 var p=pending.pop();var data=p.data();
+                if(data.levelKind()==Ast.DataLevelKind.CONDITION_88)continue;
                 if(data.levelKind()==Ast.DataLevelKind.RENAMES_66&&p.parent().isPresent()){renames.add(p);continue;}
                 positions.add(p);
                 if(!identities.add(data.meta().id()))throw new IllegalArgumentException("duplicate physical declaration identity");
@@ -140,6 +141,7 @@ public final class StorageComponents {
         var names=new HashMap<String,Ast.DataEntry>();var ambiguous=new HashSet<String>();
         Ast.DataEntry previous=null;
         for(var data:siblings) {
+            if(data.levelKind()==Ast.DataLevelKind.CONDITION_88)continue;
             if(data.levelKind()==Ast.DataLevelKind.RENAMES_66&&parent.isPresent())continue;
             var redefines=data.clauses().stream().filter(Ast.RedefinesClause.class::isInstance).map(Ast.RedefinesClause.class::cast).toList();
             Ast.DataEntry selected=null;boolean proved=false;

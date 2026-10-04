@@ -1,7 +1,6 @@
 package io.github.gustavo2358.cobolexplorer;
 
 import io.github.gustavo2358.cobolexplorer.semanticproduct.CobolSemanticPort;
-import io.github.gustavo2358.cobolexplorer.semanticproduct.consumer.CobolLoweringReadinessConsumer;
 import io.github.gustavo2358.cobolexplorer.semanticproduct.projection.CobolSemanticProductProjector;
 import io.github.gustavo2358.cobolexplorer.semanticproduct.transport.SemanticProductJsonWriter;
 import org.antlr.v4.runtime.*;
@@ -235,16 +234,11 @@ public final class ExplorerMain {
         // Preserve the original filename as a byte-identical compatibility alias.
         Files.copy(output.resolve("cobol-semantic-product"+jsonSuffix),
                 output.resolve("semantic-product"+jsonSuffix), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-        CobolLoweringReadinessConsumer.Audit loweringReadiness =
-                CobolLoweringReadinessConsumer.audit(semanticProduct);
-        LOG.debug("event=semantic_product_published phase=SEMANTIC_PRODUCT elapsedMs={} unit={} dataDeclarations={} statements={} gaps={} loweringReadiness={} cfgReadiness={} effectsDataflowReadiness={}",
-                elapsedMs(semanticProductStarted),
-                loweringReadiness.unit().canonicalProgramName(),
-                loweringReadiness.dataDeclarations().size(), loweringReadiness.statements().size(),
-                loweringReadiness.gaps().size(),
-                loweringReadiness.coverage().readiness().lowering().status(),
-                loweringReadiness.coverage().readiness().cfg().status(),
-                loweringReadiness.coverage().readiness().effectsDataflow().status());
+        io.github.gustavo2358.cobolexplorer.semanticproduct.transport.GapSnapshotWriter.write(
+                compilationProduct.units().stream().map(u -> u.product()).toList(), output.resolve("gaps-data.js"));
+        LOG.debug("event=semantic_product_published phase=SEMANTIC_PRODUCT elapsedMs={} unit={} dataDeclarations={} statements={} gaps={}",
+                elapsedMs(semanticProductStarted), semanticProduct.unit().canonicalProgramName(),
+                semanticProduct.dataDeclarations().size(), semanticProduct.statements().size(), semanticProduct.gaps().size());
         progress.phase = "REFERENCE_RESOLUTION";
         ResolutionSnapshot.from(source.getFileName().toString(),
                         Arrays.asList(normalized.split("\\R", -1)), compilationUnit, resolution,
@@ -261,29 +255,22 @@ public final class ExplorerMain {
                 externalClassifications.entries().size(),
                 resolutionMetrics.indexedDeclarations(), resolutionMetrics.nominalLookups(),
                 resolutionMetrics.candidateInspections(), resolutionMetrics.maximumCandidates());
-        if (!resolutionReport.completeness().dependencyAnalysisReady()) {
-            List<String> blockingReasons = resolutionReport.completeness().blockingReasons().stream().limit(5).toList();
-            LOG.warn("event=analysis_degraded phase=REFERENCE_RESOLUTION gaps={} blockingReasons={} reason=RESOLUTION_GAPS fallback=RESULT_PUBLISHED_WITH_GAPS impact=DEPENDENCY_ANALYSIS_NOT_READY statusCounts={}",
-                    resolutionReport.gaps().size(), blockingReasons, resolutionReport.statusCounts());
-        }
-
         System.out.printf(Locale.ROOT,
                 "Generated %s, %s, %s and %s%nSource: %s%nParse tree: %,d nodes | %,d tokens | depth %d%n" +
                 "AST: %,d nodes | depth %d | literal-target CALLs %d%n" +
                         "Symbols: %,d declarations | %,d scopes | %,d diagnostics | parser errors %d%n" +
-                        "Reference binding: %,d entries | %,d gaps | dependency analysis ready: %s%n",
+                        "Reference binding: %,d entries | Semantic Product active gaps: %,d%n",
                 output.resolve("index.html"), output.resolve("ast.html"), output.resolve("symbols.html"),
                 output.resolve("resolution.html"),
                 source.getFileName(), nodes.size(),
                 tokenCount, maxDepth, astSnapshot.metrics().nodes(), astSnapshot.metrics().maxDepth(),
                 astSnapshot.metrics().literalTargetCalls(), symbolSnapshot.metrics().symbols(),
                 symbolSnapshot.metrics().scopes(), symbolSnapshot.metrics().diagnostics(), parserErrors,
-                resolution.entries().size(), resolutionReport.gaps().size(),
-                resolutionReport.completeness().dependencyAnalysisReady());
+                resolution.entries().size(), compilationProduct.units().stream().mapToInt(u -> u.product().gaps().size()).sum());
         progress.phase = "COMPLETED";
-        LOG.info("event=analysis_completed phase=ANALYSIS elapsedMs={} programUnits={} references={} gaps={} dependencyAnalysisReady={} output={}",
+        LOG.info("event=analysis_completed phase=ANALYSIS elapsedMs={} programUnits={} references={} semanticProductGaps={} output={}",
                 elapsedMs(analysisStarted), compilationUnit.programUnits().size(), resolution.entries().size(),
-                resolutionReport.gaps().size(), resolutionReport.completeness().dependencyAnalysisReady(), output);
+                compilationProduct.units().stream().mapToInt(u -> u.product().gaps().size()).sum(), output);
         }
     }
 

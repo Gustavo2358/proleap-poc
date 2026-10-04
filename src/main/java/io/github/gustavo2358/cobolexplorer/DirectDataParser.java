@@ -62,7 +62,7 @@ public final class DirectDataParser {
     private sealed interface Clause permits Picture, Usage, Value, Redefines, Preserved, Occurs { int origin(); }
     private record Picture(int origin, int pictureOrigin, String spelling) implements Clause { }
     private record Usage(int origin, boolean display) implements Clause { }
-    private record Value(int origin, List<Integer> intervals, String basicToken) implements Clause { }
+    private record Value(int origin, List<Integer> intervals, String basicToken, List<Ast.ConditionRange> ranges, Optional<Ast.ConditionValue> falseValue) implements Clause { }
     private record Redefines(int origin, int nameOrigin, String name) implements Clause { }
     private record Preserved(int origin, boolean external, boolean global) implements Clause { }
     private record Reference(int origin, String name, List<Qualifier> qualifiers) { }
@@ -268,30 +268,40 @@ public final class DirectDataParser {
         }
         Value value() {
             int origin = enter("dataValueClause"); if (is(VALUE, VALUES)) { take(); if (is(IS, ARE)) take(); }
-            var intervals = new ArrayList<Integer>(); String single = null;
+            var intervals = new ArrayList<Integer>(); var ranges=new ArrayList<Ast.ConditionRange>(); String single = null;
             do {
                 if (!intervals.isEmpty()) optional(COMMACHAR);
                 int interval = enter("dataValueInterval"); int from = enter("dataValueIntervalFrom");
                 String basic = la() == NONNUMERICLITERAL ? input.LT(1).getText() : null;
-                if (literalToken(la())) literal();
+                Ast.ConditionValue first=new Ast.ConditionValue(Ast.ConditionValueKind.UNAVAILABLE,"");
+                if (literalToken(la())) first=literal("dataValueLiteral");
                 else if (wordToken(la())) { int word = enter("cobolWord"); take(); close(word); }
                 else reject("expected VALUE operand");
                 close(from);
-                if (is(THROUGH, THRU)) { int to = enter("dataValueIntervalTo"); take(); literal(); close(to); basic = null; }
+                Optional<Ast.ConditionValue> last=Optional.empty();
+                if (is(THROUGH, THRU)) { int to = enter("dataValueIntervalTo"); take(); last=Optional.of(literal()); close(to); basic = null; }
+                ranges.add(new Ast.ConditionRange(first,last));
                 close(interval); intervals.add(interval); single = intervals.size() == 1 ? basic : null;
-            } while (is(COMMACHAR) || literalToken(la()) || wordToken(la()));
-            close(origin); return new Value(origin, List.copyOf(intervals), single);
+            } while (!is(WHEN,SET,TO,FALSE)&&(is(COMMACHAR) || literalToken(la()) || wordToken(la())));
+            Optional<Ast.ConditionValue> falseValue=Optional.empty();
+            if(is(WHEN,SET,TO,FALSE)){optional(WHEN);optional(SET);optional(TO);expect(FALSE);optional(IS);falseValue=Optional.of(literal());}
+            close(origin); return new Value(origin, List.copyOf(intervals), single,List.copyOf(ranges),falseValue);
         }
-        void literal() {
-            int literal = enter("literal"); int type = la();
+        Ast.ConditionValue literal(){return literal("literal");}
+        Ast.ConditionValue literal(String rule) {
+            int start=input.index();
+            int literal = enter(rule); int type = la();
             if (type == NONNUMERICLITERAL) take();
             else if (figurative(type) || type == ALL) { int f = enter("figurativeConstant"); take(); if (type == ALL) literal(); close(f); }
             else if (integerToken(type) || type == NUMERICLITERAL) {
                 int n = enter("numericLiteral");
                 if (integerToken(type)) { int i = enter("integerLiteral"); take(); close(i); } else take(); close(n);
-            } else if (is(TRUE, FALSE)) { int b = enter("booleanLiteral"); take(); close(b); }
+            } else if (is(TRUE, FALSE)) { if(rule.equals("dataValueLiteral")){if(la()==FALSE)reject("FALSE starts a false clause");take();}else{int b = enter("booleanLiteral"); take(); close(b);} }
             else reject("unsupported VALUE operand");
             close(literal);
+            StringBuilder spelling=new StringBuilder();
+            for(int i=start;i<input.index();i++){var token=input.get(i);if(token.getChannel()==Token.DEFAULT_CHANNEL)spelling.append(token.getText());}
+            return ConditionValueSyntax.literal(spelling.toString());
         }
         Redefines redefines() {
             int origin = enter("dataRedefinesClause"); take();
@@ -468,7 +478,7 @@ public final class DirectDataParser {
                     AstBuilder.elementaryTextExtent(p.spelling()), AstBuilder.elementaryIntegerDigits(p.spelling()));
             else if (draft instanceof Usage u) node = new Ast.UsageClause(meta, text.replaceFirst("(?i)^USAGE\\s+(IS\\s+)?", ""), text, u.display());
             else if (draft instanceof Value v) node = new Ast.ValueClause(meta, v.intervals().stream().map(this::text).map(String::strip).toList(), text,
-                    v.basicToken() == null ? Optional.empty() : AstBuilder.basicLogicalTextToken(v.basicToken()));
+                    v.basicToken() == null ? Optional.empty() : AstBuilder.basicLogicalTextToken(v.basicToken()),v.ranges(),v.falseValue());
             else if (draft instanceof Redefines r) node = new Ast.RedefinesClause(meta, new Ast.DataReference(meta(r.nameOrigin()), r.name(), text(r.nameOrigin()).strip(), List.of(), List.of(), null, Ast.ReferenceUnderstanding.STRUCTURED), text);
             else if (draft instanceof Occurs o) {
                 Ast.Expression minimum = o.minimumReference() == null ? integerExpression(o.minimumInteger()) : reference(o.minimumReference());
